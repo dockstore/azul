@@ -1772,9 +1772,9 @@ class Config:
 
     blocked_user_agents_custom_regex_term = 'blocked_user_agents_custom'
 
-    waf_rate_rule_name = 'RateRule'
+    waf_rate_rule_name = 'rate_limit'
 
-    waf_rate_alarm_rule_name = 'RateAlarmRule'
+    waf_rate_alarm_rule_name = 'rate_limit_alarm'
 
     waf_rate_rule_period = 300  # seconds; this value is fixed by AWS
 

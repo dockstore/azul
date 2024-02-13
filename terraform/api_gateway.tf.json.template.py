@@ -237,7 +237,7 @@ emit_tf({
                                     'name': name,
                                     'statement': {
                                         'ip_set_reference_statement': {
-                                            'arn': '${data.aws_wafv2_ip_set.%s.arn}' % ip_set_term
+                                            'arn': '${data.aws_wafv2_ip_set.%s.arn}' % name
                                         }
                                     },
                                     'action': {
@@ -249,7 +249,7 @@ emit_tf({
                                                 'name': config.blocked_v4_ips_term
                                             }
                                         }
-                                        if ip_set_term == config.blocked_v4_ips_term else
+                                        if name == config.blocked_v4_ips_term else
                                         {}
                                     ),
                                     'visibility_config': {
@@ -258,13 +258,13 @@ emit_tf({
                                         'cloudwatch_metrics_enabled': True
                                     }
                                 }
-                                for name, action, ip_set_term in [
-                                    ('BlockedIPs', 'block', config.blocked_v4_ips_term),
-                                    ('AllowedIPs', 'allow', config.allowed_v4_ips_term)
+                                for name, action in [
+                                    (config.blocked_v4_ips_term, 'block'),
+                                    (config.allowed_v4_ips_term, 'allow')
                                 ]
                             ],
                             {
-                                'name': 'BlockedUserAgents',
+                                'name': 'blocked_user_agents',
                                 'statement': {
                                     'or_statement': {
                                         'statement': [
@@ -296,7 +296,7 @@ emit_tf({
                                     'name': config.blocked_user_agents_regex_term
                                 },
                                 'visibility_config': {
-                                    'metric_name': 'BlockedUserAgents',
+                                    'metric_name': 'blocked_user_agents',
                                     'sampled_requests_enabled': True,
                                     'cloudwatch_metrics_enabled': True
                                 }
@@ -343,7 +343,7 @@ emit_tf({
                                 ]
                             ],
                             {
-                                'name': 'AWS-CommonRuleSet',
+                                'name': 'aws_common_rule_set',
                                 'statement': {
                                     'managed_rule_group_statement': {
                                         'name': 'AWSManagedRulesCommonRuleSet',
@@ -385,13 +385,13 @@ emit_tf({
                                     'none': {}
                                 },
                                 'visibility_config': {
-                                    'metric_name': 'AWS-CommonRuleSet',
+                                    'metric_name': 'aws_common_rule_set',
                                     'sampled_requests_enabled': True,
                                     'cloudwatch_metrics_enabled': True
                                 }
                             },
                             {
-                                'name': 'AWS-AmazonIpReputationList',
+                                'name': 'aws_amazon_ip_reputation_list',
                                 'statement': {
                                     'managed_rule_group_statement': {
                                         'name': 'AWSManagedRulesAmazonIpReputationList',
@@ -402,13 +402,13 @@ emit_tf({
                                     'none': {}
                                 },
                                 'visibility_config': {
-                                    'metric_name': 'AWS-AmazonIpReputationList',
+                                    'metric_name': 'aws_amazon_ip_reputation_list',
                                     'sampled_requests_enabled': True,
                                     'cloudwatch_metrics_enabled': True
                                 }
                             },
                             {
-                                'name': 'AWS-UnixRuleSet',
+                                'name': 'aws_unix_rule_set',
                                 'statement': {
                                     'managed_rule_group_statement': {
                                         'name': 'AWSManagedRulesUnixRuleSet',
@@ -419,14 +419,14 @@ emit_tf({
                                     'none': {}
                                 },
                                 'visibility_config': {
-                                    'metric_name': 'AWS-UnixRuleSet',
+                                    'metric_name': 'aws_unix_rule_set',
                                     'sampled_requests_enabled': True,
                                     'cloudwatch_metrics_enabled': True
                                 }
                             },
                             *iif(config.waf_bot_control, [
                                 {
-                                    'name': 'AWS-AWSManagedRulesBotControlRuleSet',
+                                    'name': 'aws_managed_rules_bot_control_rule_set',
                                     'statement': {
                                         'managed_rule_group_statement': {
                                             'name': 'AWSManagedRulesBotControlRuleSet',
@@ -474,7 +474,7 @@ emit_tf({
                                         'none': {}
                                     },
                                     'visibility_config': {
-                                        'metric_name': 'AWS-AWSManagedRulesBotControlRuleSet',
+                                        'metric_name': 'aws_managed_rules_bot_control_rule_set',
                                         'sampled_requests_enabled': True,
                                         'cloudwatch_metrics_enabled': True
                                     }
@@ -487,7 +487,7 @@ emit_tf({
                                     # requests. The managed rule is scoped down
                                     # to URLs dissallowed in robots.txt, so this
                                     # rule shouldn't affect well-behaved bot.
-                                    'name': 'BlockVerifiedBotsRule',
+                                    'name': 'block_verified_bots_rule',
                                     'statement': {
                                         'label_match_statement': {
                                             'scope': 'LABEL',
@@ -498,7 +498,7 @@ emit_tf({
                                         'block': {}
                                     },
                                     "visibility_config": {
-                                        'metric_name': 'BlockVerifiedBotsRule',
+                                        'metric_name': 'block_verified_bots_rule',
                                         'sampled_requests_enabled': True,
                                         'cloudwatch_metrics_enabled': True
                                     }
