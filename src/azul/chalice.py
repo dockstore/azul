@@ -1,6 +1,7 @@
 from abc import (
     ABCMeta,
 )
+import base64
 from collections.abc import (
     Iterable,
 )
@@ -15,6 +16,8 @@ import logging
 import mimetypes
 import os
 import pathlib
+import re
+import secrets
 from typing import (
     Any,
     Iterator,
@@ -206,15 +209,146 @@ class AzulChaliceApp(Chalice):
             config.lambda_is_handling_api_gateway_request = False
 
     @classmethod
+    def csp_nonce(cls) -> str:
+        """
+        Return a randomly generated nonce value for use in a Content Security
+        Policy header.
+        """
+        return base64.b64encode(secrets.token_bytes(32)).decode('ascii').rstrip('=')
+
+    @classmethod
+    def content_security_policy(cls, nonce: str | None = None) -> str:
+        """
+        >>> from azul.doctests import assert_json
+        >>> assert_json(AzulChaliceApp.content_security_policy(None).split(';'))
+        [
+            "default-src 'self'",
+            "img-src 'self' data:",
+            "script-src 'self'",
+            "style-src 'self'",
+            "frame-ancestors 'none'"
+        ]
+
+        >>> assert_json(AzulChaliceApp.content_security_policy(nonce='foo').split(';'))
+        [
+            "default-src 'self'",
+            "img-src 'self' data:",
+            "script-src 'self' 'nonce-foo'",
+            "style-src 'self' 'nonce-foo'",
+            "frame-ancestors 'none'"
+        ]
+        """
+        self_ = sq('self')
+        none = sq('none')
+        nonce = [] if nonce is None else [sq('nonce-' + nonce)]
+
+        return ';'.join([
+            jw('default-src', self_),
+            jw('img-src', self_, 'data:'),
+            jw('script-src', self_, *nonce),
+            jw('style-src', self_, *nonce),
+            jw('frame-ancestors', none),
+        ])
+
+    @classmethod
+    def validate_csp(cls, csp: str, has_nonce: bool) -> str:
+        """
+        Raise an exception if the CSP is invalid, otherwise return the validated
+        CSP.
+
+        >>> cls = AzulChaliceApp
+        >>> cls.validate_csp("default-src 'self';img-src 'self' data:;"
+        ...                   "script-src 'self';"
+        ...                   "style-src 'self';"
+        ...                   "frame-ancestors 'none'", has_nonce=False)
+        "default-src 'self';img-src 'self' data:;script-src 'self';style-src 'self';frame-ancestors 'none'"
+
+        Fails if nonce violates the RFC
+
+        >>> cls.validate_csp("default-src 'self';img-src 'self' data:;"
+        ...                   "script-src 'self' 'nonce-1234567890123456789012345678901234567890***';"
+        ...                   "style-src 'self' 'nonce-1234567890123456789012345678901234567890***';"
+        ...                   "frame-ancestors 'none'", has_nonce=True)
+        Traceback (most recent call last):
+        ...
+        AssertionError: 'nonce-1234567890123456789012345678901234567890***'
+
+        Fails if nonce is shorter than expected
+
+        >>> cls.validate_csp("default-src 'self';img-src 'self' data:;"
+        ...                   "script-src 'self' 'nonce-1234567890';"
+        ...                   "style-src 'self' 'nonce-1234567890';"
+        ...                   "frame-ancestors 'none'", has_nonce=True)
+        Traceback (most recent call last):
+        ...
+        AssertionError: 'nonce-1234567890'
+
+        Fails if nonce is longer than expected
+
+        >>> cls.validate_csp("default-src 'self';img-src 'self' data:;"
+        ...                   "script-src 'self' 'nonce-12345678901234567890123456789012345678901234567890';"
+        ...                   "style-src 'self' 'nonce-12345678901234567890123456789012345678901234567890';"
+        ...                   "frame-ancestors 'none'", has_nonce=True)
+        Traceback (most recent call last):
+        ...
+        AssertionError: 'nonce-12345678901234567890123456789012345678901234567890'
+        """
+        # https://www.w3.org/TR/CSP2/#policy-syntax
+        directive_re = re.compile(r'[ \t]*([a-zA-Z0-9-]+)'
+                                  # Space, tab and any visible character
+                                  # (0x21-0xFE) except for comma (0x2C) or
+                                  # semicolon (0x3B).
+                                  r'(?:[ \t]([ \t\x21-\x2B\x2D-\x3A\x3C-\xFE]*))?')
+        nonce_re = re.compile(r"'nonce-([a-zA-Z0-9+/]{43})'")
+        expected_directives = [
+            'default-src',
+            'frame-ancestors',
+            'img-src',
+            'script-src',
+            'style-src',
+        ]
+        expected_expressions = [
+            sq('none'),
+            sq('self'),
+            'data:',
+        ]
+        directives = list()
+        expressions = list()
+        nonces = dict()
+
+        for directive in csp.split(';'):
+            match = directive_re.fullmatch(directive)
+            assert match is not None
+            name, value = match.groups()
+            assert name not in directives, name
+            directives.append(name)
+            for expression in value.split(' '):
+                if expression in expected_expressions:
+                    expressions.append(expression)
+                else:
+                    match = nonce_re.fullmatch(expression)
+                    assert match is not None, expression
+                    assert name not in nonces, name
+                    nonces[name] = match.group(1)
+        if has_nonce:
+            assert ['script-src', 'style-src'] == sorted(nonces.keys()), nonces.keys()
+            assert len(set(nonces.values())) == 1, sorted(set(nonces.values()))
+        else:
+            assert nonces == {}, nonces
+        assert expected_directives == sorted(directives), sorted(directives)
+        assert expected_expressions == sorted(set(expressions)), sorted(set(expressions))
+        return csp
+
+    @classmethod
     def security_headers(cls) -> dict[str, str]:
         """
-        Headers added to every response from the app, as well as canned 4XX and
-        5XX responses from API Gateway. Use of these headers addresses known
-        security vulnerabilities.
+        Default values for headers added to every response from the app, as well
+        as canned 4XX and 5XX responses from API Gateway. Use of these headers
+        addresses known security vulnerabilities.
         """
         hsts_max_age = 60 * 60 * 24 * 365 * 2
         return {
-            'Content-Security-Policy': jw('default-src', sq('self')),
+            'Content-Security-Policy': cls.content_security_policy(),
             'Referrer-Policy': 'strict-origin-when-cross-origin',
             'Strict-Transport-Security': jw(f'max-age={hsts_max_age};',
                                             'includeSubDomains;',
@@ -229,11 +363,10 @@ class AzulChaliceApp(Chalice):
         Add headers to the response
         """
         response = get_response(event)
-        response.headers.update(self.security_headers())
-        # FIXME: Add a CSP header with a nonce value to text/html responses
-        #        https://github.com/DataBiosphere/azul-private/issues/6
-        if response.headers.get('Content-Type') == 'text/html':
-            del response.headers['Content-Security-Policy']
+        # Add security headers to the response without overwriting any headers
+        # that might have been added already (e.g. Content-Security-Policy)
+        for k, v in self.security_headers().items():
+            response.headers.setdefault(k, v)
         view_function = self.routes[event.path][event.method].view_function
         cache_control = getattr(view_function, 'cache_control')
         # Caching defeats the automatic reloading of application source code by
@@ -529,11 +662,14 @@ class AzulChaliceApp(Chalice):
         return controller_cls(app=self, **kwargs)
 
     def swagger_ui(self) -> Response:
-        swagger_ui_template = self.load_static_resource('swagger', 'swagger-ui.html.template.mustache')
+        file_name = 'swagger-ui.html.template.mustache'
+        template = self.load_static_resource('swagger', file_name)
         base_url = self.base_url
         redirect_url = furl(base_url).add(path='oauth2_redirect')
         deployment_url = furl(base_url).add(path='openapi')
-        swagger_ui_html = chevron.render(swagger_ui_template, {
+        nonce = self.csp_nonce()
+        html = chevron.render(template, {
+            'CSP_NONCE': json.dumps(nonce),
             'DEPLOYMENT_PATH': json.dumps(str(deployment_url.path)),
             'OAUTH2_CLIENT_ID': json.dumps(config.google_oauth2_client_id),
             'OAUTH2_REDIRECT_URL': json.dumps(str(redirect_url)),
@@ -543,8 +679,11 @@ class AzulChaliceApp(Chalice):
             ])
         })
         return Response(status_code=200,
-                        headers={'Content-Type': 'text/html'},
-                        body=swagger_ui_html)
+                        headers={
+                            'Content-Type': 'text/html',
+                            'Content-Security-Policy': self.content_security_policy(nonce)
+                        },
+                        body=html)
 
     def swagger_resource(self, file_name: str) -> Response:
         if os.sep in file_name:

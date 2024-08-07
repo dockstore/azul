@@ -29,6 +29,7 @@ from chalice import (
     Response,
     UnauthorizedError,
 )
+import chevron
 from furl import (
     furl,
 )
@@ -487,10 +488,18 @@ globals().update(app.default_routes())
     }
 )
 def oauth2_redirect():
-    oauth2_redirect_html = app.load_static_resource('swagger', 'oauth2-redirect.html')
+    file_name = 'oauth2-redirect.html.template.mustache'
+    template = app.load_static_resource('swagger', file_name)
+    nonce = app.csp_nonce()
+    html = chevron.render(template, {
+        'CSP_NONCE': json.dumps(nonce)
+    })
     return Response(status_code=200,
-                    headers={'Content-Type': 'text/html'},
-                    body=oauth2_redirect_html)
+                    headers={
+                        'Content-Type': 'text/html',
+                        'Content-Security-Policy': app.content_security_policy(nonce)
+                    },
+                    body=html)
 
 
 def validate_repository_search(entity_type: EntityType,
