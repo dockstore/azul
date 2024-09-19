@@ -18,6 +18,7 @@ more-itertools==10.5.0
 msgpack==1.1.0
 requests==2.32.3
 rsa==4.7.2  # resolve ambiguity with build-time dependency
+setuptools==70.3.0  # Keep consistent with requirements.pip.txt. Python 3.12 removed distutils, which we depended on transitively. Luckily, setuptools includes a vendored copy.
 urllib3==1.26.20
 werkzeug==3.0.6
 -r requirements.trans.txt
