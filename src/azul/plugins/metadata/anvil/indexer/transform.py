@@ -585,9 +585,10 @@ class BundleTransformer(SingletonTransformer):
             # will be redundant with those emitted by the file transformer, but
             # these will be coalesced by the index service before they are
             # written to ElasticSearch.
+            dataset = self._only_dataset()
             for entity in chain(self.bundle.orphans, self.bundle.entities):
                 if partition.contains(UUID(entity.entity_id)):
-                    yield self._replica(entity, file_hub=None)
+                    yield self._replica(entity, file_hub=None, root_hub=dataset.entity_id)
 
 
 class DatasetTransformer(SingletonTransformer):
@@ -632,6 +633,7 @@ class FileTransformer(BaseTransformer):
                    entity: EntityReference
                    ) -> Iterable[Contribution | Replica]:
         linked = self._linked_entities(entity)
+        dataset = self._only_dataset()
         contents = dict(
             activities=self._entities(self._activity, chain.from_iterable(
                 linked[activity_type]
@@ -645,7 +647,7 @@ class FileTransformer(BaseTransformer):
         )
         yield self._contribution(contents, entity.entity_id)
         if config.enable_replicas:
-            yield self._replica(entity, file_hub=entity.entity_id)
+            yield self._replica(entity, file_hub=entity.entity_id, root_hub=dataset.entity_id)
             for linked_entity in linked:
                 yield self._replica(
                     linked_entity,
@@ -655,4 +657,5 @@ class FileTransformer(BaseTransformer):
                     # hub IDs field empty for datasets and rely on the tenet
                     # that every file is an implicit hub of its parent dataset.
                     file_hub=None if linked_entity.entity_type == 'anvil_dataset' else entity.entity_id,
+                    root_hub=dataset.entity_id
                 )
