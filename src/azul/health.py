@@ -507,7 +507,9 @@ class HealthApp(AzulChaliceApp):
         @self.metric_alarm(metric=LambdaMetric.errors,
                            threshold=1,
                            period=24 * 60 * 60)
-        @self.metric_alarm(metric=LambdaMetric.throttles)
+        @self.metric_alarm(metric=LambdaMetric.throttles,
+                           threshold=0,
+                           period=5 * 60)
         @self.retry(num_retries=0)
         # FIXME: Remove redundant prefix from name
         #        https://github.com/DataBiosphere/azul/issues/5337
