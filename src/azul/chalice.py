@@ -276,6 +276,9 @@ class AzulChaliceApp(Chalice):
             if not interactive:
                 require(bool(methods), 'Must list methods with interactive=False')
                 self.non_interactive_routes.update((path, method) for method in methods)
+            if method_spec:
+                responses = method_spec.get('responses', {})
+                responses |= self.http_504_response()
             chalice_decorator = super().route(path, **kwargs)
 
             def decorator(view_func):
@@ -738,6 +741,17 @@ class AzulChaliceApp(Chalice):
             }
 
         return locals()
+
+    def http_504_response(self) -> JSON:
+        return {
+            '504': {
+                'description': format_description('''
+                    Request timed out. When handling this response, clients
+                    should wait the number of seconds specified in the
+                    `Retry-After` header and then retry the request.
+                ''')
+            }
+        }
 
 
 @attrs.frozen(kw_only=True)
