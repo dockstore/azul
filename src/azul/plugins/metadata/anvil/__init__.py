@@ -243,7 +243,8 @@ class Plugin(MetadataPlugin[AnvilBundle]):
         return SpecialFields(source_id='source_id',
                              source_spec='source_spec',
                              bundle_uuid='bundle_uuid',
-                             bundle_version='bundle_version')
+                             bundle_version='bundle_version',
+                             implicit_hub_id='datasets.dataset_id')
 
     @property
     def implicit_hub_type(self) -> str:
@@ -330,7 +331,14 @@ class Plugin(MetadataPlugin[AnvilBundle]):
             schema['name']: schema
             for schema in anvil_schema['tables']
         }
-        entity_schemas = []
+        non_schema_replicas = [
+            r for r in replicas
+            if r['replica_type'] not in table_schemas_by_name
+        ]
+        # For tables not described by the AnVIL schema, fall back to building
+        # their PFB schema dynamically from the shapes of the replicas
+        entity_schemas = super().verbatim_pfb_schema(non_schema_replicas)
+        # For the rest, use the AnVIL schema as the basis of the PFB schema
         for table_name, table_schema in table_schemas_by_name.items():
             # FIXME: Improve handling of DUOS replicas
             #        https://github.com/DataBiosphere/azul/issues/6139
