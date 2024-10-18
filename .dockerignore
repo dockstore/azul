@@ -3,4 +3,5 @@
 !common.mk
 !requirements*.txt
 !bin/keys/docker-apt-keyring.pgp
+!fips_enabled
 requirements.all.txt

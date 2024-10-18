@@ -36,11 +36,13 @@ $(eval $(call requirements,_runtime_deps,requirements_pip,,))
 define docker
 .PHONY: docker$1
 docker$1: check_docker
+	echo 0 > fips_enabled
 	docker build \
 	       --build-arg azul_docker_registry=$$(azul_docker_registry) \
 	       --build-arg azul_python_image=$$(azul_python_image) \
 	       --build-arg azul_docker_version=$$(azul_docker_version) \
 	       --build-arg azul_terraform_version=$$(azul_terraform_version) \
+	       --build-arg azul_proc_sys_crypto=$$(azul_proc_sys_crypto) \
 	       --build-arg PIP_DISABLE_PIP_VERSION_CHECK=$$(PIP_DISABLE_PIP_VERSION_CHECK) \
 	       --build-arg make_target=requirements$2 \
 	       --tag $$(azul_image)$3:$$(azul_image_tag) \

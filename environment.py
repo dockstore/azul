@@ -264,6 +264,14 @@ def env() -> Mapping[str, Optional[str]]:
         #
         'azul_terraform_version': '1.9.8',
 
+        # When building the Azul image on a FIPS mode enabled system (e.g.
+        # GitLab), this variable should be set to `/proc/sys/crypto`, the path
+        # where a `fips_enabled` file will be mounted. This is required for the
+        # command `apt-get update` to succeed which would otherwise fail on
+        # Debian bookworm with FIPS mode enabled.
+        #
+        'azul_proc_sys_crypto': '/tmp',
+
         # A dictionary mapping the short name of each Docker image used in Azul
         # to its fully qualified name. Note that a change to any of the image
         # references below requires running `make docker_images.json` and

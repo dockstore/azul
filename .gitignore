@@ -5,6 +5,7 @@ __pycache__/
 /.coverage
 /.coverage.*
 /fedramp_inventory.xlsx
+/fips_enabled
 
 ## Build products above this line. Please see the `clean` target in Makefile.
 
