@@ -1252,6 +1252,8 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
             if config.is_anvil_enabled(catalog):
                 # Replica bundles do not add contributions to the index and
                 # therefore do not appear anywhere in the service response
+                # FIXME: Integration test does not assert that replica bundles are indexed
+                #        https://github.com/DataBiosphere/azul/issues/6647
                 replica_fqids = {
                     bundle_fqid
                     for bundle_fqid in expected_fqids
