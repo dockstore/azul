@@ -890,6 +890,7 @@ class IndexWriter:
             # optional document source.
             assert isinstance(doc, Document), doc
             action = dict(doc.to_index(self.catalog, self.field_types))
+            action.update(action.pop('params', {}))
             action['_index'] = action.pop('index')
             action['_id'] = action.pop('id')
             body = action.pop('body', None)

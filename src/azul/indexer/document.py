@@ -1330,6 +1330,8 @@ class Document(Generic[C], metaclass=ABCMeta):
             result['body'] = self._body(field_types[coordinates.entity.catalog])
         if self.version is not None:
             result['if_seq_no'], result['if_primary_term'] = self.version
+        if self.op_type is OpType.update:
+            result['params'] = {'retry_on_conflict': 3}
         return result
 
     def _body(self, field_types: FieldTypes) -> JSON:
