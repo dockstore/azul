@@ -278,11 +278,14 @@ class TDRHCABundle(HCABundle[TDRBundleFQID], TDRBundle):
 
 class Plugin(TDRPlugin[TDRHCABundle, TDRSourceSpec, TDRSourceRef, TDRBundleFQID]):
 
-    def _count_subgraphs(self, source: TDRSourceSpec) -> int:
-        rows = self._run_sql(f'''
-            SELECT COUNT(*) AS count
-            FROM {backtick(self._full_table_name(source, 'links'))}
-        ''')
+    def count_bundles(self, source: TDRSourceSpec) -> int:
+        prefix = '' if source.prefix is None else source.prefix.common
+        query = f'''
+        SELECT COUNT(*) AS count
+        FROM {backtick(self._full_table_name(source, 'links'))}
+        WHERE STARTS_WITH(datarepo_row_id, {prefix!r})
+        '''
+        rows = self._run_sql(query)
         return one(rows)['count']
 
     def _list_bundles(self,

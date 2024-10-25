@@ -169,14 +169,16 @@ class Plugin(TDRPlugin[TDRAnvilBundle, TDRSourceSpec, TDRSourceRef, TDRAnvilBund
     datarepo_row_uuid_version = 4
     bundle_uuid_version = 10
 
-    def _count_subgraphs(self, source: TDRSourceSpec) -> int:
+    def count_bundles(self, source: TDRSourceSpec) -> int:
+        prefix = '' if source.prefix is None else source.prefix.common
         rows = self._run_sql(f'''
             SELECT COUNT(*) AS count
             FROM {backtick(self._full_table_name(source, BundleType.primary.value))}
+            WHERE STARTS_WITH(datarepo_row_id, {prefix!r})
             UNION ALL
             SELECT COUNT(*) AS count
             FROM {backtick(self._full_table_name(source, BundleType.supplementary.value))}
-            WHERE is_supplementary
+            WHERE is_supplementary AND STARTS_WITH(datarepo_row_id, {prefix!r})
         ''')
         return sum(row['count'] for row in rows)
 

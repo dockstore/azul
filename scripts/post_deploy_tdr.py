@@ -102,7 +102,7 @@ class TerraValidator:
             require(prefix.common == '', source_spec)
             self.tdr.check_bigquery_access(source_spec)
         else:
-            subgraph_count = len(plugin.list_bundles(ref, prefix.common))
+            subgraph_count = plugin.count_bundles(ref.spec)
             require(subgraph_count > 0, 'Common prefix is too long', ref.spec)
             require(subgraph_count <= 512, 'Common prefix is too short', ref.spec)
 

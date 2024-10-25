@@ -26,6 +26,9 @@ from typing import (
 from furl import (
     furl,
 )
+from more_itertools import (
+    ilen,
+)
 
 from azul import (
     CatalogName,
@@ -163,9 +166,13 @@ class Plugin(RepositoryPlugin[CannedBundle, SimpleSourceSpec, CannedSourceRef, C
                                                             ref)
             return factory.load_staging_area(path)
 
-    def _count_subgraphs(self, source: SOURCE_SPEC) -> int:
+    def count_bundles(self, source: SOURCE_SPEC) -> int:
         staging_area = self.staging_area(source.spec.name)
-        return len(staging_area.links)
+        return ilen(
+            links_id
+            for links_id in staging_area.links
+            if source.prefix is None or links_id.startswith(source.prefix.common)
+        )
 
     def list_bundles(self,
                      source: CannedSourceRef,
