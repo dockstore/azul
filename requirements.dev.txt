@@ -1,6 +1,6 @@
 atomicwrites==1.4.1
-awscli==1.29.63
-boto3-stubs[s3,sqs,lambda,dynamodb,iam,ecr,stepfunctions,kms]==1.28.63  # match this with the version of the `boto3` runtime dependency
+awscli==1.35.14
+boto3-stubs[s3,sqs,lambda,dynamodb,iam,ecr,stepfunctions,kms]==1.35.48  # match this with the version of the `boto3` runtime dependency
 coverage==7.6.4
 docker==7.1.0
 flake8==5.0.4
@@ -13,7 +13,7 @@ google-cloud-bigquery-reservation==1.13.5
 google-cloud-storage==2.18.2
 jq==1.8.0
 locust==2.32.0
-moto[s3,sqs,sns,dynamodb,iam]==4.1.13  # match the extras with the backends listed in AzulUnitTestCase._reset_moto
+moto[s3,sqs,sns,dynamodb,iam]==5.0.18  # match the extras with the backends listed in AzulUnitTestCase._reset_moto
 openapi-spec-validator==0.5.1
 openpyxl==3.1.5
 posix_ipc==1.1.1

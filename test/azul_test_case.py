@@ -210,7 +210,7 @@ class AzulTestCase(TestCase):
         # Moto mock's stop() method has the drastic effect of resetting the
         # model class attributes that are used to track model instances so that
         # they can later be cleaned up when the backend is reset.
-        if isinstance(instance, moto.BaseMockAWS):
+        if isinstance(instance, moto.core.models.MockAWS):
             cleanup = partial(instance.stop, remove_data=False)
         else:
             cleanup = instance.stop
