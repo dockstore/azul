@@ -147,6 +147,14 @@ class AzulTestCase(TestCase):
                     'The \'body\' parameter is deprecated for the \'.*\' API '
                     'and will be removed in .*. Instead use .*'
                 ),
+                (
+                    'Automatically retrieving remote references can be a security vulnerability '
+                    'and is discouraged by the JSON Schema specifications. Relying on this '
+                    'behavior is deprecated and will shortly become an error. If you are sure '
+                    'you want to remotely retrieve your reference and that it is safe to do so, '
+                    'you can find instructions for doing so via referencing.Registry in the '
+                    'referencing documentation (https://referencing.readthedocs.org).'
+                )
             },
             UserWarning: {
                 'https://github.com/DataBiosphere/azul/issues/2114',

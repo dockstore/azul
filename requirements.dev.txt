@@ -14,7 +14,7 @@ google-cloud-storage==2.18.2
 jq==1.8.0
 locust==2.32.0
 moto[s3,sqs,sns,dynamodb,iam]==5.0.18  # match the extras with the backends listed in AzulUnitTestCase._reset_moto
-openapi-spec-validator==0.5.1
+openapi-spec-validator==0.7.1
 openpyxl==3.1.5
 posix_ipc==1.1.1
 pygithub==2.4
