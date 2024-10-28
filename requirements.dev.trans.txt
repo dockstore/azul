@@ -35,8 +35,8 @@ openapi-schema-validator==0.6.2
 pathable==0.4.3
 psutil==6.1.0
 py-partiql-parser==0.5.6
-pycodestyle==2.9.1
-pyflakes==2.5.0
+pycodestyle==2.12.1
+pyflakes==3.2.0
 pyjwt==2.9.0
 pynacl==1.5.0
 pyparsing==3.2.0
