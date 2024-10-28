@@ -16,7 +16,7 @@ http-message-signatures==0.5.0
 jmespath==1.0.1
 more-itertools==10.5.0
 msgpack==1.1.0
-requests==2.32.2
+requests==2.32.3
 rsa==4.7.2  # resolve ambiguity with build-time dependency
 urllib3==1.26.20
 werkzeug==3.0.6
