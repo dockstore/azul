@@ -43,6 +43,9 @@ from google.cloud.bigquery import (
     QueryJobConfig,
     QueryPriority,
 )
+from google.cloud.bigquery.table import (
+    RowIterator,
+)
 from more_itertools import (
     one,
 )
@@ -504,13 +507,13 @@ class TDRClient(SAMClient):
             else:
                 assert False
         if log.isEnabledFor(logging.DEBUG):
-            log.debug('Job info: %s', json.dumps(self._job_info(job)))
+            log.debug('Job info: %s', json.dumps(self._job_info(job, result)))
         return result
 
     def _trunc_query(self, query: str) -> str:
         return trunc_ellipses(query, 2048)
 
-    def _job_info(self, job: QueryJob) -> JSON:
+    def _job_info(self, job: QueryJob, result: RowIterator) -> JSON:
         # noinspection PyProtectedMember
         stats = job._properties['statistics']['query']
         if config.debug < 2:
@@ -518,6 +521,7 @@ class TDRClient(SAMClient):
             stats = {k: v for k, v in stats.items() if k not in ignore}
         return {
             'job_id': job.job_id,
+            'total_rows': result.total_rows,
             'stats': stats,
             'query': self._trunc_query(job.query)
         }

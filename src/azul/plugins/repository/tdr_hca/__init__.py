@@ -470,7 +470,8 @@ class Plugin(TDRPlugin[TDRHCABundle, TDRSourceSpec, TDRSourceRef, TDRBundleFQID]
         log.debug('Retrieved %i entities of type %r', len(rows), entity_type)
         missing = expected - {row[pk_column] for row in rows}
         require(not missing,
-                f'Required entities not found in {table_name}: {missing}')
+                f'Found only {len(rows)} out of {len(entity_ids)} expected rows in {table_name}. '
+                f'Missing entities: {missing}')
         return rows
 
     def _in(self,
