@@ -1136,8 +1136,7 @@ dcp43_sources = mkdict(dcp42_sources, 476, mkdelta([
     mksrc('bigquery', 'datarepo-1dbd3c50', 'hca_prod_ae9f439bbd474d6ebd7232dc70b35d97__20241004_dcp2_20241004_dcp43', ma),  # noqa E501
     mksrc('bigquery', 'datarepo-21d1f89b', 'hca_prod_b39381584e8d4fdb9e139e94270dde16__20241004_dcp2_20241004_dcp43'),
     mksrc('bigquery', 'datarepo-550c8f98', 'hca_prod_c3dd819dabab4957b20988f1e0900368__20241004_dcp2_20241004_dcp43'),
-    mksrc('bigquery', 'datarepo-06a00830', 'hca_prod_c5ca43aa3b2b42168eb3f57adcbc99a1__20220118_dcp2_20241004_dcp43'),
-    mksrc('bigquery', 'datarepo-55151ed4', 'hca_prod_cdabcf0b76024abf9afb3b410e545703__20230201_dcp2_20241008_dcp43')
+    mksrc('bigquery', 'datarepo-06a00830', 'hca_prod_c5ca43aa3b2b42168eb3f57adcbc99a1__20220118_dcp2_20241004_dcp43')
     # @formatter:on
 ]))
 
