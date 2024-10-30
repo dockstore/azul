@@ -1,6 +1,6 @@
 blessed==1.20.0
 blinker==1.9.0
-botocore-stubs==1.35.61
+botocore-stubs==1.35.62
 brotli==1.1.0
 click==8.1.7
 colorama==0.4.6
@@ -46,7 +46,7 @@ readchar==4.2.1
 referencing==0.35.1
 requests-toolbelt==1.0.0
 rfc3339-validator==0.1.4
-rpds-py==0.20.0
+rpds-py==0.21.0
 smmap==5.0.1
 tqdm==4.67.0
 types-awscrt==0.23.0

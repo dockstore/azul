@@ -10,7 +10,7 @@ blinker==1.9.0
 boto3==1.35.48
 boto3-stubs==1.35.48
 botocore==1.35.48
-botocore-stubs==1.35.61
+botocore-stubs==1.35.62
 brotli==1.1.0
 cachetools==5.5.0
 certifi==2024.8.30
@@ -116,7 +116,7 @@ requests-toolbelt==1.0.0
 requirements-parser==0.2.0+1
 responses==0.25.3
 rfc3339-validator==0.1.4
-rpds-py==0.20.0
+rpds-py==0.21.0
 rsa==4.7.2
 s3transfer==0.10.3
 setuptools==70.3.0
