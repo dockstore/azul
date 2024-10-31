@@ -15,10 +15,6 @@ import struct
 import sys
 import uuid
 
-from more_itertools import (
-    one,
-)
-
 from azul import (
     cache,
     config,
@@ -52,15 +48,8 @@ log = logging.getLogger(__name__)
 
 def main(argv):
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=AzulArgumentHelpFormatter)
-    default_catalog = config.default_catalog
-    plugin_cls = RepositoryPlugin.load(default_catalog)
-    plugin = plugin_cls.create(default_catalog)
-    if len(plugin.sources) == 1:
-        source_arg = {'default': str(one(plugin.sources))}
-    else:
-        source_arg = {'required': True}
     parser.add_argument('--source', '-s',
-                        **source_arg,
+                        required=True,
                         help='The repository source containing the bundle')
     parser.add_argument('--uuid', '-b',
                         required=True,
