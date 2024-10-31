@@ -327,8 +327,8 @@ class Plugin(MetadataPlugin[AnvilBundle]):
         return result
 
     def verbatim_pfb_schema(self,
-                            replicas: Iterable[JSON]
-                            ) -> tuple[Iterable[JSON], Sequence[str], JSON]:
+                            replicas: list[JSON]
+                            ) -> tuple[Sequence[str], JSON]:
         entity_schemas = []
         entity_types = []
         for table_schema in sorted(anvil_schema['tables'], key=itemgetter('name')):
@@ -369,7 +369,7 @@ class Plugin(MetadataPlugin[AnvilBundle]):
                 'type': 'record',
                 'fields': field_schemas
             })
-        return replicas, entity_types, avro_pfb_schema(entity_schemas)
+        return entity_types, avro_pfb_schema(entity_schemas)
 
     def _pfb_schema_from_anvil_column(self,
                                       *,
