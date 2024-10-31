@@ -434,7 +434,7 @@ class MetadataPlugin(Plugin[BUNDLE]):
 
     def verbatim_pfb_schema(self,
                             replicas: list[JSON]
-                            ) -> tuple[Sequence[str], JSON]:
+                            ) -> list[JSON]:
         """
         Generate a PFB schema for the verbatim manifest. The default,
         metadata-agnostic implementation loads all replica documents into memory

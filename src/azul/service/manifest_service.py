@@ -2101,7 +2101,10 @@ class PFBVerbatimManifestGenerator(VerbatimManifestGenerator):
     def create_file(self) -> tuple[str, Optional[str]]:
         plugin = self.service.metadata_plugin(self.catalog)
         replicas = list(self._all_replicas())
-        replica_types, pfb_schema = plugin.verbatim_pfb_schema(replicas)
+        replica_schemas = plugin.verbatim_pfb_schema(replicas)
+        replica_schemas.sort(key=itemgetter('name'))
+        replica_types = [s['name'] for s in replica_schemas]
+        pfb_schema = avro_pfb.avro_pfb_schema(replica_schemas)
         pfb_metadata_entity = avro_pfb.pfb_metadata_entity(replica_types, links=False)
 
         def pfb_entities():

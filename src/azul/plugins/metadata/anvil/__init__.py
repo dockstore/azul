@@ -53,9 +53,6 @@ from azul.plugins.metadata.anvil.service.response import (
     AnvilSearchResponseStage,
     AnvilSummaryResponseStage,
 )
-from azul.service.avro_pfb import (
-    avro_pfb_schema,
-)
 from azul.service.manifest_service import (
     ManifestFormat,
 )
@@ -328,15 +325,16 @@ class Plugin(MetadataPlugin[AnvilBundle]):
 
     def verbatim_pfb_schema(self,
                             replicas: list[JSON]
-                            ) -> tuple[Sequence[str], JSON]:
+                            ) -> list[JSON]:
+        table_schemas_by_name = {
+            schema['name']: schema
+            for schema in anvil_schema['tables']
+        }
         entity_schemas = []
-        entity_types = []
-        for table_schema in sorted(anvil_schema['tables'], key=itemgetter('name')):
-            table_name = table_schema['name']
+        for table_name, table_schema in table_schemas_by_name.items():
             # FIXME: Improve handling of DUOS replicas
             #        https://github.com/DataBiosphere/azul/issues/6139
             is_duos_type = table_name == 'anvil_dataset'
-            entity_types.append(table_name)
             field_schemas = [
                 self._pfb_schema_from_anvil_column(table_name=table_name,
                                                    column_name='datarepo_row_id',
@@ -369,7 +367,7 @@ class Plugin(MetadataPlugin[AnvilBundle]):
                 'type': 'record',
                 'fields': field_schemas
             })
-        return entity_types, avro_pfb_schema(entity_schemas)
+        return entity_schemas
 
     def _pfb_schema_from_anvil_column(self,
                                       *,
