@@ -1,6 +1,6 @@
 """
-Download manifest and metadata for a given bundle from the given repository
-source and store them as separate JSON files in the index test data directory.
+Download the contents of a given bundle from the given repository source and
+store it as a single JSON file.
 
 Note: silently overwrites the destination file.
 """
