@@ -55,7 +55,7 @@ def main(argv):
                         required=True,
                         help='The UUID of the bundle to can.')
     parser.add_argument('--version', '-v',
-                        help='The version of the bundle to can  (default: the latest version).')
+                        help='The version of the bundle to can. Required for HCA, ignored for AnVIL.')
     parser.add_argument('--output-dir', '-O',
                         default=os.path.join(config.project_root, 'test', 'indexer', 'data'),
                         help='The path to the output directory (default: %(default)s).')
