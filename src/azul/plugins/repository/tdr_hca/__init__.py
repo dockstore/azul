@@ -288,10 +288,11 @@ class Plugin(TDRPlugin[TDRHCABundle, TDRSourceSpec, TDRSourceRef, TDRBundleFQID]
         rows = self._run_sql(query)
         return one(rows)['count']
 
-    def _list_bundles(self,
-                      source: TDRSourceRef,
-                      prefix: str
-                      ) -> list[TDRBundleFQID]:
+    def list_bundles(self,
+                     source: TDRSourceRef,
+                     prefix: str
+                     ) -> list[TDRBundleFQID]:
+        self._assert_source(source)
         current_bundles = self._query_unique_sorted(f'''
             SELECT links_id, version
             FROM {backtick(self._full_table_name(source.spec, 'links'))}

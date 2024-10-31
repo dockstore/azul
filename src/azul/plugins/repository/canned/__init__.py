@@ -64,9 +64,6 @@ from azul.time import (
 from azul.types import (
     JSON,
 )
-from azul.uuids import (
-    validate_uuid_prefix,
-)
 from humancellatlas.data.metadata.helpers.staging_area import (
     CannedStagingAreaFactory,
     StagingArea,
@@ -179,18 +176,14 @@ class Plugin(RepositoryPlugin[CannedBundle, SimpleSourceSpec, CannedSourceRef, C
                      prefix: str
                      ) -> list[CannedBundleFQID]:
         self._assert_source(source)
-        validate_uuid_prefix(prefix)
-        log.info('Listing bundles with prefix %r in source %r.', prefix, source)
-        bundle_fqids = []
         staging_area = self.staging_area(source.spec.name)
-        for link in staging_area.links.values():
-            if link.uuid.startswith(prefix):
-                bundle_fqids.append(CannedBundleFQID(source=source,
-                                                     uuid=link.uuid,
-                                                     version=link.version))
-        log.info('There are %i bundle(s) with prefix %r in source %r.',
-                 len(bundle_fqids), prefix, source)
-        return bundle_fqids
+        return [
+            CannedBundleFQID(source=source,
+                             uuid=link.uuid,
+                             version=link.version)
+            for link in staging_area.links.values()
+            if link.uuid.startswith(prefix)
+        ]
 
     def fetch_bundle(self, bundle_fqid: CannedBundleFQID) -> CannedBundle:
         self._assert_source(bundle_fqid.source)

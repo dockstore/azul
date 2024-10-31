@@ -182,10 +182,11 @@ class Plugin(TDRPlugin[TDRAnvilBundle, TDRSourceSpec, TDRSourceRef, TDRAnvilBund
         ''')
         return sum(row['count'] for row in rows)
 
-    def _list_bundles(self,
-                      source: TDRSourceRef,
-                      prefix: str
-                      ) -> list[TDRAnvilBundleFQID]:
+    def list_bundles(self,
+                     source: TDRSourceRef,
+                     prefix: str
+                     ) -> list[TDRAnvilBundleFQID]:
+        self._assert_source(source)
         spec = source.spec
         primary = BundleType.primary.value
         supplementary = BundleType.supplementary.value

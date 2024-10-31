@@ -225,7 +225,11 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
             source = plugin.resolve_source(source)
         else:
             assert isinstance(source, SourceRef), source
-        return plugin.list_bundles(source, prefix)
+        log.info('Listing bundles with prefix %r in source %r.', prefix, source)
+        bundle_fqids = plugin.list_bundles(source, prefix)
+        log.info('There are %i bundle(s) with prefix %r in source %r.',
+                 len(bundle_fqids), prefix, source)
+        return bundle_fqids
 
     @property
     def sqs(self):
