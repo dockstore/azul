@@ -152,7 +152,7 @@ from azul.plugins.metadata.anvil.bundle import (
     Link,
 )
 from azul.plugins.repository.tdr_anvil import (
-    BundleEntityType,
+    BundleType,
     TDRAnvilBundleFQID,
     TDRAnvilBundleFQIDJSON,
 )
@@ -165,9 +165,6 @@ from azul.service.async_manifest_service import (
 from azul.service.manifest_service import (
     ManifestFormat,
     ManifestGenerator,
-)
-from azul.strings import (
-    pluralize,
 )
 from azul.terra import (
     ServiceAccountCredentialsProvider,
@@ -350,7 +347,7 @@ class IntegrationTestCase(AzulTestCase, metaclass=ABCMeta):
                 if not (
                     # DUOS bundles are too sparse to fulfill the managed access tests
                     config.is_anvil_enabled(catalog)
-                    and cast(TDRAnvilBundleFQID, bundle_fqid).entity_type is BundleEntityType.duos
+                    and cast(TDRAnvilBundleFQID, bundle_fqid).table_name is BundleType.duos
                 )
             )
             bundle_fqid = self.random.choice(bundle_fqids)
@@ -503,8 +500,7 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
         if config.is_hca_enabled(catalog):
             bundle_index, project_index = 'bundles', 'projects'
         elif config.is_anvil_enabled(catalog):
-            bundle_index = pluralize(BundleEntityType.primary.value)
-            project_index = 'datasets'
+            bundle_index, project_index = 'biosamples', 'datasets'
         else:
             assert False, catalog
         service_paths = {
@@ -749,6 +745,14 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
         else:
             assert False, catalog
 
+    def _uuid_column_name(self, catalog: CatalogName) -> str:
+        if config.is_hca_enabled(catalog):
+            return 'bundle_uuid'
+        elif config.is_anvil_enabled(catalog):
+            return 'bundles.bundle_uuid'
+        else:
+            assert False, catalog
+
     def _test_dos_and_drs(self, catalog: CatalogName):
         if config.is_dss_enabled(catalog) and config.dss_direct_access:
             _, file = self._get_one_inner_file(catalog)
@@ -927,8 +931,8 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
             )
         )
 
-    def _check_compact_manifest(self, _catalog: CatalogName, response: bytes):
-        self.__check_csv_manifest(BytesIO(response), 'bundle_uuid')
+    def _check_compact_manifest(self, catalog: CatalogName, response: bytes):
+        self.__check_csv_manifest(BytesIO(response), self._uuid_column_name(catalog))
 
     def _check_terra_bdbag_manifest(self, catalog: CatalogName, response: bytes):
         with ZipFile(BytesIO(response)) as zip_fh:
@@ -1047,14 +1051,14 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
 
     def __check_csv_manifest(self,
                              file: IO[bytes],
-                             uuid_field_name: str
+                             uuid_column_name: str
                              ) -> list[Mapping[str, str]]:
         reader = self._read_csv_manifest(file)
         rows = list(reader)
         log.info(f'Manifest contains {len(rows)} rows.')
         self.assertGreater(len(rows), 0)
-        self.assertIn(uuid_field_name, reader.fieldnames)
-        bundle_uuids = rows[0][uuid_field_name].split(ManifestGenerator.padded_joiner)
+        self.assertIn(uuid_column_name, reader.fieldnames)
+        bundle_uuids = rows[0][uuid_column_name].split(ManifestGenerator.padded_joiner)
         self.assertGreater(len(bundle_uuids), 0)
         for bundle_uuid in bundle_uuids:
             self.assertEqual(bundle_uuid, str(uuid.UUID(bundle_uuid)))
@@ -1276,17 +1280,17 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
                 # and 0 or more other entities. Biosamples only occur in primary
                 # bundles.
                 if len(hit['biosamples']) > 0:
-                    entity_type = BundleEntityType.primary
+                    table_name = BundleType.primary
                 # Supplementary bundles contain only 1 file and 1 dataset.
                 elif len(hit['files']) > 0:
-                    entity_type = BundleEntityType.supplementary
+                    table_name = BundleType.supplementary
                 # DUOS bundles contain only 1 dataset.
                 elif len(hit['datasets']) > 0:
-                    entity_type = BundleEntityType.duos
+                    table_name = BundleType.duos
                 else:
                     assert False, hit
                 bundle_fqid = cast(TDRAnvilBundleFQIDJSON, bundle_fqid)
-                bundle_fqid['entity_type'] = entity_type.value
+                bundle_fqid['table_name'] = table_name.value
             bundle_fqid = self.repository_plugin(catalog).resolve_bundle(bundle_fqid)
             indexed_fqids.add(bundle_fqid)
         return indexed_fqids
@@ -1296,10 +1300,12 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
                                  bundle_fqids: Set[SourcedBundleFQID]
                                  ) -> None:
         with self.subTest('catalog_complete', catalog=catalog):
-            expected_fqids = set(self.azul_client.filter_obsolete_bundle_versions(bundle_fqids))
-            obsolete_fqids = bundle_fqids - expected_fqids
-            if obsolete_fqids:
-                log.debug('Ignoring obsolete bundle versions %r', obsolete_fqids)
+            expected_fqids = bundle_fqids
+            if not config.is_anvil_enabled(catalog):
+                expected_fqids = set(self.azul_client.filter_obsolete_bundle_versions(expected_fqids))
+                obsolete_fqids = bundle_fqids - expected_fqids
+                if obsolete_fqids:
+                    log.debug('Ignoring obsolete bundle versions %r', obsolete_fqids)
             num_bundles = len(expected_fqids)
             timeout = 600
             log.debug('Expecting bundles %s ', sorted(expected_fqids))
@@ -1605,9 +1611,10 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
         def test_compact_manifest(expected_bundles):
             manifest = BytesIO(self._get_url_content(PUT, manifest_url))
             manifest_rows = self._read_csv_manifest(manifest)
+            uuid_column_name = self._uuid_column_name(catalog)
             all_found_bundles = set()
             for row in manifest_rows:
-                row_bundles = set(row['bundle_uuid'].split(ManifestGenerator.padded_joiner))
+                row_bundles = set(row[uuid_column_name].split(ManifestGenerator.padded_joiner))
                 # It's possible for one file to be present in multiple
                 # bundles (e.g. due to stitching), so each row may include
                 # additional bundles besides those included in the filters.
