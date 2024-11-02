@@ -1956,9 +1956,11 @@ class CanBundleScriptIntegrationTest(IntegrationTestCase):
             '--uuid', fqid.uuid,
             '--version', fqid.version,
             '--source', str(fqid.source.spec),
-            *([
-                  '--table-name', fqid.table_name.value,
-              ] if isinstance(fqid, TDRAnvilBundleFQID) else []),
+            *(
+                ['--table-name', fqid.table_name.value]
+                if isinstance(fqid, TDRAnvilBundleFQID) else
+                []
+            ),
             '--output-dir', output_dir,
         ]
         return self._can_bundle_main(args)
