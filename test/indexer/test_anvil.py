@@ -233,7 +233,5 @@ class TestAnvilIndexerWithIndexesSetUp(AnvilIndexerTestCase):
         self.assertDictEqual(doc_counts, {
             DocumentType.aggregate: 1,
             DocumentType.contribution: 2,
-            # No replica is emitted for the primary dataset because we dropped
-            # the files (hubs) from its bundle above
-            **({DocumentType.replica: 1} if config.enable_replicas else {})
+            **({DocumentType.replica: 2} if config.enable_replicas else {})
         })

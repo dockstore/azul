@@ -564,6 +564,22 @@ class BundleTransformer(SingletonTransformer):
         return EntityReference(entity_type='bundle',
                                entity_id=self.bundle.uuid)
 
+    def transform(self,
+                  partition: BundlePartition
+                  ) -> Iterable[Contribution | Replica]:
+        yield from super().transform(partition)
+        if config.enable_replicas:
+            # Replicas are only emitted by the file transformer for entities
+            # that are linked to at least one file. This excludes a small number
+            # of linked entities, usually from primary bundles that don't
+            # include any files. Some of the replicas we emit here will be
+            # redundant with those emitted by the file transformer, but these
+            # will be coalesced by the index service before they are written to
+            # ElasticSearch.
+            for entity in self.bundle.entities:
+                if partition.contains(UUID(entity.entity_id)):
+                    yield self._replica(entity, file_hub=None)
+
 
 class DatasetTransformer(SingletonTransformer):
 
@@ -573,13 +589,6 @@ class DatasetTransformer(SingletonTransformer):
 
     def _singleton(self) -> EntityReference:
         return self._only_dataset()
-
-    def _transform(self,
-                   entity: EntityReference
-                   ) -> Iterable[Contribution | Replica]:
-        yield from super()._transform(entity)
-        if self._is_duos(entity):
-            yield self._replica(entity, file_hub=None)
 
 
 class DonorTransformer(BaseTransformer):
