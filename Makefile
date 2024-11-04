@@ -36,6 +36,8 @@ $(eval $(call requirements,_runtime_deps,requirements_pip,,))
 define docker
 .PHONY: docker$1
 docker$1: check_docker
+	# FIXME: Remove creation of fips_enabled
+	#        https://github.com/DataBiosphere/azul/issues/6675
 	echo 0 > fips_enabled
 	docker build \
 	       --build-arg azul_docker_registry=$$(azul_docker_registry) \

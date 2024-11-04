@@ -42,6 +42,8 @@ build_image:
       printenv CI_REGISTRY_PASSWORD 
       | docker login --username $CI_REGISTRY_USER --password-stdin $CI_REGISTRY_IMAGE
     - set -o allexport ; source environment.boot ; set +o allexport
+    # FIXME: Remove azul_proc_sys_crypto
+    #        https://github.com/DataBiosphere/azul/issues/6675
     - azul_proc_sys_crypto=/proc/sys/crypto make docker_dev_push
 
 .base:
@@ -77,6 +79,8 @@ test:
   timeout: 1h 30m
   script:
     - make format
+    # FIXME: Remove azul_proc_sys_crypto
+    #        https://github.com/DataBiosphere/azul/issues/6675
     - >
       python -m azul -t config.deployment.is_lower_sandbox 
       && azul_proc_sys_crypto=/proc/sys/crypto make requirements_update

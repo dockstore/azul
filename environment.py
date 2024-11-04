@@ -270,6 +270,9 @@ def env() -> Mapping[str, Optional[str]]:
         # command `apt-get update` to succeed which would otherwise fail on
         # Debian bookworm with FIPS mode enabled.
         #
+        # FIXME: Remove azul_proc_sys_crypto
+        #        https://github.com/DataBiosphere/azul/issues/6675
+        #
         'azul_proc_sys_crypto': '/tmp',
 
         # A dictionary mapping the short name of each Docker image used in Azul
