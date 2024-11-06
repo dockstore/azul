@@ -147,6 +147,8 @@ class AzulTestCase(TestCase):
                     'The \'body\' parameter is deprecated for the \'.*\' API '
                     'and will be removed in .*. Instead use .*'
                 ),
+                # FIXME: DeprecationWarning about retrieval of remote schemas
+                #        https://github.com/DataBiosphere/azul/issues/6666
                 (
                     'Automatically retrieving remote references can be a security vulnerability '
                     'and is discouraged by the JSON Schema specifications. Relying on this '
