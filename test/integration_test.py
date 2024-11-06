@@ -119,6 +119,7 @@ from azul.http import (
 from azul.indexer import (
     SourceJSON,
     SourceRef,
+    SourceSpec,
     SourcedBundleFQID,
 )
 from azul.indexer.document import (
@@ -699,7 +700,7 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
             self.fail('No files found')
         return one(hits)
 
-    def _source_spec(self, catalog: CatalogName, entity: JSON) -> TDRSourceSpec:
+    def _source_spec(self, catalog: CatalogName, entity: JSON) -> SourceSpec:
         if config.is_hca_enabled(catalog):
             field = 'sourceSpec'
         elif config.is_anvil_enabled(catalog):
@@ -753,9 +754,10 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
 
     def _test_dos_and_drs(self, catalog: CatalogName):
         if config.is_dss_enabled(catalog) and config.dss_direct_access:
-            _, file = self._get_one_inner_file(catalog)
-            self._test_dos(catalog, file)
-            self._test_drs(catalog, file)
+            outer_file, inner_file = self._get_one_inner_file(catalog)
+            source = self._source_spec(catalog, outer_file)
+            self._test_dos(catalog, inner_file)
+            self._test_drs(catalog, source, inner_file)
 
     @property
     def _service_account_credentials(self) -> ContextManager:
@@ -1138,13 +1140,14 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
 
     def _validate_file_response(self,
                                 response: urllib3.HTTPResponse,
-                                source: TDRSourceSpec,
+                                source: SourceSpec,
                                 file: FileInnerEntity):
         """
         Note: The response object must have been obtained with stream=True
         """
         try:
-            if source.name == 'ANVIL_1000G_2019_Dev_20230609_ANV5_202306121732':
+            special = 'ANVIL_1000G_2019_Dev_20230609_ANV5_202306121732'
+            if isinstance(source, TDRSourceSpec) and source.name == special:
                 # All files in this snapshot were truncated to zero bytes by the
                 # Broad to save costs. The metadata is not a reliable indication
                 # of these files' actual size.
@@ -1154,7 +1157,11 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
         finally:
             response.close()
 
-    def _test_drs(self, catalog: CatalogName, file: FileInnerEntity):
+    def _test_drs(self,
+                  catalog: CatalogName,
+                  source: SourceSpec,
+                  file: FileInnerEntity
+                  ) -> None:
         repository_plugin = self.azul_client.repository_plugin(catalog)
         drs = repository_plugin.drs_client()
         for access_method in AccessMethod:
@@ -1165,7 +1172,7 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
                 self.assertIsNone(access.headers)
                 if access.method is AccessMethod.https:
                     response = self._get_url(GET, furl(access.url), stream=True)
-                    self._validate_file_response(response, file)
+                    self._validate_file_response(response, source, file)
                 elif access.method is AccessMethod.gs:
                     content = self._get_gs_url_content(furl(access.url), size=self.num_fastq_bytes)
                     self._validate_file_content(content, file)
@@ -1872,10 +1879,7 @@ class CanBundleScriptIntegrationTest(IntegrationTestCase):
         fqid = self.bundle_fqid(catalog.name)
         log.info('Canning bundle %r from catalog %r', fqid, catalog.name)
         with tempfile.TemporaryDirectory() as d:
-            self._can_bundle(source=str(fqid.source.spec),
-                             uuid=fqid.uuid,
-                             version=fqid.version,
-                             output_dir=d)
+            self._can_bundle(fqid, output_dir=d)
             generated_file = one(os.listdir(d))
             with open(os.path.join(d, generated_file)) as f:
                 bundle_json = json.load(f)
@@ -1952,16 +1956,19 @@ class CanBundleScriptIntegrationTest(IntegrationTestCase):
         return self.random.choice(sorted(bundle_fqids))
 
     def _can_bundle(self,
-                    source: str,
-                    uuid: str,
-                    version: str,
+                    fqid: SourcedBundleFQID,
                     output_dir: str
                     ) -> None:
         args = [
-            '--source', source,
-            '--uuid', uuid,
-            '--version', version,
-            '--output-dir', output_dir
+            '--uuid', fqid.uuid,
+            '--version', fqid.version,
+            '--source', str(fqid.source.spec),
+            *(
+                ['--table-name', fqid.table_name.value]
+                if isinstance(fqid, TDRAnvilBundleFQID) else
+                []
+            ),
+            '--output-dir', output_dir,
         ]
         return self._can_bundle_main(args)
 
