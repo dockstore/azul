@@ -68,10 +68,16 @@
         "id": "sha256:4af999c66c8d79bf51020261881aac85e8065af0240efe533373add63e6b043a",
         "platform": "linux/amd64"
     },
-    "docker.io/clamav/clamav:1.4.1-8": {
-        "digest": "sha256:a0adcd5364585643193c9c2aedc299d0be4d0a69cbc47b79256c9ce75b9e9fb3",
-        "id": "sha256:d09faa3a500487589e615bf0b951dce6a4b4750d7efe4066fe111b4c4fb3cc9d",
-        "platform": "linux/amd64"
+    "docker.io/clamav/clamav:1.4.1-11": {
+        "digest": "sha256:18ee1938f916644541f2a732ff87290b034101f606a391fedd654ce9efed86c4",
+        "mirror_digest": "sha256:c800cb752e2fc3dd35c49e75f1376c3c214652915e878cd7882bf700867a1895",
+        "parts": {
+            "linux/amd64": {
+                "digest": "sha256:30f3a49e7d861ea73d7c026bf0051b3bf1c5b2048a65aa0f7c8a00f7178a3a8c",
+                "id": "sha256:62e27723dc75e8fd77282fa766bf2c54069ff94b834ee25d6cb5687e8e2a701c",
+                "platform": "linux/amd64"
+            }
+        }
     },
     "docker.io/gitlab/gitlab-ce:17.5.1-ce.0": {
         "digest": "sha256:c5e575f13858c69d882217d8e40024250c36a171228a78da5a3d2d19d3890ff5",
