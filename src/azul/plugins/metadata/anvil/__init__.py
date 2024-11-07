@@ -244,10 +244,10 @@ class Plugin(MetadataPlugin[AnvilBundle]):
                              source_spec='source_spec',
                              bundle_uuid='bundle_uuid',
                              bundle_version='bundle_version',
-                             implicit_hub_id='datasets.dataset_id')
+                             root_entity_id='datasets.dataset_id')
 
     @property
-    def implicit_hub_type(self) -> str:
+    def root_entity_type(self) -> str:
         return 'datasets'
 
     @property
