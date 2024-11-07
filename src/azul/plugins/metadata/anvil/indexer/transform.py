@@ -62,6 +62,7 @@ from azul.indexer.document import (
     pass_thru_json,
 )
 from azul.indexer.transform import (
+    ReplicaTransformer,
     Transformer,
 )
 from azul.plugins.metadata.anvil.bundle import (
@@ -623,11 +624,17 @@ class DonorTransformer(BaseTransformer):
         yield self._contribution(contents, entity.entity_id)
 
 
-class FileTransformer(BaseTransformer):
+class FileTransformer(BaseTransformer, ReplicaTransformer):
 
     @classmethod
     def entity_type(cls) -> str:
         return 'files'
+
+    @classmethod
+    def hot_entity_types(cls) -> dict[EntityType, EntityType]:
+        return {
+            'anvil_dataset': 'datasets',
+        }
 
     def _transform(self,
                    entity: EntityReference
@@ -645,17 +652,14 @@ class FileTransformer(BaseTransformer):
             donors=self._entities(self._donor, linked['anvil_donor']),
             files=[self._file(entity)],
         )
-        yield self._contribution(contents, entity.entity_id)
+        file_id = entity.entity_id
+        yield self._contribution(contents, file_id)
         if config.enable_replicas:
-            yield self._replica(entity, file_hub=entity.entity_id, root_hub=dataset.entity_id)
+            dataset_id = dataset.entity_id
+            yield self._replica(entity, file_hub=file_id, root_hub=dataset_id)
             for linked_entity in linked:
                 yield self._replica(
                     linked_entity,
-                    # Datasets are linked to every file in their snapshot,
-                    # making an explicit list of hub IDs for the dataset both
-                    # redundant and impractically large. Therefore, we leave the
-                    # hub IDs field empty for datasets and rely on the tenet
-                    # that every file is an implicit hub of its parent dataset.
-                    file_hub=None if linked_entity.entity_type == 'anvil_dataset' else entity.entity_id,
-                    root_hub=dataset.entity_id
+                    file_hub=None if linked_entity.entity_type in self.hot_entity_types() else file_id,
+                    root_hub=dataset_id
                 )

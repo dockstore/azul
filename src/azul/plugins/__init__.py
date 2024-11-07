@@ -22,6 +22,9 @@ from typing import (
 )
 
 import attr
+from more_itertools import (
+    one,
+)
 
 from azul import (
     CatalogName,
@@ -56,6 +59,7 @@ from azul.indexer.document import (
     IndexName,
 )
 from azul.indexer.transform import (
+    ReplicaTransformer,
     Transformer,
 )
 from azul.types import (
@@ -145,7 +149,7 @@ class SpecialFields:
     source_spec: FieldName
     bundle_uuid: FieldName
     bundle_version: FieldName
-    implicit_hub_id: FieldName
+    root_entity_id: FieldName
 
 
 class ManifestFormat(Enum):
@@ -429,16 +433,34 @@ class MetadataPlugin(Plugin[BUNDLE]):
         raise NotImplementedError
 
     @property
-    @abstractmethod
-    def implicit_hub_type(self) -> str:
+    def root_entity_type(self) -> str:
         """
-        The type of entities that do not explicitly track their hubs in replica
-        documents in order to avoid a large list of hub references in the
-        replica document, and to avoid contention when updating that list during
-        indexing. Note that this is not a type of hub entities, but rather the
-        type of replica entities that have implicit hubs.
+        The type of entity that sits at the root of the entity graph, and that
+        all other entities are directly or indirectly associated with.
+        Typically, entities of other types are thought of as *belonging to* the
+        root entity and this relationship is implied rather than made explicit
+        via a foreign key or some other manifestation of a graph connection. The
+        mere presence of a `project` entity in a TDR snapshot for HCA, for
+        example, implies that all other entities in that snapshot *belong* to
+        that project.
         """
         raise NotImplementedError
+
+    @property
+    def hot_entity_types(self) -> Iterable[str]:
+        """
+        The types of inner entities that do not explicitly track their hubs in
+        replica documents in order to avoid a large list of hub references in
+        the replica document, and to avoid contention when updating that list
+        during indexing. This will always include the root type.
+        """
+        replica_transformer_type = one(
+            t for t in self.transformer_types()
+            if issubclass(t, ReplicaTransformer)
+        )
+        hot_entity_types = replica_transformer_type.hot_entity_types().values()
+        assert self.root_entity_type in hot_entity_types
+        return hot_entity_types
 
     @property
     def facets(self) -> Sequence[str]:

@@ -12,6 +12,9 @@ from datetime import (
 from enum import (
     Enum,
 )
+from itertools import (
+    chain,
+)
 import logging
 import re
 from typing import (
@@ -79,6 +82,7 @@ from azul.indexer.document import (
     pass_thru_json,
 )
 from azul.indexer.transform import (
+    ReplicaTransformer,
     Transformer,
 )
 from azul.iterators import (
@@ -1418,11 +1422,17 @@ class PartitionedTransformer(BaseTransformer, Generic[ENTITY]):
         return self._transform(generable(self._entities_in, partition))
 
 
-class FileTransformer(PartitionedTransformer[api.File]):
+class FileTransformer(PartitionedTransformer[api.File], ReplicaTransformer):
 
     @classmethod
     def entity_type(cls) -> str:
         return 'files'
+
+    @classmethod
+    def hot_entity_types(cls) -> dict[EntityType, EntityType]:
+        return {
+            'project': 'projects'
+        }
 
     def _entities(self) -> Iterable[api.File]:
         return self.api_bundle.not_stitched(self.api_bundle.files)
@@ -1470,19 +1480,13 @@ class FileTransformer(PartitionedTransformer[api.File]):
                         for entity_type, values in additional_contents.items():
                             contents[entity_type].extend(values)
                 file_id = file.ref.entity_id
-                project_ref = self._api_project.ref
-                project_id = project_ref.entity_id
                 yield self._contribution(contents, file_id)
                 if config.enable_replicas:
-                    yield self._replica(self.api_bundle.ref, file_hub=file_id, root_hub=project_id)
-                    # Projects are linked to every file in their snapshot,
-                    # making an explicit list of hub IDs for the project both
-                    # redundant and impractically large. Therefore, we leave the
-                    # hub IDs field empty for projects and rely on the tenet
-                    # that every file is an implicit hub of its parent project.
-                    yield self._replica(project_ref, file_hub=None, root_hub=project_id)
-                    for linked_entity in visitor.entities:
-                        yield self._replica(linked_entity, file_hub=file_id, root_hub=project_id)
+                    project_ref = self._api_project.ref
+                    project_id = project_ref.entity_id
+                    for ref in chain([project_ref, self.api_bundle.ref], visitor.entities):
+                        file_hub = None if ref.entity_type in self.hot_entity_types() else file_id
+                        yield self._replica(ref, file_hub=file_hub, root_hub=project_id)
 
     def matrix_stratification_values(self, file: api.File) -> JSON:
         """

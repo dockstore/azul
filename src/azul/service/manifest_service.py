@@ -72,6 +72,7 @@ from furl import (
     furl,
 )
 from more_itertools import (
+    always_iterable,
     chunked,
     one,
 )
@@ -1997,7 +1998,8 @@ class VerbatimManifestGenerator(FileBasedManifestGenerator, metaclass=ABCMeta):
     def entity_type(self) -> str:
         # Orphans only have projects/datasets as hubs, so we need to retrieve
         # aggregates of those types in order to join against orphan replicas
-        return self.implicit_hub_type if self.include_orphans else 'files'
+        root_entity_type = self.metadata_plugin.root_entity_type
+        return root_entity_type if self.include_orphans else 'files'
 
     @property
     def included_fields(self) -> list[FieldPath]:
@@ -2006,12 +2008,15 @@ class VerbatimManifestGenerator(FileBasedManifestGenerator, metaclass=ABCMeta):
         # "keys" used for the join.
         return [
             ('entity_id',),
-            ('contents', self.implicit_hub_type, 'document_id')
+            *(
+                ('contents', entity_type, 'document_id')
+                for entity_type in self.hot_entity_types
+            )
         ]
 
     @property
-    def implicit_hub_type(self) -> str:
-        return self.metadata_plugin.implicit_hub_type
+    def hot_entity_types(self) -> Iterable[str]:
+        return self.metadata_plugin.hot_entity_types
 
     @property
     def include_orphans(self) -> bool:
@@ -2020,12 +2025,12 @@ class VerbatimManifestGenerator(FileBasedManifestGenerator, metaclass=ABCMeta):
         # entities implicitly connected to the matching hubs, even replicas of
         # orphans, i.e., entities that aren't connected to files.
         plugin = self.metadata_plugin
-        implicit_hub_fields = {
+        root_entity_fields = {
             field_name
             for field_name, field_path in plugin.field_mapping.items()
-            if field_path[0] == 'contents' and field_path[1] == plugin.implicit_hub_type
+            if field_path[0] == 'contents' and field_path[1] == plugin.root_entity_type
         }
-        return self.filters.explicit.keys() < implicit_hub_fields
+        return self.filters.explicit.keys() < root_entity_fields
 
     @attrs.frozen(kw_only=True)
     class ReplicaKeys:
@@ -2039,17 +2044,19 @@ class VerbatimManifestGenerator(FileBasedManifestGenerator, metaclass=ABCMeta):
         or the replica's entity ID.
         """
         hub_id: str
-        replica_id: str
+        replica_ids: list[str]
 
     def _replica_keys(self) -> Iterable[ReplicaKeys]:
-        hub_type = self.implicit_hub_type
         request = self._create_request()
         for hit in request.scan():
-            replica_id = one(hit['contents'][hub_type])['document_id']
-            if self.entity_type != hub_type:
-                replica_id = one(replica_id)
+            document_ids = [
+                document_id
+                for entity_type in self.hot_entity_types
+                for inner_entity in hit['contents'].to_dict().get(entity_type, ())
+                for document_id in always_iterable(inner_entity['document_id'])
+            ]
             yield self.ReplicaKeys(hub_id=hit['entity_id'],
-                                   replica_id=replica_id)
+                                   replica_ids=document_ids)
 
     def _all_replicas(self) -> Iterable[JSON]:
         emitted_replica_ids = set()
@@ -2077,7 +2084,7 @@ class VerbatimManifestGenerator(FileBasedManifestGenerator, metaclass=ABCMeta):
         hub_ids, replica_ids = set(), set()
         for key in keys:
             hub_ids.add(key.hub_id)
-            replica_ids.add(key.replica_id)
+            replica_ids.update(key.replica_ids)
         request = request.query(Q('bool', should=[
             {'terms': {'hub_ids.keyword': list(hub_ids)}},
             {'terms': {'entity_id.keyword': list(replica_ids)}}
