@@ -962,7 +962,7 @@ def emit(t: T, target_branch: str):
                 },
                 {
                     'type': 'cli',
-                    'content': 'Ran `script/export_inspector_findings.py` against `anvildev`, imported results '
+                    'content': 'Ran `scripts/export_inspector_findings.py` against `anvildev`, imported results '
                                'to [Google Sheet](https://docs.google.com/spreadsheets/d/'
                                '1RWF7g5wRKWPGovLw4jpJGX_XMi8aWLXLOvvE5rxqgH8) and posted screenshot of '
                                'relevant<footnote relevant/> findings as a comment on the connected issue.'
