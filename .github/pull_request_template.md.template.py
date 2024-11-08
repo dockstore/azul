@@ -210,17 +210,15 @@ class T(Enum):
         return self not in (T.backport, T.hotfix)
 
     def shared_deploy_is_two_phase(self, target_branch: str) -> bool:
-        # If there is a sandbox deployment, the `shared` component needs to be
-        # deployed in two-phases. The first phase, prior to the merge and the
-        # sandbox build preceding the merge, mirrors new images to ECR, while
-        # the second phase removes any unused images. This makes it possible to
-        # abandon the merge in case the sandbox build fails. The presence of a
-        # sandbox also (incidentally) suggests the presence of collocated
-        # personal deployments which would break if the old images were to be
-        # deleted immediately. Even with two phases, personal deployments will
+        # All `shared` components are deployed in two-phases. The first phase,
+        # prior to the merge, mirrors new images to ECR, while the second phase
+        # removes any outdated images. This makes it possible to abandon the
+        # merge in case the sandbox build fails. Furthermore, collocated
+        # personal deployments would break if the old images were to be deleted
+        # immediately. Note that even with two phases, personal deployments will
         # break after the second phase but the fix is simply to rebase any
         # feature branches and redeploy.
-        return self.has_sandbox_for(target_branch)
+        return True
 
     def shared_deploy_target(self, target_branch: str) -> str:
         return 'apply' + iif(self.shared_deploy_is_two_phase(target_branch), '_keep_unused')
