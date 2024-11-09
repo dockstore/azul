@@ -28,7 +28,6 @@ from tempfile import (
     TemporaryDirectory,
 )
 from typing import (
-    Iterable,
     Optional,
 )
 from unittest.mock import (
@@ -2088,35 +2087,39 @@ class TestAnvilManifests(AnvilManifestTestCase):
         self._assert_tsv(expected, response)
 
     def test_verbatim_jsonl_manifest(self):
-        linked_entities_by_hash = {}
-        all_entities_by_hash = {}
-
-        def unique_rows(entities: Mapping[EntityReference, JSON]
-                        ) -> Iterable[tuple[str, JSON]]:
-            for ref, contents in entities.items():
-                yield json_hash(contents).digest(), {
-                    'type': ref.entity_type,
-                    'value': contents
-                }
-
-        for bundle_fqid in self.bundles():
-            bundle = self._load_canned_bundle(bundle_fqid)
-            linked_entities_by_hash.update(unique_rows(bundle.entities))
-            all_entities_by_hash.update(unique_rows(bundle.orphans))
-        all_entities_by_hash.update(linked_entities_by_hash)
-
-        for filters, expect_orphans in [
+        all_entities, linked_entities = self._canned_entities()
+        cases = [
             ({}, False),
             ({'datasets.title': {'is': ['ANVIL_CMG_UWASH_DS_BDIS']}}, False),
             # Orphans should be included only when filtering by dataset ID
             ({'datasets.dataset_id': {'is': ['52ee7665-7033-63f2-a8d9-ce8e32666739']}}, True)
-        ]:
+        ]
+        for filters, expect_orphans in cases:
             with self.subTest(filters=filters):
                 response = self._get_manifest(ManifestFormat.verbatim_jsonl, filters=filters)
                 self.assertEqual(200, response.status_code)
-                expected_rows = list((all_entities_by_hash if expect_orphans
-                                      else linked_entities_by_hash).values())
+                expected_rows = list(all_entities if expect_orphans else linked_entities)
                 self._assert_jsonl(expected_rows, response)
+
+    def _canned_entities(self):
+
+        def hash_entities(entities: dict[EntityReference, JSON]) -> dict[str, JSON]:
+            return {
+                json_hash(contents).digest(): {
+                    'type': ref.entity_type,
+                    'value': contents
+                }
+                for ref, contents in entities.items()
+            }
+
+        linked_entities_by_hash, all_entities_by_hash = {}, {}
+        for bundle_fqid in self.bundles():
+            bundle = self._load_canned_bundle(bundle_fqid)
+            linked_entities_by_hash.update(hash_entities(bundle.entities))
+            all_entities_by_hash.update(hash_entities(bundle.orphans))
+        all_entities_by_hash.update(linked_entities_by_hash)
+
+        return all_entities_by_hash.values(), linked_entities_by_hash.values()
 
     def test_verbatim_pfb_manifest(self):
         response = self._get_manifest(ManifestFormat.verbatim_pfb, filters={})
