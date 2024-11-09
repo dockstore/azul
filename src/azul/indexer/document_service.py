@@ -49,6 +49,14 @@ class DocumentService:
     def aggregate_class(self, catalog: CatalogName) -> Type[Aggregate]:
         return self.metadata_plugin(catalog).aggregate_class()
 
+    @property
+    def always_limit_access(self) -> bool:
+        """
+        True if access restrictions are enforced unconditionally. False, if the
+        filter stage is allowed to weaken them, e.g., based on the entity type.
+        """
+        return True
+
     def transformer_types(self,
                           catalog: CatalogName
                           ) -> Iterable[Type[Transformer]]:
@@ -122,6 +130,3 @@ class DocumentService:
                                          self.field_types(catalog),
                                          forward=forward,
                                          allowed_paths=allowed_paths)
-
-    def always_limit_access(self) -> bool:
-        return True

@@ -192,14 +192,18 @@ class FilterStage(_ElasticsearchStage[Response, Response]):
 
     @cached_property
     def prepared_filters(self) -> TranslatedFilters:
-        filters_json = self.filters.reify(self.plugin, limit_access=self._limit_access())
+        limit_access = self.service.always_limit_access or self._limit_access
+        filters_json = self.filters.reify(self.plugin, limit_access=limit_access)
         return self._translate_filters(filters_json)
 
+    @property
     @abstractmethod
     def _limit_access(self) -> bool:
         """
         Whether to enforce the managed access controls during filter
-        reification.
+        reification, provided that the service allows such conditional
+        enforcement of access. If it doesn't, the return value should be
+        ignored, and access must be enforced unconditionally.
         """
         raise NotImplementedError
 

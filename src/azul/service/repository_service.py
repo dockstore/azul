@@ -375,5 +375,6 @@ class RepositoryService(ElasticsearchService):
             assert file_version == file['version']
         return file
 
+    @property
     def always_limit_access(self) -> bool:
         return False
