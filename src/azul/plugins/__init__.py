@@ -615,9 +615,10 @@ class RepositoryPlugin(Plugin[BUNDLE],
         raise NotImplementedError
 
     @abstractmethod
-    def _count_subgraphs(self, source: SOURCE_SPEC) -> int:
+    def count_bundles(self, source: SOURCE_SPEC) -> int:
         """
-        The total number of subgraphs in the given source, ignoring its prefix.
+        The total number of subgraphs in the given source. The source's prefix
+        may be None.
         """
         raise NotImplementedError
 
@@ -631,7 +632,7 @@ class RepositoryPlugin(Plugin[BUNDLE],
         should be appropriate for indexing in the given catalog.
         """
         if source.spec.prefix is None:
-            count = self._count_subgraphs(source.spec)
+            count = self.count_bundles(source.spec)
             is_main = config.deployment.is_main
             is_it = catalog in config.integration_test_catalogs
             # We use the "lesser" heuristic during IT to avoid indexing an

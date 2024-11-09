@@ -2037,14 +2037,7 @@ class VerbatimManifestGenerator(FileBasedManifestGenerator, metaclass=ABCMeta):
                 if replica_id not in emitted_replica_ids:
                     num_new_replicas += 1
                     yield replica.to_dict()
-                    # Note that this will be zero for replicas that use implicit
-                    # hubs, in which case there are actually many hubs
-                    explicit_hub_count = len(replica.hub_ids)
-                    # We don't have to track the IDs of replicas with only one
-                    # hub, since we know that there are no other hubs that could
-                    # cause their re-emission.
-                    if explicit_hub_count != 1:
-                        emitted_replica_ids.add(replica_id)
+                    emitted_replica_ids.add(replica_id)
             log.info('Found %d replicas (%d already emitted) from page of %d hubs',
                      num_replicas, num_replicas - num_new_replicas, len(page))
 
