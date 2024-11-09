@@ -127,6 +127,19 @@ class Sorting:
 
 @attr.s(auto_attribs=True, frozen=True, kw_only=True)
 class SpecialFields:
+    """
+    Azul defines a number of fields in each /index/{entity_type} response that
+    are synthetic (not directly taken from the metadata) and/or are used
+    internally. Their naming is inconsistent between metadata plugin
+    implementations. This class encapsulates the naming of these fields so that
+    we don't need to litter the source with strings literals and conditionals.
+
+    It is an incomplete abstraction in that it does not express the name of the
+    inner entity the field is a property of in the /index/{entity_type}
+    response. In that way, the values of the attributes of instances of this
+    class are more akin to a facet name, rather than a field name. However, not
+    every field represented here is actually a facet.
+    """
     accessible: ClassVar[FieldName] = 'accessible'
     source_id: FieldName
     source_spec: FieldName
@@ -410,6 +423,9 @@ class MetadataPlugin(Plugin[BUNDLE]):
     @property
     @abstractmethod
     def special_fields(self) -> SpecialFields:
+        """
+        See :py:class:`SpecialFields`.
+        """
         raise NotImplementedError
 
     @property
