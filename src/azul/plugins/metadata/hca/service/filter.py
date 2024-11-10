@@ -5,5 +5,6 @@ from azul.service.elasticsearch_service import (
 
 class HCAFilterStage(FilterStage):
 
+    @property
     def _limit_access(self) -> bool:
         return self.entity_type != 'projects'

@@ -17,7 +17,6 @@ from typing import (
     ClassVar,
     MutableSet,
     Self,
-    Sequence,
 )
 from uuid import (
     UUID,
@@ -315,18 +314,15 @@ def pfb_schema_from_field_types(field_types: FieldTypes) -> JSON:
     return avro_pfb_schema(entity_schemas)
 
 
-def pfb_schema_from_replicas(replicas: Iterable[JSON]
-                             ) -> tuple[Sequence[str], JSON]:
-    schemas_by_replica_type = {}
+def pfb_schema_from_replicas(replicas: Iterable[JSON]) -> list[JSON]:
+    schemas_by_replica_type: dict[str, MutableJSON] = {}
     for replica in replicas:
         replica_type, replica_contents = replica['replica_type'], replica['contents']
         _update_replica_schema(schema=schemas_by_replica_type,
                                path=(replica_type,),
                                key=replica_type,
                                value=replica_contents)
-    schemas_by_replica_type = sorted(schemas_by_replica_type.items())
-    keys, values = zip(*schemas_by_replica_type)
-    return keys, avro_pfb_schema(values)
+    return list(schemas_by_replica_type.values())
 
 
 def avro_pfb_schema(azul_avro_schema: Iterable[JSON]) -> JSON:
