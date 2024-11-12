@@ -958,7 +958,7 @@ def emit(t: T, target_branch: str):
             *iif(t is T.upgrade, [
                 {
                     'type': 'cli',
-                    'content': 'At least one hour has passed since `anvildev.shared` was last deployed'
+                    'content': 'At least 24 hours have passed since `anvildev.shared` was last deployed'
                 },
                 {
                     'type': 'cli',
