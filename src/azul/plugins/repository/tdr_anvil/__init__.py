@@ -351,6 +351,8 @@ class Plugin(TDRPlugin[TDRAnvilBundle, TDRSourceSpec, TDRSourceRef, TDRAnvilBund
         log.info('Calculating batch prefix lengths for partition %r of %d tables '
                  'in source %s', prefix, len(table_names), source)
         # The extraneous outer 'SELECT *' works around a bug in BigQuery emulator
+        # FIXME: BigQuery Emulator rejects valid query
+        #        https://github.com/DataBiosphere/azul/issues/6704
         query = ' UNION ALL '.join(f'''(
             SELECT * FROM (
                 SELECT
