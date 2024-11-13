@@ -681,8 +681,11 @@ def emit(t: T, target_branch: str):
                         },
                         iif(t in (t.upgrade, t.promotion), {
                             'type': 'cli',
-                            'content': f'Made a backup of the GitLab data volume in `{d}` (see [operator manual]'
-                                       f'(../blob/develop/OPERATOR.rst#backup-gitlab-volumes) for details)',
+                            'content': 'Ran ' + bq(
+                                f'_select {d}.gitlab && '
+                                f'python scripts/create_gitlab_snapshot.py --no-restart'
+                            ) + ' (see [operator manual](../blob/develop/OPERATOR.rst#backup-gitlab-volumes) '
+                                'for details)',
                             'alt': 'or this PR is not labeled `backup:gitlab`'
                         }),
                         {
