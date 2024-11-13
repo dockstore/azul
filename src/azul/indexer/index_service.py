@@ -212,8 +212,7 @@ class IndexService(DocumentService):
         for contributions, replicas in transforms:
             tallies.update(self.contribute(catalog, contributions))
             self.replicate(catalog, replicas)
-        if tallies:
-            self.aggregate(tallies)
+        self.aggregate(tallies)
 
     def delete(self, catalog: CatalogName, bundle: Bundle) -> None:
         """
@@ -461,6 +460,12 @@ class IndexService(DocumentService):
         Also note that the input tallies can refer to entities from different
         catalogs.
         """
+        # Attempting to filter by an empty array of coordinates while reading
+        # the aggregates will fail with a 400 error from ElasticSearch. This
+        # happens when indexing replica bundles for AnVIL, since they emit no
+        # contributions.
+        if not tallies:
+            return
         # Use catalog specified in each tally
         writer = self._create_writer(DocumentType.aggregate, catalog=None)
         while True:
