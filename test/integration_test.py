@@ -1908,7 +1908,7 @@ class CanBundleScriptIntegrationTest(IntegrationTestCase):
         source = self._choose_source(catalog)
         # The plugin will raise an exception if the source lacks a prefix
         source = source.with_prefix(Prefix.of_everything)
-        bundle_fqids = self.repository_plugin(catalog).list_bundles(source, '')
+        bundle_fqids = self.azul_client.list_bundles(catalog, source, prefix='')
         return self.random.choice(sorted(bundle_fqids))
 
     def _can_bundle(self,
