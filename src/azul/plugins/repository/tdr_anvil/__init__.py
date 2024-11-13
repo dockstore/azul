@@ -260,13 +260,12 @@ class Plugin(TDRPlugin[TDRAnvilBundle, TDRSourceSpec, TDRSourceRef, TDRAnvilBund
                 bundle_uuid = change_version(dataset_row_id,
                                              self.datarepo_row_uuid_version,
                                              self.bundle_uuid_version)
-                bundles.append(TDRAnvilBundleFQID(
-                    uuid=bundle_uuid,
-                    version=self._version,
-                    source=source,
-                    table_name=BundleType.duos.value,
-                    batch_prefix=None,
-                ))
+                bundle_fqid = TDRAnvilBundleFQID(uuid=bundle_uuid,
+                                                 version=self._version,
+                                                 source=source,
+                                                 table_name=BundleType.duos.value,
+                                                 batch_prefix=None)
+                bundles.append(bundle_fqid)
         for row in self._run_sql(f'''
             SELECT datarepo_row_id
             FROM {backtick(self._full_table_name(spec, BundleType.primary.value))}
@@ -275,13 +274,12 @@ class Plugin(TDRPlugin[TDRAnvilBundle, TDRSourceSpec, TDRSourceRef, TDRAnvilBund
             bundle_uuid = change_version(row['datarepo_row_id'],
                                          self.datarepo_row_uuid_version,
                                          self.bundle_uuid_version)
-            bundles.append(TDRAnvilBundleFQID(
-                uuid=bundle_uuid,
-                version=self._version,
-                source=source,
-                table_name=BundleType.primary.value,
-                batch_prefix=None,
-            ))
+            bundle_fqid = TDRAnvilBundleFQID(uuid=bundle_uuid,
+                                             version=self._version,
+                                             source=source,
+                                             table_name=BundleType.primary.value,
+                                             batch_prefix=None)
+            bundles.append(bundle_fqid)
         prefix_lengths_by_table = self._batch_tables(source.spec, prefix)
         for table_name, (batch_prefix_length, _) in prefix_lengths_by_table.items():
             batch_prefixes = Prefix(common=prefix,

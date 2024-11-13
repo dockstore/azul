@@ -150,9 +150,7 @@ class AnvilBundle(Bundle[BUNDLE_FQID], ABC):
                 for entity_ref, entity in entities.items()
             }
 
-        return cls(
-            fqid=fqid,
-            entities=from_json(json_['entities']),
-            links=set(map(EntityLink.from_json, json_['links'])),
-            orphans=from_json(json_['orphans'])
-        )
+        return cls(fqid=fqid,
+                   entities=from_json(json_['entities']),
+                   links=set(map(EntityLink.from_json, json_['links'])),
+                   orphans=from_json(json_['orphans']))
