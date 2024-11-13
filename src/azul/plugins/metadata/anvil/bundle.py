@@ -130,29 +130,29 @@ class AnvilBundle(Bundle[BUNDLE_FQID], ABC):
         pass
 
     def to_json(self) -> MutableJSON:
-        def serialize_entities(entities):
+        def to_json(entities):
             return {
                 str(entity_ref): entity
                 for entity_ref, entity in sorted(entities.items())
             }
 
         return {
-            'entities': serialize_entities(self.entities),
-            'orphans': serialize_entities(self.orphans),
+            'entities': to_json(self.entities),
+            'orphans': to_json(self.orphans),
             'links': [link.to_json() for link in sorted(self.links)]
         }
 
     @classmethod
     def from_json(cls, fqid: BUNDLE_FQID, json_: JSON) -> Self:
-        def deserialize_entities(json_entities):
+        def from_json(entities):
             return {
                 EntityReference.parse(entity_ref): entity
-                for entity_ref, entity in json_entities.items()
+                for entity_ref, entity in entities.items()
             }
 
         return cls(
             fqid=fqid,
-            entities=deserialize_entities(json_['entities']),
+            entities=from_json(json_['entities']),
             links=set(map(EntityLink.from_json, json_['links'])),
-            orphans=deserialize_entities(json_['orphans'])
+            orphans=from_json(json_['orphans'])
         )
