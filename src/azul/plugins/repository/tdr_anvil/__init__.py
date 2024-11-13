@@ -11,7 +11,6 @@ from typing import (
     AbstractSet,
     Callable,
     Iterable,
-    Self,
     cast,
 )
 import uuid
@@ -123,20 +122,19 @@ class BundleType(Enum):
     supplementary = 'anvil_file'
     duos = 'anvil_dataset'
 
-    def is_batched(self: Self | str) -> bool:
+    @classmethod
+    def is_batched(cls, table_name: str) -> bool:
         """
-        >>> BundleType.primary.is_batched()
+        True if bundles for the table of the given name represent batches of
+        rows, or False if each bundle represents a single row.
+
+        >>> BundleType.is_batched(BundleType.primary.value)
         False
 
         >>> BundleType.is_batched('anvil_activity')
         True
         """
-        if isinstance(self, str):
-            try:
-                self = BundleType(self)
-            except ValueError:
-                return True
-        return self not in (BundleType.primary, BundleType.duos)
+        return table_name not in (cls.primary.value, cls.duos.value)
 
 
 class TDRAnvilBundleFQIDJSON(SourcedBundleFQIDJSON):
