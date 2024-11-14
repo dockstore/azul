@@ -482,18 +482,6 @@ def static_resource(file):
     return app.swagger_resource(file)
 
 
-@app.route(
-    '/oauth2_redirect',
-    enabled=config.google_oauth2_client_id is not None,
-    cache_control='no-store'
-)
-def oauth2_redirect():
-    oauth2_redirect_html = app.load_static_resource('swagger', 'oauth2-redirect.html')
-    return Response(status_code=200,
-                    headers={"Content-Type": "text/html"},
-                    body=oauth2_redirect_html)
-
-
 common_specs = CommonEndpointSpecs(app_name='service')
 
 
@@ -589,6 +577,18 @@ def custom_health(keys: Optional[str] = None):
 )
 def update_health_cache(_event: chalice.app.CloudWatchEvent):
     app.health_controller.update_cache()
+
+
+@app.route(
+    '/oauth2_redirect',
+    enabled=config.google_oauth2_client_id is not None,
+    cache_control='no-store'
+)
+def oauth2_redirect():
+    oauth2_redirect_html = app.load_static_resource('swagger', 'oauth2-redirect.html')
+    return Response(status_code=200,
+                    headers={"Content-Type": "text/html"},
+                    body=oauth2_redirect_html)
 
 
 def validate_repository_search(entity_type: EntityType,
