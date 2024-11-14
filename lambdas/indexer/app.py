@@ -3,7 +3,6 @@ from typing import (
     Optional,
 )
 
-# noinspection PyPackageRequirements
 import chalice
 from chalice import (
     Response,
