@@ -22,7 +22,6 @@ from typing import (
 import urllib.parse
 
 import attr
-import chalice
 from chalice import (
     BadRequestError as BRE,
     ChaliceViewError,
@@ -52,9 +51,7 @@ from azul.auth import (
     OAuth2,
 )
 from azul.chalice import (
-    AzulChaliceApp,
     C,
-    LambdaMetric,
 )
 from azul.collections import (
     OrderedSet,
@@ -63,6 +60,7 @@ from azul.drs import (
     AccessMethod,
 )
 from azul.health import (
+    HealthApp,
     HealthController,
 )
 from azul.indexer.document import (
@@ -79,9 +77,6 @@ from azul.openapi import (
     params,
     responses,
     schema,
-)
-from azul.openapi.spec import (
-    CommonEndpointSpecs,
 )
 from azul.plugins import (
     ManifestFormat,
@@ -276,7 +271,7 @@ spec = {
 }
 
 
-class ServiceApp(AzulChaliceApp):
+class ServiceApp(HealthApp):
 
     def spec(self) -> JSON:
         return {
@@ -459,70 +454,6 @@ class ServiceApp(AzulChaliceApp):
             path = path.format(token=token_or_key)
         url = self.base_url.add(path=path)
         return url.set(args=params)
-
-    def default_routes(self):
-        common_specs = CommonEndpointSpecs(app_name=self.unqualified_app_name)
-
-        @self.route(
-            '/health',
-            methods=['GET'],
-            cors=True,
-            **common_specs.full_health
-        )
-        def health():
-            return self.health_controller.health()
-
-        @self.route(
-            '/health/basic',
-            methods=['GET'],
-            cors=True,
-            **common_specs.basic_health
-        )
-        def basic_health():
-            return self.health_controller.basic_health()
-
-        @self.route(
-            '/health/cached',
-            methods=['GET'],
-            cors=True,
-            **common_specs.cached_health
-        )
-        def cached_health():
-            return self.health_controller.cached_health()
-
-        @self.route(
-            '/health/fast',
-            methods=['GET'],
-            cors=True,
-            **common_specs.fast_health
-        )
-        def fast_health():
-            return self.health_controller.fast_health()
-
-        @self.route(
-            '/health/{keys}',
-            methods=['GET'],
-            cors=True,
-            **common_specs.custom_health
-        )
-        def custom_health(keys: Optional[str] = None):
-            return self.health_controller.custom_health(keys)
-
-        @self.metric_alarm(metric=LambdaMetric.errors,
-                           threshold=1,
-                           period=24 * 60 * 60)
-        @self.metric_alarm(metric=LambdaMetric.throttles)
-        @self.retry(num_retries=0)
-        # FIXME: Remove redundant prefix from name
-        #        https://github.com/DataBiosphere/azul/issues/5337
-        @self.schedule(
-            'rate(1 minute)',
-            name=self.unqualified_app_name + 'cachehealth'
-        )
-        def update_health_cache(_event: chalice.app.CloudWatchEvent):
-            self.health_controller.update_cache()
-
-        return super().default_routes() | locals()
 
 
 app = ServiceApp()

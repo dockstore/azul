@@ -6,6 +6,141 @@
         "version": "1.0"
     },
     "paths": {
+        "/openapi": {
+            "get": {
+                "summary": "Return OpenAPI specifications for this REST API",
+                "description": "\nThis endpoint returns the [OpenAPI specifications]'\n(https://github.com/OAI/OpenAPI-Specification) for this REST\nAPI. These are the specifications used to generate the page\nyou are visiting now.\n",
+                "responses": {
+                    "200": {
+                        "description": "200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "openapi": {
+                                            "type": "string"
+                                        },
+                                        "info": {
+                                            "type": "object",
+                                            "properties": {},
+                                            "additionalProperties": false
+                                        },
+                                        "tags": {
+                                            "type": "object",
+                                            "properties": {},
+                                            "additionalProperties": false
+                                        },
+                                        "servers": {
+                                            "type": "object",
+                                            "properties": {},
+                                            "additionalProperties": false
+                                        },
+                                        "paths": {
+                                            "type": "object",
+                                            "properties": {},
+                                            "additionalProperties": false
+                                        },
+                                        "components": {
+                                            "type": "object",
+                                            "properties": {},
+                                            "additionalProperties": false
+                                        }
+                                    },
+                                    "required": [
+                                        "openapi",
+                                        "info",
+                                        "tags",
+                                        "servers",
+                                        "paths",
+                                        "components"
+                                    ],
+                                    "additionalProperties": false
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "Auxiliary"
+                ]
+            }
+        },
+        "/version": {
+            "get": {
+                "summary": "Describe current version of this REST API",
+                "tags": [
+                    "Auxiliary"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Version endpoint is reachable.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "git": {
+                                            "type": "object",
+                                            "properties": {
+                                                "commit": {
+                                                    "type": "string"
+                                                },
+                                                "dirty": {
+                                                    "type": "boolean"
+                                                }
+                                            },
+                                            "required": [
+                                                "commit",
+                                                "dirty"
+                                            ],
+                                            "additionalProperties": false
+                                        },
+                                        "changes": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "title": {
+                                                        "type": "string"
+                                                    },
+                                                    "issues": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "upgrade": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "notes": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "title",
+                                                    "issues",
+                                                    "upgrade"
+                                                ],
+                                                "additionalProperties": false
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "git",
+                                        "changes"
+                                    ],
+                                    "additionalProperties": false
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/health": {
             "get": {
                 "summary": "Complete health check",
@@ -502,141 +637,6 @@
                 "tags": [
                     "Auxiliary"
                 ]
-            }
-        },
-        "/openapi": {
-            "get": {
-                "summary": "Return OpenAPI specifications for this REST API",
-                "description": "\nThis endpoint returns the [OpenAPI specifications]'\n(https://github.com/OAI/OpenAPI-Specification) for this REST\nAPI. These are the specifications used to generate the page\nyou are visiting now.\n",
-                "responses": {
-                    "200": {
-                        "description": "200 response",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "openapi": {
-                                            "type": "string"
-                                        },
-                                        "info": {
-                                            "type": "object",
-                                            "properties": {},
-                                            "additionalProperties": false
-                                        },
-                                        "tags": {
-                                            "type": "object",
-                                            "properties": {},
-                                            "additionalProperties": false
-                                        },
-                                        "servers": {
-                                            "type": "object",
-                                            "properties": {},
-                                            "additionalProperties": false
-                                        },
-                                        "paths": {
-                                            "type": "object",
-                                            "properties": {},
-                                            "additionalProperties": false
-                                        },
-                                        "components": {
-                                            "type": "object",
-                                            "properties": {},
-                                            "additionalProperties": false
-                                        }
-                                    },
-                                    "required": [
-                                        "openapi",
-                                        "info",
-                                        "tags",
-                                        "servers",
-                                        "paths",
-                                        "components"
-                                    ],
-                                    "additionalProperties": false
-                                }
-                            }
-                        }
-                    }
-                },
-                "tags": [
-                    "Auxiliary"
-                ]
-            }
-        },
-        "/version": {
-            "get": {
-                "summary": "Describe current version of this REST API",
-                "tags": [
-                    "Auxiliary"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Version endpoint is reachable.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "git": {
-                                            "type": "object",
-                                            "properties": {
-                                                "commit": {
-                                                    "type": "string"
-                                                },
-                                                "dirty": {
-                                                    "type": "boolean"
-                                                }
-                                            },
-                                            "required": [
-                                                "commit",
-                                                "dirty"
-                                            ],
-                                            "additionalProperties": false
-                                        },
-                                        "changes": {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "object",
-                                                "properties": {
-                                                    "title": {
-                                                        "type": "string"
-                                                    },
-                                                    "issues": {
-                                                        "type": "array",
-                                                        "items": {
-                                                            "type": "string"
-                                                        }
-                                                    },
-                                                    "upgrade": {
-                                                        "type": "array",
-                                                        "items": {
-                                                            "type": "string"
-                                                        }
-                                                    },
-                                                    "notes": {
-                                                        "type": "string"
-                                                    }
-                                                },
-                                                "required": [
-                                                    "title",
-                                                    "issues",
-                                                    "upgrade"
-                                                ],
-                                                "additionalProperties": false
-                                            }
-                                        }
-                                    },
-                                    "required": [
-                                        "git",
-                                        "changes"
-                                    ],
-                                    "additionalProperties": false
-                                }
-                            }
-                        }
-                    }
-                }
             }
         },
         "/{catalog}/{action}": {

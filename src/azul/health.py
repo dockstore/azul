@@ -19,6 +19,7 @@ import attr
 from botocore.exceptions import (
     ClientError,
 )
+import chalice
 from chalice import (
     ChaliceViewError,
     NotFoundError,
@@ -40,12 +41,20 @@ from azul import (
 )
 from azul.chalice import (
     AppController,
+    AzulChaliceApp,
+    LambdaMetric,
 )
 from azul.deployment import (
     aws,
 )
 from azul.es import (
     ESClientFactory,
+)
+from azul.openapi import (
+    format_description,
+    params,
+    responses,
+    schema,
 )
 from azul.plugins import (
     MetadataPlugin,
@@ -314,3 +323,202 @@ class Health:
     )
 
     all_keys: ClassVar[Set[str]] = frozenset(p.key for p in all_properties)
+
+
+class HealthApp(AzulChaliceApp):
+
+    @cached_property
+    def health_controller(self) -> HealthController:
+        return self._controller(HealthController,
+                                lambda_name=self.unqualified_app_name)
+
+    def default_routes(self):
+        _routes = super().default_routes()
+        _app_name = self.unqualified_app_name
+
+        _up_key = {
+            'up': format_description('''
+                indicates the overall result of the health check
+            '''),
+        }
+
+        _fast_keys = {
+            **{
+                prop.key: format_description(prop.description)
+                for prop in Health.fast_properties[_app_name]
+            },
+            **_up_key
+        }
+
+        _all_keys = {
+            **{
+                prop.key: format_description(prop.description)
+                for prop in Health.all_properties
+            },
+            **_up_key
+        }
+
+        def _health_spec(health_keys: dict) -> JSON:
+            return {
+                'responses': {
+                    f'{200 if up else 503}': {
+                        'description': format_description(f'''
+                            {'The' if up else 'At least one of the'} checked resources
+                            {'are' if up else 'is not'} healthy.
+
+                            The response consists of the following keys:
+
+                        ''') + ''.join(f'* `{k}` {v}' for k, v in health_keys.items()) + format_description(f'''
+
+                            The top-level `up` key of the response is
+                            `{'true' if up else 'false'}`.
+
+                        ''') + (format_description(f'''
+                            {'All' if up else 'At least one'} of the nested `up` keys
+                            {'are `true`' if up else 'is `false`'}.
+                        ''') if len(health_keys) > 1 else ''),
+                        **responses.json_content(
+                            schema.object(
+                                additional_properties=schema.object(
+                                    additional_properties=True,
+                                    up=schema.enum(up)
+                                ),
+                                up=schema.enum(up)
+                            ),
+                            example={
+                                k: up if k == 'up' else {} for k in health_keys
+                            }
+                        )
+                    } for up in [True, False]
+                },
+                'tags': ['Auxiliary']
+            }
+
+        @self.route(
+            '/health',
+            methods=['GET'],
+            cors=True,
+            method_spec={
+                'summary': 'Complete health check',
+                'description': format_description(f'''
+                            Health check of the {_app_name} REST API and all
+                            resources it depends on. This may take long time to complete
+                            and exerts considerable load on the API. For that reason it
+                            should not be requested frequently or by automated
+                            monitoring facilities that would be better served by the
+                            [`/health/fast`](#operations-Auxiliary-get_health_fast) or
+                            [`/health/cached`](#operations-Auxiliary-get_health_cached)
+                            endpoints.
+                        '''),
+                **_health_spec(_all_keys)
+            }
+        )
+        def health():
+            return self.health_controller.health()
+
+        @self.route(
+            '/health/basic',
+            methods=['GET'],
+            cors=True,
+            method_spec={
+                'summary': 'Basic health check',
+                'description': format_description(f'''
+                                Health check of only the REST API itself, excluding other
+                                resources that it depends on. A 200 response indicates that
+                                the {_app_name} is reachable via HTTP(S) but nothing
+                                more.
+                            '''),
+                **_health_spec(_up_key)
+            }
+        )
+        def basic_health():
+            return self.health_controller.basic_health()
+
+        @self.route(
+            '/health/cached',
+            methods=['GET'],
+            cors=True,
+            method_spec={
+                'summary': 'Cached health check for continuous monitoring',
+                'description': format_description(f'''
+                                Return a cached copy of the
+                                [`/health/fast`](#operations-Auxiliary-get_health_fast)
+                                response. This endpoint is optimized for continuously
+                                running, distributed health monitors such as Route 53 health
+                                checks. The cache ensures that the {_app_name} is not
+                                overloaded by these types of health monitors. The cache is
+                                updated every minute.
+                            '''),
+                **_health_spec(_fast_keys)
+            }
+        )
+        def cached_health():
+            return self.health_controller.cached_health()
+
+        @self.route(
+            '/health/fast',
+            methods=['GET'],
+            cors=True,
+            method_spec={
+                'summary': 'Fast health check',
+                'description': format_description('''
+                                Performance-optimized health check of the REST API and other
+                                critical resources tht it depends on. This endpoint can be
+                                requested more frequently than
+                                [`/health`](#operations-Auxiliary-get_health) but
+                                periodically scheduled, automated requests should be made to
+                                [`/health/cached`](#operations-Auxiliary-get_health_cached).
+                            '''),
+                **_health_spec(_fast_keys)
+            }
+        )
+        def fast_health():
+            return self.health_controller.fast_health()
+
+        @self.route(
+            '/health/{keys}',
+            methods=['GET'],
+            cors=True,
+            method_spec={
+                'summary': 'Selective health check',
+                'description': format_description('''
+                                This endpoint allows clients to request a health check on a
+                                specific set of resources. Each resource is identified by a
+                                *key*, the same key under which the resource appears in a
+                                [`/health`](#operations-Auxiliary-get_health) response.
+                            '''),
+                **_health_spec(_all_keys)
+            }, path_spec={
+                'parameters': [
+                    params.path(
+                        'keys',
+                        type_=schema.array(schema.enum(*sorted(Health.all_keys))),
+                        description='''
+                                        A comma-separated list of keys selecting the health
+                                        checks to be performed. Each key corresponds to an
+                                        entry in the response.
+                                    ''')
+                ]
+            }
+        )
+        def custom_health(keys: Optional[str] = None):
+            return self.health_controller.custom_health(keys)
+
+        @self.metric_alarm(metric=LambdaMetric.errors,
+                           threshold=1,
+                           period=24 * 60 * 60)
+        @self.metric_alarm(metric=LambdaMetric.throttles)
+        @self.retry(num_retries=0)
+        # FIXME: Remove redundant prefix from name
+        #        https://github.com/DataBiosphere/azul/issues/5337
+        @self.schedule(
+            'rate(1 minute)',
+            name=self.unqualified_app_name + 'cachehealth'
+        )
+        def update_health_cache(_event: chalice.app.CloudWatchEvent):
+            self.health_controller.update_cache()
+
+        return {
+            **_routes,
+            **{k: v for k, v in locals().items() if not k.startswith('_')}
+        }
