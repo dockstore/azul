@@ -4,9 +4,6 @@ from typing import (
 )
 
 import chalice
-from chalice import (
-    Response,
-)
 
 from azul import (
     CatalogName,
@@ -112,51 +109,7 @@ class IndexerApp(AzulChaliceApp, SignatureHelper):
         return self.auth_from_request(self.current_request)
 
     def default_routes(self):
-
-        @self.route(
-            '/',
-            cache_control='public, max-age=0, must-revalidate',
-            cors=False
-        )
-        def swagger_ui():
-            return self.swagger_ui()
-
-        @self.route(
-            '/static/{file}',
-            cache_control='public, max-age=86400',
-            cors=True
-        )
-        def static_resource(file):
-            return self.swagger_resource(file)
-
         common_specs = CommonEndpointSpecs(app_name=self.unqualified_app_name)
-
-        @self.route(
-            '/openapi',
-            methods=['GET'],
-            cache_control='public, max-age=500',
-            cors=True,
-            **common_specs.openapi
-        )
-        def openapi():
-            return Response(status_code=200,
-                            headers={'content-type': 'application/json'},
-                            body=self.spec())
-
-        @self.route(
-            '/version',
-            methods=['GET'],
-            cors=True,
-            **common_specs.version
-        )
-        def version():
-            from azul.changelog import (
-                compact_changes,
-            )
-            return {
-                'git': config.lambda_git_status,
-                'changes': compact_changes(limit=10)
-            }
 
         @self.route(
             '/health',
@@ -217,7 +170,7 @@ class IndexerApp(AzulChaliceApp, SignatureHelper):
         def update_health_cache(_event: chalice.app.CloudWatchEvent):
             self.health_controller.update_cache()
 
-        return locals()
+        return super().default_routes() | locals()
 
 
 app = IndexerApp()

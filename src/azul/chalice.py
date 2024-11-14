@@ -61,6 +61,11 @@ from azul.json import (
     copy_json,
     json_head,
 )
+from azul.openapi import (
+    format_description,
+    responses,
+    schema,
+)
 from azul.strings import (
     join_words as jw,
     single_quote as sq,
@@ -631,6 +636,100 @@ class AzulChaliceApp(Chalice):
                     pass
                 else:
                     yield retry.bind(self, handler_name)
+
+    def default_routes(self):
+
+        @self.route(
+            '/',
+            cache_control='public, max-age=0, must-revalidate',
+            cors=False
+        )
+        def swagger_ui():
+            return self.swagger_ui()
+
+        @self.route(
+            '/static/{file}',
+            cache_control='public, max-age=86400',
+            cors=True
+        )
+        def static_resource(file):
+            return self.swagger_resource(file)
+
+        @self.route(
+            '/openapi',
+            methods=['GET'],
+            cache_control='public, max-age=500',
+            cors=True,
+            method_spec={
+                'summary': 'Return OpenAPI specifications for this REST API',
+                'description': format_description('''
+                                This endpoint returns the [OpenAPI specifications]'
+                                (https://github.com/OAI/OpenAPI-Specification) for this REST
+                                API. These are the specifications used to generate the page
+                                you are visiting now.
+                            '''),
+                'responses': {
+                    '200': {
+                        'description': '200 response',
+                        **responses.json_content(
+                            schema.object(
+                                openapi=str,
+                                **{
+                                    k: schema.object()
+                                    for k in ('info', 'tags', 'servers', 'paths', 'components')
+                                }
+                            )
+                        )
+                    }
+                },
+                'tags': ['Auxiliary']
+            }
+        )
+        def openapi():
+            return Response(status_code=200,
+                            headers={'content-type': 'application/json'},
+                            body=self.spec())
+
+        @self.route(
+            '/version',
+            methods=['GET'],
+            cors=True,
+            method_spec={
+                'summary': 'Describe current version of this REST API',
+                'tags': ['Auxiliary'],
+                'responses': {
+                    '200': {
+                        'description': 'Version endpoint is reachable.',
+                        **responses.json_content(
+                            schema.object(
+                                git=schema.object(
+                                    commit=str,
+                                    dirty=bool
+                                ),
+                                changes=schema.array(
+                                    schema.object(
+                                        title=str,
+                                        issues=schema.array(str),
+                                        upgrade=schema.array(str),
+                                        notes=schema.optional(str)
+                                    )
+                                )
+                            )
+                        )
+                    }
+                }
+            }
+        )
+        def version():
+            from azul.changelog import (
+                compact_changes,
+            )
+            return {
+                'git': config.lambda_git_status,
+                'changes': compact_changes(limit=10)
+            }
+
+        return locals()
 
 
 @attrs.frozen(kw_only=True)
