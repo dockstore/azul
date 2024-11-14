@@ -459,124 +459,119 @@ class ServiceApp(AzulChaliceApp):
         url = self.base_url.add(path=path)
         return url.set(args=params)
 
+    def default_routes(self):
+
+        @self.route(
+            '/',
+            cache_control='public, max-age=0, must-revalidate',
+            cors=False
+        )
+        def swagger_ui():
+            return self.swagger_ui()
+
+        @self.route(
+            '/static/{file}',
+            cache_control='public, max-age=86400',
+            cors=True
+        )
+        def static_resource(file):
+            return self.swagger_resource(file)
+
+        common_specs = CommonEndpointSpecs(app_name='service')
+
+        @self.route(
+            '/openapi',
+            methods=['GET'],
+            cache_control='public, max-age=500',
+            cors=True,
+            **common_specs.openapi
+        )
+        def openapi():
+            return Response(status_code=200,
+                            headers={'content-type': 'application/json'},
+                            body=self.spec())
+
+        @self.route(
+            '/version',
+            methods=['GET'],
+            cors=True,
+            **common_specs.version
+        )
+        def version():
+            from azul.changelog import (
+                compact_changes,
+            )
+            return {
+                'git': config.lambda_git_status,
+                'changes': compact_changes(limit=10)
+            }
+
+        @self.route(
+            '/health',
+            methods=['GET'],
+            cors=True,
+            **common_specs.full_health
+        )
+        def health():
+            return self.health_controller.health()
+
+        @self.route(
+            '/health/basic',
+            methods=['GET'],
+            cors=True,
+            **common_specs.basic_health
+        )
+        def basic_health():
+            return self.health_controller.basic_health()
+
+        @self.route(
+            '/health/cached',
+            methods=['GET'],
+            cors=True,
+            **common_specs.cached_health
+        )
+        def cached_health():
+            return self.health_controller.cached_health()
+
+        @self.route(
+            '/health/fast',
+            methods=['GET'],
+            cors=True,
+            **common_specs.fast_health
+        )
+        def fast_health():
+            return self.health_controller.fast_health()
+
+        @self.route(
+            '/health/{keys}',
+            methods=['GET'],
+            cors=True,
+            **common_specs.custom_health
+        )
+        def custom_health(keys: Optional[str] = None):
+            return self.health_controller.custom_health(keys)
+
+        @self.metric_alarm(metric=LambdaMetric.errors,
+                           threshold=1,
+                           period=24 * 60 * 60)
+        @self.metric_alarm(metric=LambdaMetric.throttles)
+        @self.retry(num_retries=0)
+        # FIXME: Remove redundant prefix from name
+        #        https://github.com/DataBiosphere/azul/issues/5337
+        @self.schedule(
+            'rate(1 minute)',
+            name='servicecachehealth'
+        )
+        def update_health_cache(_event: chalice.app.CloudWatchEvent):
+            self.health_controller.update_cache()
+
+        return locals()
+
 
 app = ServiceApp()
 configure_app_logging(app, log)
 
-
-@app.route(
-    '/',
-    cache_control='public, max-age=0, must-revalidate',
-    cors=False
-)
-def swagger_ui():
-    return app.swagger_ui()
-
-
-@app.route(
-    '/static/{file}',
-    cache_control='public, max-age=86400',
-    cors=True
-)
-def static_resource(file):
-    return app.swagger_resource(file)
-
-
-common_specs = CommonEndpointSpecs(app_name='service')
-
-
-@app.route(
-    '/openapi',
-    methods=['GET'],
-    cache_control='public, max-age=500',
-    cors=True,
-    **common_specs.openapi
-)
-def openapi():
-    return Response(status_code=200,
-                    headers={'content-type': 'application/json'},
-                    body=app.spec())
-
-
-@app.route(
-    '/version',
-    methods=['GET'],
-    cors=True,
-    **common_specs.version
-)
-def version():
-    from azul.changelog import (
-        compact_changes,
-    )
-    return {
-        'git': config.lambda_git_status,
-        'changes': compact_changes(limit=10)
-    }
-
-
-@app.route(
-    '/health',
-    methods=['GET'],
-    cors=True,
-    **common_specs.full_health
-)
-def health():
-    return app.health_controller.health()
-
-
-@app.route(
-    '/health/basic',
-    methods=['GET'],
-    cors=True,
-    **common_specs.basic_health
-)
-def basic_health():
-    return app.health_controller.basic_health()
-
-
-@app.route(
-    '/health/cached',
-    methods=['GET'],
-    cors=True,
-    **common_specs.cached_health
-)
-def cached_health():
-    return app.health_controller.cached_health()
-
-
-@app.route(
-    '/health/fast',
-    methods=['GET'],
-    cors=True,
-    **common_specs.fast_health
-)
-def fast_health():
-    return app.health_controller.fast_health()
-
-
-@app.route(
-    '/health/{keys}',
-    methods=['GET'],
-    cors=True,
-    **common_specs.custom_health
-)
-def custom_health(keys: Optional[str] = None):
-    return app.health_controller.custom_health(keys)
-
-
-@app.metric_alarm(metric=LambdaMetric.errors,
-                  threshold=1,
-                  period=24 * 60 * 60)
-@app.metric_alarm(metric=LambdaMetric.throttles)
-@app.retry(num_retries=0)
-# FIXME: Remove redundant prefix from name
-#        https://github.com/DataBiosphere/azul/issues/5337
-@app.schedule(
-    'rate(1 minute)',
-    name='servicecachehealth'
-)
-def update_health_cache(_event: chalice.app.CloudWatchEvent):
-    app.health_controller.update_cache()
+globals().update(app.default_routes())
 
 
 @app.route(
