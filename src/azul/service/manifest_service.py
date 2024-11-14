@@ -1985,6 +1985,8 @@ class VerbatimManifestGenerator(FileBasedManifestGenerator, metaclass=ABCMeta):
 
     @property
     def entity_type(self) -> str:
+        # Orphans only have projects/datasets as hubs, so we need to retrieve
+        # aggregates of those types in order to join against orphan replicas
         return self.implicit_hub_type if self.include_orphans else 'files'
 
     @property
@@ -2003,6 +2005,9 @@ class VerbatimManifestGenerator(FileBasedManifestGenerator, metaclass=ABCMeta):
 
     @property
     def include_orphans(self) -> bool:
+        # When filtering only by project/dataset ID, we need to include
+        # *everything* in the selected projects/datasets, even rows that don't
+        # appear anywhere in the rest of the service response.
         special_fields = self.service.metadata_plugin(self.catalog).special_fields
         return self.filters.explicit.keys() == {special_fields.implicit_hub_id}
 
@@ -2110,6 +2115,7 @@ class PFBVerbatimManifestGenerator(VerbatimManifestGenerator):
         plugin = self.service.metadata_plugin(self.catalog)
         replicas = list(self._all_replicas())
         replica_schemas = plugin.verbatim_pfb_schema(replicas)
+        # Ensure field order is consistent for unit tests
         replica_schemas.sort(key=itemgetter('name'))
         replica_types = [s['name'] for s in replica_schemas]
         pfb_schema = avro_pfb.avro_pfb_schema(replica_schemas)

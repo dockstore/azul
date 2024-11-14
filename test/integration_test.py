@@ -294,6 +294,18 @@ class IntegrationTestCase(AzulTestCase, metaclass=ABCMeta):
                        *,
                        public: bool | None = None
                        ) -> SourceRef | None:
+        """
+        Choose an indexed source at random.
+
+        :param catalog: The name of the catalog to select a source from.
+
+        :param public: If none (as by default), allow the source to be either
+                       public or non-public. If true, choose a public source, or
+                       raise an `AssertionError` if the catalog contains no
+                       public sources. If false, choose a non-public source, or
+                       return `None` if the catalog contains no non-public
+                       sources.
+        """
         plugin = self.repository_plugin(catalog)
         sources = set(config.sources(catalog))
         if public is not None:

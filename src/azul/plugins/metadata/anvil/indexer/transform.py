@@ -170,8 +170,8 @@ class BaseTransformer(Transformer, metaclass=ABCMeta):
 
     def estimate(self, partition: BundlePartition) -> int:
         # Orphans are not considered when deciding whether to partition the
-        # bundle, but if the bundle is partitioned then each orphan will be
-        # replicated in a single partition
+        # bundle, but if the bundle is partitioned then each partition will only
+        # emit replicas for the orphans that it contains
         return sum(map(partial(self._contains, partition), self.bundle.entities))
 
     def transform(self,
@@ -578,13 +578,13 @@ class BundleTransformer(SingletonTransformer):
                   ) -> Iterable[Contribution | Replica]:
         yield from super().transform(partition)
         if config.enable_replicas:
-            # Replicas are only emitted by the file transformer for entities
-            # that are linked to at least one file. This excludes all orphans,
-            # and a small number of linked entities, usually from primary
-            # bundles don't include any files. Some of the replicas we emit here
-            # will be redundant with those emitted by the file transformer, but
-            # these will be coalesced by the index service before they are
-            # written to ElasticSearch.
+            # The file transformer only emits replicas for entities that are
+            # linked to at least one file. This excludes all orphans, and a
+            # small number of linked entities, usually from primary bundles
+            # don't include any files. Some of the replicas we emit here will be
+            # redundant with those emitted by the file transformer, but these
+            # will be consolidated by the index service before they are written
+            # to ElasticSearch.
             dataset = self._only_dataset()
             for entity in chain(self.bundle.orphans, self.bundle.entities):
                 if partition.contains(UUID(entity.entity_id)):
