@@ -2122,10 +2122,37 @@ class TestAnvilManifests(AnvilManifestTestCase):
         return all_entities_by_hash.values(), linked_entities_by_hash.values()
 
     def test_verbatim_pfb_manifest(self):
-        response = self._get_manifest(ManifestFormat.verbatim_pfb, filters={})
-        self.assertEqual(200, response.status_code)
         with open(self._data_path('service') / 'verbatim/anvil/pfb_schema.json') as f:
             expected_schema = json.load(f)
         with open(self._data_path('service') / 'verbatim/anvil/pfb_entities.json') as f:
             expected_entities = json.load(f)
-        self._assert_pfb(expected_schema, expected_entities, response)
+
+        def test(expected_schema, expected_entities, filters):
+            response = self._get_manifest(ManifestFormat.verbatim_pfb, filters)
+            self.assertEqual(200, response.status_code)
+            self._assert_pfb(expected_schema, expected_entities, response)
+
+        with self.subTest(orphans=True):
+            test(expected_schema, expected_entities, filters={
+                'datasets.dataset_id': {'is': ['52ee7665-7033-63f2-a8d9-ce8e32666739']}
+            })
+
+        with self.subTest(orphans=False):
+            # Dynamically edit out references to the orphaned entities that are
+            # only expected when filtering by dataset ID
+            schemas = one(
+                field['type']
+                for field in expected_schema['fields']
+                if field['name'] == 'object'
+            )
+            # The first AVRO record is the PFB schema, or 'metadata entity' in PFB terms.
+            metadata_entity = expected_entities[0]['object']['nodes']
+            for part in [
+                schemas,
+                metadata_entity,
+                expected_entities
+            ]:
+                filtered = [e for e in part if e['name'] != 'non_schema_orphan_table']
+                assert len(filtered) < len(part), 'Expected to filter orphan references'
+                part[:] = filtered
+            test(expected_schema, expected_entities, filters={})

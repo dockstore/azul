@@ -1158,6 +1158,27 @@
                     ],
                     "name": "anvil_variantcallingactivity",
                     "type": "record"
+                },
+                {
+                    "fields": [
+                        {
+                            "name": "datarepo_row_id",
+                            "namespace": "non_schema_orphan_table",
+                            "type": "string"
+                        },
+                        {
+                            "name": "non_schema_column",
+                            "namespace": "non_schema_orphan_table",
+                            "type": "string"
+                        },
+                        {
+                            "name": "version",
+                            "namespace": "non_schema_orphan_table",
+                            "type": "string"
+                        }
+                    ],
+                    "name": "non_schema_orphan_table",
+                    "type": "record"
                 }
             ]
         },
