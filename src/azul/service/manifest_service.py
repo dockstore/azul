@@ -116,6 +116,7 @@ from azul.plugins import (
     DocumentSlice,
     ManifestConfig,
     ManifestFormat,
+    MetadataPlugin,
     MutableManifestConfig,
     RepositoryPlugin,
     dotted,
@@ -806,6 +807,10 @@ class ManifestGenerator(metaclass=ABCMeta):
         catalog = self.catalog
         return RepositoryPlugin.load(catalog).create(catalog)
 
+    @property
+    def metadata_plugin(self) -> MetadataPlugin:
+        return self.service.metadata_plugin(self.catalog)
+
     @classmethod
     @abstractmethod
     def file_name_extension(cls) -> str:
@@ -848,7 +853,7 @@ class ManifestGenerator(metaclass=ABCMeta):
         The manifest config this generator uses. A manifest config is a mapping
         from document properties to manifest fields.
         """
-        return self.service.metadata_plugin(self.catalog).manifest_config
+        return self.metadata_plugin.manifest_config
 
     @cached_property
     def included_fields(self) -> list[FieldPath] | None:
@@ -2006,7 +2011,7 @@ class VerbatimManifestGenerator(FileBasedManifestGenerator, metaclass=ABCMeta):
 
     @property
     def implicit_hub_type(self) -> str:
-        return self.service.metadata_plugin(self.catalog).implicit_hub_type
+        return self.metadata_plugin.implicit_hub_type
 
     @property
     def include_orphans(self) -> bool:
@@ -2014,7 +2019,7 @@ class VerbatimManifestGenerator(FileBasedManifestGenerator, metaclass=ABCMeta):
         # data sets for AnVIL or projects for HCA, we include replicas of all
         # entities implicitly connected to the matching hubs, even replicas of
         # orphans, i.e., entities that aren't connected to files.
-        plugin = self.service.metadata_plugin(self.catalog)
+        plugin = self.metadata_plugin
         implicit_hub_fields = {
             field_name
             for field_name, field_path in plugin.field_mapping.items()
@@ -2123,9 +2128,8 @@ class PFBVerbatimManifestGenerator(VerbatimManifestGenerator):
         return ManifestFormat.verbatim_pfb
 
     def create_file(self) -> tuple[str, str | None]:
-        plugin = self.service.metadata_plugin(self.catalog)
         replicas = list(self._all_replicas())
-        replica_schemas = plugin.verbatim_pfb_schema(replicas)
+        replica_schemas = self.metadata_plugin.verbatim_pfb_schema(replicas)
         # Ensure field order is consistent for unit tests
         replica_schemas.sort(key=itemgetter('name'))
         replica_types = [s['name'] for s in replica_schemas]
