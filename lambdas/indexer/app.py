@@ -72,7 +72,7 @@ spec = {
 class IndexerApp(AzulChaliceApp, SignatureHelper):
 
     @cached_property
-    def health_controller(self):
+    def health_controller(self) -> HealthController:
         return self._controller(HealthController, lambda_name='indexer')
 
     @cached_property
