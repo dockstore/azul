@@ -84,6 +84,81 @@
                 ]
             }
         },
+        "/version": {
+            "get": {
+                "summary": "Describe current version of this REST API",
+                "tags": [
+                    "Auxiliary"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Version endpoint is reachable.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "git": {
+                                            "type": "object",
+                                            "properties": {
+                                                "commit": {
+                                                    "type": "string"
+                                                },
+                                                "dirty": {
+                                                    "type": "boolean"
+                                                }
+                                            },
+                                            "required": [
+                                                "commit",
+                                                "dirty"
+                                            ],
+                                            "additionalProperties": false
+                                        },
+                                        "changes": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "title": {
+                                                        "type": "string"
+                                                    },
+                                                    "issues": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "upgrade": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "notes": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "title",
+                                                    "issues",
+                                                    "upgrade"
+                                                ],
+                                                "additionalProperties": false
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "git",
+                                        "changes"
+                                    ],
+                                    "additionalProperties": false
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/health": {
             "get": {
                 "summary": "Complete health check",
@@ -576,81 +651,6 @@
                 "tags": [
                     "Auxiliary"
                 ]
-            }
-        },
-        "/version": {
-            "get": {
-                "summary": "Describe current version of this REST API",
-                "tags": [
-                    "Auxiliary"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Version endpoint is reachable.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "git": {
-                                            "type": "object",
-                                            "properties": {
-                                                "commit": {
-                                                    "type": "string"
-                                                },
-                                                "dirty": {
-                                                    "type": "boolean"
-                                                }
-                                            },
-                                            "required": [
-                                                "commit",
-                                                "dirty"
-                                            ],
-                                            "additionalProperties": false
-                                        },
-                                        "changes": {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "object",
-                                                "properties": {
-                                                    "title": {
-                                                        "type": "string"
-                                                    },
-                                                    "issues": {
-                                                        "type": "array",
-                                                        "items": {
-                                                            "type": "string"
-                                                        }
-                                                    },
-                                                    "upgrade": {
-                                                        "type": "array",
-                                                        "items": {
-                                                            "type": "string"
-                                                        }
-                                                    },
-                                                    "notes": {
-                                                        "type": "string"
-                                                    }
-                                                },
-                                                "required": [
-                                                    "title",
-                                                    "issues",
-                                                    "upgrade"
-                                                ],
-                                                "additionalProperties": false
-                                            }
-                                        }
-                                    },
-                                    "required": [
-                                        "git",
-                                        "changes"
-                                    ],
-                                    "additionalProperties": false
-                                }
-                            }
-                        }
-                    }
-                }
             }
         },
         "/index/catalogs": {

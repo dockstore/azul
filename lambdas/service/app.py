@@ -511,6 +511,22 @@ def openapi():
 
 
 @app.route(
+    '/version',
+    methods=['GET'],
+    cors=True,
+    **common_specs.version
+)
+def version():
+    from azul.changelog import (
+        compact_changes,
+    )
+    return {
+        'git': config.lambda_git_status,
+        'changes': compact_changes(limit=10)
+    }
+
+
+@app.route(
     '/health',
     methods=['GET'],
     cors=True,
@@ -573,22 +589,6 @@ def custom_health(keys: Optional[str] = None):
 )
 def update_health_cache(_event: chalice.app.CloudWatchEvent):
     app.health_controller.update_cache()
-
-
-@app.route(
-    '/version',
-    methods=['GET'],
-    cors=True,
-    **common_specs.version
-)
-def version():
-    from azul.changelog import (
-        compact_changes,
-    )
-    return {
-        'git': config.lambda_git_status,
-        'changes': compact_changes(limit=10)
-    }
 
 
 def validate_repository_search(entity_type: EntityType,
