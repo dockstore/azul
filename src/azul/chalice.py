@@ -141,6 +141,11 @@ class AzulChaliceApp(Chalice):
         self.register_middleware(self._api_gateway_context_middleware, 'http')
         self.register_middleware(self._authentication_middleware, 'http')
 
+    @property
+    def unqualified_app_name(self):
+        result, _ = config.unqualified_resource_name(self.app_name)
+        return result
+
     def __call__(self, event: dict, context: LambdaContext) -> dict[str, Any]:
         # Chalice does not URL-decode path parameters
         # (https://github.com/aws/chalice/issues/511)

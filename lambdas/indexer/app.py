@@ -72,7 +72,8 @@ class IndexerApp(AzulChaliceApp, SignatureHelper):
 
     @cached_property
     def health_controller(self) -> HealthController:
-        return self._controller(HealthController, lambda_name='indexer')
+        return self._controller(HealthController,
+                                lambda_name=self.unqualified_app_name)
 
     @cached_property
     def index_controller(self) -> IndexController:
@@ -128,7 +129,7 @@ class IndexerApp(AzulChaliceApp, SignatureHelper):
         def static_resource(file):
             return self.swagger_resource(file)
 
-        common_specs = CommonEndpointSpecs(app_name='indexer')
+        common_specs = CommonEndpointSpecs(app_name=self.unqualified_app_name)
 
         @self.route(
             '/openapi',
@@ -211,7 +212,7 @@ class IndexerApp(AzulChaliceApp, SignatureHelper):
         #        https://github.com/DataBiosphere/azul/issues/5337
         @self.schedule(
             'rate(1 minute)',
-            name='indexercachehealth'
+            name=self.unqualified_app_name + 'cachehealth'
         )
         def update_health_cache(_event: chalice.app.CloudWatchEvent):
             self.health_controller.update_cache()

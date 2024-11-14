@@ -312,7 +312,8 @@ class ServiceApp(AzulChaliceApp):
 
     @cached_property
     def health_controller(self) -> HealthController:
-        return self._controller(HealthController, lambda_name='service')
+        return self._controller(HealthController,
+                                lambda_name=self.unqualified_app_name)
 
     @cached_property
     def catalog_controller(self) -> CatalogController:
@@ -477,7 +478,7 @@ class ServiceApp(AzulChaliceApp):
         def static_resource(file):
             return self.swagger_resource(file)
 
-        common_specs = CommonEndpointSpecs(app_name='service')
+        common_specs = CommonEndpointSpecs(app_name=self.unqualified_app_name)
 
         @self.route(
             '/openapi',
@@ -560,7 +561,7 @@ class ServiceApp(AzulChaliceApp):
         #        https://github.com/DataBiosphere/azul/issues/5337
         @self.schedule(
             'rate(1 minute)',
-            name='servicecachehealth'
+            name=self.unqualified_app_name + 'cachehealth'
         )
         def update_health_cache(_event: chalice.app.CloudWatchEvent):
             self.health_controller.update_cache()
