@@ -289,7 +289,7 @@ class IntegrationTestCase(AzulTestCase, metaclass=ABCMeta):
                     managed_access_sources[catalog].add(ref)
         return managed_access_sources
 
-    def _choose_source(self,
+    def _select_source(self,
                        catalog: CatalogName,
                        *,
                        public: bool | None = None
@@ -410,10 +410,10 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
         catalogs: list[Catalog] = []
         for catalog in config.integration_test_catalogs:
             if index:
-                public_source = self._choose_source(catalog, public=True)
-                ma_source = self._choose_source(catalog, public=False)
-                notifications, fqids = self._prepare_notifications(catalog,
-                                                                   sources=alist(public_source, ma_source))
+                public_source = self._select_source(catalog, public=True)
+                ma_source = self._select_source(catalog, public=False)
+                sources = alist(public_source, ma_source)
+                notifications, fqids = self._prepare_notifications(catalog, sources)
             else:
                 with self._service_account_credentials:
                     fqids = self._get_indexed_bundles(catalog)
@@ -1905,7 +1905,7 @@ class CanBundleScriptIntegrationTest(IntegrationTestCase):
             self._test_catalog(mock_catalog)
 
     def bundle_fqid(self, catalog: CatalogName) -> SourcedBundleFQID:
-        source = self._choose_source(catalog)
+        source = self._select_source(catalog)
         # The plugin will raise an exception if the source lacks a prefix
         source = source.with_prefix(Prefix.of_everything)
         bundle_fqids = self.azul_client.list_bundles(catalog, source, prefix='')
