@@ -1,7 +1,7 @@
 {
     "openapi": "3.0.1",
     "info": {
-        "title": "azul_indexer",
+        "title": "azul-indexer-dev",
         "description": "\nThis is the internal API for Azul's indexer component.\n",
         "version": "1.0"
     },
