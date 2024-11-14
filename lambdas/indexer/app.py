@@ -212,7 +212,7 @@ def fast_health():
     cors=True,
     **common_specs.custom_health
 )
-def health_by_key(keys: Optional[str] = None):
+def custom_health(keys: Optional[str] = None):
     return app.health_controller.custom_health(keys)
 
 
