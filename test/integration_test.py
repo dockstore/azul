@@ -312,7 +312,7 @@ class IntegrationTestCase(AzulTestCase, metaclass=ABCMeta):
             else:
                 assert False, public
         if len(sources) == 0:
-            assert public is False, 'Every catalog should contain a public source'
+            assert public is False, 'An IT catalog must contain at least one public source'
             return None
         else:
             source = self.random.choice(sorted(sources))
