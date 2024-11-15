@@ -8,8 +8,8 @@ import azul.azulclient
 import azul.bigquery
 import azul.bytes
 import azul.caching
-import azul.chalice
 import azul.collections
+import azul.csp
 import azul.docker
 import azul.doctests
 import azul.dss
@@ -72,8 +72,8 @@ def load_tests(_loader,
         azul.bigquery,
         azul.bytes,
         azul.caching,
-        azul.chalice,
         azul.collections,
+        azul.csp,
         azul.doctests,
         azul.docker,
         azul.dss,
