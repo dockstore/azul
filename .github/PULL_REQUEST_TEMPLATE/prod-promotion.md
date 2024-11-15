@@ -53,7 +53,7 @@ Connected issue: #0000
 
 ### System administrator
 
-- [ ] Background migrations for `prod.gitlab` are complete <sub>or this PR is not labeled `deploy:gitlab`</sub>
+- [ ] Background migrations for [`prod.gitlab`](https://gitlab.azul.data.humancellatlas.org/admin/background_migrations) are complete <sub>or this PR is not labeled `deploy:gitlab`</sub>
 - [ ] PR is assigned to only the operator
 
 

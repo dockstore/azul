@@ -32,6 +32,9 @@ from azul import (
 from azul.collections import (
     OrderedSet,
 )
+from azul.modules import (
+    load_script,
+)
 from azul.strings import (
     back_quote as bq,
     join_grammatically,
@@ -233,6 +236,16 @@ def main():
             pass
         else:
             emit(t, target_branch)
+
+
+def env_var(deployment: str, variable: str) -> str:
+    """
+    Return an environment variable value from the given deployment.
+    """
+    script = load_script('export_environment')
+    env, warning = script.load_env(deployment)
+    resolved_env = script.resolve_env(env)
+    return resolved_env[variable]
 
 
 def emit(t: T, target_branch: str):
@@ -715,7 +728,9 @@ def emit(t: T, target_branch: str):
                 *[
                     {
                         'type': 'cli',
-                        'content': f'Background migrations for `{d}.gitlab` are complete',
+                        'content': f'Background migrations for '
+                                   f'[`{d}.gitlab`](https://gitlab.{env_var(d, "AZUL_DOMAIN_NAME")}'
+                                   f'/admin/background_migrations) are complete',
                         'alt': 'or this PR is not labeled `deploy:gitlab`'
                     }
                     for d in t.target_deployments(target_branch)
