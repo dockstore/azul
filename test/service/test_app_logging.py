@@ -37,9 +37,9 @@ class TestServiceAppLogging(DCP1CannedBundleTestCase, LocalAppTestCase):
             for authenticated in False, True:
                 with self.subTest(level=level, authenticated=authenticated):
                     url = self.base_url.set(path='/health/basic')
-                    headers = {'authorization': 'Bearer foo_token'} if authenticated else {}
+                    request_headers = {'authorization': 'Bearer foo_token'} if authenticated else {}
                     with self.assertLogs(logger=log, level=level) as logs:
-                        requests.get(str(url), headers=headers)
+                        requests.get(str(url), headers=request_headers)
                     logs = [(r.levelno, r.getMessage()) for r in logs.records]
                     request_headers = {
                         'host': url.netloc,
@@ -47,7 +47,7 @@ class TestServiceAppLogging(DCP1CannedBundleTestCase, LocalAppTestCase):
                         'accept-encoding': 'gzip, deflate, br',
                         'accept': '*/*',
                         'connection': 'keep-alive',
-                        **headers,
+                        **request_headers,
                     }
                     response_headers = {
                         'Access-Control-Allow-Origin': '*',
