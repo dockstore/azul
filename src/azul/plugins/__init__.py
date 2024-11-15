@@ -127,11 +127,25 @@ class Sorting:
 
 @attr.s(auto_attribs=True, frozen=True, kw_only=True)
 class SpecialFields:
+    """
+    Azul defines a number of fields in each /index/{entity_type} response that
+    are synthetic (not directly taken from the metadata) and/or are used
+    internally. Their naming is inconsistent between metadata plugin
+    implementations. This class encapsulates the naming of these fields so that
+    we don't need to litter the source with strings literals and conditionals.
+
+    It is an incomplete abstraction in that it does not express the name of the
+    inner entity the field is a property of in the /index/{entity_type}
+    response. In that way, the values of the attributes of instances of this
+    class are more akin to a facet name, rather than a field name. However, not
+    every field represented here is actually a facet.
+    """
     accessible: ClassVar[FieldName] = 'accessible'
     source_id: FieldName
     source_spec: FieldName
     bundle_uuid: FieldName
     bundle_version: FieldName
+    implicit_hub_id: FieldName
 
 
 class ManifestFormat(Enum):
@@ -409,6 +423,9 @@ class MetadataPlugin(Plugin[BUNDLE]):
     @property
     @abstractmethod
     def special_fields(self) -> SpecialFields:
+        """
+        See :py:class:`SpecialFields`.
+        """
         raise NotImplementedError
 
     @property
@@ -433,8 +450,8 @@ class MetadataPlugin(Plugin[BUNDLE]):
         raise NotImplementedError
 
     def verbatim_pfb_schema(self,
-                            replicas: Iterable[JSON]
-                            ) -> tuple[Iterable[JSON], Sequence[str], JSON]:
+                            replicas: list[JSON]
+                            ) -> list[JSON]:
         """
         Generate a PFB schema for the verbatim manifest. The default,
         metadata-agnostic implementation loads all replica documents into memory
@@ -445,17 +462,14 @@ class MetadataPlugin(Plugin[BUNDLE]):
 
         :param replicas: The replica documents to be described by the PFB schema
 
-        :return: a triple of
-            1. the same set of replicas passed to this method
-            2. the set of entity types defined by the PFB schema
-            3. a PFB schema describing the provided replicas
+        :return: a tuple of
+            1. the set of entity types defined by the PFB schema
+            2. a PFB schema describing the provided replicas
         """
         from azul.service import (
             avro_pfb,
         )
-        replicas = list(replicas)
-        replica_types, pfb_schema = avro_pfb.pfb_schema_from_replicas(replicas)
-        return replicas, replica_types, pfb_schema
+        return avro_pfb.pfb_schema_from_replicas(replicas)
 
     @abstractmethod
     def document_slice(self, entity_type: str) -> DocumentSlice | None:
@@ -583,6 +597,13 @@ class RepositoryPlugin(Plugin[BUNDLE],
         bundle_cls, spec_cls, ref_cls, fqid_cls = self._generic_params
         return fqid_cls
 
+    def bundle_fqid_from_json(self, fqid: SourcedBundleFQIDJSON) -> BUNDLE_FQID:
+        """
+        Instantiate a :class:`SourcedBundleFQID` from its JSON representation.
+        The expected input matches the output format of `SourcedBundleFQID.to_json`.
+        """
+        return self._bundle_fqid_cls.from_json(fqid)
+
     @property
     def _bundle_cls(self) -> type[BUNDLE]:
         bundle_cls, spec_cls, ref_cls, fqid_cls = self._generic_params
@@ -607,13 +628,11 @@ class RepositoryPlugin(Plugin[BUNDLE],
         """
         raise NotImplementedError
 
-    def resolve_bundle(self, fqid: SourcedBundleFQIDJSON) -> BUNDLE_FQID:
-        return self._bundle_fqid_cls.from_json(fqid)
-
     @abstractmethod
-    def _count_subgraphs(self, source: SOURCE_SPEC) -> int:
+    def count_bundles(self, source: SOURCE_SPEC) -> int:
         """
-        The total number of subgraphs in the given source, ignoring its prefix.
+        The total number of subgraphs in the given source. The source's prefix
+        may be None.
         """
         raise NotImplementedError
 
@@ -627,7 +646,7 @@ class RepositoryPlugin(Plugin[BUNDLE],
         should be appropriate for indexing in the given catalog.
         """
         if source.spec.prefix is None:
-            count = self._count_subgraphs(source.spec)
+            count = self.count_bundles(source.spec)
             is_main = config.deployment.is_main
             is_it = catalog in config.integration_test_catalogs
             # We use the "lesser" heuristic during IT to avoid indexing an
@@ -636,7 +655,7 @@ class RepositoryPlugin(Plugin[BUNDLE],
                 prefix = Prefix.for_main_deployment(count)
             else:
                 prefix = Prefix.for_lesser_deployment(count)
-            source = attr.evolve(source, spec=attr.evolve(source.spec, prefix=prefix))
+            source = source.with_prefix(prefix)
         return source
 
     @abstractmethod

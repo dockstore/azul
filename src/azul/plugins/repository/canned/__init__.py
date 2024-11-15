@@ -26,6 +26,9 @@ from typing import (
 from furl import (
     furl,
 )
+from more_itertools import (
+    ilen,
+)
 
 from azul import (
     CatalogName,
@@ -60,9 +63,6 @@ from azul.time import (
 )
 from azul.types import (
     JSON,
-)
-from azul.uuids import (
-    validate_uuid_prefix,
 )
 from humancellatlas.data.metadata.helpers.staging_area import (
     CannedStagingAreaFactory,
@@ -163,27 +163,27 @@ class Plugin(RepositoryPlugin[CannedBundle, SimpleSourceSpec, CannedSourceRef, C
                                                             ref)
             return factory.load_staging_area(path)
 
-    def _count_subgraphs(self, source: SOURCE_SPEC) -> int:
+    def count_bundles(self, source: SOURCE_SPEC) -> int:
         staging_area = self.staging_area(source.spec.name)
-        return len(staging_area.links)
+        return ilen(
+            links_id
+            for links_id in staging_area.links
+            if source.prefix is None or links_id.startswith(source.prefix.common)
+        )
 
     def list_bundles(self,
                      source: CannedSourceRef,
                      prefix: str
                      ) -> list[CannedBundleFQID]:
         self._assert_source(source)
-        validate_uuid_prefix(prefix)
-        log.info('Listing bundles with prefix %r in source %r.', prefix, source)
-        bundle_fqids = []
         staging_area = self.staging_area(source.spec.name)
-        for link in staging_area.links.values():
-            if link.uuid.startswith(prefix):
-                bundle_fqids.append(CannedBundleFQID(source=source,
-                                                     uuid=link.uuid,
-                                                     version=link.version))
-        log.info('There are %i bundle(s) with prefix %r in source %r.',
-                 len(bundle_fqids), prefix, source)
-        return bundle_fqids
+        return [
+            CannedBundleFQID(source=source,
+                             uuid=link.uuid,
+                             version=link.version)
+            for link in staging_area.links.values()
+            if link.uuid.startswith(prefix)
+        ]
 
     def fetch_bundle(self, bundle_fqid: CannedBundleFQID) -> CannedBundle:
         self._assert_source(bundle_fqid.source)

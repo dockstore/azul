@@ -191,17 +191,6 @@ class TDRPlugin(RepositoryPlugin[TDR_BUNDLE, SOURCE_SPEC, SOURCE_REF, BUNDLE_FQI
     def _lookup_source_id(self, spec: TDRSourceSpec) -> str:
         return self.tdr.lookup_source(spec)
 
-    def list_bundles(self,
-                     source: TDRSourceRef,
-                     prefix: str
-                     ) -> list[TDRBundleFQID]:
-        self._assert_source(source)
-        log.info('Listing bundles with prefix %r in source %r.', prefix, source)
-        bundle_fqids = self._list_bundles(source, prefix)
-        log.info('There are %i bundle(s) with prefix %r in source %r.',
-                 len(bundle_fqids), prefix, source)
-        return bundle_fqids
-
     def fetch_bundle(self, bundle_fqid: TDRBundleFQID) -> TDR_BUNDLE:
         self._assert_source(bundle_fqid.source)
         now = time.time()
@@ -222,13 +211,6 @@ class TDRPlugin(RepositoryPlugin[TDR_BUNDLE, SOURCE_SPEC, SOURCE_REF, BUNDLE_FQI
 
     def _full_table_name(self, source: TDRSourceSpec, table_name: str) -> str:
         return source.qualify_table(table_name)
-
-    @abstractmethod
-    def _list_bundles(self,
-                      source: TDRSourceRef,
-                      prefix: str
-                      ) -> list[TDRBundleFQID]:
-        raise NotImplementedError
 
     @abstractmethod
     def _emulate_bundle(self, bundle_fqid: TDRBundleFQID) -> TDR_BUNDLE:
