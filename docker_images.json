@@ -79,9 +79,9 @@
             }
         }
     },
-    "docker.io/gitlab/gitlab-ce:17.5.1-ce.0": {
-        "digest": "sha256:c5e575f13858c69d882217d8e40024250c36a171228a78da5a3d2d19d3890ff5",
-        "id": "sha256:740049c6bb664ca2aa6d1857433ca9c6d354aec6d41ec553771ef9c4657e940e",
+    "docker.io/gitlab/gitlab-ce:17.5.2-ce.0": {
+        "digest": "sha256:65a095c50ce4e222adb6c2b61e6e019f7b2f660d0a584183d0845d20055289b5",
+        "id": "sha256:3ef04867cda6da06e659a5130d6a6f336a0a92a61994d16408737fe717dac5f2",
         "platform": "linux/amd64"
     },
     "docker.io/gitlab/gitlab-runner:ubuntu-v17.5.3": {
