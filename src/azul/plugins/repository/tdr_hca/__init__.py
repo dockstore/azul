@@ -278,17 +278,21 @@ class TDRHCABundle(HCABundle[TDRBundleFQID], TDRBundle):
 
 class Plugin(TDRPlugin[TDRHCABundle, TDRSourceSpec, TDRSourceRef, TDRBundleFQID]):
 
-    def _count_subgraphs(self, source: TDRSourceSpec) -> int:
-        rows = self._run_sql(f'''
-            SELECT COUNT(*) AS count
-            FROM {backtick(self._full_table_name(source, 'links'))}
-        ''')
+    def count_bundles(self, source: TDRSourceSpec) -> int:
+        prefix = '' if source.prefix is None else source.prefix.common
+        query = f'''
+        SELECT COUNT(*) AS count
+        FROM {backtick(self._full_table_name(source, 'links'))}
+        WHERE STARTS_WITH(datarepo_row_id, {prefix!r})
+        '''
+        rows = self._run_sql(query)
         return one(rows)['count']
 
-    def _list_bundles(self,
-                      source: TDRSourceRef,
-                      prefix: str
-                      ) -> list[TDRBundleFQID]:
+    def list_bundles(self,
+                     source: TDRSourceRef,
+                     prefix: str
+                     ) -> list[TDRBundleFQID]:
+        self._assert_source(source)
         current_bundles = self._query_unique_sorted(f'''
             SELECT links_id, version
             FROM {backtick(self._full_table_name(source.spec, 'links'))}
@@ -466,7 +470,8 @@ class Plugin(TDRPlugin[TDRHCABundle, TDRSourceSpec, TDRSourceRef, TDRBundleFQID]
         log.debug('Retrieved %i entities of type %r', len(rows), entity_type)
         missing = expected - {row[pk_column] for row in rows}
         require(not missing,
-                f'Required entities not found in {table_name}: {missing}')
+                f'Found only {len(rows)} out of {len(entity_ids)} expected rows in {table_name}. '
+                f'Missing entities: {missing}')
         return rows
 
     def _in(self,

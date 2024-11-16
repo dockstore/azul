@@ -1985,7 +1985,7 @@ class VerbatimManifestGenerator(FileBasedManifestGenerator, metaclass=ABCMeta):
 
     @property
     def entity_type(self) -> str:
-        return 'files'
+        return self.implicit_hub_type if self.include_orphans else 'files'
 
     @property
     def included_fields(self) -> list[FieldPath]:
@@ -2000,6 +2000,11 @@ class VerbatimManifestGenerator(FileBasedManifestGenerator, metaclass=ABCMeta):
     @property
     def implicit_hub_type(self) -> str:
         return self.service.metadata_plugin(self.catalog).implicit_hub_type
+
+    @property
+    def include_orphans(self) -> bool:
+        special_fields = self.service.metadata_plugin(self.catalog).special_fields
+        return self.filters.explicit.keys() == {special_fields.implicit_hub_id}
 
     @attrs.frozen(kw_only=True)
     class ReplicaKeys:
@@ -2019,8 +2024,11 @@ class VerbatimManifestGenerator(FileBasedManifestGenerator, metaclass=ABCMeta):
         hub_type = self.implicit_hub_type
         request = self._create_request()
         for hit in request.scan():
+            replica_id = one(hit['contents'][hub_type])['document_id']
+            if self.entity_type != hub_type:
+                replica_id = one(replica_id)
             yield self.ReplicaKeys(hub_id=hit['entity_id'],
-                                   replica_id=one(one(hit['contents'][hub_type])['document_id']))
+                                   replica_id=replica_id)
 
     def _all_replicas(self) -> Iterable[JSON]:
         emitted_replica_ids = set()
@@ -2037,14 +2045,7 @@ class VerbatimManifestGenerator(FileBasedManifestGenerator, metaclass=ABCMeta):
                 if replica_id not in emitted_replica_ids:
                     num_new_replicas += 1
                     yield replica.to_dict()
-                    # Note that this will be zero for replicas that use implicit
-                    # hubs, in which case there are actually many hubs
-                    explicit_hub_count = len(replica.hub_ids)
-                    # We don't have to track the IDs of replicas with only one
-                    # hub, since we know that there are no other hubs that could
-                    # cause their re-emission.
-                    if explicit_hub_count != 1:
-                        emitted_replica_ids.add(replica_id)
+                    emitted_replica_ids.add(replica_id)
             log.info('Found %d replicas (%d already emitted) from page of %d hubs',
                      num_replicas, num_replicas - num_new_replicas, len(page))
 
@@ -2107,8 +2108,11 @@ class PFBVerbatimManifestGenerator(VerbatimManifestGenerator):
 
     def create_file(self) -> tuple[str, Optional[str]]:
         plugin = self.service.metadata_plugin(self.catalog)
-        replicas = self._all_replicas()
-        replicas, replica_types, pfb_schema = plugin.verbatim_pfb_schema(replicas)
+        replicas = list(self._all_replicas())
+        replica_schemas = plugin.verbatim_pfb_schema(replicas)
+        replica_schemas.sort(key=itemgetter('name'))
+        replica_types = [s['name'] for s in replica_schemas]
+        pfb_schema = avro_pfb.avro_pfb_schema(replica_schemas)
         pfb_metadata_entity = avro_pfb.pfb_metadata_entity(replica_types, links=False)
 
         def pfb_entities():
