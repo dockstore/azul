@@ -18,7 +18,6 @@ import pathlib
 from typing import (
     Any,
     Iterator,
-    Optional,
     Self,
     Type,
     TypeVar,
@@ -83,7 +82,7 @@ class AzulRequest(Request):
     Use only for type hints. The actual requests will be instances of the parent
     class, but they will have the attributes defined here.
     """
-    authentication: Optional[Authentication]
+    authentication: Authentication | None
 
 
 # For some reason Chalice does not define an exception for the 410 status code
@@ -126,7 +125,7 @@ class AzulChaliceApp(Chalice):
                  app_name: str,
                  app_module_path: str,
                  unit_test: bool = False,
-                 spec: Optional[JSON] = None):
+                 spec: JSON | None = None):
         self._patch_event_source_handler()
         assert app_module_path.endswith('/app.py'), app_module_path
         self.app_module_path = app_module_path
@@ -239,8 +238,8 @@ class AzulChaliceApp(Chalice):
               enabled: bool = True,
               interactive: bool = True,
               cache_control: str = 'no-store',
-              path_spec: Optional[JSON] = None,
-              method_spec: Optional[JSON] = None,
+              path_spec: JSON | None = None,
+              method_spec: JSON | None = None,
               **kwargs):
         """
         Decorates a view handler function in a Chalice application.
@@ -354,8 +353,8 @@ class AzulChaliceApp(Chalice):
 
     def _register_spec(self,
                        path: str,
-                       path_spec: Optional[JSON],
-                       method_spec: Optional[JSON],
+                       path_spec: JSON | None,
+                       method_spec: JSON | None,
                        methods: Iterable[str]):
         """
         Add a route's specifications to the specification object.
@@ -389,7 +388,7 @@ class AzulChaliceApp(Chalice):
             else:
                 return super().default(o)
 
-    def _authenticate(self) -> Optional[Authentication]:
+    def _authenticate(self) -> Authentication | None:
         """
         Authenticate the current request, return None if it is unauthenticated,
         or raise a ChaliceViewError if it carries invalid authentication.
