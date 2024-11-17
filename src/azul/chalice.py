@@ -73,7 +73,6 @@ from azul.strings import (
 from azul.types import (
     JSON,
     LambdaContext,
-    MutableJSON,
 )
 
 log = logging.getLogger(__name__)
@@ -134,10 +133,10 @@ class AzulChaliceApp(Chalice):
         self.unit_test = unit_test
         self.non_interactive_routes: set[tuple[str, str]] = set()
         if spec is None:
-            self._specs: Optional[MutableJSON] = None
+            self._specs = None
         else:
             assert 'paths' not in spec, 'The top-level spec must not define paths'
-            self._specs: Optional[MutableJSON] = copy_json(spec)
+            self._specs = copy_json(spec)
             self._specs['paths'] = {}
         super().__init__(app_name, debug=config.debug > 0, configure_logs=False)
         # Middleware is invoked in order of registration
