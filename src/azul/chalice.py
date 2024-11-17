@@ -48,6 +48,7 @@ from azul import (
     config,
     mutable_furl,
     open_resource,
+    require,
 )
 from azul.auth import (
     Authentication,
@@ -271,10 +272,10 @@ class AzulChaliceApp(Chalice):
                             invocation.
         """
         if enabled:
-            if not interactive:
-                methods = kwargs['methods']
-                self.non_interactive_routes.update((path, method) for method in methods)
             methods = kwargs.get('methods', ())
+            if not interactive:
+                require(bool(methods), 'Must list methods with interactive=False')
+                self.non_interactive_routes.update((path, method) for method in methods)
             chalice_decorator = super().route(path, **kwargs)
 
             def decorator(view_func):
