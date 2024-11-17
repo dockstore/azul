@@ -133,12 +133,12 @@ class AzulChaliceApp(Chalice):
         self.app_module_path = app_module_path
         self.unit_test = unit_test
         self.non_interactive_routes: set[tuple[str, str]] = set()
-        if spec is not None:
+        if spec is None:
+            self._specs: Optional[MutableJSON] = None
+        else:
             assert 'paths' not in spec, 'The top-level spec must not define paths'
             self._specs: Optional[MutableJSON] = copy_json(spec)
             self._specs['paths'] = {}
-        else:
-            self._specs: Optional[MutableJSON] = None
         super().__init__(app_name, debug=config.debug > 0, configure_logs=False)
         # Middleware is invoked in order of registration
         self.register_middleware(self._logging_middleware, 'http')
