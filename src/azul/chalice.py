@@ -234,6 +234,7 @@ class AzulChaliceApp(Chalice):
 
     def route(self,
               path: str,
+              *,
               enabled: bool = True,
               interactive: bool = True,
               cache_control: str = 'no-store',
