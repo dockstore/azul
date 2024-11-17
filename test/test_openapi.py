@@ -35,9 +35,11 @@ class TestAppSpecs(AzulUnitTestCase):
     def test_top_level_spec(self):
         spec = {'foo': 'bar'}
         app = self.app(spec)
-        self.assertEqual(app._specs, {'foo': 'bar', 'paths': {}}, "Confirm 'paths' is added")
+        self.assertEqual({'foo': 'bar', 'paths': {}}, app._specs,
+                         "Confirm 'paths' is added")
         spec['new key'] = 'new value'
-        self.assertNotIn('new key', app.spec(), 'Changing input object should not affect specs')
+        self.assertNotIn('new key', app.spec(),
+                         'Changing input object should not affect specs')
 
     def test_already_annotated_top_level_spec(self):
         with self.assertRaises(AssertionError):
