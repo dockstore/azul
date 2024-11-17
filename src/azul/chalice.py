@@ -19,7 +19,6 @@ from typing import (
     Any,
     Iterator,
     Self,
-    Type,
     TypeVar,
 )
 from urllib.parse import (
@@ -495,7 +494,7 @@ class AzulChaliceApp(Chalice):
                     pass
         return config.default_catalog
 
-    def _controller(self, controller_cls: Type[C], **kwargs) -> C:
+    def _controller(self, controller_cls: type[C], **kwargs) -> C:
         return controller_cls(app=self, **kwargs)
 
     def swagger_ui(self) -> Response:
