@@ -210,17 +210,15 @@ class T(Enum):
         return self not in (T.backport, T.hotfix)
 
     def shared_deploy_is_two_phase(self, target_branch: str) -> bool:
-        # If there is a sandbox deployment, the `shared` component needs to be
-        # deployed in two-phases. The first phase, prior to the merge and the
-        # sandbox build preceding the merge, mirrors new images to ECR, while
-        # the second phase removes any unused images. This makes it possible to
-        # abandon the merge in case the sandbox build fails. The presence of a
-        # sandbox also (incidentally) suggests the presence of collocated
-        # personal deployments which would break if the old images were to be
-        # deleted immediately. Even with two phases, personal deployments will
+        # All `shared` components are deployed in two-phases. The first phase,
+        # prior to the merge, mirrors new images to ECR, while the second phase
+        # removes any outdated images. This makes it possible to abandon the
+        # merge in case the sandbox build fails. Furthermore, collocated
+        # personal deployments would break if the old images were to be deleted
+        # immediately. Note that even with two phases, personal deployments will
         # break after the second phase but the fix is simply to rebase any
         # feature branches and redeploy.
-        return self.has_sandbox_for(target_branch)
+        return True
 
     def shared_deploy_target(self, target_branch: str) -> str:
         return 'apply' + iif(self.shared_deploy_is_two_phase(target_branch), '_keep_unused')
@@ -681,8 +679,11 @@ def emit(t: T, target_branch: str):
                         },
                         iif(t in (t.upgrade, t.promotion), {
                             'type': 'cli',
-                            'content': f'Made a backup of the GitLab data volume in `{d}` (see [operator manual]'
-                                       f'(../blob/develop/OPERATOR.rst#backup-gitlab-volumes) for details)',
+                            'content': 'Ran ' + bq(
+                                f'_select {d}.gitlab && '
+                                f'python scripts/create_gitlab_snapshot.py --no-restart'
+                            ) + ' (see [operator manual](../blob/develop/OPERATOR.rst#backup-gitlab-volumes) '
+                                'for details)',
                             'alt': 'or this PR is not labeled `backup:gitlab`'
                         }),
                         {
@@ -962,7 +963,7 @@ def emit(t: T, target_branch: str):
                 },
                 {
                     'type': 'cli',
-                    'content': 'Ran `script/export_inspector_findings.py` against `anvildev`, imported results '
+                    'content': 'Ran `scripts/export_inspector_findings.py` against `anvildev`, imported results '
                                'to [Google Sheet](https://docs.google.com/spreadsheets/d/'
                                '1RWF7g5wRKWPGovLw4jpJGX_XMi8aWLXLOvvE5rxqgH8) and posted screenshot of '
                                'relevant<footnote relevant/> findings as a comment on the connected issue.'
