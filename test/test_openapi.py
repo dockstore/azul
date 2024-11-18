@@ -6,8 +6,14 @@ from furl import (
     furl,
 )
 
+from azul import (
+    JSON,
+)
 from azul.chalice import (
     AzulChaliceApp,
+)
+from azul.json import (
+    copy_json,
 )
 from azul.logging import (
     configure_test_logging,
@@ -78,7 +84,22 @@ class TestAppSpecs(AzulUnitTestCase):
             'tags': [],
             'servers': [{'url': 'https://fake.url/'}]
         }
-        self.assertEqual(app.spec(), expected_spec)
+
+        actual_spec = self._assert_default_method_spec(app.spec())
+        self.assertEqual(expected_spec, actual_spec)
+
+    def _assert_default_method_spec(self, actual_spec: JSON) -> JSON:
+        actual_spec = copy_json(actual_spec)
+        for path_spec in actual_spec['paths'].values():
+            for method, method_spec in path_spec.items():
+                methods = {'get', 'put'}  # only what's used in these tests
+                if method in methods:
+                    responses = method_spec.pop('responses')
+                    response = responses.pop('504')
+                    description = response.pop('description')
+                    self.assertIn('Request timed out', description)
+                    self.assertEqual(({}, {}), (response, responses))
+        return actual_spec
 
     def test_just_path_spec(self):
         app = self.app({'foo': 'bar'})
@@ -134,7 +155,8 @@ class TestAppSpecs(AzulUnitTestCase):
             'tags': [],
             'servers': [{'url': 'https://fake.url/'}]
         }
-        self.assertEqual(app.spec(), expected_specs)
+        actual_spec = self._assert_default_method_spec(app.spec())
+        self.assertEqual(expected_specs, actual_spec)
 
     def test_duplicate_method_specs(self):
         app = self.app({'foo': 'bar'})

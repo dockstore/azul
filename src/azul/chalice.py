@@ -53,6 +53,9 @@ from azul import (
 from azul.auth import (
     Authentication,
 )
+from azul.collections import (
+    deep_dict_merge,
+)
 from azul.enums import (
     auto,
 )
@@ -276,9 +279,9 @@ class AzulChaliceApp(Chalice):
             if not interactive:
                 require(bool(methods), 'Must list methods with interactive=False')
                 self.non_interactive_routes.update((path, method) for method in methods)
-            if method_spec:
-                responses = method_spec.get('responses', {})
-                responses |= self.http_504_response()
+            if method_spec is not None:
+                method_spec = deep_dict_merge(method_spec,
+                                              self.default_method_specs())
             chalice_decorator = super().route(path, **kwargs)
 
             def decorator(view_func):
@@ -742,14 +745,16 @@ class AzulChaliceApp(Chalice):
 
         return locals()
 
-    def http_504_response(self) -> JSON:
+    def default_method_specs(self):
         return {
-            '504': {
-                'description': format_description('''
-                    Request timed out. When handling this response, clients
-                    should wait the number of seconds specified in the
-                    `Retry-After` header and then retry the request.
-                ''')
+            'responses': {
+                '504': {
+                    'description': format_description('''
+                        Request timed out. When handling this response, clients
+                        should wait the number of seconds specified in the
+                        `Retry-After` header and then retry the request.
+                    ''')
+                }
             }
         }
 
