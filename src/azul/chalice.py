@@ -250,7 +250,7 @@ class AzulChaliceApp(Chalice):
 
         See https://chalice.readthedocs.io/en/latest/api.html#Chalice.route.
 
-        :param path: See https://chalice.readthedocs.io/en/latest/api.html#Chalice.route
+        :param path: See https://aws.github.io/chalice/api#Chalice.route
 
         :param enabled: If False, do not route any requests to the decorated
                         view function. The application will behave as if the
@@ -263,14 +263,14 @@ class AzulChaliceApp(Chalice):
                               header.
 
         :param path_spec: Corresponds to an OpenAPI Paths Object. See
-                          https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.3.md#pathsObject
+                          https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#paths-object
                           If multiple `@app.route` invocations refer to the same
                           path (but with different HTTP methods), only specify
                           this argument for one of them, otherwise an
                           AssertionError will be raised.
 
         :param method_spec: Corresponds to an OpenAPI Operation Object. See
-                            https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.3.md#operationObject
+                            https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#operation-object
                             This should be specified for every `@app.route`
                             invocation.
         """
