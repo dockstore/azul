@@ -18,7 +18,9 @@ import pathlib
 from typing import (
     Any,
     Iterator,
+    Literal,
     Self,
+    Sequence,
     TypeVar,
 )
 from urllib.parse import (
@@ -236,9 +238,12 @@ class AzulChaliceApp(Chalice):
         response.headers['Cache-Control'] = cache_control
         return response
 
+    HttpMethod = Literal['GET', 'POST', 'PUT', 'PATCH', 'HEAD', 'OPTIONS', 'DELETE']
+
     def route(self,
               path: str,
               *,
+              methods: Sequence[HttpMethod] = ('GET',),
               enabled: bool = True,
               interactive: bool = True,
               cache_control: str = 'no-store',
@@ -251,6 +256,8 @@ class AzulChaliceApp(Chalice):
         See https://chalice.readthedocs.io/en/latest/api.html#Chalice.route.
 
         :param path: See https://aws.github.io/chalice/api#Chalice.route
+
+        :param methods: See https://aws.github.io/chalice/api#Chalice.route
 
         :param enabled: If False, do not route any requests to the decorated
                         view function. The application will behave as if the
@@ -275,14 +282,13 @@ class AzulChaliceApp(Chalice):
                             invocation.
         """
         if enabled:
-            methods = kwargs.get('methods', ())
             if not interactive:
                 require(bool(methods), 'Must list methods with interactive=False')
                 self.non_interactive_routes.update((path, method) for method in methods)
             if method_spec is not None:
                 method_spec = deep_dict_merge(method_spec,
                                               self.default_method_specs())
-            chalice_decorator = super().route(path, **kwargs)
+            chalice_decorator = super().route(path, methods=methods, **kwargs)
 
             def decorator(view_func):
                 view_func.cache_control = cache_control
