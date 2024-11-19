@@ -675,32 +675,6 @@ class AzulChaliceApp(Chalice):
             return self.swagger_ui()
 
         @self.route(
-            '/static/{file}',
-            interactive=False,
-            cache_control='public, max-age=86400',
-            cors=True,
-            method_spec={
-                'summary': 'Static files needed for the Swagger UI',
-                'tags': ['Auxiliary'],
-                'responses': {
-                    '200': {
-                        'description': 'The response body is the contents of the requested file'
-                    },
-                    '404': {
-                        'description': 'The requested file does not exist'
-                    }
-                }
-            },
-            path_spec={
-                'parameters': [
-                    params.path('file', str, description='The name of a static file to be returned')
-                ]
-            }
-        )
-        def static_resource(file):
-            return self.swagger_resource(file)
-
-        @self.route(
             '/openapi',
             methods=['GET'],
             cache_control='public, max-age=500',
@@ -734,6 +708,32 @@ class AzulChaliceApp(Chalice):
             return Response(status_code=200,
                             headers={'content-type': 'application/json'},
                             body=self.spec())
+
+        @self.route(
+            '/static/{file}',
+            interactive=False,
+            cache_control='public, max-age=86400',
+            cors=True,
+            method_spec={
+                'summary': 'Static files needed for the Swagger UI',
+                'tags': ['Auxiliary'],
+                'responses': {
+                    '200': {
+                        'description': 'The response body is the contents of the requested file'
+                    },
+                    '404': {
+                        'description': 'The requested file does not exist'
+                    }
+                }
+            },
+            path_spec={
+                'parameters': [
+                    params.path('file', str, description='The name of a static file to be returned')
+                ]
+            }
+        )
+        def static_resource(file):
+            return self.swagger_resource(file)
 
         @self.route(
             '/version',
