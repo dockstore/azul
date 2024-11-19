@@ -67,6 +67,7 @@ from azul.json import (
 )
 from azul.openapi import (
     format_description,
+    params,
     responses,
     schema,
 )
@@ -129,19 +130,17 @@ class AzulChaliceApp(Chalice):
     def __init__(self,
                  app_name: str,
                  app_module_path: str,
+                 *,
                  unit_test: bool = False,
-                 spec: JSON | None = None):
+                 spec: JSON):
         self._patch_event_source_handler()
         assert app_module_path.endswith('/app.py'), app_module_path
         self.app_module_path = app_module_path
         self.unit_test = unit_test
         self.non_interactive_routes: set[tuple[str, str]] = set()
-        if spec is None:
-            self._specs = None
-        else:
-            assert 'paths' not in spec, 'The top-level spec must not define paths'
-            self._specs = copy_json(spec)
-            self._specs['paths'] = {}
+        assert 'paths' not in spec, 'The top-level spec must not define paths'
+        self._specs = copy_json(spec)
+        self._specs['paths'] = {}
         super().__init__(app_name, debug=config.debug > 0, configure_logs=False)
         # Middleware is invoked in order of registration
         self.register_middleware(self._logging_middleware, 'http')
@@ -240,6 +239,7 @@ class AzulChaliceApp(Chalice):
 
     HttpMethod = Literal['GET', 'POST', 'PUT', 'PATCH', 'HEAD', 'OPTIONS', 'DELETE']
 
+    # noinspection PyMethodOverriding
     def route(self,
               path: str,
               *,
@@ -248,7 +248,7 @@ class AzulChaliceApp(Chalice):
               interactive: bool = True,
               cache_control: str = 'no-store',
               path_spec: JSON | None = None,
-              method_spec: JSON | None = None,
+              method_spec: JSON,
               **kwargs):
         """
         Decorates a view handler function in a Chalice application.
@@ -278,16 +278,14 @@ class AzulChaliceApp(Chalice):
 
         :param method_spec: Corresponds to an OpenAPI Operation Object. See
                             https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#operation-object
-                            This should be specified for every `@app.route`
+                            This must be specified for every `@app.route`
                             invocation.
         """
         if enabled:
             if not interactive:
                 require(bool(methods), 'Must list methods with interactive=False')
                 self.non_interactive_routes.update((path, method) for method in methods)
-            if method_spec is not None:
-                method_spec = deep_dict_merge(method_spec,
-                                              self.default_method_specs())
+            method_spec = deep_dict_merge(method_spec, self.default_method_specs())
             chalice_decorator = super().route(path, methods=methods, **kwargs)
 
             def decorator(view_func):
@@ -367,7 +365,7 @@ class AzulChaliceApp(Chalice):
     def _register_spec(self,
                        path: str,
                        path_spec: JSON | None,
-                       method_spec: JSON | None,
+                       method_spec: JSON,
                        methods: Iterable[str]):
         """
         Add a route's specifications to the specification object.
@@ -376,16 +374,15 @@ class AzulChaliceApp(Chalice):
             assert path not in self._specs['paths'], 'Only specify path_spec once per route path'
             self._specs['paths'][path] = copy_json(path_spec)
 
-        if method_spec is not None:
-            for method in methods:
-                # OpenAPI requires HTTP method names be lower case
-                method = method.lower()
-                # This may override duplicate specs from path_specs
-                if path not in self._specs['paths']:
-                    self._specs['paths'][path] = {}
-                assert method not in self._specs['paths'][path], \
-                    'Only specify method_spec once per route path and method'
-                self._specs['paths'][path][method] = copy_json(method_spec)
+        for method in methods:
+            # OpenAPI requires HTTP method names be lower case
+            method = method.lower()
+            # This may override duplicate specs from path_specs
+            if path not in self._specs['paths']:
+                self._specs['paths'][path] = {}
+            assert method not in self._specs['paths'][path], \
+                'Only specify method_spec once per route path and method'
+            self._specs['paths'][path][method] = copy_json(method_spec)
 
     class _LogJSONEncoder(JSONEncoder):
 
@@ -661,16 +658,44 @@ class AzulChaliceApp(Chalice):
 
         @self.route(
             '/',
+            interactive=False,
             cache_control='public, max-age=0, must-revalidate',
-            cors=False
+            cors=False,
+            method_spec={
+                'summary': 'A Swagger UI for interactive use of this REST API',
+                'tags': ['Auxiliary'],
+                'responses': {
+                    '200': {
+                        'description': 'The response body is an HTML page containing the Swagger UI'
+                    }
+                }
+            }
         )
         def swagger_ui():
             return self.swagger_ui()
 
         @self.route(
             '/static/{file}',
+            interactive=False,
             cache_control='public, max-age=86400',
-            cors=True
+            cors=True,
+            method_spec={
+                'summary': 'Static files needed for the Swagger UI',
+                'tags': ['Auxiliary'],
+                'responses': {
+                    '200': {
+                        'description': 'The response body is the contents of the requested file'
+                    },
+                    '404': {
+                        'description': 'The requested file does not exist'
+                    }
+                }
+            },
+            path_spec={
+                'parameters': [
+                    params.path('file', str, description='The name of a static file to be returned')
+                ]
+            }
         )
         def static_resource(file):
             return self.swagger_resource(file)

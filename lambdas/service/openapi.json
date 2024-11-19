@@ -21,9 +21,59 @@
         {
             "name": "Auxiliary",
             "description": "\nDescribes various aspects of the Azul service\n"
+        },
+        {
+            "name": "Deprecated",
+            "description": "\nEndpoints that should not be used and that will be removed\n"
         }
     ],
     "paths": {
+        "/": {
+            "get": {
+                "summary": "A Swagger UI for interactive use of this REST API",
+                "tags": [
+                    "Auxiliary"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The response body is an HTML page containing the Swagger UI"
+                    },
+                    "504": {
+                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                    }
+                }
+            }
+        },
+        "/static/{file}": {
+            "parameters": [
+                {
+                    "name": "file",
+                    "in": "path",
+                    "required": true,
+                    "schema": {
+                        "type": "string"
+                    },
+                    "description": "The name of a static file to be returned"
+                }
+            ],
+            "get": {
+                "summary": "Static files needed for the Swagger UI",
+                "tags": [
+                    "Auxiliary"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The response body is the contents of the requested file"
+                    },
+                    "404": {
+                        "description": "The requested file does not exist"
+                    },
+                    "504": {
+                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                    }
+                }
+            }
+        },
         "/openapi": {
             "get": {
                 "summary": "Return OpenAPI specifications for this REST API",
@@ -672,6 +722,36 @@
                 "tags": [
                     "Auxiliary"
                 ]
+            }
+        },
+        "/oauth2_redirect": {
+            "get": {
+                "summary": "Destination endpoint for Google OAuth 2.0 redirects",
+                "tags": [
+                    "Auxiliary"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "\nThe response body is HTML page with a script that extracts\nthe access token and redirects back to the Swagger UI.\n"
+                    },
+                    "504": {
+                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                    }
+                }
+            }
+        },
+        "/integrations": {
+            "get": {
+                "summary": "This endpoint will be removed in the future.",
+                "tags": [
+                    "Deprecated"
+                ],
+                "deprecated": true,
+                "responses": {
+                    "504": {
+                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                    }
+                }
             }
         },
         "/index/catalogs": {

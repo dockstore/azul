@@ -54,17 +54,18 @@ class TestAppSpecs(AzulUnitTestCase):
     def test_unannotated(self):
         app = self.app({'foo': 'bar'})
 
-        @app.route('/foo', methods=['GET', 'PUT'])
+        @app.route('/foo', methods=['GET', 'PUT'], method_spec={})
         def route():
             pass  # no coverage
 
         expected = {
             'foo': 'bar',
-            'paths': {},
+            'paths': {'/foo': {'get': {}, 'put': {}}},
             'tags': [],
             'servers': [{'url': 'https://fake.url/'}]
         }
-        self.assertEqual(app.spec(), expected)
+        actual_spec = self._assert_default_method_spec(app.spec())
+        self.assertEqual(expected, actual_spec)
 
     def test_just_method_spec(self):
         app = self.app({'foo': 'bar'})
@@ -100,23 +101,6 @@ class TestAppSpecs(AzulUnitTestCase):
                     self.assertIn('Request timed out', description)
                     self.assertEqual(({}, {}), (response, responses))
         return actual_spec
-
-    def test_just_path_spec(self):
-        app = self.app({'foo': 'bar'})
-
-        @app.route('/foo', methods=['GET', 'PUT'], path_spec={'a': 'b'})
-        def route():
-            pass  # no coverage
-
-        expected_spec = {
-            'foo': 'bar',
-            'paths': {
-                '/foo': {'a': 'b'}
-            },
-            'tags': [],
-            'servers': [{'url': 'https://fake.url/'}]
-        }
-        self.assertEqual(app.spec(), expected_spec)
 
     def test_fully_annotated_override(self):
         app = self.app({'foo': 'bar'})
@@ -171,12 +155,12 @@ class TestAppSpecs(AzulUnitTestCase):
     def test_duplicate_path_specs(self):
         app = self.app({'foo': 'bar'})
 
-        @app.route('/foo', methods=['PUT'], path_spec={'a': 'XXX'})
+        @app.route('/foo', methods=['PUT'], path_spec={'a': 'XXX'}, method_spec={})
         def route1():
             pass
 
         with self.assertRaises(AssertionError) as cm:
-            @app.route('/foo', methods=['GET'], path_spec={'a': 'b'})
+            @app.route('/foo', methods=['GET'], path_spec={'a': 'b'}, method_spec={})
             def route2():
                 pass
         self.assertEqual(str(cm.exception), 'Only specify path_spec once per route path')

@@ -55,10 +55,10 @@ class TestAppLogging(AzulUnitTestCase):
             with mock.patch.dict(os.environ, AZUL_DEBUG=str(debug)):
                 with self.subTest(debug=debug):
                     log_level = azul_log_level()
-                    app = AzulChaliceApp(__name__, '/app.py', unit_test=True)
+                    app = AzulChaliceApp(__name__, '/app.py', unit_test=True, spec={})
                     path = '/fail/path'
 
-                    @app.route(path)
+                    @app.route(path, method_spec={})
                     def fail():
                         raise ValueError(magic_message)
 

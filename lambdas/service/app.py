@@ -266,6 +266,12 @@ spec = {
             'description': fd('''
                 Describes various aspects of the Azul service
             ''')
+        },
+        {
+            'name': 'Deprecated',
+            'description': fd('''
+                Endpoints that should not be used and that will be removed
+            ''')
         }
     ]
 }
@@ -465,7 +471,20 @@ globals().update(app.default_routes())
 @app.route(
     '/oauth2_redirect',
     enabled=config.google_oauth2_client_id is not None,
-    cache_control='no-store'
+    cache_control='no-store',
+    interactive=False,
+    method_spec={
+        'summary': 'Destination endpoint for Google OAuth 2.0 redirects',
+        'tags': ['Auxiliary'],
+        'responses': {
+            '200': {
+                'description': fd('''
+                    The response body is HTML page with a script that extracts
+                    the access token and redirects back to the Swagger UI.
+                ''')
+            }
+        }
+    }
 )
 def oauth2_redirect():
     oauth2_redirect_html = app.load_static_resource('swagger', 'oauth2-redirect.html')
@@ -718,10 +737,18 @@ def validate_params(query_params: Mapping[str, str],
                 raise BRE(f'Invalid value for `{param_name}`')
 
 
+deprecated_method_spec = {
+    'summary': 'This endpoint will be removed in the future.',
+    'tags': ['Deprecated'],
+    'deprecated': True
+}
+
+
 @app.route(
     '/integrations',
     methods=['GET'],
-    cors=True
+    cors=True,
+    method_spec=deprecated_method_spec
 )
 def get_integrations():
     query_params = app.current_request.query_params or {}
@@ -1896,7 +1923,8 @@ def get_data_object_access(file_uuid, access_id):
     drs.dos_object_url_path('{file_uuid}'),
     methods=['GET'],
     enabled=config.is_dss_enabled(),
-    cors=True
+    cors=True,
+    method_spec=deprecated_method_spec
 )
 def dos_get_data_object(file_uuid):
     """
