@@ -58,16 +58,22 @@ def main():
                                   new_callable=PropertyMock,
                                   return_value=True):
                     assert config.enable_replicas
-                    lambda_endpoint = furl('http://localhost')
-                    with patch.object(target=AzulChaliceApp,
-                                      attribute='base_url',
-                                      new=lambda_endpoint):
-                        app_module = load_app_module(lambda_name)
-                        assert app_module.app.base_url == lambda_endpoint
-                        app_spec = app_module.app.spec()
-                        doc_path = Path(config.project_root) / 'lambdas' / lambda_name / 'openapi.json'
-                        with write_file_atomically(doc_path) as file:
-                            json.dump(app_spec, file, indent=4)
+                    monitoring_email = 'azul-group@ucsc.edu'
+                    with patch.object(target=type(config),
+                                      attribute='monitoring_email',
+                                      new_callable=PropertyMock,
+                                      return_value=monitoring_email):
+                        assert getattr(config, 'monitoring_email') == monitoring_email
+                        lambda_endpoint = furl('http://localhost')
+                        with patch.object(target=AzulChaliceApp,
+                                          attribute='base_url',
+                                          new=lambda_endpoint):
+                            app_module = load_app_module(lambda_name)
+                            assert app_module.app.base_url == lambda_endpoint
+                            app_spec = app_module.app.spec()
+                            doc_path = Path(config.project_root) / 'lambdas' / lambda_name / 'openapi.json'
+                            with write_file_atomically(doc_path) as file:
+                                json.dump(app_spec, file, indent=4)
 
 
 if __name__ == '__main__':

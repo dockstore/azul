@@ -33,6 +33,16 @@ def setUpModule():
     configure_test_logging()
 
 
+swagger_info_spec = {
+    'info': {
+        'description': '\n\n## Contact us\n\nFor technical support please file an '
+                       'issue at\n[GitHub](https://github.com/DataBiosphere/azul/issues) or email\n'
+                       '`azul-group@ucsc.edu`. To report a security concern or misconduct please '
+                       'email\n`azul-group@ucsc.edu`.\n'
+    }
+}
+
+
 @patch('azul.chalice.AzulChaliceApp.base_url', furl('https://fake.url'))
 class TestAppSpecs(AzulUnitTestCase):
 
@@ -42,7 +52,7 @@ class TestAppSpecs(AzulUnitTestCase):
     def test_top_level_spec(self):
         spec = {'foo': 'bar'}
         app = self.app(spec)
-        self.assertEqual({'foo': 'bar', 'paths': {}}, app._specs,
+        self.assertEqual({'foo': 'bar', 'paths': {}, **swagger_info_spec}, app._specs,
                          "Confirm 'paths' is added")
         spec['new key'] = 'new value'
         self.assertNotIn('new key', app.spec(),
@@ -61,6 +71,7 @@ class TestAppSpecs(AzulUnitTestCase):
 
         expected = {
             'foo': 'bar',
+            **swagger_info_spec,
             'paths': {'/foo': {'get': {}, 'put': {}}},
             'tags': [],
             'servers': [{'url': 'https://fake.url/'}]
@@ -77,6 +88,7 @@ class TestAppSpecs(AzulUnitTestCase):
 
         expected_spec = {
             'foo': 'bar',
+            **swagger_info_spec,
             'paths': {
                 '/foo': {
                     'get': {'a': 'b'},
@@ -148,7 +160,8 @@ class TestAppSpecs(AzulUnitTestCase):
                 }
             },
             'tags': [],
-            'servers': [{'url': 'https://fake.url/'}]
+            'servers': [{'url': 'https://fake.url/'}],
+            **swagger_info_spec
         }
         actual_spec = self._assert_default_spec(app.spec())
         self.assertEqual(expected_specs, actual_spec)
