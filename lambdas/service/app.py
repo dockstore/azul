@@ -22,7 +22,6 @@ from typing import (
 import urllib.parse
 
 import attr
-import chalice
 from chalice import (
     BadRequestError as BRE,
     ChaliceViewError,
@@ -52,9 +51,7 @@ from azul.auth import (
     OAuth2,
 )
 from azul.chalice import (
-    AzulChaliceApp,
     C,
-    LambdaMetric,
 )
 from azul.collections import (
     OrderedSet,
@@ -63,6 +60,7 @@ from azul.drs import (
     AccessMethod,
 )
 from azul.health import (
+    HealthApp,
     HealthController,
 )
 from azul.indexer.document import (
@@ -79,9 +77,6 @@ from azul.openapi import (
     params,
     responses,
     schema,
-)
-from azul.openapi.spec import (
-    CommonEndpointSpecs,
 )
 from azul.plugins import (
     ManifestFormat,
@@ -232,7 +227,7 @@ spec = {
         # changes and reset the minor version to zero. Otherwise, increment only
         # the minor version for backwards compatible changes. A backwards
         # compatible change is one that does not require updates to clients.
-        'version': '9.2'
+        'version': '9.3'
     },
     'tags': [
         {
@@ -271,12 +266,18 @@ spec = {
             'description': fd('''
                 Describes various aspects of the Azul service
             ''')
+        },
+        {
+            'name': 'Deprecated',
+            'description': fd('''
+                Endpoints that should not be used and that will be removed
+            ''')
         }
     ]
 }
 
 
-class ServiceApp(AzulChaliceApp):
+class ServiceApp(HealthApp):
 
     def spec(self) -> JSON:
         return {
@@ -312,7 +313,8 @@ class ServiceApp(AzulChaliceApp):
 
     @cached_property
     def health_controller(self) -> HealthController:
-        return self._controller(HealthController, lambda_name='service')
+        return self._controller(HealthController,
+                                lambda_name=self.unqualified_app_name)
 
     @cached_property
     def catalog_controller(self) -> CatalogController:
@@ -463,132 +465,32 @@ class ServiceApp(AzulChaliceApp):
 app = ServiceApp()
 configure_app_logging(app, log)
 
-
-@app.route(
-    '/',
-    cache_control='public, max-age=0, must-revalidate',
-    cors=False
-)
-def swagger_ui():
-    return app.swagger_ui()
-
-
-@app.route(
-    '/static/{file}',
-    cache_control='public, max-age=86400',
-    cors=True
-)
-def static_resource(file):
-    return app.swagger_resource(file)
+globals().update(app.default_routes())
 
 
 @app.route(
     '/oauth2_redirect',
     enabled=config.google_oauth2_client_id is not None,
-    cache_control='no-store'
+    cache_control='no-store',
+    interactive=False,
+    method_spec={
+        'summary': 'Destination endpoint for Google OAuth 2.0 redirects',
+        'tags': ['Auxiliary'],
+        'responses': {
+            '200': {
+                'description': fd('''
+                    The response body is HTML page with a script that extracts
+                    the access token and redirects back to the Swagger UI.
+                ''')
+            }
+        }
+    }
 )
 def oauth2_redirect():
     oauth2_redirect_html = app.load_static_resource('swagger', 'oauth2-redirect.html')
     return Response(status_code=200,
                     headers={"Content-Type": "text/html"},
                     body=oauth2_redirect_html)
-
-
-common_specs = CommonEndpointSpecs(app_name='service')
-
-
-@app.route(
-    '/openapi',
-    methods=['GET'],
-    cache_control='public, max-age=500',
-    cors=True,
-    **common_specs.openapi
-)
-def openapi():
-    return Response(status_code=200,
-                    headers={'content-type': 'application/json'},
-                    body=app.spec())
-
-
-@app.route(
-    '/health',
-    methods=['GET'],
-    cors=True,
-    **common_specs.full_health
-)
-def health():
-    return app.health_controller.health()
-
-
-@app.route(
-    '/health/basic',
-    methods=['GET'],
-    cors=True,
-    **common_specs.basic_health
-)
-def basic_health():
-    return app.health_controller.basic_health()
-
-
-@app.route(
-    '/health/cached',
-    methods=['GET'],
-    cors=True,
-    **common_specs.cached_health
-)
-def cached_health():
-    return app.health_controller.cached_health()
-
-
-@app.route(
-    '/health/fast',
-    methods=['GET'],
-    cors=True,
-    **common_specs.fast_health
-)
-def fast_health():
-    return app.health_controller.fast_health()
-
-
-@app.route(
-    '/health/{keys}',
-    methods=['GET'],
-    cors=True,
-    **common_specs.custom_health
-)
-def custom_health(keys: Optional[str] = None):
-    return app.health_controller.custom_health(keys)
-
-
-@app.metric_alarm(metric=LambdaMetric.errors,
-                  threshold=1,
-                  period=24 * 60 * 60)
-@app.metric_alarm(metric=LambdaMetric.throttles)
-@app.retry(num_retries=0)
-# FIXME: Remove redundant prefix from name
-#        https://github.com/DataBiosphere/azul/issues/5337
-@app.schedule(
-    'rate(1 minute)',
-    name='servicecachehealth'
-)
-def update_health_cache(_event: chalice.app.CloudWatchEvent):
-    app.health_controller.update_cache()
-
-
-@app.route(
-    '/version',
-    methods=['GET'],
-    cors=True,
-    **common_specs.version
-)
-def version():
-    from azul.changelog import (
-        compact_changes,
-    )
-    return {
-        'git': config.lambda_git_status,
-        'changes': compact_changes(limit=10)
-    }
 
 
 def validate_repository_search(entity_type: EntityType,
@@ -835,10 +737,18 @@ def validate_params(query_params: Mapping[str, str],
                 raise BRE(f'Invalid value for `{param_name}`')
 
 
+deprecated_method_spec = {
+    'summary': 'This endpoint will be removed in the future.',
+    'tags': ['Deprecated'],
+    'deprecated': True
+}
+
+
 @app.route(
     '/integrations',
     methods=['GET'],
-    cors=True
+    cors=True,
+    method_spec=deprecated_method_spec
 )
 def get_integrations():
     query_params = app.current_request.query_params or {}
@@ -2013,7 +1923,8 @@ def get_data_object_access(file_uuid, access_id):
     drs.dos_object_url_path('{file_uuid}'),
     methods=['GET'],
     enabled=config.is_dss_enabled(),
-    cors=True
+    cors=True,
+    method_spec=deprecated_method_spec
 )
 def dos_get_data_object(file_uuid):
     """
