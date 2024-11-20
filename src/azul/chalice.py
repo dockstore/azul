@@ -234,8 +234,19 @@ class AzulChaliceApp(Chalice):
             del response.headers['Content-Security-Policy']
         view_function = self.routes[event.path][event.method].view_function
         cache_control = getattr(view_function, 'cache_control')
+        # Caching defeats the automatic reloading of application source code by
+        # `chalice local`, which is useful, so we disable caching in that case.
+        cache_control = 'no-store' if self.is_running_locally else cache_control
         response.headers['Cache-Control'] = cache_control
         return response
+
+    def _http_cache_for(self, seconds: int):
+        """
+        The HTTP Cache-Control response header value that will cause the
+        response to the current request to be cached for the given amount of
+        time.
+        """
+        return f'public, max-age={seconds}, must-revalidate'
 
     HttpMethod = Literal['GET', 'POST', 'PUT', 'PATCH', 'HEAD', 'OPTIONS', 'DELETE']
 
@@ -342,7 +353,9 @@ class AzulChaliceApp(Chalice):
         callers should always append to it.
         """
         if self.current_request is None:
-            # Invocation via AWS StepFunctions
+            # Invocation from outside the context of handling of a request, for
+            # example, when `chalice local` loads the app module or during an
+            # invocation via AWS StepFunctions
             self_url = config.service_endpoint
         elif isinstance(self.current_request, Request):
             try:
@@ -361,6 +374,11 @@ class AzulChaliceApp(Chalice):
         else:
             assert False, self.current_request
         return self_url
+
+    @property
+    def is_running_locally(self) -> bool:
+        host = self.base_url.netloc.partition(':')[0]
+        return host in ('localhost', '127.0.0.1')
 
     def _register_spec(self,
                        path: str,
@@ -659,7 +677,7 @@ class AzulChaliceApp(Chalice):
         @self.route(
             '/',
             interactive=False,
-            cache_control='public, max-age=0, must-revalidate',
+            cache_control=self._http_cache_for(60),
             cors=False,
             method_spec={
                 'summary': 'A Swagger UI for interactive use of this REST API',
@@ -677,7 +695,7 @@ class AzulChaliceApp(Chalice):
         @self.route(
             '/openapi',
             methods=['GET'],
-            cache_control='public, max-age=500',
+            cache_control=self._http_cache_for(60),
             cors=True,
             method_spec={
                 'summary': 'Return OpenAPI specifications for this REST API',
@@ -712,7 +730,7 @@ class AzulChaliceApp(Chalice):
         @self.route(
             '/static/{file}',
             interactive=False,
-            cache_control='public, max-age=86400',
+            cache_control=self._http_cache_for(24 * 60 * 60),
             cors=True,
             method_spec={
                 'summary': 'Static files needed for the Swagger UI',

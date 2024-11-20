@@ -1990,15 +1990,19 @@ class DisableAutomaticIndexCreationTest(IntegrationTestCase):
 class ResponseHeadersTest(AzulTestCase):
 
     def test_response_security_headers(self):
+        no_cache = 'no-store'
+        short_cache = 'public, max-age=60, must-revalidate'
+        long_cache = 'public, max-age=86400, must-revalidate'
         test_cases = {
-            '/': {'Cache-Control': 'public, max-age=0, must-revalidate'},
-            '/static/swagger-ui.css': {'Cache-Control': 'public, max-age=86400'},
-            '/openapi': {'Cache-Control': 'public, max-age=500'},
-            '/oauth2_redirect': {'Cache-Control': 'no-store'},
-            '/health/basic': {'Cache-Control': 'no-store'}
+            '/': short_cache,
+            '/static/swagger-ui.css': long_cache,
+            '/openapi': short_cache,
+            '/oauth2_redirect': no_cache,
+            '/health/basic': no_cache
         }
         for endpoint in (config.service_endpoint, config.indexer_endpoint):
-            for path, expected_headers in test_cases.items():
+            for path, cache_control in test_cases.items():
+                expected_headers = {'Cache-Control': cache_control}
                 with self.subTest(endpoint=endpoint, path=path):
                     if path == '/oauth2_redirect' and endpoint == config.indexer_endpoint:
                         pass  # no oauth2 endpoint on indexer Lambda
