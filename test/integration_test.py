@@ -2009,7 +2009,7 @@ class ResponseHeadersTest(AzulTestCase):
                     else:
                         response = requests.get(str(endpoint / path))
                         response.raise_for_status()
-                        expected = AzulChaliceApp.security_headers | expected_headers
+                        expected = AzulChaliceApp.security_headers() | expected_headers
                         # FIXME: Add a CSP header with a nonce value to text/html responses
                         #        https://github.com/DataBiosphere/azul-private/issues/6
                         if path in ['/', '/oauth2_redirect']:
@@ -2021,5 +2021,5 @@ class ResponseHeadersTest(AzulTestCase):
             with self.subTest(endpoint=endpoint):
                 response = requests.get(str(endpoint / 'does-not-exist'))
                 self.assertEqual(403, response.status_code)
-                self.assertIsSubset(AzulChaliceApp.security_headers.items(),
+                self.assertIsSubset(AzulChaliceApp.security_headers().items(),
                                     response.headers.items())

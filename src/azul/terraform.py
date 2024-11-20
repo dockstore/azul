@@ -824,7 +824,7 @@ class Chalice:
         #
         security_headers = {
             f'gatewayresponse.header.{k}': f"'{v}'"
-            for k, v in AzulChaliceApp.security_headers.items()
+            for k, v in AzulChaliceApp.security_headers().items()
         }
         assert 'aws_api_gateway_gateway_response' not in resources, resources
         openapi_spec['x-amazon-apigateway-gateway-responses'] = (
