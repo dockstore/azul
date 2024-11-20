@@ -38,6 +38,15 @@
                 }
             }
         },
+        "/static/swagger-initializer.js": {
+            "get": {
+                "responses": {
+                    "504": {
+                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                    }
+                }
+            }
+        },
         "/openapi": {
             "get": {
                 "summary": "Return OpenAPI specifications for this REST API",
