@@ -30,6 +30,22 @@
     "paths": {
         "/": {
             "get": {
+                "summary": "A redirect to the Swagger UI for interactive use of this REST API",
+                "tags": [
+                    "Auxiliary"
+                ],
+                "responses": {
+                    "301": {
+                        "description": "A redirect to the Swagger UI"
+                    },
+                    "504": {
+                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                    }
+                }
+            }
+        },
+        "/static/index.html": {
+            "get": {
                 "summary": "A Swagger UI for interactive use of this REST API",
                 "tags": [
                     "Auxiliary"

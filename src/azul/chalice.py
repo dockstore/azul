@@ -531,7 +531,7 @@ class AzulChaliceApp(Chalice):
         return controller_cls(app=self, **kwargs)
 
     def swagger_ui(self) -> Response:
-        file_name = 'swagger-ui.html.template.mustache'
+        file_name = 'index.html.template.mustache'
         template = self.load_static_resource('swagger', file_name)
         base_url = self.base_url
         redirect_url = furl(base_url).add(path='oauth2_redirect')
@@ -687,6 +687,24 @@ class AzulChaliceApp(Chalice):
 
         @self.route(
             '/',
+            interactive=False,
+            method_spec={
+                'summary': 'A redirect to the Swagger UI for interactive use of this REST API',
+                'tags': ['Auxiliary'],
+                'responses': {
+                    '301': {
+                        'description': 'A redirect to the Swagger UI'
+                    }
+                }
+            }
+        )
+        def swagger_redirect():
+            return Response(status_code=301,
+                            body='',
+                            headers={'Location': str(self.base_url.set(path='static/index.html'))})
+
+        @self.route(
+            '/static/index.html',
             interactive=False,
             cache_control=self._http_cache_for(60),
             cors=False,
