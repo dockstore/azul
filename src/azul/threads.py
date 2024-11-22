@@ -129,9 +129,15 @@ class DeferredTaskExecutor(metaclass=ABCMeta):
     ...     def never(self):
     ...         self.d = 1
 
-    >>> e = MyExecutor()
-    >>> e.run()  # err() raises an exception
+    >>> from logging import Logger
+    >>> import unittest.mock
+    >>> with unittest.mock.patch.object(Logger, 'warning') as mock_warning:
+    ...     e = MyExecutor()
+    ...     e.run()  # err() raises an exception, and emits a warning log
     [ValueError(123)]
+
+    >>> mock_warning.mock_calls
+    [call('Exception in deferred callable', exc_info=True)]
 
     >>> 1.23 <= e.delta < 2 # set() runs after the given delay, but not much later
     True
