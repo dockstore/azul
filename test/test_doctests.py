@@ -1,4 +1,5 @@
 import doctest
+import unittest
 
 import azul
 import azul.attrs
@@ -57,7 +58,10 @@ def setUpModule():
     configure_test_logging()
 
 
-def load_tests(_loader, tests, _ignore):
+def load_tests(_loader,
+               tests: unittest.TestSuite,
+               _ignore
+               ) -> unittest.TestSuite:
     root = azul.config.project_root
     for module in [
         azul,
@@ -113,3 +117,8 @@ def load_tests(_loader, tests, _ignore):
         assert suite.countTestCases() > 0, module
         tests.addTests(suite)
     return tests
+
+
+if __name__ == '__main__':
+    runner = unittest.TextTestRunner()
+    runner.run(load_tests(None, unittest.TestSuite(), None))
