@@ -62,13 +62,13 @@ class Latch:
     >>> with ThreadPoolExecutor(max_workers=n) as tpe:
     ...     l = Latch(n)
     ...     fs = [tpe.submit(l.decrement, 1) for i in range(n)]
-    >>> [f.result() for f in fs]
+    >>> list(map(Future.result, fs))
     [None, None]
 
     >>> with ThreadPoolExecutor(max_workers=n) as tpe:
     ...     l = Latch(n+1)
     ...     fs = [tpe.submit(l.decrement, 1, timeout=1) for i in range(n)]
-    >>> [f.result() for f in fs]
+    >>> list(map(Future.result, fs))
     Traceback (most recent call last):
     ...
     TimeoutError
@@ -79,7 +79,7 @@ class Latch:
         self.value = value
         self.condition = threading.Condition()
 
-    def decrement(self, value, timeout=None):
+    def decrement(self, value, *, timeout=None):
         require(isinstance(value, int))
         self.condition.acquire()
         try:
@@ -107,6 +107,7 @@ class DeferredTaskExecutor(metaclass=ABCMeta):
     ...
     ...     def __init__(self) -> None:
     ...         super().__init__(num_workers=2)
+    ...         self.delta = None
     ...         self.a, self.b, self.c, self.d = None, None, None, None
     ...
     ...     def _run(self):
