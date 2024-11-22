@@ -332,7 +332,7 @@ _hibernate() {
 	if test -z "$azul_terraform_component"; then
 		make -C lambdas && {
 			cd terraform &&
-			make validate
+			make validate &&
 			terraform destroy -target aws_elasticsearch_domain.index && {
 				cd gitlab &&
 				_select "$AZUL_DEPLOYMENT_STAGE.gitlab" &&
