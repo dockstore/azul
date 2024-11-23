@@ -321,7 +321,7 @@ class TestManifests(DCP1ManifestTestCase, PFBTestCase):
 
     _drs_domain_name = 'drs-test.lan'  # see canned PFB results
 
-    def test_pfb_manifest(self):
+    def test_terra_pfb_manifest(self):
         # This test uses canned expectations. It might be difficult to manually
         # update the can after changes to the indexer. If that is the case,
         # delete the file and run this test. It will repopulate the file. Run
