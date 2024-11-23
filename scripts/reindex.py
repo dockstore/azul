@@ -3,15 +3,13 @@ Command line utility to trigger indexing of bundles from DSS into Azul
 """
 
 import argparse
-from collections import (
-    defaultdict,
-)
 import fnmatch
 import logging
 import sys
 
 from azul import (
     config,
+    reject,
     require,
 )
 from azul.args import (
@@ -83,7 +81,9 @@ parser.add_argument('--delete',
                     default=False,
                     action='store_true',
                     help='Delete all Elasticsearch indices in the current deployment. '
-                         'Implies --create when combined with --index.')
+                         'Implies --create when combined with --index. '
+                         'Behaves like --deindex instead if the operations is limited to a subset '
+                         'of the configured sources.')
 parser.add_argument('--index',
                     default=False,
                     action='store_true',
@@ -131,48 +131,50 @@ def main(argv: list[str]):
 
     azul = AzulClient(num_workers=args.num_workers)
 
+    sources_by_catalog = {
+        catalog: azul.catalog_sources(catalog)
+        for catalog in args.catalogs
+    }
     source_globs = set(args.sources)
-    if not args.local or args.deindex:
-        sources_by_catalog = defaultdict(set)
-        globs_matched = set()
-        for catalog in args.catalogs:
-            sources = azul.catalog_sources(catalog)
+    globs_matched = set()
+    every_source = '*' in source_globs
+    if not every_source:
+        if args.local:
+            parser.error('Cannot specify sources when performing a local reindex')
+            assert False
+        for catalog, sources in sources_by_catalog.items():
+            catalog_matches = set()
             for source_glob in source_globs:
                 matches = fnmatch.filter(sources, source_glob)
                 if matches:
                     globs_matched.add(source_glob)
                 log.debug('Source glob %r matched sources %r in catalog %r',
                           source_glob, matches, catalog)
-                sources_by_catalog[catalog].update(matches)
+                catalog_matches.update(matches)
+            sources_by_catalog[catalog] = catalog_matches
         unmatched = source_globs - globs_matched
         if unmatched:
             log.warning('Source(s) not found in any catalog: %r', unmatched)
         require(any(sources_by_catalog.values()),
                 'No valid sources specified for any catalog')
-    else:
-        if source_globs == {'*'}:
-            sources_by_catalog = {
-                catalog: azul.catalog_sources(catalog)
-                for catalog in args.catalogs
-            }
-        else:
-            parser.error('Cannot specify sources when performing a local reindex')
-            assert False
 
-    if args.deindex:
-        require(not any((args.index, args.delete, args.create)),
-                '--deindex is incompatible with --index, --create, and --delete.')
-        require('*' not in source_globs, '--deindex is incompatible with source `*`. '
-                                         'Use --delete instead.')
+    reject(args.deindex and (args.delete or args.create),
+           '--deindex is incompatible with --create and --delete.')
 
+    deindex = args.deindex or (args.delete and not every_source)
+    delete = args.delete and every_source
+
+    if deindex:
+        reject(every_source, '--deindex is incompatible with source `*`. '
+                             'Use --delete instead.')
         for catalog, sources in sources_by_catalog.items():
             if sources:
                 azul.deindex(catalog, sources)
 
     azul.reset_indexer(args.catalogs,
                        purge_queues=args.purge,
-                       delete_indices=args.delete,
-                       create_indices=args.create or args.index and args.delete)
+                       delete_indices=delete,
+                       create_indices=args.create or args.index and delete)
 
     if args.index:
         log.info('Queuing notifications for reindexing ...')
