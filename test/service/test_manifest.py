@@ -277,7 +277,7 @@ class ManifestTestCase(WebServiceTestCase,
         self.assertEqual(expected_entities, entities)
 
     def _canned_manifest_path(self, *path: str) -> Path:
-        return self._data_path('service').joinpath('manifest', *path)
+        return self._data_path('service', 'manifest', *path)
 
     def _load_canned_manifest(self, *path: str) -> MutableJSON:
         with open(self._canned_manifest_path(*path)) as f:
