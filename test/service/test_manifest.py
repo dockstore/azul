@@ -2127,32 +2127,36 @@ class TestAnvilManifests(AnvilManifestTestCase):
         with open(self._data_path('service') / 'verbatim/anvil/pfb_entities.json') as f:
             expected_entities = json.load(f)
 
-        def test(expected_schema, expected_entities, filters):
+        def test(filters):
             response = self._get_manifest(ManifestFormat.verbatim_pfb, filters)
             self.assertEqual(200, response.status_code)
             self._assert_pfb(expected_schema, expected_entities, response)
 
         with self.subTest(orphans=True):
-            test(expected_schema, expected_entities, filters={
-                'datasets.dataset_id': {'is': ['52ee7665-7033-63f2-a8d9-ce8e32666739']}
-            })
+            test({'datasets.dataset_id': {'is': ['52ee7665-7033-63f2-a8d9-ce8e32666739']}})
 
         with self.subTest(orphans=False):
-            # Dynamically edit out references to the orphaned entities that are
-            # only expected when filtering by dataset ID
-            schemas = one(
-                field['type']
+            # Dynamically edit out references to the orphaned entities (and
+            # their schemas) that are only expected when filtering by dataset
+            # ID. This subtest modifies the expectations in place, and therefore
+            # needs to come last.
+            self.assertEqual('Entity', expected_schema['name'])
+            object_field_schema = one(
+                field
                 for field in expected_schema['fields']
                 if field['name'] == 'object'
             )
-            # The first AVRO record is the PFB schema, or 'metadata entity' in PFB terms.
-            metadata_entity = expected_entities[0]['object']['nodes']
-            for part in [
-                schemas,
-                metadata_entity,
-                expected_entities
-            ]:
+            # The `object` field is of a union type, so the schema's `type`
+            # property is an array
+            schemas = object_field_schema['type']
+            # The first AVRO record is the *metadata entity* in PFB terms,
+            # declaring higher level constraints that can't expressed in the
+            # AVRO schema
+            metadata_entity = expected_entities[0]
+            self.assertEqual('Metadata', metadata_entity['name'])
+            higher_schemas = metadata_entity['object']['nodes']
+            for part in [schemas, higher_schemas, expected_entities]:
                 filtered = [e for e in part if e['name'] != 'non_schema_orphan_table']
                 assert len(filtered) < len(part), 'Expected to filter orphan references'
                 part[:] = filtered
-            test(expected_schema, expected_entities, filters={})
+            test({})
