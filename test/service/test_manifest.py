@@ -29,6 +29,7 @@ from tempfile import (
 )
 from typing import (
     Optional,
+    cast,
 )
 from unittest.mock import (
     MagicMock,
@@ -59,6 +60,7 @@ from requests import (
 )
 
 from azul import (
+    RequirementError,
     config,
 )
 from azul.collections import (
@@ -83,12 +85,16 @@ from azul.logging import (
 from azul.plugins import (
     ManifestFormat,
 )
+from azul.plugins.metadata.hca import (
+    FileTransformer,
+)
 from azul.plugins.repository.dss import (
     DSSBundle,
 )
 from azul.service import (
     Filters,
     FiltersJSON,
+    avro_pfb,
     manifest_service,
 )
 from azul.service.manifest_service import (
@@ -119,9 +125,6 @@ from indexer import (
     CannedFileTestCase,
     DCP1CannedBundleTestCase,
 )
-from pfb_test_case import (
-    PFBTestCase,
-)
 from service import (
     DocumentCloningTestCase,
     StorageServiceTestCase,
@@ -137,6 +140,9 @@ def setUpModule():
 
 
 class CannedManifestTestCase(CannedFileTestCase):
+    """
+    Support for tests that deal with canned manifests
+    """
 
     def _canned_manifest_path(self, *path: str) -> Path:
         return self._data_path('service', 'manifest', *path)
@@ -149,6 +155,25 @@ class CannedManifestTestCase(CannedFileTestCase):
         schema = self._load_canned_manifest(*path, 'pfb_schema.json')
         entities = self._load_canned_manifest(*path, 'pfb_entities.json')
         return schema, entities
+
+    def _assert_pfb_schema(self, schema):
+        fastavro.parse_schema(schema)
+        # Parsing successfully proves our schema is valid
+        with self.assertRaises(KeyError):
+            fastavro.parse_schema({'this': 'is not', 'an': 'avro schema'})
+
+        actual = json.dumps(schema, indent=4, sort_keys=True)
+        expected = self._data_path('service', 'manifest', 'terra', 'pfb_manifest.schema.json')
+        self._assert_or_create_json_can(expected, actual)
+
+    def _assert_or_create_json_can(self, expected: Path, actual: str):
+        if expected.exists():
+            with open(expected, 'r') as f:
+                expected = json.load(f)
+            self.assertEqual(expected, json.loads(actual))
+        else:
+            with open(expected, 'w') as f:
+                f.write(actual)
 
 
 class ManifestTestCase(WebServiceTestCase,
@@ -313,7 +338,7 @@ class DCP1ManifestTestCase(ManifestTestCase, DCP1CannedBundleTestCase):
     pass
 
 
-class TestManifests(DCP1ManifestTestCase, PFBTestCase):
+class TestManifests(DCP1ManifestTestCase):
 
     def run(self,
             result: Optional[unittest.result.TestResult] = None
@@ -2165,3 +2190,28 @@ class TestAnvilManifests(AnvilManifestTestCase):
                 assert len(filtered) < len(part), 'Expected to filter orphan references'
                 part[:] = filtered
             test({})
+
+
+class TestPFB(CannedManifestTestCase):
+    """
+    Tests of terra.pfb code that don't require an ES index.
+    """
+
+    def test_terra_pfb_schema(self):
+        self.maxDiff = None
+        field_types = FileTransformer.field_types()
+        schema = avro_pfb.pfb_schema_from_field_types(field_types)
+        self._assert_pfb_schema(schema)
+
+    def test_pfb_metadata_object(self):
+        metadata_entity = avro_pfb.pfb_metadata_entity(FileTransformer.field_types())
+        field_types = FileTransformer.field_types()
+        schema = avro_pfb.pfb_schema_from_field_types(field_types)
+        parsed_schema = fastavro.parse_schema(cast(dict, schema))
+        fastavro.validate(metadata_entity, parsed_schema)
+
+    def test_pfb_entity_id(self):
+        # Terra limits ID's 254 chars
+        avro_pfb.PFBEntity(id='a' * 254, name='foo', object={})
+        with self.assertRaises(RequirementError):
+            avro_pfb.PFBEntity(id='a' * 255, name='foo', object={})
