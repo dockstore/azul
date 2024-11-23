@@ -340,10 +340,6 @@ class TestManifests(DCP1ManifestTestCase, PFBTestCase):
         shared_file_bundle = self._shared_file_bundle(new_bundle_fqid)
         self._index_bundle(shared_file_bundle, delete=False)
 
-        def to_json(records):
-            # 'default' is specified to handle the conversion of datetime values
-            return json.dumps(records, indent=4, sort_keys=True, default=str)
-
         # We write entities differently depending on debug so we test both cases
         for debug in (1, 0):
             with self.subTest(debug=debug):
@@ -355,14 +351,10 @@ class TestManifests(DCP1ManifestTestCase, PFBTestCase):
                     schema = reader.writer_schema
                     self._assert_pfb_schema(schema)
                     records = list(reader)
-                    results_file = self._canned_manifest_path('terra', 'pfb_manifest.results.json')
-                    if results_file.exists():
-                        with open(results_file, 'r') as f:
-                            expected_records = json.load(f)
-                        self.assertEqual(expected_records, json.loads(to_json(records)))
-                    else:
-                        with open(results_file, 'w') as f:
-                            f.write(to_json(records))
+                    expected = self._canned_manifest_path('terra', 'pfb_manifest.results.json')
+                    # 'default' is specified to handle the conversion of datetime values
+                    actual = json.dumps(records, indent=4, sort_keys=True, default=str)
+                    self._assert_or_create_json_can(expected, actual)
 
     def _shared_file_bundle(self, bundle):
         """
