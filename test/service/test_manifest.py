@@ -343,7 +343,7 @@ class TestManifests(DCP1ManifestTestCase, PFBTestCase):
                     schema = reader.writer_schema
                     self._assert_pfb_schema(schema)
                     records = list(reader)
-                    results_file = Path(__file__).parent / 'data' / 'pfb_manifest.results.json'
+                    results_file = Path(__file__).parent / 'data/manifest/terra/pfb_manifest.results.json'
                     if results_file.exists():
                         with open(results_file, 'r') as f:
                             expected_records = json.load(f)
