@@ -21,6 +21,9 @@ from io import (
 )
 import json
 import os
+from pathlib import (
+    Path,
+)
 from tempfile import (
     TemporaryDirectory,
 )
@@ -273,6 +276,18 @@ class ManifestTestCase(WebServiceTestCase,
         self.assertEqual(expected_schema, schema)
         self.assertEqual(expected_entities, entities)
 
+    def _canned_manifest_path(self, *path: str) -> Path:
+        return self._data_path('service').joinpath('manifest', *path)
+
+    def _load_canned_manifest(self, *path: str) -> MutableJSON:
+        with open(self._canned_manifest_path(*path)) as f:
+            return json.load(f)
+
+    def _load_canned_pfb(self, *path: str) -> tuple[MutableJSON, MutableJSON]:
+        schema = self._load_canned_manifest(*path, 'pfb_schema.json')
+        entities = self._load_canned_manifest(*path, 'pfb_entities.json')
+        return schema, entities
+
     def _file_url(self, file_id, version):
         return str(self.base_url.set(path='/repository/files/' + file_id,
                                      args=dict(catalog=self.catalog,
@@ -340,7 +355,7 @@ class TestManifests(DCP1ManifestTestCase, PFBTestCase):
                     schema = reader.writer_schema
                     self._assert_pfb_schema(schema)
                     records = list(reader)
-                    results_file = self._data_path('service') / 'manifest' / 'terra' / 'pfb_manifest.results.json'
+                    results_file = self._canned_manifest_path('terra', 'pfb_manifest.results.json')
                     if results_file.exists():
                         with open(results_file, 'r') as f:
                             expected_records = json.load(f)
@@ -1364,10 +1379,8 @@ class TestManifests(DCP1ManifestTestCase, PFBTestCase):
     def test_verbatim_pfb_manifest(self):
         response = self._get_manifest(ManifestFormat.verbatim_pfb, filters={})
         self.assertEqual(200, response.status_code)
-        with open(self._data_path('service') / 'manifest' / 'verbatim' / 'pfb' / 'hca' / 'pfb_schema.json') as f:
-            expected_schema = json.load(f)
-        with open(self._data_path('service') / 'manifest' / 'verbatim' / 'pfb' / 'hca' / 'pfb_entities.json') as f:
-            expected_entities = json.load(f)
+        canned_pfb = self._load_canned_pfb('verbatim', 'pfb', 'hca')
+        expected_schema, expected_entities = canned_pfb
         self._assert_pfb(expected_schema, expected_entities, response)
 
 
@@ -2119,10 +2132,8 @@ class TestAnvilManifests(AnvilManifestTestCase):
         return all_entities_by_hash.values(), linked_entities_by_hash.values()
 
     def test_verbatim_pfb_manifest(self):
-        with open(self._data_path('service') / 'manifest' / 'verbatim' / 'pfb' / 'anvil' / 'pfb_schema.json') as f:
-            expected_schema = json.load(f)
-        with open(self._data_path('service') / 'manifest' / 'verbatim' / 'pfb' / 'anvil' / 'pfb_entities.json') as f:
-            expected_entities = json.load(f)
+        canned_pfb = self._load_canned_pfb('verbatim', 'pfb', 'anvil')
+        expected_schema, expected_entities = canned_pfb
 
         def test(filters):
             response = self._get_manifest(ManifestFormat.verbatim_pfb, filters)
