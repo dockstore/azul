@@ -116,6 +116,7 @@ from azul.types import (
 )
 from indexer import (
     AnvilCannedBundleTestCase,
+    CannedFileTestCase,
     DCP1CannedBundleTestCase,
 )
 from pfb_test_case import (
@@ -135,8 +136,24 @@ def setUpModule():
     configure_test_logging(log)
 
 
+class CannedManifestTestCase(CannedFileTestCase):
+
+    def _canned_manifest_path(self, *path: str) -> Path:
+        return self._data_path('service', 'manifest', *path)
+
+    def _load_canned_manifest(self, *path: str) -> MutableJSON:
+        with open(self._canned_manifest_path(*path)) as f:
+            return json.load(f)
+
+    def _load_canned_pfb(self, *path: str) -> tuple[MutableJSON, MutableJSON]:
+        schema = self._load_canned_manifest(*path, 'pfb_schema.json')
+        entities = self._load_canned_manifest(*path, 'pfb_entities.json')
+        return schema, entities
+
+
 class ManifestTestCase(WebServiceTestCase,
                        StorageServiceTestCase,
+                       CannedManifestTestCase,
                        metaclass=ABCMeta):
 
     def setUp(self):
@@ -275,18 +292,6 @@ class ManifestTestCase(WebServiceTestCase,
         entities = sorted(manifest, key=sort_key)
         self.assertEqual(expected_schema, schema)
         self.assertEqual(expected_entities, entities)
-
-    def _canned_manifest_path(self, *path: str) -> Path:
-        return self._data_path('service', 'manifest', *path)
-
-    def _load_canned_manifest(self, *path: str) -> MutableJSON:
-        with open(self._canned_manifest_path(*path)) as f:
-            return json.load(f)
-
-    def _load_canned_pfb(self, *path: str) -> tuple[MutableJSON, MutableJSON]:
-        schema = self._load_canned_manifest(*path, 'pfb_schema.json')
-        entities = self._load_canned_manifest(*path, 'pfb_entities.json')
-        return schema, entities
 
     def _file_url(self, file_id, version):
         return str(self.base_url.set(path='/repository/files/' + file_id,
