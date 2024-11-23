@@ -163,7 +163,7 @@ class CannedManifestTestCase(CannedFileTestCase):
             fastavro.parse_schema({'this': 'is not', 'an': 'avro schema'})
 
         actual = json.dumps(schema, indent=4, sort_keys=True)
-        expected = self._canned_manifest_path('terra', 'pfb_manifest.schema.json')
+        expected = self._canned_manifest_path('terra', 'pfb_schema.json')
         self._assert_or_create_json_can(expected, actual)
 
     def _assert_or_create_json_can(self, expected: Path, actual: str):
@@ -381,7 +381,7 @@ class TestManifests(DCP1ManifestTestCase):
                     schema = reader.writer_schema
                     self._assert_pfb_schema(schema)
                     records = list(reader)
-                    expected = self._canned_manifest_path('terra', 'pfb_manifest.results.json')
+                    expected = self._canned_manifest_path('terra', 'pfb_entities.json')
                     # 'default' is specified to handle the conversion of datetime values
                     actual = json.dumps(records, indent=4, sort_keys=True, default=str)
                     self._assert_or_create_json_can(expected, actual)
