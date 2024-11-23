@@ -1364,9 +1364,9 @@ class TestManifests(DCP1ManifestTestCase, PFBTestCase):
     def test_verbatim_pfb_manifest(self):
         response = self._get_manifest(ManifestFormat.verbatim_pfb, filters={})
         self.assertEqual(200, response.status_code)
-        with open(self._data_path('service') / 'manifest/verbatim/pfb/hca/pfb_schema.json') as f:
+        with open(self._data_path('service') / 'manifest' / 'verbatim' / 'pfb' / 'hca' / 'pfb_schema.json') as f:
             expected_schema = json.load(f)
-        with open(self._data_path('service') / 'manifest/verbatim/pfb/hca/pfb_entities.json') as f:
+        with open(self._data_path('service') / 'manifest' / 'verbatim' / 'pfb' / 'hca' / 'pfb_entities.json') as f:
             expected_entities = json.load(f)
         self._assert_pfb(expected_schema, expected_entities, response)
 
@@ -2119,9 +2119,9 @@ class TestAnvilManifests(AnvilManifestTestCase):
         return all_entities_by_hash.values(), linked_entities_by_hash.values()
 
     def test_verbatim_pfb_manifest(self):
-        with open(self._data_path('service') / 'manifest/verbatim/pfb/anvil/pfb_schema.json') as f:
+        with open(self._data_path('service') / 'manifest' / 'verbatim' / 'pfb' / 'anvil' / 'pfb_schema.json') as f:
             expected_schema = json.load(f)
-        with open(self._data_path('service') / 'manifest/verbatim/pfb/anvil/pfb_entities.json') as f:
+        with open(self._data_path('service') / 'manifest' / 'verbatim' / 'pfb' / 'anvil' / 'pfb_entities.json') as f:
             expected_entities = json.load(f)
 
         def test(filters):

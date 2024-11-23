@@ -18,7 +18,7 @@ class PFBTestCase(CannedFileTestCase):
         def to_json(records):
             return json.dumps(records, indent=4, sort_keys=True)
 
-        results_file = self._data_path('service') / 'manifest/terra/pfb_manifest.schema.json'
+        results_file = self._data_path('service') / 'manifest' / 'terra' / 'pfb_manifest.schema.json'
         if results_file.exists():
             with open(results_file, 'r') as f:
                 expected_records = json.load(f)
