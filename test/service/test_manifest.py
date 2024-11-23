@@ -21,9 +21,6 @@ from io import (
 )
 import json
 import os
-from pathlib import (
-    Path,
-)
 from tempfile import (
     TemporaryDirectory,
 )
@@ -343,7 +340,7 @@ class TestManifests(DCP1ManifestTestCase, PFBTestCase):
                     schema = reader.writer_schema
                     self._assert_pfb_schema(schema)
                     records = list(reader)
-                    results_file = Path(__file__).parent / 'data/manifest/terra/pfb_manifest.results.json'
+                    results_file = self._data_path('service') / 'manifest' / 'terra' / 'pfb_manifest.results.json'
                     if results_file.exists():
                         with open(results_file, 'r') as f:
                             expected_records = json.load(f)
