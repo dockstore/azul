@@ -163,7 +163,7 @@ class CannedManifestTestCase(CannedFileTestCase):
             fastavro.parse_schema({'this': 'is not', 'an': 'avro schema'})
 
         actual = json.dumps(schema, indent=4, sort_keys=True)
-        expected = self._data_path('service', 'manifest', 'terra', 'pfb_manifest.schema.json')
+        expected = self._canned_manifest_path('terra', 'pfb_manifest.schema.json')
         self._assert_or_create_json_can(expected, actual)
 
     def _assert_or_create_json_can(self, expected: Path, actual: str):
