@@ -29,6 +29,7 @@ from chalice import (
     Response,
     UnauthorizedError,
 )
+import chevron
 from furl import (
     furl,
 )
@@ -55,6 +56,9 @@ from azul.chalice import (
 )
 from azul.collections import (
     OrderedSet,
+)
+from azul.csp import (
+    CSP,
 )
 from azul.drs import (
     AccessMethod,
@@ -487,10 +491,19 @@ globals().update(app.default_routes())
     }
 )
 def oauth2_redirect():
-    oauth2_redirect_html = app.load_static_resource('swagger', 'oauth2-redirect.html')
+    file_name = 'oauth2-redirect.html.template.mustache'
+    template = app.load_static_resource('swagger', file_name)
+    nonce = CSP.new_nonce()
+    html = chevron.render(template, {
+        'CSP_NONCE': json.dumps(nonce)
+    })
+    csp = CSP.for_azul(nonce)
     return Response(status_code=200,
-                    headers={"Content-Type": "text/html"},
-                    body=oauth2_redirect_html)
+                    headers={
+                        'Content-Type': 'text/html',
+                        'Content-Security-Policy': str(csp)
+                    },
+                    body=html)
 
 
 def validate_repository_search(entity_type: EntityType,

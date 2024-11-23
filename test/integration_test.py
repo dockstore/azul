@@ -106,6 +106,9 @@ from azul.chalice import (
 from azul.collections import (
     alist,
 )
+from azul.csp import (
+    CSP,
+)
 from azul.drs import (
     AccessMethod,
 )
@@ -2002,24 +2005,41 @@ class ResponseHeadersTest(AzulTestCase):
         }
         for endpoint in (config.service_endpoint, config.indexer_endpoint):
             for path, cache_control in test_cases.items():
-                expected_headers = {'Cache-Control': cache_control}
                 with self.subTest(endpoint=endpoint, path=path):
                     if path == '/oauth2_redirect' and endpoint == config.indexer_endpoint:
                         pass  # no oauth2 endpoint on indexer Lambda
                     else:
                         response = requests.get(str(endpoint / path))
                         response.raise_for_status()
-                        expected = AzulChaliceApp.security_headers | expected_headers
-                        # FIXME: Add a CSP header with a nonce value to text/html responses
-                        #        https://github.com/DataBiosphere/azul-private/issues/6
-                        if path in ['/', '/oauth2_redirect']:
-                            del expected['Content-Security-Policy']
-                        self.assertIsSubset(expected.items(), response.headers.items())
+                        actual_csp = response.headers['Content-Security-Policy']
+                        parsed_csp = CSP.parse(actual_csp)
+                        parsed_csp.validate()
+                        nonce = parsed_csp.nonce()
+                        # We only expect a CSP nonce for specific endpoints.
+                        self.assertIs(nonce is None, path not in ['/', '/oauth2_redirect'])
+                        expected_headers = {
+                            # The fact that most headers are hard-coded in
+                            # security_headers() gives us license to use that
+                            # method here to compose the expected value, even
+                            # though it constitutes code under test. There is
+                            # not much that can break in that method, and even
+                            # if one of the literals in it had an error, that
+                            # error would likely be repeated in a literal here.
+                            **AzulChaliceApp.security_headers(),
+                            'Cache-Control': cache_control,
+                            # The random nonce in the actual CSP makes it hard
+                            # to compose an expected value for it. Instead, we
+                            # parse and validate the actual CSP, then serialize
+                            # it again and interpolate the result into the
+                            # expected value.
+                            'Content-Security-Policy': str(parsed_csp)
+                        }
+                        self.assertIsSubset(expected_headers.items(), response.headers.items())
 
     def test_default_4xx_response_headers(self):
         for endpoint in (config.service_endpoint, config.indexer_endpoint):
             with self.subTest(endpoint=endpoint):
                 response = requests.get(str(endpoint / 'does-not-exist'))
                 self.assertEqual(403, response.status_code)
-                self.assertIsSubset(AzulChaliceApp.security_headers.items(),
+                self.assertIsSubset(AzulChaliceApp.security_headers().items(),
                                     response.headers.items())

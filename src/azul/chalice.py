@@ -58,6 +58,9 @@ from azul.auth import (
 from azul.collections import (
     deep_dict_merge,
 )
+from azul.csp import (
+    CSP,
+)
 from azul.enums import (
     auto,
 )
@@ -73,7 +76,6 @@ from azul.openapi import (
 )
 from azul.strings import (
     join_words as jw,
-    single_quote as sq,
 )
 from azul.types import (
     JSON,
@@ -205,33 +207,35 @@ class AzulChaliceApp(Chalice):
         finally:
             config.lambda_is_handling_api_gateway_request = False
 
-    hsts_max_age = 60 * 60 * 24 * 365 * 2
-
-    # Headers added to every response from the app, as well as canned 4XX and
-    # 5XX responses from API Gateway. Use of these headers addresses known
-    # security vulnerabilities.
-    #
-    security_headers = {
-        'Content-Security-Policy': jw('default-src', sq('self')),
-        'Referrer-Policy': 'strict-origin-when-cross-origin',
-        'Strict-Transport-Security': jw(f'max-age={hsts_max_age};',
-                                        'includeSubDomains;',
-                                        'preload'),
-        'X-Content-Type-Options': 'nosniff',
-        'X-Frame-Options': 'DENY',
-        'X-XSS-Protection': '1; mode=block'
-    }
+    @classmethod
+    def security_headers(cls) -> dict[str, str]:
+        """
+        Default values for headers added to every response from the app, as well
+        as canned 4XX and 5XX responses from API Gateway. Use of these headers
+        addresses known security vulnerabilities.
+        """
+        hsts_max_age = 60 * 60 * 24 * 365 * 2
+        csp = CSP.for_azul()
+        return {
+            'Content-Security-Policy': str(csp),
+            'Referrer-Policy': 'strict-origin-when-cross-origin',
+            'Strict-Transport-Security': jw(f'max-age={hsts_max_age};',
+                                            'includeSubDomains;',
+                                            'preload'),
+            'X-Content-Type-Options': 'nosniff',
+            'X-Frame-Options': 'DENY',
+            'X-XSS-Protection': '1; mode=block'
+        }
 
     def _security_headers_middleware(self, event, get_response):
         """
         Add headers to the response
         """
         response = get_response(event)
-        response.headers.update(self.security_headers)
-        # FIXME: Add a CSP header with a nonce value to text/html responses
-        #        https://github.com/DataBiosphere/azul-private/issues/6
-        if response.headers.get('Content-Type') == 'text/html':
-            del response.headers['Content-Security-Policy']
+        # Add security headers to the response without overwriting any headers
+        # that might have been added already (e.g. Content-Security-Policy)
+        for k, v in self.security_headers().items():
+            response.headers.setdefault(k, v)
         view_function = self.routes[event.path][event.method].view_function
         cache_control = getattr(view_function, 'cache_control')
         # Caching defeats the automatic reloading of application source code by
@@ -527,11 +531,14 @@ class AzulChaliceApp(Chalice):
         return controller_cls(app=self, **kwargs)
 
     def swagger_ui(self) -> Response:
-        swagger_ui_template = self.load_static_resource('swagger', 'swagger-ui.html.template.mustache')
+        file_name = 'swagger-ui.html.template.mustache'
+        template = self.load_static_resource('swagger', file_name)
         base_url = self.base_url
         redirect_url = furl(base_url).add(path='oauth2_redirect')
         deployment_url = furl(base_url).add(path='openapi')
-        swagger_ui_html = chevron.render(swagger_ui_template, {
+        nonce = CSP.new_nonce()
+        html = chevron.render(template, {
+            'CSP_NONCE': json.dumps(nonce),
             'DEPLOYMENT_PATH': json.dumps(str(deployment_url.path)),
             'OAUTH2_CLIENT_ID': json.dumps(config.google_oauth2_client_id),
             'OAUTH2_REDIRECT_URL': json.dumps(str(redirect_url)),
@@ -540,20 +547,24 @@ class AzulChaliceApp(Chalice):
                 for path, method in self.non_interactive_routes
             ])
         })
+        csp = CSP.for_azul(nonce)
         return Response(status_code=200,
-                        headers={'Content-Type': 'text/html'},
-                        body=swagger_ui_html)
+                        headers={
+                            'Content-Type': 'text/html',
+                            'Content-Security-Policy': str(csp)
+                        },
+                        body=html)
 
-    def swagger_resource(self, file) -> Response:
-        if os.sep in file:
-            raise BadRequestError(file)
+    def swagger_resource(self, file_name: str) -> Response:
+        if os.sep in file_name:
+            raise BadRequestError(file_name)
         else:
             try:
-                body = self.load_static_resource('swagger', file)
+                body = self.load_static_resource('swagger', file_name)
             except FileNotFoundError:
-                raise NotFoundError(file)
+                raise NotFoundError(file_name)
             else:
-                path = pathlib.Path(file)
+                path = pathlib.Path(file_name)
                 content_type = mimetypes.types_map[path.suffix]
                 return Response(status_code=200,
                                 headers={'Content-Type': content_type},
