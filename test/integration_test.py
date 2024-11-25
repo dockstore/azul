@@ -289,11 +289,23 @@ class IntegrationTestCase(AzulTestCase, metaclass=ABCMeta):
                     managed_access_sources[catalog].add(ref)
         return managed_access_sources
 
-    def _choose_source(self,
+    def _select_source(self,
                        catalog: CatalogName,
                        *,
                        public: bool | None = None
                        ) -> SourceRef | None:
+        """
+        Choose an indexed source at random.
+
+        :param catalog: The name of the catalog to select a source from.
+
+        :param public: If none (as by default), allow the source to be either
+                       public or non-public. If true, choose a public source, or
+                       raise an `AssertionError` if the catalog contains no
+                       public sources. If false, choose a non-public source, or
+                       return `None` if the catalog contains no non-public
+                       sources.
+        """
         plugin = self.repository_plugin(catalog)
         sources = set(config.sources(catalog))
         if public is not None:
@@ -312,7 +324,7 @@ class IntegrationTestCase(AzulTestCase, metaclass=ABCMeta):
             else:
                 assert False, public
         if len(sources) == 0:
-            assert public is False, 'Every catalog should contain a public source'
+            assert public is False, 'An IT catalog must contain at least one public source'
             return None
         else:
             source = self.random.choice(sorted(sources))
@@ -410,10 +422,10 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
         catalogs: list[Catalog] = []
         for catalog in config.integration_test_catalogs:
             if index:
-                public_source = self._choose_source(catalog, public=True)
-                ma_source = self._choose_source(catalog, public=False)
-                notifications, fqids = self._prepare_notifications(catalog,
-                                                                   sources=alist(public_source, ma_source))
+                public_source = self._select_source(catalog, public=True)
+                ma_source = self._select_source(catalog, public=False)
+                sources = alist(public_source, ma_source)
+                notifications, fqids = self._prepare_notifications(catalog, sources)
             else:
                 with self._service_account_credentials:
                     fqids = self._get_indexed_bundles(catalog)
@@ -1905,10 +1917,10 @@ class CanBundleScriptIntegrationTest(IntegrationTestCase):
             self._test_catalog(mock_catalog)
 
     def bundle_fqid(self, catalog: CatalogName) -> SourcedBundleFQID:
-        source = self._choose_source(catalog)
+        source = self._select_source(catalog)
         # The plugin will raise an exception if the source lacks a prefix
         source = source.with_prefix(Prefix.of_everything)
-        bundle_fqids = self.repository_plugin(catalog).list_bundles(source, '')
+        bundle_fqids = self.azul_client.list_bundles(catalog, source, prefix='')
         return self.random.choice(sorted(bundle_fqids))
 
     def _can_bundle(self,
