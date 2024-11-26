@@ -28,16 +28,17 @@ _period: 14 days
   - [ ] GH Action workflow succeeded
   - [ ] Image is available on [DockerHub](https://hub.docker.com/repository/docker/ucscgi/azul-bigquery-emulator) 
 - [ ] Create Azul PR, connected to this issue, with … 
-  - [ ] … changes to `requirements*.txt` from open Dependabot PRs, one commit per PR
-  - [ ] … update to [Python](https://hub.docker.com/_/python/tags) (only patch versions) <sub>or no update available</sub>
-  - [ ] … update to [Terraform](https://hub.docker.com/r/hashicorp/terraform/tags) (only patch versions) <sub>or no update available</sub>
-  - [ ] … new [PyCharm image](https://hub.docker.com/repository/docker/ucscgi/azul-pycharm)
-  - [ ] … new [Elasticsearch image](https://hub.docker.com/repository/docker/ucscgi/azul-elasticsearch)
-  - [ ] … new [BigQuery Emulator image](https://hub.docker.com/repository/docker/ucscgi/azul-bigquery-emulator)
-  - [ ] … update to [Docker images](https://hub.docker.com/_/docker/tags) (only minor and patch versions) <sub>or no update available</sub>
-  - [ ] … update to [GitLab](https://hub.docker.com/r/gitlab/gitlab-ce/tags) & [GitLab runner images](https://hub.docker.com/r/gitlab/gitlab-runner/tags) <sub>or no update available</sub>
-  - [ ] … update to [ClamAV image](https://hub.docker.com/r/clamav/clamav/tags) <sub>or no update available</sub>
-  - [ ] … update to [GitLab AMI](https://github.com/DataBiosphere/azul/blob/develop/OPERATOR.rst#updating-the-ami-for-gitlab-instances) <sub>or no update available</sub>
+    - [ ] … changes to `requirements*.txt` from open Dependabot PRs, one commit per PR
+    - [ ] … upgrade direct Python dependencies, [reference the operator manual](https://github.com/DataBiosphere/azul/blob/develop/OPERATOR.rst#upgrade-direct-python-dependencies) for instructions <sub>or not applicable</sub>
+    - [ ] … update to [Python](https://hub.docker.com/_/python/tags) (only patch versions) <sub>or no update available</sub>
+    - [ ] … update to [Terraform](https://hub.docker.com/r/hashicorp/terraform/tags) (only patch versions) <sub>or no update available</sub>
+    - [ ] … new [PyCharm image](https://hub.docker.com/repository/docker/ucscgi/azul-pycharm)
+    - [ ] … new [Elasticsearch image](https://hub.docker.com/repository/docker/ucscgi/azul-elasticsearch)
+    - [ ] … new [BigQuery Emulator image](https://hub.docker.com/repository/docker/ucscgi/azul-bigquery-emulator)
+    - [ ] … update to [Docker images](https://hub.docker.com/_/docker/tags) (only minor and patch versions) <sub>or no update available</sub>
+    - [ ] … update to [GitLab](https://hub.docker.com/r/gitlab/gitlab-ce/tags) & [GitLab runner images](https://hub.docker.com/r/gitlab/gitlab-runner/tags) <sub>or no update available</sub>
+    - [ ] … update to [ClamAV image](https://hub.docker.com/r/clamav/clamav/tags) <sub>or no update available</sub>
+    - [ ] … update to [GitLab AMI](https://github.com/DataBiosphere/azul/blob/develop/OPERATOR.rst#updating-the-ami-for-gitlab-instances) <sub>or no update available</sub>
 - [ ] Created tickets for any deferred updates to …
   - [ ] … to next major or minor Python version <sub>or such ticket already exists</sub>
   - [ ] … to next major Docker version <sub>or such ticket already exists</sub>

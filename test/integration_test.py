@@ -78,7 +78,7 @@ from more_itertools import (
     only,
 )
 from openapi_spec_validator import (
-    validate_spec,
+    validate,
 )
 import requests
 import urllib3
@@ -1784,7 +1784,7 @@ class OpenAPIIntegrationTest(AzulTestCase):
                 response = requests.get(str(url))
                 response.raise_for_status()
                 spec = response.json()
-                validate_spec(spec)
+                validate(spec)
 
 
 class AzulChaliceLocalIntegrationTest(AzulTestCase):

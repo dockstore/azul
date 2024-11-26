@@ -346,6 +346,52 @@ a step on that path per biweekly upgrade PR.
 Before upgrading the GitLab version, create a backup of the GitLab volume. See
 `Backup GitLab volumes`_ for help.
 
+Upgrade direct Python dependencies
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In PyCharm, use `Package tool window`_  to view the most recent versions of
+the project's direct Python dependencies. This feature may only work properly
+after running ``make envhook``, and correctly configuring the Python interpreter
+for the project (at least once before).
+
+Proceed by identifying the packages that are candidates for upgrades. Check the
+dependencies listed in ``requirements.txt`` and ``requirements.dev.txt`` against
+the Package tool window, where the dependency indicates of an available version.
+When updating:
+
+ * Update to the latest mature release (a release with a high patch number or
+   where the most recent patch release is at least a couple of months old) and go
+   backward if problems occur.
+
+  * Document each of these problems with a dedicated FIXME, with its respective
+    ticket & reference, when non-trivial code base changes are necessary due to
+    a package version upgrade.
+
+  * Reference the GitHub link in a comment beside the conflictive package.
+
+ * If updating a package causes a trivial change or a dismissable warning when
+   including a FIXME (e.g., deprecation warnings), it should be done on its own
+   commit, to easily identify the dependencies forcing the change and the given
+   resolution.
+
+Note, a way to display all available versions of a given package in a concise
+way, is to pretend to install a non-existing version from a terminal console
+via the pip command. For example, to see all available versions of ``flake8``
+one may run ``pip install flake8=9.9.9``, and the output will display all
+versions of the dependency.
+
+As always, each of the committed changes should be tested, and should
+independently succeed all feature branch checks in GitHub, etc. Perform the
+following for smoke-testing basic operations and functions:
+
+ #. Recreate the project's virtualenv from scratch, run the ``requirements``
+    target, run the ``envhook`` target and end with ``requirements_update``.
+
+ #. Run the ``test``, and ``deploy`` targets in personal deployment (or via
+    sandbox) and then run the integration test.
+
+.. _Package tool window: https://www.jetbrains.com/guide/python/tutorials/getting-started-pycharm/installing-and-managing-python-packages/
+
 Increase GitLab data volume size
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
