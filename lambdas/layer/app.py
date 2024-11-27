@@ -10,9 +10,10 @@ from azul.chalice import (
 
 app = AzulChaliceApp(app_name=config.qualified_resource_name('dependencies'),
                      app_module_path=__file__,
-                     unit_test=False)
+                     unit_test=False,
+                     spec={})
 
 
-@app.route('/')
+@app.route('/', method_spec={})
 def foo():
     pass

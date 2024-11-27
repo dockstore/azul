@@ -78,7 +78,7 @@ from more_itertools import (
     only,
 )
 from openapi_spec_validator import (
-    validate_spec,
+    validate,
 )
 import requests
 import urllib3
@@ -105,6 +105,9 @@ from azul.chalice import (
 )
 from azul.collections import (
     alist,
+)
+from azul.csp import (
+    CSP,
 )
 from azul.drs import (
     AccessMethod,
@@ -286,11 +289,23 @@ class IntegrationTestCase(AzulTestCase, metaclass=ABCMeta):
                     managed_access_sources[catalog].add(ref)
         return managed_access_sources
 
-    def _choose_source(self,
+    def _select_source(self,
                        catalog: CatalogName,
                        *,
                        public: bool | None = None
                        ) -> SourceRef | None:
+        """
+        Choose an indexed source at random.
+
+        :param catalog: The name of the catalog to select a source from.
+
+        :param public: If none (as by default), allow the source to be either
+                       public or non-public. If true, choose a public source, or
+                       raise an `AssertionError` if the catalog contains no
+                       public sources. If false, choose a non-public source, or
+                       return `None` if the catalog contains no non-public
+                       sources.
+        """
         plugin = self.repository_plugin(catalog)
         sources = set(config.sources(catalog))
         if public is not None:
@@ -309,7 +324,7 @@ class IntegrationTestCase(AzulTestCase, metaclass=ABCMeta):
             else:
                 assert False, public
         if len(sources) == 0:
-            assert public is False, 'Every catalog should contain a public source'
+            assert public is False, 'An IT catalog must contain at least one public source'
             return None
         else:
             source = self.random.choice(sorted(sources))
@@ -407,10 +422,10 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
         catalogs: list[Catalog] = []
         for catalog in config.integration_test_catalogs:
             if index:
-                public_source = self._choose_source(catalog, public=True)
-                ma_source = self._choose_source(catalog, public=False)
-                notifications, fqids = self._prepare_notifications(catalog,
-                                                                   sources=alist(public_source, ma_source))
+                public_source = self._select_source(catalog, public=True)
+                ma_source = self._select_source(catalog, public=False)
+                sources = alist(public_source, ma_source)
+                notifications, fqids = self._prepare_notifications(catalog, sources)
             else:
                 with self._service_account_credentials:
                     fqids = self._get_indexed_bundles(catalog)
@@ -1769,7 +1784,7 @@ class OpenAPIIntegrationTest(AzulTestCase):
                 response = requests.get(str(url))
                 response.raise_for_status()
                 spec = response.json()
-                validate_spec(spec)
+                validate(spec)
 
 
 class AzulChaliceLocalIntegrationTest(AzulTestCase):
@@ -1902,10 +1917,10 @@ class CanBundleScriptIntegrationTest(IntegrationTestCase):
             self._test_catalog(mock_catalog)
 
     def bundle_fqid(self, catalog: CatalogName) -> SourcedBundleFQID:
-        source = self._choose_source(catalog)
+        source = self._select_source(catalog)
         # The plugin will raise an exception if the source lacks a prefix
         source = source.with_prefix(Prefix.of_everything)
-        bundle_fqids = self.repository_plugin(catalog).list_bundles(source, '')
+        bundle_fqids = self.azul_client.list_bundles(catalog, source, prefix='')
         return self.random.choice(sorted(bundle_fqids))
 
     def _can_bundle(self,
@@ -1990,32 +2005,53 @@ class DisableAutomaticIndexCreationTest(IntegrationTestCase):
 class ResponseHeadersTest(AzulTestCase):
 
     def test_response_security_headers(self):
+        no_cache = 'no-store'
+        short_cache = 'public, max-age=60, must-revalidate'
+        long_cache = 'public, max-age=86400, must-revalidate'
         test_cases = {
-            '/': {'Cache-Control': 'public, max-age=0, must-revalidate'},
-            '/static/swagger-ui.css': {'Cache-Control': 'public, max-age=86400'},
-            '/openapi': {'Cache-Control': 'public, max-age=500'},
-            '/oauth2_redirect': {'Cache-Control': 'no-store'},
-            '/health/basic': {'Cache-Control': 'no-store'}
+            '/': short_cache,
+            '/static/swagger-ui.css': long_cache,
+            '/openapi': short_cache,
+            '/oauth2_redirect': no_cache,
+            '/health/basic': no_cache
         }
         for endpoint in (config.service_endpoint, config.indexer_endpoint):
-            for path, expected_headers in test_cases.items():
+            for path, cache_control in test_cases.items():
                 with self.subTest(endpoint=endpoint, path=path):
                     if path == '/oauth2_redirect' and endpoint == config.indexer_endpoint:
                         pass  # no oauth2 endpoint on indexer Lambda
                     else:
                         response = requests.get(str(endpoint / path))
                         response.raise_for_status()
-                        expected = AzulChaliceApp.security_headers | expected_headers
-                        # FIXME: Add a CSP header with a nonce value to text/html responses
-                        #        https://github.com/DataBiosphere/azul-private/issues/6
-                        if path in ['/', '/oauth2_redirect']:
-                            del expected['Content-Security-Policy']
-                        self.assertIsSubset(expected.items(), response.headers.items())
+                        actual_csp = response.headers['Content-Security-Policy']
+                        parsed_csp = CSP.parse(actual_csp)
+                        parsed_csp.validate()
+                        nonce = parsed_csp.nonce()
+                        # We only expect a CSP nonce for specific endpoints.
+                        self.assertIs(nonce is None, path not in ['/', '/oauth2_redirect'])
+                        expected_headers = {
+                            # The fact that most headers are hard-coded in
+                            # security_headers() gives us license to use that
+                            # method here to compose the expected value, even
+                            # though it constitutes code under test. There is
+                            # not much that can break in that method, and even
+                            # if one of the literals in it had an error, that
+                            # error would likely be repeated in a literal here.
+                            **AzulChaliceApp.security_headers(),
+                            'Cache-Control': cache_control,
+                            # The random nonce in the actual CSP makes it hard
+                            # to compose an expected value for it. Instead, we
+                            # parse and validate the actual CSP, then serialize
+                            # it again and interpolate the result into the
+                            # expected value.
+                            'Content-Security-Policy': str(parsed_csp)
+                        }
+                        self.assertIsSubset(expected_headers.items(), response.headers.items())
 
     def test_default_4xx_response_headers(self):
         for endpoint in (config.service_endpoint, config.indexer_endpoint):
             with self.subTest(endpoint=endpoint):
                 response = requests.get(str(endpoint / 'does-not-exist'))
                 self.assertEqual(403, response.status_code)
-                self.assertIsSubset(AzulChaliceApp.security_headers.items(),
+                self.assertIsSubset(AzulChaliceApp.security_headers().items(),
                                     response.headers.items())

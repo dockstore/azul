@@ -10,13 +10,11 @@ from app_test_case import (
     LocalAppTestCase,
 )
 from azul.chalice import (
+    AzulChaliceApp,
     log,
 )
 from azul.logging import (
     configure_test_logging,
-)
-from azul.strings import (
-    single_quote as sq,
 )
 from indexer import (
     DCP1CannedBundleTestCase,
@@ -39,23 +37,33 @@ class TestServiceAppLogging(DCP1CannedBundleTestCase, LocalAppTestCase):
             for authenticated in False, True:
                 with self.subTest(level=level, authenticated=authenticated):
                     url = self.base_url.set(path='/health/basic')
-                    headers = {'authorization': 'Bearer foo_token'} if authenticated else {}
+                    request_headers = {'authorization': 'Bearer foo_token'} if authenticated else {}
                     with self.assertLogs(logger=log, level=level) as logs:
-                        requests.get(str(url), headers=headers)
+                        requests.get(str(url), headers=request_headers)
                     logs = [(r.levelno, r.getMessage()) for r in logs.records]
-                    headers = {
+                    request_headers = {
                         'host': url.netloc,
-                        'user-agent': 'python-requests/2.32.2',
+                        'user-agent': 'python-requests/2.32.3',
                         'accept-encoding': 'gzip, deflate, br',
                         'accept': '*/*',
                         'connection': 'keep-alive',
-                        **headers,
+                        **request_headers,
+                    }
+                    response_headers = {
+                        'Access-Control-Allow-Origin': '*',
+                        'Access-Control-Allow-Headers': 'Authorization,'
+                                                        'Content-Type,'
+                                                        'X-Amz-Date,'
+                                                        'X-Amz-Security-Token,'
+                                                        'X-Api-Key',
+                        **AzulChaliceApp.security_headers(),
+                        'Cache-Control': 'no-store'
                     }
                     self.assertEqual(logs, [
                         (
                             INFO,
-                            f"Received GET request for '/health/basic', "
-                            f"with {json.dumps({'query': None, 'headers': headers})}."),
+                            "Received GET request for '/health/basic', "
+                            f'with {json.dumps(dict(query=None, headers=request_headers))}.'),
                         (
                             INFO,
                             "Authenticated request as OAuth2(access_token='foo_token')"
@@ -66,17 +74,9 @@ class TestServiceAppLogging(DCP1CannedBundleTestCase, LocalAppTestCase):
                             level,
                             'Returning 200 response. To log headers and body, set AZUL_DEBUG to 1.'
                             if level == INFO else
-                            'Returning 200 response with headers {"Access-Control-Allow-Origin": '
-                            '"*", "Access-Control-Allow-Headers": '
-                            '"Authorization,Content-Type,X-Amz-Date,X-Amz-Security-Token,X-Api-Key", '
-                            f'"Content-Security-Policy": "default-src {sq("self")}", '
-                            '"Referrer-Policy": "strict-origin-when-cross-origin", '
-                            '"Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload", '
-                            '"X-Content-Type-Options": "nosniff", '
-                            '"X-Frame-Options": "DENY", '
-                            '"X-XSS-Protection": "1; mode=block", '
-                            '"Cache-Control": "no-store"}. '
-                            'See next line for the first 1024 characters of the body.\n'
+                            'Returning 200 response with headers ' +
+                            json.dumps(response_headers) + '. ' +
+                            'See next line for the first 1024 characters of the body.\n' +
                             '{"up": true}'
                         )
                     ])

@@ -93,8 +93,8 @@ class CannedFileTestCase(AzulUnitTestCase):
     """
 
     @classmethod
-    def _data_path(cls, module: Literal['service', 'indexer']) -> Path:
-        return Path(config.project_root) / 'test' / module / 'data'
+    def _data_path(cls, module: Literal['service', 'indexer'], *path: str) -> Path:
+        return Path(config.project_root).joinpath('test', module, 'data', *path)
 
     @classmethod
     def _load_canned_file(cls,
@@ -120,7 +120,7 @@ class CannedFileTestCase(AzulUnitTestCase):
                                   ) -> Union[MutableJSONs, MutableJSON]:
         suffix = '' if version is None else '.' + version
         file_name = f'{uuid}{suffix}.{extension}.json'
-        with open(cls._data_path('indexer') / file_name, 'r') as infile:
+        with open(cls._data_path('indexer', file_name), 'r') as infile:
             return json.load(infile)
 
 
