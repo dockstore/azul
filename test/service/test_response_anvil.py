@@ -892,7 +892,7 @@ class TestAnvilResponse(AnvilIndexerTestCase, WebServiceTestCase):
                             }
                         ],
                         'datasets': [
-                            {}
+                            {'duos_id': ['DUOS-000000']}
                         ],
                         'diagnoses': [],
                         'donors': [],
@@ -1220,7 +1220,8 @@ class TestAnvilResponse(AnvilIndexerTestCase, WebServiceTestCase):
                                     None
                                 ],
                                 'accessible': True,
-                                'description': 'Study description from DUOS'
+                                'description': 'Study description from DUOS',
+                                'duos_id': 'DUOS-000000'
                             }
                         ],
                         'diagnoses': [
