@@ -118,7 +118,9 @@ from azul.strings import (
 from azul.types import (
     JSON,
     JSONs,
+    MutableCompositeJSON,
     MutableJSON,
+    MutableJSONs,
 )
 from indexer import (
     AnvilCannedBundleTestCase,
@@ -147,13 +149,17 @@ class CannedManifestTestCase(CannedFileTestCase):
     def _canned_manifest_path(self, *path: str) -> Path:
         return self._data_path('service', 'manifest', *path)
 
-    def _load_canned_manifest(self, *path: str) -> MutableJSON:
+    def _load_canned_manifest(self, *path: str) -> MutableCompositeJSON:
         with open(self._canned_manifest_path(*path)) as f:
-            return json.load(f)
+            manifest = json.load(f)
+        assert isinstance(manifest, (dict, list)), type(manifest)
+        return manifest
 
-    def _load_canned_pfb(self, *path: str) -> tuple[MutableJSON, MutableJSON]:
+    def _load_canned_pfb(self, *path: str) -> tuple[MutableJSON, MutableJSONs]:
         schema = self._load_canned_manifest(*path, 'pfb_schema.json')
+        assert isinstance(schema, dict), type(schema)
         entities = self._load_canned_manifest(*path, 'pfb_entities.json')
+        assert isinstance(entities, list), type(entities)
         return schema, entities
 
     def _assert_pfb_schema(self, schema):
