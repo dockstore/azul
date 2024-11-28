@@ -2124,13 +2124,26 @@ class TestAnvilManifests(AnvilManifestTestCase):
         ]
         self._assert_tsv(expected, response)
 
+    dataset_id_filters: FiltersJSON = {
+        'datasets.dataset_id': {'is': ['52ee7665-7033-63f2-a8d9-ce8e32666739']}
+    }
+
+    dataset_title_filters: FiltersJSON = {
+        'datasets.title': {'is': ['ANVIL_CMG_UWASH_DS_BDIS']}
+    }
+
+    neutral_file_filters: FiltersJSON = {
+        'files.is_supplementary': {'is': [True, False]}
+    }
+
     def test_verbatim_jsonl_manifest(self):
         all_entities, linked_entities = self._canned_entities()
         cases = [
-            ({}, False),
-            ({'datasets.title': {'is': ['ANVIL_CMG_UWASH_DS_BDIS']}}, False),
-            # Orphans should be included only when filtering by dataset ID
-            ({'datasets.dataset_id': {'is': ['52ee7665-7033-63f2-a8d9-ce8e32666739']}}, True)
+            ({}, True),
+            (self.dataset_title_filters, True),
+            (self.dataset_id_filters, True),
+            (self.neutral_file_filters, False),
+            ({**self.neutral_file_filters, **self.dataset_title_filters}, False),
         ]
         for filters, expect_orphans in cases:
             with self.subTest(filters=filters):
@@ -2169,7 +2182,13 @@ class TestAnvilManifests(AnvilManifestTestCase):
             self._assert_pfb(expected_schema, expected_entities, response)
 
         with self.subTest(orphans=True):
-            test({'datasets.dataset_id': {'is': ['52ee7665-7033-63f2-a8d9-ce8e32666739']}})
+            for filters in [
+                {},
+                self.dataset_id_filters,
+                self.dataset_title_filters
+            ]:
+                with self.subTest(filters=filters):
+                    test(filters)
 
         with self.subTest(orphans=False):
             # Dynamically edit out references to the orphaned entities (and
@@ -2195,7 +2214,12 @@ class TestAnvilManifests(AnvilManifestTestCase):
                 filtered = [e for e in part if e['name'] != 'non_schema_orphan_table']
                 assert len(filtered) < len(part), 'Expected to filter orphan references'
                 part[:] = filtered
-            test({})
+            for filters in [
+                self.neutral_file_filters,
+                {**self.neutral_file_filters, **self.dataset_title_filters}
+            ]:
+                with self.subTest(filters=filters):
+                    test(filters)
 
 
 class TestPFB(CannedManifestTestCase):
