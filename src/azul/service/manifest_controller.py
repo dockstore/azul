@@ -163,7 +163,7 @@ class ManifestController(SourceController):
                     execution_id = manifest_key.hash
                     # ManifestGenerationState is also JSON but there is no way
                     # to express that since TypedDict rejects a co-parent class.
-                    input: JSON = cast(JSON, state)
+                    input = cast(JSON, state)
                     token = self.async_service.start_generation(execution_id, input)
                 else:
                     # A cache hit
