@@ -96,6 +96,9 @@ from azul.bytes import (
     azul_urlsafe_b64decode,
     azul_urlsafe_b64encode,
 )
+from azul.collections import (
+    getitem,
+)
 from azul.deployment import (
     aws,
 )
@@ -2052,7 +2055,7 @@ class VerbatimManifestGenerator(FileBasedManifestGenerator, metaclass=ABCMeta):
             document_ids = [
                 document_id
                 for entity_type in self.hot_entity_types
-                for inner_entity in hit['contents'].to_dict().get(entity_type, ())
+                for inner_entity in getitem(hit['contents'], entity_type, ())
                 for document_id in always_iterable(inner_entity['document_id'])
             ]
             yield self.ReplicaKeys(hub_id=hit['entity_id'],
