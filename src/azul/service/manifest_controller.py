@@ -112,23 +112,29 @@ class ManifestController(SourceController):
         else:
             assert False, type(result)
 
+    def _unpack_token_or_key(self,
+                             token_or_key: str
+                             ) -> tuple[Token | None, SignedManifestKey | None]:
+        if token_or_key is None:
+            return None, None
+        else:
+            try:
+                return Token.decode(token_or_key), None
+            except InvalidTokenError:
+                try:
+                    return None, SignedManifestKey.decode(token_or_key)
+                except InvalidManifestKey:
+                    # The OpenAPI spec doesn't distinguish key and token
+                    raise BadRequestError('Invalid token')
+
     def get_manifest_async(self,
                            *,
                            token_or_key: str,
                            query_params: Mapping[str, str],
                            fetch: bool,
                            authentication: Optional[Authentication]):
-        if token_or_key is None:
-            token, manifest_key = None, None
-        else:
-            try:
-                token, manifest_key = Token.decode(token_or_key), None
-            except InvalidTokenError:
-                try:
-                    token, manifest_key = None, SignedManifestKey.decode(token_or_key)
-                except InvalidManifestKey:
-                    # The OpenAPI spec doesn't distinguish key and token
-                    raise BadRequestError('Invalid token')
+
+        token, manifest_key = self._unpack_token_or_key(token_or_key)
 
         if token is None:
             if manifest_key is None:
@@ -169,6 +175,7 @@ class ManifestController(SourceController):
                 except InvalidManifestKeySignature:
                     raise BadRequestError('Invalid token')
         else:
+            assert manifest_key is None, manifest_key
             try:
                 token_or_state = self.async_service.inspect_generation(token)
             except NoSuchGeneration:
