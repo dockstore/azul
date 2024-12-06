@@ -37,7 +37,6 @@ from more_itertools import (
 
 from azul import (
     JSON,
-    RequirementError,
 )
 from azul.indexer.document import (
     EntityReference,
@@ -783,19 +782,14 @@ class TestSchema(AzulUnitTestCase):
 
     def test_invalid_schema_domain(self):
         json_body = self._entity_json(schema_domain='foo.humancellatlas.org')
-        with self.assertRaises(RequirementError) as cm:
+        with self.assertRaises(AssertionError) as cm:
             Protocol.from_json(json_body)
         expected = (
             'Unexpected schema domain',
             furl('https://foo.humancellatlas.org/type/protocol/7.1.0/protocol'),
-            [
-                'schema.humancellatlas.org',
-                'schema.dev.data.humancellatlas.org',
-                'schema.staging.data.humancellatlas.org',
-                'schema.integration.data.humancellatlas.org'
-            ]
+            self.valid_schema_domains
         )
-        self.assertEqual(expected, cm.exception.args)
+        self.assertEqual(expected, cm.exception.args[0].args)
 
 
 def load_tests(_loader, tests, _ignore):

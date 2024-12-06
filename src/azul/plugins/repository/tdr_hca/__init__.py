@@ -67,6 +67,9 @@ from azul.types import (
     JSONs,
     is_optional,
 )
+from humancellatlas.data.metadata.api import (
+    Entity,
+)
 
 log = logging.getLogger(__name__)
 
@@ -189,6 +192,7 @@ class TDRHCABundle(HCABundle[TDRBundleFQID], TDRBundle):
             self.stitched.add(entity.entity_id)
         if entity.entity_type.endswith('_file'):
             descriptor = json.loads(row['descriptor'])
+            Entity.validate_described_by(descriptor)
             self._add_manifest_entry(entity,
                                      name=row['file_name'],
                                      uuid=descriptor['file_id'],
