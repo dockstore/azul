@@ -91,7 +91,6 @@ zones_by_domain = {
 api_gateway_log_format = {
     'accountId': '$context.accountId',
     'apiId': '$context.apiId',
-    'awsEndpointRequestId': '$context.awsEndpointRequestId',
     'domainName': '$context.domainName',
     'domainPrefix': '$context.domainPrefix',
     'error_message': '$context.error.message',
@@ -105,7 +104,6 @@ api_gateway_log_format = {
     'integration_latency': '$context.integration.latency',
     'integration_requestId': '$context.integration.requestId',
     'integration_status': '$context.integration.status',
-    'integrationLatency': '$context.integrationLatency',
     'integrationStatus': '$context.integrationStatus',
     'path': '$context.path',
     'protocol': '$context.protocol',
