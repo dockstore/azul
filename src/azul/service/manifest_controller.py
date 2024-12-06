@@ -209,6 +209,7 @@ class ManifestController(SourceController):
         body: dict[str, int | str | FlatJSON]
 
         if manifest is None:
+            assert token is not None
             url = self.manifest_url_func(fetch=fetch, token_or_key=token.encode())
             body = {
                 'Status': 301,
