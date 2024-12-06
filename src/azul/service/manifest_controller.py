@@ -138,6 +138,9 @@ class ManifestController(SourceController):
 
         if token is None:
             if manifest_key is None:
+                # Neither a token representing an ongoing execution was given,
+                # nor the key of an already cached manifest. There could still
+                # be a cached manifest, so we'll need to look it up.
                 format = ManifestFormat(query_params['format'])
                 catalog = query_params.get('catalog', config.default_catalog)
                 filters = self.get_filters(catalog, authentication, query_params.get('filters'))
@@ -146,7 +149,9 @@ class ManifestController(SourceController):
                                                                 catalog=catalog,
                                                                 filters=filters)
                 except CachedManifestNotFound as e:
+                    # A cache miss, but the exception tells us the cache key
                     manifest, manifest_key = None, e.manifest_key
+                    # Prepare the execution that will generate the manifest
                     partition = ManifestPartition.first()
                     state: ManifestGenerationState = {
                         'filters': filters.to_json(),
@@ -161,8 +166,12 @@ class ManifestController(SourceController):
                     input: JSON = cast(JSON, state)
                     token = self.async_service.start_generation(execution_id, input)
                 else:
+                    # A cache hit
                     manifest_key = manifest.manifest_key
             else:
+                # The client passed the key of a cached manifest, originating
+                # from the final 302 response to a fetch request for a curl
+                # manifest (see below).
                 if fetch:
                     raise BadRequestError('The fetch endpoint does not support a manifest key')
                 if authentication is not None:
@@ -171,10 +180,14 @@ class ManifestController(SourceController):
                     manifest_key = self.service.verify_manifest_key(manifest_key)
                     manifest = self.service.get_cached_manifest_with_key(manifest_key)
                 except CachedManifestNotFound:
+                    # We can't restart the execution to regenerate the manifest
+                    # because we don't know the parameters that were used to
+                    # create it. So the client will have to do it.
                     raise GoneError('The requested manifest has expired, please request a new one')
                 except InvalidManifestKeySignature:
                     raise BadRequestError('Invalid token')
         else:
+            # A token for an ongoing execution was given
             assert manifest_key is None, manifest_key
             try:
                 token_or_state = self.async_service.inspect_generation(token)
@@ -183,8 +196,10 @@ class ManifestController(SourceController):
             except GenerationFailed as e:
                 raise ChaliceViewError('Failed to generate manifest', e.status, e.output)
             if isinstance(token_or_state, Token):
+                # Execution is still ongoing, we got an updated token
                 token, manifest, manifest_key = token_or_state, None, None
             elif isinstance(token_or_state, dict):
+                # Eecution is done, a cached manifest should be ready
                 state = token_or_state
                 manifest = Manifest.from_json(state['manifest'])
                 manifest_key = manifest.manifest_key
