@@ -156,7 +156,9 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
     @mock.patch.object(ManifestService, 'get_cached_manifest')
     @mock.patch.object(ManifestService, 'verify_manifest_key')
     @mock.patch.object(ManifestService, 'get_cached_manifest_with_key')
+    @mock.patch.object(ManifestService, 'get_manifest_url')
     def test(self,
+             get_manifest_url,
              get_cached_manifest_with_key,
              verify_manifest_key,
              get_cached_manifest,
@@ -193,7 +195,7 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
 
                     object_url = 'https://url.to.manifest?foo=bar'
                     file_name = 'some_file_name'
-                    manifest = Manifest(location=object_url,
+                    manifest = Manifest(object_key='key/of/manifest',
                                         was_cached=False,
                                         format=format,
                                         manifest_key=manifest_key,
@@ -279,6 +281,7 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                             _sfn.describe_execution.return_value = {'status': 'SUCCEEDED'}
                         elif i == 2:
                             get_manifest.return_value = manifest
+                            get_manifest_url.return_value = object_url
                             _sfn.start_execution.assert_not_called()
                             _sfn.describe_execution.assert_called_once()
                             _sfn.reset_mock()

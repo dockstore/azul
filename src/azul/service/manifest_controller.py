@@ -218,7 +218,7 @@ class ManifestController(SourceController):
                 manifest_key = self.service.sign_manifest_key(manifest_key)
                 url = self.manifest_url_func(fetch=False, token_or_key=manifest_key.encode())
             else:
-                url = furl(manifest.location)
+                url = furl(self.service.get_manifest_url(manifest))
             body = {
                 'Status': 302,
                 'Location': str(url),

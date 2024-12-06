@@ -405,8 +405,9 @@ class Manifest:
     """
     Contains the details of a prepared manifest.
     """
-    #: The URL of the manifest file.
-    location: str
+    #: The S3 object key under which the manifest is stored in the storage
+    #: bucket
+    object_key: str
 
     #: True if an existing manifest was reused or False if a new manifest was
     #: generated.
@@ -415,7 +416,7 @@ class Manifest:
     #: The format of the manifest
     format: ManifestFormat
 
-    #: The key under which the manifest is stored
+    #: Uniquely identifies this manifest
     manifest_key: ManifestKey
 
     #: The proposed file name of the manifest when downloading it to a user's
@@ -424,7 +425,7 @@ class Manifest:
 
     def to_json(self) -> JSON:
         return {
-            'location': self.location,
+            'object_key': self.object_key,
             'was_cached': self.was_cached,
             'format': self.format.value,
             'manifest_key': self.manifest_key.to_json(),
@@ -433,7 +434,7 @@ class Manifest:
 
     @classmethod
     def from_json(cls, json: JSON) -> 'Manifest':
-        return cls(location=json['location'],
+        return cls(object_key=json['object_key'],
                    was_cached=json['was_cached'],
                    format=ManifestFormat(json['format']),
                    manifest_key=ManifestKey.from_json(json['manifest_key']),
@@ -637,10 +638,10 @@ class ManifestService(ElasticsearchService):
                            ) -> Manifest | ManifestPartition:
         partition = generator.write(manifest_key, partition)
         if partition.is_last:
-            return self._presign_manifest(generator_cls=type(generator),
-                                          manifest_key=manifest_key,
-                                          file_name=partition.file_name,
-                                          was_cached=False)
+            return self._make_manifest(generator_cls=type(generator),
+                                       manifest_key=manifest_key,
+                                       file_name=partition.file_name,
+                                       was_cached=False)
         else:
             return partition
 
@@ -695,26 +696,29 @@ class ManifestService(ElasticsearchService):
         if file_name is None:
             raise CachedManifestNotFound(manifest_key)
         else:
-            return self._presign_manifest(generator_cls=generator_cls,
-                                          manifest_key=manifest_key,
-                                          file_name=file_name,
-                                          was_cached=True)
+            return self._make_manifest(generator_cls=generator_cls,
+                                       manifest_key=manifest_key,
+                                       file_name=file_name,
+                                       was_cached=True)
 
-    def _presign_manifest(self,
-                          generator_cls: Type['ManifestGenerator'],
-                          manifest_key: ManifestKey,
-                          file_name: Optional[str],
-                          was_cached: bool
-                          ) -> Manifest:
+    def _make_manifest(self,
+                       generator_cls: Type['ManifestGenerator'],
+                       manifest_key: ManifestKey,
+                       file_name: Optional[str],
+                       was_cached: bool
+                       ) -> Manifest:
         if not generator_cls.use_content_disposition_file_name:
             file_name = None
         object_key = generator_cls.s3_object_key(manifest_key)
-        presigned_url = self.storage_service.get_presigned_url(object_key, file_name)
-        return Manifest(location=presigned_url,
+        return Manifest(object_key=object_key,
                         was_cached=was_cached,
                         format=generator_cls.format(),
                         manifest_key=manifest_key,
                         file_name=file_name)
+
+    def get_manifest_url(self, manifest: Manifest) -> str:
+        return self.storage_service.get_presigned_url(key=manifest.object_key,
+                                                      file_name=manifest.file_name)
 
     file_name_tag = 'azul_file_name'
 

@@ -225,11 +225,11 @@ class ManifestTestCase(WebServiceTestCase,
                       ) -> Response:
         manifest, num_partitions = self._get_manifest_object(format, filters)
         self.assertEqual(1, num_partitions)
-        response = requests.get(manifest.location, stream=stream)
+        url = furl(self._service.get_manifest_url(manifest))
+        response = requests.get(str(url), stream=stream)
         # Moto doesn't support signed S3 URLs with Content-Disposition baked in,
         # so we'll retroactively inject it into the response header.
-        location = furl(manifest.location)
-        content_disposition = location.args.get('response-content-disposition')
+        content_disposition = url.args.get('response-content-disposition')
         if content_disposition is not None:
             response.headers['content-disposition'] = content_disposition
         return response
@@ -1373,9 +1373,9 @@ class TestManifests(DCP1ManifestTestCase):
                         manifest, num_partitions = self._get_manifest_object(format, filters)
                         self.assertFalse(manifest.was_cached)
                         self.assertEqual(1, num_partitions)
-                        query = furl(manifest.location).query
+                        url = furl(self._service.get_manifest_url(manifest))
                         expected_cd = f'attachment;filename="{expected_name}.tsv"'
-                        actual_cd = query.params['response-content-disposition']
+                        actual_cd = url.args['response-content-disposition']
                         self.assertEqual(expected_cd, actual_cd)
 
     def test_verbatim_jsonl_manifest(self):
@@ -1591,11 +1591,11 @@ class TestManifestCache(DCP1ManifestTestCase):
         # seconds, the signed URL is going to have a different expiration.
         manifest = attrs.evolve(manifest,
                                 was_cached=True,
-                                location=cached_manifest_1.location)
+                                object_key=cached_manifest_1.object_key)
         self.assertEqual(manifest, cached_manifest_1)
         cached_manifest_2 = self._service.get_cached_manifest_with_key(manifest_key)
         cached_manifest_1 = attrs.evolve(cached_manifest_1,
-                                         location=cached_manifest_2.location)
+                                         object_key=cached_manifest_2.object_key)
         self.assertEqual(cached_manifest_1, cached_manifest_2)
         _time_until_object_expires.assert_called_once()
         _time_until_object_expires.reset_mock()
@@ -1623,7 +1623,9 @@ class TestManifestResponse(DCP1ManifestTestCase):
     @patch.object(ManifestService, 'get_cached_manifest_with_key')
     @patch.object(ManifestService, 'sign_manifest_key')
     @patch.object(ManifestService, 'verify_manifest_key')
+    @patch.object(ManifestService, 'get_manifest_url')
     def test_manifest(self,
+                      get_manifest_url,
                       verify_manifest_key,
                       sign_manifest_key,
                       get_cached_manifest_with_key,
@@ -1642,13 +1644,14 @@ class TestManifestResponse(DCP1ManifestTestCase):
             signed_manifest_key = SignedManifestKey(value=manifest_key, signature=b'123')
             sign_manifest_key.return_value = signed_manifest_key
             verify_manifest_key.return_value = manifest_key
-            manifest = Manifest(location=str(object_url),
+            manifest = Manifest(object_key='key/of/manifest',
                                 was_cached=False,
                                 format=format,
                                 manifest_key=manifest_key,
                                 file_name=default_file_name)
             get_cached_manifest.return_value = manifest
             get_cached_manifest_with_key.return_value = manifest
+            get_manifest_url.return_value = object_url
             args = dict(catalog=self.catalog,
                         format=format.value,
                         filters='{}')
@@ -1726,7 +1729,8 @@ class TestManifestPartitioning(DCP1ManifestTestCase, DocumentCloningTestCase):
         with patch.object(PagedManifestGenerator, 'part_size', part_size):
             manifest, num_partitions = self._get_manifest_object(ManifestFormat.compact,
                                                                  filters={})
-        content = requests.get(manifest.location).content
+        url = self._service.get_manifest_url(manifest)
+        content = requests.get(url).content
         self.assertGreater(num_partitions, 1)
         self.assertGreater(len(content), (num_partitions - 1) * part_size)
 
