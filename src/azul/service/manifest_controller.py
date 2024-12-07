@@ -160,7 +160,7 @@ class ManifestController(SourceController):
                     }
                     # Manifest keys for catalogs with long names would be too
                     # long to be used directly as state machine execution names.
-                    execution_id = manifest_key.hash
+                    execution_id = manifest_key.uuid
                     # ManifestGenerationState is also JSON but there is no way
                     # to express that since TypedDict rejects a co-parent class.
                     input = cast(JSON, state)

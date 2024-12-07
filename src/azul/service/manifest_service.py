@@ -17,9 +17,6 @@ import csv
 from datetime import (
     datetime,
 )
-from hashlib import (
-    sha256,
-)
 from inspect import (
     isabstract,
 )
@@ -48,6 +45,7 @@ from tempfile import (
 )
 import time
 from typing import (
+    ClassVar,
     IO,
     Optional,
     Protocol,
@@ -149,6 +147,9 @@ from azul.types import (
     JSON,
     JSONs,
     MutableJSON,
+)
+from azul.uuids import (
+    uuid5_for_bytes,
 )
 from azul.vendored.frozendict import (
     frozendict,
@@ -390,9 +391,11 @@ class ManifestKey(BareManifestKey):
                    manifest_hash=UUID(json['manifest_hash']),
                    source_hash=UUID(json['source_hash']))
 
+    _uuid_namespace: ClassVar[UUID] = UUID('c5a0cd95-44f7-4216-972f-623f00f8fd22')
+
     @property
-    def hash(self) -> bytes:
-        return sha256(self.pack()).digest()
+    def uuid(self) -> UUID:
+        return uuid5_for_bytes(self._uuid_namespace, self.pack())
 
 
 @attrs.frozen

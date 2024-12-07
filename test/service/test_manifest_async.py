@@ -70,7 +70,7 @@ def setUpModule():
 
 @patch.object(AsyncManifestService, '_sfn')
 class TestAsyncManifestService(AzulUnitTestCase):
-    execution_id = b'42'
+    execution_id = UUID('1ea94a54-a64d-54f1-8b41-15455fb958db')
 
     def test_token_encoding(self, _sfn):
         token = Token(execution_id=self.execution_id, request_index=42, retry_after=123)
@@ -148,7 +148,7 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
     def lambda_name(cls) -> str:
         return 'service'
 
-    execution_id = b'42'
+    execution_id = UUID('1ea94a54-a64d-54f1-8b41-15455fb958db')
 
     @mock_aws
     @mock.patch.object(AsyncManifestService, '_sfn')
@@ -226,7 +226,7 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                                                           partition=partitions[0].to_json())
                     service: AsyncManifestService
                     service = self.app_module.app.manifest_controller.async_service
-                    execution_id = manifest_key.hash
+                    execution_id = manifest_key.uuid
                     execution_name = service.execution_name(execution_id)
                     machine_arn = service.machine_arn
                     execution_arn = service.execution_arn(execution_name)
