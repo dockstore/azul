@@ -234,73 +234,80 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                         'executionArn': execution_arn,
                         'startDate': 123
                     }
-                    url = initial_url
-                    for i, expected_status in enumerate(3 * [301] + [302]):
-                        response = requests.request(method='PUT' if i == 0 else 'GET',
+
+                    def request(method: str, url: furl, *, expect: int) -> furl:
+                        response = requests.request(method=method,
                                                     url=str(url),
                                                     allow_redirects=False)
                         if fetch:
                             self.assertEqual(200, response.status_code)
                             response = response.json()
-                            self.assertEqual(expected_status, response.pop('Status'))
+                            self.assertEqual(expect, response.pop('Status'))
                             headers = response
                         else:
-                            self.assertEqual(expected_status, response.status_code)
+                            self.assertEqual(expect, response.status_code)
                             headers = response.headers
-                        if expected_status == 301:
+                        if expect == 301:
                             self.assertGreaterEqual(int(headers['Retry-After']), 0)
-                        url = furl(headers['Location'])
-                        if i == 0:
-                            state: ManifestGenerationState = input
-                            _sfn.start_execution.assert_called_once_with(
-                                stateMachineArn=machine_arn,
-                                name=execution_name,
-                                input=json.dumps(input)
-                            )
-                            _sfn.describe_execution.assert_not_called()
-                            _sfn.reset_mock()
-                            _sfn.describe_execution.return_value = {'status': 'RUNNING'}
-                            token_url = url
-                        elif i == 1:
-                            get_manifest.return_value = partitions[1]
-                            state = self.app_module.generate_manifest(state, None)
-                            self.assertEqual(partitions[1],
-                                             ManifestPartition.from_json(state['partition']))
-                            get_manifest.assert_called_once_with(
-                                format=format,
-                                catalog=self.catalog,
-                                filters=Filters.from_json(state['filters']),
-                                partition=partitions[0],
-                                manifest_key=ManifestKey.from_json(state['manifest_key'])
-                            )
-                            get_manifest.reset_mock()
-                            _sfn.start_execution.assert_not_called()
-                            _sfn.describe_execution.assert_called_once()
-                            _sfn.reset_mock()
-                            # simulate absence of output due eventual consistency
-                            _sfn.describe_execution.return_value = {'status': 'SUCCEEDED'}
-                        elif i == 2:
-                            get_manifest.return_value = manifest
-                            get_manifest_url.return_value = object_url
-                            _sfn.start_execution.assert_not_called()
-                            _sfn.describe_execution.assert_called_once()
-                            _sfn.reset_mock()
-                            _sfn.describe_execution.return_value = {
-                                'status': 'SUCCEEDED',
-                                'input': json.dumps(input),
-                                'output': json.dumps(
-                                    self.app_module.generate_manifest(state, None)
-                                )
-                            }
-                        elif i == 3:
-                            get_manifest.assert_called_once_with(
-                                format=format,
-                                catalog=self.catalog,
-                                filters=Filters.from_json(state['filters']),
-                                partition=partitions[1],
-                                manifest_key=ManifestKey.from_json(state['manifest_key'])
-                            )
-                            get_manifest.reset_mock()
+                        return furl(headers['Location'])
+
+                    url = initial_url
+
+                    url = request('PUT', url, expect=301)
+                    state: ManifestGenerationState = input
+                    _sfn.start_execution.assert_called_once_with(
+                        stateMachineArn=machine_arn,
+                        name=execution_name,
+                        input=json.dumps(input)
+                    )
+                    _sfn.describe_execution.assert_not_called()
+                    _sfn.reset_mock()
+                    _sfn.describe_execution.return_value = {'status': 'RUNNING'}
+                    token_url = url
+
+                    url = request('GET', url, expect=301)
+                    get_manifest.return_value = partitions[1]
+                    state = self.app_module.generate_manifest(state, None)
+                    self.assertEqual(partitions[1],
+                                     ManifestPartition.from_json(state['partition']))
+                    get_manifest.assert_called_once_with(
+                        format=format,
+                        catalog=self.catalog,
+                        filters=Filters.from_json(state['filters']),
+                        partition=partitions[0],
+                        manifest_key=ManifestKey.from_json(state['manifest_key'])
+                    )
+
+                    get_manifest.reset_mock()
+                    _sfn.start_execution.assert_not_called()
+                    _sfn.describe_execution.assert_called_once()
+                    _sfn.reset_mock()
+                    # simulate absence of output due eventual consistency
+                    _sfn.describe_execution.return_value = {'status': 'SUCCEEDED'}
+                    url = request('GET', url, expect=301)
+                    get_manifest.return_value = manifest
+                    get_manifest_url.return_value = object_url
+                    _sfn.start_execution.assert_not_called()
+                    _sfn.describe_execution.assert_called_once()
+                    _sfn.reset_mock()
+
+                    _sfn.describe_execution.return_value = {
+                        'status': 'SUCCEEDED',
+                        'input': json.dumps(input),
+                        'output': json.dumps(
+                            self.app_module.generate_manifest(state, None)
+                        )
+                    }
+                    url = request('GET', url, expect=302)
+                    get_manifest.assert_called_once_with(
+                        format=format,
+                        catalog=self.catalog,
+                        filters=Filters.from_json(state['filters']),
+                        partition=partitions[1],
+                        manifest_key=ManifestKey.from_json(state['manifest_key'])
+                    )
+                    get_manifest.reset_mock()
+
                     _sfn.start_execution.assert_not_called()
                     _sfn.describe_execution.assert_called_once()
                     expect_redirect = fetch and format is ManifestFormat.curl
