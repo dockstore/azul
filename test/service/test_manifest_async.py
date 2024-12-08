@@ -336,25 +336,49 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                     # Re-request the manifest at the initial URL. The manifest
                     # is cached so we expect no intermediate 301 redirects.
                     #
+                    get_cached_manifest.reset_mock()
                     get_cached_manifest.side_effect = None
                     get_cached_manifest.return_value = manifest
                     url = request('PUT', initial_url, expect=302)
+                    get_cached_manifest.assert_called_once_with(
+                        format=format,
+                        catalog=self.catalog,
+                        filters=filters
+                    )
                     self.assertEqual(expected_url, str(url))
 
+                    # Re-request the manifest at a URL with an insignificant
+                    # change to the filters parameter. The cached manifest
+                    # should be reused. Note that this does not cover the
+                    # insensitivity of the manifest key derivation to such
+                    # insignificant differences because we mock the manifest
+                    # service method where that is done. However, this test is
+                    # not supposed to cover the service, only the controller.
+                    #
+                    equivalent_url = initial_url.copy()
+                    equivalent_filters = json.loads(equivalent_url.args['filters'])
+                    equivalent_filters = dict(reversed(equivalent_filters.items()))
+                    equivalent_url.args['filters'] = json.dumps(equivalent_filters)
+                    get_cached_manifest.reset_mock()
+                    url = request('PUT', equivalent_url, expect=302)
+                    self.assertEqual(expected_url, str(url))
+                    get_cached_manifest.assert_called_once_with(
+                        format=format,
+                        catalog=self.catalog,
+                        filters=filters.update(equivalent_filters)
+                    )
+
                     # Expire the cached manifest and repeat the initial request
-                    # but with an insignificant difference to the filters
-                    # parameter. The repeated request should be considered valid
-                    # and matching the completed step function execution.
+                    # with the insignificant difference. The repeated request
+                    # should be considered valid and matching the completed step
+                    # function execution.
                     #
                     get_cached_manifest.side_effect = CachedManifestNotFound(manifest_key)
                     exception = self._mock_sfn_exception(_sfn,
                                                          operation_name='StartExecution',
                                                          error_code='ExecutionAlreadyExists')
                     _sfn.start_execution.side_effect = exception
-                    url = initial_url.copy()
-                    filters = json.loads(url.args['filters'])
-                    url.args['filters'] = json.dumps(dict(reversed(filters.items())))
-                    url = request('PUT', url, expect=301)
+                    url = request('PUT', equivalent_url, expect=301)
                     _sfn.reset_mock(side_effect=True)
                     # FIXME: 404 from S3 when re-requesting manifest after it expired
                     #        https://github.com/DataBiosphere/azul/issues/6441
