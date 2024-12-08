@@ -186,7 +186,6 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                                                format=format,
                                                manifest_hash=UUID('d2b0ce3c-46f0-57fe-b9d4-2e38d8934fd4'),
                                                source_hash=UUID('77936747-5968-588e-809f-af842d6be9e0'))
-                    get_cached_manifest.side_effect = CachedManifestNotFound(manifest_key)
                     signed_manifest_key = SignedManifestKey(value=manifest_key,
                                                             signature=b'123')
 
@@ -251,9 +250,14 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                             self.assertGreaterEqual(int(headers['Retry-After']), 0)
                         return furl(headers['Location'])
 
-                    url = initial_url
-
-                    url = request('PUT', url, expect=301)
+                    # Request the manifest. The cached manifest does not exist
+                    # so we expect a StepFunction execution to be started and a
+                    # 301 redirect to the manifest endpoint with a token
+                    # embedded in the URL.
+                    #
+                    get_cached_manifest.side_effect = CachedManifestNotFound(manifest_key)
+                    url = request('PUT', initial_url, expect=301)
+                    token_url = url
                     state: ManifestGenerationState = input
                     _sfn.start_execution.assert_called_once_with(
                         stateMachineArn=machine_arn,
@@ -262,9 +266,12 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                     )
                     _sfn.describe_execution.assert_not_called()
                     _sfn.reset_mock()
-                    _sfn.describe_execution.return_value = {'status': 'RUNNING'}
-                    token_url = url
 
+                    # Follow the redirect. We expect a call to determine the
+                    # status of the execution, which we mock to be still
+                    # running, and another 301 redirect.
+                    #
+                    _sfn.describe_execution.return_value = {'status': 'RUNNING'}
                     url = request('GET', url, expect=301)
                     get_manifest.return_value = partitions[1]
                     state = self.app_module.generate_manifest(state, None)
@@ -277,12 +284,18 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                         partition=partitions[0],
                         manifest_key=ManifestKey.from_json(state['manifest_key'])
                     )
-
                     get_manifest.reset_mock()
                     _sfn.start_execution.assert_not_called()
                     _sfn.describe_execution.assert_called_once()
                     _sfn.reset_mock()
-                    # simulate absence of output due eventual consistency
+
+                    # Follow the redirect. The StepFunction has finished but the
+                    # output is not yet available due to eventual consistency.
+                    # We observed this behaviour a few years ago, but it
+                    # probably doesn't happen anymore. The output is most likely
+                    # stored on S3 under the hood which strongly consistent a
+                    # while back.
+                    #
                     _sfn.describe_execution.return_value = {'status': 'SUCCEEDED'}
                     url = request('GET', url, expect=301)
                     get_manifest.return_value = manifest
@@ -291,6 +304,12 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                     _sfn.describe_execution.assert_called_once()
                     _sfn.reset_mock()
 
+                    # The StepFunction has finished and the output is available.
+                    # We expect a 302 redirect to either the signed URL of the
+                    # manifest object in S3, or, when fetching a curl manifest,
+                    # a 302 redirect to the non-fetch endpoint with the key of
+                    # the manifest in the URL.
+                    #
                     _sfn.describe_execution.return_value = {
                         'status': 'SUCCEEDED',
                         'input': json.dumps(input),
@@ -307,7 +326,6 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                         manifest_key=ManifestKey.from_json(state['manifest_key'])
                     )
                     get_manifest.reset_mock()
-
                     _sfn.start_execution.assert_not_called()
                     _sfn.describe_execution.assert_called_once()
                     expect_redirect = fetch and format is ManifestFormat.curl
@@ -315,24 +333,27 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                     self.assertEqual(expected_url, str(url))
                     _sfn.reset_mock()
 
-                    # Repeat the initial request while continuing to mock the
-                    # absence of the manifest. The SFN execution is complete so
-                    # this simulates an expired manifest. To satisfy the
-                    # request, a new generation has to be started, and the
-                    # response should be 301 redirect for the new generation.
+                    # Re-request the manifest at the initial URL. The manifest
+                    # is cached so we expect no intermediate 301 redirects.
+                    #
+                    get_cached_manifest.side_effect = None
+                    get_cached_manifest.return_value = manifest
+                    url = request('PUT', initial_url, expect=302)
+                    self.assertEqual(expected_url, str(url))
+
+                    # Expire the cached manifest and repeat the initial request
+                    # but with an insignificant difference to the filters
+                    # parameter. The repeated request should be considered valid
+                    # and matching the completed step function execution.
+                    #
+                    get_cached_manifest.side_effect = CachedManifestNotFound(manifest_key)
                     exception = self._mock_sfn_exception(_sfn,
                                                          operation_name='StartExecution',
                                                          error_code='ExecutionAlreadyExists')
                     _sfn.start_execution.side_effect = exception
-
-                    # Introduce an insignificant difference in the SFN input by
-                    # reordering the `filters` dictionary entries. The repeated
-                    # request should be considered valid and matching the completed
-                    # step function execution.
                     url = initial_url.copy()
                     filters = json.loads(url.args['filters'])
                     url.args['filters'] = json.dumps(dict(reversed(filters.items())))
-
                     response = requests.put(url=str(url), allow_redirects=False)
                     _sfn.reset_mock(side_effect=True)
                     if fetch:
