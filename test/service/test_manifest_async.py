@@ -176,7 +176,7 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                         'format': format.value,
                         'filters': json.dumps(filters.explicit)
                     }
-                    path = '/manifest/files'
+                    path = ['manifest', 'files']
 
                     initial_url = self.base_url.set(path=path, args=params)
                     if fetch:
@@ -189,10 +189,7 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                     signed_manifest_key = SignedManifestKey(value=manifest_key,
                                                             signature=b'123')
 
-                    manifest_url = self.base_url.set(path=path)
-                    manifest_url.path.segments.append(signed_manifest_key.encode())
-
-                    object_url = 'https://url.to.manifest?foo=bar'
+                    object_url = furl('https://url.to.manifest?foo=bar')
                     file_name = 'some_file_name'
                     manifest = Manifest(object_key='key/of/manifest',
                                         was_cached=False,
@@ -299,7 +296,7 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                     _sfn.describe_execution.return_value = {'status': 'SUCCEEDED'}
                     url = request('GET', url, expect=301)
                     get_manifest.return_value = manifest
-                    get_manifest_url.return_value = object_url
+                    get_manifest_url.return_value = str(object_url)
                     _sfn.start_execution.assert_not_called()
                     _sfn.describe_execution.assert_called_once()
                     _sfn.reset_mock()
@@ -328,9 +325,13 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                     get_manifest.reset_mock()
                     _sfn.start_execution.assert_not_called()
                     _sfn.describe_execution.assert_called_once()
-                    expect_redirect = fetch and format is ManifestFormat.curl
-                    expected_url = str(manifest_url) if expect_redirect else object_url
-                    self.assertEqual(expected_url, str(url))
+                    if fetch and format is ManifestFormat.curl:
+                        key_url = self.base_url.set(path=[*path, signed_manifest_key.encode()])
+                        expected_url = key_url
+                    else:
+                        key_url = None
+                        expected_url = object_url
+                    self.assertEqual(expected_url, url)
                     _sfn.reset_mock()
 
                     # Re-request the manifest at the initial URL. The manifest
@@ -345,7 +346,7 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                         catalog=self.catalog,
                         filters=filters
                     )
-                    self.assertEqual(expected_url, str(url))
+                    self.assertEqual(expected_url, url)
 
                     # Re-request the manifest at a URL with an insignificant
                     # change to the filters parameter. The cached manifest
@@ -361,7 +362,7 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                     equivalent_url.args['filters'] = json.dumps(equivalent_filters)
                     get_cached_manifest.reset_mock()
                     url = request('PUT', equivalent_url, expect=302)
-                    self.assertEqual(expected_url, str(url))
+                    self.assertEqual(expected_url, url)
                     get_cached_manifest.assert_called_once_with(
                         format=format,
                         catalog=self.catalog,
@@ -387,22 +388,27 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                     else:
                         self.assertNotEqual(token_url, url)
 
-            assert signed_manifest_key.encode() == manifest_url.path.segments[-1]
-            assert not verify_manifest_key.called
-            verify_manifest_key.return_value = manifest_key
-            assert not get_cached_manifest_with_key.called
-            get_cached_manifest_with_key.return_value = manifest
-            response = requests.get(str(manifest_url), allow_redirects=False)
-            self.assertEqual(302, response.status_code)
-            self.assertEqual(object_url, response.headers['Location'])
-            get_cached_manifest_with_key.side_effect = CachedManifestNotFound(manifest_key)
-            response = requests.get(str(manifest_url), allow_redirects=False)
-            self.assertEqual(410, response.status_code)
-            expected_response = {
-                'Code': 'GoneError',
-                'Message': 'The requested manifest has expired, please request a new one'
-            }
-            self.assertEqual(expected_response, response.json())
+                    # Request the manifest by its key if a URL with that key
+                    # that was the result of the final 302 redirect above. Then
+                    # expire the manifest and request it again.
+                    #
+                    if key_url is not None:
+                        assert signed_manifest_key.encode() == key_url.path.segments[-1]
+                        assert not verify_manifest_key.called
+                        verify_manifest_key.return_value = manifest_key
+                        assert get_cached_manifest_with_key.not_called
+                        get_cached_manifest_with_key.side_effect = None
+                        get_cached_manifest_with_key.return_value = manifest
+                        url = request('GET', key_url, expect=302)
+                        self.assertEqual(object_url, url)
+                        get_cached_manifest_with_key.side_effect = CachedManifestNotFound(manifest_key)
+                        response = requests.get(str(key_url), allow_redirects=False)
+                        self.assertEqual(410, response.status_code)
+                        expected_response = {
+                            'Code': 'GoneError',
+                            'Message': 'The requested manifest has expired, please request a new one'
+                        }
+                        self.assertEqual(expected_response, response.json())
 
     token = Token.first(execution_id).encode()
 
