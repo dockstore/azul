@@ -354,17 +354,14 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                     url = initial_url.copy()
                     filters = json.loads(url.args['filters'])
                     url.args['filters'] = json.dumps(dict(reversed(filters.items())))
-                    response = requests.put(url=str(url), allow_redirects=False)
+                    url = request('PUT', url, expect=301)
                     _sfn.reset_mock(side_effect=True)
-                    if fetch:
-                        self.assertEqual(200, response.status_code)
-                        self.assertEqual(301, response.json()['Status'])
-                    else:
-                        self.assertEqual(301, response.status_code)
                     # FIXME: 404 from S3 when re-requesting manifest after it expired
                     #        https://github.com/DataBiosphere/azul/issues/6441
-                    if False:
-                        self.assertNotEqual(token_url, response.json()['Location'])
+                    if True:
+                        self.assertEqual(token_url, url)
+                    else:
+                        self.assertNotEqual(token_url, url)
 
             assert signed_manifest_key.encode() == manifest_url.path.segments[-1]
             assert not verify_manifest_key.called
