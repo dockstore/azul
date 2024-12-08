@@ -2,6 +2,9 @@ from contextlib import (
     contextmanager,
 )
 import datetime
+from itertools import (
+    product,
+)
 import json
 from typing import (
     ContextManager,
@@ -157,7 +160,9 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
     @mock.patch.object(ManifestService, 'verify_manifest_key')
     @mock.patch.object(ManifestService, 'get_cached_manifest_with_key')
     @mock.patch.object(ManifestService, 'get_manifest_url')
+    @mock.patch.object(ManifestService, 'sign_manifest_key')
     def test(self,
+             sign_manifest_key,
              get_manifest_url,
              get_cached_manifest_with_key,
              verify_manifest_key,
@@ -166,9 +171,9 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
              _sfn):
         with responses.RequestsMock() as helper:
             helper.add_passthru(str(self.base_url))
-            for fetch in (True, False):
-                with self.subTest(fetch=fetch):
-                    format = ManifestFormat.compact
+            for format, fetch in product([ManifestFormat.compact, ManifestFormat.curl],
+                                         [True, False]):
+                with self.subTest(format=format, fetch=fetch):
                     filters = {'organ': {'is': ['lymph node']}, 'fileFormat': {'is': ['txt']}}
                     filters = Filters(explicit=filters, source_ids={self.source.id})
                     params = {
@@ -178,7 +183,7 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                     }
                     path = ['manifest', 'files']
 
-                    initial_url = self.base_url.set(path=path, args=params)
+                    initial_url = self.base_url.set(path=path.copy(), args=params)
                     if fetch:
                         initial_url.path.segments.insert(0, 'fetch')
 
@@ -235,7 +240,7 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                         response = requests.request(method=method,
                                                     url=str(url),
                                                     allow_redirects=False)
-                        if fetch:
+                        if url.path.segments[0] == 'fetch':
                             self.assertEqual(200, response.status_code)
                             response = response.json()
                             self.assertEqual(expect, response.pop('Status'))
@@ -314,7 +319,15 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                             self.app_module.generate_manifest(state, None)
                         )
                     }
+                    if fetch and format is ManifestFormat.curl:
+                        key_url = self.base_url.set(path=[*path, signed_manifest_key.encode()])
+                        expected_url = key_url
+                        sign_manifest_key.return_value = signed_manifest_key
+                    else:
+                        key_url = None
+                        expected_url = object_url
                     url = request('GET', url, expect=302)
+                    self.assertEqual(expected_url, url)
                     get_manifest.assert_called_once_with(
                         format=format,
                         catalog=self.catalog,
@@ -325,13 +338,6 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                     get_manifest.reset_mock()
                     _sfn.start_execution.assert_not_called()
                     _sfn.describe_execution.assert_called_once()
-                    if fetch and format is ManifestFormat.curl:
-                        key_url = self.base_url.set(path=[*path, signed_manifest_key.encode()])
-                        expected_url = key_url
-                    else:
-                        key_url = None
-                        expected_url = object_url
-                    self.assertEqual(expected_url, url)
                     _sfn.reset_mock()
 
                     # Re-request the manifest at the initial URL. The manifest
@@ -396,7 +402,7 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                         assert signed_manifest_key.encode() == key_url.path.segments[-1]
                         assert not verify_manifest_key.called
                         verify_manifest_key.return_value = manifest_key
-                        assert get_cached_manifest_with_key.not_called
+                        assert not get_cached_manifest_with_key.called
                         get_cached_manifest_with_key.side_effect = None
                         get_cached_manifest_with_key.return_value = manifest
                         url = request('GET', key_url, expect=302)
