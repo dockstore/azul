@@ -170,6 +170,9 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
              _sfn):
         for format, fetch in product([ManifestFormat.compact, ManifestFormat.curl],
                                      [True, False]):
+            for v in locals().values():
+                if isinstance(v, mock.Mock):
+                    v.reset_mock(return_value=True, side_effect=True)
             with self.subTest(format=format, fetch=fetch):
                 filters = {'organ': {'is': ['lymph node']}, 'fileFormat': {'is': ['txt']}}
                 filters = Filters(explicit=filters, source_ids={self.source.id})
