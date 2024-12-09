@@ -199,7 +199,7 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                                     manifest_key=manifest_key,
                                     file_name=file_name)
 
-                partitions = (
+                partitions = [
                     ManifestPartition(index=0,
                                       is_last=False,
                                       file_name=None,
@@ -218,7 +218,7 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                                       page_index=512,
                                       is_last_page=False,
                                       search_after=('foo', 'doc#bar'))
-                )
+                ]
                 input: ManifestGenerationState = dict(filters=filters.to_json(),
                                                       manifest_key=manifest_key.to_json(),
                                                       partition=partitions[0].to_json())
