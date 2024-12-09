@@ -52,6 +52,7 @@ from azul.service.manifest_controller import (
     ManifestGenerationState,
 )
 from azul.service.manifest_service import (
+    BareManifestKey,
     CachedManifestNotFound,
     Manifest,
     ManifestKey,
@@ -191,8 +192,10 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                                            format=format,
                                            manifest_hash=UUID('d2b0ce3c-46f0-57fe-b9d4-2e38d8934fd4'),
                                            source_hash=UUID('77936747-5968-588e-809f-af842d6be9e0'))
-                signed_manifest_key = SignedManifestKey(value=manifest_key,
-                                                        signature=b'123')
+                signed_manifest_key = SignedManifestKey(
+                    value=BareManifestKey.unpack(manifest_key.pack()),
+                    signature=b'123'
+                )
 
                 object_url = furl('https://url.to.manifest?foo=bar')
                 file_name = 'some_file_name'
@@ -384,11 +387,13 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                     verify_manifest_key.assert_not_called()
                     verify_manifest_key.return_value = manifest_key
                     get_cached_manifest_with_key.assert_not_called()
-                    get_cached_manifest_with_key.side_effect = None
                     get_cached_manifest_with_key.return_value = manifest
                     url = self._request('GET', key_url, expect=302)
                     self.assertEqual(object_url, url)
+                    verify_manifest_key.assert_called_once_with(signed_manifest_key)
                     get_cached_manifest.assert_not_called()
+                    get_cached_manifest_with_key.assert_called_once_with(manifest_key)
+                    get_cached_manifest_with_key.reset_mock(return_value=True)
                     get_cached_manifest_with_key.side_effect = CachedManifestNotFound(manifest_key)
                     response = requests.get(str(key_url), allow_redirects=False)
                     self.assertEqual(410, response.status_code)
@@ -398,6 +403,8 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                     }
                     self.assertEqual(expected_response, response.json())
                     get_cached_manifest.assert_not_called()
+                    get_cached_manifest_with_key.assert_called_once_with(manifest_key)
+                    get_cached_manifest_with_key.reset_mock()
 
     def _request(self, method: str, url: furl, *, expect: int) -> furl:
         response = requests.request(method=method,
