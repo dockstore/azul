@@ -236,29 +236,13 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                         'startDate': 123
                     }
 
-                    def request(method: str, url: furl, *, expect: int) -> furl:
-                        response = requests.request(method=method,
-                                                    url=str(url),
-                                                    allow_redirects=False)
-                        if url.path.segments[0] == 'fetch':
-                            self.assertEqual(200, response.status_code)
-                            response = response.json()
-                            self.assertEqual(expect, response.pop('Status'))
-                            headers = response
-                        else:
-                            self.assertEqual(expect, response.status_code)
-                            headers = response.headers
-                        if expect == 301:
-                            self.assertGreaterEqual(int(headers['Retry-After']), 0)
-                        return furl(headers['Location'])
-
                     # Request the manifest. The cached manifest does not exist
                     # so we expect a StepFunction execution to be started and a
                     # 301 redirect to the manifest endpoint with a token
                     # embedded in the URL.
                     #
                     get_cached_manifest.side_effect = CachedManifestNotFound(manifest_key)
-                    url = request('PUT', initial_url, expect=301)
+                    url = self._request('PUT', initial_url, expect=301)
                     token_url = url
                     state: ManifestGenerationState = input
                     _sfn.start_execution.assert_called_once_with(
@@ -274,7 +258,7 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                     # running, and another 301 redirect.
                     #
                     _sfn.describe_execution.return_value = {'status': 'RUNNING'}
-                    url = request('GET', url, expect=301)
+                    url = self._request('GET', url, expect=301)
                     get_manifest.return_value = partitions[1]
                     state = self.app_module.generate_manifest(state, None)
                     self.assertEqual(partitions[1],
@@ -299,7 +283,7 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                     # while back.
                     #
                     _sfn.describe_execution.return_value = {'status': 'SUCCEEDED'}
-                    url = request('GET', url, expect=301)
+                    url = self._request('GET', url, expect=301)
                     get_manifest.return_value = manifest
                     get_manifest_url.return_value = str(object_url)
                     _sfn.start_execution.assert_not_called()
@@ -326,7 +310,7 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                     else:
                         key_url = None
                         expected_url = object_url
-                    url = request('GET', url, expect=302)
+                    url = self._request('GET', url, expect=302)
                     self.assertEqual(expected_url, url)
                     get_manifest.assert_called_once_with(
                         format=format,
@@ -346,7 +330,7 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                     get_cached_manifest.reset_mock()
                     get_cached_manifest.side_effect = None
                     get_cached_manifest.return_value = manifest
-                    url = request('PUT', initial_url, expect=302)
+                    url = self._request('PUT', initial_url, expect=302)
                     get_cached_manifest.assert_called_once_with(
                         format=format,
                         catalog=self.catalog,
@@ -367,7 +351,7 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                     equivalent_filters = dict(reversed(equivalent_filters.items()))
                     equivalent_url.args['filters'] = json.dumps(equivalent_filters)
                     get_cached_manifest.reset_mock()
-                    url = request('PUT', equivalent_url, expect=302)
+                    url = self._request('PUT', equivalent_url, expect=302)
                     self.assertEqual(expected_url, url)
                     get_cached_manifest.assert_called_once_with(
                         format=format,
@@ -385,7 +369,7 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                                                          operation_name='StartExecution',
                                                          error_code='ExecutionAlreadyExists')
                     _sfn.start_execution.side_effect = exception
-                    url = request('PUT', equivalent_url, expect=301)
+                    url = self._request('PUT', equivalent_url, expect=301)
                     _sfn.reset_mock(side_effect=True)
                     # FIXME: 404 from S3 when re-requesting manifest after it expired
                     #        https://github.com/DataBiosphere/azul/issues/6441
@@ -405,7 +389,7 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                         assert not get_cached_manifest_with_key.called
                         get_cached_manifest_with_key.side_effect = None
                         get_cached_manifest_with_key.return_value = manifest
-                        url = request('GET', key_url, expect=302)
+                        url = self._request('GET', key_url, expect=302)
                         self.assertEqual(object_url, url)
                         get_cached_manifest_with_key.side_effect = CachedManifestNotFound(manifest_key)
                         response = requests.get(str(key_url), allow_redirects=False)
@@ -415,6 +399,22 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                             'Message': 'The requested manifest has expired, please request a new one'
                         }
                         self.assertEqual(expected_response, response.json())
+
+    def _request(self, method: str, url: furl, *, expect: int) -> furl:
+        response = requests.request(method=method,
+                                    url=str(url),
+                                    allow_redirects=False)
+        if url.path.segments[0] == 'fetch':
+            self.assertEqual(200, response.status_code)
+            response = response.json()
+            self.assertEqual(expect, response.pop('Status'))
+            headers = response
+        else:
+            self.assertEqual(expect, response.status_code)
+            headers = response.headers
+        if expect == 301:
+            self.assertGreaterEqual(int(headers['Retry-After']), 0)
+        return furl(headers['Location'])
 
     token = Token.first(execution_id).encode()
 
