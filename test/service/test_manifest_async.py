@@ -381,9 +381,9 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                 #
                 if key_url is not None:
                     assert signed_manifest_key.encode() == key_url.path.segments[-1]
-                    assert not verify_manifest_key.called
+                    verify_manifest_key.assert_not_called()
                     verify_manifest_key.return_value = manifest_key
-                    assert not get_cached_manifest_with_key.called
+                    get_cached_manifest_with_key.assert_not_called()
                     get_cached_manifest_with_key.side_effect = None
                     get_cached_manifest_with_key.return_value = manifest
                     url = self._request('GET', key_url, expect=302)
