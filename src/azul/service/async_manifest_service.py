@@ -2,9 +2,7 @@ import base64
 import json
 import logging
 from typing import (
-    Optional,
     Self,
-    Union,
 )
 from uuid import (
     UUID,
@@ -73,7 +71,7 @@ class Token:
                    request_index=0,
                    retry_after=cls._next_retry_after(0))
 
-    def next(self, *, retry_after: Optional[int] = None) -> Self:
+    def next(self, *, retry_after: int | None = None) -> Self:
         if retry_after is None:
             retry_after = self._next_retry_after(self.request_index)
         return attrs.evolve(self,
@@ -97,7 +95,7 @@ class NoSuchGeneration(Exception):
 @attrs.frozen(kw_only=True)
 class GenerationFailed(Exception):
     status: str = strict_auto()
-    output: Optional[str] = strict_auto()
+    output: str | None = strict_auto()
 
 
 @attrs.frozen
@@ -155,7 +153,7 @@ class AsyncManifestService:
             log.info('Started execution %r or it was already running', execution_arn)
             return token
 
-    def inspect_generation(self, token: Token) -> Union[Token, JSON]:
+    def inspect_generation(self, token: Token) -> Token | JSON:
         execution_name = self.execution_name(token.execution_id)
         execution_arn = self.execution_arn(execution_name)
         try:
