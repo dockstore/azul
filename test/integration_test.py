@@ -660,7 +660,7 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
         else:
             urls = [furl(r.headers['Location']) for r in responses if r.status == 301]
         tokens = {Token.decode(url.path.segments[-1]) for url in urls}
-        execution_ids = {token.execution_id for token in tokens}
+        execution_ids = {token.generation_id for token in tokens}
         return execution_ids
 
     def _get_one_inner_file(self, catalog: CatalogName) -> tuple[JSON, FileInnerEntity]:

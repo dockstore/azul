@@ -73,14 +73,14 @@ def setUpModule():
 
 @patch.object(AsyncManifestService, '_sfn')
 class TestAsyncManifestService(AzulUnitTestCase):
-    execution_id = UUID('1ea94a54-a64d-54f1-8b41-15455fb958db')
+    generation_id = UUID('1ea94a54-a64d-54f1-8b41-15455fb958db')
 
     def test_token_encoding(self, _sfn):
-        token = Token(execution_id=self.execution_id, request_index=42, retry_after=123)
+        token = Token(generation_id=self.generation_id, request_index=42, retry_after=123)
         self.assertEqual(token, Token.decode(token.encode()))
 
     def test_token_validation(self, _sfn):
-        token = Token(execution_id=self.execution_id, request_index=42, retry_after=123)
+        token = Token(generation_id=self.generation_id, request_index=42, retry_after=123)
         self.assertRaises(InvalidTokenError, token.decode, token.encode()[:-1])
 
     def test_status_success(self, _sfn):
@@ -89,7 +89,7 @@ class TestAsyncManifestService(AzulUnitTestCase):
         manifest
         """
         service = AsyncManifestService()
-        execution_name = service.execution_name(self.execution_id)
+        execution_name = service.execution_name(self.generation_id)
         output = {'foo': 'bar'}
         _sfn.describe_execution.return_value = {
             'executionArn': service.execution_arn(execution_name),
@@ -101,7 +101,7 @@ class TestAsyncManifestService(AzulUnitTestCase):
             'input': '{"filters": {}}',
             'output': json.dumps(output)
         }
-        token = Token(execution_id=self.execution_id, request_index=0, retry_after=0)
+        token = Token(generation_id=self.generation_id, request_index=0, retry_after=0)
         actual_output = service.inspect_generation(token)
         self.assertEqual(output, actual_output)
 
@@ -111,7 +111,7 @@ class TestAsyncManifestService(AzulUnitTestCase):
         checking the job status
         """
         service = AsyncManifestService()
-        execution_name = service.execution_name(self.execution_id)
+        execution_name = service.execution_name(self.generation_id)
         _sfn.describe_execution.return_value = {
             'executionArn': service.execution_arn(execution_name),
             'stateMachineArn': service.machine_arn,
@@ -120,9 +120,9 @@ class TestAsyncManifestService(AzulUnitTestCase):
             'startDate': datetime.datetime(2018, 11, 15, 18, 30, 44, 896000),
             'input': '{"filters": {}}'
         }
-        token = Token(execution_id=self.execution_id, request_index=0, retry_after=0)
+        token = Token(generation_id=self.generation_id, request_index=0, retry_after=0)
         token = service.inspect_generation(token)
-        expected = Token(execution_id=self.execution_id, request_index=1, retry_after=1)
+        expected = Token(generation_id=self.generation_id, request_index=1, retry_after=1)
         self.assertEqual(expected, token)
 
     def test_status_failed(self, _sfn):
@@ -130,7 +130,7 @@ class TestAsyncManifestService(AzulUnitTestCase):
         A failed manifest job should raise a GenerationFailed
         """
         service = AsyncManifestService()
-        execution_name = service.execution_name(self.execution_id)
+        execution_name = service.execution_name(self.generation_id)
         _sfn.describe_execution.return_value = {
             'executionArn': service.execution_arn(execution_name),
             'stateMachineArn': service.machine_arn,
@@ -140,7 +140,7 @@ class TestAsyncManifestService(AzulUnitTestCase):
             'stopDate': datetime.datetime(2018, 11, 14, 16, 6, 55, 860000),
             'input': '{"filters": {"organ": {"is": ["lymph node"]}}}',
         }
-        token = Token(execution_id=self.execution_id, request_index=0, retry_after=0)
+        token = Token(generation_id=self.generation_id, request_index=0, retry_after=0)
         with self.assertRaises(GenerationFailed):
             service.inspect_generation(token)
 
@@ -151,7 +151,7 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
     def lambda_name(cls) -> str:
         return 'service'
 
-    execution_id = UUID('1ea94a54-a64d-54f1-8b41-15455fb958db')
+    generation_id = UUID('1ea94a54-a64d-54f1-8b41-15455fb958db')
 
     @mock_aws
     @mock.patch.object(AsyncManifestService, '_sfn')
@@ -231,8 +231,8 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                              partition=partitions[0].to_json())
                 service: AsyncManifestService
                 service = self.app_module.app.manifest_controller.async_service
-                execution_id = manifest_key.uuid
-                execution_name = service.execution_name(execution_id)
+                generation_id = manifest_key.uuid
+                execution_name = service.execution_name(generation_id)
                 machine_arn = service.machine_arn
                 execution_arn = service.execution_arn(execution_name)
                 _sfn.start_execution.return_value = {
@@ -422,7 +422,7 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
             self.assertGreaterEqual(int(headers['Retry-After']), 0)
         return furl(headers['Location'])
 
-    token = Token.first(execution_id).encode()
+    token = Token.first(generation_id).encode()
 
     def _test(self, *, expected_status, token=token):
         url = self.base_url.set(path=['fetch', 'manifest', 'files', token])

@@ -159,12 +159,12 @@ class ManifestController(SourceController):
                         'partition': partition.to_json()
                     }
                     # Manifest keys for catalogs with long names would be too
-                    # long to be used directly as state machine execution names.
-                    execution_id = manifest_key.uuid
+                    # long to be used directly in state machine execution names.
+                    generation_id = manifest_key.uuid
                     # ManifestGenerationState is also JSON but there is no way
                     # to express that since TypedDict rejects a co-parent class.
                     input = cast(JSON, state)
-                    token = self.async_service.start_generation(execution_id, input)
+                    token = self.async_service.start_generation(generation_id, input)
                 else:
                     # A cache hit
                     manifest_key = manifest.manifest_key

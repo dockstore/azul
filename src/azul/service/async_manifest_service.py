@@ -37,13 +37,13 @@ class Token:
     """
     Represents an ongoing manifest generation
     """
-    execution_id: UUID = strict_auto()
+    generation_id: UUID = strict_auto()
     request_index: int = strict_auto()
     retry_after: int = strict_auto()
 
     def pack(self) -> bytes:
         return msgpack.packb([
-            self.execution_id.bytes,
+            self.generation_id.bytes,
             self.request_index,
             self.retry_after
         ])
@@ -51,7 +51,7 @@ class Token:
     @classmethod
     def unpack(cls, pack: bytes) -> Self:
         i = iter(msgpack.unpackb(pack))
-        return cls(execution_id=UUID(bytes=next(i)),
+        return cls(generation_id=UUID(bytes=next(i)),
                    request_index=next(i),
                    retry_after=next(i))
 
@@ -66,8 +66,8 @@ class Token:
             raise InvalidTokenError(token) from e
 
     @classmethod
-    def first(cls, execution_id: UUID) -> Self:
-        return cls(execution_id=execution_id,
+    def first(cls, generation_id: UUID) -> Self:
+        return cls(generation_id=generation_id,
                    request_index=0,
                    retry_after=cls._next_retry_after(0))
 
@@ -112,14 +112,14 @@ class AsyncManifestService:
     def machine_name(self):
         return config.qualified_resource_name(config.manifest_sfn)
 
-    def start_generation(self, execution_id: UUID, input: JSON) -> Token:
-        execution_name = self.execution_name(execution_id)
+    def start_generation(self, generation_id: UUID, input: JSON) -> Token:
+        execution_name = self.execution_name(generation_id)
         execution_arn = self.execution_arn(execution_name)
         # The input contains the verbatim manifest key as JSON while the ARN
         # contains the encoded hash of the key so this log line is useful for
         # associating the hash with the key for diagnostic purposes.
         log.info('Starting execution %r for input %r', execution_arn, input)
-        token = Token.first(execution_id)
+        token = Token.first(generation_id)
         try:
             # If there already is an execution of the given name, and if that
             # execution is still ongoing and was given the same input as what we
@@ -154,7 +154,7 @@ class AsyncManifestService:
             return token
 
     def inspect_generation(self, token: Token) -> Token | JSON:
-        execution_name = self.execution_name(token.execution_id)
+        execution_name = self.execution_name(token.generation_id)
         execution_arn = self.execution_arn(execution_name)
         try:
             execution = self._sfn.describe_execution(executionArn=execution_arn)
@@ -186,10 +186,10 @@ class AsyncManifestService:
     def execution_arn(self, execution_name):
         return self.arn(f'execution:{self.machine_name}:{execution_name}')
 
-    def execution_name(self, execution_id: UUID) -> str:
-        assert isinstance(execution_id, UUID), execution_id
-        execution_name = str(execution_id)
-        assert 0 < len(execution_name) <= 80, (execution_id, execution_name)
+    def execution_name(self, generation_id: UUID) -> str:
+        assert isinstance(generation_id, UUID), generation_id
+        execution_name = str(generation_id)
+        assert 0 < len(execution_name) <= 80, (generation_id, execution_name)
         return execution_name
 
     @property
