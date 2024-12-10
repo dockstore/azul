@@ -1,0 +1,3529 @@
+[
+    {
+        "id": null,
+        "name": "Metadata",
+        "object": {
+            "misc": {},
+            "nodes": [
+                {
+                    "links": [
+                        {
+                            "dst": "files",
+                            "multiplicity": "MANY_TO_MANY",
+                            "name": "files"
+                        }
+                    ],
+                    "name": "samples",
+                    "ontology_reference": "",
+                    "properties": [],
+                    "values": {}
+                },
+                {
+                    "links": [
+                        {
+                            "dst": "files",
+                            "multiplicity": "MANY_TO_MANY",
+                            "name": "files"
+                        }
+                    ],
+                    "name": "sample_cell_lines",
+                    "ontology_reference": "",
+                    "properties": [],
+                    "values": {}
+                },
+                {
+                    "links": [
+                        {
+                            "dst": "files",
+                            "multiplicity": "MANY_TO_MANY",
+                            "name": "files"
+                        }
+                    ],
+                    "name": "sample_organoids",
+                    "ontology_reference": "",
+                    "properties": [],
+                    "values": {}
+                },
+                {
+                    "links": [
+                        {
+                            "dst": "files",
+                            "multiplicity": "MANY_TO_MANY",
+                            "name": "files"
+                        }
+                    ],
+                    "name": "sample_specimens",
+                    "ontology_reference": "",
+                    "properties": [],
+                    "values": {}
+                },
+                {
+                    "links": [
+                        {
+                            "dst": "files",
+                            "multiplicity": "MANY_TO_MANY",
+                            "name": "files"
+                        }
+                    ],
+                    "name": "sequencing_inputs",
+                    "ontology_reference": "",
+                    "properties": [],
+                    "values": {}
+                },
+                {
+                    "links": [
+                        {
+                            "dst": "files",
+                            "multiplicity": "MANY_TO_MANY",
+                            "name": "files"
+                        }
+                    ],
+                    "name": "specimens",
+                    "ontology_reference": "",
+                    "properties": [],
+                    "values": {}
+                },
+                {
+                    "links": [
+                        {
+                            "dst": "files",
+                            "multiplicity": "MANY_TO_MANY",
+                            "name": "files"
+                        }
+                    ],
+                    "name": "cell_suspensions",
+                    "ontology_reference": "",
+                    "properties": [],
+                    "values": {}
+                },
+                {
+                    "links": [
+                        {
+                            "dst": "files",
+                            "multiplicity": "MANY_TO_MANY",
+                            "name": "files"
+                        }
+                    ],
+                    "name": "cell_lines",
+                    "ontology_reference": "",
+                    "properties": [],
+                    "values": {}
+                },
+                {
+                    "links": [
+                        {
+                            "dst": "files",
+                            "multiplicity": "MANY_TO_MANY",
+                            "name": "files"
+                        }
+                    ],
+                    "name": "donors",
+                    "ontology_reference": "",
+                    "properties": [],
+                    "values": {}
+                },
+                {
+                    "links": [
+                        {
+                            "dst": "files",
+                            "multiplicity": "MANY_TO_MANY",
+                            "name": "files"
+                        }
+                    ],
+                    "name": "organoids",
+                    "ontology_reference": "",
+                    "properties": [],
+                    "values": {}
+                },
+                {
+                    "links": [],
+                    "name": "files",
+                    "ontology_reference": "",
+                    "properties": [],
+                    "values": {}
+                },
+                {
+                    "links": [
+                        {
+                            "dst": "files",
+                            "multiplicity": "MANY_TO_MANY",
+                            "name": "files"
+                        }
+                    ],
+                    "name": "analysis_protocols",
+                    "ontology_reference": "",
+                    "properties": [],
+                    "values": {}
+                },
+                {
+                    "links": [
+                        {
+                            "dst": "files",
+                            "multiplicity": "MANY_TO_MANY",
+                            "name": "files"
+                        }
+                    ],
+                    "name": "imaging_protocols",
+                    "ontology_reference": "",
+                    "properties": [],
+                    "values": {}
+                },
+                {
+                    "links": [
+                        {
+                            "dst": "files",
+                            "multiplicity": "MANY_TO_MANY",
+                            "name": "files"
+                        }
+                    ],
+                    "name": "library_preparation_protocols",
+                    "ontology_reference": "",
+                    "properties": [],
+                    "values": {}
+                },
+                {
+                    "links": [
+                        {
+                            "dst": "files",
+                            "multiplicity": "MANY_TO_MANY",
+                            "name": "files"
+                        }
+                    ],
+                    "name": "sequencing_protocols",
+                    "ontology_reference": "",
+                    "properties": [],
+                    "values": {}
+                },
+                {
+                    "links": [
+                        {
+                            "dst": "files",
+                            "multiplicity": "MANY_TO_MANY",
+                            "name": "files"
+                        }
+                    ],
+                    "name": "sequencing_processes",
+                    "ontology_reference": "",
+                    "properties": [],
+                    "values": {}
+                },
+                {
+                    "links": [
+                        {
+                            "dst": "files",
+                            "multiplicity": "MANY_TO_MANY",
+                            "name": "files"
+                        }
+                    ],
+                    "name": "total_estimated_cells",
+                    "ontology_reference": "",
+                    "properties": [],
+                    "values": {}
+                },
+                {
+                    "links": [
+                        {
+                            "dst": "files",
+                            "multiplicity": "MANY_TO_MANY",
+                            "name": "files"
+                        }
+                    ],
+                    "name": "matrices",
+                    "ontology_reference": "",
+                    "properties": [],
+                    "values": {}
+                },
+                {
+                    "links": [
+                        {
+                            "dst": "files",
+                            "multiplicity": "MANY_TO_MANY",
+                            "name": "files"
+                        }
+                    ],
+                    "name": "contributed_analyses",
+                    "ontology_reference": "",
+                    "properties": [],
+                    "values": {}
+                },
+                {
+                    "links": [
+                        {
+                            "dst": "files",
+                            "multiplicity": "MANY_TO_MANY",
+                            "name": "files"
+                        }
+                    ],
+                    "name": "projects",
+                    "ontology_reference": "",
+                    "properties": [],
+                    "values": {}
+                },
+                {
+                    "links": [
+                        {
+                            "dst": "files",
+                            "multiplicity": "MANY_TO_MANY",
+                            "name": "files"
+                        }
+                    ],
+                    "name": "dates",
+                    "ontology_reference": "",
+                    "properties": [],
+                    "values": {}
+                }
+            ]
+        },
+        "relations": []
+    },
+    {
+        "id": "sample_specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+        "name": "sample_specimens",
+        "object": {
+            "_source": [
+                "specimen_from_organism"
+            ],
+            "_type": [
+                "specimen"
+            ],
+            "biomaterial_id": [
+                "Q4_DEMO-sample_SAMN02797092"
+            ],
+            "disease": [
+                "glioblastoma"
+            ],
+            "document_id": [
+                "b5894cf5-ecdc-4ea6-a0b9-5335ab678c7a"
+            ],
+            "has_input_biomaterial": [
+               null
+            ],
+            "organ": [
+                "brain"
+            ],
+            "organ_part": [
+                "temporal lobe"
+            ],
+            "preservation_method": [
+               null
+            ],
+            "storage_method": [
+               null
+            ]
+        },
+        "relations": []
+    },
+    {
+        "id": "samples.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+        "name": "samples",
+        "object": {
+            "biomaterial_id": [
+                "Q4_DEMO-sample_SAMN02797092"
+            ],
+            "document_id": [
+                "b5894cf5-ecdc-4ea6-a0b9-5335ab678c7a"
+            ],
+            "effective_organ": [
+                "brain"
+            ],
+            "entity_type": [
+                "specimens"
+            ],
+            "model_organ": [
+               null
+            ],
+            "model_organ_part": [
+               null
+            ],
+            "organ": [
+                "brain"
+            ],
+            "organ_part": [
+                "temporal lobe"
+            ]
+        },
+        "relations": []
+    },
+    {
+        "id": "sequencing_inputs.77795119-8498-56a8-b175-6afc82257133.1",
+        "name": "sequencing_inputs",
+        "object": {
+            "biomaterial_id": [
+                "Q4_DEMO-cellsus_SAMN02797092"
+            ],
+            "document_id": [
+                "377f2f5a-4a45-4c62-8fb0-db9ef33f5cf0"
+            ],
+            "sequencing_input_type": [
+                "cell_suspension"
+            ]
+        },
+        "relations": []
+    },
+    {
+        "id": "specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+        "name": "specimens",
+        "object": {
+            "_source": [
+                "specimen_from_organism"
+            ],
+            "_type": [
+                "specimen"
+            ],
+            "biomaterial_id": [
+                "Q4_DEMO-sample_SAMN02797092"
+            ],
+            "disease": [
+                "glioblastoma"
+            ],
+            "document_id": [
+                "b5894cf5-ecdc-4ea6-a0b9-5335ab678c7a"
+            ],
+            "has_input_biomaterial": [
+               null
+            ],
+            "organ": [
+                "brain"
+            ],
+            "organ_part": [
+                "temporal lobe"
+            ],
+            "preservation_method": [
+               null
+            ],
+            "storage_method": [
+                null
+            ]
+        },
+        "relations": []
+    },
+    {
+        "id": "cell_suspensions.77795119-8498-56a8-b175-6afc82257133.1",
+        "name": "cell_suspensions",
+        "object": {
+            "biomaterial_id": [
+                "Q4_DEMO-cellsus_SAMN02797092"
+            ],
+            "document_id": [
+                "377f2f5a-4a45-4c62-8fb0-db9ef33f5cf0"
+            ],
+            "organ": [
+                "brain"
+            ],
+            "organ_part": [
+                "temporal lobe"
+            ],
+            "selected_cell_type": [
+                null
+            ],
+            "total_estimated_cells_redundant": 0,
+            "total_estimated_cells": null
+        },
+        "relations": []
+    },
+    {
+        "id": "donors.7169f434-8d37-5894-8709-707da00dafa0.1",
+        "name": "donors",
+        "object": {
+            "biological_sex": [
+                "unknown"
+            ],
+            "biomaterial_id": [
+                "Q4_DEMO-donor_MGH30"
+            ],
+            "development_stage": [
+                "adult"
+            ],
+            "diseases": [
+                null
+            ],
+            "document_id": [
+                "242e38d2-c975-47ee-800a-6645b47e92d2"
+            ],
+            "donor_count": 1,
+            "genus_species": [
+                "Homo sapiens"
+            ],
+            "organism_age": [
+                null
+            ],
+            "organism_age_range": []
+        },
+        "relations": []
+    },
+    {
+        "id": "library_preparation_protocols.206faacb-a743-5131-80b5-745da382b5b9.1",
+        "name": "library_preparation_protocols",
+        "object": {
+            "document_id": [
+                "92bc8cf5-b595-4536-b0e8-46eb702b4f4f"
+            ],
+            "library_construction_approach": [
+                "Smart-seq2"
+            ],
+            "nucleic_acid_source": [
+                "single cell"
+            ]
+        },
+        "relations": []
+    },
+    {
+        "id": "sequencing_protocols.c9566f70-97cb-56ac-bfd5-15f56f9b84dc.1",
+        "name": "sequencing_protocols",
+        "object": {
+            "document_id": [
+                "da614ddd-0384-49ca-a6e1-2141ace13a01"
+            ],
+            "instrument_manufacturer_model": [
+                "Illumina HiSeq 2500"
+            ],
+            "paired_end": [
+                true
+            ]
+        },
+        "relations": []
+    },
+    {
+        "id": "sequencing_processes.c5fd9010-0891-5b13-b19b-86bff7d51f1d.1",
+        "name": "sequencing_processes",
+        "object": {
+            "document_id": [
+                "5afa951e-1591-4bad-a4f8-2e13cbdb760c"
+            ]
+        },
+        "relations": []
+    },
+    {
+        "id": "projects.0d35a55d-bdd1-50a2-982f-3524e3579603.1",
+        "name": "projects",
+        "object": {
+            "_type": [
+                "project"
+            ],
+            "accessions": [],
+            "contact_names": [
+                null
+            ],
+            "contributors": [],
+            "data_use_restriction": [
+                null
+            ],
+            "document_id": [
+                "6615efae-fca8-4dd2-a223-9cfcf30fe94d"
+            ],
+            "estimated_cell_count": null,
+            "institutions": [
+                "Fake Institution"
+            ],
+            "laboratory": [
+                null
+            ],
+            "project_description": [
+                null
+            ],
+            "project_short_name": [
+                "integration/Smart-seq2/2018-10-10T02:23:36Z"
+            ],
+            "project_title": [
+                "Q4_DEMO-Single cell RNA-seq of primary human glioblastomas"
+            ],
+            "publication_titles": [
+                null
+            ],
+            "publications": [],
+            "is_tissue_atlas_project": [false],
+            "bionetwork_name": ["Immune"],
+            "tissue_atlas": [
+                {
+                    "atlas": "Blood",
+                    "version": "v1.0"
+                }
+            ],
+            "supplementary_links": [
+                null
+            ]
+        },
+        "relations": []
+    },
+    {
+        "id": "files.9a9689e4-021b-5cb3-86aa-760324215f76.1",
+        "name": "files",
+        "object": {
+            "_type": "file",
+            "content-type": "text/plain; dcp-type=data",
+            "content_description": [
+                null
+            ],
+            "crc32c": "e8b38826",
+            "document_id": "0b34a80b-c818-4010-b193-e44a77036e27",
+            "drs_uri": "drs://drs-test.lan/2526ee96-c839-4d0e-869c-585fc9066cda?version=2018-10-10T03%3A10%3A32.229536Z",
+            "file_format": "txt",
+            "file_source": "DCP/2 Analysis",
+            "file_type": "analysis_file",
+            "indexed": false,
+            "is_intermediate": null,
+            "lane_index": null,
+            "matrix_cell_count": null,
+            "name": "377f2f5a-4a45-4c62-8fb0-db9ef33f5cf0_qc.quality_distribution_metrics.txt",
+            "read_index": null,
+            "sha256": "fb2c9cb1dd646e7941086b570df03fb5d6f8c539b0789a1ae1d18fa1129d0838",
+            "size": 1490,
+            "uuid": "2526ee96-c839-4d0e-869c-585fc9066cda",
+            "version": "2018-10-10T03:10:32.229536Z"
+        },
+        "relations": [
+            {
+                "dst_id": "cell_suspensions.77795119-8498-56a8-b175-6afc82257133.1",
+                "dst_name": "cell_suspensions"
+            },
+            {
+                "dst_id": "donors.7169f434-8d37-5894-8709-707da00dafa0.1",
+                "dst_name": "donors"
+            },
+            {
+                "dst_id": "library_preparation_protocols.206faacb-a743-5131-80b5-745da382b5b9.1",
+                "dst_name": "library_preparation_protocols"
+            },
+            {
+                "dst_id": "projects.0d35a55d-bdd1-50a2-982f-3524e3579603.1",
+                "dst_name": "projects"
+            },
+            {
+                "dst_id": "sample_specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "sample_specimens"
+            },
+            {
+                "dst_id": "samples.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "samples"
+            },
+            {
+                "dst_id": "sequencing_inputs.77795119-8498-56a8-b175-6afc82257133.1",
+                "dst_name": "sequencing_inputs"
+            },
+            {
+                "dst_id": "sequencing_processes.c5fd9010-0891-5b13-b19b-86bff7d51f1d.1",
+                "dst_name": "sequencing_processes"
+            },
+            {
+                "dst_id": "sequencing_protocols.c9566f70-97cb-56ac-bfd5-15f56f9b84dc.1",
+                "dst_name": "sequencing_protocols"
+            },
+            {
+                "dst_id": "specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "specimens"
+            }
+        ]
+    },
+    {
+        "id": "sample_specimens.76c970ff-96e4-56d4-a6bd-97fe852a147f.1",
+        "name": "sample_specimens",
+        "object": {
+            "_source": [
+                "specimen_from_organism"
+            ],
+            "_type": [
+                "specimen"
+            ],
+            "biomaterial_id": [
+                "DID_scRSq06_pancreas"
+            ],
+            "disease": [
+                "normal"
+            ],
+            "document_id": [
+                "a21dc760-a500-4236-bcff-da34a0e873d2"
+            ],
+            "has_input_biomaterial": [
+                null
+            ],
+            "organ": [
+                "pancreas"
+            ],
+            "organ_part": [
+                "islet of Langerhans"
+            ],
+            "preservation_method": [
+                null
+            ],
+            "storage_method": [
+                null
+            ]
+        },
+        "relations": []
+    },
+    {
+        "id": "samples.76c970ff-96e4-56d4-a6bd-97fe852a147f.1",
+        "name": "samples",
+        "object": {
+            "biomaterial_id": [
+                "DID_scRSq06_pancreas"
+            ],
+            "document_id": [
+                "a21dc760-a500-4236-bcff-da34a0e873d2"
+            ],
+            "effective_organ": [
+                "pancreas"
+            ],
+            "entity_type": [
+                "specimens"
+            ],
+            "model_organ": [
+                null
+            ],
+            "model_organ_part": [
+                null
+            ],
+            "organ": [
+                "pancreas"
+            ],
+            "organ_part": [
+                "islet of Langerhans"
+            ]
+        },
+        "relations": []
+    },
+    {
+        "id": "sequencing_inputs.c4e3c857-be5e-58df-9057-3b3dbe2da411.1",
+        "name": "sequencing_inputs",
+        "object": {
+            "biomaterial_id": [
+                "GSM2172585 1"
+            ],
+            "document_id": [
+                "412898c5-5b9b-4907-b07c-e9b89666e204"
+            ],
+            "sequencing_input_type": [
+                "cell_suspension"
+            ]
+        },
+        "relations": []
+    },
+    {
+        "id": "specimens.76c970ff-96e4-56d4-a6bd-97fe852a147f.1",
+        "name": "specimens",
+        "object": {
+            "_source": [
+                "specimen_from_organism"
+            ],
+            "_type": [
+                "specimen"
+            ],
+            "biomaterial_id": [
+                "DID_scRSq06_pancreas"
+            ],
+            "disease": [
+                "normal"
+            ],
+            "document_id": [
+                "a21dc760-a500-4236-bcff-da34a0e873d2"
+            ],
+            "has_input_biomaterial": [
+                null
+            ],
+            "organ": [
+                "pancreas"
+            ],
+            "organ_part": [
+                "islet of Langerhans"
+            ],
+            "preservation_method": [
+                null
+            ],
+            "storage_method": [
+                null
+            ]
+        },
+        "relations": []
+    },
+    {
+        "id": "cell_suspensions.c4e3c857-be5e-58df-9057-3b3dbe2da411.1",
+        "name": "cell_suspensions",
+        "object": {
+            "biomaterial_id": [
+                "GSM2172585 1"
+            ],
+            "document_id": [
+                "412898c5-5b9b-4907-b07c-e9b89666e204"
+            ],
+            "organ": [
+                "pancreas"
+            ],
+            "organ_part": [
+                "islet of Langerhans"
+            ],
+            "selected_cell_type": [
+                null
+            ],
+            "total_estimated_cells_redundant": 0,
+            "total_estimated_cells": 1
+        },
+        "relations": []
+    },
+    {
+        "id": "donors.7c2ad6c9-6233-5a64-bc01-9f850a3cec66.1",
+        "name": "donors",
+        "object": {
+            "biological_sex": [
+                "female"
+            ],
+            "biomaterial_id": [
+                "DID_scRSq06"
+            ],
+            "development_stage": [
+                null
+            ],
+            "diseases": [
+                "normal"
+            ],
+            "document_id": [
+                "7b07b9d0-cc0e-4098-9f64-f4a569f7d746"
+            ],
+            "donor_count": 1,
+            "genus_species": [
+                "Australopithecus"
+            ],
+            "organism_age": [
+                {
+                    "unit": "year",
+                    "value": "38"
+                }
+            ],
+            "organism_age_range": [
+                [
+                    1198368000.0,
+                    1198368000.0
+                ]
+            ]
+        },
+        "relations": []
+    },
+    {
+        "id": "library_preparation_protocols.62d37c3d-b944-5336-86ad-896778527408.1",
+        "name": "library_preparation_protocols",
+        "object": {
+            "document_id": [
+                "9c32cf70-3ed7-4720-badc-5ee71e8a38af"
+            ],
+            "library_construction_approach": [
+                "Smart-seq2"
+            ],
+            "nucleic_acid_source": [
+                "single cell"
+            ]
+        },
+        "relations": []
+    },
+    {
+        "id": "sequencing_protocols.53a54cc4-cd39-5a67-b26e-189937e697b8.1",
+        "name": "sequencing_protocols",
+        "object": {
+            "document_id": [
+                "61e629ed-0135-4492-ac8a-5c4ab3ccca8a"
+            ],
+            "instrument_manufacturer_model": [
+                "Illumina NextSeq 500"
+            ],
+            "paired_end": [
+                true
+            ]
+        },
+        "relations": []
+    },
+    {
+        "id": "sequencing_processes.596a62d0-05dc-5749-afbf-8a44e8ef27f5.1",
+        "name": "sequencing_processes",
+        "object": {
+            "document_id": [
+                "771ddaf6-3a4f-4314-97fe-6294ff8e25a4"
+            ]
+        },
+        "relations": []
+    },
+    {
+        "id": "projects.0a84dcbd-4475-526e-a2be-61e57bebdfa8.1",
+        "name": "projects",
+        "object": {
+            "_type": [
+                "project"
+            ],
+            "accessions": [],
+            "contact_names": [
+                null
+            ],
+            "contributors": [],
+            "data_use_restriction": [
+                null
+            ],
+            "document_id": [
+                "e8642221-4c2c-4fd7-b926-a68bce363c88"
+            ],
+            "estimated_cell_count": null,
+            "institutions": [
+                "Farmers Trucks",
+                "University"
+            ],
+            "laboratory": [
+                "John Dear"
+            ],
+            "project_description": [
+                null
+            ],
+            "project_short_name": [
+                "Single of human pancreas"
+            ],
+            "project_title": [
+                "Single cell transcriptome patterns."
+            ],
+            "publication_titles": [
+                "Single-Cell Analysis of Human Pancreas Reveals Transcriptional Signatures of Aging and Somatic Mutation Patterns."
+            ],
+            "publications": [],
+            "is_tissue_atlas_project": [false],
+            "bionetwork_name": [null],
+            "tissue_atlas": [],
+            "supplementary_links": [
+                "https://www.ebi.ac.uk/gxa/sc/experiments/E-GEOD-81547/Results"
+            ]
+        },
+        "relations": []
+    },
+    {
+        "id": "files.c3f5cd27-7540-5371-9493-af007c60547e.1",
+        "name": "files",
+        "object": {
+            "_type": "file",
+            "content-type": "application/gzip; dcp-type=data",
+            "content_description": [
+                null
+            ],
+            "crc32c": "1d998e49",
+            "document_id": "0c5ac7c0-817e-40d4-b1b1-34c3d5cfecdb",
+            "drs_uri": "drs://drs-test.lan/7b07f99e-4a8a-4ad0-bd4f-db0d7a00c7bb?version=2018-11-02T11%3A33%3A44.698028Z",
+            "file_format": "fastq.gz",
+            "file_source": null,
+            "file_type": "sequence_file",
+            "indexed": false,
+            "is_intermediate": null,
+            "lane_index": null,
+            "matrix_cell_count": null,
+            "name": "SRR3562915_1.fastq.gz",
+            "read_index": "read1",
+            "sha256": "77337cb51b2e584b5ae1b99db6c163b988cbc5b894dda2f5d22424978c3bfc7a",
+            "size": 195142097,
+            "uuid": "7b07f99e-4a8a-4ad0-bd4f-db0d7a00c7bb",
+            "version": "2018-11-02T11:33:44.698028Z"
+        },
+        "relations": [
+            {
+                "dst_id": "cell_suspensions.c4e3c857-be5e-58df-9057-3b3dbe2da411.1",
+                "dst_name": "cell_suspensions"
+            },
+            {
+                "dst_id": "donors.7c2ad6c9-6233-5a64-bc01-9f850a3cec66.1",
+                "dst_name": "donors"
+            },
+            {
+                "dst_id": "library_preparation_protocols.62d37c3d-b944-5336-86ad-896778527408.1",
+                "dst_name": "library_preparation_protocols"
+            },
+            {
+                "dst_id": "projects.0a84dcbd-4475-526e-a2be-61e57bebdfa8.1",
+                "dst_name": "projects"
+            },
+            {
+                "dst_id": "sample_specimens.76c970ff-96e4-56d4-a6bd-97fe852a147f.1",
+                "dst_name": "sample_specimens"
+            },
+            {
+                "dst_id": "samples.76c970ff-96e4-56d4-a6bd-97fe852a147f.1",
+                "dst_name": "samples"
+            },
+            {
+                "dst_id": "sequencing_inputs.c4e3c857-be5e-58df-9057-3b3dbe2da411.1",
+                "dst_name": "sequencing_inputs"
+            },
+            {
+                "dst_id": "sequencing_processes.596a62d0-05dc-5749-afbf-8a44e8ef27f5.1",
+                "dst_name": "sequencing_processes"
+            },
+            {
+                "dst_id": "sequencing_protocols.53a54cc4-cd39-5a67-b26e-189937e697b8.1",
+                "dst_name": "sequencing_protocols"
+            },
+            {
+                "dst_id": "specimens.76c970ff-96e4-56d4-a6bd-97fe852a147f.1",
+                "dst_name": "specimens"
+            }
+        ]
+    },
+    {
+        "id": "files.6a713d50-6e5e-5ef2-8b0c-fc1bca281b1d.1",
+        "name": "files",
+        "object": {
+            "_type": "file",
+            "content-type": "application/gzip; dcp-type=data",
+            "content_description": [
+                null
+            ],
+            "crc32c": "3d94b063",
+            "document_id": "14d63962-7cd3-43fc-a4d6-dc8f761c9ebd",
+            "drs_uri": "drs://drs-test.lan/b1c167da-0825-4c63-9cbc-2aada1ab367c?version=2018-10-10T03%3A10%3A35.971561Z",
+            "file_format": "bam",
+            "file_source": "DCP/2 Analysis",
+            "file_type": "analysis_file",
+            "indexed": false,
+            "is_intermediate": null,
+            "lane_index": null,
+            "matrix_cell_count": null,
+            "name": "377f2f5a-4a45-4c62-8fb0-db9ef33f5cf0_rsem.bam",
+            "read_index": null,
+            "sha256": "f25053412d65429cefc0157c0d18ae12d4bf4c4113a6af7a1820b62246c075a4",
+            "size": 3752733,
+            "uuid": "b1c167da-0825-4c63-9cbc-2aada1ab367c",
+            "version": "2018-10-10T03:10:35.971561Z"
+        },
+        "relations": [
+            {
+                "dst_id": "cell_suspensions.77795119-8498-56a8-b175-6afc82257133.1",
+                "dst_name": "cell_suspensions"
+            },
+            {
+                "dst_id": "donors.7169f434-8d37-5894-8709-707da00dafa0.1",
+                "dst_name": "donors"
+            },
+            {
+                "dst_id": "library_preparation_protocols.206faacb-a743-5131-80b5-745da382b5b9.1",
+                "dst_name": "library_preparation_protocols"
+            },
+            {
+                "dst_id": "projects.0d35a55d-bdd1-50a2-982f-3524e3579603.1",
+                "dst_name": "projects"
+            },
+            {
+                "dst_id": "sample_specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "sample_specimens"
+            },
+            {
+                "dst_id": "samples.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "samples"
+            },
+            {
+                "dst_id": "sequencing_inputs.77795119-8498-56a8-b175-6afc82257133.1",
+                "dst_name": "sequencing_inputs"
+            },
+            {
+                "dst_id": "sequencing_processes.c5fd9010-0891-5b13-b19b-86bff7d51f1d.1",
+                "dst_name": "sequencing_processes"
+            },
+            {
+                "dst_id": "sequencing_protocols.c9566f70-97cb-56ac-bfd5-15f56f9b84dc.1",
+                "dst_name": "sequencing_protocols"
+            },
+            {
+                "dst_id": "specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "specimens"
+            }
+        ]
+    },
+    {
+        "id": "files.f50b6557-2130-5b33-b748-84c8c4fe061b.1",
+        "name": "files",
+        "object": {
+            "_type": "file",
+            "content-type": "text/csv; dcp-type=data",
+            "content_description": [
+                null
+            ],
+            "crc32c": "8c75cbf7",
+            "document_id": "18791e67-0c74-43e0-be28-f0c3cd78c7a4",
+            "drs_uri": "drs://drs-test.lan/35a4d374-9eb3-404b-8ef9-fa295062f969?version=2018-10-10T03%3A10%3A33.293412Z",
+            "file_format": "csv",
+            "file_source": "DCP/2 Analysis",
+            "file_type": "analysis_file",
+            "indexed": false,
+            "is_intermediate": null,
+            "lane_index": null,
+            "matrix_cell_count": null,
+            "name": "377f2f5a-4a45-4c62-8fb0-db9ef33f5cf0_bait_bias_detail_metrics.csv",
+            "read_index": null,
+            "sha256": "e6e979ccfbdbadff06e07596b8da15223aefd278552877a318a3b6ee9c6b9e41",
+            "size": 29544,
+            "uuid": "35a4d374-9eb3-404b-8ef9-fa295062f969",
+            "version": "2018-10-10T03:10:33.293412Z"
+        },
+        "relations": [
+            {
+                "dst_id": "cell_suspensions.77795119-8498-56a8-b175-6afc82257133.1",
+                "dst_name": "cell_suspensions"
+            },
+            {
+                "dst_id": "donors.7169f434-8d37-5894-8709-707da00dafa0.1",
+                "dst_name": "donors"
+            },
+            {
+                "dst_id": "library_preparation_protocols.206faacb-a743-5131-80b5-745da382b5b9.1",
+                "dst_name": "library_preparation_protocols"
+            },
+            {
+                "dst_id": "projects.0d35a55d-bdd1-50a2-982f-3524e3579603.1",
+                "dst_name": "projects"
+            },
+            {
+                "dst_id": "sample_specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "sample_specimens"
+            },
+            {
+                "dst_id": "samples.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "samples"
+            },
+            {
+                "dst_id": "sequencing_inputs.77795119-8498-56a8-b175-6afc82257133.1",
+                "dst_name": "sequencing_inputs"
+            },
+            {
+                "dst_id": "sequencing_processes.c5fd9010-0891-5b13-b19b-86bff7d51f1d.1",
+                "dst_name": "sequencing_processes"
+            },
+            {
+                "dst_id": "sequencing_protocols.c9566f70-97cb-56ac-bfd5-15f56f9b84dc.1",
+                "dst_name": "sequencing_protocols"
+            },
+            {
+                "dst_id": "specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "specimens"
+            }
+        ]
+    },
+    {
+        "id": "files.822faf84-6ae9-5815-8d1c-5b3e2d93b917.1",
+        "name": "files",
+        "object": {
+            "_type": "file",
+            "content-type": "text/csv; dcp-type=data",
+            "content_description": [
+                null
+            ],
+            "crc32c": "062199a3",
+            "document_id": "1d77c6c5-24b6-4d43-ad5d-b02fba050025",
+            "drs_uri": "drs://drs-test.lan/e399a1c6-f595-400b-b71b-ea95707fbf74?version=2018-10-10T03%3A10%3A32.812584Z",
+            "file_format": "csv",
+            "file_source": "DCP/2 Analysis",
+            "file_type": "analysis_file",
+            "indexed": false,
+            "is_intermediate": null,
+            "lane_index": null,
+            "matrix_cell_count": null,
+            "name": "377f2f5a-4a45-4c62-8fb0-db9ef33f5cf0_QCs.csv",
+            "read_index": null,
+            "sha256": "796caeb3c67f0bbcca14aa76b556e9cbc1eb76c031ef1696799363325fdb4e92",
+            "size": 7928,
+            "uuid": "e399a1c6-f595-400b-b71b-ea95707fbf74",
+            "version": "2018-10-10T03:10:32.812584Z"
+        },
+        "relations": [
+            {
+                "dst_id": "cell_suspensions.77795119-8498-56a8-b175-6afc82257133.1",
+                "dst_name": "cell_suspensions"
+            },
+            {
+                "dst_id": "donors.7169f434-8d37-5894-8709-707da00dafa0.1",
+                "dst_name": "donors"
+            },
+            {
+                "dst_id": "library_preparation_protocols.206faacb-a743-5131-80b5-745da382b5b9.1",
+                "dst_name": "library_preparation_protocols"
+            },
+            {
+                "dst_id": "projects.0d35a55d-bdd1-50a2-982f-3524e3579603.1",
+                "dst_name": "projects"
+            },
+            {
+                "dst_id": "sample_specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "sample_specimens"
+            },
+            {
+                "dst_id": "samples.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "samples"
+            },
+            {
+                "dst_id": "sequencing_inputs.77795119-8498-56a8-b175-6afc82257133.1",
+                "dst_name": "sequencing_inputs"
+            },
+            {
+                "dst_id": "sequencing_processes.c5fd9010-0891-5b13-b19b-86bff7d51f1d.1",
+                "dst_name": "sequencing_processes"
+            },
+            {
+                "dst_id": "sequencing_protocols.c9566f70-97cb-56ac-bfd5-15f56f9b84dc.1",
+                "dst_name": "sequencing_protocols"
+            },
+            {
+                "dst_id": "specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "specimens"
+            }
+        ]
+    },
+    {
+        "id": "files.6c738ce3-f472-5ed5-84ad-b635fd18b97d.1",
+        "name": "files",
+        "object": {
+            "_type": "file",
+            "content-type": "text/csv; dcp-type=data",
+            "content_description": [
+                null
+            ],
+            "crc32c": "ec79e888",
+            "document_id": "21319798-fe9e-40a4-bcdb-a4c0780ee7bf",
+            "drs_uri": "drs://drs-test.lan/70367094-c901-4d72-a6b3-d2859729073a?version=2018-10-10T03%3A10%3A34.734838Z",
+            "file_format": "csv",
+            "file_source": "DCP/2 Analysis",
+            "file_type": "analysis_file",
+            "indexed": false,
+            "is_intermediate": null,
+            "lane_index": null,
+            "matrix_cell_count": null,
+            "name": "377f2f5a-4a45-4c62-8fb0-db9ef33f5cf0_pre_adapter_detail_metrics.csv",
+            "read_index": null,
+            "sha256": "674f7fc16bb8c8e4ac0fb03779045ed0c1fdbe8ac6523dcac9341f94a7e2313d",
+            "size": 27293,
+            "uuid": "70367094-c901-4d72-a6b3-d2859729073a",
+            "version": "2018-10-10T03:10:34.734838Z"
+        },
+        "relations": [
+            {
+                "dst_id": "cell_suspensions.77795119-8498-56a8-b175-6afc82257133.1",
+                "dst_name": "cell_suspensions"
+            },
+            {
+                "dst_id": "donors.7169f434-8d37-5894-8709-707da00dafa0.1",
+                "dst_name": "donors"
+            },
+            {
+                "dst_id": "library_preparation_protocols.206faacb-a743-5131-80b5-745da382b5b9.1",
+                "dst_name": "library_preparation_protocols"
+            },
+            {
+                "dst_id": "projects.0d35a55d-bdd1-50a2-982f-3524e3579603.1",
+                "dst_name": "projects"
+            },
+            {
+                "dst_id": "sample_specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "sample_specimens"
+            },
+            {
+                "dst_id": "samples.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "samples"
+            },
+            {
+                "dst_id": "sequencing_inputs.77795119-8498-56a8-b175-6afc82257133.1",
+                "dst_name": "sequencing_inputs"
+            },
+            {
+                "dst_id": "sequencing_processes.c5fd9010-0891-5b13-b19b-86bff7d51f1d.1",
+                "dst_name": "sequencing_processes"
+            },
+            {
+                "dst_id": "sequencing_protocols.c9566f70-97cb-56ac-bfd5-15f56f9b84dc.1",
+                "dst_name": "sequencing_protocols"
+            },
+            {
+                "dst_id": "specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "specimens"
+            }
+        ]
+    },
+    {
+        "id": "files.5c08389f-39ac-5443-a890-98ecaabe2044.1",
+        "name": "files",
+        "object": {
+            "_type": "file",
+            "content-type": "text/csv; dcp-type=data",
+            "content_description": [
+                null
+            ],
+            "crc32c": "38eadd82",
+            "document_id": "28220905-f58d-48a1-9258-53f97dd9d388",
+            "drs_uri": "drs://drs-test.lan/4f53c7d8-13fd-4e60-8168-df2a26652d8f?version=2018-10-10T03%3A10%3A34.363765Z",
+            "file_format": "csv",
+            "file_source": "DCP/2 Analysis",
+            "file_type": "analysis_file",
+            "indexed": false,
+            "is_intermediate": null,
+            "lane_index": null,
+            "matrix_cell_count": null,
+            "name": "377f2f5a-4a45-4c62-8fb0-db9ef33f5cf0_gc_bias.csv",
+            "read_index": null,
+            "sha256": "2d6b0ed81a78a2026739a7053ba8319d006a7b0d9e0f46adb010180d22c76b5e",
+            "size": 8654,
+            "uuid": "4f53c7d8-13fd-4e60-8168-df2a26652d8f",
+            "version": "2018-10-10T03:10:34.363765Z"
+        },
+        "relations": [
+            {
+                "dst_id": "cell_suspensions.77795119-8498-56a8-b175-6afc82257133.1",
+                "dst_name": "cell_suspensions"
+            },
+            {
+                "dst_id": "donors.7169f434-8d37-5894-8709-707da00dafa0.1",
+                "dst_name": "donors"
+            },
+            {
+                "dst_id": "library_preparation_protocols.206faacb-a743-5131-80b5-745da382b5b9.1",
+                "dst_name": "library_preparation_protocols"
+            },
+            {
+                "dst_id": "projects.0d35a55d-bdd1-50a2-982f-3524e3579603.1",
+                "dst_name": "projects"
+            },
+            {
+                "dst_id": "sample_specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "sample_specimens"
+            },
+            {
+                "dst_id": "samples.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "samples"
+            },
+            {
+                "dst_id": "sequencing_inputs.77795119-8498-56a8-b175-6afc82257133.1",
+                "dst_name": "sequencing_inputs"
+            },
+            {
+                "dst_id": "sequencing_processes.c5fd9010-0891-5b13-b19b-86bff7d51f1d.1",
+                "dst_name": "sequencing_processes"
+            },
+            {
+                "dst_id": "sequencing_protocols.c9566f70-97cb-56ac-bfd5-15f56f9b84dc.1",
+                "dst_name": "sequencing_protocols"
+            },
+            {
+                "dst_id": "specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "specimens"
+            }
+        ]
+    },
+    {
+        "id": "files.7c805990-e3f4-52c6-a7e8-90c1290cf980.1",
+        "name": "files",
+        "object": {
+            "_type": "file",
+            "content-type": "text/plain; dcp-type=data",
+            "content_description": [
+                null
+            ],
+            "crc32c": "a45828f5",
+            "document_id": "416e31c0-b0ec-4674-ab37-ab8506a9f219",
+            "drs_uri": "drs://drs-test.lan/ee417573-2281-439a-98f9-05fcb5dd2faf?version=2018-10-10T03%3A10%3A31.845129Z",
+            "file_format": "txt",
+            "file_source": "DCP/2 Analysis",
+            "file_type": "analysis_file",
+            "indexed": false,
+            "is_intermediate": null,
+            "lane_index": null,
+            "matrix_cell_count": null,
+            "name": "377f2f5a-4a45-4c62-8fb0-db9ef33f5cf0_qc.quality_by_cycle_metrics.txt",
+            "read_index": null,
+            "sha256": "83ee700382b8abf0fd8f70a6d034e14e8387774aa9990cc9d9c4b89211197fca",
+            "size": 1868,
+            "uuid": "ee417573-2281-439a-98f9-05fcb5dd2faf",
+            "version": "2018-10-10T03:10:31.845129Z"
+        },
+        "relations": [
+            {
+                "dst_id": "cell_suspensions.77795119-8498-56a8-b175-6afc82257133.1",
+                "dst_name": "cell_suspensions"
+            },
+            {
+                "dst_id": "donors.7169f434-8d37-5894-8709-707da00dafa0.1",
+                "dst_name": "donors"
+            },
+            {
+                "dst_id": "library_preparation_protocols.206faacb-a743-5131-80b5-745da382b5b9.1",
+                "dst_name": "library_preparation_protocols"
+            },
+            {
+                "dst_id": "projects.0d35a55d-bdd1-50a2-982f-3524e3579603.1",
+                "dst_name": "projects"
+            },
+            {
+                "dst_id": "sample_specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "sample_specimens"
+            },
+            {
+                "dst_id": "samples.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "samples"
+            },
+            {
+                "dst_id": "sequencing_inputs.77795119-8498-56a8-b175-6afc82257133.1",
+                "dst_name": "sequencing_inputs"
+            },
+            {
+                "dst_id": "sequencing_processes.c5fd9010-0891-5b13-b19b-86bff7d51f1d.1",
+                "dst_name": "sequencing_processes"
+            },
+            {
+                "dst_id": "sequencing_protocols.c9566f70-97cb-56ac-bfd5-15f56f9b84dc.1",
+                "dst_name": "sequencing_protocols"
+            },
+            {
+                "dst_id": "specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "specimens"
+            }
+        ]
+    },
+    {
+        "id": "files.5631a24c-a767-56f2-b897-529d1173775e.1",
+        "name": "files",
+        "object": {
+            "_type": "file",
+            "content-type": "text/plain; dcp-type=data",
+            "content_description": [
+                null
+            ],
+            "crc32c": "074766b5",
+            "document_id": "48e42fe3-41cd-49bd-b7f4-1e3c49682131",
+            "drs_uri": "drs://drs-test.lan/ac880333-cb92-4f55-971a-614bd065d8ef?version=2018-10-10T03%3A10%3A31.316188Z",
+            "file_format": "txt",
+            "file_source": "DCP/2 Analysis",
+            "file_type": "analysis_file",
+            "indexed": false,
+            "is_intermediate": null,
+            "lane_index": null,
+            "matrix_cell_count": null,
+            "name": "377f2f5a-4a45-4c62-8fb0-db9ef33f5cf0_qc.bait_bias_summary_metrics.txt",
+            "read_index": null,
+            "sha256": "cb53289c95fd1030726cf93e509d4dc37461bc21b29ff8d2a4165b086dd75f50",
+            "size": 2708,
+            "uuid": "ac880333-cb92-4f55-971a-614bd065d8ef",
+            "version": "2018-10-10T03:10:31.316188Z"
+        },
+        "relations": [
+            {
+                "dst_id": "cell_suspensions.77795119-8498-56a8-b175-6afc82257133.1",
+                "dst_name": "cell_suspensions"
+            },
+            {
+                "dst_id": "donors.7169f434-8d37-5894-8709-707da00dafa0.1",
+                "dst_name": "donors"
+            },
+            {
+                "dst_id": "library_preparation_protocols.206faacb-a743-5131-80b5-745da382b5b9.1",
+                "dst_name": "library_preparation_protocols"
+            },
+            {
+                "dst_id": "projects.0d35a55d-bdd1-50a2-982f-3524e3579603.1",
+                "dst_name": "projects"
+            },
+            {
+                "dst_id": "sample_specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "sample_specimens"
+            },
+            {
+                "dst_id": "samples.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "samples"
+            },
+            {
+                "dst_id": "sequencing_inputs.77795119-8498-56a8-b175-6afc82257133.1",
+                "dst_name": "sequencing_inputs"
+            },
+            {
+                "dst_id": "sequencing_processes.c5fd9010-0891-5b13-b19b-86bff7d51f1d.1",
+                "dst_name": "sequencing_processes"
+            },
+            {
+                "dst_id": "sequencing_protocols.c9566f70-97cb-56ac-bfd5-15f56f9b84dc.1",
+                "dst_name": "sequencing_protocols"
+            },
+            {
+                "dst_id": "specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "specimens"
+            }
+        ]
+    },
+    {
+        "id": "files.b0fe453c-effa-5a25-86c1-5cfbf779993f.1",
+        "name": "files",
+        "object": {
+            "_type": "file",
+            "content-type": "application/gzip; dcp-type=data",
+            "content_description": [
+                null
+            ],
+            "crc32c": "4ef74578",
+            "document_id": "5f0cdf49-aabe-40f4-8af3-033115805bb0",
+            "drs_uri": "drs://drs-test.lan/c005f647-b3fb-45a8-857a-8f5e6a878ccf?version=2018-10-10T02%3A38%3A11.612423Z",
+            "file_format": "fastq.gz",
+            "file_source": null,
+            "file_type": "sequence_file",
+            "indexed": false,
+            "is_intermediate": null,
+            "lane_index": 1,
+            "matrix_cell_count": null,
+            "name": "R1.fastq.gz",
+            "read_index": "read1",
+            "sha256": "fe6d4fdfea2ff1df97500dcfe7085ac3abfb760026bff75a34c20fb97a4b2b29",
+            "size": 125191,
+            "uuid": "c005f647-b3fb-45a8-857a-8f5e6a878ccf",
+            "version": "2018-10-10T02:38:11.612423Z"
+        },
+        "relations": [
+            {
+                "dst_id": "cell_suspensions.77795119-8498-56a8-b175-6afc82257133.1",
+                "dst_name": "cell_suspensions"
+            },
+            {
+                "dst_id": "donors.7169f434-8d37-5894-8709-707da00dafa0.1",
+                "dst_name": "donors"
+            },
+            {
+                "dst_id": "library_preparation_protocols.206faacb-a743-5131-80b5-745da382b5b9.1",
+                "dst_name": "library_preparation_protocols"
+            },
+            {
+                "dst_id": "projects.0d35a55d-bdd1-50a2-982f-3524e3579603.1",
+                "dst_name": "projects"
+            },
+            {
+                "dst_id": "sample_specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "sample_specimens"
+            },
+            {
+                "dst_id": "samples.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "samples"
+            },
+            {
+                "dst_id": "sequencing_inputs.77795119-8498-56a8-b175-6afc82257133.1",
+                "dst_name": "sequencing_inputs"
+            },
+            {
+                "dst_id": "sequencing_processes.c5fd9010-0891-5b13-b19b-86bff7d51f1d.1",
+                "dst_name": "sequencing_processes"
+            },
+            {
+                "dst_id": "sequencing_protocols.c9566f70-97cb-56ac-bfd5-15f56f9b84dc.1",
+                "dst_name": "sequencing_protocols"
+            },
+            {
+                "dst_id": "specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "specimens"
+            }
+        ]
+    },
+    {
+        "id": "files.89e508fa-ec65-501c-ac69-05ddcc51d566.1",
+        "name": "files",
+        "object": {
+            "_type": "file",
+            "content-type": "application/gzip; dcp-type=data",
+            "content_description": [
+                null
+            ],
+            "crc32c": "54bb9c82",
+            "document_id": "70d1af4a-82c8-478a-8960-e9028b3616ca",
+            "drs_uri": "drs://drs-test.lan/74897eb7-0701-4e4f-9e6b-8b9521b2816b?version=2018-11-02T11%3A33%3A44.450442Z",
+            "file_format": "fastq.gz",
+            "file_source": null,
+            "file_type": "sequence_file",
+            "indexed": false,
+            "is_intermediate": null,
+            "lane_index": null,
+            "matrix_cell_count": null,
+            "name": "SRR3562915_2.fastq.gz",
+            "read_index": "read2",
+            "sha256": "465a230aa127376fa641f8b8f8cad3f08fef37c8aafc67be454f0f0e4e63d68d",
+            "size": 190330156,
+            "uuid": "74897eb7-0701-4e4f-9e6b-8b9521b2816b",
+            "version": "2018-11-02T11:33:44.450442Z"
+        },
+        "relations": [
+            {
+                "dst_id": "cell_suspensions.c4e3c857-be5e-58df-9057-3b3dbe2da411.1",
+                "dst_name": "cell_suspensions"
+            },
+            {
+                "dst_id": "donors.7c2ad6c9-6233-5a64-bc01-9f850a3cec66.1",
+                "dst_name": "donors"
+            },
+            {
+                "dst_id": "library_preparation_protocols.62d37c3d-b944-5336-86ad-896778527408.1",
+                "dst_name": "library_preparation_protocols"
+            },
+            {
+                "dst_id": "projects.0a84dcbd-4475-526e-a2be-61e57bebdfa8.1",
+                "dst_name": "projects"
+            },
+            {
+                "dst_id": "sample_specimens.76c970ff-96e4-56d4-a6bd-97fe852a147f.1",
+                "dst_name": "sample_specimens"
+            },
+            {
+                "dst_id": "samples.76c970ff-96e4-56d4-a6bd-97fe852a147f.1",
+                "dst_name": "samples"
+            },
+            {
+                "dst_id": "sequencing_inputs.c4e3c857-be5e-58df-9057-3b3dbe2da411.1",
+                "dst_name": "sequencing_inputs"
+            },
+            {
+                "dst_id": "sequencing_processes.596a62d0-05dc-5749-afbf-8a44e8ef27f5.1",
+                "dst_name": "sequencing_processes"
+            },
+            {
+                "dst_id": "sequencing_protocols.53a54cc4-cd39-5a67-b26e-189937e697b8.1",
+                "dst_name": "sequencing_protocols"
+            },
+            {
+                "dst_id": "specimens.76c970ff-96e4-56d4-a6bd-97fe852a147f.1",
+                "dst_name": "specimens"
+            }
+        ]
+    },
+    {
+        "id": "files.6d986347-bf6e-584c-a623-9e04f203349d.1",
+        "name": "files",
+        "object": {
+            "_type": "file",
+            "content-type": "application/gzip; dcp-type=data",
+            "content_description": [
+                null
+            ],
+            "crc32c": "69987b3e",
+            "document_id": "74c8c730-139e-40a5-b77e-f46088fa4d95",
+            "drs_uri": "drs://drs-test.lan/b764ce7d-3938-4451-b68c-678feebc8f2a?version=2018-10-10T02%3A38%3A11.851483Z",
+            "file_format": "fastq.gz",
+            "file_source": null,
+            "file_type": "sequence_file",
+            "indexed": false,
+            "is_intermediate": null,
+            "lane_index": 1,
+            "matrix_cell_count": null,
+            "name": "R2.fastq.gz",
+            "read_index": "read2",
+            "sha256": "c305bee37b3c3735585e11306272b6ab085f04cd22ea8703957b4503488cfeba",
+            "size": 130024,
+            "uuid": "b764ce7d-3938-4451-b68c-678feebc8f2a",
+            "version": "2018-10-10T02:38:11.851483Z"
+        },
+        "relations": [
+            {
+                "dst_id": "cell_suspensions.77795119-8498-56a8-b175-6afc82257133.1",
+                "dst_name": "cell_suspensions"
+            },
+            {
+                "dst_id": "donors.7169f434-8d37-5894-8709-707da00dafa0.1",
+                "dst_name": "donors"
+            },
+            {
+                "dst_id": "library_preparation_protocols.206faacb-a743-5131-80b5-745da382b5b9.1",
+                "dst_name": "library_preparation_protocols"
+            },
+            {
+                "dst_id": "projects.0d35a55d-bdd1-50a2-982f-3524e3579603.1",
+                "dst_name": "projects"
+            },
+            {
+                "dst_id": "sample_specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "sample_specimens"
+            },
+            {
+                "dst_id": "samples.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "samples"
+            },
+            {
+                "dst_id": "sequencing_inputs.77795119-8498-56a8-b175-6afc82257133.1",
+                "dst_name": "sequencing_inputs"
+            },
+            {
+                "dst_id": "sequencing_processes.c5fd9010-0891-5b13-b19b-86bff7d51f1d.1",
+                "dst_name": "sequencing_processes"
+            },
+            {
+                "dst_id": "sequencing_protocols.c9566f70-97cb-56ac-bfd5-15f56f9b84dc.1",
+                "dst_name": "sequencing_protocols"
+            },
+            {
+                "dst_id": "specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "specimens"
+            }
+        ]
+    },
+    {
+        "id": "files.073f88fc-d541-51bd-b2a8-3f6e2684e673.1",
+        "name": "files",
+        "object": {
+            "_type": "file",
+            "content-type": "text/plain; dcp-type=data",
+            "content_description": [
+                null
+            ],
+            "crc32c": "0d086593",
+            "document_id": "8b4ed86d-99a8-4665-8f56-5a54fac6cb12",
+            "drs_uri": "drs://drs-test.lan/2866dfcd-6346-4db8-ad1c-36a50dd99f44?version=2018-10-10T03%3A10%3A31.541754Z",
+            "file_format": "txt",
+            "file_source": "DCP/2 Analysis",
+            "file_type": "analysis_file",
+            "indexed": false,
+            "is_intermediate": null,
+            "lane_index": null,
+            "matrix_cell_count": null,
+            "name": "377f2f5a-4a45-4c62-8fb0-db9ef33f5cf0_qc.insert_size_metrics.txt",
+            "read_index": null,
+            "sha256": "15c506c283d8b72c2a58fae1c8b58f525837e7e10adfa00080af72ea156fdaed",
+            "size": 5005,
+            "uuid": "2866dfcd-6346-4db8-ad1c-36a50dd99f44",
+            "version": "2018-10-10T03:10:31.541754Z"
+        },
+        "relations": [
+            {
+                "dst_id": "cell_suspensions.77795119-8498-56a8-b175-6afc82257133.1",
+                "dst_name": "cell_suspensions"
+            },
+            {
+                "dst_id": "donors.7169f434-8d37-5894-8709-707da00dafa0.1",
+                "dst_name": "donors"
+            },
+            {
+                "dst_id": "library_preparation_protocols.206faacb-a743-5131-80b5-745da382b5b9.1",
+                "dst_name": "library_preparation_protocols"
+            },
+            {
+                "dst_id": "projects.0d35a55d-bdd1-50a2-982f-3524e3579603.1",
+                "dst_name": "projects"
+            },
+            {
+                "dst_id": "sample_specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "sample_specimens"
+            },
+            {
+                "dst_id": "samples.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "samples"
+            },
+            {
+                "dst_id": "sequencing_inputs.77795119-8498-56a8-b175-6afc82257133.1",
+                "dst_name": "sequencing_inputs"
+            },
+            {
+                "dst_id": "sequencing_processes.c5fd9010-0891-5b13-b19b-86bff7d51f1d.1",
+                "dst_name": "sequencing_processes"
+            },
+            {
+                "dst_id": "sequencing_protocols.c9566f70-97cb-56ac-bfd5-15f56f9b84dc.1",
+                "dst_name": "sequencing_protocols"
+            },
+            {
+                "dst_id": "specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "specimens"
+            }
+        ]
+    },
+    {
+        "id": "files.d9375054-2281-5af8-999b-6c1634bda214.1",
+        "name": "files",
+        "object": {
+            "_type": "file",
+            "content-type": "text/plain; dcp-type=data",
+            "content_description": [
+                null
+            ],
+            "crc32c": "132739db",
+            "document_id": "9a827f0b-d74a-436f-a39f-f8c8c9eadfa3",
+            "drs_uri": "drs://drs-test.lan/3a97e493-d758-4659-84f2-1c8060161459?version=2018-10-10T03%3A10%3A32.503612Z",
+            "file_format": "txt",
+            "file_source": "DCP/2 Analysis",
+            "file_type": "analysis_file",
+            "indexed": false,
+            "is_intermediate": null,
+            "lane_index": null,
+            "matrix_cell_count": null,
+            "name": "377f2f5a-4a45-4c62-8fb0-db9ef33f5cf0_qc.rna_metrics.txt",
+            "read_index": null,
+            "sha256": "cb2373c6dc2048b583c624291f7d3e4690c23934805100af773aa78682543141",
+            "size": 3218,
+            "uuid": "3a97e493-d758-4659-84f2-1c8060161459",
+            "version": "2018-10-10T03:10:32.503612Z"
+        },
+        "relations": [
+            {
+                "dst_id": "cell_suspensions.77795119-8498-56a8-b175-6afc82257133.1",
+                "dst_name": "cell_suspensions"
+            },
+            {
+                "dst_id": "donors.7169f434-8d37-5894-8709-707da00dafa0.1",
+                "dst_name": "donors"
+            },
+            {
+                "dst_id": "library_preparation_protocols.206faacb-a743-5131-80b5-745da382b5b9.1",
+                "dst_name": "library_preparation_protocols"
+            },
+            {
+                "dst_id": "projects.0d35a55d-bdd1-50a2-982f-3524e3579603.1",
+                "dst_name": "projects"
+            },
+            {
+                "dst_id": "sample_specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "sample_specimens"
+            },
+            {
+                "dst_id": "samples.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "samples"
+            },
+            {
+                "dst_id": "sequencing_inputs.77795119-8498-56a8-b175-6afc82257133.1",
+                "dst_name": "sequencing_inputs"
+            },
+            {
+                "dst_id": "sequencing_processes.c5fd9010-0891-5b13-b19b-86bff7d51f1d.1",
+                "dst_name": "sequencing_processes"
+            },
+            {
+                "dst_id": "sequencing_protocols.c9566f70-97cb-56ac-bfd5-15f56f9b84dc.1",
+                "dst_name": "sequencing_protocols"
+            },
+            {
+                "dst_id": "specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "specimens"
+            }
+        ]
+    },
+    {
+        "id": "files.94dd44c7-a939-5c58-b9ee-2ef220d0644b.1",
+        "name": "files",
+        "object": {
+            "_type": "file",
+            "content-type": "text/csv; dcp-type=data",
+            "content_description": [
+                null
+            ],
+            "crc32c": "d0ea20f5",
+            "document_id": "9d88ec61-e189-4618-ac15-992a134749a8",
+            "drs_uri": "drs://drs-test.lan/f7cbd75f-abb1-4703-bf11-7d55a28ae5c0?version=2018-10-10T03%3A10%3A33.596635Z",
+            "file_format": "csv",
+            "file_source": "DCP/2 Analysis",
+            "file_type": "analysis_file",
+            "indexed": false,
+            "is_intermediate": null,
+            "lane_index": null,
+            "matrix_cell_count": null,
+            "name": "377f2f5a-4a45-4c62-8fb0-db9ef33f5cf0_base_distribution_by_cycle_metrics.csv",
+            "read_index": null,
+            "sha256": "c910ece6155921d0ef500074db6e8c6b7bc53839a256bbb16eaf558b79583f5c",
+            "size": 4341,
+            "uuid": "f7cbd75f-abb1-4703-bf11-7d55a28ae5c0",
+            "version": "2018-10-10T03:10:33.596635Z"
+        },
+        "relations": [
+            {
+                "dst_id": "cell_suspensions.77795119-8498-56a8-b175-6afc82257133.1",
+                "dst_name": "cell_suspensions"
+            },
+            {
+                "dst_id": "donors.7169f434-8d37-5894-8709-707da00dafa0.1",
+                "dst_name": "donors"
+            },
+            {
+                "dst_id": "library_preparation_protocols.206faacb-a743-5131-80b5-745da382b5b9.1",
+                "dst_name": "library_preparation_protocols"
+            },
+            {
+                "dst_id": "projects.0d35a55d-bdd1-50a2-982f-3524e3579603.1",
+                "dst_name": "projects"
+            },
+            {
+                "dst_id": "sample_specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "sample_specimens"
+            },
+            {
+                "dst_id": "samples.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "samples"
+            },
+            {
+                "dst_id": "sequencing_inputs.77795119-8498-56a8-b175-6afc82257133.1",
+                "dst_name": "sequencing_inputs"
+            },
+            {
+                "dst_id": "sequencing_processes.c5fd9010-0891-5b13-b19b-86bff7d51f1d.1",
+                "dst_name": "sequencing_processes"
+            },
+            {
+                "dst_id": "sequencing_protocols.c9566f70-97cb-56ac-bfd5-15f56f9b84dc.1",
+                "dst_name": "sequencing_protocols"
+            },
+            {
+                "dst_id": "specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "specimens"
+            }
+        ]
+    },
+    {
+        "id": "files.a95f9944-c6d7-5993-825c-3ec7613da92a.1",
+        "name": "files",
+        "object": {
+            "_type": "file",
+            "content-type": "application/octet-stream; dcp-type=data",
+            "content_description": [
+                null
+            ],
+            "crc32c": "24b04481",
+            "document_id": "a3b39c62-3dd8-48f9-bcba-08a16f43a40b",
+            "drs_uri": "drs://drs-test.lan/55878ed2-a7bf-423f-b6ee-97969e2e66ef?version=2018-10-10T03%3A10%3A37.034867Z",
+            "file_format": "results",
+            "file_source": "DCP/2 Analysis",
+            "file_type": "analysis_file",
+            "indexed": false,
+            "is_intermediate": null,
+            "lane_index": null,
+            "matrix_cell_count": null,
+            "name": "377f2f5a-4a45-4c62-8fb0-db9ef33f5cf0_rsem.isoforms.results",
+            "read_index": null,
+            "sha256": "abf4f12296e2e99fa153b63f920657bfa37718681111091d51c098207e7f6b41",
+            "size": 18940597,
+            "uuid": "55878ed2-a7bf-423f-b6ee-97969e2e66ef",
+            "version": "2018-10-10T03:10:37.034867Z"
+        },
+        "relations": [
+            {
+                "dst_id": "cell_suspensions.77795119-8498-56a8-b175-6afc82257133.1",
+                "dst_name": "cell_suspensions"
+            },
+            {
+                "dst_id": "donors.7169f434-8d37-5894-8709-707da00dafa0.1",
+                "dst_name": "donors"
+            },
+            {
+                "dst_id": "library_preparation_protocols.206faacb-a743-5131-80b5-745da382b5b9.1",
+                "dst_name": "library_preparation_protocols"
+            },
+            {
+                "dst_id": "projects.0d35a55d-bdd1-50a2-982f-3524e3579603.1",
+                "dst_name": "projects"
+            },
+            {
+                "dst_id": "sample_specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "sample_specimens"
+            },
+            {
+                "dst_id": "samples.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "samples"
+            },
+            {
+                "dst_id": "sequencing_inputs.77795119-8498-56a8-b175-6afc82257133.1",
+                "dst_name": "sequencing_inputs"
+            },
+            {
+                "dst_id": "sequencing_processes.c5fd9010-0891-5b13-b19b-86bff7d51f1d.1",
+                "dst_name": "sequencing_processes"
+            },
+            {
+                "dst_id": "sequencing_protocols.c9566f70-97cb-56ac-bfd5-15f56f9b84dc.1",
+                "dst_name": "sequencing_protocols"
+            },
+            {
+                "dst_id": "specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "specimens"
+            }
+        ]
+    },
+    {
+        "id": "files.92c1924a-8361-5c76-a4fc-bfcaca8563ad.1",
+        "name": "files",
+        "object": {
+            "_type": "file",
+            "content-type": "application/gzip; dcp-type=data",
+            "content_description": [
+                null
+            ],
+            "crc32c": "700bd519",
+            "document_id": "a5acdc07-18bf-4c06-b212-2b36e52173ef",
+            "drs_uri": "drs://drs-test.lan/51c9ad31-5888-47eb-9e0c-02f042373c4e?version=2018-10-10T03%3A10%3A35.284782Z",
+            "file_format": "bam",
+            "file_source": "DCP/2 Analysis",
+            "file_type": "analysis_file",
+            "indexed": false,
+            "is_intermediate": null,
+            "lane_index": null,
+            "matrix_cell_count": null,
+            "name": "377f2f5a-4a45-4c62-8fb0-db9ef33f5cf0_qc.bam",
+            "read_index": null,
+            "sha256": "e3cd90d79f520c0806dddb1ca0c5a11fbe26ac0c0be983ba5098d6769f78294c",
+            "size": 550597,
+            "uuid": "51c9ad31-5888-47eb-9e0c-02f042373c4e",
+            "version": "2018-10-10T03:10:35.284782Z"
+        },
+        "relations": [
+            {
+                "dst_id": "cell_suspensions.77795119-8498-56a8-b175-6afc82257133.1",
+                "dst_name": "cell_suspensions"
+            },
+            {
+                "dst_id": "donors.7169f434-8d37-5894-8709-707da00dafa0.1",
+                "dst_name": "donors"
+            },
+            {
+                "dst_id": "library_preparation_protocols.206faacb-a743-5131-80b5-745da382b5b9.1",
+                "dst_name": "library_preparation_protocols"
+            },
+            {
+                "dst_id": "projects.0d35a55d-bdd1-50a2-982f-3524e3579603.1",
+                "dst_name": "projects"
+            },
+            {
+                "dst_id": "sample_specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "sample_specimens"
+            },
+            {
+                "dst_id": "samples.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "samples"
+            },
+            {
+                "dst_id": "sequencing_inputs.77795119-8498-56a8-b175-6afc82257133.1",
+                "dst_name": "sequencing_inputs"
+            },
+            {
+                "dst_id": "sequencing_processes.c5fd9010-0891-5b13-b19b-86bff7d51f1d.1",
+                "dst_name": "sequencing_processes"
+            },
+            {
+                "dst_id": "sequencing_protocols.c9566f70-97cb-56ac-bfd5-15f56f9b84dc.1",
+                "dst_name": "sequencing_protocols"
+            },
+            {
+                "dst_id": "specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "specimens"
+            }
+        ]
+    },
+    {
+        "id": "files.a378d4d4-d676-5ab1-9615-e647f9fd080f.1",
+        "name": "files",
+        "object": {
+            "_type": "file",
+            "content-type": "application/json; dcp-type=data",
+            "content_description": [
+                null
+            ],
+            "crc32c": "4e75003e",
+            "document_id": "b4767274-c12b-401f-8bc1-9c9213149442",
+            "drs_uri": "drs://drs-test.lan/c1c4a2bc-b5fb-4083-af64-f5dec70d7f9d?version=2018-10-10T03%3A10%3A37.983672Z",
+            "file_format": "matrix",
+            "file_source": "DCP/2 Analysis",
+            "file_type": "analysis_file",
+            "indexed": false,
+            "is_intermediate": null,
+            "lane_index": null,
+            "matrix_cell_count": null,
+            "name": "377f2f5a-4a45-4c62-8fb0-db9ef33f5cf0.zarr/.zattrs",
+            "read_index": null,
+            "sha256": "e9bf2c74bb562b91a45538bd74225edfd3a62bd8b74ab8c71b3c8f7295f3fcc6",
+            "size": 144,
+            "uuid": "c1c4a2bc-b5fb-4083-af64-f5dec70d7f9d",
+            "version": "2018-10-10T03:10:37.983672Z"
+        },
+        "relations": [
+            {
+                "dst_id": "cell_suspensions.77795119-8498-56a8-b175-6afc82257133.1",
+                "dst_name": "cell_suspensions"
+            },
+            {
+                "dst_id": "donors.7169f434-8d37-5894-8709-707da00dafa0.1",
+                "dst_name": "donors"
+            },
+            {
+                "dst_id": "library_preparation_protocols.206faacb-a743-5131-80b5-745da382b5b9.1",
+                "dst_name": "library_preparation_protocols"
+            },
+            {
+                "dst_id": "projects.0d35a55d-bdd1-50a2-982f-3524e3579603.1",
+                "dst_name": "projects"
+            },
+            {
+                "dst_id": "sample_specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "sample_specimens"
+            },
+            {
+                "dst_id": "samples.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "samples"
+            },
+            {
+                "dst_id": "sequencing_inputs.77795119-8498-56a8-b175-6afc82257133.1",
+                "dst_name": "sequencing_inputs"
+            },
+            {
+                "dst_id": "sequencing_processes.c5fd9010-0891-5b13-b19b-86bff7d51f1d.1",
+                "dst_name": "sequencing_processes"
+            },
+            {
+                "dst_id": "sequencing_protocols.c9566f70-97cb-56ac-bfd5-15f56f9b84dc.1",
+                "dst_name": "sequencing_protocols"
+            },
+            {
+                "dst_id": "specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "specimens"
+            }
+        ]
+    },
+    {
+        "id": "files.bb9c0688-7d66-5419-b3d4-b993b537a45c.1",
+        "name": "files",
+        "object": {
+            "_type": "file",
+            "content-type": "application/json; dcp-type=data",
+            "content_description": [
+                null
+            ],
+            "crc32c": "444a7707",
+            "document_id": "dfa9da1b-3f48-4c76-86a2-833ded3e2745",
+            "drs_uri": "drs://drs-test.lan/54541cc5-9010-425b-9037-22e43948c97c?version=2018-10-10T03%3A10%3A38.239541Z",
+            "file_format": "unknown",
+            "file_source": "DCP/2 Analysis",
+            "file_type": "analysis_file",
+            "indexed": false,
+            "is_intermediate": null,
+            "lane_index": null,
+            "matrix_cell_count": null,
+            "name": "377f2f5a-4a45-4c62-8fb0-db9ef33f5cf0.zarr/.zgroup",
+            "read_index": null,
+            "sha256": "2383746e67b4bcc2762b3f100f06c3fa2d5f149ab5a8e5da5d33521464a01959",
+            "size": 24,
+            "uuid": "54541cc5-9010-425b-9037-22e43948c97c",
+            "version": "2018-10-10T03:10:38.239541Z"
+        },
+        "relations": [
+            {
+                "dst_id": "cell_suspensions.77795119-8498-56a8-b175-6afc82257133.1",
+                "dst_name": "cell_suspensions"
+            },
+            {
+                "dst_id": "donors.7169f434-8d37-5894-8709-707da00dafa0.1",
+                "dst_name": "donors"
+            },
+            {
+                "dst_id": "library_preparation_protocols.206faacb-a743-5131-80b5-745da382b5b9.1",
+                "dst_name": "library_preparation_protocols"
+            },
+            {
+                "dst_id": "projects.0d35a55d-bdd1-50a2-982f-3524e3579603.1",
+                "dst_name": "projects"
+            },
+            {
+                "dst_id": "sample_specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "sample_specimens"
+            },
+            {
+                "dst_id": "samples.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "samples"
+            },
+            {
+                "dst_id": "sequencing_inputs.77795119-8498-56a8-b175-6afc82257133.1",
+                "dst_name": "sequencing_inputs"
+            },
+            {
+                "dst_id": "sequencing_processes.c5fd9010-0891-5b13-b19b-86bff7d51f1d.1",
+                "dst_name": "sequencing_processes"
+            },
+            {
+                "dst_id": "sequencing_protocols.c9566f70-97cb-56ac-bfd5-15f56f9b84dc.1",
+                "dst_name": "sequencing_protocols"
+            },
+            {
+                "dst_id": "specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "specimens"
+            }
+        ]
+    },
+    {
+        "id": "files.e0381796-2a9a-5aca-8ccf-32e34ece795f.1",
+        "name": "files",
+        "object": {
+            "_type": "file",
+            "content-type": "application/json; dcp-type=data",
+            "content_description": [
+                null
+            ],
+            "crc32c": "444a7707",
+            "document_id": "11d84aef-c087-4fd1-bdc9-0c3402a0db01",
+            "drs_uri": "drs://drs-test.lan/66b8f976-6f1e-45b3-bd97-069658c3c847?version=2018-10-10T03%3A10%3A38.474167Z",
+            "file_format": "unknown",
+            "file_source": "DCP/2 Analysis",
+            "file_type": "analysis_file",
+            "indexed": false,
+            "is_intermediate": null,
+            "lane_index": null,
+            "matrix_cell_count": null,
+            "name": "377f2f5a-4a45-4c62-8fb0-db9ef33f5cf0.zarr/expression_matrix/.zgroup",
+            "read_index": null,
+            "sha256": "2383746e67b4bcc2762b3f100f06c3fa2d5f149ab5a8e5da5d33521464a01959",
+            "size": 24,
+            "uuid": "66b8f976-6f1e-45b3-bd97-069658c3c847",
+            "version": "2018-10-10T03:10:38.474167Z"
+        },
+        "relations": [
+            {
+                "dst_id": "cell_suspensions.77795119-8498-56a8-b175-6afc82257133.1",
+                "dst_name": "cell_suspensions"
+            },
+            {
+                "dst_id": "donors.7169f434-8d37-5894-8709-707da00dafa0.1",
+                "dst_name": "donors"
+            },
+            {
+                "dst_id": "library_preparation_protocols.206faacb-a743-5131-80b5-745da382b5b9.1",
+                "dst_name": "library_preparation_protocols"
+            },
+            {
+                "dst_id": "projects.0d35a55d-bdd1-50a2-982f-3524e3579603.1",
+                "dst_name": "projects"
+            },
+            {
+                "dst_id": "sample_specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "sample_specimens"
+            },
+            {
+                "dst_id": "samples.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "samples"
+            },
+            {
+                "dst_id": "sequencing_inputs.77795119-8498-56a8-b175-6afc82257133.1",
+                "dst_name": "sequencing_inputs"
+            },
+            {
+                "dst_id": "sequencing_processes.c5fd9010-0891-5b13-b19b-86bff7d51f1d.1",
+                "dst_name": "sequencing_processes"
+            },
+            {
+                "dst_id": "sequencing_protocols.c9566f70-97cb-56ac-bfd5-15f56f9b84dc.1",
+                "dst_name": "sequencing_protocols"
+            },
+            {
+                "dst_id": "specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "specimens"
+            }
+        ]
+    },
+    {
+        "id": "files.5ba04e85-c7d4-59b0-9ef4-9dc0e165df40.1",
+        "name": "files",
+        "object": {
+            "_type": "file",
+            "content-type": "application/json; dcp-type=data",
+            "content_description": [
+                null
+            ],
+            "crc32c": "c6ab0701",
+            "document_id": "345c5bd6-ac02-4b5d-9d53-e2ec7d7928aa",
+            "drs_uri": "drs://drs-test.lan/ac05d7fb-d6b9-4ab1-8c04-6211450dbb62?version=2018-10-10T03%3A10%3A38.714461Z",
+            "file_format": "unknown",
+            "file_source": "DCP/2 Analysis",
+            "file_type": "analysis_file",
+            "indexed": false,
+            "is_intermediate": null,
+            "lane_index": null,
+            "matrix_cell_count": null,
+            "name": "377f2f5a-4a45-4c62-8fb0-db9ef33f5cf0.zarr/expression_matrix/cell_id/.zarray",
+            "read_index": null,
+            "sha256": "b0ae46aff3e2446c88dbde31abfb6253fcc8b571195f536f83d0641a29890669",
+            "size": 333,
+            "uuid": "ac05d7fb-d6b9-4ab1-8c04-6211450dbb62",
+            "version": "2018-10-10T03:10:38.714461Z"
+        },
+        "relations": [
+            {
+                "dst_id": "cell_suspensions.77795119-8498-56a8-b175-6afc82257133.1",
+                "dst_name": "cell_suspensions"
+            },
+            {
+                "dst_id": "donors.7169f434-8d37-5894-8709-707da00dafa0.1",
+                "dst_name": "donors"
+            },
+            {
+                "dst_id": "library_preparation_protocols.206faacb-a743-5131-80b5-745da382b5b9.1",
+                "dst_name": "library_preparation_protocols"
+            },
+            {
+                "dst_id": "projects.0d35a55d-bdd1-50a2-982f-3524e3579603.1",
+                "dst_name": "projects"
+            },
+            {
+                "dst_id": "sample_specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "sample_specimens"
+            },
+            {
+                "dst_id": "samples.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "samples"
+            },
+            {
+                "dst_id": "sequencing_inputs.77795119-8498-56a8-b175-6afc82257133.1",
+                "dst_name": "sequencing_inputs"
+            },
+            {
+                "dst_id": "sequencing_processes.c5fd9010-0891-5b13-b19b-86bff7d51f1d.1",
+                "dst_name": "sequencing_processes"
+            },
+            {
+                "dst_id": "sequencing_protocols.c9566f70-97cb-56ac-bfd5-15f56f9b84dc.1",
+                "dst_name": "sequencing_protocols"
+            },
+            {
+                "dst_id": "specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "specimens"
+            }
+        ]
+    },
+    {
+        "id": "files.c089fb56-f67f-57fa-98b4-da1b0cad984f.1",
+        "name": "files",
+        "object": {
+            "_type": "file",
+            "content-type": "application/octet-stream; dcp-type=data",
+            "content_description": [
+                null
+            ],
+            "crc32c": "cd2fd51f",
+            "document_id": "5aa074b9-f6e6-4790-9608-b5eb37425341",
+            "drs_uri": "drs://drs-test.lan/0c518a52-f315-4ea2-beed-1c9d8f2d802b?version=2018-10-10T03%3A10%3A39.039270Z",
+            "file_format": "unknown",
+            "file_source": "DCP/2 Analysis",
+            "file_type": "analysis_file",
+            "indexed": false,
+            "is_intermediate": null,
+            "lane_index": null,
+            "matrix_cell_count": null,
+            "name": "377f2f5a-4a45-4c62-8fb0-db9ef33f5cf0.zarr/expression_matrix/cell_id/0.0",
+            "read_index": null,
+            "sha256": "fa77e1466fbe9d016b8c20dade29ebc19356e586d725feaf83d3efc7b007161a",
+            "size": 153,
+            "uuid": "0c518a52-f315-4ea2-beed-1c9d8f2d802b",
+            "version": "2018-10-10T03:10:39.039270Z"
+        },
+        "relations": [
+            {
+                "dst_id": "cell_suspensions.77795119-8498-56a8-b175-6afc82257133.1",
+                "dst_name": "cell_suspensions"
+            },
+            {
+                "dst_id": "donors.7169f434-8d37-5894-8709-707da00dafa0.1",
+                "dst_name": "donors"
+            },
+            {
+                "dst_id": "library_preparation_protocols.206faacb-a743-5131-80b5-745da382b5b9.1",
+                "dst_name": "library_preparation_protocols"
+            },
+            {
+                "dst_id": "projects.0d35a55d-bdd1-50a2-982f-3524e3579603.1",
+                "dst_name": "projects"
+            },
+            {
+                "dst_id": "sample_specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "sample_specimens"
+            },
+            {
+                "dst_id": "samples.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "samples"
+            },
+            {
+                "dst_id": "sequencing_inputs.77795119-8498-56a8-b175-6afc82257133.1",
+                "dst_name": "sequencing_inputs"
+            },
+            {
+                "dst_id": "sequencing_processes.c5fd9010-0891-5b13-b19b-86bff7d51f1d.1",
+                "dst_name": "sequencing_processes"
+            },
+            {
+                "dst_id": "sequencing_protocols.c9566f70-97cb-56ac-bfd5-15f56f9b84dc.1",
+                "dst_name": "sequencing_protocols"
+            },
+            {
+                "dst_id": "specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "specimens"
+            }
+        ]
+    },
+    {
+        "id": "files.23c591de-089b-5e7b-abfd-9b4f2a13a980.1",
+        "name": "files",
+        "object": {
+            "_type": "file",
+            "content-type": "application/json; dcp-type=data",
+            "content_description": [
+                null
+            ],
+            "crc32c": "b89e6723",
+            "document_id": "b9672a5e-03be-41a6-9155-b29626815e11",
+            "drs_uri": "drs://drs-test.lan/136108ab-277e-47a4-acc3-1feed8fb2f25?version=2018-10-10T03%3A10%3A39.426609Z",
+            "file_format": "unknown",
+            "file_source": "DCP/2 Analysis",
+            "file_type": "analysis_file",
+            "indexed": false,
+            "is_intermediate": null,
+            "lane_index": null,
+            "matrix_cell_count": null,
+            "name": "377f2f5a-4a45-4c62-8fb0-db9ef33f5cf0.zarr/expression_matrix/expression/.zarray",
+            "read_index": null,
+            "sha256": "31f6f311ce1934669c993d3ae909f89084d605554312bc34262340e3f37005ca",
+            "size": 341,
+            "uuid": "136108ab-277e-47a4-acc3-1feed8fb2f25",
+            "version": "2018-10-10T03:10:39.426609Z"
+        },
+        "relations": [
+            {
+                "dst_id": "cell_suspensions.77795119-8498-56a8-b175-6afc82257133.1",
+                "dst_name": "cell_suspensions"
+            },
+            {
+                "dst_id": "donors.7169f434-8d37-5894-8709-707da00dafa0.1",
+                "dst_name": "donors"
+            },
+            {
+                "dst_id": "library_preparation_protocols.206faacb-a743-5131-80b5-745da382b5b9.1",
+                "dst_name": "library_preparation_protocols"
+            },
+            {
+                "dst_id": "projects.0d35a55d-bdd1-50a2-982f-3524e3579603.1",
+                "dst_name": "projects"
+            },
+            {
+                "dst_id": "sample_specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "sample_specimens"
+            },
+            {
+                "dst_id": "samples.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "samples"
+            },
+            {
+                "dst_id": "sequencing_inputs.77795119-8498-56a8-b175-6afc82257133.1",
+                "dst_name": "sequencing_inputs"
+            },
+            {
+                "dst_id": "sequencing_processes.c5fd9010-0891-5b13-b19b-86bff7d51f1d.1",
+                "dst_name": "sequencing_processes"
+            },
+            {
+                "dst_id": "sequencing_protocols.c9566f70-97cb-56ac-bfd5-15f56f9b84dc.1",
+                "dst_name": "sequencing_protocols"
+            },
+            {
+                "dst_id": "specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "specimens"
+            }
+        ]
+    },
+    {
+        "id": "files.7d4d32cd-5e7e-55cf-a0ad-1efbea34b750.1",
+        "name": "files",
+        "object": {
+            "_type": "file",
+            "content-type": "application/octet-stream; dcp-type=data",
+            "content_description": [
+                null
+            ],
+            "crc32c": "caaefa77",
+            "document_id": "c0da3d0b-128b-4b37-a3d6-9538ab29e9b6",
+            "drs_uri": "drs://drs-test.lan/0bef5419-739c-4a2c-aedb-43754d55d51c?version=2018-10-10T03%3A10%3A39.642846Z",
+            "file_format": "unknown",
+            "file_source": "DCP/2 Analysis",
+            "file_type": "analysis_file",
+            "indexed": false,
+            "is_intermediate": null,
+            "lane_index": null,
+            "matrix_cell_count": null,
+            "name": "377f2f5a-4a45-4c62-8fb0-db9ef33f5cf0.zarr/expression_matrix/expression/0.0",
+            "read_index": null,
+            "sha256": "625a4c8c5224432840964847bbefaf43cd535d9313d045ac5c9cb19411c86bee",
+            "size": 3054,
+            "uuid": "0bef5419-739c-4a2c-aedb-43754d55d51c",
+            "version": "2018-10-10T03:10:39.642846Z"
+        },
+        "relations": [
+            {
+                "dst_id": "cell_suspensions.77795119-8498-56a8-b175-6afc82257133.1",
+                "dst_name": "cell_suspensions"
+            },
+            {
+                "dst_id": "donors.7169f434-8d37-5894-8709-707da00dafa0.1",
+                "dst_name": "donors"
+            },
+            {
+                "dst_id": "library_preparation_protocols.206faacb-a743-5131-80b5-745da382b5b9.1",
+                "dst_name": "library_preparation_protocols"
+            },
+            {
+                "dst_id": "projects.0d35a55d-bdd1-50a2-982f-3524e3579603.1",
+                "dst_name": "projects"
+            },
+            {
+                "dst_id": "sample_specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "sample_specimens"
+            },
+            {
+                "dst_id": "samples.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "samples"
+            },
+            {
+                "dst_id": "sequencing_inputs.77795119-8498-56a8-b175-6afc82257133.1",
+                "dst_name": "sequencing_inputs"
+            },
+            {
+                "dst_id": "sequencing_processes.c5fd9010-0891-5b13-b19b-86bff7d51f1d.1",
+                "dst_name": "sequencing_processes"
+            },
+            {
+                "dst_id": "sequencing_protocols.c9566f70-97cb-56ac-bfd5-15f56f9b84dc.1",
+                "dst_name": "sequencing_protocols"
+            },
+            {
+                "dst_id": "specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "specimens"
+            }
+        ]
+    },
+    {
+        "id": "files.bc4ad5cc-95c8-5806-8356-2b9542b8a795.1",
+        "name": "files",
+        "object": {
+            "_type": "file",
+            "content-type": "application/json; dcp-type=data",
+            "content_description": [
+                null
+            ],
+            "crc32c": "f629ec34",
+            "document_id": "46465f1a-a0cc-413f-aebc-505e4714c6b2",
+            "drs_uri": "drs://drs-test.lan/3a5f7299-1aa1-4060-9631-212c29b4d807?version=2018-10-10T03%3A10%3A39.899615Z",
+            "file_format": "unknown",
+            "file_source": "DCP/2 Analysis",
+            "file_type": "analysis_file",
+            "indexed": false,
+            "is_intermediate": null,
+            "lane_index": null,
+            "matrix_cell_count": null,
+            "name": "377f2f5a-4a45-4c62-8fb0-db9ef33f5cf0.zarr/expression_matrix/gene_id/.zarray",
+            "read_index": null,
+            "sha256": "5c65571866242de9ca10a299eb14d239d5c5c5f4538835b2df600bb212076083",
+            "size": 341,
+            "uuid": "3a5f7299-1aa1-4060-9631-212c29b4d807",
+            "version": "2018-10-10T03:10:39.899615Z"
+        },
+        "relations": [
+            {
+                "dst_id": "cell_suspensions.77795119-8498-56a8-b175-6afc82257133.1",
+                "dst_name": "cell_suspensions"
+            },
+            {
+                "dst_id": "donors.7169f434-8d37-5894-8709-707da00dafa0.1",
+                "dst_name": "donors"
+            },
+            {
+                "dst_id": "library_preparation_protocols.206faacb-a743-5131-80b5-745da382b5b9.1",
+                "dst_name": "library_preparation_protocols"
+            },
+            {
+                "dst_id": "projects.0d35a55d-bdd1-50a2-982f-3524e3579603.1",
+                "dst_name": "projects"
+            },
+            {
+                "dst_id": "sample_specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "sample_specimens"
+            },
+            {
+                "dst_id": "samples.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "samples"
+            },
+            {
+                "dst_id": "sequencing_inputs.77795119-8498-56a8-b175-6afc82257133.1",
+                "dst_name": "sequencing_inputs"
+            },
+            {
+                "dst_id": "sequencing_processes.c5fd9010-0891-5b13-b19b-86bff7d51f1d.1",
+                "dst_name": "sequencing_processes"
+            },
+            {
+                "dst_id": "sequencing_protocols.c9566f70-97cb-56ac-bfd5-15f56f9b84dc.1",
+                "dst_name": "sequencing_protocols"
+            },
+            {
+                "dst_id": "specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "specimens"
+            }
+        ]
+    },
+    {
+        "id": "files.fcf3e9fc-55df-5bf4-afcd-ed2ed58d42ab.1",
+        "name": "files",
+        "object": {
+            "_type": "file",
+            "content-type": "application/octet-stream; dcp-type=data",
+            "content_description": [
+                null
+            ],
+            "crc32c": "59d86b68",
+            "document_id": "7ba06d4d-c134-4324-84e6-3a37e57af2ce",
+            "drs_uri": "drs://drs-test.lan/a8f0dc39-6019-4fc7-899d-4e34a48d03e5?version=2018-10-10T03%3A10%3A40.113268Z",
+            "file_format": "unknown",
+            "file_source": "DCP/2 Analysis",
+            "file_type": "analysis_file",
+            "indexed": false,
+            "is_intermediate": null,
+            "lane_index": null,
+            "matrix_cell_count": null,
+            "name": "377f2f5a-4a45-4c62-8fb0-db9ef33f5cf0.zarr/expression_matrix/gene_id/0.0",
+            "read_index": null,
+            "sha256": "ad468829c4ad38e218b5d0c1573803aba4a5fed31b6fc755c6394d97ac0d417b",
+            "size": 192191,
+            "uuid": "a8f0dc39-6019-4fc7-899d-4e34a48d03e5",
+            "version": "2018-10-10T03:10:40.113268Z"
+        },
+        "relations": [
+            {
+                "dst_id": "cell_suspensions.77795119-8498-56a8-b175-6afc82257133.1",
+                "dst_name": "cell_suspensions"
+            },
+            {
+                "dst_id": "donors.7169f434-8d37-5894-8709-707da00dafa0.1",
+                "dst_name": "donors"
+            },
+            {
+                "dst_id": "library_preparation_protocols.206faacb-a743-5131-80b5-745da382b5b9.1",
+                "dst_name": "library_preparation_protocols"
+            },
+            {
+                "dst_id": "projects.0d35a55d-bdd1-50a2-982f-3524e3579603.1",
+                "dst_name": "projects"
+            },
+            {
+                "dst_id": "sample_specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "sample_specimens"
+            },
+            {
+                "dst_id": "samples.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "samples"
+            },
+            {
+                "dst_id": "sequencing_inputs.77795119-8498-56a8-b175-6afc82257133.1",
+                "dst_name": "sequencing_inputs"
+            },
+            {
+                "dst_id": "sequencing_processes.c5fd9010-0891-5b13-b19b-86bff7d51f1d.1",
+                "dst_name": "sequencing_processes"
+            },
+            {
+                "dst_id": "sequencing_protocols.c9566f70-97cb-56ac-bfd5-15f56f9b84dc.1",
+                "dst_name": "sequencing_protocols"
+            },
+            {
+                "dst_id": "specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "specimens"
+            }
+        ]
+    },
+    {
+        "id": "files.0f862030-bd18-5b93-8fe8-cc2b74e340f7.1",
+        "name": "files",
+        "object": {
+            "_type": "file",
+            "content-type": "application/json; dcp-type=data",
+            "content_description": [
+                null
+            ],
+            "crc32c": "25d193cf",
+            "document_id": "7cd4f7cc-8712-4ffd-b91d-9cb7c6182f52",
+            "drs_uri": "drs://drs-test.lan/68ba4711-1447-42ac-aa40-9c0e4cda1666?version=2018-10-10T03%3A10%3A40.583439Z",
+            "file_format": "unknown",
+            "file_source": "DCP/2 Analysis",
+            "file_type": "analysis_file",
+            "indexed": false,
+            "is_intermediate": null,
+            "lane_index": null,
+            "matrix_cell_count": null,
+            "name": "377f2f5a-4a45-4c62-8fb0-db9ef33f5cf0.zarr/expression_matrix/qc_metric/.zarray",
+            "read_index": null,
+            "sha256": "334848718d4aee17991ea4cd9f0585654e24c7967a0a11c5f259c7b8825d8227",
+            "size": 337,
+            "uuid": "68ba4711-1447-42ac-aa40-9c0e4cda1666",
+            "version": "2018-10-10T03:10:40.583439Z"
+        },
+        "relations": [
+            {
+                "dst_id": "cell_suspensions.77795119-8498-56a8-b175-6afc82257133.1",
+                "dst_name": "cell_suspensions"
+            },
+            {
+                "dst_id": "donors.7169f434-8d37-5894-8709-707da00dafa0.1",
+                "dst_name": "donors"
+            },
+            {
+                "dst_id": "library_preparation_protocols.206faacb-a743-5131-80b5-745da382b5b9.1",
+                "dst_name": "library_preparation_protocols"
+            },
+            {
+                "dst_id": "projects.0d35a55d-bdd1-50a2-982f-3524e3579603.1",
+                "dst_name": "projects"
+            },
+            {
+                "dst_id": "sample_specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "sample_specimens"
+            },
+            {
+                "dst_id": "samples.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "samples"
+            },
+            {
+                "dst_id": "sequencing_inputs.77795119-8498-56a8-b175-6afc82257133.1",
+                "dst_name": "sequencing_inputs"
+            },
+            {
+                "dst_id": "sequencing_processes.c5fd9010-0891-5b13-b19b-86bff7d51f1d.1",
+                "dst_name": "sequencing_processes"
+            },
+            {
+                "dst_id": "sequencing_protocols.c9566f70-97cb-56ac-bfd5-15f56f9b84dc.1",
+                "dst_name": "sequencing_protocols"
+            },
+            {
+                "dst_id": "specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "specimens"
+            }
+        ]
+    },
+    {
+        "id": "files.3ce24614-e988-5168-9f68-67fce7a75768.1",
+        "name": "files",
+        "object": {
+            "_type": "file",
+            "content-type": "application/octet-stream; dcp-type=data",
+            "content_description": [
+                null
+            ],
+            "crc32c": "17a84191",
+            "document_id": "54604922-909e-4094-83d7-9d8ac7e7cdbd",
+            "drs_uri": "drs://drs-test.lan/27e66328-e337-4bcd-ba15-7893ecaf841f?version=2018-10-10T03%3A10%3A40.801631Z",
+            "file_format": "unknown",
+            "file_source": "DCP/2 Analysis",
+            "file_type": "analysis_file",
+            "indexed": false,
+            "is_intermediate": null,
+            "lane_index": null,
+            "matrix_cell_count": null,
+            "name": "377f2f5a-4a45-4c62-8fb0-db9ef33f5cf0.zarr/expression_matrix/qc_metric/0.0",
+            "read_index": null,
+            "sha256": "215349395555fa4af2669d6119ef0ff39ba7aa3f34cb981041024466ff462693",
+            "size": 4054,
+            "uuid": "27e66328-e337-4bcd-ba15-7893ecaf841f",
+            "version": "2018-10-10T03:10:40.801631Z"
+        },
+        "relations": [
+            {
+                "dst_id": "cell_suspensions.77795119-8498-56a8-b175-6afc82257133.1",
+                "dst_name": "cell_suspensions"
+            },
+            {
+                "dst_id": "donors.7169f434-8d37-5894-8709-707da00dafa0.1",
+                "dst_name": "donors"
+            },
+            {
+                "dst_id": "library_preparation_protocols.206faacb-a743-5131-80b5-745da382b5b9.1",
+                "dst_name": "library_preparation_protocols"
+            },
+            {
+                "dst_id": "projects.0d35a55d-bdd1-50a2-982f-3524e3579603.1",
+                "dst_name": "projects"
+            },
+            {
+                "dst_id": "sample_specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "sample_specimens"
+            },
+            {
+                "dst_id": "samples.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "samples"
+            },
+            {
+                "dst_id": "sequencing_inputs.77795119-8498-56a8-b175-6afc82257133.1",
+                "dst_name": "sequencing_inputs"
+            },
+            {
+                "dst_id": "sequencing_processes.c5fd9010-0891-5b13-b19b-86bff7d51f1d.1",
+                "dst_name": "sequencing_processes"
+            },
+            {
+                "dst_id": "sequencing_protocols.c9566f70-97cb-56ac-bfd5-15f56f9b84dc.1",
+                "dst_name": "sequencing_protocols"
+            },
+            {
+                "dst_id": "specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "specimens"
+            }
+        ]
+    },
+    {
+        "id": "files.088445ba-bb02-5482-8b52-49a0e48cd859.1",
+        "name": "files",
+        "object": {
+            "_type": "file",
+            "content-type": "application/json; dcp-type=data",
+            "content_description": [
+                null
+            ],
+            "crc32c": "25d193cf",
+            "document_id": "e0fc82a4-9bc2-4219-b763-99c865e4f9c0",
+            "drs_uri": "drs://drs-test.lan/2ab1a516-ef36-41b6-a78f-513361658feb?version=2018-10-10T03%3A10%3A40.958708Z",
+            "file_format": "unknown",
+            "file_source": "DCP/2 Analysis",
+            "file_type": "analysis_file",
+            "indexed": false,
+            "is_intermediate": null,
+            "lane_index": null,
+            "matrix_cell_count": null,
+            "name": "377f2f5a-4a45-4c62-8fb0-db9ef33f5cf0.zarr/expression_matrix/qc_values/.zarray",
+            "read_index": null,
+            "sha256": "334848718d4aee17991ea4cd9f0585654e24c7967a0a11c5f259c7b8825d8227",
+            "size": 337,
+            "uuid": "2ab1a516-ef36-41b6-a78f-513361658feb",
+            "version": "2018-10-10T03:10:40.958708Z"
+        },
+        "relations": [
+            {
+                "dst_id": "cell_suspensions.77795119-8498-56a8-b175-6afc82257133.1",
+                "dst_name": "cell_suspensions"
+            },
+            {
+                "dst_id": "donors.7169f434-8d37-5894-8709-707da00dafa0.1",
+                "dst_name": "donors"
+            },
+            {
+                "dst_id": "library_preparation_protocols.206faacb-a743-5131-80b5-745da382b5b9.1",
+                "dst_name": "library_preparation_protocols"
+            },
+            {
+                "dst_id": "projects.0d35a55d-bdd1-50a2-982f-3524e3579603.1",
+                "dst_name": "projects"
+            },
+            {
+                "dst_id": "sample_specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "sample_specimens"
+            },
+            {
+                "dst_id": "samples.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "samples"
+            },
+            {
+                "dst_id": "sequencing_inputs.77795119-8498-56a8-b175-6afc82257133.1",
+                "dst_name": "sequencing_inputs"
+            },
+            {
+                "dst_id": "sequencing_processes.c5fd9010-0891-5b13-b19b-86bff7d51f1d.1",
+                "dst_name": "sequencing_processes"
+            },
+            {
+                "dst_id": "sequencing_protocols.c9566f70-97cb-56ac-bfd5-15f56f9b84dc.1",
+                "dst_name": "sequencing_protocols"
+            },
+            {
+                "dst_id": "specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "specimens"
+            }
+        ]
+    },
+    {
+        "id": "files.ffdb0549-afcc-5a58-a2cf-9c2451a61180.1",
+        "name": "files",
+        "object": {
+            "_type": "file",
+            "content-type": "application/octet-stream; dcp-type=data",
+            "content_description": [
+                null
+            ],
+            "crc32c": "bdc30523",
+            "document_id": "5c3246df-9ee8-42fe-ab19-ddd0ddea3e15",
+            "drs_uri": "drs://drs-test.lan/351970aa-bc4c-405e-a274-be9e08e42e98?version=2018-10-10T03%3A10%3A41.135992Z",
+            "file_format": "unknown",
+            "file_source": "DCP/2 Analysis",
+            "file_type": "analysis_file",
+            "indexed": false,
+            "is_intermediate": null,
+            "lane_index": null,
+            "matrix_cell_count": null,
+            "name": "377f2f5a-4a45-4c62-8fb0-db9ef33f5cf0.zarr/expression_matrix/qc_values/0.0",
+            "read_index": null,
+            "sha256": "af4b69064dd3f393d9da8138f0f5b5599e5fcac35daa0cc0233ec229c5135d0a",
+            "size": 1257,
+            "uuid": "351970aa-bc4c-405e-a274-be9e08e42e98",
+            "version": "2018-10-10T03:10:41.135992Z"
+        },
+        "relations": [
+            {
+                "dst_id": "cell_suspensions.77795119-8498-56a8-b175-6afc82257133.1",
+                "dst_name": "cell_suspensions"
+            },
+            {
+                "dst_id": "donors.7169f434-8d37-5894-8709-707da00dafa0.1",
+                "dst_name": "donors"
+            },
+            {
+                "dst_id": "library_preparation_protocols.206faacb-a743-5131-80b5-745da382b5b9.1",
+                "dst_name": "library_preparation_protocols"
+            },
+            {
+                "dst_id": "projects.0d35a55d-bdd1-50a2-982f-3524e3579603.1",
+                "dst_name": "projects"
+            },
+            {
+                "dst_id": "sample_specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "sample_specimens"
+            },
+            {
+                "dst_id": "samples.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "samples"
+            },
+            {
+                "dst_id": "sequencing_inputs.77795119-8498-56a8-b175-6afc82257133.1",
+                "dst_name": "sequencing_inputs"
+            },
+            {
+                "dst_id": "sequencing_processes.c5fd9010-0891-5b13-b19b-86bff7d51f1d.1",
+                "dst_name": "sequencing_processes"
+            },
+            {
+                "dst_id": "sequencing_protocols.c9566f70-97cb-56ac-bfd5-15f56f9b84dc.1",
+                "dst_name": "sequencing_protocols"
+            },
+            {
+                "dst_id": "specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "specimens"
+            }
+        ]
+    },
+    {
+        "id": "files.ee110f09-10d3-59cc-9aee-97be6f3c6284.1",
+        "name": "files",
+        "object": {
+            "_type": "file",
+            "content-type": "application/octet-stream; dcp-type=data",
+            "content_description": [
+                null
+            ],
+            "crc32c": "7581baea",
+            "document_id": "b7f69b47-cbdf-4ec9-be6e-d316827aad8e",
+            "drs_uri": "drs://drs-test.lan/cf859616-212d-4579-bd86-03c5f8e06ec0?version=2018-10-10T03%3A10%3A36.453150Z",
+            "file_format": "results",
+            "file_source": "DCP/2 Analysis",
+            "file_type": "analysis_file",
+            "indexed": false,
+            "is_intermediate": null,
+            "lane_index": null,
+            "matrix_cell_count": null,
+            "name": "377f2f5a-4a45-4c62-8fb0-db9ef33f5cf0_rsem.genes.results",
+            "read_index": null,
+            "sha256": "60462c3b1ccde59bbff0f3b62a4f8491d07a0d7a55abbb2df093f72aaadb77b5",
+            "size": 7629174,
+            "uuid": "cf859616-212d-4579-bd86-03c5f8e06ec0",
+            "version": "2018-10-10T03:10:36.453150Z"
+        },
+        "relations": [
+            {
+                "dst_id": "cell_suspensions.77795119-8498-56a8-b175-6afc82257133.1",
+                "dst_name": "cell_suspensions"
+            },
+            {
+                "dst_id": "donors.7169f434-8d37-5894-8709-707da00dafa0.1",
+                "dst_name": "donors"
+            },
+            {
+                "dst_id": "library_preparation_protocols.206faacb-a743-5131-80b5-745da382b5b9.1",
+                "dst_name": "library_preparation_protocols"
+            },
+            {
+                "dst_id": "projects.0d35a55d-bdd1-50a2-982f-3524e3579603.1",
+                "dst_name": "projects"
+            },
+            {
+                "dst_id": "sample_specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "sample_specimens"
+            },
+            {
+                "dst_id": "samples.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "samples"
+            },
+            {
+                "dst_id": "sequencing_inputs.77795119-8498-56a8-b175-6afc82257133.1",
+                "dst_name": "sequencing_inputs"
+            },
+            {
+                "dst_id": "sequencing_processes.c5fd9010-0891-5b13-b19b-86bff7d51f1d.1",
+                "dst_name": "sequencing_processes"
+            },
+            {
+                "dst_id": "sequencing_protocols.c9566f70-97cb-56ac-bfd5-15f56f9b84dc.1",
+                "dst_name": "sequencing_protocols"
+            },
+            {
+                "dst_id": "specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "specimens"
+            }
+        ]
+    },
+    {
+        "id": "files.fd4dcf28-df3e-5abe-95c2-2147882cb0f8.1",
+        "name": "files",
+        "object": {
+            "_type": "file",
+            "content-type": "text/csv; dcp-type=data",
+            "content_description": [
+                null
+            ],
+            "crc32c": "d5d1e302",
+            "document_id": "c059ee58-fbea-40d9-b552-acc1285138a3",
+            "drs_uri": "drs://drs-test.lan/29466279-4d12-44dd-9f87-8429b61a9f13?version=2018-10-10T03%3A10%3A33.862470Z",
+            "file_format": "csv",
+            "file_source": "DCP/2 Analysis",
+            "file_type": "analysis_file",
+            "indexed": false,
+            "is_intermediate": null,
+            "lane_index": null,
+            "matrix_cell_count": null,
+            "name": "377f2f5a-4a45-4c62-8fb0-db9ef33f5cf0_error_summary_metrics.csv",
+            "read_index": null,
+            "sha256": "c691a24d6bd11b9b60b99efe4641e2392ff50ab518b6474b595e86610dfe9751",
+            "size": 457,
+            "uuid": "29466279-4d12-44dd-9f87-8429b61a9f13",
+            "version": "2018-10-10T03:10:33.862470Z"
+        },
+        "relations": [
+            {
+                "dst_id": "cell_suspensions.77795119-8498-56a8-b175-6afc82257133.1",
+                "dst_name": "cell_suspensions"
+            },
+            {
+                "dst_id": "donors.7169f434-8d37-5894-8709-707da00dafa0.1",
+                "dst_name": "donors"
+            },
+            {
+                "dst_id": "library_preparation_protocols.206faacb-a743-5131-80b5-745da382b5b9.1",
+                "dst_name": "library_preparation_protocols"
+            },
+            {
+                "dst_id": "projects.0d35a55d-bdd1-50a2-982f-3524e3579603.1",
+                "dst_name": "projects"
+            },
+            {
+                "dst_id": "sample_specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "sample_specimens"
+            },
+            {
+                "dst_id": "samples.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "samples"
+            },
+            {
+                "dst_id": "sequencing_inputs.77795119-8498-56a8-b175-6afc82257133.1",
+                "dst_name": "sequencing_inputs"
+            },
+            {
+                "dst_id": "sequencing_processes.c5fd9010-0891-5b13-b19b-86bff7d51f1d.1",
+                "dst_name": "sequencing_processes"
+            },
+            {
+                "dst_id": "sequencing_protocols.c9566f70-97cb-56ac-bfd5-15f56f9b84dc.1",
+                "dst_name": "sequencing_protocols"
+            },
+            {
+                "dst_id": "specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "specimens"
+            }
+        ]
+    },
+    {
+        "id": "sample_specimens.a4460596-f04a-5c2a-9512-beed1c0eea6a.2",
+        "name": "sample_specimens",
+        "object": {
+            "_source": [
+                "specimen_from_organism"
+            ],
+            "_type": [
+                "specimen"
+            ],
+            "biomaterial_id": [
+                "AP1_specimen"
+            ],
+            "disease": [
+                "COVID-19"
+            ],
+            "document_id": [
+                "224d3750-f1f7-5b04-bbce-e23f09eea7d7",
+                "5275e5a0-6043-4ec9-86a1-6c1140cbeede"
+            ],
+            "has_input_biomaterial": [
+                null
+            ],
+            "organ": [
+                "blood",
+                "lung"
+            ],
+            "organ_part": [
+                null
+            ],
+            "preservation_method": [
+                null
+            ],
+            "storage_method": [
+                null
+            ]
+        },
+        "relations": []
+    },
+    {
+        "id": "samples.a4460596-f04a-5c2a-9512-beed1c0eea6a.2",
+        "name": "samples",
+        "object": {
+            "biomaterial_id": [
+                "AP1_specimen"
+            ],
+            "document_id": [
+                "224d3750-f1f7-5b04-bbce-e23f09eea7d7",
+                "5275e5a0-6043-4ec9-86a1-6c1140cbeede"
+            ],
+            "effective_organ": [
+                "blood",
+                "lung"
+            ],
+            "entity_type": [
+                "specimens"
+            ],
+            "model_organ": [
+                null
+            ],
+            "model_organ_part": [
+                null
+            ],
+            "organ": [
+                "blood",
+                "lung"
+            ],
+            "organ_part": [
+                null
+            ]
+        },
+        "relations": []
+    },
+    {
+        "id": "specimens.a4460596-f04a-5c2a-9512-beed1c0eea6a.2",
+        "name": "specimens",
+        "object": {
+            "_source": [
+                "specimen_from_organism"
+            ],
+            "_type": [
+                "specimen"
+            ],
+            "biomaterial_id": [
+                "AP1_specimen"
+            ],
+            "disease": [
+                "COVID-19"
+            ],
+            "document_id": [
+                "224d3750-f1f7-5b04-bbce-e23f09eea7d7",
+                "5275e5a0-6043-4ec9-86a1-6c1140cbeede"
+            ],
+            "has_input_biomaterial": [
+                null
+            ],
+            "organ": [
+                "blood",
+                "lung"
+            ],
+            "organ_part": [
+                null
+            ],
+            "preservation_method": [
+                null
+            ],
+            "storage_method": [
+                null
+            ]
+        },
+        "relations": []
+    },
+    {
+        "id": "cell_suspensions.6ee4f4eb-d3e5-5c21-8023-21cb9499858d.1",
+        "name": "cell_suspensions",
+        "object": {
+            "biomaterial_id": [
+                "AP1CS"
+            ],
+            "document_id": [
+                "d6b3d2ab-5715-4486-a544-ac09fafac279"
+            ],
+            "organ": [
+                "lung"
+            ],
+            "organ_part": [
+                null
+            ],
+            "selected_cell_type": [
+                "peripheral blood mononuclear cell"
+            ],
+            "total_estimated_cells_redundant": 0,
+            "total_estimated_cells": 20000
+        },
+        "relations": []
+    },
+    {
+        "id": "cell_suspensions.8de635aa-c8ee-5ae0-b8e5-937b93d17ad5.1",
+        "name": "cell_suspensions",
+        "object": {
+            "biomaterial_id": [
+                "AP1CS"
+            ],
+            "document_id": [
+                "d9eaaffe-4c93-5503-984f-762e8dfddce4"
+            ],
+            "organ": [
+                "blood"
+            ],
+            "organ_part": [
+                null
+            ],
+            "selected_cell_type": [
+                "peripheral blood mononuclear cell"
+            ],
+            "total_estimated_cells_redundant": 0,
+            "total_estimated_cells": 20000
+        },
+        "relations": []
+    },
+    {
+        "id": "donors.04b4f86f-be62-58de-a749-7b6ca22f550b.2",
+        "name": "donors",
+        "object": {
+            "biological_sex": [
+                "unknown"
+            ],
+            "biomaterial_id": [
+                "AP1"
+            ],
+            "development_stage": [
+                "human adult stage"
+            ],
+            "diseases": [
+                "COVID-19"
+            ],
+            "document_id": [
+                "0895599c-f57d-4843-963e-11eab29f883b",
+                "9173ee6a-f1b2-5762-9272-3433b5ef7530"
+            ],
+            "donor_count": 1,
+            "genus_species": [
+                "Homo sapiens"
+            ],
+            "organism_age": [
+                {
+                    "unit": "year",
+                    "value": "56"
+                },
+                null
+            ],
+            "organism_age_range": [
+                [
+                    1766016000.0,
+                    1766016000.0
+                ]
+            ]
+        },
+        "relations": []
+    },
+    {
+        "id": "analysis_protocols.b60d6764-67a8-591e-87e7-3ed91c248627.1",
+        "name": "analysis_protocols",
+        "object": {
+            "document_id": [
+                "811adf54-7f27-5aec-9ed7-c6084c4c3a1b"
+            ],
+            "workflow": [
+                "Combined_AnalysisProt"
+            ]
+        },
+        "relations": []
+    },
+    {
+        "id": "library_preparation_protocols.916caca6-07c2-5085-941f-d762d48b8df8.1",
+        "name": "library_preparation_protocols",
+        "object": {
+            "document_id": [
+                "f08df8f8-4966-5265-b127-36625c77deae"
+            ],
+            "library_construction_approach": [
+                "10x 3' v3"
+            ],
+            "nucleic_acid_source": [
+                "single cell"
+            ]
+        },
+        "relations": []
+    },
+    {
+        "id": "projects.199f34f4-ea80-5753-b615-8b4b595a8766.1",
+        "name": "projects",
+        "object": {
+            "_type": [
+                "project"
+            ],
+            "accessions": [
+                {
+                    "accession": "E-MTAB-10026",
+                    "namespace": "array_express"
+                },
+                {
+                    "accession": "EGAD00000000002",
+                    "namespace": "ega"
+                },
+                {
+                    "accession": "EGAS00000000001",
+                    "namespace": "ega"
+                },
+                {
+                    "accession": "phs001836",
+                    "namespace": "dbgap"
+                },
+                {
+                    "accession": "phs001997.v1.p1",
+                    "namespace": "dbgap"
+                }
+            ],
+            "contact_names": [
+                null
+            ],
+            "contributors": [],
+            "data_use_restriction": [
+                null
+            ],
+            "document_id": [
+                "90bf705c-d891-5ce2-aa54-094488b445c6"
+            ],
+            "estimated_cell_count": 10000,
+            "institutions": [
+                "Newcastle University"
+            ],
+            "laboratory": [
+                null
+            ],
+            "project_description": [
+                null
+            ],
+            "project_short_name": [
+                "Covid19PBMC"
+            ],
+            "project_title": [
+                "The cellular immune response to COVID-19 deciphered by single cell multi-omics across three UK centres"
+            ],
+            "publication_titles": [
+                "The cellular immune response to COVID-19 deciphered by single cell multi-omics across three UK centres"
+            ],
+            "publications": [],
+            "is_tissue_atlas_project": [false],
+            "bionetwork_name": [null],
+            "tissue_atlas": [],
+            "supplementary_links": [
+                null
+            ]
+        },
+        "relations": []
+    },
+    {
+        "id": "files.0132361d-c778-5bf7-a77d-daed6d9036c2.1",
+        "name": "files",
+        "object": {
+            "_type": "file",
+            "content-type": "application/gzip; dcp-type=data",
+            "content_description": [
+                "count matrix"
+            ],
+            "crc32c": "aff4c924",
+            "document_id": "cf5d9300-3b81-52eb-a02f-25fb1364419e",
+            "drs_uri": "drs://drs-test.lan/2ecedea4-b90c-5025-9967-fc08f27a4dc6?version=2021-01-01T00%3A00%3A00.000000Z",
+            "file_format": "h5ad",
+            "file_source": "Contributor",
+            "file_type": "analysis_file",
+            "indexed": false,
+            "is_intermediate": false,
+            "lane_index": null,
+            "matrix_cell_count": 2100,
+            "name": "AP1_file.h5ad",
+            "read_index": null,
+            "sha256": "8908aec2bf49fdc557a5841352c52c8af857707c6f9c760ff51fb6e0858a6577",
+            "size": 143,
+            "uuid": "2ecedea4-b90c-5025-9967-fc08f27a4dc6",
+            "version": "2021-01-01T00:00:00.000000Z"
+        },
+        "relations": [
+            {
+                "dst_id": "analysis_protocols.b60d6764-67a8-591e-87e7-3ed91c248627.1",
+                "dst_name": "analysis_protocols"
+            },
+            {
+                "dst_id": "cell_suspensions.6ee4f4eb-d3e5-5c21-8023-21cb9499858d.1",
+                "dst_name": "cell_suspensions"
+            },
+            {
+                "dst_id": "cell_suspensions.8de635aa-c8ee-5ae0-b8e5-937b93d17ad5.1",
+                "dst_name": "cell_suspensions"
+            },
+            {
+                "dst_id": "donors.04b4f86f-be62-58de-a749-7b6ca22f550b.2",
+                "dst_name": "donors"
+            },
+            {
+                "dst_id": "library_preparation_protocols.916caca6-07c2-5085-941f-d762d48b8df8.1",
+                "dst_name": "library_preparation_protocols"
+            },
+            {
+                "dst_id": "projects.199f34f4-ea80-5753-b615-8b4b595a8766.1",
+                "dst_name": "projects"
+            },
+            {
+                "dst_id": "sample_specimens.a4460596-f04a-5c2a-9512-beed1c0eea6a.2",
+                "dst_name": "sample_specimens"
+            },
+            {
+                "dst_id": "samples.a4460596-f04a-5c2a-9512-beed1c0eea6a.2",
+                "dst_name": "samples"
+            },
+            {
+                "dst_id": "specimens.a4460596-f04a-5c2a-9512-beed1c0eea6a.2",
+                "dst_name": "specimens"
+            }
+        ]
+    },
+    {
+        "id": "files.097fc0ea-a0af-5571-a29e-09367aaf5a29.1",
+        "name": "files",
+        "object": {
+            "_type": "file",
+            "content-type": "application/octet-stream; dcp-type=data",
+            "content_description": [
+                null
+            ],
+            "crc32c": "6ce5efc2",
+            "document_id": "da510e7a-5495-40c5-964d-b5291372102c",
+            "drs_uri": "drs://drs-test.lan/7eda54d3-3522-4079-9089-60839ee4d4f9?version=2018-10-10T03%3A10%3A35.686843Z",
+            "file_format": "bai",
+            "file_source": "DCP/2 Analysis",
+            "file_type": "analysis_file",
+            "indexed": false,
+            "is_intermediate": null,
+            "lane_index": null,
+            "matrix_cell_count": null,
+            "name": "377f2f5a-4a45-4c62-8fb0-db9ef33f5cf0_qc.bam.bai",
+            "read_index": null,
+            "sha256": "d7dd835ba3e9cf56958976fc90267786233958c92d9dfcd5a6cb3c0ce95a52e2",
+            "size": 1399032,
+            "uuid": "7eda54d3-3522-4079-9089-60839ee4d4f9",
+            "version": "2018-10-10T03:10:35.686843Z"
+        },
+        "relations": [
+            {
+                "dst_id": "cell_suspensions.77795119-8498-56a8-b175-6afc82257133.1",
+                "dst_name": "cell_suspensions"
+            },
+            {
+                "dst_id": "donors.7169f434-8d37-5894-8709-707da00dafa0.1",
+                "dst_name": "donors"
+            },
+            {
+                "dst_id": "library_preparation_protocols.206faacb-a743-5131-80b5-745da382b5b9.1",
+                "dst_name": "library_preparation_protocols"
+            },
+            {
+                "dst_id": "projects.0d35a55d-bdd1-50a2-982f-3524e3579603.1",
+                "dst_name": "projects"
+            },
+            {
+                "dst_id": "sample_specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "sample_specimens"
+            },
+            {
+                "dst_id": "samples.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "samples"
+            },
+            {
+                "dst_id": "sequencing_inputs.77795119-8498-56a8-b175-6afc82257133.1",
+                "dst_name": "sequencing_inputs"
+            },
+            {
+                "dst_id": "sequencing_processes.c5fd9010-0891-5b13-b19b-86bff7d51f1d.1",
+                "dst_name": "sequencing_processes"
+            },
+            {
+                "dst_id": "sequencing_protocols.c9566f70-97cb-56ac-bfd5-15f56f9b84dc.1",
+                "dst_name": "sequencing_protocols"
+            },
+            {
+                "dst_id": "specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "specimens"
+            }
+        ]
+    },
+    {
+        "id": "files.64128c81-fe0d-5fa4-8040-88a526c5dbb4.1",
+        "name": "files",
+        "object": {
+            "_type": "file",
+            "content-type": "text/csv; dcp-type=data",
+            "content_description": [
+                null
+            ],
+            "crc32c": "5191baeb",
+            "document_id": "fd67cd38-2483-49ff-8a9b-0fe1f2607901",
+            "drs_uri": "drs://drs-test.lan/84985aaf-e397-45ee-8b96-37ed2cc650d4?version=2018-10-10T03%3A10%3A35.017351Z",
+            "file_format": "csv",
+            "file_source": "DCP/2 Analysis",
+            "file_type": "analysis_file",
+            "indexed": false,
+            "is_intermediate": null,
+            "lane_index": null,
+            "matrix_cell_count": null,
+            "name": "377f2f5a-4a45-4c62-8fb0-db9ef33f5cf0_pre_adapter_summary_metrics.csv",
+            "read_index": null,
+            "sha256": "8b90565cdda2daa693e74d5b9e7652eb4bb6aae91e6993b084f1103a9bfda23b",
+            "size": 1899,
+            "uuid": "84985aaf-e397-45ee-8b96-37ed2cc650d4",
+            "version": "2018-10-10T03:10:35.017351Z"
+        },
+        "relations": [
+            {
+                "dst_id": "cell_suspensions.77795119-8498-56a8-b175-6afc82257133.1",
+                "dst_name": "cell_suspensions"
+            },
+            {
+                "dst_id": "donors.7169f434-8d37-5894-8709-707da00dafa0.1",
+                "dst_name": "donors"
+            },
+            {
+                "dst_id": "library_preparation_protocols.206faacb-a743-5131-80b5-745da382b5b9.1",
+                "dst_name": "library_preparation_protocols"
+            },
+            {
+                "dst_id": "projects.0d35a55d-bdd1-50a2-982f-3524e3579603.1",
+                "dst_name": "projects"
+            },
+            {
+                "dst_id": "sample_specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "sample_specimens"
+            },
+            {
+                "dst_id": "samples.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "samples"
+            },
+            {
+                "dst_id": "sequencing_inputs.77795119-8498-56a8-b175-6afc82257133.1",
+                "dst_name": "sequencing_inputs"
+            },
+            {
+                "dst_id": "sequencing_processes.c5fd9010-0891-5b13-b19b-86bff7d51f1d.1",
+                "dst_name": "sequencing_processes"
+            },
+            {
+                "dst_id": "sequencing_protocols.c9566f70-97cb-56ac-bfd5-15f56f9b84dc.1",
+                "dst_name": "sequencing_protocols"
+            },
+            {
+                "dst_id": "specimens.7042846c-37e0-5735-80b0-fae53eb4e024.1",
+                "dst_name": "specimens"
+            }
+        ]
+    }
+]

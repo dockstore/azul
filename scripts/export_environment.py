@@ -73,6 +73,14 @@ class EnvironmentModule(metaclass=ABCMeta):
         }
 
 
+class InvalidDeployment(RuntimeError):
+
+    def __init__(self, dir_: Path) -> None:
+        super().__init__(
+            f"{dir_} does not exist or is not a symbolic link to a directory."
+        )
+
+
 class InvalidActiveDeployment(RuntimeError):
 
     def __init__(self, dir_: Path) -> None:
@@ -91,45 +99,55 @@ class BadParentDeployment(RuntimeError):
         )
 
 
-def load_env() -> Tuple[Environment, Optional[str]]:
+def load_env(deployment: Optional[str] = None
+             ) -> Tuple[Environment, Optional[str]]:
     """
     Load environment.py and environment.local.py modules from the project
-    root and the current active deployment directory, call their env()
-    function to obtain the environment dictionary and merge the dictionaries.
-    The entries from an environment.local.py take precedence over those from
-    a corresponding environment.py in the same directory. The modules from
-    the deployment directory take precedence over ones in the project root.
+    root and either the specified deployment or the current active deployment
+    directory, call their env() function to obtain the environment dictionary
+    and merge the dictionaries. The entries from an environment.local.py take
+    precedence over those from a corresponding environment.py in the same
+    directory. The modules from the deployment directory take precedence over
+    ones in the project root.
     """
 
     deployments_dir = root_dir / 'deployments'
     active_deployment_dir = deployments_dir / '.active'
-    if active_deployment_dir.exists():
-        if not active_deployment_dir.is_dir() or not active_deployment_dir.is_symlink():
-            raise InvalidActiveDeployment(active_deployment_dir)
 
-        # If active deployment is a component of another one, also load the parent
-        # deployments (like dev.gitlab).
-        active_deployment_dir = Path(os.readlink(str(active_deployment_dir)))
-        if not active_deployment_dir.is_absolute():
-            active_deployment_dir = deployments_dir / active_deployment_dir
-        if not active_deployment_dir.is_dir():
-            raise InvalidActiveDeployment(active_deployment_dir)
-        relative_active_deployment_dir = active_deployment_dir.relative_to(deployments_dir)
-        prefix, _, suffix = str(relative_active_deployment_dir).partition('.')
-        if suffix and suffix != 'local':
-            parent_deployment_dir = deployments_dir / prefix
-            if not parent_deployment_dir.exists():
-                raise BadParentDeployment(parent_deployment_dir, active_deployment_dir)
-        else:
-            parent_deployment_dir = None
+    if deployment is not None:
+        deployment_dir = deployments_dir / deployment
+        if not deployment_dir.is_dir():
+            raise InvalidDeployment(deployments_dir)
         warning = None
+    elif active_deployment_dir.is_dir() and active_deployment_dir.is_symlink():
+        deployment_dir = Path(os.readlink(str(active_deployment_dir)))
+        if not deployment_dir.is_absolute():
+            deployment_dir = deployments_dir / deployment_dir
+        if not deployment_dir.is_dir():
+            raise InvalidActiveDeployment(deployment_dir)
+        warning = None
+    elif active_deployment_dir.exists():
+        raise InvalidActiveDeployment(active_deployment_dir)
     else:
         warning = (
             f'No active deployment (missing {str(active_deployment_dir)!r}). '
             f'Loaded global defaults only.'
         )
-        active_deployment_dir = None
+        deployment_dir = None
+
+    if deployment_dir is None:
         parent_deployment_dir = None
+    else:
+        # If the deployment is a component of another one (e.g. `dev.gitlab`),
+        # also get the parent deployment's directory.
+        relative_deployment_dir = deployment_dir.relative_to(deployments_dir)
+        prefix, _, suffix = str(relative_deployment_dir).partition('.')
+        if suffix and suffix != 'local':
+            parent_deployment_dir = deployments_dir / prefix
+            if not parent_deployment_dir.exists():
+                raise BadParentDeployment(parent_deployment_dir, deployment_dir)
+        else:
+            parent_deployment_dir = None
 
     def _load(dir_path: Path, local: bool = False) -> Optional[EnvironmentModule]:
         """
@@ -153,10 +171,10 @@ def load_env() -> Tuple[Environment, Optional[str]]:
             return None
 
     modules = [
-        active_deployment_dir and _load(active_deployment_dir, local=True),
+        deployment_dir and _load(deployment_dir, local=True),
         parent_deployment_dir and _load(parent_deployment_dir, local=True),
         _load(root_dir, local=True),
-        active_deployment_dir and _load(active_deployment_dir),
+        deployment_dir and _load(deployment_dir),
         parent_deployment_dir and _load(parent_deployment_dir),
         _load(root_dir)
     ]

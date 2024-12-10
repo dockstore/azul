@@ -46,8 +46,8 @@ def main():
         assert config.catalogs == catalogs
         with patch.object(target=config,
                           attribute=f'{lambda_name}_function_name',
-                          return_value=f'azul_{lambda_name}'):
-            assert getattr(config, f'{lambda_name}_name') == f'azul_{lambda_name}'
+                          return_value=f'azul-{lambda_name}-dev'):
+            assert getattr(config, f'{lambda_name}_name') == f'azul-{lambda_name}-dev'
             with patch.object(target=type(config),
                               attribute='enable_log_forwarding',
                               new_callable=PropertyMock,

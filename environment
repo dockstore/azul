@@ -332,20 +332,34 @@ _hibernate() {
 	if test -z "$azul_terraform_component"; then
 		make -C lambdas && {
 			cd terraform &&
-			make validate
-			terraform destroy -target aws_elasticsearch_domain.index && {
+			make validate && {
+				terraform destroy \
+					-target aws_cloudwatch_metric_alarm.indexercachehealth \
+					-target aws_cloudwatch_metric_alarm.servicecachehealth \
+					-target aws_elasticsearch_domain.index
+			} && {
+				cd shared &&
+				_select "$AZUL_DEPLOYMENT_STAGE.shared" &&
+				make validate &&
+				terraform destroy \
+					-target aws_cloudwatch_metric_alarm.clamscan \
+					-target aws_cloudwatch_metric_alarm.freshclam
+			} && {
 				cd gitlab &&
 				_select "$AZUL_DEPLOYMENT_STAGE.gitlab" &&
 				make validate &&
 				terraform destroy \
+					-target aws_cloudwatch_metric_alarm.gitlab_cpu_use \
+					-target aws_cloudwatch_metric_alarm.gitlab_data_disk_use \
+					-target aws_cloudwatch_metric_alarm.gitlab_root_disk_use \
 					-target aws_ec2_client_vpn_endpoint.gitlab \
 					-target aws_instance.gitlab \
 					-target aws_nat_gateway.gitlab_0 \
 					-target aws_nat_gateway.gitlab_1 \
 					-target aws_lb.gitlab_nlb \
 					-target aws_lb.gitlab_alb
-				}
 			}
+		}
 	else
 		echo "Must have main component selected"
 		return 1
