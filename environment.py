@@ -930,5 +930,21 @@ def env() -> Mapping[str, Optional[str]]:
         # not covering any changes to the indexer, since indexing will be
         # skipped.
         #
-        'azul_it_flags': None
+        'azul_it_flags': None,
+
+        # A global rate limit on file downloads across all regions and IP
+        # addresses, enforced by AWS WAF.
+        #
+        # The syntax is `<limit>/<window>@<concurrency>` where `<limit>` is the
+        # maximum allowed number of download requests made every `<window>`
+        # seconds, and `<concurrency>` is the expected number of distinct IPs
+        # making at least one download request during that time. The concurrency
+        # does not need to be an integer. See
+        #
+        # https://docs.aws.amazon.com/waf/latest/developerguide/waf-rule-statement-type-rate-based-high-level-settings.html
+        #
+        # for restrictions on the supported values for `<limit>` ("Rate limit")
+        # and `<window>` ("Evaluation window").
+        #
+        'AZUL_FILE_DOWNLOAD_RATE_LIMIT': None
     }
