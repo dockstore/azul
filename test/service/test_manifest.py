@@ -29,6 +29,7 @@ from tempfile import (
 )
 from typing import (
     Optional,
+    cast,
 )
 from unittest.mock import (
     MagicMock,
@@ -59,6 +60,7 @@ from requests import (
 )
 
 from azul import (
+    RequirementError,
     config,
 )
 from azul.collections import (
@@ -83,12 +85,16 @@ from azul.logging import (
 from azul.plugins import (
     ManifestFormat,
 )
+from azul.plugins.metadata.hca import (
+    FileTransformer,
+)
 from azul.plugins.repository.dss import (
     DSSBundle,
 )
 from azul.service import (
     Filters,
     FiltersJSON,
+    avro_pfb,
     manifest_service,
 )
 from azul.service.manifest_service import (
@@ -116,10 +122,8 @@ from azul.types import (
 )
 from indexer import (
     AnvilCannedBundleTestCase,
+    CannedFileTestCase,
     DCP1CannedBundleTestCase,
-)
-from pfb_test_case import (
-    PFBTestCase,
 )
 from service import (
     DocumentCloningTestCase,
@@ -135,8 +139,46 @@ def setUpModule():
     configure_test_logging(log)
 
 
+class CannedManifestTestCase(CannedFileTestCase):
+    """
+    Support for tests that deal with canned manifests
+    """
+
+    def _canned_manifest_path(self, *path: str) -> Path:
+        return self._data_path('service', 'manifest', *path)
+
+    def _load_canned_manifest(self, *path: str) -> MutableJSON:
+        with open(self._canned_manifest_path(*path)) as f:
+            return json.load(f)
+
+    def _load_canned_pfb(self, *path: str) -> tuple[MutableJSON, MutableJSON]:
+        schema = self._load_canned_manifest(*path, 'pfb_schema.json')
+        entities = self._load_canned_manifest(*path, 'pfb_entities.json')
+        return schema, entities
+
+    def _assert_pfb_schema(self, schema):
+        fastavro.parse_schema(schema)
+        # Parsing successfully proves our schema is valid
+        with self.assertRaises(KeyError):
+            fastavro.parse_schema({'this': 'is not', 'an': 'avro schema'})
+
+        actual = json.dumps(schema, indent=4, sort_keys=True)
+        expected = self._canned_manifest_path('terra', 'pfb_schema.json')
+        self._assert_or_create_json_can(expected, actual)
+
+    def _assert_or_create_json_can(self, expected: Path, actual: str):
+        if expected.exists():
+            with open(expected, 'r') as f:
+                expected = json.load(f)
+            self.assertEqual(expected, json.loads(actual))
+        else:
+            with open(expected, 'w') as f:
+                f.write(actual)
+
+
 class ManifestTestCase(WebServiceTestCase,
                        StorageServiceTestCase,
+                       CannedManifestTestCase,
                        metaclass=ABCMeta):
 
     def setUp(self):
@@ -296,7 +338,7 @@ class DCP1ManifestTestCase(ManifestTestCase, DCP1CannedBundleTestCase):
     pass
 
 
-class TestManifests(DCP1ManifestTestCase, PFBTestCase):
+class TestManifests(DCP1ManifestTestCase):
 
     def run(self,
             result: Optional[unittest.result.TestResult] = None
@@ -309,7 +351,7 @@ class TestManifests(DCP1ManifestTestCase, PFBTestCase):
 
     _drs_domain_name = 'drs-test.lan'  # see canned PFB results
 
-    def test_pfb_manifest(self):
+    def test_terra_pfb_manifest(self):
         # This test uses canned expectations. It might be difficult to manually
         # update the can after changes to the indexer. If that is the case,
         # delete the file and run this test. It will repopulate the file. Run
@@ -328,10 +370,6 @@ class TestManifests(DCP1ManifestTestCase, PFBTestCase):
         shared_file_bundle = self._shared_file_bundle(new_bundle_fqid)
         self._index_bundle(shared_file_bundle, delete=False)
 
-        def to_json(records):
-            # 'default' is specified to handle the conversion of datetime values
-            return json.dumps(records, indent=4, sort_keys=True, default=str)
-
         # We write entities differently depending on debug so we test both cases
         for debug in (1, 0):
             with self.subTest(debug=debug):
@@ -343,14 +381,10 @@ class TestManifests(DCP1ManifestTestCase, PFBTestCase):
                     schema = reader.writer_schema
                     self._assert_pfb_schema(schema)
                     records = list(reader)
-                    results_file = Path(__file__).parent / 'data' / 'pfb_manifest.results.json'
-                    if results_file.exists():
-                        with open(results_file, 'r') as f:
-                            expected_records = json.load(f)
-                        self.assertEqual(expected_records, json.loads(to_json(records)))
-                    else:
-                        with open(results_file, 'w') as f:
-                            f.write(to_json(records))
+                    expected = self._canned_manifest_path('terra', 'pfb_entities.json')
+                    # 'default' is specified to handle the conversion of datetime values
+                    actual = json.dumps(records, indent=4, sort_keys=True, default=str)
+                    self._assert_or_create_json_can(expected, actual)
 
     def _shared_file_bundle(self, bundle):
         """
@@ -1367,10 +1401,8 @@ class TestManifests(DCP1ManifestTestCase, PFBTestCase):
     def test_verbatim_pfb_manifest(self):
         response = self._get_manifest(ManifestFormat.verbatim_pfb, filters={})
         self.assertEqual(200, response.status_code)
-        with open(self._data_path('service') / 'verbatim/hca/pfb_schema.json') as f:
-            expected_schema = json.load(f)
-        with open(self._data_path('service') / 'verbatim/hca/pfb_entities.json') as f:
-            expected_entities = json.load(f)
+        canned_pfb = self._load_canned_pfb('verbatim', 'pfb', 'hca')
+        expected_schema, expected_entities = canned_pfb
         self._assert_pfb(expected_schema, expected_entities, response)
 
 
@@ -2122,10 +2154,64 @@ class TestAnvilManifests(AnvilManifestTestCase):
         return all_entities_by_hash.values(), linked_entities_by_hash.values()
 
     def test_verbatim_pfb_manifest(self):
-        response = self._get_manifest(ManifestFormat.verbatim_pfb, filters={})
-        self.assertEqual(200, response.status_code)
-        with open(self._data_path('service') / 'verbatim/anvil/pfb_schema.json') as f:
-            expected_schema = json.load(f)
-        with open(self._data_path('service') / 'verbatim/anvil/pfb_entities.json') as f:
-            expected_entities = json.load(f)
-        self._assert_pfb(expected_schema, expected_entities, response)
+        canned_pfb = self._load_canned_pfb('verbatim', 'pfb', 'anvil')
+        expected_schema, expected_entities = canned_pfb
+
+        def test(filters):
+            response = self._get_manifest(ManifestFormat.verbatim_pfb, filters)
+            self.assertEqual(200, response.status_code)
+            self._assert_pfb(expected_schema, expected_entities, response)
+
+        with self.subTest(orphans=True):
+            test({'datasets.dataset_id': {'is': ['52ee7665-7033-63f2-a8d9-ce8e32666739']}})
+
+        with self.subTest(orphans=False):
+            # Dynamically edit out references to the orphaned entities (and
+            # their schemas) that are only expected when filtering by dataset
+            # ID. This subtest modifies the expectations in place, and therefore
+            # needs to come last.
+            self.assertEqual('Entity', expected_schema['name'])
+            object_field_schema = one(
+                field
+                for field in expected_schema['fields']
+                if field['name'] == 'object'
+            )
+            # The `object` field is of a union type, so the schema's `type`
+            # property is an array
+            schemas = object_field_schema['type']
+            # The first AVRO record is the *metadata entity* in PFB terms,
+            # declaring higher level constraints that can't expressed in the
+            # AVRO schema
+            metadata_entity = expected_entities[0]
+            self.assertEqual('Metadata', metadata_entity['name'])
+            higher_schemas = metadata_entity['object']['nodes']
+            for part in [schemas, higher_schemas, expected_entities]:
+                filtered = [e for e in part if e['name'] != 'non_schema_orphan_table']
+                assert len(filtered) < len(part), 'Expected to filter orphan references'
+                part[:] = filtered
+            test({})
+
+
+class TestPFB(CannedManifestTestCase):
+    """
+    Tests of terra.pfb code that don't require an ES index.
+    """
+
+    def test_terra_pfb_schema(self):
+        self.maxDiff = None
+        field_types = FileTransformer.field_types()
+        schema = avro_pfb.pfb_schema_from_field_types(field_types)
+        self._assert_pfb_schema(schema)
+
+    def test_pfb_metadata_object(self):
+        metadata_entity = avro_pfb.pfb_metadata_entity(FileTransformer.field_types())
+        field_types = FileTransformer.field_types()
+        schema = avro_pfb.pfb_schema_from_field_types(field_types)
+        parsed_schema = fastavro.parse_schema(cast(dict, schema))
+        fastavro.validate(metadata_entity, parsed_schema)
+
+    def test_pfb_entity_id(self):
+        # Terra limits ID's 254 chars
+        avro_pfb.PFBEntity(id='a' * 254, name='foo', object={})
+        with self.assertRaises(RequirementError):
+            avro_pfb.PFBEntity(id='a' * 255, name='foo', object={})

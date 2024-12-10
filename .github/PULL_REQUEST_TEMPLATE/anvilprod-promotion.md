@@ -53,7 +53,7 @@ Connected issue: #0000
 
 ### System administrator
 
-- [ ] Background migrations for `anvilprod.gitlab` are complete <sub>or this PR is not labeled `deploy:gitlab`</sub>
+- [ ] Background migrations for [`anvilprod.gitlab`](https://gitlab.explore.anvilproject.org/admin/background_migrations) are complete <sub>or this PR is not labeled `deploy:gitlab`</sub>
 - [ ] PR is assigned to only the operator
 
 
@@ -100,9 +100,9 @@ Connected issue: #0000
 
 ### System administrator
 
-- [ ] Removed unused image tags from [pycharm image on DockerHub](https://hub.docker.com/repository/docker/ucscgi/azul-pycharm) <sub>or this promotion does not alter references to that image</sub>
-- [ ] Removed unused image tags from [elasticsearch image on DockerHub](https://hub.docker.com/repository/docker/ucscgi/azul-elasticsearch) <sub>or this promotion does not alter references to that image</sub>
-- [ ] Removed unused image tags from [bigquery_emulator image on DockerHub](https://hub.docker.com/repository/docker/ucscgi/azul-bigquery-emulator) <sub>or this promotion does not alter references to that image</sub>
+- [ ] Removed unused image tags from [pycharm image on DockerHub](https://hub.docker.com/repository/docker/ucscgi/azul-pycharm/tags) <sub>or this promotion does not alter references to that image</sub>
+- [ ] Removed unused image tags from [elasticsearch image on DockerHub](https://hub.docker.com/repository/docker/ucscgi/azul-elasticsearch/tags) <sub>or this promotion does not alter references to that image</sub>
+- [ ] Removed unused image tags from [bigquery_emulator image on DockerHub](https://hub.docker.com/repository/docker/ucscgi/azul-bigquery-emulator/tags) <sub>or this promotion does not alter references to that image</sub>
 - [ ] PR is assigned to no one
 
 

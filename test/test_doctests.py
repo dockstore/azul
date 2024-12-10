@@ -1,4 +1,5 @@
 import doctest
+import unittest
 
 import azul
 import azul.attrs
@@ -8,6 +9,7 @@ import azul.bigquery
 import azul.bytes
 import azul.caching
 import azul.collections
+import azul.csp
 import azul.docker
 import azul.doctests
 import azul.dss
@@ -57,7 +59,10 @@ def setUpModule():
     configure_test_logging()
 
 
-def load_tests(_loader, tests, _ignore):
+def load_tests(_loader,
+               tests: unittest.TestSuite,
+               _ignore
+               ) -> unittest.TestSuite:
     root = azul.config.project_root
     for module in [
         azul,
@@ -68,6 +73,7 @@ def load_tests(_loader, tests, _ignore):
         azul.bytes,
         azul.caching,
         azul.collections,
+        azul.csp,
         azul.doctests,
         azul.docker,
         azul.dss,
@@ -113,3 +119,8 @@ def load_tests(_loader, tests, _ignore):
         assert suite.countTestCases() > 0, module
         tests.addTests(suite)
     return tests
+
+
+if __name__ == '__main__':
+    runner = unittest.TextTestRunner()
+    runner.run(load_tests(None, unittest.TestSuite(), None))
