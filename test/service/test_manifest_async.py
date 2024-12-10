@@ -225,9 +225,10 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                                       is_last_page=False,
                                       search_after=('foo', 'doc#bar'))
                 ]
-                input: ManifestGenerationState = dict(filters=filters.to_json(),
-                                                      manifest_key=manifest_key.to_json(),
-                                                      partition=partitions[0].to_json())
+                input: ManifestGenerationState
+                input = dict(filters=filters.to_json(),
+                             manifest_key=manifest_key.to_json(),
+                             partition=partitions[0].to_json())
                 service: AsyncManifestService
                 service = self.app_module.app.manifest_controller.async_service
                 execution_id = manifest_key.uuid
@@ -251,9 +252,9 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                     get_manifest.assert_called_once_with(
                         format=format,
                         catalog=self.catalog,
-                        filters=Filters.from_json(state['filters']),
+                        filters=filters,
                         partition=partitions[partition],
-                        manifest_key=ManifestKey.from_json(state['manifest_key'])
+                        manifest_key=manifest_key
                     )
                     get_manifest.reset_mock()
 
@@ -311,12 +312,11 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                 # a 302 redirect to the non-fetch endpoint with the key of
                 # the manifest in the URL.
                 #
+                state = self.app_module.generate_manifest(state, None)
                 _sfn.describe_execution.return_value = {
                     'status': 'SUCCEEDED',
                     'input': json.dumps(input),
-                    'output': json.dumps(
-                        self.app_module.generate_manifest(state, None)
-                    )
+                    'output': json.dumps(state)
                 }
                 if fetch and format is ManifestFormat.curl:
                     key_url = self.base_url.set(path=[*path, signed_manifest_key.encode()])
