@@ -338,7 +338,8 @@ emit_tf({
                                     'cloudwatch_metrics_enabled': True
                                 }
                             },
-                        ])],
+                        ])
+                    ],
                     'scope': 'REGIONAL',
                     'visibility_config': {
                         'cloudwatch_metrics_enabled': True,
