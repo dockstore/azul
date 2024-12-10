@@ -23,7 +23,7 @@ emit_tf(tag_resources=False, config={
             },
             'aws': {
                 'source': 'hashicorp/aws',
-                'version': '5.49.0'
+                'version': '5.80.0'
             },
             # FIXME: Remove the provider
             #        https://github.com/DataBiosphere/azul/pull/6285
