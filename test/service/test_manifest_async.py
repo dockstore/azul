@@ -2,6 +2,9 @@ from contextlib import (
     contextmanager,
 )
 import datetime
+from functools import (
+    wraps,
+)
 from itertools import (
     product,
 )
@@ -169,11 +172,22 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
              get_cached_manifest,
              get_manifest,
              _sfn):
+
+        mocks = [v for v in locals().values() if isinstance(v, mock.Mock)]
+
+        def reset(f):
+            @wraps(f)
+            def wrapper(*args, **kwargs):
+                try:
+                    return f(*args, **kwargs)
+                finally:
+                    for m in mocks:
+                        m.reset_mock(return_value=True, side_effect=True)
+
+            return wrapper
+
         for format, fetch in product([ManifestFormat.compact, ManifestFormat.curl],
                                      [True, False]):
-            for v in locals().values():
-                if isinstance(v, mock.Mock):
-                    v.reset_mock(return_value=True, side_effect=True)
             with self.subTest(format=format, fetch=fetch):
                 filters = {'organ': {'is': ['lymph node']}, 'fileFormat': {'is': ['txt']}}
                 filters = Filters(explicit=filters, source_ids={self.source.id})
@@ -235,10 +249,6 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                 execution_name = service.execution_name(generation_id)
                 machine_arn = service.machine_arn
                 execution_arn = service.execution_arn(execution_name)
-                _sfn.start_execution.return_value = {
-                    'executionArn': execution_arn,
-                    'startDate': 123
-                }
 
                 def assert_get_cached_manifest(filters=filters):
                     get_cached_manifest.assert_called_once_with(
@@ -246,7 +256,6 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                         catalog=self.catalog,
                         filters=filters
                     )
-                    get_cached_manifest.reset_mock()
 
                 def assert_get_manifest(partition):
                     get_manifest.assert_called_once_with(
@@ -256,7 +265,6 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                         partition=partitions[partition],
                         manifest_key=manifest_key
                     )
-                    get_manifest.reset_mock()
 
                 url: furl
                 state: ManifestGenerationState
@@ -270,9 +278,14 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                 # 301 redirect to the manifest endpoint with a token
                 # embedded in the URL.
                 #
+                @reset
                 def put():
                     nonlocal url, state, token_url
                     get_cached_manifest.side_effect = CachedManifestNotFound(manifest_key)
+                    _sfn.start_execution.return_value = {
+                        'executionArn': execution_arn,
+                        'startDate': 123
+                    }
                     url = self._request('PUT', initial_url, expect=301)
                     assert_get_cached_manifest()
                     state = input
@@ -282,8 +295,6 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                         name=execution_name,
                         input=json.dumps(input)
                     )
-                    _sfn.describe_execution.assert_not_called()
-                    _sfn.reset_mock()
 
                 put()
 
@@ -291,6 +302,7 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                 # status of the execution, which we mock to be still
                 # running, and another 301 redirect.
                 #
+                @reset
                 def get_token_while_running():
                     nonlocal url, state
                     _sfn.describe_execution.return_value = {'status': 'RUNNING'}
@@ -300,9 +312,7 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                     self.assertEqual(partitions[1],
                                      ManifestPartition.from_json(state['partition']))
                     assert_get_manifest(partition=0)
-                    _sfn.start_execution.assert_not_called()
                     _sfn.describe_execution.assert_called_once()
-                    _sfn.reset_mock()
 
                 get_token_while_running()
 
@@ -313,15 +323,12 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                 # stored on S3 under the hood which strongly consistent a
                 # while back.
                 #
+                @reset
                 def get_token_when_almost_done():
                     nonlocal url
                     _sfn.describe_execution.return_value = {'status': 'SUCCEEDED'}
                     url = self._request('GET', url, expect=301)
-                    get_manifest.return_value = manifest
-                    get_manifest_url.return_value = str(object_url)
-                    _sfn.start_execution.assert_not_called()
                     _sfn.describe_execution.assert_called_once()
-                    _sfn.reset_mock()
 
                 get_token_when_almost_done()
 
@@ -331,8 +338,10 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                 # a 302 redirect to the non-fetch endpoint with the key of
                 # the manifest in the URL.
                 #
+                @reset
                 def get_token_when_done():
                     nonlocal url, state, key_url, expected_url
+                    get_manifest.return_value = manifest
                     state = self.app_module.generate_manifest(state, None)
                     _sfn.describe_execution.return_value = {
                         'status': 'SUCCEEDED',
@@ -346,23 +355,24 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                     else:
                         key_url = None
                         expected_url = object_url
+                        get_manifest_url.return_value = str(object_url)
                     url = self._request('GET', url, expect=302)
                     self.assertEqual(expected_url, url)
                     assert_get_manifest(partition=1)
-                    get_manifest.reset_mock()
-                    _sfn.start_execution.assert_not_called()
                     _sfn.describe_execution.assert_called_once()
-                    _sfn.reset_mock()
 
                 get_token_when_done()
 
                 # Re-request the manifest at the initial URL. The manifest
                 # is cached so we expect no intermediate 301 redirects.
                 #
+                @reset
                 def repeat_put():
                     nonlocal url
-                    get_cached_manifest.side_effect = None
                     get_cached_manifest.return_value = manifest
+                    get_manifest_url.return_value = str(object_url)
+                    if fetch and format is ManifestFormat.curl:
+                        sign_manifest_key.return_value = signed_manifest_key
                     url = self._request('PUT', initial_url, expect=302)
                     assert_get_cached_manifest()
                     self.assertEqual(expected_url, url)
@@ -377,8 +387,13 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                 # service method where that is done. However, this test is
                 # not supposed to cover the service, only the controller.
                 #
+                @reset
                 def modified_put():
                     nonlocal url, equivalent_url
+                    get_cached_manifest.return_value = manifest
+                    get_manifest_url.return_value = str(object_url)
+                    if key_url is not None:
+                        sign_manifest_key.return_value = signed_manifest_key
                     equivalent_url = initial_url.copy()
                     equivalent_filters = json.loads(equivalent_url.args['filters'])
                     equivalent_filters = dict(reversed(equivalent_filters.items()))
@@ -394,6 +409,7 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                 # should be considered valid and matching the completed step
                 # function execution.
                 #
+                @reset
                 def modified_put_after_expiration():
                     nonlocal url
                     get_cached_manifest.side_effect = CachedManifestNotFound(manifest_key)
@@ -401,34 +417,38 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                                                          operation_name='StartExecution',
                                                          error_code='ExecutionAlreadyExists')
                     _sfn.start_execution.side_effect = exception
+                    _sfn.describe_execution.return_value = {
+                        'status': 'SUCCEEDED',
+                        'input': json.dumps(input),
+                        'output': json.dumps(state)
+                    }
                     url = self._request('PUT', equivalent_url, expect=301)
-                    _sfn.reset_mock(side_effect=True)
-                    assert_get_cached_manifest()
                     # FIXME: 404 from S3 when re-requesting manifest after it expired
                     #        https://github.com/DataBiosphere/azul/issues/6441
                     if True:
                         self.assertEqual(token_url, url)
                     else:
                         self.assertNotEqual(token_url, url)
+                    assert_get_cached_manifest()
 
                 modified_put_after_expiration()
 
                 # Request the manifest by its key if a URL with that key
                 # was the result of the final 302 redirect above.
                 #
+                @reset
                 def get_key():
                     nonlocal url
                     assert signed_manifest_key.encode() == key_url.path.segments[-1]
-                    verify_manifest_key.assert_not_called()
                     verify_manifest_key.return_value = manifest_key
-                    get_cached_manifest_with_key.assert_not_called()
                     get_cached_manifest_with_key.return_value = manifest
+                    if key_url is not None:
+                        sign_manifest_key.return_value = signed_manifest_key
+                    get_manifest_url.return_value = str(object_url)
                     url = self._request('GET', key_url, expect=302)
                     self.assertEqual(object_url, url)
                     verify_manifest_key.assert_called_once_with(signed_manifest_key)
-                    get_cached_manifest.assert_not_called()
                     get_cached_manifest_with_key.assert_called_once_with(manifest_key)
-                    get_cached_manifest_with_key.reset_mock(return_value=True)
 
                 if key_url is not None:
                     get_key()
@@ -437,7 +457,9 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                 # URL with that key was the result of the final 302 redirect
                 # above.
                 #
+                @reset
                 def get_key_after_expiration():
+                    verify_manifest_key.return_value = manifest_key
                     get_cached_manifest_with_key.side_effect = CachedManifestNotFound(manifest_key)
                     response = requests.get(str(key_url), allow_redirects=False)
                     self.assertEqual(410, response.status_code)
@@ -446,9 +468,7 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                         'Message': 'The requested manifest has expired, please request a new one'
                     }
                     self.assertEqual(expected_response, response.json())
-                    get_cached_manifest.assert_not_called()
                     get_cached_manifest_with_key.assert_called_once_with(manifest_key)
-                    get_cached_manifest_with_key.reset_mock()
 
                 if key_url is not None:
                     get_key_after_expiration()
