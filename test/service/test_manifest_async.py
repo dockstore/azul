@@ -250,6 +250,11 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                 machine_arn = service.machine_arn
                 execution_arn = service.execution_arn(execution_name)
 
+                not_found = CachedManifestNotFound(manifest_key)
+                execution_exists = self._mock_sfn_exception(_sfn,
+                                                            operation_name='StartExecution',
+                                                            error_code='ExecutionAlreadyExists')
+
                 def assert_get_cached_manifest(filters=filters):
                     get_cached_manifest.assert_called_once_with(
                         format=format,
@@ -281,7 +286,7 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                 @reset
                 def put():
                     nonlocal url, state, token_url
-                    get_cached_manifest.side_effect = CachedManifestNotFound(manifest_key)
+                    get_cached_manifest.side_effect = not_found
                     _sfn.start_execution.return_value = {
                         'executionArn': execution_arn,
                         'startDate': 123
@@ -412,11 +417,8 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                 @reset
                 def modified_put_after_expiration():
                     nonlocal url
-                    get_cached_manifest.side_effect = CachedManifestNotFound(manifest_key)
-                    exception = self._mock_sfn_exception(_sfn,
-                                                         operation_name='StartExecution',
-                                                         error_code='ExecutionAlreadyExists')
-                    _sfn.start_execution.side_effect = exception
+                    get_cached_manifest.side_effect = not_found
+                    _sfn.start_execution.side_effect = execution_exists
                     _sfn.describe_execution.return_value = {
                         'status': 'SUCCEEDED',
                         'input': json.dumps(input),
@@ -460,7 +462,7 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                 @reset
                 def get_key_after_expiration():
                     verify_manifest_key.return_value = manifest_key
-                    get_cached_manifest_with_key.side_effect = CachedManifestNotFound(manifest_key)
+                    get_cached_manifest_with_key.side_effect = not_found
                     response = requests.get(str(key_url), allow_redirects=False)
                     self.assertEqual(410, response.status_code)
                     expected_response = {
