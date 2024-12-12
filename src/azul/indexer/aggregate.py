@@ -429,13 +429,14 @@ class SimpleAggregator(EntityAggregator):
         aggregate = {}
         for entity in entities:
             self._accumulate(aggregate, entity)
-        return [
-            {
-                k: accumulator.get()
-                for k, accumulator in aggregate.items()
-                if accumulator is not None
-            }
-        ] if aggregate else []
+        return [self._aggregate(aggregate)] if aggregate else []
+
+    def _aggregate(self, aggregate: dict[str, Accumulator]) -> JSON:
+        result = {}
+        for k, accumulator in aggregate.items():
+            if accumulator is not None:
+                result[k] = accumulator.get()
+        return result
 
     def _accumulate(self,
                     aggregate: dict[str, Accumulator | None],
@@ -461,11 +462,7 @@ class GroupingAggregator(SimpleAggregator):
             aggregate = aggregates[group_keys]
             self._accumulate(aggregate, entity)
         return [
-            {
-                field: accumulator.get()
-                for field, accumulator in aggregate.items()
-                if accumulator is not None
-            }
+            self._aggregate(aggregate)
             for aggregate in aggregates.values()
         ]
 
