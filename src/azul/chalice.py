@@ -143,7 +143,8 @@ class AzulChaliceApp(Chalice):
         assert 'paths' not in spec, 'The top-level spec must not define paths'
         self._specs = copy_json(spec)
         self._specs['paths'] = {}
-        super().__init__(app_name, debug=config.debug > 0, configure_logs=False)
+        # The `debug` arg controls whether tracebacks appear in error responses
+        super().__init__(app_name, debug=config.debug > 1, configure_logs=False)
         # Middleware is invoked in order of registration
         self.register_middleware(self._logging_middleware, 'http')
         self.register_middleware(self._security_headers_middleware, 'http')
