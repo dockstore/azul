@@ -10,7 +10,6 @@ import logging
 from typing import (
     Any,
     Callable,
-    Optional,
 )
 
 from azul import (
@@ -202,7 +201,7 @@ class DictAccumulator(Accumulator):
     a SetAccumulator by using the identity function (``lambda _: _``) for the key.
     """
 
-    def __init__(self, max_size: Optional[int], key: Callable):
+    def __init__(self, max_size: int | None, key: Callable):
         """
         :param max_size: The maximum number of elements to retain. A value of
                          None can be used to specify no maximum.
@@ -420,14 +419,14 @@ class EntityAggregator(metaclass=ABCMeta):
     def _transform_entity(self, entity: JSON) -> JSON:
         return entity
 
-    def _accumulator(self, field: str) -> Optional[Accumulator]:
+    def _accumulator(self, field: str) -> Accumulator | None:
         """
         Return the Accumulator instance to be used for the given field or None
         if the field should not be accumulated.
         """
         return self._default_accumulator()
 
-    def _default_accumulator(self) -> Optional[Accumulator]:
+    def _default_accumulator(self) -> Accumulator | None:
         return SetAccumulator(max_size=100)
 
     @abstractmethod
@@ -450,7 +449,7 @@ class SimpleAggregator(EntityAggregator):
         ] if aggregate else []
 
     def _accumulate(self,
-                    aggregate: dict[str, Optional[Accumulator]],
+                    aggregate: dict[str, Accumulator | None],
                     entity: JSON
                     ):
         entity = self._transform_entity(entity)
@@ -467,7 +466,7 @@ class SimpleAggregator(EntityAggregator):
 class GroupingAggregator(SimpleAggregator):
 
     def aggregate(self, entities: Entities) -> Entities:
-        aggregates: dict[Any, dict[str, Optional[Accumulator]]] = defaultdict(dict)
+        aggregates: dict[Any, dict[str, Accumulator | None]] = defaultdict(dict)
         for entity in entities:
             group_keys = self._group_keys(entity)
             aggregate = aggregates[group_keys]
