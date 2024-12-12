@@ -166,6 +166,9 @@ class DonorOrganismAggregator(SimpleAggregator):
             # be omitted during the verbatim handover. Donors are a "hot" entity
             # type, and we can't track their hubs in replica documents, so we
             # rely on the inner entity IDs instead.
+            #
+            # FIXME: Enforce that hot entity types are completely aggregated
+            #        https://github.com/DataBiosphere/azul/issues/6793
             return SetAccumulator(max_size=100)
         else:
             return super()._accumulator(field)
@@ -207,6 +210,9 @@ class ProtocolAggregator(SimpleAggregator):
             # protocols may be omitted during the verbatim handover. Some
             # protocols are "hot" entity types, and we can't track their hubs in
             # replicas, so we rely on the inner entity IDs instead.
+            #
+            # FIXME: Enforce that hot entity types are completely aggregated
+            #        https://github.com/DataBiosphere/azul/issues/6793
             return SetAccumulator(max_size=100)
         else:
             return super()._accumulator(field)
