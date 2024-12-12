@@ -270,7 +270,7 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                 state: ManifestGenerationState
                 token_url: furl
                 key_url: furl
-                expected_url: furl
+                final_url: furl
                 equivalent_url: furl
 
                 # Request the manifest. The cached manifest does not exist
@@ -340,7 +340,7 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                 #
                 @reset
                 def get_token_when_done():
-                    nonlocal url, state, key_url, expected_url
+                    nonlocal url, state, key_url, final_url
                     get_manifest.return_value = manifest
                     state = self.app_module.generate_manifest(state, None)
                     _sfn.describe_execution.return_value = {
@@ -350,14 +350,14 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                     }
                     if fetch and format is ManifestFormat.curl:
                         key_url = self.base_url.set(path=[*path, signed_manifest_key.encode()])
-                        expected_url = key_url
+                        final_url = key_url
                         sign_manifest_key.return_value = signed_manifest_key
                     else:
                         key_url = None
-                        expected_url = object_url
+                        final_url = object_url
                         get_manifest_url.return_value = str(object_url)
                     url = self._request('GET', url, expect=302)
-                    self.assertEqual(expected_url, url)
+                    self.assertEqual(final_url, url)
                     assert_get_manifest(partition=1)
                     _sfn.describe_execution.assert_called_once()
 
@@ -375,7 +375,7 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                         sign_manifest_key.return_value = signed_manifest_key
                     url = self._request('PUT', initial_url, expect=302)
                     assert_get_cached_manifest()
-                    self.assertEqual(expected_url, url)
+                    self.assertEqual(final_url, url)
 
                 repeat_put()
 
@@ -399,7 +399,7 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                     equivalent_filters = dict(reversed(equivalent_filters.items()))
                     equivalent_url.args['filters'] = json.dumps(equivalent_filters)
                     url = self._request('PUT', equivalent_url, expect=302)
-                    self.assertEqual(expected_url, url)
+                    self.assertEqual(final_url, url)
                     assert_get_cached_manifest(filters.update(equivalent_filters))
 
                 modified_put()
