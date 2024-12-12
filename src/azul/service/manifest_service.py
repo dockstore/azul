@@ -2005,11 +2005,17 @@ class VerbatimManifestGenerator(FileBasedManifestGenerator, metaclass=ABCMeta):
 
     @property
     def include_orphans(self) -> bool:
-        # When filtering only by project/dataset ID, we need to include
-        # *everything* in the selected projects/datasets, even rows that don't
-        # appear anywhere in the rest of the service response.
-        special_fields = self.service.metadata_plugin(self.catalog).special_fields
-        return self.filters.explicit.keys() == {special_fields.implicit_hub_id}
+        # When filtering exclusively by properties of implicit hubs, e.g.,
+        # data sets for AnVIL or projects for HCA, we include replicas of all
+        # entities implicitly connected to the matching hubs, even replicas of
+        # orphans, i.e., entities that aren't connected to files.
+        plugin = self.service.metadata_plugin(self.catalog)
+        implicit_hub_fields = {
+            field_name
+            for field_name, field_path in plugin.field_mapping.items()
+            if field_path[0] == 'contents' and field_path[1] == plugin.implicit_hub_type
+        }
+        return self.filters.explicit.keys() < implicit_hub_fields
 
     @attrs.frozen(kw_only=True)
     class ReplicaKeys:
