@@ -1432,7 +1432,12 @@ class FileTransformer(PartitionedTransformer[api.File], ReplicaTransformer):
     @classmethod
     def hot_entity_types(cls) -> dict[EntityType, EntityType]:
         return {
-            'project': 'projects'
+            'project': 'projects',
+            'donor_organism': 'donors',
+            **{
+                f'{protocol_type}_protocol': f'{protocol_type}_protocols'
+                for protocol_type in ['analysis', 'imaging', 'library_preparation', 'sequencing']
+            }
         }
 
     def _entities(self) -> Iterable[api.File]:

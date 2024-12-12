@@ -41,10 +41,15 @@ class Accumulator(metaclass=ABCMeta):
     type.
     """
 
+    def __init__(self):
+        self.dropped = 0
+
     @abstractmethod
     def accumulate(self, value):
         """
-        Incorporate the given value into this accumulator.
+        Incorporate the given value into this accumulator. If the value is not
+        incorporated (due to e.g. a maximum size constraint), implementations
+        should increment :py:attr:`dropped`.
         """
         raise NotImplementedError
 
@@ -114,23 +119,23 @@ class SetAccumulator(Accumulator):
         :return: True, if the given value was incorporated into the set
 
         >>> acc = SetAccumulator(max_size=3)
-        >>> acc.accumulate(1)
-        True
+        >>> acc.accumulate(1), acc.dropped
+        (True, 0)
 
-        >>> acc.accumulate(1)
-        False
+        >>> acc.accumulate(1), acc.dropped
+        (False, 0)
 
-        >>> acc.accumulate(2)
-        True
+        >>> (acc.accumulate(2), acc.dropped)
+        (True, 0)
 
-        >>> acc.accumulate([1, 2, 3])
-        True
+        >>> acc.accumulate([1, 2, 3]), acc.dropped
+        (True, 0)
 
-        >>> acc.accumulate([2, 3])
-        False
+        >>> acc.accumulate([2, 3]), acc.dropped
+        (False, 0)
 
-        >>> acc.accumulate(4)
-        False
+        >>> acc.accumulate(4), acc.dropped
+        (False, 1)
 
         >>> acc.get()
         [1, 2, 3]
@@ -151,6 +156,11 @@ class SetAccumulator(Accumulator):
             else:
                 assert False
         else:
+            if isinstance(value, (list, set)):
+                if not self.value.issuperset(value):
+                    self.dropped += 1
+            elif value not in self.value:
+                self.dropped += 1
             return False
 
     def get(self) -> list[Any]:
@@ -172,22 +182,24 @@ class ListAccumulator(Accumulator):
         """
         >>> acc = ListAccumulator(max_size=3)
         >>> acc.accumulate(1)
-        >>> acc.get()
-        [1]
+        >>> acc.get(), acc.dropped
+        ([1], 0)
 
         >>> acc.accumulate([3, 2])
-        >>> acc.get()
-        [1, 2, 3]
+        >>> acc.get(), acc.dropped
+        ([1, 2, 3], 0)
 
         >>> acc.accumulate([4])
-        >>> acc.get()
-        [1, 2, 3]
+        >>> acc.get(), acc.dropped
+        ([1, 2, 3], 1)
         """
         if self.max_size is None or len(self.value) < self.max_size:
             if isinstance(value, (list, set)):
                 self.value.extend(value)
             else:
                 self.value.append(value)
+        else:
+            self.dropped += 1
 
     def get(self) -> list[Any]:
         return sorted(self.value)
@@ -248,6 +260,7 @@ class DictAccumulator(Accumulator):
         :param key: A function returning the key to be used both for storing the
                     accumulated value and sorting the accumulated set of values.
         """
+        super().__init__()
         self.max_size = max_size
         self.key = key
         self.value = {}
@@ -256,12 +269,12 @@ class DictAccumulator(Accumulator):
         """
         >>> acc = DictAccumulator(max_size=3, key=lambda s: s.lower())
         >>> acc.accumulate('foo')
-        >>> acc.get()
-        ['foo']
+        >>> acc.get(), acc.dropped
+        (['foo'], 0)
 
         >>> acc.accumulate('foo')
-        >>> acc.get()
-        ['foo']
+        >>> acc.get(), acc.dropped
+        (['foo'], 0)
 
         >>> acc.accumulate('Foo')
         Traceback (most recent call last):
@@ -270,12 +283,12 @@ class DictAccumulator(Accumulator):
 
         >>> acc.accumulate('Bar')
         >>> acc.accumulate('BAZ')
-        >>> acc.get()
-        ['Bar', 'BAZ', 'foo']
+        >>> acc.get(), acc.dropped
+        (['Bar', 'BAZ', 'foo'], 0)
 
         >>> acc.accumulate('spam')
-        >>> acc.get()
-        ['Bar', 'BAZ', 'foo']
+        >>> acc.get(), acc.dropped
+        (['Bar', 'BAZ', 'foo'], 1)
         """
         if self.max_size is None or len(self.value) < self.max_size:
             key = self.key(value)
@@ -285,6 +298,8 @@ class DictAccumulator(Accumulator):
                 self.value[key] = value
             else:
                 require(old_value == value, old_value, value)
+        elif value not in self.value:
+            self.dropped += 1
 
     def get(self):
         return sorted(self.value.values(), key=self.key)
@@ -319,6 +334,7 @@ class FrequencySetAccumulator(Accumulator):
             self.value[value] += 1
 
     def get(self) -> list[Any]:
+        self.dropped = max(0, len(self.value) - self.max_size)
         return [item for item, count in self.value.most_common(self.max_size)]
 
 
@@ -445,6 +461,7 @@ class DistinctAccumulator(Accumulator):
     """
 
     def __init__(self, inner: Accumulator, max_size: int = None) -> None:
+        super().__init__()
         self.value = inner
         self.keys = SetAccumulator(max_size=max_size)
 
@@ -502,6 +519,9 @@ class SimpleAggregator(EntityAggregator):
         for k, accumulator in aggregate.items():
             if accumulator is not None:
                 result[k] = accumulator.get()
+                if accumulator.dropped > 0:
+                    log.warning('Values were dropped %d times while aggregating %s.%s',
+                                accumulator.dropped, self.entity_type, k)
         return result
 
     def _accumulate(self,
