@@ -1196,7 +1196,7 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
                             url: furl,
                             size: int | None = None
                             ) -> BytesIO:
-        self.assertEquals('gs', url.scheme)
+        self.assertEqual('gs', url.scheme)
         path = os.environ['GOOGLE_APPLICATION_CREDENTIALS']
         credentials = service_account.Credentials.from_service_account_file(path)
         storage_client = storage.Client(credentials=credentials)
