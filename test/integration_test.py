@@ -178,6 +178,7 @@ from azul.terra import (
 from azul.types import (
     JSON,
     JSONs,
+    MutableJSON,
     MutableJSONs,
 )
 from azul_test_case import (
@@ -980,7 +981,7 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
         # The schema is also an Avro object, specifically a Avro record which
         # FastAVRO exposes to us as a JSON object, i.e., a `dict` with string
         # keys
-        record_schema = reader.writer_schema
+        record_schema: MutableJSON = reader.writer_schema
         # Each object in a PFB is also of type 'record'
         self.assertEqual('record', record_schema['type'])
         # PFB calls the records *entities*. Unfortunately, the PFB standard is
