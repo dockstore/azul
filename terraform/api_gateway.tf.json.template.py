@@ -196,13 +196,13 @@ emit_tf({
                             *[
                                 {
                                     'name': name,
-                                    'action': {
-                                        action: {}
-                                    },
                                     'statement': {
                                         'ip_set_reference_statement': {
                                             'arn': '${data.aws_wafv2_ip_set.%s.arn}' % ip_set_term
                                         }
+                                    },
+                                    'action': {
+                                        action: {}
                                     },
                                     'visibility_config': {
                                         'metric_name': name,
@@ -218,6 +218,12 @@ emit_tf({
                             *[
                                 {
                                     'name': name,
+                                    'statement': {
+                                        'rate_based_statement': {
+                                            'limit': limit,
+                                            'aggregate_key_type': 'IP'
+                                        }
+                                    },
                                     'action': {
                                         'block': {
                                             'custom_response': {
@@ -229,12 +235,6 @@ emit_tf({
                                                     }
                                                 ]
                                             }
-                                        }
-                                    },
-                                    'statement': {
-                                        'rate_based_statement': {
-                                            'limit': limit,
-                                            'aggregate_key_type': 'IP'
                                         }
                                     },
                                     'visibility_config': {
@@ -258,9 +258,6 @@ emit_tf({
                             ],
                             {
                                 'name': 'AWS-CommonRuleSet',
-                                'override_action': {
-                                    'none': {}
-                                },
                                 'statement': {
                                     'managed_rule_group_statement': {
                                         'name': 'AWSManagedRulesCommonRuleSet',
@@ -298,6 +295,9 @@ emit_tf({
                                         ]
                                     }
                                 },
+                                'override_action': {
+                                    'none': {}
+                                },
                                 'visibility_config': {
                                     'metric_name': 'AWS-CommonRuleSet',
                                     'sampled_requests_enabled': True,
@@ -306,14 +306,14 @@ emit_tf({
                             },
                             {
                                 'name': 'AWS-AmazonIpReputationList',
-                                'override_action': {
-                                    'none': {}
-                                },
                                 'statement': {
                                     'managed_rule_group_statement': {
                                         'name': 'AWSManagedRulesAmazonIpReputationList',
                                         'vendor_name': 'AWS'
                                     }
+                                },
+                                'override_action': {
+                                    'none': {}
                                 },
                                 'visibility_config': {
                                     'metric_name': 'AWS-AmazonIpReputationList',
@@ -323,14 +323,14 @@ emit_tf({
                             },
                             {
                                 'name': 'AWS-UnixRuleSet',
-                                'override_action': {
-                                    'none': {}
-                                },
                                 'statement': {
                                     'managed_rule_group_statement': {
                                         'name': 'AWSManagedRulesUnixRuleSet',
                                         'vendor_name': 'AWS'
                                     }
+                                },
+                                'override_action': {
+                                    'none': {}
                                 },
                                 'visibility_config': {
                                     'metric_name': 'AWS-UnixRuleSet',
