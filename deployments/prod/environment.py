@@ -1288,6 +1288,22 @@ dcp44_sources = mkdict(dcp43_sources, 478, mkdelta([
     # @formatter:on
 ]))
 
+dcp45_sources = mkdict(dcp44_sources, 484, mkdelta([
+    # @formatter:off
+    mksrc('bigquery', 'datarepo-44d8565d', 'hca_prod_005d611a14d54fbf846e571a1f874f70__20220111_dcp2_20241205_dcp45'),
+    mksrc('bigquery', 'datarepo-46f6eb97', 'hca_prod_01aacb6840764fd99eb9aba0f48c1b5a__20230616_dcp2_20241205_dcp45'),
+    mksrc('bigquery', 'datarepo-6130b203', 'hca_prod_08fb10df32e5456c9882e33fcd49077a__20231212_dcp2_20241205_dcp45'),
+    mksrc('bigquery', 'datarepo-94e55f6a', 'hca_prod_2433c1e45a1246a5b2d5d3554a7694f2__20241205_dcp2_20241205_dcp45'),
+    mksrc('bigquery', 'datarepo-bcdeba16', 'hca_prod_40bb5783c9244d19b6cbd26a8d3ae1d8__20241205_dcp2_20241205_dcp45'),
+    mksrc('bigquery', 'datarepo-059abc16', 'hca_prod_474a4229840e4d6382af8d3aa615ee17__20241205_dcp2_20241205_dcp45'),
+    mksrc('bigquery', 'datarepo-8d869988 ', 'hca_prod_7fc0a7569b064e63a7806c9fc3f9d76d__20241205_dcp2_20241205_dcp45'),
+    mksrc('bigquery', 'datarepo-f7e93b13', 'hca_prod_9762d70c9b274f578cbc377b9b92ea9b__20241205_dcp2_20241205_dcp45'),
+    mksrc('bigquery', 'datarepo-66f332bc', 'hca_prod_ae9f439bbd474d6ebd7232dc70b35d97__20241004_dcp2_20241205_dcp45', ma),  # noqa E501
+    mksrc('bigquery', 'datarepo-48f5e511', 'hca_prod_df8eb7ce370746afb823e081a562e954__20241205_dcp2_20241205_dcp45'),
+    mksrc('bigquery', 'datarepo-6c94b83b', 'hca_prod_e255b1c611434fa683a8528f15b41038__20220330_dcp2_20241205_dcp45'),
+    # @formatter:on
+]))
+
 lungmap_sources = mkdict({}, 3, mkdelta([
     mksrc('bigquery', 'datarepo-32f75497', 'lungmap_prod_00f056f273ff43ac97ff69ca10e38c89__20220308_20220308'),
     mksrc('bigquery', 'datarepo-7066459d', 'lungmap_prod_1bdcecde16be420888f478cd2133d11d__20220308_20220308'),
@@ -1375,6 +1391,7 @@ def env() -> Mapping[str, Optional[str]]:
                                        sources=mklist(sources))
             for atlas, catalog, sources in [
                 ('hca', 'dcp44', dcp44_sources),
+                ('hca', 'dcp45', dcp45_sources),
                 ('lungmap', 'lm7', lm7_sources),
                 ('lungmap', 'lm8', lm8_sources)
             ] for suffix, internal in [
