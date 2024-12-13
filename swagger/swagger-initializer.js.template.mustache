@@ -1,0 +1,43 @@
+window.onload = function() {
+  //<editor-fold desc="Changeable Configuration Block">
+
+  // Adapted from https://github.com/swagger-api/swagger-ui/issues/3725#issuecomment-334899276
+  const DisableTryItOutPlugin = function() {
+    return {
+      statePlugins: {
+        spec: {
+          wrapSelectors: {
+            allowTryItOutFor: (oriSelector, system) => (state, ...args) => {
+              return oriSelector(state, ...args) && ({{{NON_INTERACTIVE_METHODS}}}.indexOf(args.join('/')) == -1);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  window.ui = SwaggerUIBundle({
+    url: {{{DEPLOYMENT_PATH}}},
+    dom_id: '#swagger-ui',
+    deepLinking: true,
+    presets: [
+      SwaggerUIBundle.presets.apis,
+      SwaggerUIStandalonePreset
+    ],
+    plugins: [
+      SwaggerUIBundle.plugins.DownloadUrl,
+      DisableTryItOutPlugin
+    ],
+    oauth2RedirectUrl: {{{OAUTH2_REDIRECT_URL}}},
+    layout: "StandaloneLayout"
+  });
+
+  const client_id = {{{OAUTH2_CLIENT_ID}}};
+  if (client_id !== null) {
+      window.ui.initOAuth({
+        clientId: client_id
+      })
+  }
+
+  //</editor-fold>
+};

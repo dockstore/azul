@@ -2009,7 +2009,8 @@ class ResponseHeadersTest(AzulTestCase):
         short_cache = 'public, max-age=60, must-revalidate'
         long_cache = 'public, max-age=86400, must-revalidate'
         test_cases = {
-            '/': short_cache,
+            '/static/index.html': long_cache,
+            '/static/swagger-initializer.js': short_cache,
             '/static/swagger-ui.css': long_cache,
             '/openapi': short_cache,
             '/oauth2_redirect': no_cache,
@@ -2028,7 +2029,7 @@ class ResponseHeadersTest(AzulTestCase):
                         parsed_csp.validate()
                         nonce = parsed_csp.nonce()
                         # We only expect a CSP nonce for specific endpoints.
-                        self.assertIs(nonce is None, path not in ['/', '/oauth2_redirect'])
+                        self.assertIs(nonce is None, path != '/oauth2_redirect')
                         expected_headers = {
                             # The fact that most headers are hard-coded in
                             # security_headers() gives us license to use that

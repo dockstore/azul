@@ -458,6 +458,30 @@ SSH into the instance, and run ``sudo yum update`` followed by ``sudo reboot``.
 Wait for the GitLab web application to become available again and perform a
 ``git fetch`` from one of the Git repositories hosted on that instance.
 
+Updating the Swagger UI
+^^^^^^^^^^^^^^^^^^^^^^^
+
+Operators should regularly check for available updates to the Swagger UI. The
+current version used by Azul is hardcoded in ``scripts/update_swagger.py``. The
+upstream source is located here:
+
+https://github.com/swagger-api/swagger-ui/tree/master/dist
+
+Scheduled upgrade PR's should only include minor and hotfix updates to the
+Swagger UI. If a new major version is available, open a new issue instead. To
+perform the update, edit the ``tag`` variable in the ``update_swagger`` script
+and run it. If there are nontrivial changes to the ``swagger-initializer.js`` or
+``oauth2-redirect.html`` files, cancel the update and open a new issue instead.
+Otherwise, forward any changes to those two files to their respective mustache
+template files, and commit the changes to the script and all modified files in
+the ``swagger/`` directory. The commit message must include the new tag, as well
+as a link to the upstream source in the commit body, e.g.::
+
+    Update Swagger UI to v<release version> (#issue-number)
+
+    https://github.com/swagger-api/swagger-ui/tree/v<release version>/dist
+
+
 Export AWS Inspector findings
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
