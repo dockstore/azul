@@ -1904,12 +1904,12 @@ emit_tf({} if config.terraform_component != 'gitlab' else {
                             )
                         },
                         {
-                            'path': '/etc/systemd/system/prune-images.service',
+                            'path': '/etc/systemd/system/docker-prune.service',
                             'permissions': '0644',
                             'owner': 'root',
                             'content': jl(
                                 '[Unit]',
-                                'Description=Pruning of stale docker images',
+                                'Description=Pruning of stale docker data (containers, networks, images, volumes)',
                                 'After=docker.service gitlab-dind.service',
                                 'Requires=docker.service gitlab-dind.service',
                                 '[Service]',
@@ -1919,8 +1919,8 @@ emit_tf({} if config.terraform_component != 'gitlab' else {
                                 'StandardError=null',
                                 'Type=oneshot',  # oneshot to allow multiple ExecStart
                                 'TimeoutStartSec=5min',  # `docker pull` may take a long time
-                                'ExecStartPre=-/usr/bin/docker stop prune-images',
-                                'ExecStartPre=-/usr/bin/docker rm prune-images',
+                                'ExecStartPre=-/usr/bin/docker stop docker-prune',
+                                'ExecStartPre=-/usr/bin/docker rm docker-prune',
                                 'ExecStartPre=/usr/bin/docker pull ' + str(dind_image),
                                 *[
                                     jw(
@@ -1937,19 +1937,18 @@ emit_tf({} if config.terraform_component != 'gitlab' else {
                                     for command in [
                                         sq(
                                             'docker',  # The docker …
-                                            'image',  # … image command …
+                                            'volume',  # … volume command …
                                             'prune',  # … to delete, …
                                             '--force',  # … without prompting for confirmation, …
-                                            '--all',  # … all images …
-                                            f'--filter "until={90 * 24}h"',  # … except those from more recent builds …
+                                            '--all',  # … all unused volumes …
                                             '> /proc/1/fd/1',  # … with output sent to the container's STDOUT.
                                         ),
                                         sq(
                                             'docker',  # The docker …
-                                            'buildx',  # … buildx command …
+                                            'system',  # … system command …
                                             'prune',  # … to delete, …
                                             '--force',  # … without prompting for confirmation, …
-                                            '--all',  # … all images …
+                                            '--all',  # … all unused containers, networks, and images …
                                             f'--filter "until={90 * 24}h"',  # … except those from more recent builds …
                                             '> /proc/1/fd/1',  # … with output sent to the container's STDOUT.
                                             #
@@ -1965,7 +1964,7 @@ emit_tf({} if config.terraform_component != 'gitlab' else {
                             )
                         },
                         {
-                            'path': '/etc/systemd/system/prune-images.timer',
+                            'path': '/etc/systemd/system/docker-prune.timer',
                             'permissions': '0644',
                             'owner': 'root',
                             'content': jl(
@@ -2198,7 +2197,7 @@ emit_tf({} if config.terraform_component != 'gitlab' else {
                             'gitlab',
                             'gitlab-runner',
                             'clamscan.timer',
-                            'prune-images.timer',
+                            'docker-prune.timer',
                             'registry-garbage-collect.timer'
                         ],
                         [
