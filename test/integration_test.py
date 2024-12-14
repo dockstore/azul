@@ -411,14 +411,13 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
         def _wait_for_indexer():
             self.azul_client.wait_for_indexer()
 
-        # For faster modify-deploy-test cycles, set `delete` to False and run
-        # test once. Then also set `index` to False. Subsequent runs will use
-        # catalogs from first run. Don't commit changes to these two lines.
-        index = True
-        delete = True
+        flags = config.it_flags
+        index, delete = ['no_' + flag not in flags for flag in ['index', 'delete']]
 
         if index:
             self._reset_indexer()
+        else:
+            log.warning('Will skip indexing due to overriding IT flag.')
 
         catalogs: list[Catalog] = []
         for catalog in config.integration_test_catalogs:
@@ -467,6 +466,8 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
                 with self._service_account_credentials:
                     for catalog in catalogs:
                         self._assert_catalog_empty(catalog.name)
+        else:
+            log.warning('Will skip deletions due to overriding IT flag')
 
         self._test_other_endpoints()
 

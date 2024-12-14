@@ -1600,6 +1600,10 @@ class Config:
     def vpn_subnet(self) -> str:
         return self.environ['azul_vpn_subnet']
 
+    @property
+    def it_flags(self) -> set[str]:
+        return set(self.environ.get('azul_it_flags', '').split())
+
 
 config: Config = Config()  # yes, the type hint does help PyCharm
 
