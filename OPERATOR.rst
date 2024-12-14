@@ -629,7 +629,7 @@ backport PR first. The new PR will include the changes from the old one.
 Deploying the Data Browser
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The Data Browser is deployed two steps. The first step is building the
+The Data Browser is deployed in two steps. The first step is building the
 ``ucsc/data-browser`` project on GitLab. This is initiated by pushing a branch
 whose name matches ``ucsc/*/*`` to one of our GitLab instances. The resulting
 pipeline produces a tarball stored in the package registry on that GitLab
