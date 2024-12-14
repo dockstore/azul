@@ -112,6 +112,28 @@ class SetAccumulator(Accumulator):
     def accumulate(self, value) -> bool:
         """
         :return: True, if the given value was incorporated into the set
+
+        >>> acc = SetAccumulator(max_size=3)
+        >>> acc.accumulate(1)
+        True
+
+        >>> acc.accumulate(1)
+        False
+
+        >>> acc.accumulate(2)
+        True
+
+        >>> acc.accumulate([1, 2, 3])
+        True
+
+        >>> acc.accumulate([2, 3])
+        False
+
+        >>> acc.accumulate(4)
+        False
+
+        >>> acc.get()
+        [1, 2, 3]
         """
         if self.max_size is None or len(self.value) < self.max_size:
             before = len(self.value)
@@ -147,6 +169,20 @@ class ListAccumulator(Accumulator):
         self.max_size = max_size
 
     def accumulate(self, value):
+        """
+        >>> acc = ListAccumulator(max_size=3)
+        >>> acc.accumulate(1)
+        >>> acc.get()
+        [1]
+
+        >>> acc.accumulate([3, 2])
+        >>> acc.get()
+        [1, 2, 3]
+
+        >>> acc.accumulate([4])
+        >>> acc.get()
+        [1, 2, 3]
+        """
         if self.max_size is None or len(self.value) < self.max_size:
             if isinstance(value, (list, set)):
                 self.value.extend(value)
@@ -217,6 +253,30 @@ class DictAccumulator(Accumulator):
         self.value = {}
 
     def accumulate(self, value):
+        """
+        >>> acc = DictAccumulator(max_size=3, key=lambda s: s.lower())
+        >>> acc.accumulate('foo')
+        >>> acc.get()
+        ['foo']
+
+        >>> acc.accumulate('foo')
+        >>> acc.get()
+        ['foo']
+
+        >>> acc.accumulate('Foo')
+        Traceback (most recent call last):
+        ...
+        azul.RequirementError: ('foo', 'Foo')
+
+        >>> acc.accumulate('Bar')
+        >>> acc.accumulate('BAZ')
+        >>> acc.get()
+        ['Bar', 'BAZ', 'foo']
+
+        >>> acc.accumulate('spam')
+        >>> acc.get()
+        ['Bar', 'BAZ', 'foo']
+        """
         if self.max_size is None or len(self.value) < self.max_size:
             key = self.key(value)
             try:
