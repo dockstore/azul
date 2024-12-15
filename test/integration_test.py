@@ -109,6 +109,9 @@ from azul.collections import (
 from azul.csp import (
     CSP,
 )
+from azul.deployment import (
+    aws,
+)
 from azul.drs import (
     AccessMethod,
 )
@@ -532,9 +535,10 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
         assert supported_formats
         for format in [None, *supported_formats]:
             filters = self._manifest_filters(catalog)
-            first_fetch = bool(self.random.getrandbits(1))
-            for fetch in [first_fetch, not first_fetch]:
-                with self.subTest('manifest', catalog=catalog, format=format, fetch=fetch):
+            execution_ids = set()
+            coin_flip = bool(self.random.getrandbits(1))
+            for i, fetch in enumerate([coin_flip, coin_flip, not coin_flip]):
+                with self.subTest('manifest', catalog=catalog, format=format, i=i, fetch=fetch):
                     args = dict(catalog=catalog, filters=json.dumps(filters))
                     if format is None:
                         format = first(supported_formats)
@@ -565,13 +569,22 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
                             results = list(tpe.map(worker, range(num_workers)))
 
                     self.assertEqual([None] * num_workers, results)
-                    execution_ids = self._manifest_execution_ids(responses, fetch=fetch)
-                    # The second iteration of the inner-most loop re-requests
-                    # the manifest with only `fetch` being different. In that
-                    # case, the manifest will already be cached and no step
-                    # function execution is expected to have been started.
-                    expect_execution = fetch == first_fetch
-                    self.assertEqual(1 if expect_execution else 0, len(execution_ids))
+
+                    execution_ids.update(self._manifest_execution_ids(responses))
+                    bucket, key = one(self._manifest_objects(responses))
+                    if i == 0:
+                        aws.s3.delete_object(Bucket=bucket, Key=key)
+                        # One execution to generate the manifest
+                        self.assertEqual(1, len(execution_ids))
+                    elif i == 1:
+                        # One more execution to re-generate the manifest
+                        self.assertEqual(2, len(execution_ids))
+                    elif i == 2:
+                        # Only fetch mode changed, cached manifest will be used,
+                        # and no additional executions are expectect
+                        self.assertEqual(2, len(execution_ids))
+                    else:
+                        assert False
 
     def _manifest_filters(self, catalog: CatalogName) -> JSON:
         # IT catalogs with just one public source are always indexed completely
@@ -642,27 +655,42 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
                             self._manifest_validators[format](catalog, response.data)
                             break
 
-                execution_ids = self._manifest_execution_ids(responses, fetch=False)
+                execution_ids = self._manifest_execution_ids(responses)
                 self.assertEqual(1, len(execution_ids))
 
     def _manifest_execution_ids(self,
-                                responses: list[urllib3.HTTPResponse],
-                                *,
-                                fetch: bool
-                                ) -> set[uuid.UUID]:
-        urls: list[furl]
-        if fetch:
-            responses = [
-                json.loads(r.data)
-                for r in responses
-                if r.status == 200 and r.headers['Content-Type'] == 'application/json'
-            ]
-            urls = [furl(r['Location']) for r in responses if r['Status'] == 301]
-        else:
-            urls = [furl(r.headers['Location']) for r in responses if r.status == 301]
+                                responses: list[urllib3.HTTPResponse]
+                                ) -> set[tuple[uuid.UUID, int]]:
+        urls = self._manifest_urls(responses, status=301)
         tokens = {Token.decode(url.path.segments[-1]) for url in urls}
-        execution_ids = {token.generation_id for token in tokens}
+        execution_ids = {token.execution_id for token in tokens}
         return execution_ids
+
+    def _manifest_objects(self,
+                          responses: list[urllib3.HTTPResponse]
+                          ) -> set[tuple[str, str]]:
+        urls = self._manifest_urls(responses, status=302)
+        return {
+            (url.path.segments[0], '/'.join(url.path.segments[1:]))
+            for url in urls
+            if url.netloc == 's3.amazonaws.com' and url.scheme == 'https'
+        }
+
+    def _manifest_urls(self,
+                       responses: list[urllib3.HTTPResponse],
+                       *,
+                       status: int
+                       ) -> list[furl]:
+        urls: list[furl] = []
+        for response in responses:
+            if response.status == 200:
+                if response.headers['Content-Type'] == 'application/json':
+                    body = json.loads(response.data)
+                    if body['Status'] == status:
+                        urls.append(furl(body['Location']))
+            elif response.status == status:
+                urls.append(furl(response.headers['Location']))
+        return urls
 
     def _get_one_inner_file(self, catalog: CatalogName) -> tuple[JSON, FileInnerEntity]:
         outer_file = self._get_one_outer_file(catalog)
@@ -1065,8 +1093,8 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
         num_files = 0
         for url, output in grouper(lines, 2):
             num_files += 1
-            self.assertTrue(url.startswith('url='))
-            self.assertTrue(output.startswith('output='))
+            self.assertTrue(url.startswith('url='), url)
+            self.assertTrue(output.startswith('output='), output)
         log.info(f'Manifest contains {num_files} files.')
         self.assertGreater(num_files, 0)
 

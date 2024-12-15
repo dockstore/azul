@@ -36,6 +36,12 @@ import requests
 from app_test_case import (
     LocalAppTestCase,
 )
+from azul import (
+    JSON,
+)
+from azul.collections import (
+    deep_dict_merge,
+)
 from azul.logging import (
     configure_test_logging,
 )
@@ -44,6 +50,7 @@ from azul.plugins import (
 )
 from azul.service import (
     Filters,
+    FiltersJSON,
 )
 from azul.service.async_manifest_service import (
     AsyncManifestService,
@@ -79,11 +86,17 @@ class TestAsyncManifestService(AzulUnitTestCase):
     generation_id = UUID('1ea94a54-a64d-54f1-8b41-15455fb958db')
 
     def test_token_encoding(self, _sfn):
-        token = Token(generation_id=self.generation_id, request_index=42, retry_after=123)
+        token = Token(generation_id=self.generation_id,
+                      iteration=3,
+                      request_index=42,
+                      retry_after=123)
         self.assertEqual(token, Token.decode(token.encode()))
 
     def test_token_validation(self, _sfn):
-        token = Token(generation_id=self.generation_id, request_index=42, retry_after=123)
+        token = Token(generation_id=self.generation_id,
+                      iteration=3,
+                      request_index=42,
+                      retry_after=123)
         self.assertRaises(InvalidTokenError, token.decode, token.encode()[:-1])
 
     def test_status_success(self, _sfn):
@@ -92,8 +105,8 @@ class TestAsyncManifestService(AzulUnitTestCase):
         manifest
         """
         service = AsyncManifestService()
-        execution_name = service.execution_name(self.generation_id)
-        output = {'foo': 'bar'}
+        execution_name = service.execution_name(self.generation_id, iteration=0)
+        input, output = {'filters': {}}, {'foo': 'bar'}
         _sfn.describe_execution.return_value = {
             'executionArn': service.execution_arn(execution_name),
             'stateMachineArn': service.machine_arn,
@@ -101,12 +114,15 @@ class TestAsyncManifestService(AzulUnitTestCase):
             'status': 'SUCCEEDED',
             'startDate': datetime.datetime(2018, 11, 15, 18, 30, 44, 896000),
             'stopDate': datetime.datetime(2018, 11, 15, 18, 30, 59, 295000),
-            'input': '{"filters": {}}',
+            'input': json.dumps(input),
             'output': json.dumps(output)
         }
-        token = Token(generation_id=self.generation_id, request_index=0, retry_after=0)
-        actual_output = service.inspect_generation(token)
-        self.assertEqual(output, actual_output)
+        token = Token(generation_id=self.generation_id,
+                      iteration=0,
+                      request_index=0,
+                      retry_after=0)
+        actual_result = service.inspect_generation(token)
+        self.assertEqual({'input': input, 'output': output}, actual_result)
 
     def test_status_running(self, _sfn):
         """
@@ -114,7 +130,7 @@ class TestAsyncManifestService(AzulUnitTestCase):
         checking the job status
         """
         service = AsyncManifestService()
-        execution_name = service.execution_name(self.generation_id)
+        execution_name = service.execution_name(self.generation_id, iteration=0)
         _sfn.describe_execution.return_value = {
             'executionArn': service.execution_arn(execution_name),
             'stateMachineArn': service.machine_arn,
@@ -123,9 +139,15 @@ class TestAsyncManifestService(AzulUnitTestCase):
             'startDate': datetime.datetime(2018, 11, 15, 18, 30, 44, 896000),
             'input': '{"filters": {}}'
         }
-        token = Token(generation_id=self.generation_id, request_index=0, retry_after=0)
+        token = Token(generation_id=self.generation_id,
+                      iteration=0,
+                      request_index=0,
+                      retry_after=0)
         token = service.inspect_generation(token)
-        expected = Token(generation_id=self.generation_id, request_index=1, retry_after=1)
+        expected = Token(generation_id=self.generation_id,
+                         iteration=0,
+                         request_index=1,
+                         retry_after=1)
         self.assertEqual(expected, token)
 
     def test_status_failed(self, _sfn):
@@ -133,7 +155,7 @@ class TestAsyncManifestService(AzulUnitTestCase):
         A failed manifest job should raise a GenerationFailed
         """
         service = AsyncManifestService()
-        execution_name = service.execution_name(self.generation_id)
+        execution_name = service.execution_name(self.generation_id, iteration=0)
         _sfn.describe_execution.return_value = {
             'executionArn': service.execution_arn(execution_name),
             'stateMachineArn': service.machine_arn,
@@ -143,7 +165,10 @@ class TestAsyncManifestService(AzulUnitTestCase):
             'stopDate': datetime.datetime(2018, 11, 14, 16, 6, 55, 860000),
             'input': '{"filters": {"organ": {"is": ["lymph node"]}}}',
         }
-        token = Token(generation_id=self.generation_id, request_index=0, retry_after=0)
+        token = Token(generation_id=self.generation_id,
+                      iteration=0,
+                      request_index=0,
+                      retry_after=0)
         with self.assertRaises(GenerationFailed):
             service.inspect_generation(token)
 
@@ -246,9 +271,19 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                 service: AsyncManifestService
                 service = self.app_module.app.manifest_controller.async_service
                 generation_id = manifest_key.uuid
-                execution_name = service.execution_name(generation_id)
+                execution_names = [
+                    service.execution_name(generation_id, iteration=i)
+                    for i in range(3)
+                ]
                 machine_arn = service.machine_arn
-                execution_arn = service.execution_arn(execution_name)
+                execution_arns = list(map(service.execution_arn, execution_names))
+
+                not_found = CachedManifestNotFound(manifest_key)
+                execution_exists = self._mock_sfn_exception(
+                    _sfn,
+                    operation_name='StartExecution',
+                    error_code='ExecutionAlreadyExists'
+                )
 
                 not_found = CachedManifestNotFound(manifest_key)
                 execution_exists = self._mock_sfn_exception(_sfn,
@@ -277,6 +312,45 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                 key_url: furl
                 final_url: furl
                 equivalent_url: furl
+                equivalent_filters: FiltersJSON
+                equivalent_input: ManifestGenerationState
+
+                iterations: list[JSON] = []
+
+                def mock_start_generation(*, start: int = 0, describe: int = 0):
+                    *rest, last = range(start, len(iterations))
+                    _sfn.start_execution.side_effect = [
+                        *(execution_exists for _ in rest),
+                        {
+                            'executionArn': execution_arns[last],
+                            'startDate': 1234
+                        }
+                    ]
+                    *rest, last = range(describe, len(iterations))
+                    _sfn.describe_execution.side_effect = [
+                        {
+                            'status': 'SUCCEEDED',
+                            'input': json.dumps(iterations[i]),
+                            'output': json.dumps(state)
+                        }
+                        for i in rest
+                    ]
+
+                def assert_start_generation(*, start: int = 0, describe: int = 0):
+                    indices = range(start, len(iterations))
+                    expected_calls = [
+                        mock.call(stateMachineArn=machine_arn,
+                                  name=execution_names[i],
+                                  input=json.dumps(iterations[-1]))
+                        for i in indices
+                    ]
+                    self.assertEqual(expected_calls, _sfn.start_execution.mock_calls)
+                    indices = range(describe, len(iterations))
+                    expected_calls = [
+                        mock.call(executionArn=execution_arns[i])
+                        for i in indices[:-1]
+                    ]
+                    self.assertEqual(expected_calls, _sfn.describe_execution.mock_calls)
 
                 # Request the manifest. The cached manifest does not exist
                 # so we expect a StepFunction execution to be started and a
@@ -287,19 +361,13 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                 def put():
                     nonlocal url, state, token_url
                     get_cached_manifest.side_effect = not_found
-                    _sfn.start_execution.return_value = {
-                        'executionArn': execution_arn,
-                        'startDate': 123
-                    }
+                    iterations.append(input)
+                    mock_start_generation()
                     url = self._request('PUT', initial_url, expect=301)
                     assert_get_cached_manifest()
+                    assert_start_generation()
                     state = input
                     token_url = url
-                    _sfn.start_execution.assert_called_once_with(
-                        stateMachineArn=machine_arn,
-                        name=execution_name,
-                        input=json.dumps(input)
-                    )
 
                 put()
 
@@ -361,10 +429,12 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                         key_url = None
                         final_url = object_url
                         get_manifest_url.return_value = str(object_url)
+                    get_cached_manifest_with_key.return_value = manifest
                     url = self._request('GET', url, expect=302)
                     self.assertEqual(final_url, url)
                     assert_get_manifest(partition=1)
                     _sfn.describe_execution.assert_called_once()
+                    get_cached_manifest_with_key.assert_called_once_with(manifest_key)
 
                 get_token_when_done()
 
@@ -394,7 +464,7 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                 #
                 @reset
                 def modified_put():
-                    nonlocal url, equivalent_url
+                    nonlocal url, equivalent_url, equivalent_filters
                     get_cached_manifest.return_value = manifest
                     get_manifest_url.return_value = str(object_url)
                     if key_url is not None:
@@ -412,28 +482,58 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                 # Expire the cached manifest and repeat the initial request
                 # with the insignificant difference. The repeated request
                 # should be considered valid and matching the completed step
-                # function execution.
+                # function execution. However, because the manifest is missing,
+                # the generation should be restarted with a new execution.
                 #
                 @reset
                 def modified_put_after_expiration():
-                    nonlocal url
+                    nonlocal url, state, token_url, equivalent_input
                     get_cached_manifest.side_effect = not_found
-                    _sfn.start_execution.side_effect = execution_exists
-                    _sfn.describe_execution.return_value = {
-                        'status': 'SUCCEEDED',
-                        'input': json.dumps(input),
-                        'output': json.dumps(state)
-                    }
+                    equivalent_input = deep_dict_merge(
+                        {'filters': {'explicit': equivalent_filters}},
+                        input
+                    )
+                    iterations.append(equivalent_input)
+                    mock_start_generation()
                     url = self._request('PUT', equivalent_url, expect=301)
-                    # FIXME: 404 from S3 when re-requesting manifest after it expired
-                    #        https://github.com/DataBiosphere/azul/issues/6441
-                    if True:
-                        self.assertEqual(token_url, url)
-                    else:
-                        self.assertNotEqual(token_url, url)
                     assert_get_cached_manifest()
+                    self.assertNotEqual(token_url, url)
+                    assert_get_cached_manifest()
+                    assert_start_generation()
+                    token_url = url
+                    state = equivalent_input
 
                 modified_put_after_expiration()
+                get_token_while_running()
+                get_token_when_almost_done()
+
+                # The StepFunction has finished but the output is has expired
+                # or was deleted. We expect yet another execution to restart
+                # the generation.
+                #
+                @reset
+                def get_stale_token_when_done():
+                    nonlocal url, state, key_url, token_url
+                    get_manifest.return_value = manifest
+                    state = self.app_module.generate_manifest(state, None)
+                    get_cached_manifest_with_key.side_effect = not_found
+                    previous_iteration = len(iterations)
+                    iterations.append(equivalent_input)
+                    mock_start_generation(start=previous_iteration,
+                                          describe=previous_iteration - 1)
+                    url = self._request('GET', url, expect=301)
+                    self.assertNotEqual(token_url, url)
+                    assert_get_manifest(partition=1)
+                    get_cached_manifest_with_key.assert_called_once_with(manifest_key)
+                    assert_start_generation(start=previous_iteration,
+                                            describe=previous_iteration - 1)
+                    token_url = url
+                    state = equivalent_input
+
+                get_stale_token_when_done()
+                get_token_while_running()
+                get_token_when_almost_done()
+                get_token_when_done()
 
                 # Request the manifest by its key if a URL with that key
                 # was the result of the final 302 redirect above.
@@ -467,7 +567,7 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                     self.assertEqual(410, response.status_code)
                     expected_response = {
                         'Code': 'GoneError',
-                        'Message': 'The requested manifest has expired, please request a new one'
+                        'Message': 'The manifest has expired, please request a new one'
                     }
                     self.assertEqual(expected_response, response.json())
                     get_cached_manifest_with_key.assert_called_once_with(manifest_key)
@@ -491,7 +591,7 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
             self.assertGreaterEqual(int(headers['Retry-After']), 0)
         return furl(headers['Location'])
 
-    token = Token.first(generation_id).encode()
+    token = Token.first(generation_id, iteration=0).encode()
 
     def _test(self, *, expected_status, token=token):
         url = self.base_url.set(path=['fetch', 'manifest', 'files', token])

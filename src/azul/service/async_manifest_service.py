@@ -3,6 +3,7 @@ import json
 import logging
 from typing import (
     Self,
+    TypedDict,
 )
 from uuid import (
     UUID,
@@ -35,15 +36,30 @@ class InvalidTokenError(Exception):
 @attrs.frozen(kw_only=True)
 class Token:
     """
-    Represents an ongoing manifest generation
+    Represents a Step Function execution to generate a manifest
     """
+    #: A hash of the inputs
     generation_id: UUID = strict_auto()
+
+    #: Number of prior executions for the generation represented by this token
+    iteration: int = strict_auto()
+
+    #: The number of times the service received a request to inspect the
+    #: status of the execution represented by this token
     request_index: int = strict_auto()
+
+    #: How long clients should wait before requesting a status update about the
+    #: execution represented by the token
     retry_after: int = strict_auto()
+
+    @property
+    def execution_id(self) -> tuple[UUID, int]:
+        return self.generation_id, self.iteration
 
     def pack(self) -> bytes:
         return msgpack.packb([
             self.generation_id.bytes,
+            self.iteration,
             self.request_index,
             self.retry_after
         ])
@@ -52,6 +68,7 @@ class Token:
     def unpack(cls, pack: bytes) -> Self:
         i = iter(msgpack.unpackb(pack))
         return cls(generation_id=UUID(bytes=next(i)),
+                   iteration=next(i),
                    request_index=next(i),
                    retry_after=next(i))
 
@@ -66,8 +83,9 @@ class Token:
             raise InvalidTokenError(token) from e
 
     @classmethod
-    def first(cls, generation_id: UUID) -> Self:
+    def first(cls, generation_id: UUID, iteration: int) -> Self:
         return cls(generation_id=generation_id,
+                   iteration=iteration,
                    request_index=0,
                    retry_after=cls._next_retry_after(0))
 
@@ -87,8 +105,18 @@ class Token:
             return delays[-1]
 
 
+class ExecutionResult(TypedDict):
+    input: JSON
+    output: JSON
+
+
 @attrs.frozen
 class NoSuchGeneration(Exception):
+    token: Token = strict_auto()
+
+
+@attrs.frozen
+class GenerationFinished(Exception):
     token: Token = strict_auto()
 
 
@@ -112,14 +140,18 @@ class AsyncManifestService:
     def machine_name(self):
         return config.qualified_resource_name(config.manifest_sfn)
 
-    def start_generation(self, generation_id: UUID, input: JSON) -> Token:
-        execution_name = self.execution_name(generation_id)
+    def start_generation(self,
+                         generation_id: UUID,
+                         input: JSON,
+                         iteration: int
+                         ) -> Token:
+        execution_name = self.execution_name(generation_id, iteration)
         execution_arn = self.execution_arn(execution_name)
         # The input contains the verbatim manifest key as JSON while the ARN
         # contains the encoded hash of the key so this log line is useful for
         # associating the hash with the key for diagnostic purposes.
         log.info('Starting execution %r for input %r', execution_arn, input)
-        token = Token.first(generation_id)
+        token = Token.first(generation_id, iteration)
         try:
             # If there already is an execution of the given name, and if that
             # execution is still ongoing and was given the same input as what we
@@ -145,16 +177,16 @@ class AsyncManifestService:
             execution = self._sfn.describe_execution(executionArn=execution_arn)
             if input == json.loads(execution['input']):
                 log.info('A completed execution %r already exists', execution_arn)
-                return token
+                raise GenerationFinished(token)
             else:
                 raise InvalidGeneration(token)
         else:
-            assert execution_arn == execution['executionArn'], execution
+            assert execution_arn == execution['executionArn'], (execution_arn, execution)
             log.info('Started execution %r or it was already running', execution_arn)
             return token
 
-    def inspect_generation(self, token: Token) -> Token | JSON:
-        execution_name = self.execution_name(token.generation_id)
+    def inspect_generation(self, token: Token) -> Token | ExecutionResult:
+        execution_name = self.execution_name(token.generation_id, token.iteration)
         execution_arn = self.execution_arn(execution_name)
         try:
             execution = self._sfn.describe_execution(executionArn=execution_arn)
@@ -169,7 +201,7 @@ class AsyncManifestService:
                     return token.next(retry_after=1)
                 else:
                     log.info('Execution %r succeeded with output %r', execution_arn, output)
-                    return json.loads(output)
+                    return {k: json.loads(execution[k]) for k in ['input', 'output']}
             elif status == 'RUNNING':
                 log.info('Execution %r is still running', execution_arn)
                 return token.next()
@@ -186,10 +218,11 @@ class AsyncManifestService:
     def execution_arn(self, execution_name):
         return self.arn(f'execution:{self.machine_name}:{execution_name}')
 
-    def execution_name(self, generation_id: UUID) -> str:
+    def execution_name(self, generation_id: UUID, iteration: int) -> str:
         assert isinstance(generation_id, UUID), generation_id
-        execution_name = str(generation_id)
-        assert 0 < len(execution_name) <= 80, (generation_id, execution_name)
+        assert isinstance(iteration, int), iteration
+        execution_name = f'{generation_id}_{iteration}'
+        assert 0 < len(execution_name) <= 80, execution_name
         return execution_name
 
     @property
