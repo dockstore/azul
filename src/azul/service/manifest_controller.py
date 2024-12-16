@@ -37,6 +37,7 @@ from azul.service import (
 from azul.service.async_manifest_service import (
     AsyncManifestService,
     GenerationFailed,
+    GenerationFinished,
     InvalidTokenError,
     NoSuchGeneration,
     Token,
@@ -112,26 +113,62 @@ class ManifestController(SourceController):
         else:
             assert False, type(result)
 
+    def _unpack_token_or_key(self,
+                             token_or_key: str
+                             ) -> tuple[Token | None, SignedManifestKey | None]:
+        if token_or_key is None:
+            return None, None
+        else:
+            try:
+                return Token.decode(token_or_key), None
+            except InvalidTokenError:
+                try:
+                    return None, SignedManifestKey.decode(token_or_key)
+                except InvalidManifestKey:
+                    # The OpenAPI spec doesn't distinguish key and token
+                    raise BadRequestError('Invalid token')
+
+    def _start_execution(self,
+                         filters: Filters,
+                         manifest_key: ManifestKey,
+                         previous_token: Token | None = None,
+                         ) -> Token:
+        partition = ManifestPartition.first()
+        state: ManifestGenerationState = {
+            'filters': filters.to_json(),
+            'manifest_key': manifest_key.to_json(),
+            'partition': partition.to_json()
+        }
+        # Manifest keys for catalogs with long names would be too long to be
+        # used directly as state machine execution names.
+        generation_id = manifest_key.uuid
+        # ManifestGenerationState is also JSON but there is no way to express
+        # that since TypedDict rejects a co-parent class.
+        input = cast(JSON, state)
+        next_iteration = 0 if previous_token is None else previous_token.iteration + 1
+        for i in range(10):
+            try:
+                return self.async_service.start_generation(generation_id,
+                                                           input,
+                                                           iteration=next_iteration + i)
+            except GenerationFinished:
+                pass
+        raise ChaliceViewError('Too many executions of this manifest generation')
+
     def get_manifest_async(self,
                            *,
                            token_or_key: str,
                            query_params: Mapping[str, str],
                            fetch: bool,
                            authentication: Optional[Authentication]):
-        if token_or_key is None:
-            token, manifest_key = None, None
-        else:
-            try:
-                token, manifest_key = Token.decode(token_or_key), None
-            except InvalidTokenError:
-                try:
-                    token, manifest_key = None, SignedManifestKey.decode(token_or_key)
-                except InvalidManifestKey:
-                    # The OpenAPI spec doesn't distinguish key and token
-                    raise BadRequestError('Invalid token')
+
+        token, manifest_key = self._unpack_token_or_key(token_or_key)
 
         if token is None:
             if manifest_key is None:
+                # Neither a token representing an ongoing execution was given,
+                # nor the key of an already cached manifest. There could still
+                # be a cached manifest, so we'll need to look it up.
                 format = ManifestFormat(query_params['format'])
                 catalog = query_params.get('catalog', config.default_catalog)
                 filters = self.get_filters(catalog, authentication, query_params.get('filters'))
@@ -140,23 +177,18 @@ class ManifestController(SourceController):
                                                                 catalog=catalog,
                                                                 filters=filters)
                 except CachedManifestNotFound as e:
+                    # A cache miss, but the exception tells us the cache key
                     manifest, manifest_key = None, e.manifest_key
-                    partition = ManifestPartition.first()
-                    state: ManifestGenerationState = {
-                        'filters': filters.to_json(),
-                        'manifest_key': manifest_key.to_json(),
-                        'partition': partition.to_json()
-                    }
-                    # Manifest keys for catalogs with long names would be too
-                    # long to be used directly as state machine execution names.
-                    execution_id = manifest_key.hash
-                    # ManifestGenerationState is also JSON but there is no way
-                    # to express that since TypedDict rejects a co-parent class.
-                    input: JSON = cast(JSON, state)
-                    token = self.async_service.start_generation(execution_id, input)
+                    # Prepare the execution that will generate the manifest
+                    token = self._start_execution(filters=filters,
+                                                  manifest_key=manifest_key)
                 else:
+                    # A cache hit
                     manifest_key = manifest.manifest_key
             else:
+                # The client passed the key of a cached manifest, originating
+                # from the final 302 response to a fetch request for a curl
+                # manifest (see below).
                 if fetch:
                     raise BadRequestError('The fetch endpoint does not support a manifest key')
                 if authentication is not None:
@@ -165,28 +197,53 @@ class ManifestController(SourceController):
                     manifest_key = self.service.verify_manifest_key(manifest_key)
                     manifest = self.service.get_cached_manifest_with_key(manifest_key)
                 except CachedManifestNotFound:
-                    raise GoneError('The requested manifest has expired, please request a new one')
+                    # We could start another execution but that would require
+                    # the client to follow more redirects. We've already sent
+                    # the final 302 so we shouldn't that.
+                    raise GoneError('The manifest has expired, please request a new one')
                 except InvalidManifestKeySignature:
                     raise BadRequestError('Invalid token')
         else:
+            # A token for an ongoing execution was given
+            assert manifest_key is None, manifest_key
             try:
-                token_or_state = self.async_service.inspect_generation(token)
+                token_or_result = self.async_service.inspect_generation(token)
             except NoSuchGeneration:
                 raise BadRequestError('Invalid token')
             except GenerationFailed as e:
                 raise ChaliceViewError('Failed to generate manifest', e.status, e.output)
-            if isinstance(token_or_state, Token):
-                token, manifest, manifest_key = token_or_state, None, None
-            elif isinstance(token_or_state, dict):
-                state = token_or_state
-                manifest = Manifest.from_json(state['manifest'])
+            if isinstance(token_or_result, Token):
+                # Execution is still ongoing, we got an updated token
+                token, manifest, manifest_key = token_or_result, None, None
+            elif isinstance(token_or_result, dict):
+                # The execution is done, the resulting manifest should be ready
+                result = token_or_result
+                manifest = Manifest.from_json(result['output']['manifest'])
                 manifest_key = manifest.manifest_key
+                try:
+                    manifest = self.service.get_cached_manifest_with_key(manifest_key)
+                except CachedManifestNotFound as e:
+                    assert manifest_key == e.manifest_key
+                    # There are two possible causes for the missing manifest: it
+                    # may have expired, in which case the supplied token must be
+                    # really stale, or the manifest was deleted immediately
+                    # after it was created. We haven't sent a 302 redirect yet,
+                    # so we'll just restart the generation by starting another
+                    # execution for it.
+                    manifest = None
+                    filters = Filters.from_json(result['input']['filters'])
+                    token = self._start_execution(filters=filters,
+                                                  manifest_key=manifest_key,
+                                                  previous_token=token)
+                else:
+                    assert manifest_key == manifest.manifest_key
             else:
-                assert False, token_or_state
+                assert False, token_or_result
 
         body: dict[str, int | str | FlatJSON]
 
         if manifest is None:
+            assert token is not None
             url = self.manifest_url_func(fetch=fetch, token_or_key=token.encode())
             body = {
                 'Status': 301,
@@ -218,7 +275,7 @@ class ManifestController(SourceController):
                 manifest_key = self.service.sign_manifest_key(manifest_key)
                 url = self.manifest_url_func(fetch=False, token_or_key=manifest_key.encode())
             else:
-                url = furl(manifest.location)
+                url = furl(self.service.get_manifest_url(manifest))
             body = {
                 'Status': 302,
                 'Location': str(url),

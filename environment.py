@@ -912,5 +912,21 @@ def env() -> Mapping[str, Optional[str]]:
         # in the Azul VPC. This subnet can't overlap the VPC CIDR and the subnet
         # mask must be less than 22 bits.
         #
-        'azul_vpn_subnet': None
+        'azul_vpn_subnet': None,
+
+        # This variable contains a space-separated list of keywords, also known
+        # as *flags*, that control certain aspects of the integration test (IT).
+        #
+        # The presence of the `no_index` flag prevents the IT from indexing and
+        # causes it to reuse the indices created by a previous run. The
+        # `no_delete` flag prevents the IT from performing any deletions,
+        # allowing subsequent runs to reuse the indices.
+        #
+        # For faster modify-deploy-test cycles, set this to 'no_delete' and run
+        # the IT. Then set it to 'no_index no_delete'. Subsequent IT runs will
+        # reuse the index from a prior run, and be significantly faster, albeit
+        # not covering any changes to the indexer, since indexing will be
+        # skipped.
+        #
+        'azul_it_flags': None
     }

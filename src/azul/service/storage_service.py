@@ -173,18 +173,25 @@ class StorageService:
         """
         Return a pre-signed URL to the given key.
 
-        :param key: the key of the S3 object whose content a request to the signed URL will return
+        :param key: The key of the S3 object whose content a request to the
+                    signed URL will return
 
-        :param file_name: the file name to be returned as part of a Content-Disposition header in the response to a
-                          request to the signed URL. If None, no such header will be present in the response.
+        :param file_name: the file name to be returned as part of a
+                          Content-Disposition header in the response to a
+                          request to the signed URL. If None, no such header
+                          will be present in the response.
         """
-        assert file_name is None or '"' not in file_name
+        assert file_name is None or '"' not in file_name, file_name
         return self._s3.generate_presigned_url(
             ClientMethod=self._s3.get_object.__name__,
             Params={
                 'Bucket': self.bucket_name,
                 'Key': key,
-                **({} if file_name is None else {'ResponseContentDisposition': f'attachment;filename="{file_name}"'})
+                **(
+                    {}
+                    if file_name is None else
+                    {'ResponseContentDisposition': f'attachment;filename="{file_name}"'}
+                )
             })
 
     def put_object_tagging(self, object_key: str, tagging: Tagging = None):
