@@ -243,6 +243,7 @@ def main():
 def deployment_env(deployment) -> Mapping[str, str]:
     script = load_script('export_environment')
     env, warning = script.load_env(deployment)
+    assert warning is None, warning
     resolved_env = script.resolve_env(env)
     return resolved_env
 
