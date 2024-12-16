@@ -26,6 +26,7 @@ from more_itertools import (
 )
 
 from azul import (
+    cache,
     config,
     iif,
 )
@@ -238,14 +239,12 @@ def main():
             emit(t, target_branch)
 
 
-def env_var(deployment: str, variable: str) -> str:
-    """
-    Return an environment variable value from the given deployment.
-    """
+@cache
+def deployment_env(deployment) -> Mapping[str, str]:
     script = load_script('export_environment')
     env, warning = script.load_env(deployment)
     resolved_env = script.resolve_env(env)
-    return resolved_env[variable]
+    return resolved_env
 
 
 def emit(t: T, target_branch: str):
@@ -729,7 +728,7 @@ def emit(t: T, target_branch: str):
                     {
                         'type': 'cli',
                         'content': f'Background migrations for '
-                                   f'[`{d}.gitlab`](https://gitlab.{env_var(d, 'AZUL_DOMAIN_NAME')}'
+                                   f'[`{d}.gitlab`](https://gitlab.{deployment_env(d)['AZUL_DOMAIN_NAME']}'
                                    f'/admin/background_migrations) are complete',
                         'alt': 'or this PR is not labeled `deploy:gitlab`'
                     }
