@@ -334,7 +334,7 @@ def emit(t: T, target_branch: str):
             },
             iif(t is not T.backport, {
                 'type': 'cli',
-                'content': f"PR title references {t.issues('all', 'the')} connected {t.issues}"
+                'content': f'PR title references {t.issues('all', 'the')} connected {t.issues}'
             }),
             *(
                 [
@@ -729,7 +729,7 @@ def emit(t: T, target_branch: str):
                     {
                         'type': 'cli',
                         'content': f'Background migrations for '
-                                   f'[`{d}.gitlab`](https://gitlab.{env_var(d, "AZUL_DOMAIN_NAME")}'
+                                   f'[`{d}.gitlab`](https://gitlab.{env_var(d, 'AZUL_DOMAIN_NAME')}'
                                    f'/admin/background_migrations) are complete',
                         'alt': 'or this PR is not labeled `deploy:gitlab`'
                     }
