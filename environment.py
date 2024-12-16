@@ -207,13 +207,15 @@ def env() -> Mapping[str, Optional[str]]:
 
         # The Docker registry containing all 3rd party images used by this
         # project, including images used locally, in FROM clauses, for CI/CD or
-        # GitLab. Must be empty or end in a slash. All references to 3rd party
-        # images must point at the registry defined here, ideally by prefixing
-        # the image reference with a reference to this variable. The registry
-        # and the images therein are managed by the `shared` TF component, which
-        # copies images from the upstream registry into the Azul registry. A
-        # 3rd-party image at `<registry>/<username>/<repository>:tag`, is stored
-        # as `${azul_docker_registry>}<registry>/<username>/<repository>:tag` in
+        # GitLab. Must be empty or end in a slash. All references to images from
+        # other parties must point at the registry defined here, ideally by
+        # prefixing the image reference with a reference to this variable. The
+        # registry and the images therein are managed by the `shared` TF
+        # component, which copies images from the upstream registry into the
+        # Azul registry.
+        #
+        # The image `<registry>/<username>/<repository>:<tag>`, is stored as
+        # `${azul_docker_registry>}<registry>/<username>/<repository>:<tag>` in
         # the Azul registry. To disable the use of the Azul registry, set this
         # variable to the empty string.
         #
@@ -400,9 +402,9 @@ def env() -> Mapping[str, Optional[str]]:
         # IAM role normally assumed by lambda functions in the active Azul
         # deployment.
         #
-        # The syntax is <account>[,<role>...][:<account>[,<role>...]...] where
-        # <account> is the numeric AWS account ID and role is a role name with
-        # optional * or ? wildcards for the StringLike operator in IAM
+        # The syntax is `<account>[,<role>...][:<account>[,<role>...]...]` where
+        # `<account>` is the numeric AWS account ID and `<role>` is a role name
+        # with optional * or ? wildcards for the StringLike operator in IAM
         # conditions. Whitespace around separators and at the beginning or end
         # of the value are ignored.
         #
