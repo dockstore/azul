@@ -235,15 +235,15 @@ class FrequencySetAccumulator(Accumulator):
     An accumulator that accepts any number of values and returns a list with
     length max_size or smaller containing the most frequent values accumulated.
 
-    >>> a = FrequencySetAccumulator(2)
-    >>> a.accumulate('x')
-    >>> a.accumulate(['x','y'])
-    >>> a.accumulate({'x','y','z'})
-    >>> a.get()
+    >>> acc = FrequencySetAccumulator(2)
+    >>> acc.accumulate('x')
+    >>> acc.accumulate(['x','y'])
+    >>> acc.accumulate({'x','y','z'})
+    >>> acc.get()
     ['x', 'y']
-    >>> a = FrequencySetAccumulator(0)
-    >>> a.accumulate('x')
-    >>> a.get()
+    >>> acc = FrequencySetAccumulator(0)
+    >>> acc.accumulate('x')
+    >>> acc.get()
     []
     """
 
@@ -365,22 +365,22 @@ class DistinctAccumulator(Accumulator):
     the value from the first pair will be accumulated. The actual values will be
     accumulated in another accumulator instance specified at construction.
 
-        >>> a = DistinctAccumulator(SumAccumulator(initially=0), max_size=3)
+        >>> acc = DistinctAccumulator(SumAccumulator(initially=0), max_size=3)
 
     Keys can be tuples, too.
 
-        >>> a.accumulate((('x', 'y'), 3))
+        >>> acc.accumulate((('x', 'y'), 3))
 
     Values associated with a recurring key will not be accumulated.
 
-        >>> a.accumulate((('x', 'y'), 4))
-        >>> a.accumulate(('a', 20))
-        >>> a.accumulate(('b', 100))
+        >>> acc.accumulate((('x', 'y'), 4))
+        >>> acc.accumulate(('a', 20))
+        >>> acc.accumulate(('b', 100))
 
     Accumulation stops at max_size distinct keys.
 
-        >>> a.accumulate(('c', 1000))
-        >>> a.get()
+        >>> acc.accumulate(('c', 1000))
+        >>> acc.get()
         123
     """
 
