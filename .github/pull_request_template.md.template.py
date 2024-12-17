@@ -213,6 +213,7 @@ class T(Enum):
     def needs_shared_deploy(self):
         return self not in (T.backport, T.hotfix)
 
+    # noinspection PyUnusedLocal
     def shared_deploy_is_two_phase(self, target_branch: str) -> bool:
         # All `shared` components are deployed in two-phases. The first phase,
         # prior to the merge, mirrors new images to ECR, while the second phase
