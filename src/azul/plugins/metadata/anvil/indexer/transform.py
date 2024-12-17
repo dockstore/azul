@@ -155,19 +155,20 @@ class BaseTransformer(Transformer, metaclass=ABCMeta):
     @classmethod
     def aggregator(cls, entity_type) -> EntityAggregator:
         if entity_type == 'activities':
-            return ActivityAggregator()
+            agg_cls = ActivityAggregator
         elif entity_type == 'biosamples':
-            return BiosampleAggregator()
+            agg_cls = BiosampleAggregator
         elif entity_type == 'datasets':
-            return DatasetAggregator()
+            agg_cls = DatasetAggregator
         elif entity_type == 'diagnoses':
-            return DiagnosisAggregator()
+            agg_cls = DiagnosisAggregator
         elif entity_type == 'donors':
-            return DonorAggregator()
+            agg_cls = DonorAggregator
         elif entity_type == 'files':
-            return FileAggregator()
+            agg_cls = FileAggregator
         else:
             assert False, entity_type
+        return agg_cls(entity_type)
 
     def estimate(self, partition: BundlePartition) -> int:
         # Orphans are not considered when deciding whether to partition the

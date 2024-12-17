@@ -18,6 +18,9 @@ from azul import (
 from azul.collections import (
     none_safe_key,
 )
+from azul.indexer.document import (
+    EntityType,
+)
 from azul.json_freeze import (
     freeze,
     thaw,
@@ -404,6 +407,9 @@ class UniqueValueCountAccumulator(SetAccumulator):
 
 
 class EntityAggregator(metaclass=ABCMeta):
+
+    def __init__(self, entity_type: EntityType):
+        self.entity_type = entity_type
 
     def _transform_entity(self, entity: JSON) -> JSON:
         return entity
