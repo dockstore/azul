@@ -957,7 +957,7 @@ def emit(t: T, target_branch: str):
                             for action in [
                                 'Started reindex',
                                 'Checked for, triaged and possibly requeued messages in both fail queues',
-                                'Emptied fail queues',
+                                'Emptied fail queues'
                             ]
                         ]
                     ]
