@@ -464,38 +464,39 @@ class BaseTransformer(Transformer, metaclass=ABCMeta):
     @classmethod
     def aggregator(cls, entity_type: EntityType) -> EntityAggregator | None:
         if entity_type == 'files':
-            return FileAggregator()
+            agg_cls = FileAggregator
         elif entity_type in SampleTransformer.inner_entity_types():
-            return SampleAggregator()
+            agg_cls = SampleAggregator
         elif entity_type == 'specimens':
-            return SpecimenAggregator()
+            agg_cls = SpecimenAggregator
         elif entity_type == 'cell_suspensions':
-            return CellSuspensionAggregator()
+            agg_cls = CellSuspensionAggregator
         elif entity_type == 'cell_lines':
-            return CellLineAggregator()
+            agg_cls = CellLineAggregator
         elif entity_type == 'donors':
-            return DonorOrganismAggregator()
+            agg_cls = DonorOrganismAggregator
         elif entity_type == 'organoids':
-            return OrganoidAggregator()
+            agg_cls = OrganoidAggregator
         elif entity_type == 'projects':
-            return ProjectAggregator()
+            agg_cls = ProjectAggregator
         elif entity_type in (
             'analysis_protocols',
             'imaging_protocols',
             'library_preparation_protocols',
             'sequencing_protocols'
         ):
-            return ProtocolAggregator()
+            agg_cls = ProtocolAggregator
         elif entity_type == 'sequencing_inputs':
-            return SequencingInputAggregator()
+            agg_cls = SequencingInputAggregator
         elif entity_type == 'sequencing_processes':
-            return SequencingProcessAggregator()
+            agg_cls = SequencingProcessAggregator
         elif entity_type in ('matrices', 'contributed_analyses'):
-            return MatricesAggregator()
+            agg_cls = MatricesAggregator
         elif entity_type == 'dates':
-            return DateAggregator()
+            agg_cls = DateAggregator
         else:
-            return SimpleAggregator()
+            agg_cls = SimpleAggregator
+        return agg_cls(entity_type)
 
     def _replicate(self, entity: EntityReference) -> tuple[str, JSON]:
         if entity == self.api_bundle.ref:
