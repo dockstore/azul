@@ -1417,4 +1417,18 @@ def env() -> Mapping[str, Optional[str]]:
         }),
 
         'AZUL_ENABLE_REPLICAS': '0',
+
+        # HCA allocates a daily budget for file downloads. To avoid exceeding
+        # that budget, we limit the download rate as follows:
+        #
+        # r = b/d/f/24/60*w
+        #
+        # where `r` is the rate limit (downloads/window), `b` is the daily
+        # download budget (dollars/day), `d` is the download cost (dollars/
+        # gibibyte/download), `f` is the average file size (gibibytes), and `w`
+        # is the evaluation window (minutes) (=10). The value for `d` varies by
+        # region, so a weighted average is calculated based on the observed
+        # number of daily downloads per region.
+        #
+        'AZUL_FILE_DOWNLOAD_RATE_LIMIT': '59/600@2.9'
     }
