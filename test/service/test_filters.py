@@ -34,7 +34,7 @@ class TestFilterReification(AzulTestCase):
         source_spec=MagicMock(),
         bundle_uuid=MagicMock(),
         bundle_version=MagicMock(),
-        implicit_hub_id=MagicMock()
+        root_entity_id=MagicMock()
     )
 
     @property

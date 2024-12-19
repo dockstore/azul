@@ -161,6 +161,15 @@ class DonorOrganismAggregator(SimpleAggregator):
                                                          none_safe_itemgetter('value', 'unit')))
         elif field == 'donor_count':
             return UniqueValueCountAccumulator()
+        elif field == 'document_id':
+            # If any donor IDs are missing from the aggregate, those donors will
+            # be omitted during the verbatim handover. Donors are a "hot" entity
+            # type, and we can't track their hubs in replica documents, so we
+            # rely on the inner entity IDs instead.
+            #
+            # FIXME: Enforce that hot entity types are completely aggregated
+            #        https://github.com/DataBiosphere/azul/issues/6648
+            return SetAccumulator(max_size=100)
         else:
             return super()._accumulator(field)
 
@@ -196,6 +205,15 @@ class ProtocolAggregator(SimpleAggregator):
     def _accumulator(self, field) -> Accumulator | None:
         if field == 'assay_type':
             return FrequencySetAccumulator(max_size=100)
+        elif field == 'document_id':
+            # If any protocol IDs are missing from the aggregate, those
+            # protocols may be omitted during the verbatim handover. Some
+            # protocols are "hot" entity types, and we can't track their hubs in
+            # replicas, so we rely on the inner entity IDs instead.
+            #
+            # FIXME: Enforce that hot entity types are completely aggregated
+            #        https://github.com/DataBiosphere/azul/issues/6648
+            return SetAccumulator(max_size=100)
         else:
             return super()._accumulator(field)
 

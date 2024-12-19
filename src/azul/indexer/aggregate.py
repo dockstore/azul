@@ -10,7 +10,6 @@ import logging
 from typing import (
     Any,
     Callable,
-    Optional,
 )
 
 from azul import (
@@ -18,6 +17,9 @@ from azul import (
 )
 from azul.collections import (
     none_safe_key,
+)
+from azul.indexer.document import (
+    EntityType,
 )
 from azul.json_freeze import (
     freeze,
@@ -39,10 +41,15 @@ class Accumulator(metaclass=ABCMeta):
     type.
     """
 
+    def __init__(self):
+        self.dropped = 0
+
     @abstractmethod
     def accumulate(self, value):
         """
-        Incorporate the given value into this accumulator.
+        Incorporate the given value into this accumulator. If the value is not
+        incorporated (due to e.g. a maximum size constraint), implementations
+        should increment :py:attr:`dropped`.
         """
         raise NotImplementedError
 
@@ -110,6 +117,28 @@ class SetAccumulator(Accumulator):
     def accumulate(self, value) -> bool:
         """
         :return: True, if the given value was incorporated into the set
+
+        >>> acc = SetAccumulator(max_size=3)
+        >>> acc.accumulate(1), acc.dropped
+        (True, 0)
+
+        >>> acc.accumulate(1), acc.dropped
+        (False, 0)
+
+        >>> (acc.accumulate(2), acc.dropped)
+        (True, 0)
+
+        >>> acc.accumulate([1, 2, 3]), acc.dropped
+        (True, 0)
+
+        >>> acc.accumulate([2, 3]), acc.dropped
+        (False, 0)
+
+        >>> acc.accumulate(4), acc.dropped
+        (False, 1)
+
+        >>> acc.get()
+        [1, 2, 3]
         """
         if self.max_size is None or len(self.value) < self.max_size:
             before = len(self.value)
@@ -127,6 +156,11 @@ class SetAccumulator(Accumulator):
             else:
                 assert False
         else:
+            if isinstance(value, (list, set)):
+                if not self.value.issuperset(value):
+                    self.dropped += 1
+            elif value not in self.value:
+                self.dropped += 1
             return False
 
     def get(self) -> list[Any]:
@@ -145,11 +179,27 @@ class ListAccumulator(Accumulator):
         self.max_size = max_size
 
     def accumulate(self, value):
+        """
+        >>> acc = ListAccumulator(max_size=3)
+        >>> acc.accumulate(1)
+        >>> acc.get(), acc.dropped
+        ([1], 0)
+
+        >>> acc.accumulate([3, 2])
+        >>> acc.get(), acc.dropped
+        ([1, 2, 3], 0)
+
+        >>> acc.accumulate([4])
+        >>> acc.get(), acc.dropped
+        ([1, 2, 3], 1)
+        """
         if self.max_size is None or len(self.value) < self.max_size:
             if isinstance(value, (list, set)):
                 self.value.extend(value)
             else:
                 self.value.append(value)
+        else:
+            self.dropped += 1
 
     def get(self) -> list[Any]:
         return sorted(self.value)
@@ -202,7 +252,7 @@ class DictAccumulator(Accumulator):
     a SetAccumulator by using the identity function (``lambda _: _``) for the key.
     """
 
-    def __init__(self, max_size: Optional[int], key: Callable):
+    def __init__(self, max_size: int | None, key: Callable):
         """
         :param max_size: The maximum number of elements to retain. A value of
                          None can be used to specify no maximum.
@@ -210,11 +260,36 @@ class DictAccumulator(Accumulator):
         :param key: A function returning the key to be used both for storing the
                     accumulated value and sorting the accumulated set of values.
         """
+        super().__init__()
         self.max_size = max_size
         self.key = key
         self.value = {}
 
     def accumulate(self, value):
+        """
+        >>> acc = DictAccumulator(max_size=3, key=lambda s: s.lower())
+        >>> acc.accumulate('foo')
+        >>> acc.get(), acc.dropped
+        (['foo'], 0)
+
+        >>> acc.accumulate('foo')
+        >>> acc.get(), acc.dropped
+        (['foo'], 0)
+
+        >>> acc.accumulate('Foo')
+        Traceback (most recent call last):
+        ...
+        azul.RequirementError: ('foo', 'Foo')
+
+        >>> acc.accumulate('Bar')
+        >>> acc.accumulate('BAZ')
+        >>> acc.get(), acc.dropped
+        (['Bar', 'BAZ', 'foo'], 0)
+
+        >>> acc.accumulate('spam')
+        >>> acc.get(), acc.dropped
+        (['Bar', 'BAZ', 'foo'], 1)
+        """
         if self.max_size is None or len(self.value) < self.max_size:
             key = self.key(value)
             try:
@@ -223,6 +298,8 @@ class DictAccumulator(Accumulator):
                 self.value[key] = value
             else:
                 require(old_value == value, old_value, value)
+        elif value not in self.value:
+            self.dropped += 1
 
     def get(self):
         return sorted(self.value.values(), key=self.key)
@@ -233,15 +310,15 @@ class FrequencySetAccumulator(Accumulator):
     An accumulator that accepts any number of values and returns a list with
     length max_size or smaller containing the most frequent values accumulated.
 
-    >>> a = FrequencySetAccumulator(2)
-    >>> a.accumulate('x')
-    >>> a.accumulate(['x','y'])
-    >>> a.accumulate({'x','y','z'})
-    >>> a.get()
+    >>> acc = FrequencySetAccumulator(2)
+    >>> acc.accumulate('x')
+    >>> acc.accumulate(['x','y'])
+    >>> acc.accumulate({'x','y','z'})
+    >>> acc.get()
     ['x', 'y']
-    >>> a = FrequencySetAccumulator(0)
-    >>> a.accumulate('x')
-    >>> a.get()
+    >>> acc = FrequencySetAccumulator(0)
+    >>> acc.accumulate('x')
+    >>> acc.get()
     []
     """
 
@@ -257,6 +334,7 @@ class FrequencySetAccumulator(Accumulator):
             self.value[value] += 1
 
     def get(self) -> list[Any]:
+        self.dropped = max(0, len(self.value) - self.max_size)
         return [item for item, count in self.value.most_common(self.max_size)]
 
 
@@ -363,26 +441,27 @@ class DistinctAccumulator(Accumulator):
     the value from the first pair will be accumulated. The actual values will be
     accumulated in another accumulator instance specified at construction.
 
-        >>> a = DistinctAccumulator(SumAccumulator(initially=0), max_size=3)
+        >>> acc = DistinctAccumulator(SumAccumulator(initially=0), max_size=3)
 
     Keys can be tuples, too.
 
-        >>> a.accumulate((('x', 'y'), 3))
+        >>> acc.accumulate((('x', 'y'), 3))
 
     Values associated with a recurring key will not be accumulated.
 
-        >>> a.accumulate((('x', 'y'), 4))
-        >>> a.accumulate(('a', 20))
-        >>> a.accumulate(('b', 100))
+        >>> acc.accumulate((('x', 'y'), 4))
+        >>> acc.accumulate(('a', 20))
+        >>> acc.accumulate(('b', 100))
 
     Accumulation stops at max_size distinct keys.
 
-        >>> a.accumulate(('c', 1000))
-        >>> a.get()
+        >>> acc.accumulate(('c', 1000))
+        >>> acc.get()
         123
     """
 
     def __init__(self, inner: Accumulator, max_size: int = None) -> None:
+        super().__init__()
         self.value = inner
         self.keys = SetAccumulator(max_size=max_size)
 
@@ -395,39 +474,31 @@ class DistinctAccumulator(Accumulator):
         return self.value.get()
 
 
-class UniqueValueCountAccumulator(Accumulator):
+class UniqueValueCountAccumulator(SetAccumulator):
     """
     Count the number of unique values
     """
 
-    def __init__(self):
-        super().__init__()
-        self.value = SetAccumulator()
-
-    def accumulate(self, value) -> bool:
-        """
-        :return: True, if the given value increased the count of unique values
-        """
-        return self.value.accumulate(value)
-
     def get(self) -> int:
-        unique_items = self.value.get()
-        return len(unique_items)
+        return len(super().get())
 
 
 class EntityAggregator(metaclass=ABCMeta):
 
+    def __init__(self, entity_type: EntityType):
+        self.entity_type = entity_type
+
     def _transform_entity(self, entity: JSON) -> JSON:
         return entity
 
-    def _accumulator(self, field: str) -> Optional[Accumulator]:
+    def _accumulator(self, field: str) -> Accumulator | None:
         """
         Return the Accumulator instance to be used for the given field or None
         if the field should not be accumulated.
         """
         return self._default_accumulator()
 
-    def _default_accumulator(self) -> Optional[Accumulator]:
+    def _default_accumulator(self) -> Accumulator | None:
         return SetAccumulator(max_size=100)
 
     @abstractmethod
@@ -441,16 +512,20 @@ class SimpleAggregator(EntityAggregator):
         aggregate = {}
         for entity in entities:
             self._accumulate(aggregate, entity)
-        return [
-            {
-                k: accumulator.get()
-                for k, accumulator in aggregate.items()
-                if accumulator is not None
-            }
-        ] if aggregate else []
+        return [self._aggregate(aggregate)] if aggregate else []
+
+    def _aggregate(self, aggregate: dict[str, Accumulator]) -> JSON:
+        result = {}
+        for k, accumulator in aggregate.items():
+            if accumulator is not None:
+                result[k] = accumulator.get()
+                if accumulator.dropped > 0:
+                    log.warning('Values were dropped %d times while aggregating %s.%s',
+                                accumulator.dropped, self.entity_type, k)
+        return result
 
     def _accumulate(self,
-                    aggregate: dict[str, Optional[Accumulator]],
+                    aggregate: dict[str, Accumulator | None],
                     entity: JSON
                     ):
         entity = self._transform_entity(entity)
@@ -467,17 +542,13 @@ class SimpleAggregator(EntityAggregator):
 class GroupingAggregator(SimpleAggregator):
 
     def aggregate(self, entities: Entities) -> Entities:
-        aggregates: dict[Any, dict[str, Optional[Accumulator]]] = defaultdict(dict)
+        aggregates: dict[Any, dict[str, Accumulator | None]] = defaultdict(dict)
         for entity in entities:
             group_keys = self._group_keys(entity)
             aggregate = aggregates[group_keys]
             self._accumulate(aggregate, entity)
         return [
-            {
-                field: accumulator.get()
-                for field, accumulator in aggregate.items()
-                if accumulator is not None
-            }
+            self._aggregate(aggregate)
             for aggregate in aggregates.values()
         ]
 
