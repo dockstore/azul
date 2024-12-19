@@ -288,6 +288,7 @@ class RepositoryController(SourceController):
                 'file_name': file_name,
                 'file_uuid': file_uuid,
                 'file_version': file_version,
+                'file_size': file_size,
                 'catalog': catalog,
                 'fetch': fetch,
                 **{

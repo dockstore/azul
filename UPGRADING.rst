@@ -19,6 +19,13 @@ branch that does not have the listed changes, the steps would need to be
 reverted. This is all fairly informal and loosely defined. Hopefully we won't
 have too many entries in this file.
 
+#5736 Update to Python 3.12.x
+=============================
+
+Update Python on your developer machines to version 3.12.7. In your working
+copy, run ``make virtualenv`` and ``make requirements envhook``.
+
+
 #6531 Eliminate RepositoryPlugin.list_partitions
 ================================================
 

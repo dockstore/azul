@@ -3,4 +3,7 @@
 !common.mk
 !requirements*.txt
 !bin/keys/docker-apt-keyring.pgp
+# FIXME: Remove fips_enabled
+#        https://github.com/DataBiosphere/azul/issues/6675
+!fips_enabled
 requirements.all.txt
