@@ -15,7 +15,7 @@ def env() -> Mapping[str, Optional[str]]:
     other environment variables in the form `{FOO}` where FOO is the name of an
     environment variable. See
 
-    https://docs.python.org/3.11/library/string.html#format-string-syntax
+    https://docs.python.org/3.12/library/string.html#format-string-syntax
 
     for the concrete syntax. These references will be resolved *after* the
     overall environment has been compiled by merging all relevant
@@ -248,7 +248,7 @@ def env() -> Mapping[str, Optional[str]]:
         # and committing the resulting changes. It also requires redeploying the
         # `shared` component.
         #
-        'azul_python_version': '3.11.10',
+        'azul_python_version': '3.12.7',
 
         # The version of Terraform used throughout the system.
         #
@@ -263,6 +263,17 @@ def env() -> Mapping[str, Optional[str]]:
         # changes.
         #
         'azul_terraform_version': '1.9.8',
+
+        # When building the Azul image on a FIPS mode enabled system (e.g.
+        # GitLab), this variable should be set to `/proc/sys/crypto`, the path
+        # where a `fips_enabled` file will be mounted. This is required for the
+        # command `apt-get update` to succeed which would otherwise fail on
+        # Debian bookworm with FIPS mode enabled.
+        #
+        # FIXME: Remove azul_proc_sys_crypto
+        #        https://github.com/DataBiosphere/azul/issues/6675
+        #
+        'azul_proc_sys_crypto': '/tmp',
 
         # A dictionary mapping the short name of each Docker image used in Azul
         # to its fully qualified name. Note that a change to any of the image
@@ -279,36 +290,36 @@ def env() -> Mapping[str, Optional[str]]:
             # See `azul_python_version` above about what actions are required
             # after modifying this entry.
             'python': {
-                'ref': 'docker.io/library/python:{azul_python_version}-slim-bullseye',
+                'ref': 'docker.io/library/python:{azul_python_version}-slim-bookworm',
                 'url': 'https://hub.docker.com/_/python',
             },
             'pycharm': {
-                'ref': 'docker.io/ucscgi/azul-pycharm:2024.2.4-38',
+                'ref': 'docker.io/ucscgi/azul-pycharm:2024.3-39',
                 'url': 'https://hub.docker.com/repository/docker/ucscgi/azul-pycharm',
                 'is_custom': True
             },
             'elasticsearch': {
-                'ref': 'docker.io/ucscgi/azul-elasticsearch:7.17.25-31',
+                'ref': 'docker.io/ucscgi/azul-elasticsearch:7.17.25-32',
                 'url': 'https://hub.docker.com/repository/docker/ucscgi/azul-elasticsearch',
                 'is_custom': True
             },
             'bigquery_emulator': {
-                'ref': 'docker.io/ucscgi/azul-bigquery-emulator:0.4.4-17',
+                'ref': 'docker.io/ucscgi/azul-bigquery-emulator:0.4.4-18',
                 'url': 'https://hub.docker.com/repository/docker/ucscgi/azul-bigquery-emulator',
                 'is_custom': True
             },
             # Updating any of the four images below additionally requires
             # redeploying the `gitlab` TF component.
             'clamav': {
-                'ref': 'docker.io/clamav/clamav:1.4.1-12',
+                'ref': 'docker.io/clamav/clamav:1.4.1-14',
                 'url': 'https://hub.docker.com/r/clamav/clamav'
             },
             'gitlab': {
-                'ref': 'docker.io/gitlab/gitlab-ce:17.5.2-ce.0',
+                'ref': 'docker.io/gitlab/gitlab-ce:17.6.1-ce.0',
                 'url': 'https://hub.docker.com/r/gitlab/gitlab-ce'
             },
             'gitlab_runner': {
-                'ref': 'docker.io/gitlab/gitlab-runner:ubuntu-v17.5.3',
+                'ref': 'docker.io/gitlab/gitlab-runner:ubuntu-v17.6.0',
                 'url': 'https://hub.docker.com/r/gitlab/gitlab-runner'
             },
             'dind': {
