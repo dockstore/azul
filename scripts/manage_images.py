@@ -79,7 +79,7 @@ def copy_single_platform_image(src: TagImageRef,
 
     with Repository.temporary_auth_file(dst, src) as auth_file:
         command = [
-            'skopeo', 'copy', '--authfile', auth_file, '--preserve-digests',
+            'skopeo', 'copy', '--authfile', auth_file, '--preserve-digests', '--debug',
             'docker://' + str(src.with_digest(digest)),
             'docker://' + str(dst)
         ]
