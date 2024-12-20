@@ -47,8 +47,10 @@ import time
 from typing import (
     ClassVar,
     IO,
+    Optional,
     Protocol,
     Self,
+    Type,
     cast,
 )
 import unicodedata
@@ -72,7 +74,6 @@ from furl import (
     furl,
 )
 from more_itertools import (
-    always_iterable,
     chunked,
     one,
 )
@@ -96,9 +97,6 @@ from azul.bytes import (
     azul_urlsafe_b64decode,
     azul_urlsafe_b64encode,
 )
-from azul.collections import (
-    getitem,
-)
 from azul.deployment import (
     aws,
 )
@@ -120,7 +118,6 @@ from azul.plugins import (
     DocumentSlice,
     ManifestConfig,
     ManifestFormat,
-    MetadataPlugin,
     MutableManifestConfig,
     RepositoryPlugin,
     dotted,
@@ -166,7 +163,7 @@ class ManifestUrlFunc(Protocol):
     def __call__(self,
                  *,
                  fetch: bool = True,
-                 token_or_key: str | None = None,
+                 token_or_key: Optional[str] = None,
                  **params: str
                  ) -> mutable_furl: ...
 
@@ -388,7 +385,7 @@ class ManifestKey(BareManifestKey):
         }
 
     @classmethod
-    def from_json(cls, json: JSON) -> Self:
+    def from_json(cls, json: JSON) -> 'ManifestKey':
         return cls(catalog=json['catalog'],
                    format=ManifestFormat(json['format']),
                    manifest_hash=UUID(json['manifest_hash']),
@@ -439,7 +436,7 @@ class Manifest:
         }
 
     @classmethod
-    def from_json(cls, json: JSON) -> Self:
+    def from_json(cls, json: JSON) -> 'Manifest':
         return cls(object_key=json['object_key'],
                    was_cached=json['was_cached'],
                    format=ManifestFormat(json['format']),
@@ -477,38 +474,38 @@ class ManifestPartition:
     #: portion of the file name. If all pages of all partitions yield the same
     #: base name, the file name on the last partition will incorporate the base
     #: name. Otherwise, a generic, content-independent file name will be used.
-    file_name: str | None = None
+    file_name: Optional[str] = None
 
     #: The cached configuration of the manifest that contains this partition.
     #: Manifest generators whose `manifest_config` property is expensive should
     #: cache the returned value here for subsequent partitions to reuse.
-    config: AnyJSON | None = None
+    config: Optional[AnyJSON] = None
 
     #: The ID of the S3 multi-part upload this partition is a part of. If a
     #: manifest consists of just one partition, this may be None, but it doesn't
     #: have to be.
-    multipart_upload_id: str | None = None
+    multipart_upload_id: Optional[str] = None
 
     #: The S3 ETag of each partition; the current one and all the ones before it
-    part_etags: tuple[str, ...] | None = attrs.field(converter=tuple_or_none,
-                                                     default=None)
+    part_etags: Optional[tuple[str, ...]] = attrs.field(converter=tuple_or_none,
+                                                        default=None)
 
     #: The index of the current page. The index is zero-based and global. For
     #: example, if the first partition contains five pages, the index of the
     #: first page in the second partition is 5. This is None for manifests whose
     #: partitions aren't split into pages.
-    page_index: int | None = None
+    page_index: Optional[int] = None
 
     #: True if the current page is the last page of the entire manifest. This is
     #: None for manifests whose partitions aren't split into pages.
-    is_last_page: bool | None = None
+    is_last_page: Optional[bool] = None
 
     #: The `sort` value of the first hit of the current page in this partition,
     #: or None if there is no current page.
-    search_after: tuple[str, str] | None = None
+    search_after: Optional[tuple[str, str]] = None
 
     @classmethod
-    def from_json(cls, partition: JSON) -> Self:
+    def from_json(cls, partition: JSON) -> 'ManifestPartition':
         return cls(**{
             k: tuple(v) if k == 'search_after' and v is not None else v
             for k, v in partition.items()
@@ -518,7 +515,7 @@ class ManifestPartition:
         return attrs.asdict(self)
 
     @classmethod
-    def first(cls) -> Self:
+    def first(cls) -> 'ManifestPartition':
         return cls(index=0,
                    is_last=False)
 
@@ -529,21 +526,21 @@ class ManifestPartition:
     def with_config(self, config: AnyJSON):
         return attrs.evolve(self, config=config)
 
-    def with_upload(self, multipart_upload_id) -> Self:
+    def with_upload(self, multipart_upload_id) -> 'ManifestPartition':
         return attrs.evolve(self,
                             multipart_upload_id=multipart_upload_id,
                             part_etags=())
 
-    def first_page(self) -> Self:
+    def first_page(self) -> 'ManifestPartition':
         assert self.index == 0, self
         return attrs.evolve(self,
                             page_index=0,
                             is_last_page=False)
 
     def next_page(self,
-                  file_name: str | None,
+                  file_name: Optional[str],
                   search_after: tuple[str, str]
-                  ) -> Self:
+                  ) -> 'ManifestPartition':
         assert self.page_index is not None, self
         # If different pages yield different file names, use default file name
         if self.page_index > 0:
@@ -557,12 +554,12 @@ class ManifestPartition:
     def last_page(self):
         return attrs.evolve(self, is_last_page=True)
 
-    def next(self, part_etag: str) -> Self:
+    def next(self, part_etag: str) -> 'ManifestPartition':
         return attrs.evolve(self,
                             index=self.index + 1,
                             part_etags=(*self.part_etags, part_etag))
 
-    def last(self, file_name: str) -> Self:
+    def last(self, file_name: str) -> 'ManifestPartition':
         return attrs.evolve(self,
                             file_name=file_name,
                             is_last=True)
@@ -586,7 +583,7 @@ class ManifestService(ElasticsearchService):
                      catalog: CatalogName,
                      filters: Filters,
                      partition: ManifestPartition,
-                     manifest_key: ManifestKey | None = None
+                     manifest_key: Optional[ManifestKey] = None
                      ) -> Manifest | ManifestPartition:
         """
         Return a fully populated manifest that ends with the given partition or
@@ -695,7 +692,7 @@ class ManifestService(ElasticsearchService):
         return self._get_cached_manifest(generator_cls, manifest_key)
 
     def _get_cached_manifest(self,
-                             generator_cls: type['ManifestGenerator'],
+                             generator_cls: Type['ManifestGenerator'],
                              manifest_key: ManifestKey
                              ) -> Manifest:
         file_name = self._get_cached_manifest_file_name(generator_cls, manifest_key)
@@ -708,9 +705,9 @@ class ManifestService(ElasticsearchService):
                                        was_cached=True)
 
     def _make_manifest(self,
-                       generator_cls: type['ManifestGenerator'],
+                       generator_cls: Type['ManifestGenerator'],
                        manifest_key: ManifestKey,
-                       file_name: str | None,
+                       file_name: Optional[str],
                        was_cached: bool
                        ) -> Manifest:
         if not generator_cls.use_content_disposition_file_name:
@@ -729,9 +726,9 @@ class ManifestService(ElasticsearchService):
     file_name_tag = 'azul_file_name'
 
     def _get_cached_manifest_file_name(self,
-                                       generator_cls: type['ManifestGenerator'],
+                                       generator_cls: Type['ManifestGenerator'],
                                        manifest_key: ManifestKey
-                                       ) -> str | None:
+                                       ) -> Optional[str]:
         """
         Return the proposed local file name of the manifest with the given
         object key if it was previously created, still exists in the bucket, and
@@ -773,9 +770,9 @@ class ManifestService(ElasticsearchService):
                 return None
 
     def command_lines(self,
-                      manifest: Manifest | None,
+                      manifest: Optional[Manifest],
                       url: furl,
-                      authentication: Authentication | None
+                      authentication: Optional[Authentication]
                       ) -> FlatJSON:
         format = None if manifest is None else manifest.format
         generator_cls = ManifestGenerator.cls_for_format(format)
@@ -810,10 +807,6 @@ class ManifestGenerator(metaclass=ABCMeta):
     def repository_plugin(self) -> RepositoryPlugin:
         catalog = self.catalog
         return RepositoryPlugin.load(catalog).create(catalog)
-
-    @property
-    def metadata_plugin(self) -> MetadataPlugin:
-        return self.service.metadata_plugin(self.catalog)
 
     @classmethod
     @abstractmethod
@@ -857,7 +850,7 @@ class ManifestGenerator(metaclass=ABCMeta):
         The manifest config this generator uses. A manifest config is a mapping
         from document properties to manifest fields.
         """
-        return self.metadata_plugin.manifest_config
+        return self.service.metadata_plugin(self.catalog).manifest_config
 
     @cached_property
     def included_fields(self) -> list[FieldPath] | None:
@@ -874,7 +867,7 @@ class ManifestGenerator(metaclass=ABCMeta):
             if field_name is not None
         ]
 
-    _cls_for_format: dict[ManifestFormat, type['ManifestGenerator']] = {}
+    _cls_for_format: dict[ManifestFormat, Type['ManifestGenerator']] = {}
 
     def __init_subclass__(cls) -> None:
         super().__init_subclass__()
@@ -885,8 +878,8 @@ class ManifestGenerator(metaclass=ABCMeta):
 
     @classmethod
     def cls_for_format(cls,
-                       format: ManifestFormat | None
-                       ) -> type['ManifestGenerator']:
+                       format: Optional[ManifestFormat]
+                       ) -> Type['ManifestGenerator']:
         """
         Return the generator class  for the given format.
 
@@ -910,8 +903,8 @@ class ManifestGenerator(metaclass=ABCMeta):
     @classmethod
     def command_lines(cls,
                       url: furl,
-                      file_name: str | None,
-                      authentication: Authentication | None
+                      file_name: Optional[str],
+                      authentication: Optional[Authentication]
                       ) -> FlatJSON:
         # Normally we would have used --remote-name and --remote-header-name
         # which gets the file name from the content-disposition header. However,
@@ -1020,7 +1013,7 @@ class ManifestGenerator(metaclass=ABCMeta):
 
     def file_name(self,
                   manifest_key: ManifestKey,
-                  base_name: str | None = None
+                  base_name: Optional[str] = None
                   ) -> str:
         if base_name:
             file_name_prefix = unicodedata.normalize('NFKD', base_name)
@@ -1133,7 +1126,7 @@ class ManifestGenerator(metaclass=ABCMeta):
     def _azul_file_url(self,
                        file: JSON,
                        args: Mapping = frozendict()
-                       ) -> str | None:
+                       ) -> Optional[str]:
         download_cls = self.repository_plugin.file_download_class()
         if download_cls.needs_drs_uri and file['drs_uri'] is None:
             return None
@@ -1178,7 +1171,7 @@ class ManifestGenerator(metaclass=ABCMeta):
                  hash_value, time.time() - start_time, self.filters)
         return hash_value
 
-    def tagging(self, file_name: str | None) -> Mapping[str, str] | None:
+    def tagging(self, file_name: Optional[str]) -> Optional[Mapping[str, str]]:
         if file_name is None:
             return None
         else:
@@ -1326,7 +1319,7 @@ class FileBasedManifestGenerator(ManifestGenerator):
     """
 
     @abstractmethod
-    def create_file(self) -> tuple[str, str | None]:
+    def create_file(self) -> tuple[str, Optional[str]]:
         raise NotImplementedError
 
     def write(self,
@@ -1379,8 +1372,8 @@ class CurlManifestGenerator(PagedManifestGenerator):
     @classmethod
     def command_lines(cls,
                       url: furl,
-                      file_name: str | None,
-                      authentication: Authentication | None
+                      file_name: Optional[str],
+                      authentication: Optional[Authentication]
                       ) -> FlatJSON:
         authentication_option = [] if authentication is None else [
             '--header',
@@ -1731,7 +1724,7 @@ class PFBManifestGenerator(FileBasedManifestGenerator):
             doc = self._hit_to_doc(hit)
             yield doc
 
-    def create_file(self) -> tuple[str, str | None]:
+    def create_file(self) -> tuple[str, Optional[str]]:
         transformers = self.service.transformer_types(self.catalog)
         transformer = one(t for t in transformers if t.entity_type() == 'files')
         field_types = transformer.field_types()
@@ -1791,7 +1784,7 @@ class BDBagManifestGenerator(FileBasedManifestGenerator):
             for field_path, column_mapping in super().manifest_config.items()
         }
 
-    def create_file(self) -> tuple[str, str | None]:
+    def create_file(self) -> tuple[str, Optional[str]]:
         with TemporaryDirectory() as temp_path:
             bag_path = os.path.join(temp_path, 'manifest')
             os.makedirs(bag_path)
@@ -2001,8 +1994,7 @@ class VerbatimManifestGenerator(FileBasedManifestGenerator, metaclass=ABCMeta):
     def entity_type(self) -> str:
         # Orphans only have projects/datasets as hubs, so we need to retrieve
         # aggregates of those types in order to join against orphan replicas
-        root_entity_type = self.metadata_plugin.root_entity_type
-        return root_entity_type if self.include_orphans else 'files'
+        return self.implicit_hub_type if self.include_orphans else 'files'
 
     @property
     def included_fields(self) -> list[FieldPath]:
@@ -2011,15 +2003,12 @@ class VerbatimManifestGenerator(FileBasedManifestGenerator, metaclass=ABCMeta):
         # "keys" used for the join.
         return [
             ('entity_id',),
-            *(
-                ('contents', entity_type, 'document_id')
-                for entity_type in self.hot_entity_types
-            )
+            ('contents', self.implicit_hub_type, 'document_id')
         ]
 
     @property
-    def hot_entity_types(self) -> Iterable[str]:
-        return self.metadata_plugin.hot_entity_types
+    def implicit_hub_type(self) -> str:
+        return self.service.metadata_plugin(self.catalog).implicit_hub_type
 
     @property
     def include_orphans(self) -> bool:
@@ -2027,13 +2016,13 @@ class VerbatimManifestGenerator(FileBasedManifestGenerator, metaclass=ABCMeta):
         # data sets for AnVIL or projects for HCA, we include replicas of all
         # entities implicitly connected to the matching hubs, even replicas of
         # orphans, i.e., entities that aren't connected to files.
-        plugin = self.metadata_plugin
-        root_entity_fields = {
+        plugin = self.service.metadata_plugin(self.catalog)
+        implicit_hub_fields = {
             field_name
             for field_name, field_path in plugin.field_mapping.items()
-            if field_path[0] == 'contents' and field_path[1] == plugin.root_entity_type
+            if field_path[0] == 'contents' and field_path[1] == plugin.implicit_hub_type
         }
-        return self.filters.explicit.keys() < root_entity_fields
+        return self.filters.explicit.keys() < implicit_hub_fields
 
     @attrs.frozen(kw_only=True)
     class ReplicaKeys:
@@ -2047,19 +2036,17 @@ class VerbatimManifestGenerator(FileBasedManifestGenerator, metaclass=ABCMeta):
         or the replica's entity ID.
         """
         hub_id: str
-        replica_ids: list[str]
+        replica_id: str
 
     def _replica_keys(self) -> Iterable[ReplicaKeys]:
+        hub_type = self.implicit_hub_type
         request = self._create_request()
         for hit in request.scan():
-            document_ids = [
-                document_id
-                for entity_type in self.hot_entity_types
-                for inner_entity in getitem(hit['contents'], entity_type, ())
-                for document_id in always_iterable(inner_entity['document_id'])
-            ]
+            replica_id = one(hit['contents'][hub_type])['document_id']
+            if self.entity_type != hub_type:
+                replica_id = one(replica_id)
             yield self.ReplicaKeys(hub_id=hit['entity_id'],
-                                   replica_ids=document_ids)
+                                   replica_id=replica_id)
 
     def _all_replicas(self) -> Iterable[JSON]:
         emitted_replica_ids = set()
@@ -2087,7 +2074,7 @@ class VerbatimManifestGenerator(FileBasedManifestGenerator, metaclass=ABCMeta):
         hub_ids, replica_ids = set(), set()
         for key in keys:
             hub_ids.add(key.hub_id)
-            replica_ids.update(key.replica_ids)
+            replica_ids.add(key.replica_id)
         request = request.query(Q('bool', should=[
             {'terms': {'hub_ids.keyword': list(hub_ids)}},
             {'terms': {'entity_id.keyword': list(replica_ids)}}
@@ -2109,7 +2096,7 @@ class JSONLVerbatimManifestGenerator(VerbatimManifestGenerator):
     def format(cls) -> ManifestFormat:
         return ManifestFormat.verbatim_jsonl
 
-    def create_file(self) -> tuple[str, str | None]:
+    def create_file(self) -> tuple[str, Optional[str]]:
         fd, path = mkstemp(suffix=f'.{self.file_name_extension()}')
         os.close(fd)
         with open(path, 'w') as f:
@@ -2137,9 +2124,10 @@ class PFBVerbatimManifestGenerator(VerbatimManifestGenerator):
     def format(cls) -> ManifestFormat:
         return ManifestFormat.verbatim_pfb
 
-    def create_file(self) -> tuple[str, str | None]:
+    def create_file(self) -> tuple[str, Optional[str]]:
+        plugin = self.service.metadata_plugin(self.catalog)
         replicas = list(self._all_replicas())
-        replica_schemas = self.metadata_plugin.verbatim_pfb_schema(replicas)
+        replica_schemas = plugin.verbatim_pfb_schema(replicas)
         # Ensure field order is consistent for unit tests
         replica_schemas.sort(key=itemgetter('name'))
         replica_types = [s['name'] for s in replica_schemas]

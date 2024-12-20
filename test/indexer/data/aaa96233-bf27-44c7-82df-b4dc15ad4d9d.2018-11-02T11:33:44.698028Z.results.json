@@ -3756,6 +3756,8 @@
             },
             "entity_id": "7b07b9d0-cc0e-4098-9f64-f4a569f7d746",
             "hub_ids": [
+                "0c5ac7c0-817e-40d4-b1b1-34c3d5cfecdb",
+                "70d1af4a-82c8-478a-8960-e9028b3616ca",
                 "e8642221-4c2c-4fd7-b926-a68bce363c88"
             ],
             "replica_type": "donor_organism"
@@ -3798,6 +3800,8 @@
             },
             "entity_id": "9c32cf70-3ed7-4720-badc-5ee71e8a38af",
             "hub_ids": [
+                "0c5ac7c0-817e-40d4-b1b1-34c3d5cfecdb",
+                "70d1af4a-82c8-478a-8960-e9028b3616ca",
                 "e8642221-4c2c-4fd7-b926-a68bce363c88"
             ],
             "replica_type": "library_preparation_protocol"
@@ -3834,6 +3838,8 @@
             },
             "entity_id": "61e629ed-0135-4492-ac8a-5c4ab3ccca8a",
             "hub_ids": [
+                "0c5ac7c0-817e-40d4-b1b1-34c3d5cfecdb",
+                "70d1af4a-82c8-478a-8960-e9028b3616ca",
                 "e8642221-4c2c-4fd7-b926-a68bce363c88"
             ],
             "replica_type": "sequencing_protocol"

@@ -20,7 +20,6 @@ from operator import (
 from typing import (
     Any,
     Callable,
-    Protocol,
     TypeVar,
     Union,
 )
@@ -362,68 +361,6 @@ class NestedDict(defaultdict):
             k: v.to_dict() if isinstance(v, NestedDict) else v
             for k, v in self.items()
         }
-
-
-# FIXME: Remove once upstream issue is closed
-#        https://github.com/python/typeshed/issues/11822
-
-_KT_contra = TypeVar("_KT_contra", contravariant=True)
-_VT_co = TypeVar("_VT_co", covariant=True)
-
-
-class SupportsGetItem(Protocol[_KT_contra, _VT_co]):
-
-    def __getitem__(self, key: _KT_contra, /) -> _VT_co: ...
-
-
-def getitem(d: SupportsGetItem[_KT_contra, _VT_co],
-            k: _KT_contra,
-            /,
-            default: _VT_co | None = None) -> _VT_co:
-    """
-    For mappings that implement ``.__getitem__()`` but forego the recommended
-    implementation of ``.get()``:
-
-    https://docs.python.org/3/reference/datamodel.html#emulating-container-types
-
-    >  It is also recommended that mappings provide the methods keys(),
-    >  values(), items(), get() …
-
-    :param d: the mapping of keys to values
-
-    :param k: a key
-
-    :param default: the value to return when the key is absent
-
-    :return: the value at the given key or the default if the key is absent
-             from the mapping
-
-    >>> class M:
-    ...     def __getitem__(self, k):
-    ...         return {42:7}[k]
-
-    >>> m = M()
-
-    >>> getitem(m, 42)
-    7
-
-    >>> getitem(m, 42, 2)
-    7
-
-    >>> m[1]
-    Traceback (most recent call last):
-    ...
-    KeyError: 1
-
-    >>> getitem(m, 1)
-
-    >>> getitem(m, 1, default=2)
-    2
-    """
-    try:
-        return d.__getitem__(k)
-    except KeyError:
-        return default
 
 
 class OrderedSet(MutableSet[K]):

@@ -283,10 +283,10 @@ class Plugin(MetadataPlugin[HCABundle]):
                              source_spec='sourceSpec',
                              bundle_uuid='bundleUuid',
                              bundle_version='bundleVersion',
-                             root_entity_id='projectId')
+                             implicit_hub_id='projectId')
 
     @property
-    def root_entity_type(self) -> str:
+    def implicit_hub_type(self) -> str:
         return 'projects'
 
     @property

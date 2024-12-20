@@ -62,7 +62,6 @@ from azul.indexer.document import (
     pass_thru_json,
 )
 from azul.indexer.transform import (
-    ReplicaTransformer,
     Transformer,
 )
 from azul.plugins.metadata.anvil.bundle import (
@@ -155,20 +154,19 @@ class BaseTransformer(Transformer, metaclass=ABCMeta):
     @classmethod
     def aggregator(cls, entity_type) -> EntityAggregator:
         if entity_type == 'activities':
-            agg_cls = ActivityAggregator
+            return ActivityAggregator()
         elif entity_type == 'biosamples':
-            agg_cls = BiosampleAggregator
+            return BiosampleAggregator()
         elif entity_type == 'datasets':
-            agg_cls = DatasetAggregator
+            return DatasetAggregator()
         elif entity_type == 'diagnoses':
-            agg_cls = DiagnosisAggregator
+            return DiagnosisAggregator()
         elif entity_type == 'donors':
-            agg_cls = DonorAggregator
+            return DonorAggregator()
         elif entity_type == 'files':
-            agg_cls = FileAggregator
+            return FileAggregator()
         else:
             assert False, entity_type
-        return agg_cls(entity_type)
 
     def estimate(self, partition: BundlePartition) -> int:
         # Orphans are not considered when deciding whether to partition the
@@ -625,17 +623,11 @@ class DonorTransformer(BaseTransformer):
         yield self._contribution(contents, entity.entity_id)
 
 
-class FileTransformer(BaseTransformer, ReplicaTransformer):
+class FileTransformer(BaseTransformer):
 
     @classmethod
     def entity_type(cls) -> str:
         return 'files'
-
-    @classmethod
-    def hot_entity_types(cls) -> dict[EntityType, EntityType]:
-        return {
-            'anvil_dataset': 'datasets',
-        }
 
     def _transform(self,
                    entity: EntityReference
@@ -653,14 +645,17 @@ class FileTransformer(BaseTransformer, ReplicaTransformer):
             donors=self._entities(self._donor, linked['anvil_donor']),
             files=[self._file(entity)],
         )
-        file_id = entity.entity_id
-        yield self._contribution(contents, file_id)
+        yield self._contribution(contents, entity.entity_id)
         if config.enable_replicas:
-            dataset_id = dataset.entity_id
-            yield self._replica(entity, file_hub=file_id, root_hub=dataset_id)
+            yield self._replica(entity, file_hub=entity.entity_id, root_hub=dataset.entity_id)
             for linked_entity in linked:
                 yield self._replica(
                     linked_entity,
-                    file_hub=None if linked_entity.entity_type in self.hot_entity_types() else file_id,
-                    root_hub=dataset_id
+                    # Datasets are linked to every file in their snapshot,
+                    # making an explicit list of hub IDs for the dataset both
+                    # redundant and impractically large. Therefore, we leave the
+                    # hub IDs field empty for datasets and rely on the tenet
+                    # that every file is an implicit hub of its parent dataset.
+                    file_hub=None if linked_entity.entity_type == 'anvil_dataset' else entity.entity_id,
+                    root_hub=dataset.entity_id
                 )

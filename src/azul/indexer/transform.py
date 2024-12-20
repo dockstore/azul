@@ -184,16 +184,3 @@ class Transformer(metaclass=ABCMeta):
                  passed as the ``this`` argument.
         """
         raise NotImplementedError
-
-
-class ReplicaTransformer(Transformer, metaclass=ABCMeta):
-
-    @classmethod
-    @abstractmethod
-    def hot_entity_types(cls) -> dict[EntityType, EntityType]:
-        """
-        The types of entities that do not explicitly track their hubs in
-        replica documents. Keys describe untransformed entities in a bundle;
-        values describe transformed inner entities in the index.
-        """
-        raise NotImplementedError

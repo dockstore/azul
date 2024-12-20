@@ -12,9 +12,6 @@ from datetime import (
 from enum import (
     Enum,
 )
-from itertools import (
-    chain,
-)
 import logging
 import re
 from typing import (
@@ -82,7 +79,6 @@ from azul.indexer.document import (
     pass_thru_json,
 )
 from azul.indexer.transform import (
-    ReplicaTransformer,
     Transformer,
 )
 from azul.iterators import (
@@ -464,39 +460,38 @@ class BaseTransformer(Transformer, metaclass=ABCMeta):
     @classmethod
     def aggregator(cls, entity_type: EntityType) -> EntityAggregator | None:
         if entity_type == 'files':
-            agg_cls = FileAggregator
+            return FileAggregator()
         elif entity_type in SampleTransformer.inner_entity_types():
-            agg_cls = SampleAggregator
+            return SampleAggregator()
         elif entity_type == 'specimens':
-            agg_cls = SpecimenAggregator
+            return SpecimenAggregator()
         elif entity_type == 'cell_suspensions':
-            agg_cls = CellSuspensionAggregator
+            return CellSuspensionAggregator()
         elif entity_type == 'cell_lines':
-            agg_cls = CellLineAggregator
+            return CellLineAggregator()
         elif entity_type == 'donors':
-            agg_cls = DonorOrganismAggregator
+            return DonorOrganismAggregator()
         elif entity_type == 'organoids':
-            agg_cls = OrganoidAggregator
+            return OrganoidAggregator()
         elif entity_type == 'projects':
-            agg_cls = ProjectAggregator
+            return ProjectAggregator()
         elif entity_type in (
             'analysis_protocols',
             'imaging_protocols',
             'library_preparation_protocols',
             'sequencing_protocols'
         ):
-            agg_cls = ProtocolAggregator
+            return ProtocolAggregator()
         elif entity_type == 'sequencing_inputs':
-            agg_cls = SequencingInputAggregator
+            return SequencingInputAggregator()
         elif entity_type == 'sequencing_processes':
-            agg_cls = SequencingProcessAggregator
+            return SequencingProcessAggregator()
         elif entity_type in ('matrices', 'contributed_analyses'):
-            agg_cls = MatricesAggregator
+            return MatricesAggregator()
         elif entity_type == 'dates':
-            agg_cls = DateAggregator
+            return DateAggregator()
         else:
-            agg_cls = SimpleAggregator
-        return agg_cls(entity_type)
+            return SimpleAggregator()
 
     def _replicate(self, entity: EntityReference) -> tuple[str, JSON]:
         if entity == self.api_bundle.ref:
@@ -1423,22 +1418,11 @@ class PartitionedTransformer(BaseTransformer, Generic[ENTITY]):
         return self._transform(generable(self._entities_in, partition))
 
 
-class FileTransformer(PartitionedTransformer[api.File], ReplicaTransformer):
+class FileTransformer(PartitionedTransformer[api.File]):
 
     @classmethod
     def entity_type(cls) -> str:
         return 'files'
-
-    @classmethod
-    def hot_entity_types(cls) -> dict[EntityType, EntityType]:
-        return {
-            'project': 'projects',
-            'donor_organism': 'donors',
-            **{
-                f'{protocol_type}_protocol': f'{protocol_type}_protocols'
-                for protocol_type in ['analysis', 'imaging', 'library_preparation', 'sequencing']
-            }
-        }
 
     def _entities(self) -> Iterable[api.File]:
         return self.api_bundle.not_stitched(self.api_bundle.files)
@@ -1486,13 +1470,19 @@ class FileTransformer(PartitionedTransformer[api.File], ReplicaTransformer):
                         for entity_type, values in additional_contents.items():
                             contents[entity_type].extend(values)
                 file_id = file.ref.entity_id
+                project_ref = self._api_project.ref
+                project_id = project_ref.entity_id
                 yield self._contribution(contents, file_id)
                 if config.enable_replicas:
-                    project_ref = self._api_project.ref
-                    project_id = project_ref.entity_id
-                    for ref in chain([project_ref, self.api_bundle.ref], visitor.entities):
-                        file_hub = None if ref.entity_type in self.hot_entity_types() else file_id
-                        yield self._replica(ref, file_hub=file_hub, root_hub=project_id)
+                    yield self._replica(self.api_bundle.ref, file_hub=file_id, root_hub=project_id)
+                    # Projects are linked to every file in their snapshot,
+                    # making an explicit list of hub IDs for the project both
+                    # redundant and impractically large. Therefore, we leave the
+                    # hub IDs field empty for projects and rely on the tenet
+                    # that every file is an implicit hub of its parent project.
+                    yield self._replica(project_ref, file_hub=None, root_hub=project_id)
+                    for linked_entity in visitor.entities:
+                        yield self._replica(linked_entity, file_hub=file_id, root_hub=project_id)
 
     def matrix_stratification_values(self, file: api.File) -> JSON:
         """
