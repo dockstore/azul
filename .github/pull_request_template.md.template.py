@@ -5,6 +5,7 @@ from enum import (
 from itertools import (
     chain,
 )
+import json
 from pathlib import (
     Path,
 )
@@ -26,6 +27,7 @@ from more_itertools import (
 )
 
 from azul import (
+    cache,
     config,
     iif,
 )
@@ -212,6 +214,7 @@ class T(Enum):
     def needs_shared_deploy(self):
         return self not in (T.backport, T.hotfix)
 
+    # noinspection PyUnusedLocal
     def shared_deploy_is_two_phase(self, target_branch: str) -> bool:
         # All `shared` components are deployed in two-phases. The first phase,
         # prior to the merge, mirrors new images to ECR, while the second phase
@@ -238,14 +241,20 @@ def main():
             emit(t, target_branch)
 
 
-def env_var(deployment: str, variable: str) -> str:
-    """
-    Return an environment variable value from the given deployment.
-    """
+@cache
+def deployment_env(deployment: str,
+                   component: str | None = None
+                   ) -> Mapping[str, str]:
     script = load_script('export_environment')
+    deployment += '' if component is None else '.' + component
     env, warning = script.load_env(deployment)
+    assert warning is None, warning
     resolved_env = script.resolve_env(env)
-    return resolved_env[variable]
+    return resolved_env
+
+
+def azul_domain_name(d):
+    return deployment_env(d)['AZUL_DOMAIN_NAME']
 
 
 def emit(t: T, target_branch: str):
@@ -334,7 +343,7 @@ def emit(t: T, target_branch: str):
             },
             iif(t is not T.backport, {
                 'type': 'cli',
-                'content': f"PR title references {t.issues('all', 'the')} connected {t.issues}"
+                'content': f'PR title references {t.issues('all', 'the')} connected {t.issues}'
             }),
             *(
                 [
@@ -729,7 +738,7 @@ def emit(t: T, target_branch: str):
                     {
                         'type': 'cli',
                         'content': f'Background migrations for '
-                                   f'[`{d}.gitlab`](https://gitlab.{env_var(d, "AZUL_DOMAIN_NAME")}'
+                                   f'[`{d}.gitlab`](https://gitlab.{azul_domain_name(d)}'
                                    f'/admin/background_migrations) are complete',
                         'alt': 'or this PR is not labeled `deploy:gitlab`'
                     }
@@ -956,12 +965,35 @@ def emit(t: T, target_branch: str):
                             for action in [
                                 'Started reindex',
                                 'Checked for, triaged and possibly requeued messages in both fail queues',
-                                'Emptied fail queues',
+                                'Emptied fail queues'
                             ]
                         ]
                     ]
                     for d, s in t.target_deployments(target_branch).items()
                 ))),
+                *[
+                    {
+                        'type': 'cli',
+                        'content': f'{action} in `{d}`',
+                        'alt': (
+                            'or neither this PR nor a failed, prior promotion requires it'
+                            if t is T.hotfix else
+                            f'or this PR does not require reindexing `{d}`'
+                        )
+                    }
+                    for d, s in t.target_deployments(target_branch).items()
+                    for action in [
+                        *[
+                            'Restarted the `trigger_child` job in the most recent Data Browser build for the ['
+                            f'{browser_site['branch']} branch]'
+                            f'(https://gitlab.{azul_domain_name(d)}/ucsc/data-browser/-/pipelines?scope=branches) '
+                            f'on GitLab'
+                            for browser_site in
+                            json.loads(deployment_env(d, 'browser')['azul_browser_sites']).values()
+                        ],
+                        'Restarted `deploy` job in the GitLab pipeline for this PR'
+                    ]
+                ],
                 iif(t is T.hotfix, {
                     'type': 'cli',
                     'content': 'Created backport PR and linked to it in a comment on this PR'
