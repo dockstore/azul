@@ -94,7 +94,7 @@ parser.add_argument('--deindex',
                     action='store_true',
                     help='Delete all documents in the current deployment that match '
                          'the specified sources. '
-                         'Incompatible with --index, --create, and --delete. '
+                         'Incompatible with --create and --delete. '
                          'Do not run while indexing is ongoing.')
 parser.add_argument('--create',
                     default=False,
