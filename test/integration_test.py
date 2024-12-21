@@ -433,6 +433,8 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
                 with self._service_account_credentials:
                     fqids = self._get_indexed_bundles(catalog)
                 indexed_sources = {fqid.source for fqid in fqids}
+                # FIXME: Improve equality and interning semantics for source ref and spec
+                #        https://github.com/DataBiosphere/azul/issues/6778
                 ma_source_ids = {s.id for s in self.managed_access_sources_by_catalog[catalog]}
                 public_source = one(s for s in indexed_sources if s.id not in ma_source_ids)
                 ma_source = only(s for s in indexed_sources if s.id in ma_source_ids)

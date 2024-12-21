@@ -367,6 +367,8 @@ class SourceSpec(Generic[SOURCE_SPEC], metaclass=ABCMeta):
     have simple unstructured names may want to use :class:`SimpleSourceSpec`.
     """
 
+    # FIXME: Improve equality and interning semantics for source ref and spec
+    #        https://github.com/DataBiosphere/azul/issues/6778
     prefix: Prefix | None
 
     @classmethod
@@ -475,6 +477,9 @@ class SourceRef(SupportsLessAndGreaterThan, Generic[SOURCE_SPEC, SOURCE_REF]):
     spec. There may be an instance of a subclass of this class that has the same
     ID and spec as an instance of this class or another subclass of this class.
 
+    FIXME: Improve equality and interning semantics for source ref and spec
+           https://github.com/DataBiosphere/azul/issues/6778
+
     Note to plugin implementers: Since the source ID can't be assumed to be
     globally unique, plugins should subclass this class, even if the subclass
     body is empty.
@@ -499,6 +504,9 @@ class SourceRef(SupportsLessAndGreaterThan, Generic[SOURCE_SPEC, SOURCE_REF]):
         """
         Interns instances by their ID and spec. Two different sources may still
         use the same ID or spec.
+
+        FIXME: Improve equality and interning semantics for source ref and spec
+               https://github.com/DataBiosphere/azul/issues/6778
 
         >>> class S(SourceRef): pass
         >>> a, b  = SimpleSourceSpec.parse('a:/0'), SimpleSourceSpec.parse('b:/0')
