@@ -239,7 +239,7 @@ def env() -> Mapping[str, Optional[str]]:
         'AZUL_ENABLE_MONITORING': '1',
 
         'AZUL_ES_INSTANCE_TYPE': 'r7gd.xlarge.elasticsearch',
-        'AZUL_ES_INSTANCE_COUNT': '4',
+        'AZUL_ES_INSTANCE_COUNT': '2',
 
         'AZUL_DEBUG': '1',
 
