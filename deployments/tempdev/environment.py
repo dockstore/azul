@@ -81,11 +81,11 @@ def env() -> Mapping[str, Optional[str]]:
         # Set variables for the `anvildev` (short for AnVIL development)
         # deployment here.
         #
-        # Only modify this file if you intend to commit those changes. To change the
-        # environment with a setting that's specific to you AND the deployment, create
-        # a environment.local.py right next to this file and make your changes there.
-        # Settings applicable to all environments but specific to you go into
-        # environment.local.py at the project root.
+        # Only modify this file if you intend to commit those changes. To apply
+        # a setting that's specific to you AND the deployment, create an
+        # `environment.local.py` file right next to this one and apply that
+        # setting there. Settings that are applicable to all environments but
+        # specific to you go into `environment.local.py` at the project root.
 
         'AZUL_DEPLOYMENT_STAGE': 'tempdev',
 
