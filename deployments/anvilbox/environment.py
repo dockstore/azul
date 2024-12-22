@@ -68,7 +68,7 @@ def env() -> Mapping[str, Optional[str]]:
     other environment variables in the form `{FOO}` where FOO is the name of an
     environment variable. See
 
-    https://docs.python.org/3.11/library/string.html#format-string-syntax
+    https://docs.python.org/3.12/library/string.html#format-string-syntax
 
     for the concrete syntax. These references will be resolved *after* the
     overall environment has been compiled by merging all relevant
@@ -128,8 +128,7 @@ def env() -> Mapping[str, Optional[str]]:
 
         **(
             {
-                # $0.382/h × 2 × 24h/d × 30d/mo = $550.08/mo
-                'AZUL_ES_INSTANCE_TYPE': 'r6gd.xlarge.elasticsearch',
+                'AZUL_ES_INSTANCE_TYPE': 'r7gd.xlarge.elasticsearch',
                 'AZUL_ES_INSTANCE_COUNT': '2',
             } if is_sandbox else {
                 # Personal deployments share an ES domain with `anvilbox`
