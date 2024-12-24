@@ -203,11 +203,11 @@ def env() -> Mapping[str, Optional[str]]:
     return {
         # Set variables for the `dev` (short for development) deployment here.
         #
-        # Only modify this file if you intend to commit those changes. To change the
-        # environment with a setting that's specific to you AND the deployment, create
-        # a environment.local.py right next to this file and make your changes there.
-        # Settings applicable to all environments but specific to you go into
-        # environment.local.py at the project root.
+        # Only modify this file if you intend to commit those changes. To apply
+        # a setting that's specific to you AND the deployment, create an
+        # `environment.local.py` file right next to this one and apply that
+        # setting there. Settings that are applicable to all environments but
+        # specific to you go into `environment.local.py` at the project root.
 
         'AZUL_DEPLOYMENT_STAGE': 'dev',
 
@@ -238,8 +238,7 @@ def env() -> Mapping[str, Optional[str]]:
 
         'AZUL_ENABLE_MONITORING': '1',
 
-        # $0.382/h × 3 × 24h/d × 30d/mo = $825.12/mo
-        'AZUL_ES_INSTANCE_TYPE': 'r6gd.xlarge.elasticsearch',
+        'AZUL_ES_INSTANCE_TYPE': 'r6gd.large.elasticsearch',
         'AZUL_ES_INSTANCE_COUNT': '4',
 
         'AZUL_DEBUG': '1',

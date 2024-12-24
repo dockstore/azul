@@ -530,31 +530,6 @@ class AzulChaliceApp(Chalice):
     def _controller(self, controller_cls: type[C], **kwargs) -> C:
         return controller_cls(app=self, **kwargs)
 
-    def swagger_ui(self) -> Response:
-        file_name = 'swagger-ui.html.template.mustache'
-        template = self.load_static_resource('swagger', file_name)
-        base_url = self.base_url
-        redirect_url = furl(base_url).add(path='oauth2_redirect')
-        deployment_url = furl(base_url).add(path='openapi')
-        nonce = CSP.new_nonce()
-        html = chevron.render(template, {
-            'CSP_NONCE': json.dumps(nonce),
-            'DEPLOYMENT_PATH': json.dumps(str(deployment_url.path)),
-            'OAUTH2_CLIENT_ID': json.dumps(config.google_oauth2_client_id),
-            'OAUTH2_REDIRECT_URL': json.dumps(str(redirect_url)),
-            'NON_INTERACTIVE_METHODS': json.dumps([
-                f'{path}/{method.lower()}'
-                for path, method in self.non_interactive_routes
-            ])
-        })
-        csp = CSP.for_azul(nonce)
-        return Response(status_code=200,
-                        headers={
-                            'Content-Type': 'text/html',
-                            'Content-Security-Policy': str(csp)
-                        },
-                        body=html)
-
     def swagger_resource(self, file_name: str) -> Response:
         if os.sep in file_name:
             raise BadRequestError(file_name)
@@ -688,7 +663,25 @@ class AzulChaliceApp(Chalice):
         @self.route(
             '/',
             interactive=False,
-            cache_control=self._http_cache_for(60),
+            method_spec={
+                'summary': 'A redirect to the Swagger UI for interactive use of this REST API',
+                'tags': ['Auxiliary'],
+                'responses': {
+                    '301': {
+                        'description': 'A redirect to the Swagger UI'
+                    }
+                }
+            }
+        )
+        def swagger_redirect():
+            return Response(status_code=301,
+                            body='',
+                            headers={'Location': str(self.base_url.set(path='static/index.html'))})
+
+        @self.route(
+            '/static/index.html',
+            interactive=False,
+            cache_control=self._http_cache_for(24 * 60 * 60),
             cors=False,
             method_spec={
                 'summary': 'A Swagger UI for interactive use of this REST API',
@@ -701,7 +694,33 @@ class AzulChaliceApp(Chalice):
             }
         )
         def swagger_ui():
-            return self.swagger_ui()
+            return self.swagger_resource('index.html')
+
+        @self.route(
+            '/static/swagger-initializer.js',
+            interactive=False,
+            cache_control=self._http_cache_for(60),
+            cors=True,
+            method_spec={}
+        )
+        def swagger_initializer():
+            file_name = 'swagger-initializer.js.template.mustache'
+            template = self.load_static_resource('swagger', file_name)
+            base_url = self.base_url
+            redirect_url = furl(base_url).add(path='oauth2_redirect')
+            deployment_url = furl(base_url).add(path='openapi')
+            body = chevron.render(template, {
+                'DEPLOYMENT_PATH': json.dumps(str(deployment_url.path)),
+                'OAUTH2_CLIENT_ID': json.dumps(config.google_oauth2_client_id),
+                'OAUTH2_REDIRECT_URL': json.dumps(str(redirect_url)),
+                'NON_INTERACTIVE_METHODS': json.dumps([
+                    f'{path}/{method.lower()}'
+                    for path, method in self.non_interactive_routes
+                ])
+            })
+            return Response(status_code=200,
+                            body=body,
+                            headers={'Content-Type': 'application/javascript'})
 
         @self.route(
             '/openapi',

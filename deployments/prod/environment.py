@@ -1288,6 +1288,22 @@ dcp44_sources = mkdict(dcp43_sources, 478, mkdelta([
     # @formatter:on
 ]))
 
+dcp45_sources = mkdict(dcp44_sources, 484, mkdelta([
+    # @formatter:off
+    mksrc('bigquery', 'datarepo-44d8565d', 'hca_prod_005d611a14d54fbf846e571a1f874f70__20220111_dcp2_20241205_dcp45'),
+    mksrc('bigquery', 'datarepo-46f6eb97', 'hca_prod_01aacb6840764fd99eb9aba0f48c1b5a__20230616_dcp2_20241205_dcp45'),
+    mksrc('bigquery', 'datarepo-6130b203', 'hca_prod_08fb10df32e5456c9882e33fcd49077a__20231212_dcp2_20241205_dcp45'),
+    mksrc('bigquery', 'datarepo-94e55f6a', 'hca_prod_2433c1e45a1246a5b2d5d3554a7694f2__20241205_dcp2_20241205_dcp45'),
+    mksrc('bigquery', 'datarepo-bcdeba16', 'hca_prod_40bb5783c9244d19b6cbd26a8d3ae1d8__20241205_dcp2_20241205_dcp45'),
+    mksrc('bigquery', 'datarepo-059abc16', 'hca_prod_474a4229840e4d6382af8d3aa615ee17__20241205_dcp2_20241205_dcp45'),
+    mksrc('bigquery', 'datarepo-8d869988 ', 'hca_prod_7fc0a7569b064e63a7806c9fc3f9d76d__20241205_dcp2_20241205_dcp45'),
+    mksrc('bigquery', 'datarepo-f7e93b13', 'hca_prod_9762d70c9b274f578cbc377b9b92ea9b__20241205_dcp2_20241205_dcp45'),
+    mksrc('bigquery', 'datarepo-66f332bc', 'hca_prod_ae9f439bbd474d6ebd7232dc70b35d97__20241004_dcp2_20241205_dcp45', ma),  # noqa E501
+    mksrc('bigquery', 'datarepo-48f5e511', 'hca_prod_df8eb7ce370746afb823e081a562e954__20241205_dcp2_20241205_dcp45'),
+    mksrc('bigquery', 'datarepo-6c94b83b', 'hca_prod_e255b1c611434fa683a8528f15b41038__20220330_dcp2_20241205_dcp45'),
+    # @formatter:on
+]))
+
 lungmap_sources = mkdict({}, 3, mkdelta([
     mksrc('bigquery', 'datarepo-32f75497', 'lungmap_prod_00f056f273ff43ac97ff69ca10e38c89__20220308_20220308'),
     mksrc('bigquery', 'datarepo-7066459d', 'lungmap_prod_1bdcecde16be420888f478cd2133d11d__20220308_20220308'),
@@ -1343,7 +1359,7 @@ def env() -> Mapping[str, Optional[str]]:
     other environment variables in the form `{FOO}` where FOO is the name of an
     environment variable. See
 
-    https://docs.python.org/3.11/library/string.html#format-string-syntax
+    https://docs.python.org/3.12/library/string.html#format-string-syntax
 
     for the concrete syntax. These references will be resolved *after* the
     overall environment has been compiled by merging all relevant
@@ -1357,11 +1373,11 @@ def env() -> Mapping[str, Optional[str]]:
     return {
         # Set variables for the `prod` (short for production) deployment here.
         #
-        # Only modify this file if you intend to commit those changes. To change the
-        # environment with a setting that's specific to you AND the deployment, create
-        # a environment.local.py right next to this file and make your changes there.
-        # Settings applicable to all environments but specific to you go into
-        # environment.local.py at the project root.
+        # Only modify this file if you intend to commit those changes. To apply
+        # a setting that's specific to you AND the deployment, create an
+        # `environment.local.py` file right next to this one and apply that
+        # setting there. Settings that are applicable to all environments but
+        # specific to you go into `environment.local.py` at the project root.
 
         'AZUL_DEPLOYMENT_STAGE': 'prod',
 
@@ -1375,6 +1391,7 @@ def env() -> Mapping[str, Optional[str]]:
                                        sources=mklist(sources))
             for atlas, catalog, sources in [
                 ('hca', 'dcp44', dcp44_sources),
+                ('hca', 'dcp45', dcp45_sources),
                 ('lungmap', 'lm7', lm7_sources),
                 ('lungmap', 'lm8', lm8_sources)
             ] for suffix, internal in [
@@ -1416,4 +1433,18 @@ def env() -> Mapping[str, Optional[str]]:
         }),
 
         'AZUL_ENABLE_REPLICAS': '0',
+
+        # HCA allocates a daily budget for file downloads. To avoid exceeding
+        # that budget, we limit the download rate as follows:
+        #
+        # r = b/d/f/24/60*w
+        #
+        # where `r` is the rate limit (downloads/window), `b` is the daily
+        # download budget (dollars/day), `d` is the download cost (dollars/
+        # gibibyte/download), `f` is the average file size (gibibytes), and `w`
+        # is the evaluation window (minutes) (=10). The value for `d` varies by
+        # region, so a weighted average is calculated based on the observed
+        # number of daily downloads per region.
+        #
+        'AZUL_FILE_DOWNLOAD_RATE_LIMIT': '59/600@2.9'
     }
