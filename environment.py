@@ -207,13 +207,15 @@ def env() -> Mapping[str, Optional[str]]:
 
         # The Docker registry containing all 3rd party images used by this
         # project, including images used locally, in FROM clauses, for CI/CD or
-        # GitLab. Must be empty or end in a slash. All references to 3rd party
-        # images must point at the registry defined here, ideally by prefixing
-        # the image reference with a reference to this variable. The registry
-        # and the images therein are managed by the `shared` TF component, which
-        # copies images from the upstream registry into the Azul registry. A
-        # 3rd-party image at `<registry>/<username>/<repository>:tag`, is stored
-        # as `${azul_docker_registry>}<registry>/<username>/<repository>:tag` in
+        # GitLab. Must be empty or end in a slash. All references to images from
+        # other parties must point at the registry defined here, ideally by
+        # prefixing the image reference with a reference to this variable. The
+        # registry and the images therein are managed by the `shared` TF
+        # component, which copies images from the upstream registry into the
+        # Azul registry.
+        #
+        # The image `<registry>/<username>/<repository>:<tag>`, is stored as
+        # `${azul_docker_registry>}<registry>/<username>/<repository>:<tag>` in
         # the Azul registry. To disable the use of the Azul registry, set this
         # variable to the empty string.
         #
@@ -234,7 +236,7 @@ def env() -> Mapping[str, Optional[str]]:
         # `gitlab` components, as well as building and pushing the executor
         # image (see terraform/gitlab/runner/Dockerfile for how).
         #
-        'azul_docker_version': '27.3.1',
+        'azul_docker_version': '27.4.0',
 
         # The version of Python used throughout the system.
         #
@@ -248,7 +250,7 @@ def env() -> Mapping[str, Optional[str]]:
         # and committing the resulting changes. It also requires redeploying the
         # `shared` component.
         #
-        'azul_python_version': '3.12.7',
+        'azul_python_version': '3.12.8',
 
         # The version of Terraform used throughout the system.
         #
@@ -294,28 +296,28 @@ def env() -> Mapping[str, Optional[str]]:
                 'url': 'https://hub.docker.com/_/python',
             },
             'pycharm': {
-                'ref': 'docker.io/ucscgi/azul-pycharm:2024.3-39',
+                'ref': 'docker.io/ucscgi/azul-pycharm:2024.3.1-40',
                 'url': 'https://hub.docker.com/repository/docker/ucscgi/azul-pycharm',
                 'is_custom': True
             },
             'elasticsearch': {
-                'ref': 'docker.io/ucscgi/azul-elasticsearch:7.17.25-32',
+                'ref': 'docker.io/ucscgi/azul-elasticsearch:7.17.26-33',
                 'url': 'https://hub.docker.com/repository/docker/ucscgi/azul-elasticsearch',
                 'is_custom': True
             },
             'bigquery_emulator': {
-                'ref': 'docker.io/ucscgi/azul-bigquery-emulator:0.4.4-18',
+                'ref': 'docker.io/ucscgi/azul-bigquery-emulator:0.4.4-19',
                 'url': 'https://hub.docker.com/repository/docker/ucscgi/azul-bigquery-emulator',
                 'is_custom': True
             },
             # Updating any of the four images below additionally requires
             # redeploying the `gitlab` TF component.
             'clamav': {
-                'ref': 'docker.io/clamav/clamav:1.4.1-14',
+                'ref': 'docker.io/clamav/clamav:1.4.1-17',
                 'url': 'https://hub.docker.com/r/clamav/clamav'
             },
             'gitlab': {
-                'ref': 'docker.io/gitlab/gitlab-ce:17.6.1-ce.0',
+                'ref': 'docker.io/gitlab/gitlab-ce:17.6.2-ce.0',
                 'url': 'https://hub.docker.com/r/gitlab/gitlab-ce'
             },
             'gitlab_runner': {
@@ -400,9 +402,9 @@ def env() -> Mapping[str, Optional[str]]:
         # IAM role normally assumed by lambda functions in the active Azul
         # deployment.
         #
-        # The syntax is <account>[,<role>...][:<account>[,<role>...]...] where
-        # <account> is the numeric AWS account ID and role is a role name with
-        # optional * or ? wildcards for the StringLike operator in IAM
+        # The syntax is `<account>[,<role>...][:<account>[,<role>...]...]` where
+        # `<account>` is the numeric AWS account ID and `<role>` is a role name
+        # with optional * or ? wildcards for the StringLike operator in IAM
         # conditions. Whitespace around separators and at the beginning or end
         # of the value are ignored.
         #
@@ -912,5 +914,37 @@ def env() -> Mapping[str, Optional[str]]:
         # in the Azul VPC. This subnet can't overlap the VPC CIDR and the subnet
         # mask must be less than 22 bits.
         #
-        'azul_vpn_subnet': None
+        'azul_vpn_subnet': None,
+
+        # This variable contains a space-separated list of keywords, also known
+        # as *flags*, that control certain aspects of the integration test (IT).
+        #
+        # The presence of the `no_index` flag prevents the IT from indexing and
+        # causes it to reuse the indices created by a previous run. The
+        # `no_delete` flag prevents the IT from performing any deletions,
+        # allowing subsequent runs to reuse the indices.
+        #
+        # For faster modify-deploy-test cycles, set this to 'no_delete' and run
+        # the IT. Then set it to 'no_index no_delete'. Subsequent IT runs will
+        # reuse the index from a prior run, and be significantly faster, albeit
+        # not covering any changes to the indexer, since indexing will be
+        # skipped.
+        #
+        'azul_it_flags': None,
+
+        # A global rate limit on file downloads across all regions and IP
+        # addresses, enforced by AWS WAF.
+        #
+        # The syntax is `<limit>/<window>@<concurrency>` where `<limit>` is the
+        # maximum allowed number of download requests made every `<window>`
+        # seconds, and `<concurrency>` is the expected number of distinct IPs
+        # making at least one download request during that time. The concurrency
+        # does not need to be an integer. See
+        #
+        # https://docs.aws.amazon.com/waf/latest/developerguide/waf-rule-statement-type-rate-based-high-level-settings.html
+        #
+        # for restrictions on the supported values for `<limit>` ("Rate limit")
+        # and `<window>` ("Evaluation window").
+        #
+        'AZUL_FILE_DOWNLOAD_RATE_LIMIT': None
     }
