@@ -116,6 +116,8 @@ api_gateway_log_format = {
     'status': '$context.status'
 }
 
+file_download_limit = config.waf_file_download_limit
+
 emit_tf({
     'data': [
         {
@@ -193,16 +195,54 @@ emit_tf({
                     'rule': [
                         {**rule, 'priority': i}
                         for i, rule in enumerate([
+                            *([] if file_download_limit is None else [{
+                                'name': 'FileDownloadRateLimit',
+                                'statement': {
+                                    'rate_based_statement': {
+                                        'limit': file_download_limit.rate_limit,
+                                        'evaluation_window_sec': file_download_limit.evaluation_window,
+                                        'aggregate_key_type': 'CONSTANT',
+                                        'scope_down_statement': {
+                                            'regex_match_statement': {
+                                                'regex_string': '^(/fetch)?/repository/files',
+                                                'field_to_match': {'uri_path': {}},
+                                                'text_transformation': {
+                                                    'priority': 0,
+                                                    'type': 'NONE'
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                'action': {
+                                    'block': {
+                                        'custom_response': {
+                                            'response_code': 429,
+                                            'response_header': [
+                                                {
+                                                    'name': 'Retry-After',
+                                                    'value': str(file_download_limit.retry_after),
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                'visibility_config': {
+                                    'metric_name': 'FileDownloadRateLimit',
+                                    'sampled_requests_enabled': True,
+                                    'cloudwatch_metrics_enabled': True
+                                }
+                            }]),
                             *[
                                 {
                                     'name': name,
-                                    'action': {
-                                        action: {}
-                                    },
                                     'statement': {
                                         'ip_set_reference_statement': {
                                             'arn': '${data.aws_wafv2_ip_set.%s.arn}' % ip_set_term
                                         }
+                                    },
+                                    'action': {
+                                        action: {}
                                     },
                                     'visibility_config': {
                                         'metric_name': name,
@@ -218,6 +258,12 @@ emit_tf({
                             *[
                                 {
                                     'name': name,
+                                    'statement': {
+                                        'rate_based_statement': {
+                                            'limit': limit,
+                                            'aggregate_key_type': 'IP'
+                                        }
+                                    },
                                     'action': {
                                         'block': {
                                             'custom_response': {
@@ -229,12 +275,6 @@ emit_tf({
                                                     }
                                                 ]
                                             }
-                                        }
-                                    },
-                                    'statement': {
-                                        'rate_based_statement': {
-                                            'limit': limit,
-                                            'aggregate_key_type': 'IP'
                                         }
                                     },
                                     'visibility_config': {
@@ -258,9 +298,6 @@ emit_tf({
                             ],
                             {
                                 'name': 'AWS-CommonRuleSet',
-                                'override_action': {
-                                    'none': {}
-                                },
                                 'statement': {
                                     'managed_rule_group_statement': {
                                         'name': 'AWSManagedRulesCommonRuleSet',
@@ -298,6 +335,9 @@ emit_tf({
                                         ]
                                     }
                                 },
+                                'override_action': {
+                                    'none': {}
+                                },
                                 'visibility_config': {
                                     'metric_name': 'AWS-CommonRuleSet',
                                     'sampled_requests_enabled': True,
@@ -306,14 +346,14 @@ emit_tf({
                             },
                             {
                                 'name': 'AWS-AmazonIpReputationList',
-                                'override_action': {
-                                    'none': {}
-                                },
                                 'statement': {
                                     'managed_rule_group_statement': {
                                         'name': 'AWSManagedRulesAmazonIpReputationList',
                                         'vendor_name': 'AWS'
                                     }
+                                },
+                                'override_action': {
+                                    'none': {}
                                 },
                                 'visibility_config': {
                                     'metric_name': 'AWS-AmazonIpReputationList',
@@ -323,14 +363,14 @@ emit_tf({
                             },
                             {
                                 'name': 'AWS-UnixRuleSet',
-                                'override_action': {
-                                    'none': {}
-                                },
                                 'statement': {
                                     'managed_rule_group_statement': {
                                         'name': 'AWSManagedRulesUnixRuleSet',
                                         'vendor_name': 'AWS'
                                     }
+                                },
+                                'override_action': {
+                                    'none': {}
                                 },
                                 'visibility_config': {
                                     'metric_name': 'AWS-UnixRuleSet',
@@ -338,7 +378,8 @@ emit_tf({
                                     'cloudwatch_metrics_enabled': True
                                 }
                             },
-                        ])],
+                        ])
+                    ],
                     'scope': 'REGIONAL',
                     'visibility_config': {
                         'cloudwatch_metrics_enabled': True,

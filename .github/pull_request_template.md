@@ -185,6 +185,11 @@ title is `Fix: ` followed by the issue title
 - [ ] Checked for, triaged and possibly requeued messages in both fail queues in `anvildev` <sub>or this PR does not require reindexing `anvildev`</sub>
 - [ ] Emptied fail queues in `dev` <sub>or this PR does not require reindexing `dev`</sub>
 - [ ] Emptied fail queues in `anvildev` <sub>or this PR does not require reindexing `anvildev`</sub>
+- [ ] Restarted the `trigger_child` job in the most recent Data Browser build for the [ucsc/hca/dev branch](https://gitlab.dev.singlecell.gi.ucsc.edu/ucsc/data-browser/-/pipelines?scope=branches) on GitLab in `dev` <sub>or this PR does not require reindexing `dev`</sub>
+- [ ] Restarted the `trigger_child` job in the most recent Data Browser build for the [ucsc/lungmap/dev branch](https://gitlab.dev.singlecell.gi.ucsc.edu/ucsc/data-browser/-/pipelines?scope=branches) on GitLab in `dev` <sub>or this PR does not require reindexing `dev`</sub>
+- [ ] Restarted `deploy` job in the GitLab pipeline for this PR in `dev` <sub>or this PR does not require reindexing `dev`</sub>
+- [ ] Restarted the `trigger_child` job in the most recent Data Browser build for the [ucsc/anvil/anvildev branch](https://gitlab.anvil.gi.ucsc.edu/ucsc/data-browser/-/pipelines?scope=branches) on GitLab in `anvildev` <sub>or this PR does not require reindexing `anvildev`</sub>
+- [ ] Restarted `deploy` job in the GitLab pipeline for this PR in `anvildev` <sub>or this PR does not require reindexing `anvildev`</sub>
 
 
 ### Operator

@@ -1,4 +1,5 @@
 .. contents::
+.. contents::
 
 Getting started as operator
 ---------------------------
@@ -458,6 +459,30 @@ SSH into the instance, and run ``sudo yum update`` followed by ``sudo reboot``.
 Wait for the GitLab web application to become available again and perform a
 ``git fetch`` from one of the Git repositories hosted on that instance.
 
+Updating the Swagger UI
+^^^^^^^^^^^^^^^^^^^^^^^
+
+Operators should regularly check for available updates to the Swagger UI. The
+current version used by Azul is hardcoded in ``scripts/update_swagger.py``. The
+upstream source is located here:
+
+https://github.com/swagger-api/swagger-ui/tree/master/dist
+
+Scheduled upgrade PR's should only include minor and hotfix updates to the
+Swagger UI. If a new major version is available, open a new issue instead. To
+perform the update, edit the ``tag`` variable in the ``update_swagger`` script
+and run it. If there are nontrivial changes to the ``swagger-initializer.js`` or
+``oauth2-redirect.html`` files, cancel the update and open a new issue instead.
+Otherwise, forward any changes to those two files to their respective mustache
+template files, and commit the changes to the script and all modified files in
+the ``swagger/`` directory. The commit message must include the new tag, as well
+as a link to the upstream source in the commit body, e.g.::
+
+    Update Swagger UI to v<release version> (#issue-number)
+
+    https://github.com/swagger-api/swagger-ui/tree/v<release version>/dist
+
+
 Export AWS Inspector findings
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -605,7 +630,7 @@ backport PR first. The new PR will include the changes from the old one.
 Deploying the Data Browser
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The Data Browser is deployed two steps. The first step is building the
+The Data Browser is deployed in two steps. The first step is building the
 ``ucsc/data-browser`` project on GitLab. This is initiated by pushing a branch
 whose name matches ``ucsc/*/*`` to one of our GitLab instances. The resulting
 pipeline produces a tarball stored in the package registry on that GitLab
@@ -616,14 +641,16 @@ downloads the tarball from the package registry and unpacks that tarball to the
 S3 bucket backing the Data Browser's CloudFront distribution.
 
 Typically, CC requests the deployment of a Data Browser instance on Slack,
-specifying the commit they wish to be deployed. After the system administrator
-approves that request, the operator merges the specified commit into one of the
-``ucsc/{atlas}/{deployment}`` branches and then pushes that branch to the
+specifying the commit (tag or sha1) they wish to be deployed. After the
+system administrator approves that request, the operator pushes the specified tag
+(if a tag was specified) to the GitLab instance for the Azul ``{deployment}``
+that backs the Data Browser instance to be deployed. Then the specified tag (or
+commit, if no tag was specified) is merged into one of the
+``ucsc/{atlas}/{deployment}`` branches. That branch is then is pushed to the
 ``DataBiosphere/data-browser`` project on GitHub, and the ``ucsc/data-browser``
-project on the GitLab instance for the Azul ``{deployment}`` that backs the Data
-Browser instance to be deployed. For the merge commit title, SmartGit's default
-can be used, as long as the title reflects the commit (branch, tag, or sha1)
-specified by CC.
+project on GitLab (same instance as above). For the merge commit title,
+SmartGit's default can be used, as long as the title reflects the commit (tag or
+sha1) specified by CC.
 
 The ``{atlas}`` placeholder can be ``hca``, ``anvil`` or ``lungmap``. Not all
 combinations of ``{atlas}`` and ``{deployment}`` are valid. Valid combinations

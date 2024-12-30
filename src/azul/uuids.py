@@ -1,3 +1,6 @@
+from hashlib import (
+    sha1,
+)
 import math
 from typing import (
     ClassVar,
@@ -254,3 +257,13 @@ class UUIDPartition(Generic[UUID_PARTITION]):
 
 
 UUIDPartition.init_cls()
+
+
+def uuid5_for_bytes(namespace: UUID, name: bytes) -> UUID:
+    """
+    Generate a UUID from the SHA-1 hash of a namespace UUID and a name. Same as
+    uuid.uuid5 but takes `bytes` not `str`, and thereby avoids assuming an
+    encoding (uuid.uuid5 assumes UTF-8).
+    """
+    hash = sha1(namespace.bytes + name).digest()
+    return UUID(bytes=hash[:16], version=5)
