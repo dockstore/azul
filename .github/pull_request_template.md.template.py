@@ -991,7 +991,7 @@ def emit(t: T, target_branch: str):
                             for browser_site in
                             json.loads(deployment_env(d, 'browser')['azul_browser_sites']).values()
                         ],
-                        'Restarted `deploy` job in the GitLab pipeline for this PR'
+                        'Restarted `deploy_browser` job in the GitLab pipeline for this PR'
                     ]
                 ],
                 iif(t is T.hotfix, {

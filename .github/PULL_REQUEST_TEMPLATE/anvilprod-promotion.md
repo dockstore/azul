@@ -92,7 +92,7 @@ Connected issue: #0000
 - [ ] Checked for, triaged and possibly requeued messages in both fail queues in `anvilprod` <sub>or this PR does not require reindexing `anvilprod`</sub>
 - [ ] Emptied fail queues in `anvilprod` <sub>or this PR does not require reindexing `anvilprod`</sub>
 - [ ] Restarted the `trigger_child` job in the most recent Data Browser build for the [ucsc/anvil/anvilprod branch](https://gitlab.explore.anvilproject.org/ucsc/data-browser/-/pipelines?scope=branches) on GitLab in `anvilprod` <sub>or this PR does not require reindexing `anvilprod`</sub>
-- [ ] Restarted `deploy` job in the GitLab pipeline for this PR in `anvilprod` <sub>or this PR does not require reindexing `anvilprod`</sub>
+- [ ] Restarted `deploy_browser` job in the GitLab pipeline for this PR in `anvilprod` <sub>or this PR does not require reindexing `anvilprod`</sub>
 
 
 ### Operator
