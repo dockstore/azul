@@ -367,6 +367,8 @@ class SourceSpec(Generic[SOURCE_SPEC], metaclass=ABCMeta):
     have simple unstructured names may want to use :class:`SimpleSourceSpec`.
     """
 
+    # FIXME: Improve equality and interning semantics for source ref and spec
+    #        https://github.com/DataBiosphere/azul/issues/6778
     prefix: Prefix | None
 
     @classmethod
@@ -467,13 +469,16 @@ class SourceRef(SupportsLessAndGreaterThan, Generic[SOURCE_SPEC, SOURCE_REF]):
     """
     A reference to a repository source containing bundles to index. A repository
     has at least one source. A source is primarily referenced by its ID but we
-    drag the name along to 1) avoid repeatedly looking it up and 2) ensure that
+    drag the spec along to 1) avoid repeatedly looking it up and 2) ensure that
     the mapping between the two doesn't change while we index a source.
 
     Instances of this class are interned: within a Python interpreter process,
-    there will only ever be one instance of this class for any given ID. There
-    may be an instance of a subclass of this class that has the same ID as an
-    instance of this class or another subclass of this class.
+    there will only ever be one instance of this class for any given ID and
+    spec. There may be an instance of a subclass of this class that has the same
+    ID and spec as an instance of this class or another subclass of this class.
+
+    FIXME: Improve equality and interning semantics for source ref and spec
+           https://github.com/DataBiosphere/azul/issues/6778
 
     Note to plugin implementers: Since the source ID can't be assumed to be
     globally unique, plugins should subclass this class, even if the subclass
@@ -497,8 +502,11 @@ class SourceRef(SupportsLessAndGreaterThan, Generic[SOURCE_SPEC, SOURCE_REF]):
 
     def __new__(cls: type[SOURCE_REF], *, id: str, spec: SOURCE_SPEC) -> SOURCE_REF:
         """
-        Interns instances by their ID and ensures that names are unambiguous
-        for any given ID. Two different sources may still use the same name.
+        Interns instances by their ID and spec. Two different sources may still
+        use the same ID or spec.
+
+        FIXME: Improve equality and interning semantics for source ref and spec
+               https://github.com/DataBiosphere/azul/issues/6778
 
         >>> class S(SourceRef): pass
         >>> a, b  = SimpleSourceSpec.parse('a:/0'), SimpleSourceSpec.parse('b:/0')
@@ -508,9 +516,6 @@ class SourceRef(SupportsLessAndGreaterThan, Generic[SOURCE_SPEC, SOURCE_REF]):
 
         >>> S(id='1', spec=a) is S(id='2', spec=a)
         False
-
-        FIXME: Disallow two refs with same ID and different names
-               https://github.com/DataBiosphere/azul/issues/3250
 
         >>> S(id='1', spec=b) # doctest: +NORMALIZE_WHITESPACE
         S(id='1', spec=SimpleSourceSpec(prefix=Prefix(common='',
