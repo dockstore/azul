@@ -1462,9 +1462,6 @@ class Config:
     def gitlab_access_token(self) -> Optional[str]:
         return self.environ.get('azul_gitlab_access_token')
 
-    def portal_db_object_key(self, catalog_source: str) -> str:
-        return f'azul/{self.deployment_stage}/portals/{catalog_source}-db.json'
-
     @property
     def lambda_layer_key(self) -> str:
         return 'lambda_layers'
