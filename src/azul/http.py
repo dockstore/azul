@@ -16,6 +16,7 @@ import urllib3.request
 from azul import (
     cached_property,
     config,
+    require,
 )
 from azul.logging import (
     http_body_log_message,
@@ -170,10 +171,7 @@ class _LimitedRetry(urllib3.Retry):
                    status=retries,
                    other=retries,
                    status_forcelist={500, 502, 503},
-                   # After exhausting status retries, return the most recent
-                   # response instead of raising MaxRetryError. This enables any
-                   # decorating LoggingHttpClient instance to log that response.
-                   raise_on_status=False)
+                   raise_on_status=True)
         self.start = time.time()
         self.retries = retries
         return self
@@ -214,6 +212,7 @@ class LimitedRetryHttpClient(HttpClientDecorator):
 
     def urlopen(self, method, url, **kwargs) -> urllib3.HTTPResponse:
         timeout, retries = self.timeout, self.retries
+        require('retries' not in kwargs, "Argument 'retries' is disallowed")
         retry = _LimitedRetry.create(retries=retries)
         try:
             response = super().urlopen(method,
@@ -221,7 +220,7 @@ class LimitedRetryHttpClient(HttpClientDecorator):
                                        retries=retry,
                                        timeout=timeout,
                                        **kwargs)
-        except urllib3.exceptions.TimeoutError:
+        except (urllib3.exceptions.TimeoutError, urllib3.exceptions.MaxRetryError):
             raise LimitedTimeoutException(url, timeout)
         else:
             if response.status in retry.status_forcelist:
