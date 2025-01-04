@@ -166,6 +166,7 @@ class _LimitedRetry(urllib3.Retry):
                    connect=retries,
                    read=retries + 1,
                    redirect=0,
+                   raise_on_redirect=True,
                    status=retries,
                    other=retries,
                    status_forcelist={500, 502, 503},
