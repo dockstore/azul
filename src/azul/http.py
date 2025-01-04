@@ -1,8 +1,6 @@
 import logging
 import sys
-from time import (
-    time,
-)
+import time
 from typing import (
     Self,
 )
@@ -64,9 +62,9 @@ class LoggingHttpClient(HttpClientDecorator):
         if config.debug > 1:
             log.debug('… with keyword args %r', kwargs)
         log.debug(http_body_log_message('request', body))
-        start = time()
+        start = time.time()
         response = super().urlopen(method, url, body=body, **kwargs)
-        duration = time() - start
+        duration = time.time() - start
         assert isinstance(response, urllib3.HTTPResponse), type(response)
         log.info('Got %s response after %.3fs from %s to %s',
                  response.status, duration, method, url)
@@ -107,7 +105,6 @@ class _LimitedRetry(urllib3.Retry):
     >>> from urllib3.exceptions import ReadTimeoutError
     >>> from urllib3.connectionpool import ConnectionPool
     >>> from typing import cast
-    >>> from time import sleep
     >>> pool = cast(ConnectionPool, None)
     >>> error = ReadTimeoutError(pool=pool, url='', message='')
 
@@ -138,7 +135,7 @@ class _LimitedRetry(urllib3.Retry):
 
     Exhaustion sets in only after a longer delay:
 
-    >>> sleep(.02)
+    >>> time.sleep(.02)
     >>> r.is_exhausted()
     True
     """
@@ -162,7 +159,7 @@ class _LimitedRetry(urllib3.Retry):
                    # response instead of raising MaxRetryError. This enables any
                    # decorating LoggingHttpClient instance to log that response.
                    raise_on_status=False)
-        self.start = time()
+        self.start = time.time()
         self.retries = retries
         return self
 
@@ -173,7 +170,7 @@ class _LimitedRetry(urllib3.Retry):
         # retries is to guarantee that the timeout is not exceeded.
         return (
             super().is_exhausted()
-            or self.retries == 0 and time() - self.start > .01
+            or self.retries == 0 and time.time() - self.start > .01
         )
 
     def new(self, **kwargs) -> Self:
