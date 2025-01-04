@@ -23,6 +23,7 @@ python-gitlab==5.2.0
 pyyaml==6.0.2
 responses==0.25.3
 strict-rfc3339==0.7
+types-urllib3==1.26.20  # match with urllib in requirements.txt
 watchdog==6.0.0
 -r requirements.dev.trans.txt
 -r requirements.txt
