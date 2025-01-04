@@ -903,7 +903,6 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
                                 retries=urllib3.Retry(total=5,
                                                       redirect=0,
                                                       status_forcelist={429, 500, 502, 503, 504}),
-                                redirect=False,
                                 preload_content=not stream)
         assert isinstance(response, urllib3.HTTPResponse)
         return response

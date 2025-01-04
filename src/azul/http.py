@@ -50,8 +50,9 @@ class LoggingHttpClient(HttpClientDecorator):
     """
 
     def __init__(self,
-                 log: logging.Logger,
                  inner: urllib3.request.RequestMethods,
+                 log: logging.Logger,
+                 *,
                  headers: dict | None = None):
         super().__init__(inner, headers)
         self._log = log
@@ -76,12 +77,25 @@ class LoggingHttpClient(HttpClientDecorator):
         return response
 
 
+class DisableCrossHostRedirectClient(HttpClientDecorator):
+    """
+    A client that disables the "custom cross-host redirect logic" (quoting the
+    docstring here) employed by :meth:`urllib3.PoolManager.urlopen` by default.
+    To enable the logic, simply pass ``redirect=True`` to the urlopen() method.
+    """
+
+    def urlopen(self, method, url, **kwargs) -> urllib3.HTTPResponse:
+        kwargs.setdefault('redirect', False)
+        return super().urlopen(method, url, **kwargs)
+
+
 def http_client(log: logging.Logger | None = None) -> urllib3.request.RequestMethods:
-    pool_manager = urllib3.PoolManager(ca_certs=certifi.where())
-    if log is None:
-        return pool_manager
-    else:
-        return LoggingHttpClient(inner=pool_manager, log=log)
+    client: urllib3.request.RequestMethods
+    client = urllib3.PoolManager(ca_certs=certifi.where())
+    client = DisableCrossHostRedirectClient(client)
+    if log is not None:
+        client = LoggingHttpClient(client, log)
+    return client
 
 
 class LimitedTimeoutException(Exception):
