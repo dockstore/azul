@@ -127,7 +127,7 @@ class _LimitedRetry(urllib3.Retry):
 
     With zero retries …
 
-    >>> r = _LimitedRetry.create(retries=0)
+    >>> r = _LimitedRetry.create(retries=0, timeout=5)
 
     … there still is one tentative retry on read:
 
@@ -158,9 +158,10 @@ class _LimitedRetry(urllib3.Retry):
     """
     start: float
     retries: int
+    timeout: float
 
     @classmethod
-    def create(cls, *, retries: int) -> Self:
+    def create(cls, *, retries: int, timeout: float) -> Self:
         # No retries on redirects, limited retries on server failures and I/O
         # errors such as refused or dropped connections. The latter are actually
         # very likely if connections from the pool are reused after a long
@@ -176,6 +177,7 @@ class _LimitedRetry(urllib3.Retry):
                    raise_on_status=True)
         self.start = time.time()
         self.retries = retries
+        self.timeout = timeout
         return self
 
     def is_exhausted(self):
@@ -183,10 +185,11 @@ class _LimitedRetry(urllib3.Retry):
         # Otherwise, read errors that don't result from a stale pool connection
         # could exceed the overall timeout by as much as 100%. The point of zero
         # retries is to guarantee that the timeout is not exceeded.
-        return (
-            super().is_exhausted()
-            or self.retries == 0 and time.time() - self.start > .01
-        )
+        if super().is_exhausted():
+            return True
+        else:
+            elapsed = time.time() - self.start
+            return self.retries == 0 and elapsed > .01 or elapsed >= self.timeout
 
     def new(self, **kwargs) -> Self:
         # This is a copy constructor that's used to create a new instance with
@@ -195,6 +198,7 @@ class _LimitedRetry(urllib3.Retry):
         other = super().new(**kwargs)
         other.start = self.start
         other.retries = self.retries
+        other.timeout = self.timeout
         return other
 
 
@@ -215,12 +219,12 @@ class LimitedRetryHttpClient(HttpClientDecorator):
     def urlopen(self, method, url, **kwargs) -> urllib3.HTTPResponse:
         timeout, retries = self.timeout, self.retries
         require('retries' not in kwargs, "Argument 'retries' is disallowed")
-        retry = _LimitedRetry.create(retries=retries)
+        retry = _LimitedRetry.create(retries=retries, timeout=timeout)
         try:
             response = super().urlopen(method,
                                        url,
                                        retries=retry,
-                                       timeout=timeout,
+                                       timeout=timeout / (1 + retries),
                                        **kwargs)
         except (urllib3.exceptions.TimeoutError, urllib3.exceptions.MaxRetryError):
             raise LimitedTimeoutException(url, timeout)
