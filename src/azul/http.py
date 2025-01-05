@@ -22,15 +22,17 @@ from azul.logging import (
     http_body_log_message,
 )
 
+HttpClient = urllib3.request.RequestMethods
 
-class HttpClientDecorator(urllib3.request.RequestMethods):
+
+class HttpClientDecorator(HttpClient):
     """
     A convenience base class for implementations of the RequestMethods interface
     that decorate some other instance of an implementation of that interface.
     """
 
     def __init__(self,
-                 inner: urllib3.request.RequestMethods,
+                 inner: HttpClient,
                  headers: dict | None = None):
         # We'd use attrs but for some unknown reason that doesn't play well
         # with the superclass constructor.
@@ -51,7 +53,7 @@ class LoggingHttpClient(HttpClientDecorator):
     """
 
     def __init__(self,
-                 inner: urllib3.request.RequestMethods,
+                 inner: HttpClient,
                  log: logging.Logger,
                  *,
                  headers: dict | None = None):
@@ -90,8 +92,8 @@ class DisableCrossHostRedirectClient(HttpClientDecorator):
         return super().urlopen(method, url, **kwargs)
 
 
-def http_client(log: logging.Logger | None = None) -> urllib3.request.RequestMethods:
-    client: urllib3.request.RequestMethods
+def http_client(log: logging.Logger | None = None) -> HttpClient:
+    client: HttpClient
     client = urllib3.PoolManager(ca_certs=certifi.where())
     client = DisableCrossHostRedirectClient(client)
     if log is not None:
@@ -248,10 +250,10 @@ class HasCachedHttpClient:
     """
 
     @cached_property
-    def _http_client(self) -> urllib3.request.RequestMethods:
+    def _http_client(self) -> HttpClient:
         return self._create_http_client()
 
-    def _create_http_client(self) -> urllib3.request.RequestMethods:
+    def _create_http_client(self) -> HttpClient:
         """
         Subclasses can override this method to replace, wrap or modify the HTTP
         client instance returned by this method.
