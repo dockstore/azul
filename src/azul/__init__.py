@@ -1792,3 +1792,7 @@ def iif(condition: bool, then: T, otherwise: E = absent) -> Union[T, E]:
             return type(then)()
         else:
             return otherwise
+
+
+def either(value: T | None, alternative: E) -> T | E:
+    return alternative if value is None else value
