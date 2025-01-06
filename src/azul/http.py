@@ -10,12 +10,14 @@ from furl import (
     furl,
 )
 import urllib3
+import urllib3.connectionpool
 import urllib3.exceptions
 import urllib3.request
 
 from azul import (
     cached_property,
     config,
+    reject,
     require,
 )
 from azul.logging import (
@@ -41,6 +43,16 @@ class HttpClientDecorator(HttpClient):
 
     def urlopen(self, *args, **kwargs) -> urllib3.HTTPResponse:
         return self._inner.urlopen(*args, **kwargs)
+
+    def delegate[T: HttpClient](self, cls: type[T]) -> T | None:
+        inner = self._inner
+        while True:
+            if isinstance(inner, cls):
+                return inner
+            elif isinstance(inner, HttpClientDecorator):
+                inner = inner._inner
+            else:
+                return None
 
 
 class LoggingHttpClient(HttpClientDecorator):
@@ -79,6 +91,9 @@ class LoggingHttpClient(HttpClientDecorator):
             log.debug('… with a streamed response body')
         return response
 
+    def log(self, message: str, *args):
+        self._log.info(message, *args)
+
 
 class DisableCrossHostRedirectClient(HttpClientDecorator):
     """
@@ -98,7 +113,7 @@ def http_client(log: logging.Logger | None = None) -> HttpClient:
     client = DisableCrossHostRedirectClient(client)
     if log is not None:
         client = LoggingHttpClient(client, log)
-    return client
+    return StatusRetryHttpClient(client)
 
 
 class LimitedTimeoutException(Exception):
@@ -265,3 +280,107 @@ class HasCachedHttpClient:
         log = getattr(sys.modules[type(self).__module__], 'log')
         assert isinstance(log, logging.Logger), type(log)
         return http_client(log)
+
+
+class StatusRetryHttpClient(HttpClientDecorator):
+    """
+    An HTTP client that repeats the request until 1) the response status is not
+    one of a specified set of statuses that represent an error, and 2) the
+    number of repeat requests, aka *retries*, exceeds a specified value.
+
+    This class attempts to emulate urllib3's built-in retry logic to the extend
+    that the author understood it (it is rather complex).
+
+    This class imposes additional restrictions on the arguments to the
+    :py:meth:`urlopen` method, and the convenience methods that call it. See
+    :py:meth:`urlopen` for details.
+    """
+
+    redirect_statuses = frozenset(urllib3.HTTPResponse.REDIRECT_STATUSES)
+
+    retry_after_statuses = frozenset(urllib3.Retry.RETRY_AFTER_STATUS_CODES)
+
+    @property
+    def default_retries(self) -> urllib3.Retry:
+        # Despite the class docstring claiming that Retry instances "can be
+        # safely reused", all their attributes are mutable, so that claim
+        # describes a convention and is not explicitly enforced. We therefore
+        # defensively create a new instance each time one is requested.
+        return urllib3.Retry(total=None,
+                             connect=2,
+                             read=2,
+                             redirect=0,
+                             raise_on_redirect=False,
+                             status=5,
+                             raise_on_status=True,
+                             status_forcelist={429, 500, 502, 503, 504})
+
+    def urlopen(self,
+                method: str,
+                url: str,
+                *,
+                retries: urllib3.Retry = None,
+                **kwargs
+                ) -> urllib3.HTTPResponse:
+        """
+        The ``retries`` argument, if specified, must be ``None`` or an instance
+        of ``urllib3.Retry`` that has the ``status`` attribute set to an integer
+        value. If the ``retries.status_forcelist`` attribute is not ``None``,
+        its value must not intersect with the set of statuses that urllib3
+        treats as redirects (``urllib3.HTTPResponse.REDIRECT_STATUSES``).
+
+        If ``retries`` is ``None``, the return value of :meth:`default_retries`
+        is used instead. That value statisfies the above constraints but it is
+        notably different from the default value for the ``retries`` argument to
+        urllib3's ``urlopen()`` method.
+        """
+        if retries is None:
+            retries = self.default_retries
+
+        require(isinstance(retries, urllib3.Retry),
+                "Argument 'retries' must be an instance of urllib3.Retry",
+                type(retries))
+
+        require(isinstance(retries.status, int) and retries.status >= 0,
+                "Argument 'retries.status' must be an non-negative integer",
+                retries.status)
+        num_retries = retries.status
+
+        statuses = frozenset(retries.status_forcelist) or self.retry_after_statuses
+        require(bool(statuses),
+                "Argument 'retries.status_forcelist' must not be empty",
+                statuses)
+        if statuses & self.redirect_statuses:
+            reject(bool(retries.redirect),
+                   "Redirects must be disabled if 'retries.status_forcelist' "
+                   "contains one or more redirect status codes.",
+                   statuses, self.redirect_statuses)
+
+        logging_client = self.delegate(LoggingHttpClient)
+        methods = retries.allowed_methods
+        retryable = methods is False or method in methods
+        inner_retries = retries.new(status=0,
+                                    status_forcelist=None,
+                                    respect_retry_after_header=False)
+        while True:
+            response = super().urlopen(method, url, retries=inner_retries, **kwargs)
+            if retryable and response.status in statuses:
+                if 0 < num_retries:
+                    num_retries -= 1
+                    if retries.respect_retry_after_header:
+                        try:
+                            retry_after = response.headers['Retry-After']
+                        except KeyError:
+                            pass
+                        else:
+                            retry_after = int(retry_after)
+                            if logging_client is not None:
+                                logging_client.log('Sleeping %d to honor Retry-After header', retry_after)
+                            time.sleep(retry_after)
+                else:
+                    if retries.raise_on_status:
+                        raise urllib3.exceptions.MaxRetryError(response.connection, url)
+                    else:
+                        return response
+            else:
+                return response

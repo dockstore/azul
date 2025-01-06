@@ -900,9 +900,6 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
                                 body=body,
                                 headers=headers,
                                 timeout=float(config.api_gateway_lambda_timeout + 1),
-                                retries=urllib3.Retry(total=5,
-                                                      redirect=0,
-                                                      status_forcelist={429, 500, 502, 503, 504}),
                                 preload_content=not stream)
         assert isinstance(response, urllib3.HTTPResponse)
         return response
