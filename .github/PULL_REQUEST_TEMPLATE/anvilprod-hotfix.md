@@ -78,7 +78,7 @@ Connected issue: #0000
 - [ ] Checked for, triaged and possibly requeued messages in both fail queues in `anvilprod` <sub>or neither this PR nor a failed, prior promotion requires it</sub>
 - [ ] Emptied fail queues in `anvilprod` <sub>or neither this PR nor a failed, prior promotion requires it</sub>
 - [ ] Restarted the `trigger_child` job in the most recent Data Browser build for the [ucsc/anvil/anvilprod branch](https://gitlab.explore.anvilproject.org/ucsc/data-browser/-/pipelines?scope=branches) on GitLab in `anvilprod` <sub>or neither this PR nor a failed, prior promotion requires it</sub>
-- [ ] Restarted `deploy` job in the GitLab pipeline for this PR in `anvilprod` <sub>or neither this PR nor a failed, prior promotion requires it</sub>
+- [ ] Restarted `deploy_browser` job in the GitLab pipeline for this PR in `anvilprod` <sub>or neither this PR nor a failed, prior promotion requires it</sub>
 - [ ] Created backport PR and linked to it in a comment on this PR
 
 
