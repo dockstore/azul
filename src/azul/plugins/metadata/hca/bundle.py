@@ -43,6 +43,7 @@ class HCABundle(Bundle[BUNDLE_FQID], ABC):
     stitched: set[str] = attrs.field(factory=set)
 
     def reject_joiner(self, catalog: CatalogName):
+        # We can skip the `stitched` attribute because it only contains UUIDs
         self._reject_joiner(self.manifest)
         self._reject_joiner(self.metadata)
         self._reject_joiner(self.links)
