@@ -26,7 +26,6 @@ from typing import (
 import attrs
 
 from azul import (
-    CatalogName,
     RequirementError,
     config,
     reject,
@@ -641,7 +640,7 @@ class Bundle(Generic[BUNDLE_FQID], metaclass=ABCMeta):
                 raise RequirementError(msg, self.fqid)
 
     @abstractmethod
-    def reject_joiner(self, catalog: CatalogName):
+    def reject_joiner(self):
         """
         Raise a requirement error if the manifest joiner occurs in this bundle
         """
