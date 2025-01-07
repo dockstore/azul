@@ -41,9 +41,7 @@ class HCABundle(Bundle[BUNDLE_FQID], ABC):
 
     def reject_joiner(self):
         # We can skip the `stitched` attribute because it only contains UUIDs
-        self._reject_joiner(self.manifest)
-        self._reject_joiner(self.metadata)
-        self._reject_joiner(self.links)
+        self._reject_joiner([self.manifest, self.metadata, self.links])
 
     def to_json(self) -> MutableJSON:
         return {
