@@ -60,7 +60,6 @@ from azul.indexer.transform import (
 )
 from azul.types import (
     JSON,
-    JSONs,
     MutableJSON,
     get_generic_type_params,
 )
@@ -683,13 +682,6 @@ class RepositoryPlugin(Plugin[BUNDLE],
 
         :param bundle_fqid: The fully qualified ID of the bundle to fetch,
                             including its source.
-        """
-        raise NotImplementedError
-
-    @abstractmethod
-    def portal_db(self) -> JSONs:
-        """
-        Returns integrations data object
         """
         raise NotImplementedError
 

@@ -43,7 +43,6 @@ from typing import (
     TypedDict,
     cast,
 )
-import unittest
 from unittest import (
     mock,
 )
@@ -160,9 +159,6 @@ from azul.plugins.metadata.anvil.bundle import (
 from azul.plugins.repository.tdr_anvil import (
     BundleType,
     TDRAnvilBundleFQID,
-)
-from azul.portal_service import (
-    PortalService,
 )
 from azul.service.async_manifest_service import (
     Token,
@@ -1704,94 +1700,6 @@ class AzulClientIntegrationTest(IntegrationTestCase):
                           self.azul_client.index,
                           first(config.integration_test_catalogs),
                           notifications)
-
-
-class PortalTestCase(IntegrationTestCase):
-
-    @cached_property
-    def portal_service(self) -> PortalService:
-        return PortalService()
-
-
-class PortalExpirationIntegrationTest(PortalTestCase):
-
-    def test_expiration_tagging(self):
-        # This will upload the default DB if it is missing
-        self.portal_service.read()
-        s3_client = self.portal_service.client
-        response = s3_client.get_object_tagging(Bucket=self.portal_service.bucket,
-                                                Key=self.portal_service.object_key)
-        tags = [(tag['Key'], tag['Value']) for tag in response['TagSet']]
-        self.assertIn(self.portal_service._expiration_tag, tags)
-
-
-# FIXME: Re-enable when SlowDown error can be avoided
-#        https://github.com/DataBiosphere/azul/issues/4285
-@unittest.skip('Test disabled. FIXME #4285')
-@unittest.skipUnless(config.deployment.is_sandbox_or_personal,
-                     'Test would pollute portal DB')
-class PortalRegistrationIntegrationTest(PortalTestCase, AlwaysTearDownTestCase):
-
-    @property
-    def expected_db(self) -> JSONs:
-        return self.portal_service.default_db
-
-    def setUp(self) -> None:
-        self.old_db = self.portal_service.read()
-        self.portal_service.overwrite(self.expected_db)
-
-    def test_concurrent_portal_db_crud(self):
-        """
-        Use multithreading to simulate multiple users simultaneously modifying
-        the portals database.
-        """
-
-        n_threads = 4
-        n_tasks = n_threads * 5
-        n_ops = 5
-
-        entry_format = 'task={};op={}'
-
-        running = True
-
-        def run(thread_count):
-            for op_count in range(n_ops):
-                if not running:
-                    break
-                mock_entry = {
-                    'portal_id': 'foo',
-                    'integrations': [
-                        {
-                            'integration_id': 'bar',
-                            'entity_type': 'project',
-                            'integration_type': 'get',
-                            'entity_ids': ['baz']
-                        }
-                    ],
-                    'mock-count': entry_format.format(thread_count, op_count)
-                }
-                self.portal_service._crud(lambda db: [*db, mock_entry])
-
-        with ThreadPoolExecutor(max_workers=n_threads) as executor:
-            futures = [executor.submit(run, i) for i in range(n_tasks)]
-            try:
-                self.assertTrue(all(f.result() is None for f in futures))
-            finally:
-                running = False
-
-        new_db = self.portal_service.read()
-
-        old_entries = [portal for portal in new_db if 'mock-count' not in portal]
-        self.assertEqual(old_entries, self.expected_db)
-        mock_counts = [portal['mock-count'] for portal in new_db if 'mock-count' in portal]
-        self.assertEqual(len(mock_counts), len(set(mock_counts)))
-        self.assertEqual(set(mock_counts), {
-            entry_format.format(i, j)
-            for i in range(n_tasks) for j in range(n_ops)
-        })
-
-    def tearDown(self) -> None:
-        self.portal_service.overwrite(self.old_db)
 
 
 class OpenAPIIntegrationTest(AzulTestCase):

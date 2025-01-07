@@ -7,29 +7,12 @@ from azul.service.source_service import (
 from azul.terraform import (
     emit_tf,
 )
-from azul.version_service import (
-    VersionService,
-)
 
 emit_tf(
     {
         "resource": [
             {
                 "aws_dynamodb_table": {
-                    "object_versions": {
-                        "name": config.dynamo_object_version_table_name,
-                        "billing_mode": "PAY_PER_REQUEST",
-                        "point_in_time_recovery": {
-                            "enabled": True
-                        },
-                        "hash_key": VersionService.key_name,
-                        "attribute": [
-                            {
-                                "name": VersionService.key_name,
-                                "type": "S"
-                            }
-                        ]
-                    },
                     "sources_cache_by_auth": {
                         "name": config.dynamo_sources_cache_table_name,
                         "billing_mode": "PAY_PER_REQUEST",

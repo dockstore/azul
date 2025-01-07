@@ -20,7 +20,6 @@ from tempfile import (
 import time
 from typing import (
     AbstractSet,
-    Sequence,
 )
 
 from furl import (
@@ -199,9 +198,6 @@ class Plugin(RepositoryPlugin[CannedBundle, SimpleSourceSpec, CannedSourceRef, C
         log.info('It took %.003fs to download bundle %s.%s',
                  time.time() - now, bundle.uuid, bundle.version)
         return bundle
-
-    def portal_db(self) -> Sequence[JSON]:
-        return []
 
     def _construct_file_url(self, url: furl, file_name: str) -> furl:
         """

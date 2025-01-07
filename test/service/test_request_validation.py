@@ -281,13 +281,9 @@ class RequestParameterValidationTest(DCP1CannedBundleTestCase,
         for entity_type in ('files', 'bundles', 'samples'):
             url = self.base_url.set(path=('index', entity_type))
             with self.subTest(entity_type=entity_type):
-                with self.subTest(test='extra parameter'):
-                    url.args = dict(catalog=self.catalog,
-                                    some_nonexistent_filter=1)
-                    self.assertBadRequest(url, 'Unknown query parameter `some_nonexistent_filter`')
-        with self.subTest(test='missing required parameter'):
-            url = self.base_url.set(path='/integrations')
-            self.assertBadRequest(url, 'Missing required query parameters `entity_type`, `integration_type`')
+                url.args = dict(catalog=self.catalog,
+                                some_nonexistent_filter=1)
+                self.assertBadRequest(url, 'Unknown query parameter `some_nonexistent_filter`')
 
     def test_bad_catalog_param(self):
         for path in (*('/index/' + e for e in ('summary', 'files')),

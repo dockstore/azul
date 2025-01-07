@@ -90,9 +90,6 @@ from azul.plugins import (
 from azul.plugins.metadata.hca.indexer.transform import (
     value_and_unit,
 )
-from azul.portal_service import (
-    PortalService,
-)
 from azul.service import (
     FileUrlFunc,
 )
@@ -231,7 +228,7 @@ spec = {
         # changes and reset the minor version to zero. Otherwise, increment only
         # the minor version for backwards compatible changes. A backwards
         # compatible change is one that does not require updates to clients.
-        'version': '9.3'
+        'version': '10.0'
     },
     'tags': [
         {
@@ -755,42 +752,6 @@ deprecated_method_spec = {
     'tags': ['Deprecated'],
     'deprecated': True
 }
-
-
-@app.route(
-    '/integrations',
-    methods=['GET'],
-    cors=True,
-    method_spec=deprecated_method_spec
-)
-def get_integrations():
-    query_params = app.current_request.query_params or {}
-    validate_params(query_params,
-                    entity_type=Mandatory(str),
-                    integration_type=Mandatory(str),
-                    entity_ids=str)
-    try:
-        entity_ids = query_params['entity_ids']
-    except KeyError:
-        # Case where parameter is absent (do not filter using entity_id field)
-        entity_ids = None
-    else:
-        if entity_ids:
-            # Case where parameter is present and non-empty (filter for matching id value)
-            entity_ids = {entity_id.strip() for entity_id in entity_ids.split(',')}
-        else:
-            # Case where parameter is present but empty (filter for missing entity_id field,
-            # i.e., there are no acceptable id values)
-            entity_ids = set()
-
-    entity_type = query_params['entity_type']
-    integration_type = query_params['integration_type']
-
-    portal_service = PortalService()
-    body = portal_service.list_integrations(entity_type, integration_type, entity_ids)
-    return Response(status_code=200,
-                    headers={'content-type': 'application/json'},
-                    body=json.dumps(body))
 
 
 @app.route(
