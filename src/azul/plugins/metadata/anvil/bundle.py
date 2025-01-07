@@ -4,6 +4,9 @@ from abc import (
 from collections import (
     defaultdict,
 )
+from itertools import (
+    chain,
+)
 from typing import (
     AbstractSet,
     Generic,
@@ -122,9 +125,9 @@ class AnvilBundle(Bundle[BUNDLE_FQID], ABC):
     orphans: dict[EntityReference, MutableJSON] = attrs.field(factory=dict)
 
     def reject_joiner(self):
-        # FIXME: Optimize joiner rejection and re-enable it for AnVIL
-        #        https://github.com/DataBiosphere/azul/issues/5256
-        pass
+        # We can skip the `links` attribute because the only strings it contains
+        # are UUIDs and table names
+        self._reject_joiner(chain(self.entities.values(), self.orphans.values()))
 
     def to_json(self) -> MutableJSON:
         def to_json(entities):
