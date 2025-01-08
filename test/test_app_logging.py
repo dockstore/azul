@@ -96,35 +96,42 @@ class TestAppLogging(AzulUnitTestCase):
                     self.assertIn(magic_message, app_log.output[0])
                     self.assertIn(traceback_header, app_log.output[0])
 
-                    if debug:
-                        # In debug mode, the response includes the traceback …
-                        response = response.content.decode()
-                        self.assertTrue(response.startswith(traceback_header))
-                        self.assertIn(magic_message, response)
-                        # … and the response is logged.
-                        headers = {
-                            'Content-Type': 'text/plain',
-                            **app.security_headers(),
-                            'Cache-Control': 'no-store'
-                        }
-                        self.assertEqual(
-                            azul_log.output[2],
-                            'DEBUG:azul.chalice:Returning 500 response with headers ' +
-                            json.dumps(headers) + '. ' +
-                            'See next line for the first 1024 characters of the body.\n' +
-                            response
-                        )
-                    else:
-                        # Otherwise, a generic error response is returned …
-                        self.assertEqual(response.json(), {
+                    body = response.content.decode()
+                    if debug < 2:
+                        # We don't allow stacktraces in error responses …
+                        self.assertNotIn(traceback_header, body)
+                        self.assertNotIn(magic_message, body)
+                        body = json.loads(body)
+                        self.assertEqual(body, {
+                            'RequestId': body['RequestId'],  # different for every request
                             'Code': 'InternalServerError',
-                            'Message': 'An internal server error occurred.'
+                            'Message': 'An internal server error occurred.',
                         })
-                        # … and a generic error message is logged.
-                        self.assertEqual(
-                            azul_log.output[2],
-                            'INFO:azul.chalice:Returning 500 response. To log headers and body, set AZUL_DEBUG to 1.'
-                        )
+                        body = json.dumps(body)  # the body is logged without indentation
+                    else:
+                        # … except at the highest debug setting.
+                        self.assertIn(traceback_header, body)
+                        self.assertIn(magic_message, body)
+
+                    headers = {
+                        # At lower debug levels, the content type header isn't
+                        # set when running Chalice locally. If it were, the
+                        # expected value would be `application/json`.
+                        **({} if debug < 2 else {'Content-Type': 'text/plain'}),
+                        **app.security_headers(),
+                        'Cache-Control': 'no-store',
+                    }
+                    expected = (
+                        'DEBUG:azul.chalice:Returning 500 response with headers ' +
+                        json.dumps(headers) + '. ' +
+                        'See next line for the first 1024 characters of the body.\n' +
+                        body
+                    ) if debug else (
+                        'INFO:azul.chalice:Returning 500 response. ' +
+                        'To log headers and body, set AZUL_DEBUG to 1.'
+                    )
+                    self.maxDiff = None
+                    self.assertEqual(azul_log.output[2], expected)
 
 
 class TestPermittedWarnings(AzulUnitTestCase):
