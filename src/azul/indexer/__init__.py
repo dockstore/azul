@@ -643,7 +643,7 @@ class Bundle(Generic[BUNDLE_FQID], metaclass=ABCMeta):
     @abstractmethod
     def reject_joiner(self, catalog: CatalogName):
         """
-        Raise a requirement error if the given string is found in the bundle
+        Raise a requirement error if the manifest joiner occurs in this bundle
         """
         raise NotImplementedError
 
