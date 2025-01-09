@@ -264,7 +264,7 @@ def env() -> Mapping[str, Optional[str]]:
         # `make -C terraform check_schema`, and committing the resulting
         # changes.
         #
-        'azul_terraform_version': '1.9.8',
+        'azul_terraform_version': '1.10.4',
 
         # When building the Azul image on a FIPS mode enabled system (e.g.
         # GitLab), this variable should be set to `/proc/sys/crypto`, the path
