@@ -477,18 +477,17 @@ class MetadataPlugin(Plugin[BUNDLE]):
                             replicas: list[JSON]
                             ) -> list[JSON]:
         """
-        Generate a PFB schema for the verbatim manifest. The default,
-        metadata-agnostic implementation loads all replica documents into memory
-        and dynamically generates a schema based on their observed shapes. This
-        results in inconsistencies in the schema depending on the manifest
-        contents, so subclasses should override this method if their metadata
-        adheres to an authoritative schema that can be known in advance.
+        Generate the azul-specific parts of the PFB schema for the verbatim
+        manifest. The default, metadata-agnostic implementation loads all
+        replica documents into memory and dynamically generates a schema based
+        on their observed shapes. This results in inconsistencies in the schema
+        depending on the manifest contents, so subclasses should override this
+        method if their metadata adheres to an authoritative schema that can be
+        known in advance.
 
         :param replicas: The replica documents to be described by the PFB schema
 
-        :return: a tuple of
-            1. the set of entity types defined by the PFB schema
-            2. a PFB schema describing the provided replicas
+        :return: a list of PFB entity schemas describing the replicas
         """
         from azul.service import (
             avro_pfb,
