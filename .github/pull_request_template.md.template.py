@@ -21,6 +21,9 @@ from typing import (
     cast,
 )
 
+from furl import (
+    furl,
+)
 from more_itertools import (
     flatten,
     stagger,
@@ -255,6 +258,14 @@ def deployment_env(deployment: str,
 
 def azul_domain_name(d):
     return deployment_env(d)['AZUL_DOMAIN_NAME']
+
+
+def link(anchor: str, url: furl | str) -> str:
+    if isinstance(url, furl):
+        url = str(url)
+    assert ']' not in anchor, anchor
+    assert ')' not in url, url
+    return f'[{anchor}]({url})'
 
 
 def emit(t: T, target_branch: str):
@@ -984,10 +995,15 @@ def emit(t: T, target_branch: str):
                     for d, s in t.target_deployments(target_branch).items()
                     for action in [
                         *[
-                            'Restarted the `trigger_child` job in the most recent Data Browser build for the ['
-                            f'{browser_site['branch']} branch]'
-                            f'(https://gitlab.{azul_domain_name(d)}/ucsc/data-browser/-/pipelines?scope=branches) '
-                            f'on GitLab'
+                            ' '.join([
+                                'Restarted the Data Browser pipeline for the',
+                                link(
+                                    browser_site['branch'] + ' branch',
+                                    furl(f'https://gitlab.{azul_domain_name(d)}/ucsc/data-browser/-/pipelines/new',
+                                         args=dict(ref=browser_site['branch']))
+                                ),
+                                'on GitLab'
+                            ])
                             for browser_site in
                             json.loads(deployment_env(d, 'browser')['azul_browser_sites']).values()
                         ],
