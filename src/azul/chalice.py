@@ -675,9 +675,8 @@ class AzulChaliceApp(Chalice):
             }
         )
         def swagger_redirect():
-            return Response(status_code=301,
-                            body='',
-                            headers={'Location': str(self.base_url.set(path='swagger/index.html'))})
+            headers = {'Location': str(self.base_url.set(path='swagger/index.html'))}
+            return Response(status_code=301, body='', headers=headers)
 
         @self.route(
             '/swagger/index.html',
@@ -727,9 +726,8 @@ class AzulChaliceApp(Chalice):
                     for path, method in self.non_interactive_routes
                 ])
             })
-            return Response(status_code=200,
-                            body=body,
-                            headers={'Content-Type': 'application/javascript'})
+            headers = {'Content-Type': 'application/javascript'}
+            return Response(status_code=200, body=body, headers=headers)
 
         @self.route(
             '/swagger/{file}',
