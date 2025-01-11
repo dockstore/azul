@@ -1945,9 +1945,9 @@ class ResponseHeadersTest(AzulTestCase):
         short_cache = 'public, max-age=60, must-revalidate'
         long_cache = 'public, max-age=86400, must-revalidate'
         test_cases = {
-            '/static/index.html': long_cache,
-            '/static/swagger-initializer.js': short_cache,
-            '/static/swagger-ui.css': long_cache,
+            '/swagger/index.html': long_cache,
+            '/swagger/swagger-initializer.js': short_cache,
+            '/swagger/swagger-ui.css': long_cache,
             '/openapi.json': short_cache,
             '/oauth2_redirect': no_cache,
             '/health/basic': no_cache

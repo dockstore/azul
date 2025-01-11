@@ -8,7 +8,7 @@
     "paths": {
         "/": {
             "get": {
-                "summary": "A redirect to the Swagger UI for interactive use of this REST API",
+                "summary": "Redirect to the Swagger UI for interactive use of this REST API",
                 "tags": [
                     "Auxiliary"
                 ],
@@ -24,7 +24,7 @@
         },
         "/static/index.html": {
             "get": {
-                "summary": "A Swagger UI for interactive use of this REST API",
+                "summary": "The Swagger UI for interactive use of this REST API",
                 "tags": [
                     "Auxiliary"
                 ],

@@ -665,7 +665,7 @@ class AzulChaliceApp(Chalice):
             '/',
             interactive=False,
             method_spec={
-                'summary': 'A redirect to the Swagger UI for interactive use of this REST API',
+                'summary': 'Redirect to the Swagger UI for interactive use of this REST API',
                 'tags': ['Auxiliary'],
                 'responses': {
                     '301': {
@@ -685,7 +685,7 @@ class AzulChaliceApp(Chalice):
             cache_control=self._http_cache_for(24 * 60 * 60),
             cors=False,
             method_spec={
-                'summary': 'A Swagger UI for interactive use of this REST API',
+                'summary': 'The Swagger UI for interactive use of this REST API',
                 'tags': ['Auxiliary'],
                 'responses': {
                     '200': {
