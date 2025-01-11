@@ -1716,7 +1716,7 @@ class OpenAPIIntegrationTest(AzulTestCase):
                 self.assertEqual(response.headers['content-type'], 'text/html')
                 self.assertGreater(len(response.content), 0)
                 # validate OpenAPI spec
-                url.set(path='/openapi')
+                url.set(path='/openapi.json')
                 response = requests.get(str(url))
                 response.raise_for_status()
                 spec = response.json()
@@ -1904,7 +1904,7 @@ class SwaggerResourceIntegrationTest(AzulTestCase):
                 ('..%2Fdoes-not-exist', 403),
             ]:
                 with self.subTest(component=component, file=file):
-                    response = http.request(GET, str(base_url / 'static' / file))
+                    response = http.request(GET, str(base_url / 'swagger' / file))
                     self.assertEqual(expected_status, response.status)
 
 

@@ -2,7 +2,7 @@
     "openapi": "3.0.1",
     "info": {
         "title": "azul-indexer-dev",
-        "version": "2.0",
+        "version": "3.0",
         "description": "\nThis is the internal API for Azul's indexer component.\n"
     },
     "paths": {
@@ -22,7 +22,7 @@
                 }
             }
         },
-        "/static/index.html": {
+        "/swagger/index.html": {
             "get": {
                 "summary": "The Swagger UI for interactive use of this REST API",
                 "tags": [
@@ -38,7 +38,7 @@
                 }
             }
         },
-        "/static/swagger-initializer.js": {
+        "/swagger/swagger-initializer.js": {
             "get": {
                 "summary": "Used internally by the Swagger UI",
                 "tags": [
@@ -117,7 +117,7 @@
                 ]
             }
         },
-        "/static/{file}": {
+        "/swagger/{file}": {
             "parameters": [
                 {
                     "name": "file",

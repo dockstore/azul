@@ -677,10 +677,10 @@ class AzulChaliceApp(Chalice):
         def swagger_redirect():
             return Response(status_code=301,
                             body='',
-                            headers={'Location': str(self.base_url.set(path='static/index.html'))})
+                            headers={'Location': str(self.base_url.set(path='swagger/index.html'))})
 
         @self.route(
-            '/static/index.html',
+            '/swagger/index.html',
             interactive=False,
             cache_control=self._http_cache_for(24 * 60 * 60),
             cors=False,
@@ -698,7 +698,7 @@ class AzulChaliceApp(Chalice):
             return self.swagger_resource('index.html')
 
         @self.route(
-            '/static/swagger-initializer.js',
+            '/swagger/swagger-initializer.js',
             interactive=False,
             cache_control=self._http_cache_for(60),
             cors=True,
@@ -767,7 +767,7 @@ class AzulChaliceApp(Chalice):
                             body=self.spec())
 
         @self.route(
-            '/static/{file}',
+            '/swagger/{file}',
             interactive=False,
             cache_control=self._http_cache_for(24 * 60 * 60),
             cors=True,
@@ -789,7 +789,7 @@ class AzulChaliceApp(Chalice):
                 ]
             }
         )
-        def static_resource(file):
+        def swagger_resource(file):
             return self.swagger_resource(file)
 
         @self.route(
