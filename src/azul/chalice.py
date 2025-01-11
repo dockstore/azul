@@ -717,9 +717,9 @@ class AzulChaliceApp(Chalice):
             template = self.load_static_resource('swagger', file_name)
             base_url = self.base_url
             redirect_url = furl(base_url).add(path='oauth2_redirect')
-            deployment_url = furl(base_url).add(path='openapi')
+            openapi_spec = furl(base_url).add(path='openapi')
             body = chevron.render(template, {
-                'DEPLOYMENT_PATH': json.dumps(str(deployment_url.path)),
+                'OPENAPI_SPEC': json.dumps(str(openapi_spec.path)),
                 'OAUTH2_CLIENT_ID': json.dumps(config.google_oauth2_client_id),
                 'OAUTH2_REDIRECT_URL': json.dumps(str(redirect_url)),
                 'NON_INTERACTIVE_METHODS': json.dumps([
