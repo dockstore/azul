@@ -829,6 +829,33 @@ class AzulChaliceApp(Chalice):
                 'changes': compact_changes(limit=10)
             }
 
+        @self.route(
+            '/robots.txt',
+            methods=['GET'],
+            cors=True,
+            method_spec={
+                'summary': 'Robots Exclusion Protocol',
+                'tags': ['Auxiliary'],
+                'responses': {
+                    '200': {
+                        'description': format_description('''
+                            The robots.txt resource according to
+                            [RFC9309](https://datatracker.ietf.org/doc/html/rfc9309)
+                        '''),
+                    }
+                }
+            }
+        )
+        def robots_txt():
+            body = '\n'.join(f'{k}: {v}' for k, v in [
+                ('User-agent', '*'),
+                ('Disallow', '/'),
+                ('Allow', '/$'),
+                ('Allow', '/swagger/')
+            ])
+            headers = {'Content-Type': 'text/plain'}
+            return Response(status_code=200, headers=headers, body=body)
+
         return locals()
 
     def default_method_specs(self):
