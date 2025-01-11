@@ -77,7 +77,7 @@ Connected issue: #0000
 - [ ] Started reindex in `anvilprod` <sub>or neither this PR nor a failed, prior promotion requires it</sub>
 - [ ] Checked for, triaged and possibly requeued messages in both fail queues in `anvilprod` <sub>or neither this PR nor a failed, prior promotion requires it</sub>
 - [ ] Emptied fail queues in `anvilprod` <sub>or neither this PR nor a failed, prior promotion requires it</sub>
-  - [ ] Restarted the Data Browser pipeline for the [ucsc/anvil/anvilprod branch](https://gitlab.explore.anvilproject.org/ucsc/data-browser/-/pipelines/new?ref=ucsc%2Fanvil%2Fanvilprod) on GitLab in `anvilprod` <sub>or neither this PR nor a failed, prior promotion requires it</sub>
+- [ ] Restarted the Data Browser pipeline for the [ucsc/anvil/anvilprod branch](https://gitlab.explore.anvilproject.org/ucsc/data-browser/-/pipelines/new?ref=ucsc%2Fanvil%2Fanvilprod) on GitLab in `anvilprod` <sub>or neither this PR nor a failed, prior promotion requires it</sub>
 - [ ] Restarted `deploy_browser` job in the GitLab pipeline for this PR in `anvilprod` <sub>or neither this PR nor a failed, prior promotion requires it</sub>
 - [ ] Created backport PR and linked to it in a comment on this PR
 
