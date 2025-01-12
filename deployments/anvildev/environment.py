@@ -90,7 +90,6 @@ def env() -> Mapping[str, Optional[str]]:
         'AZUL_DEPLOYMENT_STAGE': 'anvildev',
 
         'AZUL_DOMAIN_NAME': 'anvil.gi.ucsc.edu',
-        'AZUL_PRIVATE_API': '0',
 
         'AZUL_CATALOGS': json.dumps({
             f'{catalog}{suffix}': dict(atlas=atlas,
