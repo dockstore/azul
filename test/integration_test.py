@@ -493,7 +493,7 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
             assert False, catalog
         service_paths = {
             '/': None,
-            '/openapi': None,
+            '/openapi.json': None,
             # the version endpoint is tested separately
             '/index/summary': None,
             f'/index/{bundle_index}': {
@@ -1948,7 +1948,7 @@ class ResponseHeadersTest(AzulTestCase):
             '/static/index.html': long_cache,
             '/static/swagger-initializer.js': short_cache,
             '/static/swagger-ui.css': long_cache,
-            '/openapi': short_cache,
+            '/openapi.json': short_cache,
             '/oauth2_redirect': no_cache,
             '/health/basic': no_cache
         }
