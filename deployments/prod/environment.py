@@ -1445,5 +1445,5 @@ def env() -> Mapping[str, Optional[str]]:
         # region, so a weighted average is calculated based on the observed
         # number of daily downloads per region.
         #
-        # 'AZUL_FILE_DOWNLOAD_RATE_LIMIT': '59/600@2.9'
+        # 'azul_file_download_rate_limit': '59/600@2.9'
     }

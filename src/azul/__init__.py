@@ -1611,7 +1611,7 @@ class Config:
 
     @property
     def waf_file_download_limit(self) -> FileDownloadLimit | None:
-        value = self.environ.get('AZUL_FILE_DOWNLOAD_RATE_LIMIT')
+        value = self.environ.get('azul_file_download_rate_limit')
         if value is None:
             return None
         else:

@@ -946,5 +946,5 @@ def env() -> Mapping[str, Optional[str]]:
         # for restrictions on the supported values for `<limit>` ("Rate limit")
         # and `<window>` ("Evaluation window").
         #
-        'AZUL_FILE_DOWNLOAD_RATE_LIMIT': None
+        'azul_file_download_rate_limit': None
     }
