@@ -702,7 +702,15 @@ class AzulChaliceApp(Chalice):
             interactive=False,
             cache_control=self._http_cache_for(60),
             cors=True,
-            method_spec={}
+            method_spec={
+                'summary': 'Used internally by the Swagger UI',
+                'tags': ['Auxiliary'],
+                'responses': {
+                    '200': {
+                        'description': 'The response body is JavaScript used internally by the Swagger UI'
+                    }
+                }
+            }
         )
         def swagger_initializer():
             file_name = 'swagger-initializer.js.template.mustache'
