@@ -59,6 +59,7 @@ jobs:
           make anvil_schema
           make check_clean
           make pep8
+          mypy
           AZUL_DEBUG=0 GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }} make test
           make check_clean
           coverage xml

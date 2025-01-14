@@ -8,7 +8,6 @@ from typing import (
     Type,
     TypeVar,
     Union,
-    get_origin,
 )
 
 from more_itertools import (
@@ -21,6 +20,7 @@ from azul import (
 from azul.types import (
     JSON,
     PrimitiveJSON,
+    reify,
 )
 
 """
@@ -457,7 +457,7 @@ def make_type(t: TYPE) -> JSON:
         return _primitive_types[t]
     elif isinstance(t, str):
         return {'type': t}
-    elif isinstance(t, get_origin(JSON)):
+    elif isinstance(t, reify(JSON)):
         return t
     else:
         assert False, type(t)

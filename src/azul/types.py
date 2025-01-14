@@ -8,9 +8,9 @@ from types import (
 from typing import (
     Any,
     ForwardRef,
-    Generic,
     Optional,
     Protocol,
+    TypeAliasType,
     TypeVar,
     Union,
     get_args,
@@ -27,27 +27,19 @@ PrimitiveJSON = str | int | float | bool | None
 # two generic types are the most specific *immutable* super-types of `list`,
 # `tuple` and `dict`:
 
-AnyJSON4 = Sequence[Any] | Mapping[str | Any] | PrimitiveJSON
-AnyJSON3 = Sequence[AnyJSON4] | Mapping[str, AnyJSON4] | PrimitiveJSON
-AnyJSON2 = Sequence[AnyJSON3] | Mapping[str, AnyJSON3] | PrimitiveJSON
-AnyJSON1 = Sequence[AnyJSON2] | Mapping[str, AnyJSON2] | PrimitiveJSON
-AnyJSON = Sequence[AnyJSON1] | Mapping[str, AnyJSON1] | PrimitiveJSON
-JSON = Mapping[str, AnyJSON]
-JSONs = Sequence[JSON]
-CompositeJSON = JSON | Sequence[AnyJSON]
-FlatJSON = Mapping[str, PrimitiveJSON]
+type AnyJSON = Sequence[AnyJSON] | Mapping[str, AnyJSON] | PrimitiveJSON
+type JSON = Mapping[str, AnyJSON]
+type JSONs = Sequence[JSON]
+type CompositeJSON = JSON | Sequence[AnyJSON]
+type FlatJSON = Mapping[str, PrimitiveJSON]
 
 # For mutable JSON we can be more specific and use dict and list:
 
-AnyMutableJSON4 = list[Any] | dict[str, Any] | PrimitiveJSON
-AnyMutableJSON3 = list[AnyMutableJSON4] | dict[str, AnyMutableJSON4] | PrimitiveJSON
-AnyMutableJSON2 = list[AnyMutableJSON3] | dict[str, AnyMutableJSON3] | PrimitiveJSON
-AnyMutableJSON1 = list[AnyMutableJSON2] | dict[str, AnyMutableJSON2] | PrimitiveJSON
-AnyMutableJSON = list[AnyMutableJSON1] | dict[str, AnyMutableJSON1] | PrimitiveJSON
-MutableJSON = dict[str, AnyMutableJSON]
-MutableJSONs = list[MutableJSON]
-MutableCompositeJSON = MutableJSON | list[AnyJSON]
-MutableFlatJSON = dict[str, PrimitiveJSON]
+type AnyMutableJSON = list[AnyMutableJSON] | dict[str, AnyMutableJSON] | PrimitiveJSON
+type MutableJSON = dict[str, AnyMutableJSON]
+type MutableJSONs = list[MutableJSON]
+type MutableCompositeJSON = MutableJSON | list[AnyJSON]
+type MutableFlatJSON = dict[str, PrimitiveJSON]
 
 
 class LambdaContext(object):
@@ -127,16 +119,16 @@ def is_optional(t) -> bool:
 
 def reify(t):
     """
-    Given a parameterized type construct, return a tuple of
-    subclasses of ``type`` representing all possible alternatives that can pass
-    for that construct at runtime. The return value is meant to be used as the
-    second argument to the ``isinstance`` or ``issubclass`` built-ins.
+    Given a parameterized type construct, return a tuple of subclasses of
+    ``type`` representing all possible alternatives that can pass for that
+    construct at runtime. The return value is meant to be used as the second
+    argument to the ``isinstance`` or ``issubclass`` built-ins.
 
     >>> reify(int)
-    <class 'int'>
+    (<class 'int'>,)
 
     >>> reify(Union[int])
-    <class 'int'>
+    (<class 'int'>,)
 
     >>> reify(str | int)
     (<class 'str'>, <class 'int'>)
@@ -191,31 +183,29 @@ def reify(t):
         ...
     ValueError: ('Not a reifiable generic type', typing.Union)
     """
-    # While `int | str` constructs a `UnionType` instance, `Union[str, int]`
-    # constructs an instance of `Union`, so we need to handle both.
-    origin = get_origin(t)
-    if origin in (UnionType, Union):
-        def f(t):
+
+    def reify(t):
+        while isinstance(t, TypeAliasType):
+            t = t.__value__
+        o = get_origin(t)
+        # While `int | str` constructs a `UnionType` instance, `Union[str, int]`
+        # constructs an instance of `Union`, so we need to handle both.
+        if o in (UnionType, Union):
             for a in get_args(t):
-                o = get_origin(a)
-                if o in (UnionType, Union):
-                    # handle Union of Union
-                    yield from f(a)
-                else:
-                    yield a if o is None else o
+                yield from reify(a)
+        elif o is not None:
+            yield o
+        elif t.__module__ == 'typing':
+            raise ValueError('Not a reifiable generic type', t)
+        else:
+            yield t
 
-        return tuple(OrderedSet(f(t)))
-    elif origin is not None:
-        return origin
-    elif t.__module__ == 'typing':
-        raise ValueError('Not a reifiable generic type', t)
-    else:
-        return t
+    return tuple(OrderedSet(reify(t)))
 
 
-def get_generic_type_params(cls: type[Generic],
+def get_generic_type_params(cls: type,
                             *required_types: type
-                            ) -> Sequence[type | TypeVar | ForwardRef]:
+                            ) -> tuple[type | TypeVar | ForwardRef, ...]:
     """
     Inspect and validate the type parameters of a subclass of `typing.Generic`.
 
@@ -224,9 +214,7 @@ def get_generic_type_params(cls: type[Generic],
     inspected class's definition. `*required_types` can be used to assert the
     superclasses of parameters that are types.
 
-    >>> from typing import Generic
-    >>> T = TypeVar(name='T')
-    >>> class A(Generic[T]):
+    >>> class A[T]:
     ...     pass
     >>> class B(A[int]):
     ...     pass
@@ -234,10 +222,10 @@ def get_generic_type_params(cls: type[Generic],
     ...     pass
 
     >>> get_generic_type_params(A)
-    (~T,)
+    (T,)
 
     >>> get_generic_type_params(A, str)
-    (~T,)
+    (T,)
 
     >>> get_generic_type_params(B)
     (<class 'int'>,)

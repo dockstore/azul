@@ -1,6 +1,6 @@
 blessed==1.20.0
 blinker==1.9.0
-botocore-stubs==1.35.94
+botocore-stubs==1.36.0
 brotli==1.1.0
 click==8.1.8
 colorama==0.4.6
@@ -21,7 +21,7 @@ itsdangerous==2.2.0
 jinja2==3.1.5
 jsonschema==4.23.0
 jsonschema-path==0.3.3
-jsonschema-specifications==2023.12.1
+jsonschema-specifications==2024.10.1
 lazy-object-proxy==1.10.0
 mccabe==0.7.0
 mypy-boto3-dynamodb==1.35.94
@@ -32,8 +32,9 @@ mypy-boto3-lambda==1.35.93
 mypy-boto3-s3==1.35.93
 mypy-boto3-sqs==1.35.93
 mypy-boto3-stepfunctions==1.35.93
-openapi-schema-validator==0.6.2
-pathable==0.4.3
+mypy-extensions==1.0.0
+openapi-schema-validator==0.6.3
+pathable==0.4.4
 psutil==6.1.1
 py-partiql-parser==0.5.6
 pycodestyle==2.12.1
@@ -51,7 +52,7 @@ runs==1.2.2
 smmap==5.0.2
 tqdm==4.67.1
 types-awscrt==0.23.6
-types-s3transfer==0.10.4
+types-s3transfer==0.11.0
 uritemplate==4.1.1
 wcwidth==0.2.13
 www-authenticate==0.9.2

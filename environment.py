@@ -678,7 +678,7 @@ def env() -> Mapping[str, Optional[str]]:
         'azul_gitlab_user': None,
 
         'PYTHONPATH': '{project_root}/src:{project_root}/test',
-        'MYPYPATH': '{project_root}/stubs',
+        'MYPYPATH': '{project_root}/src:{project_root}/stubs',
 
         # The path of a directory containing a wheel for each runtime
         # dependency. Settng this variable causes our fork of Chalice to skip
