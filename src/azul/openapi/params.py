@@ -1,7 +1,3 @@
-from typing import (
-    Union,
-)
-
 from azul.openapi import (
     format_description_key,
     schema,
@@ -36,7 +32,7 @@ def path(name: str, type_: TYPE, **kwargs: PrimitiveJSON) -> JSON:
 
 
 def query(name: str,
-          type_: Union[TYPE, schema.optional],
+          type_: TYPE | schema.optional,
           **kwargs: PrimitiveJSON
           ) -> JSON:
     """
@@ -58,7 +54,7 @@ def query(name: str,
 
 
 def header(name: str,
-           type_: Union[TYPE, schema.optional],
+           type_: TYPE | schema.optional,
            **kwargs: PrimitiveJSON
            ) -> JSON:
     """
@@ -81,18 +77,19 @@ def header(name: str,
 
 def _make_param(name: str,
                 in_: str,
-                type_: Union[TYPE, schema.optional],
+                type_: TYPE | schema.optional,
                 **kwargs: PrimitiveJSON
                 ) -> JSON:
-    is_optional = isinstance(type_, schema.optional)
-    if is_optional:
-        type_ = type_.type_
+    if isinstance(type_, schema.optional):
+        type_, required = type_.type_, False
+    else:
+        required = True
     format_description_key(kwargs)
     schema_or_content = schema.make_type(type_)
     return {
         'name': name,
         'in': in_,
-        'required': not is_optional,
+        'required': required,
         # https://swagger.io/docs/specification/describing-parameters/#schema-vs-content
         'content' if 'application/json' in schema_or_content else 'schema': schema_or_content,
         **kwargs

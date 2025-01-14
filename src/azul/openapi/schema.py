@@ -1,13 +1,8 @@
-from collections.abc import (
-    Mapping,
-)
 import re
 from typing import (
+    Mapping,
     NamedTuple,
-    Optional,
-    Type,
-    TypeVar,
-    Union,
+    TypeAliasType,
 )
 
 from more_itertools import (
@@ -15,6 +10,7 @@ from more_itertools import (
 )
 
 from azul import (
+    reject,
     require,
 )
 from azul.types import (
@@ -29,7 +25,7 @@ The two main work horses are object() and array(). The former eliminates the
 need of manually maintaining the `required` schema property.
 """
 
-TYPE = Union[None, Type, str, JSON]
+TYPE = None | type | str | JSON | TypeAliasType
 
 
 # noinspection PyPep8Naming
@@ -48,7 +44,7 @@ class optional(NamedTuple):
 
 
 # noinspection PyShadowingBuiltins
-def object(additional_properties=False, **props: Union[TYPE, optional]) -> JSON:
+def object(additional_properties=False, **props: TYPE | optional) -> JSON:
     """
     >>> from azul.doctests import assert_json
     >>> assert_json(object(x=int, y=int, relative=optional(bool)))
@@ -213,7 +209,7 @@ def enum(*items: PrimitiveJSON, type_: TYPE = None) -> JSON:
     }
 
 
-def pattern(regex: Union[str, re.Pattern], _type: TYPE = str) -> JSON:
+def pattern(regex: str | re.Pattern, _type: TYPE = str) -> JSON:
     """
     Returns schema for a JSON string matching the given pattern.
 
@@ -252,12 +248,13 @@ def pattern(regex: Union[str, re.Pattern], _type: TYPE = str) -> JSON:
 
 def with_default(default: PrimitiveJSON,
                  /,
-                 type_: Optional[TYPE] = None
+                 type_: TYPE = None
                  ) -> JSON:
     """
     Add a documented default value to the type schema.
 
     >>> from azul.doctests import assert_json
+
     >>> assert_json(with_default('foo'))
     {
         "type": "string",
@@ -277,13 +274,10 @@ def with_default(default: PrimitiveJSON,
     }
 
 
-N = TypeVar('N', bound=Union[int, float])
-
-
-def in_range(minimum: Optional[N],
-             maximum: Optional[N],
-             type_: Optional[TYPE] = None
-             ) -> JSON:
+def in_range[N: int | float](minimum: N | None,
+                             maximum: N | None,
+                             type_: TYPE = None
+                             ) -> JSON:
     """
     >>> from azul.doctests import assert_json
 
@@ -338,7 +332,7 @@ def in_range(minimum: Optional[N],
     }
 
 
-_primitive_types: Mapping[Optional[type], JSON] = {
+_primitive_types: Mapping[type | None, JSON] = {
     str: {'type': 'string'},
     bool: {'type': 'boolean'},
     # Note that `format` on numeric types is an OpenAPI extension to JSONSchema
@@ -504,6 +498,8 @@ def nullable(t: TYPE, for_openapi: bool = True) -> JSON:
     to `optional` from this module, which is used to indicate that a property
     may be absent from an object.
 
+    :param t: The schema or equivalent Python type to make nullable
+
     :param for_openapi: True to emit OpenAPI 3.0 flavor of JSONSchema, False
                         for vanilla JSONSchema
 
@@ -526,8 +522,8 @@ def nullable(t: TYPE, for_openapi: bool = True) -> JSON:
     >>> nullable(str, for_openapi=False)
     {'type': ['null', 'string']}
     """
-    require(t is not None or type(None))
+    reject(t is None or t is type(None))
     if for_openapi:
-        return make_type(t) | {'nullable': True}
+        return {**make_type(t), 'nullable': True}
     else:
         return union(None, t, for_openapi=False)
