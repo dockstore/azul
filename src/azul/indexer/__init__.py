@@ -8,6 +8,7 @@ from functools import (
 from itertools import (
     product,
 )
+import json
 import logging
 import math
 from threading import (
@@ -16,6 +17,7 @@ from threading import (
 from typing import (
     ClassVar,
     Generic,
+    Iterable,
     Iterator,
     Self,
     TypeVar,
@@ -26,7 +28,6 @@ from typing import (
 import attrs
 
 from azul import (
-    CatalogName,
     RequirementError,
     config,
     reject,
@@ -626,24 +627,21 @@ class Bundle(Generic[BUNDLE_FQID], metaclass=ABCMeta):
         """
         raise NotImplementedError
 
-    def _reject_joiner(self, value: AnyJSON):
-        if isinstance(value, dict):
-            # Since the keys in the metadata files and manifest are pre-defined,
-            # we save some time here by not looking for the joiner in the keys.
-            for v in value.values():
-                self._reject_joiner(v)
-        elif isinstance(value, list):
-            for v in value:
-                self._reject_joiner(v)
-        elif isinstance(value, str):
-            if config.manifest_column_joiner in value:
-                msg = f'{config.manifest_column_joiner!r} is disallowed in metadata'
-                raise RequirementError(msg, self.fqid)
+    def _reject_joiner(self, values: Iterable[AnyJSON]):
+        joiner = config.manifest_column_joiner
+        # We expect that skipping the check for circular references will provide
+        # a small performance benefit. The tradeoff is a risk of infinite
+        # recursion, which we consider unlikely enough to be acceptable.
+        encoder = json.JSONEncoder(check_circular=False)
+        for value in values:
+            for chunk in encoder.iterencode(value):
+                if joiner in chunk:
+                    raise RequirementError(f'{joiner!r} is disallowed in metadata', self.fqid)
 
     @abstractmethod
-    def reject_joiner(self, catalog: CatalogName):
+    def reject_joiner(self):
         """
-        Raise a requirement error if the given string is found in the bundle
+        Raise a requirement error if the manifest joiner occurs in this bundle
         """
         raise NotImplementedError
 
