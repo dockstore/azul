@@ -342,6 +342,18 @@ tf_config = {
                         'days': 90
                     }
                 }
+            },
+            'trail': {
+                'bucket': '${aws_s3_bucket.logs.id}',
+                'rule': {
+                    'id': 'expire',
+                    'status': 'Enabled',
+                    'filter': {
+                    },
+                    'expiration': {
+                        'days': config.audit_log_retention_days
+                    }
+                }
             }
         },
         'aws_s3_bucket_versioning': {
