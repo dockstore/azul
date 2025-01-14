@@ -48,15 +48,15 @@ spec = {
     'openapi': '3.0.1',
     'info': {
         'title': config.indexer_name,
-        'description': fd('''
-            This is the internal API for Azul's indexer component.
-        '''),
-        # This property should be updated in any PR connected to an issue
+        # The version property should be updated in any PR connected to an issue
         # labeled `API`. Increment the major version for backwards incompatible
         # changes and reset the minor version to zero. Otherwise, increment only
         # the minor version for backwards compatible changes. A backwards
         # compatible change is one that does not require updates to clients.
-        'version': '1.1'
+        'version': '1.1',
+        'description': fd('''
+            This is the internal API for Azul's indexer component.
+        ''')
     }
 }
 
