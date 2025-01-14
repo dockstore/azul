@@ -883,7 +883,7 @@ class Config:
                 return name
 
         @classmethod
-        def from_json(cls, name: str, spec: JSON) -> 'Config.Catalog':
+        def from_json(cls, name: str, spec: JSON) -> Self:
             plugins = {
                 plugin_type: cls.Plugin(**plugin_spec)
                 for plugin_type, plugin_spec in spec['plugins'].items()
