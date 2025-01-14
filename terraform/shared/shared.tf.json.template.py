@@ -339,7 +339,7 @@ tf_config = {
                     'filter': {
                     },
                     'expiration': {
-                        'days': 90
+                        'days': config.audit_log_retention_days
                     }
                 }
             },
