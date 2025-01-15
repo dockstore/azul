@@ -97,7 +97,7 @@ def properties(**props: Form) -> JSON:
     Returns a JSON schema `properties` attribute value.
 
     >>> from azul.doctests import assert_json
-    >>> assert_json(properties(x=make_type(int), y=make_type(bool)))
+    >>> assert_json(properties(x=schema(int), y=schema(bool)))
     {
         "x": {
             "type": "integer",
@@ -108,7 +108,7 @@ def properties(**props: Form) -> JSON:
         }
     }
     """
-    return {name: make_type(prop) for name, prop in props.items()}
+    return {name: schema(prop) for name, prop in props.items()}
 
 
 def array(item: Form, *items: Form, **kwargs) -> JSON:
@@ -134,7 +134,7 @@ def array(item: Form, *items: Form, **kwargs) -> JSON:
         "additionalItems": true
     }
     """
-    return array_type(make_type(item), *map(make_type, items), **kwargs)
+    return array_type(schema(item), *map(schema, items), **kwargs)
 
 
 def enum(*items: PrimitiveJSON, form: Form = None) -> JSON:
@@ -204,7 +204,7 @@ def enum(*items: PrimitiveJSON, form: Form = None) -> JSON:
             pass
 
     return {
-        **make_type(form),
+        **schema(form),
         'enum': items
     }
 
@@ -241,7 +241,7 @@ def pattern(regex: str | re.Pattern, _type: Form = str) -> JSON:
         regex = regex.pattern
     assert isinstance(regex, str)
     return {
-        **make_type(_type),
+        **schema(_type),
         'pattern': regex
     }
 
@@ -269,7 +269,7 @@ def with_default(default: PrimitiveJSON,
     }
     """
     return {
-        **make_type(type(default) if form is None else form),
+        **schema(type(default) if form is None else form),
         'default': default
     }
 
@@ -326,7 +326,7 @@ def in_range[N: int | float](minimum: N | None,
         require(len(set_of_types) == 1, 'Mismatched argument types', *types)
         form = one(set_of_types)
     return {
-        **make_type(form),
+        **schema(form),
         **({} if minimum is None else {'minimum': minimum}),
         **({} if maximum is None else {'maximum': maximum})
     }
@@ -404,43 +404,43 @@ def array_type(item: JSON, *items: JSON, **kwargs) -> JSON:
     }
 
 
-def make_type(form: Form) -> JSON:
+def schema(form: Form) -> JSON:
     """
     Returns the schema for a Python primitive type such as `int` or a JSON
     schema type name such as `"boolean"`.
 
     For primitive JSON types, the corresponding Python types can be used:
 
-    >>> make_type(int)
+    >>> schema(int)
     {'type': 'integer', 'format': 'int64'}
 
     This is the most concise way of specifying a string schema:
 
-    >>> make_type(str)
+    >>> schema(str)
     {'type': 'string'}
 
-    >>> make_type(JSON)
+    >>> schema(JSON)
     {'type': 'object'}
 
     A JSON schema type name may be used instead:
 
-    >>> make_type('string')
+    >>> schema('string')
     {'type': 'string'}
 
     When a dictionary is passed, it is returned verbatim. This is useful in
     conjunction with the `properties` helper:
 
-    >>> make_type({'type': 'string'})
+    >>> schema({'type': 'string'})
     {'type': 'string'}
 
     For the JSON null schema, pass `type(None)` …
 
-    >>> make_type(type(None))
+    >>> schema(type(None))
     {'type': 'null'}
 
     … or just `None`.
 
-    >>> make_type(None)
+    >>> schema(None)
     {'type': 'null'}
     """
     if form == JSON:
@@ -455,6 +455,9 @@ def make_type(form: Form) -> JSON:
         return form
     else:
         assert False, type(form)
+
+
+make = schema
 
 
 def union(*ts: Form, for_openapi: bool = True) -> JSON:
@@ -480,7 +483,7 @@ def union(*ts: Form, for_openapi: bool = True) -> JSON:
     >>> union(str, int, for_openapi=False)
     {'anyOf': [{'type': 'string'}, {'type': 'integer', 'format': 'int64'}]}
     """
-    ts = list(map(make_type, ts))
+    ts = list(map(schema, ts))
     # There are two ways to represent a union of types in JSONSchema, …
     if not for_openapi and all(len(t) == 1 and isinstance(t.get('type'), str) for t in ts):
         # … a shortcut for simple types …
@@ -524,6 +527,6 @@ def nullable(t: Form, for_openapi: bool = True) -> JSON:
     """
     reject(t is None or t is type(None))
     if for_openapi:
-        return {**make_type(t), 'nullable': True}
+        return {**schema(t), 'nullable': True}
     else:
         return union(None, t, for_openapi=False)

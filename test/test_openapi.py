@@ -277,7 +277,7 @@ class TestSchemaHelpers(AzulUnitTestCase):
         # wrapper.
         try:
             # noinspection PyTypeChecker
-            schema.make_type(schema.optional(str))
+            schema.make(schema.optional(str))
         except AssertionError as e:
             self.assertIn(schema.optional, e.args)
         else:

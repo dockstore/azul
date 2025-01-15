@@ -38,6 +38,6 @@ def header(form: Form, **kwargs: PrimitiveJSON) -> JSON:
     """
     format_description_key(kwargs)
     return {
-        'schema': schema.make_type(form),
+        'schema': schema.make(form),
         **kwargs
     }

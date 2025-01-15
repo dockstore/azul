@@ -85,7 +85,7 @@ def _make_param(name: str,
     else:
         required = True
     format_description_key(kwargs)
-    schema_or_content = schema.make_type(form)
+    schema_or_content = schema.make(form)
     return {
         'name': name,
         'in': in_,
