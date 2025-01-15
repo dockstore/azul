@@ -1,7 +1,6 @@
 import os
 import sys
 from typing import (
-    Optional,
     Sequence,
 )
 
@@ -16,7 +15,7 @@ Ensure that the currently checked out branch matches the selected deployment
 """
 
 
-def default_deployment(branch: Optional[str]) -> Optional[str]:
+def default_deployment(branch: str | None) -> str | None:
     deployments = config.shared_deployments_for_branch(branch)
     return None if deployments is None else deployments[0].name
 
@@ -24,9 +23,9 @@ def default_deployment(branch: Optional[str]) -> Optional[str]:
 class BranchDeploymentMismatch(Exception):
 
     def __init__(self,
-                 branch: Optional[str],
+                 branch: str | None,
                  deployment: config.Deployment,
-                 allowed: Optional[Sequence[config.Deployment]]
+                 allowed: Sequence[config.Deployment] | None
                  ) -> None:
         branch = 'Detached head' if branch is None else f'Branch {branch!r}'
         if allowed is None:
@@ -37,7 +36,7 @@ class BranchDeploymentMismatch(Exception):
                          f'only {allowed}personal deployments.')
 
 
-def check_branch(branch: Optional[str], deployment: str) -> None:
+def check_branch(branch: str | None, deployment: str) -> None:
     deployment = config.Deployment(deployment)
     if deployment.is_shared:
         deployments = config.shared_deployments_for_branch(branch)
@@ -45,7 +44,7 @@ def check_branch(branch: Optional[str], deployment: str) -> None:
             raise BranchDeploymentMismatch(branch, deployment, deployments)
 
 
-def gitlab_branch() -> Optional[str]:
+def gitlab_branch() -> str | None:
     """
     Return the current branch if we're on GitLab, else `None`
     """
@@ -54,7 +53,7 @@ def gitlab_branch() -> Optional[str]:
     return os.environ.get('CI_COMMIT_REF_NAME')
 
 
-def local_branch() -> Optional[str]:
+def local_branch() -> str | None:
     """
     Return `None` if detached head, else the current branch
     """
