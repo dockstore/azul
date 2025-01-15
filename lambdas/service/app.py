@@ -878,8 +878,8 @@ filters_param_spec = params.query(
 
 catalog_param_spec = params.query(
     'catalog',
-    schema.optional(schema.with_default(app.catalog,
-                                        form=schema.enum(*config.catalogs))),
+    schema.optional(schema.default(app.catalog,
+                                   form=schema.enum(*config.catalogs))),
     description='The name of the catalog to query.')
 
 
@@ -894,7 +894,7 @@ def repository_search_params_spec():
         ),
         params.query(
             'size',
-            schema.optional(schema.with_default(10, form=schema.range(min_page_size, None))),
+            schema.optional(schema.default(10, form=schema.range(min_page_size, None))),
             description=fd('''
                 The number of hits included per page. The maximum size allowed
                 depends on the catalog and entity type.

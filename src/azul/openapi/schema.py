@@ -246,22 +246,19 @@ def pattern(regex: str | re.Pattern, _type: Form = str) -> JSON:
     }
 
 
-def with_default(default: PrimitiveJSON,
-                 /,
-                 form: Form = None
-                 ) -> JSON:
+def default(default: PrimitiveJSON, /, form: Form = None) -> JSON:
     """
     Add a documented default value to the type schema.
 
     >>> from azul.doctests import assert_json
 
-    >>> assert_json(with_default('foo'))
+    >>> assert_json(default('foo'))
     {
         "type": "string",
         "default": "foo"
     }
 
-    >>> assert_json(with_default(0, form=float))
+    >>> assert_json(default(0, form=float))
     {
         "type": "number",
         "format": "double",
