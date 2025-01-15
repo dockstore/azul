@@ -44,7 +44,7 @@ class optional(NamedTuple):
 
 
 # noinspection PyShadowingBuiltins
-def object(additional_properties=False, **props: Form | optional) -> JSON:
+def object(additional_properties=False, **properties: Form | optional) -> JSON:
     """
     >>> from azul.doctests import assert_json
     >>> assert_json(object(x=int, y=int, relative=optional(bool)))
@@ -77,38 +77,18 @@ def object(additional_properties=False, **props: Form | optional) -> JSON:
         "additionalProperties": false
     }
     """
-    new_props = {}
-    required = []
-    for name, prop in props.items():
+    properties, required, items = {}, [], properties.items()
+    for name, value in items:
         if name.endswith('_'):
             name = name[:-1]
-        if isinstance(prop, optional):
-            prop = prop.form
+        if isinstance(value, optional):
+            value = value.form
         else:
             required.append(name)
-        new_props[name] = prop
-    return object_type(properties(**new_props),
+        properties[name] = schema(value)
+    return object_type(properties,
                        **(dict(required=required) if required else {}),
                        additionalProperties=additional_properties)
-
-
-def properties(**props: Form) -> JSON:
-    """
-    Returns a JSON schema `properties` attribute value.
-
-    >>> from azul.doctests import assert_json
-    >>> assert_json(properties(x=schema(int), y=schema(bool)))
-    {
-        "x": {
-            "type": "integer",
-            "format": "int64"
-        },
-        "y": {
-            "type": "boolean"
-        }
-    }
-    """
-    return {name: schema(prop) for name, prop in props.items()}
 
 
 def array(item: Form, *items: Form, **kwargs) -> JSON:
