@@ -894,7 +894,7 @@ def repository_search_params_spec():
         ),
         params.query(
             'size',
-            schema.optional(schema.with_default(10, form=schema.in_range(min_page_size, None))),
+            schema.optional(schema.with_default(10, form=schema.range(min_page_size, None))),
             description=fd('''
                 The number of hits included per page. The maximum size allowed
                 depends on the catalog and entity type.

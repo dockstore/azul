@@ -274,14 +274,14 @@ def with_default(default: PrimitiveJSON,
     }
 
 
-def in_range[N: int | float](minimum: N | None,
-                             maximum: N | None,
-                             form: Form = None
-                             ) -> JSON:
+def range[N: int | float](minimum: N | None,
+                          maximum: N | None,
+                          form: Form = None
+                          ) -> JSON:
     """
     >>> from azul.doctests import assert_json
 
-    >>> assert_json(in_range(1, 2))
+    >>> assert_json(range(1, 2))
     {
         "type": "integer",
         "format": "int64",
@@ -289,31 +289,31 @@ def in_range[N: int | float](minimum: N | None,
         "maximum": 2
     }
 
-    >>> assert_json(in_range(.5, None))
+    >>> assert_json(range(.5, None))
     {
         "type": "number",
         "format": "double",
         "minimum": 0.5
     }
 
-    >>> assert_json(in_range(None, 2.0))
+    >>> assert_json(range(None, 2.0))
     {
         "type": "number",
         "format": "double",
         "maximum": 2.0
     }
 
-    >>> assert_json(in_range(minimum=.5, maximum=2))
+    >>> assert_json(range(minimum=.5, maximum=2))
     Traceback (most recent call last):
     ...
     azul.RequirementError: ('Mismatched argument types', <class 'float'>, <class 'int'>)
 
-    >>> assert_json(in_range())
+    >>> assert_json(range())
     Traceback (most recent call last):
     ...
-    TypeError: in_range() missing 2 required positional arguments: 'minimum' and 'maximum'
+    TypeError: range() missing 2 required positional arguments: 'minimum' and 'maximum'
 
-    >>> assert_json(in_range(None, None))
+    >>> assert_json(range(None, None))
     Traceback (most recent call last):
     ...
     azul.RequirementError: Must pass at least one bound
