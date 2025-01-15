@@ -879,7 +879,7 @@ filters_param_spec = params.query(
 catalog_param_spec = params.query(
     'catalog',
     schema.optional(schema.with_default(app.catalog,
-                                        type_=schema.enum(*config.catalogs))),
+                                        form=schema.enum(*config.catalogs))),
     description='The name of the catalog to query.')
 
 
@@ -894,7 +894,7 @@ def repository_search_params_spec():
         ),
         params.query(
             'size',
-            schema.optional(schema.with_default(10, type_=schema.in_range(min_page_size, None))),
+            schema.optional(schema.with_default(10, form=schema.in_range(min_page_size, None))),
             description=fd('''
                 The number of hits included per page. The maximum size allowed
                 depends on the catalog and entity type.
@@ -1302,7 +1302,7 @@ def manifest_route(*, fetch: bool, initiate: bool):
                                 format.value
                                 for format in app.metadata_plugin.manifest_formats
                             ],
-                            type_=str
+                            form=str
                         )
                     ),
                     description=f'''

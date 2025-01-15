@@ -3,7 +3,7 @@ from azul.openapi import (
     schema,
 )
 from azul.openapi.schema import (
-    TYPE,
+    Form,
 )
 from azul.types import (
     JSON,
@@ -11,7 +11,7 @@ from azul.types import (
 )
 
 
-def path(name: str, type_: TYPE, **kwargs: PrimitiveJSON) -> JSON:
+def path(name: str, form: Form, **kwargs: PrimitiveJSON) -> JSON:
     """
     Returns an OpenAPI `parameters` specification of a URL path parameter.
     Note that path parameters cannot be optional.
@@ -28,11 +28,11 @@ def path(name: str, type_: TYPE, **kwargs: PrimitiveJSON) -> JSON:
         }
     }
     """
-    return _make_param(name, in_='path', type_=type_, **kwargs)
+    return _make_param(name, in_='path', form=form, **kwargs)
 
 
 def query(name: str,
-          type_: TYPE | schema.optional,
+          form: Form | schema.optional,
           **kwargs: PrimitiveJSON
           ) -> JSON:
     """
@@ -50,11 +50,11 @@ def query(name: str,
         }
     }
     """
-    return _make_param(name, in_='query', type_=type_, **kwargs)
+    return _make_param(name, in_='query', form=form, **kwargs)
 
 
 def header(name: str,
-           type_: TYPE | schema.optional,
+           form: Form | schema.optional,
            **kwargs: PrimitiveJSON
            ) -> JSON:
     """
@@ -72,20 +72,20 @@ def header(name: str,
         }
     }
     """
-    return _make_param(name, in_='header', type_=type_, **kwargs)
+    return _make_param(name, in_='header', form=form, **kwargs)
 
 
 def _make_param(name: str,
                 in_: str,
-                type_: TYPE | schema.optional,
+                form: Form | schema.optional,
                 **kwargs: PrimitiveJSON
                 ) -> JSON:
-    if isinstance(type_, schema.optional):
-        type_, required = type_.type_, False
+    if isinstance(form, schema.optional):
+        form, required = form.form, False
     else:
         required = True
     format_description_key(kwargs)
-    schema_or_content = schema.make_type(type_)
+    schema_or_content = schema.make_type(form)
     return {
         'name': name,
         'in': in_,

@@ -492,7 +492,7 @@ class HealthApp(AzulChaliceApp):
                 'parameters': [
                     params.path(
                         'keys',
-                        type_=schema.array(schema.enum(*sorted(Health.all_keys))),
+                        form=schema.array(schema.enum(*sorted(Health.all_keys))),
                         description='''
                                         A comma-separated list of keys selecting the health
                                         checks to be performed. Each key corresponds to an

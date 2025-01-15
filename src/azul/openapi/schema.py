@@ -25,7 +25,7 @@ The two main work horses are object() and array(). The former eliminates the
 need of manually maintaining the `required` schema property.
 """
 
-TYPE = None | type | str | JSON | TypeAliasType
+Form = None | type | str | JSON | TypeAliasType
 
 
 # noinspection PyPep8Naming
@@ -33,7 +33,7 @@ class optional(NamedTuple):
     """
     Use in conjunction with `object` to mark certain properties as optional.
     """
-    type_: TYPE
+    form: Form
 
 
 # We're consciously shadowing the `object` builtin here. Two factors mitigate
@@ -44,7 +44,7 @@ class optional(NamedTuple):
 
 
 # noinspection PyShadowingBuiltins
-def object(additional_properties=False, **props: TYPE | optional) -> JSON:
+def object(additional_properties=False, **props: Form | optional) -> JSON:
     """
     >>> from azul.doctests import assert_json
     >>> assert_json(object(x=int, y=int, relative=optional(bool)))
@@ -83,7 +83,7 @@ def object(additional_properties=False, **props: TYPE | optional) -> JSON:
         if name.endswith('_'):
             name = name[:-1]
         if isinstance(prop, optional):
-            prop = prop.type_
+            prop = prop.form
         else:
             required.append(name)
         new_props[name] = prop
@@ -92,7 +92,7 @@ def object(additional_properties=False, **props: TYPE | optional) -> JSON:
                        additionalProperties=additional_properties)
 
 
-def properties(**props: TYPE) -> JSON:
+def properties(**props: Form) -> JSON:
     """
     Returns a JSON schema `properties` attribute value.
 
@@ -111,7 +111,7 @@ def properties(**props: TYPE) -> JSON:
     return {name: make_type(prop) for name, prop in props.items()}
 
 
-def array(item: TYPE, *items: TYPE, **kwargs) -> JSON:
+def array(item: Form, *items: Form, **kwargs) -> JSON:
     """
     Returns the schema for an array of items of a given type, or a sequence of
     types.
@@ -137,7 +137,7 @@ def array(item: TYPE, *items: TYPE, **kwargs) -> JSON:
     return array_type(make_type(item), *map(make_type, items), **kwargs)
 
 
-def enum(*items: PrimitiveJSON, type_: TYPE = None) -> JSON:
+def enum(*items: PrimitiveJSON, form: Form = None) -> JSON:
     """
     Returns an `enum` schema for the given items. By default, the schema type of
     the items is inferred, but a type may be passed explicitly to override that.
@@ -145,7 +145,7 @@ def enum(*items: PrimitiveJSON, type_: TYPE = None) -> JSON:
     types of the enum values contradict the explicit type.
 
     >>> from azul.doctests import assert_json
-    >>> assert_json(enum('foo', 'bar', type_=str))
+    >>> assert_json(enum('foo', 'bar', form=str))
     {
         "type": "string",
         "enum": [
@@ -165,7 +165,7 @@ def enum(*items: PrimitiveJSON, type_: TYPE = None) -> JSON:
         ]
     }
 
-    >>> assert_json(enum('x', type_={'type': 'string'}))
+    >>> assert_json(enum('x', form={'type': 'string'}))
     {
         "type": "string",
         "enum": [
@@ -178,12 +178,12 @@ def enum(*items: PrimitiveJSON, type_: TYPE = None) -> JSON:
     ...
     ValueError: Expected exactly one item in iterable, but got <class '...'>, <class '...'>, and perhaps more.
 
-    >>> enum('foo', 'bar', type_=int)
+    >>> enum('foo', 'bar', form=int)
     Traceback (most recent call last):
     ...
     AssertionError
 
-    >>> assert_json(enum('foo', 'bar', type_="integer"))
+    >>> assert_json(enum('foo', 'bar', form="integer"))
     {
         "type": "integer",
         "enum": [
@@ -193,23 +193,23 @@ def enum(*items: PrimitiveJSON, type_: TYPE = None) -> JSON:
     }
     """
 
-    if isinstance(type_, type):
-        assert all(isinstance(item, type_) for item in items)
+    if isinstance(form, type):
+        assert all(isinstance(item, form) for item in items)
     else:
         inferred_type = one(set(map(type, items)))
-        if type_ is None:
-            type_ = inferred_type
+        if form is None:
+            form = inferred_type
         else:
             # Can't easily verify type when passed as string or mapping
             pass
 
     return {
-        **make_type(type_),
+        **make_type(form),
         'enum': items
     }
 
 
-def pattern(regex: str | re.Pattern, _type: TYPE = str) -> JSON:
+def pattern(regex: str | re.Pattern, _type: Form = str) -> JSON:
     """
     Returns schema for a JSON string matching the given pattern.
 
@@ -248,7 +248,7 @@ def pattern(regex: str | re.Pattern, _type: TYPE = str) -> JSON:
 
 def with_default(default: PrimitiveJSON,
                  /,
-                 type_: TYPE = None
+                 form: Form = None
                  ) -> JSON:
     """
     Add a documented default value to the type schema.
@@ -261,7 +261,7 @@ def with_default(default: PrimitiveJSON,
         "default": "foo"
     }
 
-    >>> assert_json(with_default(0, type_=float))
+    >>> assert_json(with_default(0, form=float))
     {
         "type": "number",
         "format": "double",
@@ -269,14 +269,14 @@ def with_default(default: PrimitiveJSON,
     }
     """
     return {
-        **make_type(type(default) if type_ is None else type_),
+        **make_type(type(default) if form is None else form),
         'default': default
     }
 
 
 def in_range[N: int | float](minimum: N | None,
                              maximum: N | None,
-                             type_: TYPE = None
+                             form: Form = None
                              ) -> JSON:
     """
     >>> from azul.doctests import assert_json
@@ -318,15 +318,15 @@ def in_range[N: int | float](minimum: N | None,
     ...
     azul.RequirementError: Must pass at least one bound
     """
-    if type_ is None:
+    if form is None:
         types = (type(minimum), type(maximum))
         set_of_types = set(types)
         set_of_types.discard(type(None))
         require(bool(set_of_types), 'Must pass at least one bound')
         require(len(set_of_types) == 1, 'Mismatched argument types', *types)
-        type_ = one(set_of_types)
+        form = one(set_of_types)
     return {
-        **make_type(type_),
+        **make_type(form),
         **({} if minimum is None else {'minimum': minimum}),
         **({} if maximum is None else {'maximum': maximum})
     }
@@ -404,7 +404,7 @@ def array_type(item: JSON, *items: JSON, **kwargs) -> JSON:
     }
 
 
-def make_type(t: TYPE) -> JSON:
+def make_type(form: Form) -> JSON:
     """
     Returns the schema for a Python primitive type such as `int` or a JSON
     schema type name such as `"boolean"`.
@@ -443,21 +443,21 @@ def make_type(t: TYPE) -> JSON:
     >>> make_type(None)
     {'type': 'null'}
     """
-    if t == JSON:
+    if form == JSON:
         return {'type': 'object'}
-    elif t is None:
-        return _primitive_types[type(t)]
-    elif isinstance(t, type):
-        return _primitive_types[t]
-    elif isinstance(t, str):
-        return {'type': t}
-    elif isinstance(t, reify(JSON)):
-        return t
+    elif form is None:
+        return _primitive_types[type(form)]
+    elif isinstance(form, type):
+        return _primitive_types[form]
+    elif isinstance(form, str):
+        return {'type': form}
+    elif isinstance(form, reify(JSON)):
+        return form
     else:
-        assert False, type(t)
+        assert False, type(form)
 
 
-def union(*ts: TYPE, for_openapi: bool = True) -> JSON:
+def union(*ts: Form, for_openapi: bool = True) -> JSON:
     """
     The union of one or more types.
 
@@ -490,7 +490,7 @@ def union(*ts: TYPE, for_openapi: bool = True) -> JSON:
         return {'anyOf': ts}
 
 
-def nullable(t: TYPE, for_openapi: bool = True) -> JSON:
+def nullable(t: Form, for_openapi: bool = True) -> JSON:
     """
     Given a schema, return a schema that additionally permits the `null` value.
 
