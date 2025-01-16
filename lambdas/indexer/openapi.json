@@ -40,7 +40,14 @@
         },
         "/static/swagger-initializer.js": {
             "get": {
+                "summary": "Used internally by the Swagger UI",
+                "tags": [
+                    "Auxiliary"
+                ],
                 "responses": {
+                    "200": {
+                        "description": "The response body is JavaScript used internally by the Swagger UI"
+                    },
                     "504": {
                         "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
                     }

@@ -1904,12 +1904,12 @@ emit_tf({} if config.terraform_component != 'gitlab' else {
                             )
                         },
                         {
-                            'path': '/etc/systemd/system/prune-images.service',
+                            'path': '/etc/systemd/system/docker-prune.service',
                             'permissions': '0644',
                             'owner': 'root',
                             'content': jl(
                                 '[Unit]',
-                                'Description=Pruning of stale docker images',
+                                'Description=Pruning of stale docker data (containers, networks, images, volumes)',
                                 'After=docker.service gitlab-dind.service',
                                 'Requires=docker.service gitlab-dind.service',
                                 '[Service]',
@@ -1919,69 +1919,52 @@ emit_tf({} if config.terraform_component != 'gitlab' else {
                                 'StandardError=null',
                                 'Type=oneshot',  # oneshot to allow multiple ExecStart
                                 'TimeoutStartSec=5min',  # `docker pull` may take a long time
-                                'ExecStartPre=-/usr/bin/docker stop prune-images',
-                                'ExecStartPre=-/usr/bin/docker rm prune-images',
+                                'ExecStartPre=-/usr/bin/docker stop docker-prune',
+                                'ExecStartPre=-/usr/bin/docker rm docker-prune',
                                 'ExecStartPre=/usr/bin/docker pull ' + str(dind_image),
-                                jw(
-                                    'ExecStart=/usr/bin/docker',
-                                    'exec',  # Execute (as in `docker exec`) …
-                                    'gitlab-dind',  # … inside the gitlab-dind container …
-                                    'sh -c',  # … via the shell so we can redirect stdout
-                                    sq(
+                                *[
+                                    jw(
+                                        'ExecStart=/usr/bin/docker',
+                                        'exec',  # Execute (as in `docker exec`) …
+                                        'gitlab-dind',  # … inside the gitlab-dind container …
+                                        'sh -c',  # … via the shell so we can redirect stdout
                                         # Normally, output from a `docker exec` command isn't processed by docker's
                                         # logging mechanism, however with a redirect to /proc/1/fd/1 we can send the
                                         # output of the command being exec'd to the docker container's STDOUT.
                                         # https://github.com/moby/moby/issues/8662#issuecomment-277396232
-                                        'docker',  # The docker …
-                                        'image',  # … image command …
-                                        'prune',  # … to delete, …
-                                        '--force',  # … without prompting for confirmation, …
-                                        '--all',  # … all images …
-                                        f'--filter "until={90 * 24}h"',  # … except those from more recent builds …
-                                        '> /proc/1/fd/1',  # … with output sent to the container's STDOUT.
-                                    ),
-                                    #
-                                    # If we deleted more recent images, we
-                                    # would risk failing the requirements
-                                    # check on sandbox builds since that
-                                    # check depends on image caching. The
-                                    # deadline below assumes that the most
-                                    # recent pipeline was run less than a
-                                    # month ago.
-                                ),
-                                jw(
-                                    'ExecStart=/usr/bin/docker',
-                                    'exec',  # Execute (as in `docker exec`) …
-                                    'gitlab-dind',  # … inside the gitlab-dind container …
-                                    'sh -c',  # … via the shell so we can redirect stdout
-                                    sq(
-                                        # Normally, output from a `docker exec` command isn't processed by docker's
-                                        # logging mechanism, however with a redirect to /proc/1/fd/1 we can send the
-                                        # output of the command being exec'd to the docker container's STDOUT.
-                                        # https://github.com/moby/moby/issues/8662#issuecomment-277396232
-                                        'docker',  # The docker …
-                                        'buildx',  # … buildx command …
-                                        'prune',  # … to delete, …
-                                        '--force',  # … without prompting for confirmation, …
-                                        '--all',  # … all images …
-                                        f'--filter "until={90 * 24}h"',  # … except those from more recent builds …
-                                        '> /proc/1/fd/1',  # … with output sent to the container's STDOUT.
-                                    ),
-                                    #
-                                    # If we deleted more recent images, we
-                                    # would risk failing the requirements
-                                    # check on sandbox builds since that
-                                    # check depends on image caching. The
-                                    # deadline below assumes that the most
-                                    # recent pipeline was run less than a
-                                    # month ago.
-                                ),
+                                        command,
+                                    )
+                                    for command in [
+                                        sq(
+                                            'docker',  # The docker …
+                                            'volume',  # … volume command …
+                                            'prune',  # … to delete, …
+                                            '--force',  # … without prompting for confirmation, …
+                                            '--all',  # … all unused volumes …
+                                            '> /proc/1/fd/1',  # … with output sent to the container's STDOUT.
+                                        ),
+                                        sq(
+                                            'docker',  # The docker …
+                                            'system',  # … system command …
+                                            'prune',  # … to delete, …
+                                            '--force',  # … without prompting for confirmation, …
+                                            '--all',  # … all unused containers, networks, and images …
+                                            f'--filter "until={90 * 24}h"',  # … except those from more recent builds …
+                                            '> /proc/1/fd/1',  # … with output sent to the container's STDOUT.
+                                            #
+                                            # If we deleted more recent images, we would risk failing the requirements
+                                            # check on sandbox builds since that check depends on image caching. The
+                                            # deadline above assumes that the most recent pipeline was run less than
+                                            # three months ago.
+                                        )
+                                    ]
+                                ],
                                 '[Install]',
                                 'WantedBy='
                             )
                         },
                         {
-                            'path': '/etc/systemd/system/prune-images.timer',
+                            'path': '/etc/systemd/system/docker-prune.timer',
                             'permissions': '0644',
                             'owner': 'root',
                             'content': jl(
@@ -2214,7 +2197,7 @@ emit_tf({} if config.terraform_component != 'gitlab' else {
                             'gitlab',
                             'gitlab-runner',
                             'clamscan.timer',
-                            'prune-images.timer',
+                            'docker-prune.timer',
                             'registry-garbage-collect.timer'
                         ],
                         [

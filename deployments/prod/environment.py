@@ -1431,7 +1431,7 @@ def env() -> Mapping[str, Optional[str]]:
             'channel_id': 'C04JWDFCPFZ'  # #team-boardwalk-prod
         }),
 
-        'AZUL_ENABLE_REPLICAS': '0',
+        'AZUL_ENABLE_REPLICAS': '1',
 
         # HCA allocates a daily budget for file downloads. To avoid exceeding
         # that budget, we limit the download rate as follows:
