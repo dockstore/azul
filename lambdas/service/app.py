@@ -789,10 +789,10 @@ def list_catalogs():
     return app.catalog_controller.list_catalogs()
 
 
-generic_object_spec = schema.object(additional_properties=True)
+generic_object_spec = schema.object(additionalProperties=True)
 array_of_object_spec = schema.array(generic_object_spec)
 hit_spec = schema.object(
-    additional_properties=True,
+    additionalProperties=True,
     protocols=array_of_object_spec,
     entryId=str,
     sources=array_of_object_spec,
@@ -815,7 +815,7 @@ def _filter_schema(field_type: FieldType) -> JSON:
     relations = field_type.supported_filter_relations
 
     def filter_schema(relation: str) -> JSON:
-        return schema.object_type(
+        return schema.object(
             properties={relation: schema.array(field_type.api_filter_schema(relation))},
             required=[relation],
             additionalProperties=False
@@ -831,7 +831,7 @@ types = app.repository_controller.field_types(app.catalog)
 
 filters_param_spec = params.query(
     'filters',
-    schema.optional(application_json(schema.object_type(
+    schema.optional(application_json(schema.object(
         default='{}',
         example={'cellCount': {'within': [[10000, 1000000000]]}},
         properties={
@@ -1152,7 +1152,7 @@ def _hoist_parameters(query_params, request):
                 '''),
                 **responses.json_content(
                     schema.object(
-                        additional_properties=True,
+                        additionalProperties=True,
                         organTypes=schema.array(str),
                         totalFileSize=float,
                         fileTypeSummaries=array_of_object_spec,

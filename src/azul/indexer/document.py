@@ -990,7 +990,7 @@ class Nested(PassThrough[JSON]):
         kwargs = dict(additionalProperties=False)
         if required:
             kwargs['required'] = required
-        return schema.object_type(properties, **kwargs)
+        return schema.object(properties=properties, **kwargs)
 
     def filter(self, relation: str, values: list[JSON]) -> list[JSON]:
         nested_object = one(values)

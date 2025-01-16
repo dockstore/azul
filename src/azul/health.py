@@ -379,8 +379,8 @@ class HealthApp(AzulChaliceApp):
                         ''') if len(health_keys) > 1 else ''),
                         **responses.json_content(
                             schema.object(
-                                additional_properties=schema.object(
-                                    additional_properties=True,
+                                additionalProperties=schema.object(
+                                    additionalProperties=True,
                                     up=schema.enum(up)
                                 ),
                                 up=schema.enum(up)

@@ -3,6 +3,7 @@ from typing import (
     Mapping,
     NamedTuple,
     TypeAliasType,
+    overload,
 )
 
 from more_itertools import (
@@ -14,6 +15,7 @@ from azul import (
     require,
 )
 from azul.types import (
+    AnyJSON,
     JSON,
     PrimitiveJSON,
     reify,
@@ -42,9 +44,23 @@ class optional(NamedTuple):
 # wholesale and its members referenced by fully qualifying their name so the
 # `object` builtin is not shadowed in the importing module.
 
+# noinspection PyShadowingBuiltins,PyPep8Naming
+@overload
+def object(*,
+           additionalProperties: JSON | bool = False,
+           **properties: Form | optional) -> JSON: ...
 
-# noinspection PyShadowingBuiltins
-def object(additional_properties=False, **properties: Form | optional) -> JSON:
+
+# noinspection PyShadowingBuiltins,PyPep8Naming
+@overload
+def object(*, properties: JSON, **kwargs: AnyJSON) -> JSON: ...
+
+
+# noinspection PyShadowingBuiltins,PyPep8Naming
+def object(*,
+           properties=None,
+           additionalProperties=None,
+           **kwargs) -> JSON:
     """
     >>> from azul.doctests import assert_json
     >>> assert_json(object(x=int, y=int, relative=optional(bool)))
@@ -76,19 +92,39 @@ def object(additional_properties=False, **properties: Form | optional) -> JSON:
         "properties": {},
         "additionalProperties": false
     }
+
+    >>> object(x=int, y=int, relative=optional(bool)) == object(
+    ...     properties=dict(x=dict(type="integer", format="int64"),
+    ...                     y=dict(type="integer", format="int64"),
+    ...                     relative=dict(type="boolean")),
+    ...     additionalProperties=False,
+    ...     required=['x','y']
+    ... )
+    True
     """
-    properties, required, items = {}, [], properties.items()
-    for name, value in items:
-        if name.endswith('_'):
-            name = name[:-1]
-        if isinstance(value, optional):
-            value = value.form
-        else:
-            required.append(name)
-        properties[name] = schema(value)
-    return object_type(properties,
-                       **(dict(required=required) if required else {}),
-                       additionalProperties=additional_properties)
+
+    if properties is None:
+        properties, required = {}, []
+        for name, value in kwargs.items():
+            if name.endswith('_'):
+                name = name[:-1]
+            if isinstance(value, optional):
+                value = value.form
+            else:
+                required.append(name)
+            properties[name] = schema(value)
+        kwargs = {'required': required} if required else {}
+        if additionalProperties is None:
+            additionalProperties = False
+        kwargs['additionalProperties'] = additionalProperties
+    else:
+        if additionalProperties is not None:
+            kwargs['additionalProperties'] = additionalProperties
+    return {
+        'type': 'object',
+        'properties': properties,
+        **kwargs,
+    }
 
 
 def array(item: Form, *items: Form, **kwargs) -> JSON:
@@ -326,31 +362,6 @@ _primitive_types: Mapping[type | None, JSON] = {
     type(None): {'type': 'null'},
     None: {'type': 'null'}
 }
-
-
-def object_type(properties: JSON, **kwargs) -> JSON:
-    """
-    Returns the schema for a JSON object with the given properties.
-
-    >>> from azul.doctests import assert_json
-    >>> assert_json(object_type({'x': {'type': 'string'}}, required=['x']))
-    {
-        "type": "object",
-        "properties": {
-            "x": {
-                "type": "string"
-            }
-        },
-        "required": [
-            "x"
-        ]
-    }
-    """
-    return {
-        'type': 'object',
-        'properties': properties,
-        **kwargs
-    }
 
 
 def array_type(item: JSON, *items: JSON, **kwargs) -> JSON:
