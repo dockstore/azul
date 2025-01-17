@@ -10,7 +10,7 @@ blinker==1.9.0
 boto3==1.36.3
 boto3-stubs-lite==1.36.3
 botocore==1.36.3
-botocore-stubs==1.36.7
+botocore-stubs==1.36.8
 brotli==1.1.0
 cachetools==5.5.1
 certifi==2024.12.14
@@ -77,7 +77,7 @@ mypy==1.14.1
 mypy-boto3-apigateway==1.36.0
 mypy-boto3-cloudwatch==1.36.0
 mypy-boto3-dynamodb==1.36.0
-mypy-boto3-ec2==1.36.5
+mypy-boto3-ec2==1.36.8
 mypy-boto3-ecr==1.36.0
 mypy-boto3-es==1.36.0
 mypy-boto3-iam==1.36.0
