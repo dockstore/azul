@@ -1620,6 +1620,10 @@ class Config:
     assert 100 <= waf_rate_rule_limit <= 2_000_000_000  # mandated by AWS
 
     @property
+    def waf_bot_control(self) -> bool:
+        return self._boolean(self.environ['azul_waf_bot_control'])
+
+    @property
     def vpc_cidr(self) -> str:
         return self.environ['azul_vpc_cidr']
 

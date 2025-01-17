@@ -946,5 +946,13 @@ def env() -> Mapping[str, Optional[str]]:
         # for restrictions on the supported values for `<limit>` ("Rate limit")
         # and `<window>` ("Evaluation window").
         #
-        'azul_waf_download_rate_limit': None
+        'azul_waf_download_rate_limit': None,
+
+        # Wether to enable bot control in AWS WAF. Setting this to 1 will enable
+        # two rules aimed at blocking requests from suspected and verified bots.
+        # As of January 2024, this will incur monthly cost of $10 per ACL plus
+        # $1 per one million requests above ten million requests. The blocking
+        # only applies to URLs disallowed via robots.txt.
+        #
+        'azul_waf_bot_control': '0'
     }

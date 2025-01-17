@@ -850,6 +850,8 @@ class AzulChaliceApp(Chalice):
             body = '\n'.join(f'{k}: {v}' for k, v in [
                 ('User-agent', '*'),
                 ('Disallow', '/'),
+                # Keep consistent with regex in scope-down statement for the
+                # bot control rule set in api_gateway.tf.json.template.py
                 ('Allow', '/$'),
                 ('Allow', '/swagger/')
             ])
