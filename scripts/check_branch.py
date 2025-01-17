@@ -44,19 +44,21 @@ def check_branch(branch: str | None, deployment: str) -> None:
             raise BranchDeploymentMismatch(branch, deployment, deployments)
 
 
-def gitlab_branch() -> str | None:
+def target_branch() -> str | None:
     """
-    Return the current branch if we're on GitLab, else `None`
+    In a local clone, this method returns the name of the branch currently
+    checked out or ``None``, if no branch is checked out (detached HEAD). On
+    GitHub and GitLab this returns the name of either the branch currently being
+    built or, if the build is for a feature branch involving a pull request, the
+    base branch of that feature branch.
     """
-    # Gitlab checks out a specific commit which results in a detached HEAD
-    # (no active branch). Extract the branch name from the runner environment.
-    return os.environ.get('CI_COMMIT_REF_NAME')
-
-
-def local_branch() -> str | None:
-    """
-    Return `None` if detached head, else the current branch
-    """
+    for variable in 'CI_COMMIT_REF_NAME', 'GITHUB_BASE_REF', 'GITHUB_HEAD_REF':
+        try:
+            branch = os.environ[variable]
+        except KeyError:
+            pass
+        else:
+            return branch
     repo = git.Repo(config.project_root)
     return None if repo.head.is_detached else repo.active_branch.name
 
@@ -70,7 +72,7 @@ def main(argv):
                         help='Print the deployment matching the current branch or exit '
                              'with non-zero status code if no such deployment exists.')
     args = parser.parse_args(argv)
-    branch = gitlab_branch() or local_branch()
+    branch = target_branch()
     if args.print:
         deployment = default_deployment(branch)
         if deployment is None:

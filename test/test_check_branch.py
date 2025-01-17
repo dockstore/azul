@@ -70,3 +70,18 @@ class TestCheckBranch(AzulUnitTestCase):
                              'prod',
                              "Branch 'feature/foo' cannot be deployed to 'prod', "
                              "only one of {'sandbox'} or personal deployments.")
+
+        variables = ['CI_COMMIT_REF_NAME', 'GITHUB_BASE_REF', 'GITHUB_HEAD_REF']
+
+        for variable in variables:
+            if variable == 'GITHUB_HEAD_REF':
+                branches = ['foo/bar']
+            else:
+                branches = ['develop', 'prod']
+            for branch in branches:
+                with patch.dict(os.environ) as env:
+                    for var in variables:
+                        env.pop(var, None)
+                    env[var] = branch
+                    with self.subTest(branch=branch, variable=variable):
+                        self.assertEqual(branch, script.target_branch())
