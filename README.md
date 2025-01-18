@@ -46,9 +46,9 @@ generic with minimal need for project-specific behavior.
 
 - git 2.36.0 or newer
 
-- [Docker], for running the tests (the community edition is sufficient).
-  The minimal required version is uncertain, but 19.03, 18.09, and 17.09 are
-  known to work.
+- [Docker], for running the tests (the community edition is sufficient). The
+  required version is specified in a variable called `azul_docker_version` in
+  [environment.py](environment.py).
 
 - Terraform, to manage deployments. Azul requires a specific version of
   Terraform, which is defined in a variable called `azul_terraform_version` in

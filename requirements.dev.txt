@@ -5,7 +5,7 @@ coverage==7.6.9
 docker==7.1.0
 flake8==7.1.1
 gevent==24.11.1
-git+https://github.com/DataBiosphere/azul-chalice@1.31.2+13#egg=chalice
+git+https://github.com/DataBiosphere/azul-chalice@1.31.3+15#egg=chalice
 git+https://github.com/hannes-ucsc/requirements-parser@v0.2.0+1#egg=requirements-parser
 gitpython==3.1.43
 google-api-python-client==2.156.0
@@ -23,6 +23,7 @@ python-gitlab==5.2.0
 pyyaml==6.0.2
 responses==0.25.3
 strict-rfc3339==0.7
+types-urllib3==1.26.20  # match with urllib in requirements.txt
 watchdog==6.0.0
 -r requirements.dev.trans.txt
 -r requirements.txt
