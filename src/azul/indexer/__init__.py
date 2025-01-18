@@ -8,6 +8,7 @@ from functools import (
 from itertools import (
     product,
 )
+import json
 import logging
 import math
 from threading import (
@@ -16,6 +17,7 @@ from threading import (
 from typing import (
     ClassVar,
     Generic,
+    Iterable,
     Iterator,
     Self,
     TypeVar,
@@ -26,7 +28,6 @@ from typing import (
 import attrs
 
 from azul import (
-    CatalogName,
     RequirementError,
     config,
     reject,
@@ -367,6 +368,8 @@ class SourceSpec(Generic[SOURCE_SPEC], metaclass=ABCMeta):
     have simple unstructured names may want to use :class:`SimpleSourceSpec`.
     """
 
+    # FIXME: Improve equality and interning semantics for source ref and spec
+    #        https://github.com/DataBiosphere/azul/issues/6778
     prefix: Prefix | None
 
     @classmethod
@@ -467,13 +470,16 @@ class SourceRef(SupportsLessAndGreaterThan, Generic[SOURCE_SPEC, SOURCE_REF]):
     """
     A reference to a repository source containing bundles to index. A repository
     has at least one source. A source is primarily referenced by its ID but we
-    drag the name along to 1) avoid repeatedly looking it up and 2) ensure that
+    drag the spec along to 1) avoid repeatedly looking it up and 2) ensure that
     the mapping between the two doesn't change while we index a source.
 
     Instances of this class are interned: within a Python interpreter process,
-    there will only ever be one instance of this class for any given ID. There
-    may be an instance of a subclass of this class that has the same ID as an
-    instance of this class or another subclass of this class.
+    there will only ever be one instance of this class for any given ID and
+    spec. There may be an instance of a subclass of this class that has the same
+    ID and spec as an instance of this class or another subclass of this class.
+
+    FIXME: Improve equality and interning semantics for source ref and spec
+           https://github.com/DataBiosphere/azul/issues/6778
 
     Note to plugin implementers: Since the source ID can't be assumed to be
     globally unique, plugins should subclass this class, even if the subclass
@@ -497,8 +503,11 @@ class SourceRef(SupportsLessAndGreaterThan, Generic[SOURCE_SPEC, SOURCE_REF]):
 
     def __new__(cls: type[SOURCE_REF], *, id: str, spec: SOURCE_SPEC) -> SOURCE_REF:
         """
-        Interns instances by their ID and ensures that names are unambiguous
-        for any given ID. Two different sources may still use the same name.
+        Interns instances by their ID and spec. Two different sources may still
+        use the same ID or spec.
+
+        FIXME: Improve equality and interning semantics for source ref and spec
+               https://github.com/DataBiosphere/azul/issues/6778
 
         >>> class S(SourceRef): pass
         >>> a, b  = SimpleSourceSpec.parse('a:/0'), SimpleSourceSpec.parse('b:/0')
@@ -508,9 +517,6 @@ class SourceRef(SupportsLessAndGreaterThan, Generic[SOURCE_SPEC, SOURCE_REF]):
 
         >>> S(id='1', spec=a) is S(id='2', spec=a)
         False
-
-        FIXME: Disallow two refs with same ID and different names
-               https://github.com/DataBiosphere/azul/issues/3250
 
         >>> S(id='1', spec=b) # doctest: +NORMALIZE_WHITESPACE
         S(id='1', spec=SimpleSourceSpec(prefix=Prefix(common='',
@@ -621,24 +627,21 @@ class Bundle(Generic[BUNDLE_FQID], metaclass=ABCMeta):
         """
         raise NotImplementedError
 
-    def _reject_joiner(self, value: AnyJSON):
-        if isinstance(value, dict):
-            # Since the keys in the metadata files and manifest are pre-defined,
-            # we save some time here by not looking for the joiner in the keys.
-            for v in value.values():
-                self._reject_joiner(v)
-        elif isinstance(value, list):
-            for v in value:
-                self._reject_joiner(v)
-        elif isinstance(value, str):
-            if config.manifest_column_joiner in value:
-                msg = f'{config.manifest_column_joiner!r} is disallowed in metadata'
-                raise RequirementError(msg, self.fqid)
+    def _reject_joiner(self, values: Iterable[AnyJSON]):
+        joiner = config.manifest_column_joiner
+        # We expect that skipping the check for circular references will provide
+        # a small performance benefit. The tradeoff is a risk of infinite
+        # recursion, which we consider unlikely enough to be acceptable.
+        encoder = json.JSONEncoder(check_circular=False)
+        for value in values:
+            for chunk in encoder.iterencode(value):
+                if joiner in chunk:
+                    raise RequirementError(f'{joiner!r} is disallowed in metadata', self.fqid)
 
     @abstractmethod
-    def reject_joiner(self, catalog: CatalogName):
+    def reject_joiner(self):
         """
-        Raise a requirement error if the given string is found in the bundle
+        Raise a requirement error if the manifest joiner occurs in this bundle
         """
         raise NotImplementedError
 

@@ -86,9 +86,9 @@ Connected issue: #0000
 - [ ] Started reindex in `prod` <sub>or this PR does not require reindexing `prod`</sub>
 - [ ] Checked for, triaged and possibly requeued messages in both fail queues in `prod` <sub>or this PR does not require reindexing `prod`</sub>
 - [ ] Emptied fail queues in `prod` <sub>or this PR does not require reindexing `prod`</sub>
-- [ ] Restarted the `trigger_child` job in the most recent Data Browser build for the [ucsc/hca/prod branch](https://gitlab.azul.data.humancellatlas.org/ucsc/data-browser/-/pipelines?scope=branches) on GitLab in `prod` <sub>or this PR does not require reindexing `prod`</sub>
-- [ ] Restarted the `trigger_child` job in the most recent Data Browser build for the [ucsc/lungmap/prod branch](https://gitlab.azul.data.humancellatlas.org/ucsc/data-browser/-/pipelines?scope=branches) on GitLab in `prod` <sub>or this PR does not require reindexing `prod`</sub>
-- [ ] Restarted `deploy` job in the GitLab pipeline for this PR in `prod` <sub>or this PR does not require reindexing `prod`</sub>
+- [ ] Restarted the Data Browser pipeline for the [ucsc/hca/prod branch](https://gitlab.azul.data.humancellatlas.org/ucsc/data-browser/-/pipelines/new?ref=ucsc%2Fhca%2Fprod) on GitLab in `prod` <sub>or this PR does not require reindexing `prod`</sub>
+- [ ] Restarted the Data Browser pipeline for the [ucsc/lungmap/prod branch](https://gitlab.azul.data.humancellatlas.org/ucsc/data-browser/-/pipelines/new?ref=ucsc%2Flungmap%2Fprod) on GitLab in `prod` <sub>or this PR does not require reindexing `prod`</sub>
+- [ ] Restarted `deploy_browser` job in the GitLab pipeline for this PR in `prod` <sub>or this PR does not require reindexing `prod`</sub>
 
 
 ### Operator

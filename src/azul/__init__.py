@@ -382,7 +382,7 @@ class Config:
             require(partition == 'aws')
             require(service == 'iam')
             require(region == '')
-            require(account_id)
+            reject(account_id == '')
             resource_type, resource_id = resource.split('/')
             require(resource_type == 'role')
             try:
@@ -1462,9 +1462,6 @@ class Config:
     def gitlab_access_token(self) -> Optional[str]:
         return self.environ.get('azul_gitlab_access_token')
 
-    def portal_db_object_key(self, catalog_source: str) -> str:
-        return f'azul/{self.deployment_stage}/portals/{catalog_source}-db.json'
-
     @property
     def lambda_layer_key(self) -> str:
         return 'lambda_layers'
@@ -1792,3 +1789,7 @@ def iif(condition: bool, then: T, otherwise: E = absent) -> Union[T, E]:
             return type(then)()
         else:
             return otherwise
+
+
+def either(value: T | None, alternative: E) -> T | E:
+    return alternative if value is None else value

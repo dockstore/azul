@@ -4,3 +4,5 @@
 # exhaustively.
 paths-ignore:
   - 'attic'
+  - 'swagger/swagger-ui-bundle.js'
+  - 'swagger/swagger-ui-standalone-preset.js'

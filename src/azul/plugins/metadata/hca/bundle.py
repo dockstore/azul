@@ -5,9 +5,6 @@ import logging
 
 import attrs
 
-from azul import (
-    CatalogName,
-)
 from azul.indexer import (
     BUNDLE_FQID,
     Bundle,
@@ -42,10 +39,9 @@ class HCABundle(Bundle[BUNDLE_FQID], ABC):
     links: MutableJSON
     stitched: set[str] = attrs.field(factory=set)
 
-    def reject_joiner(self, catalog: CatalogName):
-        self._reject_joiner(self.manifest)
-        self._reject_joiner(self.metadata)
-        self._reject_joiner(self.links)
+    def reject_joiner(self):
+        # We can skip the `stitched` attribute because it only contains UUIDs
+        self._reject_joiner([self.manifest, self.metadata, self.links])
 
     def to_json(self) -> MutableJSON:
         return {

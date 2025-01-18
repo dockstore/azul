@@ -8,7 +8,6 @@ import time
 from typing import (
     AbstractSet,
     Callable,
-    Sequence,
     TypeVar,
 )
 
@@ -198,9 +197,6 @@ class TDRPlugin(RepositoryPlugin[TDR_BUNDLE, SOURCE_SPEC, SOURCE_REF, BUNDLE_FQI
         log.info('It took %.003fs to download bundle %s.%s',
                  time.time() - now, bundle.uuid, bundle.version)
         return bundle
-
-    def portal_db(self) -> Sequence[JSON]:
-        return []
 
     @classmethod
     def format_version(cls, version: datetime.datetime) -> str:
