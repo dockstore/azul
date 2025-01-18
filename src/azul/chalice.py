@@ -665,7 +665,7 @@ class AzulChaliceApp(Chalice):
             '/',
             interactive=False,
             method_spec={
-                'summary': 'A redirect to the Swagger UI for interactive use of this REST API',
+                'summary': 'Redirect to the Swagger UI for interactive use of this REST API',
                 'tags': ['Auxiliary'],
                 'responses': {
                     '301': {
@@ -675,17 +675,16 @@ class AzulChaliceApp(Chalice):
             }
         )
         def swagger_redirect():
-            return Response(status_code=301,
-                            body='',
-                            headers={'Location': str(self.base_url.set(path='static/index.html'))})
+            headers = {'Location': str(self.base_url.set(path='swagger/index.html'))}
+            return Response(status_code=301, body='', headers=headers)
 
         @self.route(
-            '/static/index.html',
+            '/swagger/index.html',
             interactive=False,
             cache_control=self._http_cache_for(24 * 60 * 60),
             cors=False,
             method_spec={
-                'summary': 'A Swagger UI for interactive use of this REST API',
+                'summary': 'The Swagger UI for interactive use of this REST API',
                 'tags': ['Auxiliary'],
                 'responses': {
                     '200': {
@@ -698,7 +697,7 @@ class AzulChaliceApp(Chalice):
             return self.swagger_resource('index.html')
 
         @self.route(
-            '/static/swagger-initializer.js',
+            '/swagger/swagger-initializer.js',
             interactive=False,
             cache_control=self._http_cache_for(60),
             cors=True,
@@ -717,9 +716,9 @@ class AzulChaliceApp(Chalice):
             template = self.load_static_resource('swagger', file_name)
             base_url = self.base_url
             redirect_url = furl(base_url).add(path='oauth2_redirect')
-            deployment_url = furl(base_url).add(path='openapi')
+            openapi_spec = furl(base_url).add(path='openapi.json')
             body = chevron.render(template, {
-                'DEPLOYMENT_PATH': json.dumps(str(deployment_url.path)),
+                'OPENAPI_SPEC': json.dumps(str(openapi_spec.path)),
                 'OAUTH2_CLIENT_ID': json.dumps(config.google_oauth2_client_id),
                 'OAUTH2_REDIRECT_URL': json.dumps(str(redirect_url)),
                 'NON_INTERACTIVE_METHODS': json.dumps([
@@ -727,12 +726,37 @@ class AzulChaliceApp(Chalice):
                     for path, method in self.non_interactive_routes
                 ])
             })
-            return Response(status_code=200,
-                            body=body,
-                            headers={'Content-Type': 'application/javascript'})
+            headers = {'Content-Type': 'application/javascript'}
+            return Response(status_code=200, body=body, headers=headers)
 
         @self.route(
-            '/openapi',
+            '/swagger/{file}',
+            interactive=False,
+            cache_control=self._http_cache_for(24 * 60 * 60),
+            cors=True,
+            method_spec={
+                'summary': 'Static files needed for the Swagger UI',
+                'tags': ['Auxiliary'],
+                'responses': {
+                    '200': {
+                        'description': 'The response body is the contents of the requested file'
+                    },
+                    '404': {
+                        'description': 'The requested file does not exist'
+                    }
+                }
+            },
+            path_spec={
+                'parameters': [
+                    params.path('file', str, description='The name of a static file to be returned')
+                ]
+            }
+        )
+        def swagger_resource(file):
+            return self.swagger_resource(file)
+
+        @self.route(
+            '/openapi.json',
             methods=['GET'],
             cache_control=self._http_cache_for(60),
             cors=True,
@@ -765,32 +789,6 @@ class AzulChaliceApp(Chalice):
             return Response(status_code=200,
                             headers={'content-type': 'application/json'},
                             body=self.spec())
-
-        @self.route(
-            '/static/{file}',
-            interactive=False,
-            cache_control=self._http_cache_for(24 * 60 * 60),
-            cors=True,
-            method_spec={
-                'summary': 'Static files needed for the Swagger UI',
-                'tags': ['Auxiliary'],
-                'responses': {
-                    '200': {
-                        'description': 'The response body is the contents of the requested file'
-                    },
-                    '404': {
-                        'description': 'The requested file does not exist'
-                    }
-                }
-            },
-            path_spec={
-                'parameters': [
-                    params.path('file', str, description='The name of a static file to be returned')
-                ]
-            }
-        )
-        def static_resource(file):
-            return self.swagger_resource(file)
 
         @self.route(
             '/version',
@@ -830,6 +828,35 @@ class AzulChaliceApp(Chalice):
                 'git': config.lambda_git_status,
                 'changes': compact_changes(limit=10)
             }
+
+        @self.route(
+            '/robots.txt',
+            methods=['GET'],
+            cors=True,
+            method_spec={
+                'summary': 'Robots Exclusion Protocol',
+                'tags': ['Auxiliary'],
+                'responses': {
+                    '200': {
+                        'description': format_description('''
+                            The robots.txt resource according to
+                            [RFC9309](https://datatracker.ietf.org/doc/html/rfc9309)
+                        '''),
+                    }
+                }
+            }
+        )
+        def robots_txt():
+            body = '\n'.join(f'{k}: {v}' for k, v in [
+                ('User-agent', '*'),
+                ('Disallow', '/'),
+                # Keep consistent with regex in scope-down statement for the
+                # bot control rule set in api_gateway.tf.json.template.py
+                ('Allow', '/$'),
+                ('Allow', '/swagger/')
+            ])
+            headers = {'Content-Type': 'text/plain'}
+            return Response(status_code=200, headers=headers, body=body)
 
         return locals()
 

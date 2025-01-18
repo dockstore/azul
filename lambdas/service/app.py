@@ -130,6 +130,12 @@ spec = {
     'openapi': '3.0.1',
     'info': {
         'title': config.service_name,
+        # The version property should be updated in any PR connected to an issue
+        # labeled `API`. Increment the major version for backwards incompatible
+        # changes and reset the minor version to zero. Otherwise, increment only
+        # the minor version for backwards compatible changes. A backwards
+        # compatible change is one that does not require updates to clients.
+        'version': '12.1',
         'description': fd(f'''
             # Overview
 
@@ -222,13 +228,7 @@ spec = {
             Also notice that there is only one file. When querying a particular
             index, the corresponding entity will always be a singleton like
             this.
-        '''),
-        # This property should be updated in any PR connected to an issue
-        # labeled `API`. Increment the major version for backwards incompatible
-        # changes and reset the minor version to zero. Otherwise, increment only
-        # the minor version for backwards compatible changes. A backwards
-        # compatible change is one that does not require updates to clients.
-        'version': '10.1'
+        ''')
     },
     'tags': [
         {

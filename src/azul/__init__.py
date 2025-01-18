@@ -1611,13 +1611,17 @@ class Config:
 
     @property
     def waf_file_download_limit(self) -> FileDownloadLimit | None:
-        value = self.environ.get('AZUL_FILE_DOWNLOAD_RATE_LIMIT')
+        value = self.environ.get('azul_waf_download_rate_limit')
         if value is None:
             return None
         else:
             return self.FileDownloadLimit.parse(value)
 
     assert 100 <= waf_rate_rule_limit <= 2_000_000_000  # mandated by AWS
+
+    @property
+    def waf_bot_control(self) -> bool:
+        return self._boolean(self.environ['azul_waf_bot_control'])
 
     @property
     def vpc_cidr(self) -> str:

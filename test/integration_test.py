@@ -493,7 +493,7 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
             assert False, catalog
         service_paths = {
             '/': None,
-            '/openapi': None,
+            '/openapi.json': None,
             # the version endpoint is tested separately
             '/index/summary': None,
             f'/index/{bundle_index}': {
@@ -1716,7 +1716,7 @@ class OpenAPIIntegrationTest(AzulTestCase):
                 self.assertEqual(response.headers['content-type'], 'text/html')
                 self.assertGreater(len(response.content), 0)
                 # validate OpenAPI spec
-                url.set(path='/openapi')
+                url.set(path='/openapi.json')
                 response = requests.get(str(url))
                 response.raise_for_status()
                 spec = response.json()
@@ -1904,7 +1904,7 @@ class SwaggerResourceIntegrationTest(AzulTestCase):
                 ('..%2Fdoes-not-exist', 403),
             ]:
                 with self.subTest(component=component, file=file):
-                    response = http.request(GET, str(base_url / 'static' / file))
+                    response = http.request(GET, str(base_url / 'swagger' / file))
                     self.assertEqual(expected_status, response.status)
 
 
@@ -1945,10 +1945,10 @@ class ResponseHeadersTest(AzulTestCase):
         short_cache = 'public, max-age=60, must-revalidate'
         long_cache = 'public, max-age=86400, must-revalidate'
         test_cases = {
-            '/static/index.html': long_cache,
-            '/static/swagger-initializer.js': short_cache,
-            '/static/swagger-ui.css': long_cache,
-            '/openapi': short_cache,
+            '/swagger/index.html': long_cache,
+            '/swagger/swagger-initializer.js': short_cache,
+            '/swagger/swagger-ui.css': long_cache,
+            '/openapi.json': short_cache,
             '/oauth2_redirect': no_cache,
             '/health/basic': no_cache
         }
