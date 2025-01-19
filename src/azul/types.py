@@ -38,7 +38,7 @@ type FlatJSON = Mapping[str, PrimitiveJSON]
 type AnyMutableJSON = list[AnyMutableJSON] | dict[str, AnyMutableJSON] | PrimitiveJSON
 type MutableJSON = dict[str, AnyMutableJSON]
 type MutableJSONs = list[MutableJSON]
-type MutableCompositeJSON = MutableJSON | list[AnyJSON]
+type MutableCompositeJSON = MutableJSON | list[AnyMutableJSON]
 type MutableFlatJSON = dict[str, PrimitiveJSON]
 
 
