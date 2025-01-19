@@ -8,6 +8,7 @@ from furl import (
 
 from azul import (
     JSON,
+    RequirementError,
 )
 from azul.chalice import (
     AzulChaliceApp,
@@ -48,7 +49,7 @@ class TestAppSpecs(AzulUnitTestCase):
                          'Changing input object should not affect specs')
 
     def test_already_annotated_top_level_spec(self):
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(RequirementError):
             self.app({'paths': {'/': {'already': 'annotated'}}})
 
     def test_unannotated(self):
@@ -109,17 +110,27 @@ class TestAppSpecs(AzulUnitTestCase):
             'get': {'c': 'd'}
         }
 
-        with self.assertRaises(AssertionError) as cm:
-            @app.route('/foo', methods=['GET'], path_spec=path_spec, method_spec={'e': 'f'})
+        with self.assertRaises(RequirementError) as cm:
+            @app.route('/foo',
+                       methods=['GET'],
+                       path_spec=path_spec,
+                       method_spec={'e': 'f'})
             def route():
                 pass  # no coverage
-        self.assertEqual(str(cm.exception), 'Only specify method_spec once per route path and method')
+        self.assertEqual(str(cm.exception),
+                         'Only specify method_spec once per route path and method')
 
     def test_multiple_routes(self):
         app = self.app({'foo': 'bar'})
 
-        @app.route('/foo', methods=['GET', 'PUT'], path_spec={'a': 'b'}, method_spec={'c': 'd'})
-        @app.route('/foo/too', methods=['GET'], path_spec={'e': 'f'}, method_spec={'g': 'h'})
+        @app.route('/foo',
+                   methods=['GET', 'PUT'],
+                   path_spec={'a': 'b'},
+                   method_spec={'c': 'd'})
+        @app.route('/foo/too',
+                   methods=['GET'],
+                   path_spec={'e': 'f'},
+                   method_spec={'g': 'h'})
         def route():
             pass  # no coverage
 
@@ -145,7 +156,7 @@ class TestAppSpecs(AzulUnitTestCase):
     def test_duplicate_method_specs(self):
         app = self.app({'foo': 'bar'})
 
-        with self.assertRaises(AssertionError) as cm:
+        with self.assertRaises(RequirementError) as cm:
             @app.route('/foo', methods=['GET'], method_spec={'a': 'b'})
             @app.route('/foo', methods=['GET'], method_spec={'a': 'XXX'})
             def route():
@@ -159,7 +170,7 @@ class TestAppSpecs(AzulUnitTestCase):
         def route1():
             pass
 
-        with self.assertRaises(AssertionError) as cm:
+        with self.assertRaises(RequirementError) as cm:
             @app.route('/foo', methods=['GET'], path_spec={'a': 'b'}, method_spec={})
             def route2():
                 pass

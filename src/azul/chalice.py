@@ -50,6 +50,7 @@ from azul import (
     config,
     mutable_furl,
     open_resource,
+    reject,
     require,
 )
 from azul.auth import (
@@ -136,11 +137,11 @@ class AzulChaliceApp(Chalice):
                  unit_test: bool = False,
                  spec: JSON):
         self._patch_event_source_handler()
-        assert app_module_path.endswith('/app.py'), app_module_path
+        require(app_module_path.endswith('/app.py'), app_module_path)
         self.app_module_path = app_module_path
         self.unit_test = unit_test
         self.non_interactive_routes: set[tuple[str, str]] = set()
-        assert 'paths' not in spec, 'The top-level spec must not define paths'
+        reject('paths' in spec, 'The top-level spec must not define paths')
         self._specs = copy_json(spec)
         self._specs['paths'] = {}
         # The `debug` arg controls whether tracebacks appear in error responses
@@ -331,7 +332,7 @@ class AzulChaliceApp(Chalice):
             for method in path.values() if isinstance(method, dict)
             for tag in method.get('tags', [])
         )
-        assert 'servers' not in self._specs
+        reject('servers' in self._specs, "The 'servers' entry is computed")
         return {
             **self._specs,
             'tags': [
@@ -394,7 +395,8 @@ class AzulChaliceApp(Chalice):
         Add a route's specifications to the specification object.
         """
         if path_spec is not None:
-            assert path not in self._specs['paths'], 'Only specify path_spec once per route path'
+            reject(path in self._specs['paths'],
+                   'Only specify path_spec once per route path')
             self._specs['paths'][path] = copy_json(path_spec)
 
         for method in methods:
@@ -403,8 +405,8 @@ class AzulChaliceApp(Chalice):
             # This may override duplicate specs from path_specs
             if path not in self._specs['paths']:
                 self._specs['paths'][path] = {}
-            assert method not in self._specs['paths'][path], \
-                'Only specify method_spec once per route path and method'
+            reject(method in self._specs['paths'][path],
+                   'Only specify method_spec once per route path and method')
             self._specs['paths'][path][method] = copy_json(method_spec)
 
     class _LogJSONEncoder(JSONEncoder):
