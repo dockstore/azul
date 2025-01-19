@@ -17,6 +17,7 @@ import os
 import pathlib
 from typing import (
     Any,
+    Callable,
     Iterator,
     Literal,
     Self,
@@ -81,6 +82,9 @@ from azul.strings import (
 from azul.types import (
     JSON,
     LambdaContext,
+    json_dict,
+    json_list,
+    json_str,
 )
 
 log = logging.getLogger(__name__)
@@ -254,17 +258,17 @@ class AzulChaliceApp(Chalice):
 
     HttpMethod = Literal['GET', 'POST', 'PUT', 'PATCH', 'HEAD', 'OPTIONS', 'DELETE']
 
-    # noinspection PyMethodOverriding
-    def route(self,
-              path: str,
-              *,
-              methods: Sequence[HttpMethod] = ('GET',),
-              enabled: bool = True,
-              interactive: bool = True,
-              cache_control: str = 'no-store',
-              path_spec: JSON | None = None,
-              spec: JSON,
-              **kwargs):
+    def route[C: Callable](self,
+                           path: str,
+                           *,
+                           methods: Sequence[HttpMethod] = ('GET',),
+                           enabled: bool = True,
+                           interactive: bool = True,
+                           cache_control: str = 'no-store',
+                           path_spec: JSON | None = None,
+                           spec: JSON | None = None,
+                           **kwargs
+                           ) -> Callable[[C], C]:
         """
         Decorates a view handler function in a Chalice application.
 
@@ -297,8 +301,14 @@ class AzulChaliceApp(Chalice):
 
                      https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#operation-object
 
-                     This must be specified for every `@app.route` invocation.
+                     Even though this keyword argument has a default value, it
+                     must be specified for every `@app.route` invocation. The
+                     reason for the default is so that the signature of the
+                     override is compatible with that of the overridden method,
+                     a mypy requirement.
         """
+        require(spec is not None, "Argument 'spec' is required")
+        assert spec is not None
         if enabled:
             if not interactive:
                 require(bool(methods), 'Must list methods with interactive=False')
@@ -328,17 +338,17 @@ class AzulChaliceApp(Chalice):
         Only call this method after all routes are registered.
         """
         used_tags = set(
-            tag
-            for path in self._specs['paths'].values()
-            for method in path.values() if isinstance(method, dict)
-            for tag in method.get('tags', [])
+            json_str(tag)
+            for path in json_dict(self._specs['paths']).values()
+            for method in json_dict(path).values() if isinstance(method, dict)
+            for tag in json_list(method.get('tags', []))
         )
         reject('servers' in self._specs, "The 'servers' entry is computed")
         return {
             **self._specs,
             'tags': [
-                tag for tag in self._specs.get('tags', [])
-                if tag['name'] in used_tags
+                tag for tag in json_list(self._specs.get('tags', []))
+                if json_dict(tag)['name'] in used_tags
             ],
             'servers': [{'url': str(self.base_url.add(path='/'))}]
         }
@@ -349,7 +359,9 @@ class AzulChaliceApp(Chalice):
         The URL of the current request, including the path, but without query
         arguments. Callers can safely modify the returned `furl` instance.
         """
-        path = self.current_request.context['path']
+        request = self.current_request
+        assert request is not None
+        path = request.context['path']
         return self.base_url.add(path=path)
 
     @property
@@ -372,7 +384,9 @@ class AzulChaliceApp(Chalice):
                 from chalice.constants import (
                     DEFAULT_HANDLER_NAME,
                 )
-                assert self.lambda_context.function_name == DEFAULT_HANDLER_NAME
+                lambda_context = self.lambda_context
+                assert lambda_context is not None
+                assert lambda_context.function_name == DEFAULT_HANDLER_NAME
                 scheme = 'http'
             else:
                 # Invocation via API Gateway
@@ -395,20 +409,20 @@ class AzulChaliceApp(Chalice):
         """
         Add a route's specifications to the specification object.
         """
+        paths = json_dict(self._specs['paths'])
         if path_spec is not None:
-            reject(path in self._specs['paths'],
+            reject(path in paths,
                    'Only specify path_spec once per route path')
-            self._specs['paths'][path] = copy_json(path_spec)
+            paths[path] = copy_json(path_spec)
 
         for method in methods:
             # OpenAPI requires HTTP method names be lower case
             method = method.lower()
             # This may override duplicate specs from path_specs
-            if path not in self._specs['paths']:
-                self._specs['paths'][path] = {}
-            reject(method in self._specs['paths'][path],
+            path_methods = json_dict(paths.setdefault(path, {}))
+            reject(method in path_methods,
                    "Only specify 'spec' once per route path and method")
-            self._specs['paths'][path][method] = copy_json(spec)
+            path_methods[method] = copy_json(spec)
 
     class _LogJSONEncoder(JSONEncoder):
 
@@ -565,6 +579,7 @@ class AzulChaliceApp(Chalice):
 
         @property
         def tf_function_resource_name(self) -> str:
+            assert self.handler_name is not None, 'Unbound decorator'
             if self.handler_name is None:
                 return self.app_name
             else:
@@ -879,8 +894,10 @@ class AppController:
 
     @property
     def lambda_context(self) -> LambdaContext:
+        assert self.app.lambda_context is not None
         return self.app.lambda_context
 
     @property
     def current_request(self) -> AzulRequest:
+        assert self.app.current_request is not None
         return self.app.current_request

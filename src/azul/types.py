@@ -44,44 +44,73 @@ type MutableCompositeJSON = MutableJSON | MutableJSONArray
 type MutableFlatJSON = dict[str, PrimitiveJSON]
 
 
-class LambdaContext(object):
+def json_mapping(v: AnyJSON) -> JSON:
+    assert isinstance(v, Mapping)
+    return v
+
+
+def json_sequence(v: AnyJSON) -> JSONArray:
+    assert isinstance(v, Sequence)
+    return v
+
+
+def json_dict(v: AnyMutableJSON) -> MutableJSON:
+    assert isinstance(v, dict)
+    return v
+
+
+def json_list(v: AnyMutableJSON) -> MutableJSONArray:
+    assert isinstance(v, list)
+    return v
+
+
+def json_str(v: AnyMutableJSON | AnyJSON) -> str:
+    assert isinstance(v, str)
+    return v
+
+
+def json_int(v: AnyMutableJSON | AnyJSON) -> int:
+    assert isinstance(v, int)
+    return v
+
+
+def json_float(v: AnyMutableJSON | AnyJSON) -> float:
+    assert isinstance(v, float)
+    return v
+
+
+def json_bool(v: AnyMutableJSON | AnyJSON) -> bool:
+    assert isinstance(v, bool)
+    return v
+
+
+def json_none(v: AnyMutableJSON | AnyJSON) -> None:
+    assert v is None
+    return v
+
+
+class LambdaContext:
     """
     A stub for the AWS Lambda context
     """
 
-    @property
-    def aws_request_id(self) -> str:
-        raise NotImplementedError
+    aws_request_id: str
 
-    @property
-    def log_group_name(self) -> str:
-        raise NotImplementedError
+    log_group_name: str
 
-    @property
-    def log_stream_name(self) -> str:
-        raise NotImplementedError
+    log_stream_name: str
 
-    @property
-    def function_name(self) -> str:
-        raise NotImplementedError
+    function_name: str
 
-    @property
-    def memory_limit_in_mb(self) -> str:
-        raise NotImplementedError
+    memory_limit_in_mb: str
 
-    @property
-    def function_version(self) -> str:
-        raise NotImplementedError
+    function_version: str
 
-    @property
-    def invoked_function_arn(self) -> str:
-        raise NotImplementedError
+    invoked_function_arn: str
 
-    def get_remaining_time_in_millis(self) -> int:
-        raise NotImplementedError
+    def get_remaining_time_in_millis(self) -> int: ...  # type: ignore[empty-body]
 
-    def log(self, msg: str) -> None:
-        raise NotImplementedError
+    def log(self, msg: str) -> None: ...
 
 
 def is_optional(t) -> bool:
