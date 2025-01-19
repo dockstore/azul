@@ -23,12 +23,14 @@ import shlex
 from typing import (
     BinaryIO,
     ClassVar,
+    Literal,
     NotRequired,
     Self,
     TYPE_CHECKING,
     TextIO,
     TypeVar,
     TypedDict,
+    overload,
 )
 
 import attr
@@ -1680,9 +1682,24 @@ def reject(condition: bool, *args, exception: type = RequirementError):
         raise exception(*args)
 
 
+@overload
 def open_resource(*path: str,
                   package_root: str | None = None,
-                  binary=False) -> TextIO | BinaryIO:
+                  binary: Literal[False] = False
+                  ) -> TextIO: ...
+
+
+@overload
+def open_resource(*path: str,
+                  package_root: str | None = None,
+                  binary: Literal[True] = False
+                  ) -> BinaryIO: ...
+
+
+def open_resource(*path: str,
+                  package_root: str | None = None,
+                  binary: bool = False
+                  ) -> TextIO | BinaryIO:
     """
     Return a file object for the resources at the given path. A resource is
     a source file that can be loaded at runtime. Resources typically aren't
