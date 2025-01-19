@@ -27,18 +27,20 @@ PrimitiveJSON = str | int | float | bool | None
 # two generic types are the most specific *immutable* super-types of `list`,
 # `tuple` and `dict`:
 
-type AnyJSON = Sequence[AnyJSON] | Mapping[str, AnyJSON] | PrimitiveJSON
+type AnyJSON = JSON | JSONArray | PrimitiveJSON
 type JSON = Mapping[str, AnyJSON]
+type JSONArray = Sequence[AnyJSON]
 type JSONs = Sequence[JSON]
-type CompositeJSON = JSON | Sequence[AnyJSON]
+type CompositeJSON = JSON | JSONArray
 type FlatJSON = Mapping[str, PrimitiveJSON]
 
 # For mutable JSON we can be more specific and use dict and list:
 
-type AnyMutableJSON = list[AnyMutableJSON] | dict[str, AnyMutableJSON] | PrimitiveJSON
+type AnyMutableJSON = MutableJSON | MutableJSONArray | PrimitiveJSON
 type MutableJSON = dict[str, AnyMutableJSON]
+type MutableJSONArray = list[AnyMutableJSON]
 type MutableJSONs = list[MutableJSON]
-type MutableCompositeJSON = MutableJSON | list[AnyMutableJSON]
+type MutableCompositeJSON = MutableJSON | MutableJSONArray
 type MutableFlatJSON = dict[str, PrimitiveJSON]
 
 

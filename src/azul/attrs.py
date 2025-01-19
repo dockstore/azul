@@ -52,8 +52,8 @@ def as_annotated():
     ... # doctest: +NORMALIZE_WHITESPACE
     Traceback (most recent call last):
     ...
-    TypeError: ('y', set(), (<class 'collections.abc.Sequence'>,
-    <class 'collections.abc.Mapping'>, <class 'str'>, <class 'int'>,
+    TypeError: ('y', set(), (<class 'collections.abc.Mapping'>,
+    <class 'collections.abc.Sequence'>, <class 'str'>, <class 'int'>,
     <class 'float'>, <class 'bool'>, <class 'NoneType'>))
 
     Note that you cannot share one return value of this function between more
