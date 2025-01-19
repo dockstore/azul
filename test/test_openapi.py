@@ -117,8 +117,8 @@ class TestAppSpecs(AzulUnitTestCase):
                        method_spec={'e': 'f'})
             def route():
                 pass  # no coverage
-        self.assertEqual(str(cm.exception),
-                         'Only specify method_spec once per route path and method')
+        self.assertEqual('Only specify method_spec once per route path and method',
+                         str(cm.exception))
 
     def test_multiple_routes(self):
         app = self.app({'foo': 'bar'})
@@ -161,7 +161,8 @@ class TestAppSpecs(AzulUnitTestCase):
             @app.route('/foo', methods=['GET'], method_spec={'a': 'XXX'})
             def route():
                 pass
-        self.assertEqual(str(cm.exception), 'Only specify method_spec once per route path and method')
+        self.assertEqual('Only specify method_spec once per route path and method',
+                         str(cm.exception))
 
     def test_duplicate_path_specs(self):
         app = self.app({'foo': 'bar'})
@@ -174,7 +175,8 @@ class TestAppSpecs(AzulUnitTestCase):
             @app.route('/foo', methods=['GET'], path_spec={'a': 'b'}, method_spec={})
             def route2():
                 pass
-        self.assertEqual(str(cm.exception), 'Only specify path_spec once per route path')
+        self.assertEqual('Only specify path_spec once per route path',
+                         str(cm.exception))
 
     def test_shared_path_spec(self):
         """
