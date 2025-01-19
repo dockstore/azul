@@ -125,10 +125,8 @@ C = TypeVar('C', bound='AppController')
 
 
 class AzulChaliceApp(Chalice):
-    # FIXME: Remove these two class attributes once upstream issue is fixed
-    #        https://github.com/DataBiosphere/azul/issues/4558
-    lambda_context = None
-    current_request = None
+    lambda_context: LambdaContext | None
+    current_request: AzulRequest | None
 
     def __init__(self,
                  app_name: str,
@@ -512,10 +510,6 @@ class AzulChaliceApp(Chalice):
         package_root = os.path.dirname(self.app_module_path)
         with open_resource(*path, package_root=package_root) as f:
             return f.read()
-
-    # Some type annotations to help with auto-complete
-    lambda_context: LambdaContext
-    current_request: AzulRequest
 
     @property
     def catalog(self) -> str:
