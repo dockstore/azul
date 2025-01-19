@@ -55,7 +55,7 @@ class TestAppLogging(AzulUnitTestCase):
                     app = AzulChaliceApp(__name__, '/app.py', unit_test=True, spec={})
                     path = '/fail/path'
 
-                    @app.route(path, method_spec={})
+                    @app.route(path, spec={})
                     def fail():
                         raise ValueError(magic_message)
 

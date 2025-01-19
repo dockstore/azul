@@ -398,7 +398,7 @@ class HealthApp(AzulChaliceApp):
             '/health',
             methods=['GET'],
             cors=True,
-            method_spec={
+            spec={
                 'summary': 'Complete health check',
                 'description': format_description(f'''
                             Health check of the {_app_name} REST API and all
@@ -420,7 +420,7 @@ class HealthApp(AzulChaliceApp):
             '/health/basic',
             methods=['GET'],
             cors=True,
-            method_spec={
+            spec={
                 'summary': 'Basic health check',
                 'description': format_description(f'''
                                 Health check of only the REST API itself, excluding other
@@ -438,7 +438,7 @@ class HealthApp(AzulChaliceApp):
             '/health/cached',
             methods=['GET'],
             cors=True,
-            method_spec={
+            spec={
                 'summary': 'Cached health check for continuous monitoring',
                 'description': format_description(f'''
                                 Return a cached copy of the
@@ -459,7 +459,7 @@ class HealthApp(AzulChaliceApp):
             '/health/fast',
             methods=['GET'],
             cors=True,
-            method_spec={
+            spec={
                 'summary': 'Fast health check',
                 'description': format_description('''
                                 Performance-optimized health check of the REST API and other
@@ -479,7 +479,7 @@ class HealthApp(AzulChaliceApp):
             '/health/{keys}',
             methods=['GET'],
             cors=True,
-            method_spec={
+            spec={
                 'summary': 'Selective health check',
                 'description': format_description('''
                                 This endpoint allows clients to request a health check on a

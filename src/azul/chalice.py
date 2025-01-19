@@ -265,7 +265,7 @@ class AzulChaliceApp(Chalice):
               interactive: bool = True,
               cache_control: str = 'no-store',
               path_spec: JSON | None = None,
-              method_spec: JSON,
+              spec: JSON,
               **kwargs):
         """
         Decorates a view handler function in a Chalice application.
@@ -287,27 +287,30 @@ class AzulChaliceApp(Chalice):
                               header.
 
         :param path_spec: Corresponds to an OpenAPI Paths Object. See
+
                           https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#paths-object
+
                           If multiple `@app.route` invocations refer to the same
                           path (but with different HTTP methods), only specify
                           this argument for one of them, otherwise an
                           AssertionError will be raised.
 
-        :param method_spec: Corresponds to an OpenAPI Operation Object. See
-                            https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#operation-object
-                            This must be specified for every `@app.route`
-                            invocation.
+        :param spec: Corresponds to an OpenAPI Operation Object. See
+
+                     https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#operation-object
+
+                     This must be specified for every `@app.route` invocation.
         """
         if enabled:
             if not interactive:
                 require(bool(methods), 'Must list methods with interactive=False')
                 self.non_interactive_routes.update((path, method) for method in methods)
-            method_spec = deep_dict_merge(method_spec, self.default_method_specs())
+            spec = deep_dict_merge(spec, self.default_specs())
             chalice_decorator = super().route(path, methods=methods, **kwargs)
 
             def decorator(view_func):
                 view_func.cache_control = cache_control
-                self._register_spec(path, path_spec, method_spec, methods)
+                self._register_spec(path, path_spec, spec, methods)
                 return chalice_decorator(view_func)
 
             return decorator
@@ -389,7 +392,7 @@ class AzulChaliceApp(Chalice):
     def _register_spec(self,
                        path: str,
                        path_spec: JSON | None,
-                       method_spec: JSON,
+                       spec: JSON,
                        methods: Iterable[str]):
         """
         Add a route's specifications to the specification object.
@@ -406,8 +409,8 @@ class AzulChaliceApp(Chalice):
             if path not in self._specs['paths']:
                 self._specs['paths'][path] = {}
             reject(method in self._specs['paths'][path],
-                   'Only specify method_spec once per route path and method')
-            self._specs['paths'][path][method] = copy_json(method_spec)
+                   "Only specify 'spec' once per route path and method")
+            self._specs['paths'][path][method] = copy_json(spec)
 
     class _LogJSONEncoder(JSONEncoder):
 
@@ -666,7 +669,7 @@ class AzulChaliceApp(Chalice):
         @self.route(
             '/',
             interactive=False,
-            method_spec={
+            spec={
                 'summary': 'Redirect to the Swagger UI for interactive use of this REST API',
                 'tags': ['Auxiliary'],
                 'responses': {
@@ -685,7 +688,7 @@ class AzulChaliceApp(Chalice):
             interactive=False,
             cache_control=self._http_cache_for(24 * 60 * 60),
             cors=False,
-            method_spec={
+            spec={
                 'summary': 'The Swagger UI for interactive use of this REST API',
                 'tags': ['Auxiliary'],
                 'responses': {
@@ -703,7 +706,7 @@ class AzulChaliceApp(Chalice):
             interactive=False,
             cache_control=self._http_cache_for(60),
             cors=True,
-            method_spec={
+            spec={
                 'summary': 'Used internally by the Swagger UI',
                 'tags': ['Auxiliary'],
                 'responses': {
@@ -736,7 +739,7 @@ class AzulChaliceApp(Chalice):
             interactive=False,
             cache_control=self._http_cache_for(24 * 60 * 60),
             cors=True,
-            method_spec={
+            spec={
                 'summary': 'Static files needed for the Swagger UI',
                 'tags': ['Auxiliary'],
                 'responses': {
@@ -762,7 +765,7 @@ class AzulChaliceApp(Chalice):
             methods=['GET'],
             cache_control=self._http_cache_for(60),
             cors=True,
-            method_spec={
+            spec={
                 'summary': 'Return OpenAPI specifications for this REST API',
                 'description': format_description('''
                                 This endpoint returns the [OpenAPI specifications]'
@@ -796,7 +799,7 @@ class AzulChaliceApp(Chalice):
             '/version',
             methods=['GET'],
             cors=True,
-            method_spec={
+            spec={
                 'summary': 'Describe current version of this REST API',
                 'tags': ['Auxiliary'],
                 'responses': {
@@ -835,7 +838,7 @@ class AzulChaliceApp(Chalice):
             '/robots.txt',
             methods=['GET'],
             cors=True,
-            method_spec={
+            spec={
                 'summary': 'Robots Exclusion Protocol',
                 'tags': ['Auxiliary'],
                 'responses': {
@@ -862,7 +865,7 @@ class AzulChaliceApp(Chalice):
 
         return locals()
 
-    def default_method_specs(self):
+    def default_specs(self):
         return {
             'responses': {
                 '504': {
