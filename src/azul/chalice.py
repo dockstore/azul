@@ -310,7 +310,7 @@ class AzulChaliceApp(Chalice):
 
             def decorator(view_func):
                 view_func.cache_control = cache_control
-                self._register_spec(path, path_spec, spec, methods)
+                self._register_spec(path, methods, path_spec, spec)
                 return chalice_decorator(view_func)
 
             return decorator
@@ -391,9 +391,9 @@ class AzulChaliceApp(Chalice):
 
     def _register_spec(self,
                        path: str,
+                       methods: Iterable[str],
                        path_spec: JSON | None,
-                       spec: JSON,
-                       methods: Iterable[str]):
+                       spec: JSON):
         """
         Add a route's specifications to the specification object.
         """
