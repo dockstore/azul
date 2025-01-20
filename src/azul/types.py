@@ -8,9 +8,9 @@ from types import (
 from typing import (
     Any,
     ForwardRef,
-    Generic,
     Optional,
     Protocol,
+    TypeAliasType,
     TypeVar,
     Union,
     get_args,
@@ -27,67 +27,90 @@ PrimitiveJSON = str | int | float | bool | None
 # two generic types are the most specific *immutable* super-types of `list`,
 # `tuple` and `dict`:
 
-AnyJSON4 = Sequence[Any] | Mapping[str | Any] | PrimitiveJSON
-AnyJSON3 = Sequence[AnyJSON4] | Mapping[str, AnyJSON4] | PrimitiveJSON
-AnyJSON2 = Sequence[AnyJSON3] | Mapping[str, AnyJSON3] | PrimitiveJSON
-AnyJSON1 = Sequence[AnyJSON2] | Mapping[str, AnyJSON2] | PrimitiveJSON
-AnyJSON = Sequence[AnyJSON1] | Mapping[str, AnyJSON1] | PrimitiveJSON
-JSON = Mapping[str, AnyJSON]
-JSONs = Sequence[JSON]
-CompositeJSON = JSON | Sequence[AnyJSON]
-FlatJSON = Mapping[str, PrimitiveJSON]
+type AnyJSON = JSON | JSONArray | PrimitiveJSON
+type JSON = Mapping[str, AnyJSON]
+type JSONArray = Sequence[AnyJSON]
+type JSONs = Sequence[JSON]
+type CompositeJSON = JSON | JSONArray
+type FlatJSON = Mapping[str, PrimitiveJSON]
 
 # For mutable JSON we can be more specific and use dict and list:
 
-AnyMutableJSON4 = list[Any] | dict[str, Any] | PrimitiveJSON
-AnyMutableJSON3 = list[AnyMutableJSON4] | dict[str, AnyMutableJSON4] | PrimitiveJSON
-AnyMutableJSON2 = list[AnyMutableJSON3] | dict[str, AnyMutableJSON3] | PrimitiveJSON
-AnyMutableJSON1 = list[AnyMutableJSON2] | dict[str, AnyMutableJSON2] | PrimitiveJSON
-AnyMutableJSON = list[AnyMutableJSON1] | dict[str, AnyMutableJSON1] | PrimitiveJSON
-MutableJSON = dict[str, AnyMutableJSON]
-MutableJSONs = list[MutableJSON]
-MutableCompositeJSON = MutableJSON | list[AnyJSON]
-MutableFlatJSON = dict[str, PrimitiveJSON]
+type AnyMutableJSON = MutableJSON | MutableJSONArray | PrimitiveJSON
+type MutableJSON = dict[str, AnyMutableJSON]
+type MutableJSONArray = list[AnyMutableJSON]
+type MutableJSONs = list[MutableJSON]
+type MutableCompositeJSON = MutableJSON | MutableJSONArray
+type MutableFlatJSON = dict[str, PrimitiveJSON]
 
 
-class LambdaContext(object):
+def json_mapping(v: AnyJSON) -> JSON:
+    assert isinstance(v, Mapping)
+    return v
+
+
+def json_sequence(v: AnyJSON) -> JSONArray:
+    assert isinstance(v, Sequence)
+    return v
+
+
+def json_dict(v: AnyMutableJSON) -> MutableJSON:
+    assert isinstance(v, dict)
+    return v
+
+
+def json_list(v: AnyMutableJSON) -> MutableJSONArray:
+    assert isinstance(v, list)
+    return v
+
+
+def json_str(v: AnyMutableJSON | AnyJSON) -> str:
+    assert isinstance(v, str)
+    return v
+
+
+def json_int(v: AnyMutableJSON | AnyJSON) -> int:
+    assert isinstance(v, int)
+    return v
+
+
+def json_float(v: AnyMutableJSON | AnyJSON) -> float:
+    assert isinstance(v, float)
+    return v
+
+
+def json_bool(v: AnyMutableJSON | AnyJSON) -> bool:
+    assert isinstance(v, bool)
+    return v
+
+
+def json_none(v: AnyMutableJSON | AnyJSON) -> None:
+    assert v is None
+    return v
+
+
+class LambdaContext:
     """
     A stub for the AWS Lambda context
     """
 
-    @property
-    def aws_request_id(self) -> str:
-        raise NotImplementedError
+    aws_request_id: str
 
-    @property
-    def log_group_name(self) -> str:
-        raise NotImplementedError
+    log_group_name: str
 
-    @property
-    def log_stream_name(self) -> str:
-        raise NotImplementedError
+    log_stream_name: str
 
-    @property
-    def function_name(self) -> str:
-        raise NotImplementedError
+    function_name: str
 
-    @property
-    def memory_limit_in_mb(self) -> str:
-        raise NotImplementedError
+    memory_limit_in_mb: str
 
-    @property
-    def function_version(self) -> str:
-        raise NotImplementedError
+    function_version: str
 
-    @property
-    def invoked_function_arn(self) -> str:
-        raise NotImplementedError
+    invoked_function_arn: str
 
-    def get_remaining_time_in_millis(self) -> int:
-        raise NotImplementedError
+    def get_remaining_time_in_millis(self) -> int: ...  # type: ignore[empty-body]
 
-    def log(self, msg: str) -> None:
-        raise NotImplementedError
+    def log(self, msg: str) -> None: ...
 
 
 def is_optional(t) -> bool:
@@ -127,16 +150,16 @@ def is_optional(t) -> bool:
 
 def reify(t):
     """
-    Given a parameterized type construct, return a tuple of
-    subclasses of ``type`` representing all possible alternatives that can pass
-    for that construct at runtime. The return value is meant to be used as the
-    second argument to the ``isinstance`` or ``issubclass`` built-ins.
+    Given a parameterized type construct, return a tuple of subclasses of
+    ``type`` representing all possible alternatives that can pass for that
+    construct at runtime. The return value is meant to be used as the second
+    argument to the ``isinstance`` or ``issubclass`` built-ins.
 
     >>> reify(int)
-    <class 'int'>
+    (<class 'int'>,)
 
     >>> reify(Union[int])
-    <class 'int'>
+    (<class 'int'>,)
 
     >>> reify(str | int)
     (<class 'str'>, <class 'int'>)
@@ -191,31 +214,29 @@ def reify(t):
         ...
     ValueError: ('Not a reifiable generic type', typing.Union)
     """
-    # While `int | str` constructs a `UnionType` instance, `Union[str, int]`
-    # constructs an instance of `Union`, so we need to handle both.
-    origin = get_origin(t)
-    if origin in (UnionType, Union):
-        def f(t):
+
+    def reify(t):
+        while isinstance(t, TypeAliasType):
+            t = t.__value__
+        o = get_origin(t)
+        # While `int | str` constructs a `UnionType` instance, `Union[str, int]`
+        # constructs an instance of `Union`, so we need to handle both.
+        if o in (UnionType, Union):
             for a in get_args(t):
-                o = get_origin(a)
-                if o in (UnionType, Union):
-                    # handle Union of Union
-                    yield from f(a)
-                else:
-                    yield a if o is None else o
+                yield from reify(a)
+        elif o is not None:
+            yield o
+        elif t.__module__ == 'typing':
+            raise ValueError('Not a reifiable generic type', t)
+        else:
+            yield t
 
-        return tuple(OrderedSet(f(t)))
-    elif origin is not None:
-        return origin
-    elif t.__module__ == 'typing':
-        raise ValueError('Not a reifiable generic type', t)
-    else:
-        return t
+    return tuple(OrderedSet(reify(t)))
 
 
-def get_generic_type_params(cls: type[Generic],
+def get_generic_type_params(cls: type,
                             *required_types: type
-                            ) -> Sequence[type | TypeVar | ForwardRef]:
+                            ) -> tuple[type | TypeVar | ForwardRef, ...]:
     """
     Inspect and validate the type parameters of a subclass of `typing.Generic`.
 
@@ -224,9 +245,7 @@ def get_generic_type_params(cls: type[Generic],
     inspected class's definition. `*required_types` can be used to assert the
     superclasses of parameters that are types.
 
-    >>> from typing import Generic
-    >>> T = TypeVar(name='T')
-    >>> class A(Generic[T]):
+    >>> class A[T]:
     ...     pass
     >>> class B(A[int]):
     ...     pass
@@ -234,10 +253,10 @@ def get_generic_type_params(cls: type[Generic],
     ...     pass
 
     >>> get_generic_type_params(A)
-    (~T,)
+    (T,)
 
     >>> get_generic_type_params(A, str)
-    (~T,)
+    (T,)
 
     >>> get_generic_type_params(B)
     (<class 'int'>,)

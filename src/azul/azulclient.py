@@ -94,7 +94,7 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
         # only variant that would ever occur in the wild.
         return {
             'transaction_id': str(uuid.uuid4()),
-            'bundle_fqid': bundle_fqid.to_json()
+            'bundle_fqid': cast(JSON, bundle_fqid.to_json())
         }
 
     def bundle_message(self,
@@ -115,7 +115,7 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
         return {
             'action': 'reindex',
             'catalog': catalog,
-            'source': source.to_json(),
+            'source': cast(JSON, source.to_json()),
             'prefix': prefix
         }
 
@@ -133,7 +133,7 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
               notifications: Iterable[JSON],
               delete: bool = False
               ):
-        errors = defaultdict(int)
+        errors = defaultdict[int, int](int)
         missing = []
         indexed = 0
         total = 0
@@ -247,16 +247,16 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
                        sources: Set[str]):
 
         plugin = self.repository_plugin(catalog)
-        for source in sources:
-            source = plugin.resolve_source(source)
-            source = plugin.partition_source(catalog, source)
+        for source_spec in sources:
+            source_ref = plugin.resolve_source(source_spec)
+            source_ref = plugin.partition_source(catalog, source_ref)
 
             def message(partition_prefix: str) -> JSON:
-                log.info('Remotely reindexing prefix %r of source %r into catalog %r',
-                         partition_prefix, str(source.spec), catalog)
-                return self.reindex_message(catalog, source, partition_prefix)
+                log.info('Remotely reindexing prefix %r of source_ref %r into catalog %r',
+                         partition_prefix, str(source_ref.spec), catalog)
+                return self.reindex_message(catalog, source_ref, partition_prefix)
 
-            messages = map(message, source.spec.prefix.partition_prefixes())
+            messages = map(message, source_ref.spec.prefix.partition_prefixes())
             for batch in chunked(messages, 10):
                 entries = [
                     dict(Id=str(i), MessageBody=json.dumps(message))
@@ -265,8 +265,8 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
                 self.notifications_queue.send_messages(Entries=entries)
 
     def remote_reindex_partition(self, message: JSON) -> None:
-        catalog = message['catalog']
-        prefix = message['prefix']
+        catalog, prefix = message['catalog'], message['prefix']
+        assert isinstance(catalog, str) and isinstance(prefix, str)
         # FIXME: Adopt `trycast` for casting JSON to TypeDict
         #        https://github.com/DataBiosphere/azul/issues/5171
         source = cast(SourceJSON, message['source'])
@@ -386,11 +386,11 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
                 fqid.uuid.lower()
             )
 
-        bundle_fqids = groupby(bundle_fqids, key=group_key)
+        groups = groupby(bundle_fqids, key=group_key)
 
         # Take the first item in each group. Because the oder is reversed, this
         # is the latest version
-        bundle_fqids = [next(group) for _, group in bundle_fqids]
+        bundle_fqids = [next(group) for _, group in groups]
         return bundle_fqids
 
     @cached_property

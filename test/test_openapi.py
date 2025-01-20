@@ -8,6 +8,7 @@ from furl import (
 
 from azul import (
     JSON,
+    RequirementError,
 )
 from azul.chalice import (
     AzulChaliceApp,
@@ -48,13 +49,13 @@ class TestAppSpecs(AzulUnitTestCase):
                          'Changing input object should not affect specs')
 
     def test_already_annotated_top_level_spec(self):
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(RequirementError):
             self.app({'paths': {'/': {'already': 'annotated'}}})
 
     def test_unannotated(self):
         app = self.app({'foo': 'bar'})
 
-        @app.route('/foo', methods=['GET', 'PUT'], method_spec={})
+        @app.route('/foo', methods=['GET', 'PUT'], spec={})
         def route():
             pass  # no coverage
 
@@ -64,13 +65,13 @@ class TestAppSpecs(AzulUnitTestCase):
             'tags': [],
             'servers': [{'url': 'https://fake.url/'}]
         }
-        actual_spec = self._assert_default_method_spec(app.spec())
+        actual_spec = self._assert_default_spec(app.spec())
         self.assertEqual(expected, actual_spec)
 
-    def test_just_method_spec(self):
+    def test_just_spec(self):
         app = self.app({'foo': 'bar'})
 
-        @app.route('/foo', methods=['GET', 'PUT'], method_spec={'a': 'b'})
+        @app.route('/foo', methods=['GET', 'PUT'], spec={'a': 'b'})
         def route():
             pass  # no coverage
 
@@ -86,16 +87,16 @@ class TestAppSpecs(AzulUnitTestCase):
             'servers': [{'url': 'https://fake.url/'}]
         }
 
-        actual_spec = self._assert_default_method_spec(app.spec())
+        actual_spec = self._assert_default_spec(app.spec())
         self.assertEqual(expected_spec, actual_spec)
 
-    def _assert_default_method_spec(self, actual_spec: JSON) -> JSON:
+    def _assert_default_spec(self, actual_spec: JSON) -> JSON:
         actual_spec = copy_json(actual_spec)
         for path_spec in actual_spec['paths'].values():
-            for method, method_spec in path_spec.items():
+            for method, spec in path_spec.items():
                 methods = {'get', 'put'}  # only what's used in these tests
                 if method in methods:
-                    responses = method_spec.pop('responses')
+                    responses = spec.pop('responses')
                     response = responses.pop('504')
                     description = response.pop('description')
                     self.assertIn('Request timed out', description)
@@ -109,17 +110,27 @@ class TestAppSpecs(AzulUnitTestCase):
             'get': {'c': 'd'}
         }
 
-        with self.assertRaises(AssertionError) as cm:
-            @app.route('/foo', methods=['GET'], path_spec=path_spec, method_spec={'e': 'f'})
+        with self.assertRaises(RequirementError) as cm:
+            @app.route('/foo',
+                       methods=['GET'],
+                       path_spec=path_spec,
+                       spec={'e': 'f'})
             def route():
                 pass  # no coverage
-        self.assertEqual(str(cm.exception), 'Only specify method_spec once per route path and method')
+        self.assertEqual(str(cm.exception),
+                         "Only specify 'spec' once per route path and method")
 
     def test_multiple_routes(self):
         app = self.app({'foo': 'bar'})
 
-        @app.route('/foo', methods=['GET', 'PUT'], path_spec={'a': 'b'}, method_spec={'c': 'd'})
-        @app.route('/foo/too', methods=['GET'], path_spec={'e': 'f'}, method_spec={'g': 'h'})
+        @app.route('/foo',
+                   methods=['GET', 'PUT'],
+                   path_spec={'a': 'b'},
+                   spec={'c': 'd'})
+        @app.route('/foo/too',
+                   methods=['GET'],
+                   path_spec={'e': 'f'},
+                   spec={'g': 'h'})
         def route():
             pass  # no coverage
 
@@ -139,31 +150,33 @@ class TestAppSpecs(AzulUnitTestCase):
             'tags': [],
             'servers': [{'url': 'https://fake.url/'}]
         }
-        actual_spec = self._assert_default_method_spec(app.spec())
+        actual_spec = self._assert_default_spec(app.spec())
         self.assertEqual(expected_specs, actual_spec)
 
-    def test_duplicate_method_specs(self):
+    def test_duplicate_specs(self):
         app = self.app({'foo': 'bar'})
 
-        with self.assertRaises(AssertionError) as cm:
-            @app.route('/foo', methods=['GET'], method_spec={'a': 'b'})
-            @app.route('/foo', methods=['GET'], method_spec={'a': 'XXX'})
+        with self.assertRaises(RequirementError) as cm:
+            @app.route('/foo', methods=['GET'], spec={'a': 'b'})
+            @app.route('/foo', methods=['GET'], spec={'a': 'XXX'})
             def route():
                 pass
-        self.assertEqual(str(cm.exception), 'Only specify method_spec once per route path and method')
+        self.assertEqual("Only specify 'spec' once per route path and method",
+                         str(cm.exception))
 
     def test_duplicate_path_specs(self):
         app = self.app({'foo': 'bar'})
 
-        @app.route('/foo', methods=['PUT'], path_spec={'a': 'XXX'}, method_spec={})
+        @app.route('/foo', methods=['PUT'], path_spec={'a': 'XXX'}, spec={})
         def route1():
             pass
 
-        with self.assertRaises(AssertionError) as cm:
-            @app.route('/foo', methods=['GET'], path_spec={'a': 'b'}, method_spec={})
+        with self.assertRaises(RequirementError) as cm:
+            @app.route('/foo', methods=['GET'], path_spec={'a': 'b'}, spec={})
             def route2():
                 pass
-        self.assertEqual(str(cm.exception), 'Only specify path_spec once per route path')
+        self.assertEqual('Only specify path_spec once per route path',
+                         str(cm.exception))
 
     def test_shared_path_spec(self):
         """
@@ -181,19 +194,19 @@ class TestAppSpecs(AzulUnitTestCase):
                        methods=['GET'],
                        cors=True,
                        path_spec=shared_path_spec,
-                       method_spec={'summary': f'Swagger test {i}'})
+                       spec={'summary': f'Swagger test {i}'})
             def swagger_test():
                 pass
 
-        method_specs = app.spec()['paths'].values()
-        self.assertNotEqual(*method_specs)
+        specs = app.spec()['paths'].values()
+        self.assertNotEqual(*specs)
 
     def test_unused_tags(self):
         app = self.app({
             'tags': [{'name': name} for name in ('foo', 'bar', 'baz', 'qux')]
         })
 
-        @app.route('/foo', methods=['PUT'], method_spec={'tags': ['foo', 'qux']})
+        @app.route('/foo', methods=['PUT'], spec={'tags': ['foo', 'qux']})
         def route1():
             pass
 
@@ -277,7 +290,7 @@ class TestSchemaHelpers(AzulUnitTestCase):
         # wrapper.
         try:
             # noinspection PyTypeChecker
-            schema.make_type(schema.optional(str))
+            schema.make(schema.optional(str))
         except AssertionError as e:
             self.assertIn(schema.optional, e.args)
         else:

@@ -111,7 +111,7 @@ globals().update(app.default_routes())
 @app.route(
     '/{catalog}/{action}',
     methods=['POST'],
-    method_spec={
+    spec={
         'tags': ['Indexing'],
         'summary': 'Notify the indexer to perform an action on a bundle',
         'description': fd('''
