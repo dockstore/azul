@@ -579,7 +579,7 @@ class AzulChaliceApp(Chalice):
 
         @property
         def tf_function_resource_name(self) -> str:
-            assert self.handler_name is not None, 'Unbound decorator'
+            assert self.app_name is not None, 'Unbound decorator'
             if self.handler_name is None:
                 return self.app_name
             else:
