@@ -7,8 +7,8 @@
             "indexed": false,
             "content-type": "whatever format these are in; dcp-type=data",
             "version": "2019-09-24T09:35:06.958773Z",
-            "crc32c": "",
-            "sha256": "",
+            "crc32c": "00000000",
+            "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
             "drs_uri": "drs://mock_tdr.lan/v1_d8c20944-739f-4e7d-9161-b720953432ce_1d239f78-f3e6-5dfb-aeb0-f50d8d97b51c"
         },
         "sequence_file/5f68ea73-350b-4d37-a341-3004139fb699": {
@@ -31,8 +31,8 @@
             "indexed": false,
             "content-type": "whatever format these are in; dcp-type=data",
             "version": "2019-09-24T09:35:06.958773Z",
-            "crc32c": "",
-            "sha256": "",
+            "crc32c": "00000000",
+            "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
             "drs_uri": null
         },
         "sequence_file/133f2a25-f3aa-49a7-b9b6-d185d302fb26": {
@@ -81,8 +81,8 @@
             "indexed": false,
             "content-type": "whatever format these are in; dcp-type=data",
             "version": "2019-09-24T09:35:06.958773Z",
-            "crc32c": "",
-            "sha256": "",
+            "crc32c": "00000000",
+            "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
             "drs_uri": "drs://mock_tdr.lan/v1_d8c20944-739f-4e7d-9161-b720953432ce_9d6f268f-f484-5381-9095-f0998fa0c961"
         },
         "sequence_file/a2f4b05d-0dae-4655-acfd-ef3b91ae0ad0": {
