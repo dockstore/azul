@@ -157,8 +157,8 @@ class AzulChaliceApp(Chalice):
 
     def _add_contact_to_spec(self, spec: JSON) -> MutableJSON:
         spec = copy_json(spec)
-        info = spec.setdefault('info', {})
-        info['description'] = info.get('description', '') + config.contact_us
+        info = json_dict(spec.setdefault('info', {}))
+        info['description'] = json_str(info.get('description', '')) + config.contact_us
         return spec
 
     @property
