@@ -12,6 +12,9 @@ from typing import (
 from more_itertools import (
     one,
 )
+from more_itertools.more import (
+    always_iterable,
+)
 
 from azul import (
     JSON,
@@ -63,6 +66,7 @@ from azul.service.manifest_service import (
 from azul.types import (
     AnyMutableJSON,
     MutableJSON,
+    MutableJSONs,
 )
 
 
@@ -342,6 +346,15 @@ class Plugin(MetadataPlugin[AnvilBundle]):
         for table in anvil_schema['tables']
     }
 
+    foreign_keys_by_table = {
+        table['name']: [
+            (r['to']['table'], r['from']['column'])
+            for r in anvil_schema['relationships']
+            if r['from']['table'] == table['name']
+        ]
+        for table in anvil_schema['tables']
+    }
+
     def verbatim_pfb_entity_id(self, replica: JSON) -> str:
         replica_type = replica['replica_type']
         try:
@@ -353,6 +366,51 @@ class Plugin(MetadataPlugin[AnvilBundle]):
                 return super().verbatim_pfb_entity_id(replica)
         else:
             return replica['contents'][primary_key]
+
+    def verbatim_pfb_relations(self, replica: JSON) -> list[tuple[str, str]]:
+        table_name, contents = replica['replica_type'], replica['contents']
+        try:
+            foreign_keys = self.foreign_keys_by_table[table_name]
+        except KeyError:
+            if table_name == 'duos_dataset_registration':
+                return [('anvil_dataset', contents['dataset_id'])]
+            else:
+                return super().verbatim_pfb_relations(replica)
+        else:
+            return [
+                (foreign_table_name, foreign_key)
+                for (foreign_table_name, foreign_key_column) in foreign_keys
+                # AnVIL foreign keys may be either scalars (e.g. `anvil_diagnosis.donor_id`)
+                # or arrays (e.g. `anvil_activity.used_file_id`). Scalar foreign keys may be
+                # null; we should never observe null values in array columns thanks to
+                # BigQuery's type semantics:
+                # https://cloud.google.com/bigquery/docs/reference/standard-sql/data-types#array_nulls
+                for foreign_key in always_iterable(contents[foreign_key_column])
+            ]
+
+    def verbatim_pfb_links(self, replica_type: str) -> MutableJSONs:
+        return (
+            [
+                {
+                    'dst': 'anvil_dataset',
+                    'name': '',
+                    'multiplicity': 'ONE_TO_ONE'
+                }
+            ]
+            if replica_type == 'duos_dataset_registration' else
+            [
+                {
+                    'dst': r['to']['table'],
+                    'name': r['name'],
+                    # Each link is between a foreign key and a primary key.
+                    # Primary keys are unique within their own table, but
+                    # multiple rows in other tables can reference them.
+                    'multiplicity': 'MANY_TO_ONE',
+                }
+                for r in anvil_schema['relationships']
+                if r['from']['table'] == replica_type
+            ]
+        )
 
     def verbatim_pfb_schema(self, replicas: list[JSON]) -> list[JSON]:
         table_schemas_by_name = {
