@@ -492,6 +492,13 @@ class MetadataPlugin(Plugin[BUNDLE]):
         )
         return avro_pfb.pfb_schema_from_replicas(replicas)
 
+    def verbatim_pfb_relations(self, replica: JSON) -> list[tuple[str, str]]:
+        """
+        A list of the replicas that the given replica references/depends on,
+        represented as (replica_type, entity_id) pairs.
+        """
+        return []
+
     @abstractmethod
     def document_slice(self, entity_type: str) -> DocumentSlice | None:
         raise NotImplementedError

@@ -130,6 +130,9 @@ from azul.service import (
     Filters,
     avro_pfb,
 )
+from azul.service.avro_pfb import (
+    PFBRelation,
+)
 from azul.service.elasticsearch_service import (
     ElasticsearchService,
     Pagination,
@@ -2154,7 +2157,13 @@ class PFBVerbatimManifestGenerator(VerbatimManifestGenerator):
             yield pfb_metadata_entity
             for replica in replicas:
                 id = plugin.verbatim_pfb_entity_id(replica)
-                yield avro_pfb.PFBEntity.for_replica(id, dict(replica)).to_json(())
+                relations = plugin.verbatim_pfb_relations(replica)
+                entity = avro_pfb.PFBEntity.for_replica(id, dict(replica))
+                entity_relations = [
+                    PFBRelation(dst_name=replica_type, dst_id=entity_id)
+                    for replica_type, entity_id in relations
+                ]
+                yield entity.to_json(entity_relations)
 
         fd, path = mkstemp(suffix=f'.{self.file_name_extension()}')
         os.close(fd)
