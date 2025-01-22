@@ -193,16 +193,9 @@ class PFBEntity:
         return cls(id=id_, name=name, object=object_)
 
     @classmethod
-    def for_replica(cls, replica: MutableJSON) -> Self:
+    def for_replica(cls, id: str, replica: MutableJSON) -> Self:
         name, object_ = replica['replica_type'], replica['contents']
-        # Note that it is possible for two distinct replicas to have the same
-        # entity ID. For example, replicas representing the DUOS registration
-        # of AnVIL datasets have the same ID as the replica for the dataset
-        # itself. Terra appears to combine PFB entities with the same ID and
-        # name into a single row.
-        # FIXME: Improve handling of DUOS replicas
-        #        https://github.com/DataBiosphere/azul/issues/6139
-        return cls(id=replica['entity_id'], name=name, object=object_)
+        return cls(id=id, name=name, object=object_)
 
     @classmethod
     def _add_missing_fields(cls, name: str, object_: MutableJSON, schema):

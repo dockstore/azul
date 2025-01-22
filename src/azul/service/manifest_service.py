@@ -2139,7 +2139,8 @@ class PFBVerbatimManifestGenerator(VerbatimManifestGenerator):
 
     def create_file(self) -> tuple[str, str | None]:
         replicas = list(self._all_replicas())
-        replica_schemas = self.metadata_plugin.verbatim_pfb_schema(replicas)
+        plugin = self.metadata_plugin
+        replica_schemas = plugin.verbatim_pfb_schema(replicas)
         # Ensure field order is consistent for unit tests
         replica_schemas.sort(key=itemgetter('name'))
         replica_types = [s['name'] for s in replica_schemas]
@@ -2149,7 +2150,8 @@ class PFBVerbatimManifestGenerator(VerbatimManifestGenerator):
         def pfb_entities():
             yield pfb_metadata_entity
             for replica in replicas:
-                yield avro_pfb.PFBEntity.for_replica(dict(replica)).to_json(())
+                id = plugin.verbatim_pfb_entity_id(replica)
+                yield avro_pfb.PFBEntity.for_replica(id, dict(replica)).to_json(())
 
         fd, path = mkstemp(suffix=f'.{self.file_name_extension()}')
         os.close(fd)
