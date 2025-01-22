@@ -82,6 +82,7 @@ from azul.strings import (
 from azul.types import (
     JSON,
     LambdaContext,
+    MutableJSON,
     json_dict,
     json_list,
     json_str,
@@ -144,7 +145,7 @@ class AzulChaliceApp(Chalice):
         self.unit_test = unit_test
         self.non_interactive_routes: set[tuple[str, str]] = set()
         reject('paths' in spec, 'The top-level spec must not define paths')
-        self._specs = copy_json(spec)
+        self._specs = self._add_contact_to_spec(spec)
         self._specs['paths'] = {}
         # The `debug` arg controls whether tracebacks appear in error responses
         super().__init__(app_name, debug=config.debug > 1, configure_logs=False)
@@ -153,6 +154,12 @@ class AzulChaliceApp(Chalice):
         self.register_middleware(self._security_headers_middleware, 'http')
         self.register_middleware(self._api_gateway_context_middleware, 'http')
         self.register_middleware(self._authentication_middleware, 'http')
+
+    def _add_contact_to_spec(self, spec: JSON) -> MutableJSON:
+        spec = copy_json(spec)
+        info = json_dict(spec.setdefault('info', {}))
+        info['description'] = json_str(info.get('description', '')) + config.contact_us
+        return spec
 
     @property
     def unqualified_app_name(self):

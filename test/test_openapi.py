@@ -42,7 +42,8 @@ class TestAppSpecs(AzulUnitTestCase):
     def test_top_level_spec(self):
         spec = {'foo': 'bar'}
         app = self.app(spec)
-        self.assertEqual({'foo': 'bar', 'paths': {}}, app._specs,
+        actual_spec = self._assert_info(app._specs)
+        self.assertEqual({'foo': 'bar', 'paths': {}}, actual_spec,
                          "Confirm 'paths' is added")
         spec['new key'] = 'new value'
         self.assertNotIn('new key', app.spec(),
@@ -65,7 +66,7 @@ class TestAppSpecs(AzulUnitTestCase):
             'tags': [],
             'servers': [{'url': 'https://fake.url/'}]
         }
-        actual_spec = self._assert_default_spec(app.spec())
+        actual_spec = self._assert_default_spec(self._assert_info(app.spec()))
         self.assertEqual(expected, actual_spec)
 
     def test_just_spec(self):
@@ -87,7 +88,7 @@ class TestAppSpecs(AzulUnitTestCase):
             'servers': [{'url': 'https://fake.url/'}]
         }
 
-        actual_spec = self._assert_default_spec(app.spec())
+        actual_spec = self._assert_default_spec(self._assert_info(app.spec()))
         self.assertEqual(expected_spec, actual_spec)
 
     def _assert_default_spec(self, actual_spec: JSON) -> JSON:
@@ -101,6 +102,13 @@ class TestAppSpecs(AzulUnitTestCase):
                     description = response.pop('description')
                     self.assertIn('Request timed out', description)
                     self.assertEqual(({}, {}), (response, responses))
+        return actual_spec
+
+    def _assert_info(self, actual_spec: JSON) -> JSON:
+        actual_spec = copy_json(actual_spec)
+        info = actual_spec.pop('info')
+        self.assertIn('Contact us', info.pop('description'))
+        self.assertEqual({}, info)
         return actual_spec
 
     def test_fully_annotated_override(self):
@@ -150,7 +158,7 @@ class TestAppSpecs(AzulUnitTestCase):
             'tags': [],
             'servers': [{'url': 'https://fake.url/'}]
         }
-        actual_spec = self._assert_default_spec(app.spec())
+        actual_spec = self._assert_default_spec(self._assert_info(app.spec()))
         self.assertEqual(expected_specs, actual_spec)
 
     def test_duplicate_specs(self):

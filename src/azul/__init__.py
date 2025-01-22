@@ -49,6 +49,9 @@ from azul.caching import (
 from azul.collections import (
     atuple,
 )
+from azul.openapi import (
+    format_description,
+)
 from azul.types import (
     JSON,
 )
@@ -1515,6 +1518,19 @@ class Config:
             #        https://github.com/DataBiosphere/azul/issues/3133
             import json
             return json.loads(value)
+
+    @property
+    def contact_us(self) -> str:
+        email = self.monitoring_email
+        return format_description(f'''
+
+            ## Contact us
+
+            For technical support please file an issue at
+            [GitHub](https://github.com/DataBiosphere/azul/issues) or email
+            `{email}`. To report a security concern or misconduct please email
+            `{email}`.
+        ''')
 
     @attr.s(frozen=True, kw_only=True, auto_attribs=True)
     class SlackIntegration:
