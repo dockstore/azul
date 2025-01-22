@@ -17,6 +17,7 @@ import os
 import pathlib
 from typing import (
     Any,
+    Callable,
     Iterator,
     Literal,
     Self,
@@ -50,6 +51,7 @@ from azul import (
     config,
     mutable_furl,
     open_resource,
+    reject,
     require,
 )
 from azul.auth import (
@@ -80,6 +82,9 @@ from azul.strings import (
 from azul.types import (
     JSON,
     LambdaContext,
+    json_dict,
+    json_list,
+    json_str,
 )
 
 log = logging.getLogger(__name__)
@@ -124,10 +129,8 @@ C = TypeVar('C', bound='AppController')
 
 
 class AzulChaliceApp(Chalice):
-    # FIXME: Remove these two class attributes once upstream issue is fixed
-    #        https://github.com/DataBiosphere/azul/issues/4558
-    lambda_context = None
-    current_request = None
+    lambda_context: LambdaContext | None
+    current_request: AzulRequest | None
 
     def __init__(self,
                  app_name: str,
@@ -136,11 +139,11 @@ class AzulChaliceApp(Chalice):
                  unit_test: bool = False,
                  spec: JSON):
         self._patch_event_source_handler()
-        assert app_module_path.endswith('/app.py'), app_module_path
+        require(app_module_path.endswith('/app.py'), app_module_path)
         self.app_module_path = app_module_path
         self.unit_test = unit_test
         self.non_interactive_routes: set[tuple[str, str]] = set()
-        assert 'paths' not in spec, 'The top-level spec must not define paths'
+        reject('paths' in spec, 'The top-level spec must not define paths')
         self._specs = copy_json(spec)
         self._specs['paths'] = {}
         # The `debug` arg controls whether tracebacks appear in error responses
@@ -255,17 +258,17 @@ class AzulChaliceApp(Chalice):
 
     HttpMethod = Literal['GET', 'POST', 'PUT', 'PATCH', 'HEAD', 'OPTIONS', 'DELETE']
 
-    # noinspection PyMethodOverriding
-    def route(self,
-              path: str,
-              *,
-              methods: Sequence[HttpMethod] = ('GET',),
-              enabled: bool = True,
-              interactive: bool = True,
-              cache_control: str = 'no-store',
-              path_spec: JSON | None = None,
-              method_spec: JSON,
-              **kwargs):
+    def route[C: Callable](self,
+                           path: str,
+                           *,
+                           methods: Sequence[HttpMethod] = ('GET',),
+                           enabled: bool = True,
+                           interactive: bool = True,
+                           cache_control: str = 'no-store',
+                           path_spec: JSON | None = None,
+                           spec: JSON | None = None,
+                           **kwargs
+                           ) -> Callable[[C], C]:
         """
         Decorates a view handler function in a Chalice application.
 
@@ -286,27 +289,36 @@ class AzulChaliceApp(Chalice):
                               header.
 
         :param path_spec: Corresponds to an OpenAPI Paths Object. See
+
                           https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#paths-object
+
                           If multiple `@app.route` invocations refer to the same
                           path (but with different HTTP methods), only specify
                           this argument for one of them, otherwise an
                           AssertionError will be raised.
 
-        :param method_spec: Corresponds to an OpenAPI Operation Object. See
-                            https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#operation-object
-                            This must be specified for every `@app.route`
-                            invocation.
+        :param spec: Corresponds to an OpenAPI Operation Object. See
+
+                     https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#operation-object
+
+                     Even though this keyword argument has a default value, it
+                     must be specified for every `@app.route` invocation. The
+                     reason for the default is so that the signature of the
+                     override is compatible with that of the overridden method,
+                     a mypy requirement.
         """
+        require(spec is not None, "Argument 'spec' is required")
+        assert spec is not None
         if enabled:
             if not interactive:
                 require(bool(methods), 'Must list methods with interactive=False')
                 self.non_interactive_routes.update((path, method) for method in methods)
-            method_spec = deep_dict_merge(method_spec, self.default_method_specs())
+            spec = deep_dict_merge(spec, self.default_specs())
             chalice_decorator = super().route(path, methods=methods, **kwargs)
 
             def decorator(view_func):
                 view_func.cache_control = cache_control
-                self._register_spec(path, path_spec, method_spec, methods)
+                self._register_spec(path, methods, path_spec, spec)
                 return chalice_decorator(view_func)
 
             return decorator
@@ -326,17 +338,17 @@ class AzulChaliceApp(Chalice):
         Only call this method after all routes are registered.
         """
         used_tags = set(
-            tag
-            for path in self._specs['paths'].values()
-            for method in path.values() if isinstance(method, dict)
-            for tag in method.get('tags', [])
+            json_str(tag)
+            for path in json_dict(self._specs['paths']).values()
+            for method in json_dict(path).values() if isinstance(method, dict)
+            for tag in json_list(method.get('tags', []))
         )
-        assert 'servers' not in self._specs
+        reject('servers' in self._specs, "The 'servers' entry is computed")
         return {
             **self._specs,
             'tags': [
-                tag for tag in self._specs.get('tags', [])
-                if tag['name'] in used_tags
+                tag for tag in json_list(self._specs.get('tags', []))
+                if json_dict(tag)['name'] in used_tags
             ],
             'servers': [{'url': str(self.base_url.add(path='/'))}]
         }
@@ -347,7 +359,9 @@ class AzulChaliceApp(Chalice):
         The URL of the current request, including the path, but without query
         arguments. Callers can safely modify the returned `furl` instance.
         """
-        path = self.current_request.context['path']
+        request = self.current_request
+        assert request is not None
+        path = request.context['path']
         return self.base_url.add(path=path)
 
     @property
@@ -370,7 +384,9 @@ class AzulChaliceApp(Chalice):
                 from chalice.constants import (
                     DEFAULT_HANDLER_NAME,
                 )
-                assert self.lambda_context.function_name == DEFAULT_HANDLER_NAME
+                lambda_context = self.lambda_context
+                assert lambda_context is not None
+                assert lambda_context.function_name == DEFAULT_HANDLER_NAME
                 scheme = 'http'
             else:
                 # Invocation via API Gateway
@@ -387,25 +403,26 @@ class AzulChaliceApp(Chalice):
 
     def _register_spec(self,
                        path: str,
+                       methods: Iterable[str],
                        path_spec: JSON | None,
-                       method_spec: JSON,
-                       methods: Iterable[str]):
+                       spec: JSON):
         """
         Add a route's specifications to the specification object.
         """
+        paths = json_dict(self._specs['paths'])
         if path_spec is not None:
-            assert path not in self._specs['paths'], 'Only specify path_spec once per route path'
-            self._specs['paths'][path] = copy_json(path_spec)
+            reject(path in paths,
+                   'Only specify path_spec once per route path')
+            paths[path] = copy_json(path_spec)
 
         for method in methods:
             # OpenAPI requires HTTP method names be lower case
             method = method.lower()
             # This may override duplicate specs from path_specs
-            if path not in self._specs['paths']:
-                self._specs['paths'][path] = {}
-            assert method not in self._specs['paths'][path], \
-                'Only specify method_spec once per route path and method'
-            self._specs['paths'][path][method] = copy_json(method_spec)
+            path_methods = json_dict(paths.setdefault(path, {}))
+            reject(method in path_methods,
+                   "Only specify 'spec' once per route path and method")
+            path_methods[method] = copy_json(spec)
 
     class _LogJSONEncoder(JSONEncoder):
 
@@ -508,10 +525,6 @@ class AzulChaliceApp(Chalice):
         with open_resource(*path, package_root=package_root) as f:
             return f.read()
 
-    # Some type annotations to help with auto-complete
-    lambda_context: LambdaContext
-    current_request: AzulRequest
-
     @property
     def catalog(self) -> str:
         request = self.current_request
@@ -566,6 +579,7 @@ class AzulChaliceApp(Chalice):
 
         @property
         def tf_function_resource_name(self) -> str:
+            assert self.app_name is not None, 'Unbound decorator'
             if self.handler_name is None:
                 return self.app_name
             else:
@@ -664,8 +678,8 @@ class AzulChaliceApp(Chalice):
         @self.route(
             '/',
             interactive=False,
-            method_spec={
-                'summary': 'A redirect to the Swagger UI for interactive use of this REST API',
+            spec={
+                'summary': 'Redirect to the Swagger UI for interactive use of this REST API',
                 'tags': ['Auxiliary'],
                 'responses': {
                     '301': {
@@ -675,17 +689,16 @@ class AzulChaliceApp(Chalice):
             }
         )
         def swagger_redirect():
-            return Response(status_code=301,
-                            body='',
-                            headers={'Location': str(self.base_url.set(path='static/index.html'))})
+            headers = {'Location': str(self.base_url.set(path='swagger/index.html'))}
+            return Response(status_code=301, body='', headers=headers)
 
         @self.route(
-            '/static/index.html',
+            '/swagger/index.html',
             interactive=False,
             cache_control=self._http_cache_for(24 * 60 * 60),
             cors=False,
-            method_spec={
-                'summary': 'A Swagger UI for interactive use of this REST API',
+            spec={
+                'summary': 'The Swagger UI for interactive use of this REST API',
                 'tags': ['Auxiliary'],
                 'responses': {
                     '200': {
@@ -698,11 +711,11 @@ class AzulChaliceApp(Chalice):
             return self.swagger_resource('index.html')
 
         @self.route(
-            '/static/swagger-initializer.js',
+            '/swagger/swagger-initializer.js',
             interactive=False,
             cache_control=self._http_cache_for(60),
             cors=True,
-            method_spec={
+            spec={
                 'summary': 'Used internally by the Swagger UI',
                 'tags': ['Auxiliary'],
                 'responses': {
@@ -717,9 +730,9 @@ class AzulChaliceApp(Chalice):
             template = self.load_static_resource('swagger', file_name)
             base_url = self.base_url
             redirect_url = furl(base_url).add(path='oauth2_redirect')
-            deployment_url = furl(base_url).add(path='openapi')
+            openapi_spec = furl(base_url).add(path='openapi.json')
             body = chevron.render(template, {
-                'DEPLOYMENT_PATH': json.dumps(str(deployment_url.path)),
+                'OPENAPI_SPEC': json.dumps(str(openapi_spec.path)),
                 'OAUTH2_CLIENT_ID': json.dumps(config.google_oauth2_client_id),
                 'OAUTH2_REDIRECT_URL': json.dumps(str(redirect_url)),
                 'NON_INTERACTIVE_METHODS': json.dumps([
@@ -727,16 +740,41 @@ class AzulChaliceApp(Chalice):
                     for path, method in self.non_interactive_routes
                 ])
             })
-            return Response(status_code=200,
-                            body=body,
-                            headers={'Content-Type': 'application/javascript'})
+            headers = {'Content-Type': 'application/javascript'}
+            return Response(status_code=200, body=body, headers=headers)
 
         @self.route(
-            '/openapi',
+            '/swagger/{file}',
+            interactive=False,
+            cache_control=self._http_cache_for(24 * 60 * 60),
+            cors=True,
+            spec={
+                'summary': 'Static files needed for the Swagger UI',
+                'tags': ['Auxiliary'],
+                'responses': {
+                    '200': {
+                        'description': 'The response body is the contents of the requested file'
+                    },
+                    '404': {
+                        'description': 'The requested file does not exist'
+                    }
+                }
+            },
+            path_spec={
+                'parameters': [
+                    params.path('file', str, description='The name of a static file to be returned')
+                ]
+            }
+        )
+        def swagger_resource(file):
+            return self.swagger_resource(file)
+
+        @self.route(
+            '/openapi.json',
             methods=['GET'],
             cache_control=self._http_cache_for(60),
             cors=True,
-            method_spec={
+            spec={
                 'summary': 'Return OpenAPI specifications for this REST API',
                 'description': format_description('''
                                 This endpoint returns the [OpenAPI specifications]'
@@ -767,36 +805,10 @@ class AzulChaliceApp(Chalice):
                             body=self.spec())
 
         @self.route(
-            '/static/{file}',
-            interactive=False,
-            cache_control=self._http_cache_for(24 * 60 * 60),
-            cors=True,
-            method_spec={
-                'summary': 'Static files needed for the Swagger UI',
-                'tags': ['Auxiliary'],
-                'responses': {
-                    '200': {
-                        'description': 'The response body is the contents of the requested file'
-                    },
-                    '404': {
-                        'description': 'The requested file does not exist'
-                    }
-                }
-            },
-            path_spec={
-                'parameters': [
-                    params.path('file', str, description='The name of a static file to be returned')
-                ]
-            }
-        )
-        def static_resource(file):
-            return self.swagger_resource(file)
-
-        @self.route(
             '/version',
             methods=['GET'],
             cors=True,
-            method_spec={
+            spec={
                 'summary': 'Describe current version of this REST API',
                 'tags': ['Auxiliary'],
                 'responses': {
@@ -831,9 +843,38 @@ class AzulChaliceApp(Chalice):
                 'changes': compact_changes(limit=10)
             }
 
+        @self.route(
+            '/robots.txt',
+            methods=['GET'],
+            cors=True,
+            spec={
+                'summary': 'Robots Exclusion Protocol',
+                'tags': ['Auxiliary'],
+                'responses': {
+                    '200': {
+                        'description': format_description('''
+                            The robots.txt resource according to
+                            [RFC9309](https://datatracker.ietf.org/doc/html/rfc9309)
+                        '''),
+                    }
+                }
+            }
+        )
+        def robots_txt():
+            body = '\n'.join(f'{k}: {v}' for k, v in [
+                ('User-agent', '*'),
+                ('Disallow', '/'),
+                # Keep consistent with regex in scope-down statement for the
+                # bot control rule set in api_gateway.tf.json.template.py
+                ('Allow', '/$'),
+                ('Allow', '/swagger/')
+            ])
+            headers = {'Content-Type': 'text/plain'}
+            return Response(status_code=200, headers=headers, body=body)
+
         return locals()
 
-    def default_method_specs(self):
+    def default_specs(self):
         return {
             'responses': {
                 '504': {
@@ -853,8 +894,10 @@ class AppController:
 
     @property
     def lambda_context(self) -> LambdaContext:
+        assert self.app.lambda_context is not None
         return self.app.lambda_context
 
     @property
     def current_request(self) -> AzulRequest:
+        assert self.app.current_request is not None
         return self.app.current_request

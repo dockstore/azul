@@ -90,7 +90,6 @@ def env() -> Mapping[str, Optional[str]]:
         'AZUL_DEPLOYMENT_STAGE': 'tempdev',
 
         'AZUL_DOMAIN_NAME': 'temp.gi.ucsc.edu',
-        'AZUL_PRIVATE_API': '0',
 
         'AZUL_S3_BUCKET': 'edu-ucsc-gi-platform-temp-dev-storage-{AZUL_DEPLOYMENT_STAGE}.{AWS_DEFAULT_REGION}',
 

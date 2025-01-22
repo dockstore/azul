@@ -210,6 +210,7 @@ class AnvilSearchResponseStage(SearchResponseStage):
             },
             'datasets': {
                 'dataset_id',
+                'duos_id',
                 'title'
             },
             'diagnoses': {

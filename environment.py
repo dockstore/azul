@@ -678,7 +678,7 @@ def env() -> Mapping[str, Optional[str]]:
         'azul_gitlab_user': None,
 
         'PYTHONPATH': '{project_root}/src:{project_root}/test',
-        'MYPYPATH': '{project_root}/stubs',
+        'MYPYPATH': '{project_root}/src:{project_root}/stubs',
 
         # The path of a directory containing a wheel for each runtime
         # dependency. Settng this variable causes our fork of Chalice to skip
@@ -946,5 +946,13 @@ def env() -> Mapping[str, Optional[str]]:
         # for restrictions on the supported values for `<limit>` ("Rate limit")
         # and `<window>` ("Evaluation window").
         #
-        'AZUL_FILE_DOWNLOAD_RATE_LIMIT': None
+        'azul_waf_download_rate_limit': None,
+
+        # Wether to enable bot control in AWS WAF. Setting this to 1 will enable
+        # two rules aimed at blocking requests from suspected and verified bots.
+        # As of January 2024, this will incur monthly cost of $10 per ACL plus
+        # $1 per one million requests above ten million requests. The blocking
+        # only applies to URLs disallowed via robots.txt.
+        #
+        'azul_waf_bot_control': '0'
     }

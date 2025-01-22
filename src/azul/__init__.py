@@ -23,14 +23,14 @@ import shlex
 from typing import (
     BinaryIO,
     ClassVar,
+    Literal,
     NotRequired,
-    Optional,
     Self,
     TYPE_CHECKING,
     TextIO,
     TypeVar,
     TypedDict,
-    Union,
+    overload,
 )
 
 import attr
@@ -141,7 +141,7 @@ class Config:
     _es_endpoint_env_name = 'AZUL_ES_ENDPOINT'
 
     @property
-    def es_endpoint(self) -> Optional[Netloc]:
+    def es_endpoint(self) -> Netloc | None:
         try:
             es_endpoint = self.environ[self._es_endpoint_env_name]
         except KeyError:
@@ -152,8 +152,8 @@ class Config:
 
     def es_endpoint_env(self,
                         *,
-                        es_endpoint: Union[Netloc, str],
-                        es_instance_count: Union[int, str]
+                        es_endpoint: Netloc | str,
+                        es_instance_count: int | str
                         ) -> Mapping[str, str]:
         if isinstance(es_endpoint, tuple):
             host, port = es_endpoint
@@ -217,7 +217,7 @@ class Config:
 
     def alb_access_log_path_prefix(self,
                                    *component: str,
-                                   deployment: Optional[str] = current,
+                                   deployment: str | None = current,
                                    ) -> str:
         """
         :param deployment: Which deployment name to use in the path. Omit this
@@ -230,7 +230,7 @@ class Config:
 
     def s3_access_log_path_prefix(self,
                                   *component: str,
-                                  deployment: Optional[str] = current,
+                                  deployment: str | None = current,
                                   ) -> str:
         """
         :param deployment: Which deployment name to use in the path. Omit this
@@ -243,7 +243,7 @@ class Config:
 
     def _log_path_prefix(self,
                          prefix: list[str],
-                         deployment: Optional[str],
+                         deployment: str | None,
                          *component: str,
                          ):
         if deployment is self.current:
@@ -291,7 +291,7 @@ class Config:
         return domain
 
     @property
-    def dss_endpoint(self) -> Optional[str]:
+    def dss_endpoint(self) -> str | None:
         if self.dss_source is None:
             return None
         else:
@@ -301,7 +301,7 @@ class Config:
             return SimpleSourceSpec.parse(self.dss_source).name
 
     @property
-    def dss_source(self) -> Optional[str]:
+    def dss_source(self) -> str | None:
         return self.environ.get('AZUL_DSS_SOURCE')
 
     def sources(self, catalog: CatalogName) -> Set[str]:
@@ -331,7 +331,7 @@ class Config:
         return furl(self.environ['AZUL_SAM_SERVICE_URL'])
 
     @property
-    def duos_service_url(self) -> Optional[mutable_furl]:
+    def duos_service_url(self) -> mutable_furl | None:
         url = self.environ.get('AZUL_DUOS_SERVICE_URL')
         return None if url is None else furl(url)
 
@@ -369,8 +369,8 @@ class Config:
 
     def dss_direct_access_role(self,
                                lambda_name: str,
-                               stage: Optional[str] = None
-                               ) -> Optional[str]:
+                               stage: str | None = None
+                               ) -> str | None:
         key = 'AZUL_DSS_DIRECT_ACCESS_ROLE'
         try:
             role_arn = self.environ[key]
@@ -677,13 +677,13 @@ class Config:
     def service_name(self) -> str:
         return self.service_function_name()
 
-    def indexer_function_name(self, handler_name: Optional[str] = None):
+    def indexer_function_name(self, handler_name: str | None = None):
         return self._function_name('indexer', handler_name)
 
-    def service_function_name(self, handler_name: Optional[str] = None):
+    def service_function_name(self, handler_name: str | None = None):
         return self._function_name('service', handler_name)
 
-    def _function_name(self, lambda_name: str, handler_name: Optional[str]):
+    def _function_name(self, lambda_name: str, handler_name: str | None):
         if handler_name is None:
             return self.qualified_resource_name(lambda_name)
         else:
@@ -883,7 +883,7 @@ class Config:
                 return name
 
         @classmethod
-        def from_json(cls, name: str, spec: JSON) -> 'Config.Catalog':
+        def from_json(cls, name: str, spec: JSON) -> Self:
             plugins = {
                 plugin_type: cls.Plugin(**plugin_spec)
                 for plugin_type, plugin_spec in spec['plugins'].items()
@@ -925,29 +925,29 @@ class Config:
         return first(self.catalogs)
 
     @property
-    def current_catalog(self) -> Optional[str]:
+    def current_catalog(self) -> str | None:
         return self.environ.get('azul_current_catalog')
 
-    def it_catalog_for(self, catalog: CatalogName) -> Optional[CatalogName]:
+    def it_catalog_for(self, catalog: CatalogName) -> CatalogName | None:
         it_catalog = self.catalogs[catalog].it_catalog
         assert it_catalog in self.integration_test_catalogs, it_catalog
         return it_catalog
 
-    def is_dss_enabled(self, catalog: Optional[str] = None) -> bool:
+    def is_dss_enabled(self, catalog: str | None = None) -> bool:
         return self._is_plugin_enabled('dss', catalog)
 
-    def is_tdr_enabled(self, catalog: Optional[str] = None) -> bool:
+    def is_tdr_enabled(self, catalog: str | None = None) -> bool:
         return self._is_plugin_enabled('tdr', catalog)
 
-    def is_hca_enabled(self, catalog: Optional[str] = None) -> bool:
+    def is_hca_enabled(self, catalog: str | None = None) -> bool:
         return self._is_plugin_enabled('hca', catalog)
 
-    def is_anvil_enabled(self, catalog: Optional[str] = None) -> bool:
+    def is_anvil_enabled(self, catalog: str | None = None) -> bool:
         return self._is_plugin_enabled('anvil', catalog)
 
     def _is_plugin_enabled(self,
                            plugin_prefix: str,
-                           catalog: Optional[str]
+                           catalog: str | None
                            ) -> bool:
         def predicate(catalog):
             return any(
@@ -1078,7 +1078,7 @@ class Config:
         return self.Deployment(self.deployment_stage)
 
     @property
-    def _shared_deployments(self) -> Mapping[Optional[str], Sequence[Deployment]]:
+    def _shared_deployments(self) -> Mapping[str | None, Sequence[Deployment]]:
         """
         Maps a branch name to a sequence of names of shared deployments the
         branch can be deployed to. The key of None signifies any other branch
@@ -1299,7 +1299,7 @@ class Config:
     def enable_gcp(self):
         return self.google_project() is not None
 
-    def google_project(self) -> Optional[str]:
+    def google_project(self) -> str | None:
         return self.environ.get('GOOGLE_PROJECT')
 
     class ServiceAccount(Enum):
@@ -1459,7 +1459,7 @@ class Config:
         return self.environ['azul_github_access_token']
 
     @property
-    def gitlab_access_token(self) -> Optional[str]:
+    def gitlab_access_token(self) -> str | None:
         return self.environ.get('azul_gitlab_access_token')
 
     @property
@@ -1488,7 +1488,7 @@ class Config:
     minimum_compression_size = 0
 
     @property
-    def google_oauth2_client_id(self) -> Optional[str]:
+    def google_oauth2_client_id(self) -> str | None:
         return self.environ.get('AZUL_GOOGLE_OAUTH2_CLIENT_ID')
 
     @property
@@ -1522,7 +1522,7 @@ class Config:
         channel_id: str
 
     @property
-    def slack_integration(self) -> Optional[SlackIntegration]:
+    def slack_integration(self) -> SlackIntegration | None:
 
         # FIXME: Eliminate local import
         #        https://github.com/DataBiosphere/azul/issues/3133
@@ -1611,13 +1611,17 @@ class Config:
 
     @property
     def waf_file_download_limit(self) -> FileDownloadLimit | None:
-        value = self.environ.get('AZUL_FILE_DOWNLOAD_RATE_LIMIT')
+        value = self.environ.get('azul_waf_download_rate_limit')
         if value is None:
             return None
         else:
             return self.FileDownloadLimit.parse(value)
 
     assert 100 <= waf_rate_rule_limit <= 2_000_000_000  # mandated by AWS
+
+    @property
+    def waf_bot_control(self) -> bool:
+        return self._boolean(self.environ['azul_waf_bot_control'])
 
     @property
     def vpc_cidr(self) -> str:
@@ -1678,9 +1682,24 @@ def reject(condition: bool, *args, exception: type = RequirementError):
         raise exception(*args)
 
 
+@overload
 def open_resource(*path: str,
-                  package_root: Optional[str] = None,
-                  binary=False) -> Union[TextIO, BinaryIO]:
+                  package_root: str | None = None,
+                  binary: Literal[False] = False
+                  ) -> TextIO: ...
+
+
+@overload
+def open_resource(*path: str,
+                  package_root: str | None = None,
+                  binary: Literal[True] = False
+                  ) -> BinaryIO: ...
+
+
+def open_resource(*path: str,
+                  package_root: str | None = None,
+                  binary: bool = False
+                  ) -> TextIO | BinaryIO:
     """
     Return a file object for the resources at the given path. A resource is
     a source file that can be loaded at runtime. Resources typically aren't
@@ -1740,7 +1759,7 @@ T = TypeVar('T')
 E = TypeVar('E')
 
 
-def iif(condition: bool, then: T, otherwise: E = absent) -> Union[T, E]:
+def iif(condition: bool, then: T, otherwise: E = absent) -> T | E:
     """
     An alternative to ``if`` expressions, that, in certain situations, might
     be more convenient or readable, such as when the ``else`` branch

@@ -62,6 +62,7 @@ from azul.indexer.document import (
     pass_thru_json,
 )
 from azul.indexer.transform import (
+    ReplicaTransformer,
     Transformer,
 )
 from azul.plugins.metadata.anvil.bundle import (
@@ -154,19 +155,20 @@ class BaseTransformer(Transformer, metaclass=ABCMeta):
     @classmethod
     def aggregator(cls, entity_type) -> EntityAggregator:
         if entity_type == 'activities':
-            return ActivityAggregator()
+            agg_cls = ActivityAggregator
         elif entity_type == 'biosamples':
-            return BiosampleAggregator()
+            agg_cls = BiosampleAggregator
         elif entity_type == 'datasets':
-            return DatasetAggregator()
+            agg_cls = DatasetAggregator
         elif entity_type == 'diagnoses':
-            return DiagnosisAggregator()
+            agg_cls = DiagnosisAggregator
         elif entity_type == 'donors':
-            return DonorAggregator()
+            agg_cls = DonorAggregator
         elif entity_type == 'files':
-            return FileAggregator()
+            agg_cls = FileAggregator
         else:
             assert False, entity_type
+        return agg_cls(entity_type)
 
     def estimate(self, partition: BundlePartition) -> int:
         # Orphans are not considered when deciding whether to partition the
@@ -498,13 +500,14 @@ class SingletonTransformer(BaseTransformer, metaclass=ABCMeta):
         return {
             'document_id': null_str,
             'description': null_str,
+            'duos_id': null_str,
         }
 
     def _duos(self, dataset: EntityReference) -> MutableJSON:
         return self._entity(dataset, self._duos_types())
 
     def _is_duos(self, dataset: EntityReference) -> bool:
-        return 'description' in self.bundle.entities[dataset]
+        return 'duos_id' in self.bundle.entities[dataset]
 
     def _dataset(self, dataset: EntityReference) -> MutableJSON:
         if self._is_duos(dataset):
@@ -623,11 +626,17 @@ class DonorTransformer(BaseTransformer):
         yield self._contribution(contents, entity.entity_id)
 
 
-class FileTransformer(BaseTransformer):
+class FileTransformer(BaseTransformer, ReplicaTransformer):
 
     @classmethod
     def entity_type(cls) -> str:
         return 'files'
+
+    @classmethod
+    def hot_entity_types(cls) -> dict[EntityType, EntityType]:
+        return {
+            'anvil_dataset': 'datasets',
+        }
 
     def _transform(self,
                    entity: EntityReference
@@ -645,17 +654,14 @@ class FileTransformer(BaseTransformer):
             donors=self._entities(self._donor, linked['anvil_donor']),
             files=[self._file(entity)],
         )
-        yield self._contribution(contents, entity.entity_id)
+        file_id = entity.entity_id
+        yield self._contribution(contents, file_id)
         if config.enable_replicas:
-            yield self._replica(entity, file_hub=entity.entity_id, root_hub=dataset.entity_id)
+            dataset_id = dataset.entity_id
+            yield self._replica(entity, file_hub=file_id, root_hub=dataset_id)
             for linked_entity in linked:
                 yield self._replica(
                     linked_entity,
-                    # Datasets are linked to every file in their snapshot,
-                    # making an explicit list of hub IDs for the dataset both
-                    # redundant and impractically large. Therefore, we leave the
-                    # hub IDs field empty for datasets and rely on the tenet
-                    # that every file is an implicit hub of its parent dataset.
-                    file_hub=None if linked_entity.entity_type == 'anvil_dataset' else entity.entity_id,
-                    root_hub=dataset.entity_id
+                    file_hub=None if linked_entity.entity_type in self.hot_entity_types() else file_id,
+                    root_hub=dataset_id
                 )

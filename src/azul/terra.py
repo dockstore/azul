@@ -646,19 +646,25 @@ class TDRClient(SAMClient):
     def drs_client(self) -> DRSClient:
         return DRSClient(http_client=self._http_client)
 
-    def get_duos(self, source: TDRSourceRef) -> Optional[MutableJSON]:
+    def get_duos(self,
+                 source: TDRSourceRef
+                 ) -> tuple[str, MutableJSON] | tuple[None, None]:
         response = self._retrieve_source(source)
         try:
             duos_id = response['duosFirecloudGroup']['duosId']
         except (KeyError, TypeError):
             log.warning('No DUOS ID available for %r', source.spec)
-            return None
+            return None, None
         else:
             url = self._duos_endpoint('dataset', 'registration', duos_id)
             response = self._request('GET', url)
             if response.status == 404:
                 log.warning('No DUOS dataset registration with ID %r from %r',
                             duos_id, source.spec)
-                return None
+                return None, None
             else:
-                return self._check_response(url, response)
+                response = self._check_response(url, response)
+                consent_group = one(response['consentGroups'])
+                require(duos_id == consent_group['datasetIdentifier'],
+                        'Mismatched identifiers', duos_id, consent_group)
+                return duos_id, response

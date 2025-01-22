@@ -3,7 +3,7 @@ aws-requests-auth==0.4.3
 bdbag==1.7.3
 boto3==1.35.84  # Match version of the `boto3-stubs` dev dependency
 botocore==1.35.84
-chevron==0.14.0
+chevron==0.14.0  # Match with types-chevron in requirements.dev.txt
 deprecated==1.2.15
 elasticsearch==7.17.12  # 7.x to match server-side
 elasticsearch-dsl==7.4.1  # 7.x to match server-side

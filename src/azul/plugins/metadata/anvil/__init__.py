@@ -156,6 +156,10 @@ class Plugin(MetadataPlugin[AnvilBundle]):
                         'registered_identifier',
                         'title',
                         'data_modality',
+                        # This field path has a brittle coupling that must be
+                        # maintained to the field lookup in
+                        # `self.manifest_config`.
+                        'duos_id',
                     ]
                 },
                 'donors': {
@@ -244,10 +248,10 @@ class Plugin(MetadataPlugin[AnvilBundle]):
                              source_spec='source_spec',
                              bundle_uuid='bundle_uuid',
                              bundle_version='bundle_version',
-                             implicit_hub_id='datasets.dataset_id')
+                             root_entity_id='datasets.dataset_id')
 
     @property
-    def implicit_hub_type(self) -> str:
+    def root_entity_type(self) -> str:
         return 'datasets'
 
     @property
@@ -284,6 +288,11 @@ class Plugin(MetadataPlugin[AnvilBundle]):
         # the fields listed here and those used in `self._field_mapping`.
         fields_to_omit_from_manifest = [
             ('contents', 'activities', 'activity_table'),
+            # We omit the `duos_id` field from manifests since there is only one
+            # DUOS bundle per dataset, and that bundle only contributes to outer
+            # entities of the `datasets` type, not to entities of the other
+            # types, such as files, which the manifest is generated from.
+            ('contents', 'datasets', 'duos_id'),
             ('contents', 'files', 'uuid'),
             ('contents', 'files', 'version'),
         ]
@@ -351,6 +360,10 @@ class Plugin(MetadataPlugin[AnvilBundle]):
                                                    is_polymorphic=is_duos_type)
             ]
             if is_duos_type:
+                field_schemas.append(self._pfb_schema_from_anvil_column(table_name=table_name,
+                                                                        column_name='duos_id',
+                                                                        anvil_datatype='string',
+                                                                        is_polymorphic=True))
                 field_schemas.append(self._pfb_schema_from_anvil_column(table_name=table_name,
                                                                         column_name='description',
                                                                         anvil_datatype='string',

@@ -126,16 +126,20 @@ class BundleType(Enum):
     supplementary bundle to emit contributions for them, hence we treat them as
     orphans.
 
-    DUOS bundles consist of a single dataset entity. This "entity" includes only
-    the dataset description retrieved from DUOS, while a copy of the BigQuery
-    row for this dataset is also included as an orphan. We chose this design
-    because there is only one dataset per snapshot, which is referenced in all
-    bundles. Therefore, only one request to DUOS per *snapshot* is necessary. If
-    the DUOS `description` were retrieved at the same time as the other fields
-    of the dataset entity, we would make one request per *bundle* instead,
-    potentially overloading the DUOS service. Our solution is to retrieve
-    `description` only in a bundle of this dedicated DUOS type, once per
-    snapshot, and merge it with the other dataset fields during aggregation.
+    DUOS bundles consist of a single dataset entity. This "entity" includes the
+    DUOS ID retrieved from TDR and dataset description retrieved from DUOS,
+    while a copy of the BigQuery row for this dataset is also included as an
+    orphan. We chose this design because there is only one dataset per snapshot,
+    which is referenced in all bundles. Therefore, only one request to DUOS per
+    *snapshot* is necessary. If the DUOS `description` were retrieved at the
+    same time as the other fields of the dataset entity, we would make one
+    request per *bundle* instead, potentially overloading the DUOS service. Our
+    solution is to retrieve `description` only in a bundle of this dedicated
+    DUOS type, once per snapshot, and merge it with the other dataset fields
+    during aggregation. As a result, `duos_id` cannot be included in file
+    manifests since there is only one DUOS bundle per dataset, and that bundle
+    only contributes to outer entities of the `datasets` type, not to entities
+    of the other types, such as files, which the manifest is generated from.
 
     All other bundles are replica bundles. Replica bundles consist of a batch of
     rows from an arbitrary BigQuery table, which may or may not be described by
@@ -479,7 +483,7 @@ class Plugin(TDRPlugin[TDRAnvilBundle, TDRSourceSpec, TDRSourceRef, TDRAnvilBund
 
     def _duos_bundle(self, bundle_fqid: TDRAnvilBundleFQID) -> TDRAnvilBundle:
         assert not bundle_fqid.is_batched, bundle_fqid
-        duos_info = self.tdr.get_duos(bundle_fqid.source)
+        duos_id, duos_info = self.tdr.get_duos(bundle_fqid.source)
         description = None if duos_info is None else duos_info.get('studyDescription')
         ref, row = self._get_dataset(bundle_fqid.source.spec)
         expected_entity_id = change_version(bundle_fqid.uuid,
@@ -487,7 +491,8 @@ class Plugin(TDRPlugin[TDRAnvilBundle, TDRSourceSpec, TDRSourceRef, TDRAnvilBund
                                             self.datarepo_row_uuid_version)
         assert ref.entity_id == expected_entity_id, (ref, bundle_fqid)
         bundle = TDRAnvilBundle(fqid=bundle_fqid)
-        bundle.add_entity(ref, self._version, {'description': description})
+        entity_row = {'duos_id': duos_id, 'description': description}
+        bundle.add_entity(ref, self._version, entity_row)
         # Classify as orphan to suppress the emission of a contribution
         bundle.add_entity(ref, self._version, dict(row), is_orphan=True)
         return bundle
