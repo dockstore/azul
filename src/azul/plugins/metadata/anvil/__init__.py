@@ -9,6 +9,10 @@ from typing import (
     Sequence,
 )
 
+from more_itertools import (
+    one,
+)
+
 from azul import (
     JSON,
     config,
@@ -333,11 +337,22 @@ class Plugin(MetadataPlugin[AnvilBundle]):
         result[('contents', 'files')]['file_url'] = 'files.azul_file_url'
         return result
 
+    primary_keys_by_table = {
+        table['name']: one(table['primaryKey'])
+        for table in anvil_schema['tables']
+    }
+
     def verbatim_pfb_entity_id(self, replica: JSON) -> str:
-        if replica['replica_type'] == 'duos_dataset_registration':
-            return replica['contents']['duos_id']
+        replica_type = replica['replica_type']
+        try:
+            primary_key = self.primary_keys_by_table[replica_type]
+        except KeyError:
+            if replica_type == 'duos_dataset_registration':
+                return replica['contents']['duos_id']
+            else:
+                return super().verbatim_pfb_entity_id(replica)
         else:
-            return super().verbatim_pfb_entity_id(replica)
+            return replica['contents'][primary_key]
 
     def verbatim_pfb_schema(self, replicas: list[JSON]) -> list[JSON]:
         table_schemas_by_name = {
