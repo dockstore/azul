@@ -561,6 +561,14 @@
                             ]
                         },
                         {
+                            "name": "duos_id",
+                            "namespace": "anvil_dataset",
+                            "type": [
+                                "null",
+                                "string"
+                            ]
+                        },
+                        {
                             "name": "owner",
                             "namespace": "anvil_dataset",
                             "type": [
