@@ -127,9 +127,9 @@ class PFBConverter:
             for entity in sorted(entities, key=itemgetter('document_id')):
                 if entity_type != self.entity_type:
                     _inject_reference_handover_values(entity, doc)
-                    pfb_entity = PFBEntity.from_json(name=entity_type,
-                                                     object_=entity,
-                                                     schema=self.schema)
+                    pfb_entity = PFBEntity.for_aggregate(name=entity_type,
+                                                         object_=entity,
+                                                         schema=self.schema)
                     if pfb_entity not in self._entities:
                         self._entities[pfb_entity] = set()
                     file_relations.add(PFBRelation.to_entity(pfb_entity))
@@ -138,9 +138,9 @@ class PFBConverter:
         for entity in chain([file_entity], related_files):
             _inject_reference_handover_values(entity, doc)
             # File entities are assumed to be unique
-            pfb_entity = PFBEntity.from_json(name=self.entity_type,
-                                             object_=entity,
-                                             schema=self.schema)
+            pfb_entity = PFBEntity.for_aggregate(name=self.entity_type,
+                                                 object_=entity,
+                                                 schema=self.schema)
             assert pfb_entity not in self._entities
             # Terra streams PFBs and requires entities be defined before they are
             # referenced. Thus we add the file entity after all the entities
@@ -174,11 +174,11 @@ class PFBEntity:
         reject(len(self.id) > 254, 'Terra requires IDs be no longer than 254 chars', )
 
     @classmethod
-    def from_json(cls,
-                  name: str,
-                  object_: MutableJSON,
-                  schema: JSON
-                  ) -> Self:
+    def for_aggregate(cls,
+                      name: str,
+                      object_: MutableJSON,
+                      schema: JSON
+                      ) -> Self:
         """
         Derive ID from object in a reproducible way so that we can distinguish
         entities by comparing their IDs.
