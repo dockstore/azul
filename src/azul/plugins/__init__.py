@@ -65,6 +65,7 @@ from azul.indexer.transform import (
 from azul.types import (
     JSON,
     MutableJSON,
+    MutableJSONs,
     get_generic_type_params,
 )
 
@@ -496,6 +497,13 @@ class MetadataPlugin(Plugin[BUNDLE]):
         """
         A list of the replicas that the given replica references/depends on,
         represented as (replica_type, entity_id) pairs.
+        """
+        return []
+
+    def verbatim_pfb_links(self, replica_type: str) -> MutableJSONs:
+        """
+        Express the relationships of the given replica type as PFB links
+        (https://uc-cdis.github.io/pypfb/#link).
         """
         return []
 

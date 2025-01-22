@@ -1744,7 +1744,8 @@ class PFBManifestGenerator(FileBasedManifestGenerator):
         for doc in self._all_docs_sorted():
             converter.add_doc(doc)
 
-        entity = avro_pfb.pfb_metadata_entity(field_types)
+        links = avro_pfb.pfb_links_from_field_types(field_types)
+        entity = avro_pfb.pfb_metadata_entity(links)
         entities = itertools.chain([entity], converter.entities())
 
         fd, path = mkstemp(suffix='.avro')
@@ -2149,9 +2150,12 @@ class PFBVerbatimManifestGenerator(VerbatimManifestGenerator):
         replica_schemas = plugin.verbatim_pfb_schema(replicas)
         # Ensure field order is consistent for unit tests
         replica_schemas.sort(key=itemgetter('name'))
-        replica_types = [s['name'] for s in replica_schemas]
+        links = {
+            replica_type: plugin.verbatim_pfb_links(replica_type)
+            for replica_type in ([s['name'] for s in replica_schemas])
+        }
+        pfb_metadata_entity = avro_pfb.pfb_metadata_entity(links)
         pfb_schema = avro_pfb.avro_pfb_schema(replica_schemas)
-        pfb_metadata_entity = avro_pfb.pfb_metadata_entity(replica_types, links=False)
 
         def pfb_entities():
             yield pfb_metadata_entity
