@@ -2149,7 +2149,7 @@ class PFBVerbatimManifestGenerator(VerbatimManifestGenerator):
         def pfb_entities():
             yield pfb_metadata_entity
             for replica in replicas:
-                yield avro_pfb.PFBEntity.for_replica(dict(replica), pfb_schema).to_json(())
+                yield avro_pfb.PFBEntity.for_replica(dict(replica)).to_json(())
 
         fd, path = mkstemp(suffix=f'.{self.file_name_extension()}')
         os.close(fd)

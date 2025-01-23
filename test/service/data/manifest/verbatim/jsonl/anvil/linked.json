@@ -224,7 +224,7 @@
         }
     },
     {
-        "type": "anvil_dataset",
+        "type": "duos_dataset_registration",
         "value": {
             "dataset_id": "52ee7665-7033-63f2-a8d9-ce8e32666739",
             "description": "Study description from DUOS",

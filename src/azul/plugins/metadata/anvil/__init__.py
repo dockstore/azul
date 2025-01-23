@@ -349,26 +349,13 @@ class Plugin(MetadataPlugin[AnvilBundle]):
         entity_schemas = super().verbatim_pfb_schema(non_schema_replicas)
         # For the rest, use the AnVIL schema as the basis of the PFB schema
         for table_name, table_schema in table_schemas_by_name.items():
-            # FIXME: Improve handling of DUOS replicas
-            #        https://github.com/DataBiosphere/azul/issues/6139
-            is_duos_type = table_name == 'anvil_dataset'
             field_schemas = [
                 self._pfb_schema_from_anvil_column(table_name=table_name,
                                                    column_name='datarepo_row_id',
                                                    anvil_datatype='string',
-                                                   is_optional=False,
-                                                   is_polymorphic=is_duos_type)
+                                                   is_optional=False)
             ]
-            if is_duos_type:
-                field_schemas.append(self._pfb_schema_from_anvil_column(table_name=table_name,
-                                                                        column_name='duos_id',
-                                                                        anvil_datatype='string',
-                                                                        is_polymorphic=True))
-                field_schemas.append(self._pfb_schema_from_anvil_column(table_name=table_name,
-                                                                        column_name='description',
-                                                                        anvil_datatype='string',
-                                                                        is_polymorphic=True))
-            elif table_name == 'anvil_file':
+            if table_name == 'anvil_file':
                 field_schemas.append(self._pfb_schema_from_anvil_column(table_name=table_name,
                                                                         column_name='drs_uri',
                                                                         anvil_datatype='string'))
@@ -378,8 +365,7 @@ class Plugin(MetadataPlugin[AnvilBundle]):
                                                        column_name=column_schema['name'],
                                                        anvil_datatype=column_schema['datatype'],
                                                        is_array=column_schema['array_of'],
-                                                       is_optional=not column_schema['required'],
-                                                       is_polymorphic=is_duos_type)
+                                                       is_optional=not column_schema['required'])
                 )
 
             field_schemas.sort(key=itemgetter('name'))
@@ -397,7 +383,6 @@ class Plugin(MetadataPlugin[AnvilBundle]):
                                       anvil_datatype: str,
                                       is_array: bool = False,
                                       is_optional: bool = True,
-                                      is_polymorphic: bool = False
                                       ) -> AnyMutableJSON:
         _anvil_to_pfb_types = {
             'boolean': 'boolean',
@@ -414,8 +399,6 @@ class Plugin(MetadataPlugin[AnvilBundle]):
                 'type': 'array',
                 'items': type_
             }
-        if is_polymorphic and (is_array or not is_optional):
-            type_ = ['null', type_]
         return {
             'name': column_name,
             'namespace': table_name,
