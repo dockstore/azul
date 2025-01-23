@@ -23,8 +23,8 @@ have too many entries in this file.
 =======================================================
 
 Using the sandbox deployment's ``environment.py`` as a model, remove from your
-personal deployment's ``environment.py`` the sources removed from the ``lm2``
-catalog.
+personal deployment's ``environment.py`` the sources removed from the ``dcp3``
+and ``lm2`` catalogs.
 
 
 #6754 Managed access flag is missing from AnVIL deployments

@@ -159,8 +159,9 @@ dcp2_sources = mkdict({}, 105, mkdelta([
     mksrc('bigquery', 'datarepo-dev-96d8e08c', 'hca_dev_faeedcb0e0464be7b1ad80a3eeabb066__20210831_20210903'),
 ]))
 
-dcp3_sources = mkdict(dcp2_sources, 105, mkdelta([
+dcp3_sources = mkdict(dcp2_sources, 104, mkdelta([
     mksrc('bigquery', 'datarepo-dev-3d6d24ad', 'hca_dev_05657a599f9d4bb9b77b24be13aa5cea__20210827_20230215'),
+    mksrc('bigquery', 'datarepo-dev-76de829d', 'hca_dev_2043c65a1cf84828a6569e247d4e64f1__20210831_20210907', pop),
     mksrc('bigquery', 'datarepo-dev-b46086a9', 'hca_dev_51f02950ee254f4b8d0759aa99bb3498__20210827_20230215'),
     mksrc('bigquery', 'datarepo-dev-27c50fbc', 'hca_dev_c5f4661568de4cf4bbc2a0ae10f08243__20210827_20230215'),
     mksrc('bigquery', 'datarepo-dev-2a4ab485', 'hca_dev_d2111fac3fc44f429b6d32cd6a828267__20210830_20230215'),
