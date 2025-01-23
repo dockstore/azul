@@ -333,6 +333,12 @@ class Plugin(MetadataPlugin[AnvilBundle]):
         result[('contents', 'files')]['file_url'] = 'files.azul_file_url'
         return result
 
+    def verbatim_pfb_entity_id(self, replica: JSON) -> str:
+        if replica['replica_type'] == 'duos_dataset_registration':
+            return replica['contents']['duos_id']
+        else:
+            return super().verbatim_pfb_entity_id(replica)
+
     def verbatim_pfb_schema(self,
                             replicas: list[JSON]
                             ) -> list[JSON]:

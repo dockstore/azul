@@ -471,13 +471,6 @@ class MetadataPlugin(Plugin[BUNDLE]):
         raise NotImplementedError
 
     def verbatim_pfb_entity_id(self, replica: JSON) -> str:
-        # Note that it is possible for two distinct replicas to have the same
-        # entity ID. For example, replicas representing the DUOS registration
-        # of AnVIL datasets have the same ID as the replica for the dataset
-        # itself. Terra appears to combine PFB entities with the same ID and
-        # name into a single row.
-        # FIXME: Improve handling of DUOS replicas
-        #        https://github.com/DataBiosphere/azul/issues/6139
         return replica['entity_id']
 
     def verbatim_pfb_schema(self,
