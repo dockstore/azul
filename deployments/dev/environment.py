@@ -7,8 +7,7 @@ from typing import (
     Optional,
 )
 
-ma = 1  # managed access
-pop = 2  # remove snapshot
+pop = 1  # remove snapshot
 
 
 def mksrc(source_type: Literal['bigquery', 'parquet'],
@@ -19,7 +18,7 @@ def mksrc(source_type: Literal['bigquery', 'parquet'],
           prefix: str = ''
           ) -> tuple[str, str | None]:
     _, env, project, _ = snapshot.split('_', 3)
-    assert flags <= ma | pop
+    assert flags <= pop
     source = None if flags & pop else ':'.join([
         'tdr',
         source_type,
@@ -117,10 +116,10 @@ dcp2_sources = mkdict({}, 105, mkdelta([
     mksrc('bigquery', 'datarepo-dev-59d37b9a', 'hca_dev_946c5add47d1402a97bba5af97e8bce7__20210831_20210903'),
     mksrc('bigquery', 'datarepo-dev-788c3b52', 'hca_dev_955dfc2ca8c64d04aa4d907610545d11__20210831_20210903'),
     mksrc('bigquery', 'datarepo-dev-4b88b45b', 'hca_dev_962bd805eb894c54bad2008e497d1307__20210830_20210903'),
-    mksrc('bigquery', 'datarepo-dev-02c59b72', 'hca_dev_99101928d9b14aafb759e97958ac7403__20210830_20210903', ma),
+    mksrc('bigquery', 'datarepo-dev-02c59b72', 'hca_dev_99101928d9b14aafb759e97958ac7403__20210830_20210903'),
     mksrc('bigquery', 'datarepo-dev-a6312a94', 'hca_dev_992aad5e7fab46d9a47ddf715e8cfd24__20210830_20210903'),
     mksrc('bigquery', 'datarepo-dev-75589244', 'hca_dev_996120f9e84f409fa01e732ab58ca8b9__20210827_20210903'),
-    mksrc('bigquery', 'datarepo-dev-d4b988d6', 'hca_dev_a004b1501c364af69bbd070c06dbc17d__20210830_20210903', ma),
+    mksrc('bigquery', 'datarepo-dev-d4b988d6', 'hca_dev_a004b1501c364af69bbd070c06dbc17d__20210830_20210903'),
     mksrc('bigquery', 'datarepo-dev-9ec7beb6', 'hca_dev_a29952d9925e40f48a1c274f118f1f51__20210827_20210902'),
     mksrc('bigquery', 'datarepo-dev-d3d5bbfa', 'hca_dev_a39728aa70a04201b0a281b7badf3e71__20210830_20210903'),
     mksrc('bigquery', 'datarepo-dev-7b7daff7', 'hca_dev_a96b71c078a742d188ce83c78925cfeb__20210827_20210902'),
