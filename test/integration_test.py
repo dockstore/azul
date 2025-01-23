@@ -265,7 +265,7 @@ class IntegrationTestCase(AzulTestCase, metaclass=ABCMeta):
         # The unregistered service account should not have access to any sources
         with self.assertRaises(RequirementError) as cm:
             tdr.snapshot_names_by_id()
-        msg = one(cm.exception.args)
+        msg = str(cm.exception)
         expected_msg_prefix = f'The service account (SA) {email!r} is not authorized'
         self.assertEqual(expected_msg_prefix, msg[:len(expected_msg_prefix)])
         return tdr
