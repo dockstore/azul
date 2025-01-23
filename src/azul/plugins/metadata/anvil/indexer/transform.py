@@ -192,9 +192,8 @@ class BaseTransformer(Transformer, metaclass=ABCMeta):
                    ) -> Iterable[Contribution | Replica]:
         raise NotImplementedError
 
-    def _replicate(self, entity: EntityReference) -> tuple[str, JSON]:
-        content = ChainMap(self.bundle.entities, self.bundle.orphans)[entity]
-        return entity.entity_type, content
+    def _replica_contents(self, entity: EntityReference) -> JSON:
+        return ChainMap(self.bundle.entities, self.bundle.orphans)[entity]
 
     def _convert_entity_type(self, entity_type: str) -> str:
         assert entity_type == 'bundle' or entity_type.startswith('anvil_'), entity_type
