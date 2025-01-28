@@ -1384,12 +1384,16 @@ class TestManifests(DCP1ManifestTestCase):
         response = self._get_manifest(ManifestFormat.verbatim_jsonl, {})
         self.assertEqual(200, response.status_code)
         path = ['verbatim', 'jsonl', 'hca', 'manifest.json']
+        # FIXME: Some replicas are still missing for HCA
+        #        https://github.com/DataBiosphere/azul/issues/6597
         expected = self._load_canned_manifest(*path)
         self._assert_jsonl(expected, response)
 
     def test_verbatim_pfb_manifest(self):
         response = self._get_manifest(ManifestFormat.verbatim_pfb, filters={})
         self.assertEqual(200, response.status_code)
+        # FIXME: Some replicas are still missing for HCA
+        #        https://github.com/DataBiosphere/azul/issues/6597
         canned_pfb = self._load_canned_pfb('verbatim', 'pfb', 'hca')
         expected_schema, expected_entities = canned_pfb
         self._assert_pfb(expected_schema, expected_entities, response)

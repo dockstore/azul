@@ -1382,6 +1382,8 @@ class TransformerVisitor(api.EntityVisitor):
 
     @property
     def entities(self) -> Iterable[EntityReference]:
+        # FIXME: Some replicas are still missing for HCA
+        #        https://github.com/DataBiosphere/azul/issues/6597
         for entity_dict in vars(self).values():
             for entity in entity_dict.values():
                 yield EntityReference(entity_type=entity.schema_name,
@@ -1742,6 +1744,9 @@ class ProjectTransformer(SingletonTransformer):
 
 
 class BundleTransformer(SingletonTransformer):
+
+    # FIXME: Some replicas are still missing for HCA
+    #        https://github.com/DataBiosphere/azul/issues/6597
 
     def _singleton_entity(self) -> DatedEntity:
         return BundleAsEntity(self.api_bundle)
