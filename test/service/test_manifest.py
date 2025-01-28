@@ -201,6 +201,8 @@ class CannedManifestTestCase(CannedFileTestCase):
 
         manifest.sort(key=sort_key)
         expected.sort(key=sort_key)
+        # The canned manifests are saved as a JSON array instead of JSON Lines
+        # so that changes to the files are easier to read
         self.assertEqual(expected, manifest)
 
     def _assert_pfb(self,
@@ -1379,31 +1381,10 @@ class TestManifests(DCP1ManifestTestCase):
                         self.assertEqual(expected_cd, actual_cd)
 
     def test_verbatim_jsonl_manifest(self):
-        expected = []
-        for bundle in self.bundles():
-            bundle = self._load_canned_bundle(bundle)
-            expected.append({
-                'type': 'links',
-                'value': bundle.links
-            })
-            for ref in [
-                'cell_suspension/412898c5-5b9b-4907-b07c-e9b89666e204',
-                'project/e8642221-4c2c-4fd7-b926-a68bce363c88',
-                'sequence_file/70d1af4a-82c8-478a-8960-e9028b3616ca',
-                'sequence_file/0c5ac7c0-817e-40d4-b1b1-34c3d5cfecdb',
-                'specimen_from_organism/a21dc760-a500-4236-bcff-da34a0e873d2',
-                'donor_organism/7b07b9d0-cc0e-4098-9f64-f4a569f7d746',
-                'library_preparation_protocol/9c32cf70-3ed7-4720-badc-5ee71e8a38af',
-                'sequencing_protocol/61e629ed-0135-4492-ac8a-5c4ab3ccca8a',
-                'process/771ddaf6-3a4f-4314-97fe-6294ff8e25a4'
-            ]:
-                expected.append({
-                    'type': EntityReference.parse(ref).entity_type,
-                    'value': bundle.metadata[ref],
-                })
-
         response = self._get_manifest(ManifestFormat.verbatim_jsonl, {})
         self.assertEqual(200, response.status_code)
+        path = ['verbatim', 'jsonl', 'hca', 'manifest.json']
+        expected = self._load_canned_manifest(*path)
         self._assert_jsonl(expected, response)
 
     def test_verbatim_pfb_manifest(self):
@@ -2147,7 +2128,10 @@ class TestAnvilManifests(AnvilManifestTestCase):
     }
 
     def test_verbatim_jsonl_manifest(self):
-        all_entities, linked_entities = self._canned_entities()
+        base_path = ['verbatim', 'jsonl', 'anvil']
+        linked_rows = self._load_canned_manifest(*base_path, 'linked.json')
+        all_rows = linked_rows + self._load_canned_manifest(*base_path, 'orphans.json')
+
         cases = [
             ({}, True),
             (self.dataset_title_filters, True),
@@ -2159,28 +2143,8 @@ class TestAnvilManifests(AnvilManifestTestCase):
             with self.subTest(filters=filters):
                 response = self._get_manifest(ManifestFormat.verbatim_jsonl, filters=filters)
                 self.assertEqual(200, response.status_code)
-                expected_rows = list(all_entities if expect_orphans else linked_entities)
+                expected_rows = all_rows if expect_orphans else linked_rows
                 self._assert_jsonl(expected_rows, response)
-
-    def _canned_entities(self):
-
-        def hash_entities(entities: dict[EntityReference, JSON]) -> dict[str, JSON]:
-            return {
-                json_hash(contents).digest(): {
-                    'type': ref.entity_type,
-                    'value': contents
-                }
-                for ref, contents in entities.items()
-            }
-
-        linked_entities_by_hash, all_entities_by_hash = {}, {}
-        for bundle_fqid in self.bundles():
-            bundle = self._load_canned_bundle(bundle_fqid)
-            linked_entities_by_hash.update(hash_entities(bundle.entities))
-            all_entities_by_hash.update(hash_entities(bundle.orphans))
-        all_entities_by_hash.update(linked_entities_by_hash)
-
-        return all_entities_by_hash.values(), linked_entities_by_hash.values()
 
     def test_verbatim_pfb_manifest(self):
         canned_pfb = self._load_canned_pfb('verbatim', 'pfb', 'anvil')
