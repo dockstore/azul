@@ -91,6 +91,7 @@ from azul import (
     cached_property,
     config,
     drs,
+    false,
 )
 from azul.auth import (
     OAuth2,
@@ -265,7 +266,7 @@ class IntegrationTestCase(AzulTestCase, metaclass=ABCMeta):
         # The unregistered service account should not have access to any sources
         with self.assertRaises(RequirementError) as cm:
             tdr.snapshot_names_by_id()
-        msg = one(cm.exception.args)
+        msg = str(cm.exception)
         expected_msg_prefix = f'The service account (SA) {email!r} is not authorized'
         self.assertEqual(expected_msg_prefix, msg[:len(expected_msg_prefix)])
         return tdr
@@ -462,8 +463,7 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
         if index and delete:
             # FIXME: Test delete notifications
             #        https://github.com/DataBiosphere/azul/issues/3548
-            # noinspection PyUnreachableCode
-            if False:
+            if false():
                 with self._service_account_credentials:
                     for catalog in catalogs:
                         self._assert_catalog_empty(catalog.name)

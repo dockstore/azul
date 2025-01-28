@@ -8,9 +8,6 @@ from enum import (
     Enum,
 )
 import json
-from json import (
-    JSONEncoder,
-)
 import logging
 import mimetypes
 import os
@@ -431,7 +428,7 @@ class AzulChaliceApp(Chalice):
                    "Only specify 'spec' once per route path and method")
             path_methods[method] = copy_json(spec)
 
-    class _LogJSONEncoder(JSONEncoder):
+    class _LogJSONEncoder(json.JSONEncoder):
 
         def default(self, o: Any) -> Any:
             if isinstance(o, MultiDict):
@@ -826,14 +823,6 @@ class AzulChaliceApp(Chalice):
                                 git=schema.object(
                                     commit=str,
                                     dirty=bool
-                                ),
-                                changes=schema.array(
-                                    schema.object(
-                                        title=str,
-                                        issues=schema.array(str),
-                                        upgrade=schema.array(str),
-                                        notes=schema.optional(str)
-                                    )
                                 )
                             )
                         )
@@ -842,12 +831,8 @@ class AzulChaliceApp(Chalice):
             }
         )
         def version():
-            from azul.changelog import (
-                compact_changes,
-            )
             return {
-                'git': config.lambda_git_status,
-                'changes': compact_changes(limit=10)
+                'git': config.lambda_git_status
             }
 
         @self.route(
