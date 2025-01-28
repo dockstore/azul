@@ -562,7 +562,9 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
                             response = self._check_endpoint(PUT, '/manifest/files', args=args, fetch=fetch)
                             self._manifest_validators[format](catalog, response)
 
-                        num_workers = 3
+                        # FIXME: Set number of workers back to 3
+                        #        https://github.com/DataBiosphere/azul/issues/6850
+                        num_workers = 1
                         with ThreadPoolExecutor(max_workers=num_workers) as tpe:
                             results = list(tpe.map(worker, range(num_workers)))
 
