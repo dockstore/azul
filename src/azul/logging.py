@@ -5,6 +5,7 @@ import logging
 from typing import (
     IO,
     Optional,
+    TYPE_CHECKING,
 )
 
 import attr
@@ -13,17 +14,19 @@ from more_itertools import (
 )
 
 import azul
-from azul.chalice import (
-    AzulChaliceApp,
-)
 from azul.strings import (
     trunc_ellipses,
 )
 
+if TYPE_CHECKING:
+    from azul.chalice import (
+        AzulChaliceApp,
+    )
+
 
 @attr.s(frozen=False, kw_only=False, auto_attribs=True)
 class LambdaLogFilter(logging.Filter):
-    app: Optional[AzulChaliceApp] = None
+    app: Optional['AzulChaliceApp'] = None
 
     def filter(self, record):
         if self.app is None or self.app.lambda_context is None:
@@ -43,7 +46,7 @@ lambda_log_format = '\t'.join([
 lambda_log_date_format = '%Y-%m-%dT%H:%M:%S'
 
 
-def configure_app_logging(app: AzulChaliceApp, *loggers):
+def configure_app_logging(app: 'AzulChaliceApp', *loggers):
     _configure_log_levels(app.log, *loggers)
     if not app.unit_test:
         # Environment is not unit test
