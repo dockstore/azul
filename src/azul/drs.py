@@ -40,7 +40,9 @@ from azul.http import (
 )
 from azul.types import (
     MutableJSON,
-    MutableJSONs,
+    json_dict,
+    json_list,
+    json_str,
 )
 
 log = logging.getLogger(__name__)
@@ -55,7 +57,7 @@ def drs_object_uri(*,
     return furl(url=base_url, scheme='drs', path=path, args=params)
 
 
-def drs_object_url_path(*, object_id: str, access_id: str = None) -> str:
+def drs_object_url_path(*, object_id: str, access_id: str | None = None) -> str:
     """
     >>> drs_object_url_path(object_id='abc')
     '/ga4gh/drs/v1/objects/abc'
@@ -201,15 +203,16 @@ class IdentifiersDotOrgClient(HasCachedHttpClient):
     @cache
     def _prefix_to_namespace(self, prefix: str) -> str:
         prefix_info = self._api_request('namespaces/search/findByPrefix', prefix=prefix)
-        return furl(prefix_info['_links']['self']['href']).path.segments[-1]
+        href = json_str(json_dict(json_dict(prefix_info['_links'])['self'])['href'])
+        return furl(href).path.segments[-1]
 
     @cache
     def _namespace_to_host(self, namespace_id: str) -> tuple[str, str]:
         namespace_info = self._api_request('resources/search/findAllByNamespaceId',
                                            id=namespace_id)
-        resources: MutableJSONs = namespace_info['_embedded']['resources']
-        resource = one(resources)
-        return resource['name'], resource['urlPattern']
+        resources = json_list(json_dict(namespace_info['_embedded'])['resources'])
+        resource = json_dict(one(resources))
+        return json_str(resource['name']), json_str(resource['urlPattern'])
 
     def _api_request(self, path: str, **args) -> MutableJSON:
         url = furl(self._api_url).add(path=path, args=args)
@@ -245,11 +248,11 @@ class DRSClient:
             response = self._request(url)
             if response.status == 200:
                 # Bundles are not supported therefore we can expect 'access_methods'
-                response = json.loads(response.data)
-                access_methods = response['access_methods']
+                response_data = json_dict(json.loads(response.data))
+                access_methods = map(json_dict, json_list(response_data['access_methods']))
                 method = one(m for m in access_methods if m['type'] == access_method.scheme)
-                access_url = method.get('access_url')
-                access_id = method.get('access_id')
+                access_url = json_dict(method.get('access_url'))
+                access_id = json_str(method.get('access_id'))
                 if access_url is not None and access_id is not None:
                     # TDR quirkily uses the GS access method to provide both a
                     # GS access URL *and* an access ID that produces an HTTPS
@@ -284,11 +287,15 @@ class DRSClient:
         while True:
             response = self._request(url)
             if response.status == 200:
-                response = json.loads(response.data)
-                require(furl(response['url']).scheme == access_method.scheme)
-                return Access(method=access_method,
-                              url=response['url'],
-                              headers=response.get('headers'))
+                response_data = json_dict(json.loads(response.data))
+                require(furl(response_data['url']).scheme == access_method.scheme)
+                access_url = json_str(response_data['url'])
+                headers = response_data.get('headers')
+                if headers is None:
+                    access_headers = None
+                else:
+                    access_headers = {k: json_str(v) for k, v in json_dict(headers).items()}
+                return Access(method=access_method, url=access_url, headers=access_headers)
             elif response.status == 202:
                 wait_time = int(response.headers['retry-after'])
                 time.sleep(wait_time)
