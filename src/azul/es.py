@@ -3,9 +3,7 @@ from typing import (
     Any,
     Collection,
     Mapping,
-    Optional,
     Tuple,
-    Union,
     cast,
 )
 from urllib.parse import (
@@ -68,11 +66,11 @@ class AzulConnection(Connection):
     def perform_request(self,
                         method: str,
                         url: str,
-                        params: Optional[Mapping[str, Any]] = None,
-                        body: Optional[bytes] = None,
-                        timeout: Optional[Union[int, float]] = None,
+                        params: Mapping[str, Any] | None = None,
+                        body: bytes | None = None,
+                        timeout: int | float | None = None,
                         ignore: Collection[int] = (),
-                        headers: Optional[Mapping[str, str]] = None
+                        headers: Mapping[str, str] | None = None
                         ) -> Tuple[int, Mapping[str, str], str]:
         self._log_request(method, self._full_url(url, params), headers, body)
         return super().perform_request(method, url, params, body, timeout, ignore, headers)
@@ -81,7 +79,7 @@ class AzulConnection(Connection):
                             method: str,
                             full_url: str,
                             path: str,
-                            body: Optional[bytes],
+                            body: bytes | None,
                             status_code: int,
                             response: str,
                             duration: float
@@ -93,11 +91,11 @@ class AzulConnection(Connection):
                          method: str,
                          full_url: str,
                          path: str,
-                         body: Optional[bytes],
+                         body: bytes | None,
                          duration: float,
-                         status_code: Optional[int] = None,
-                         response: Optional[str] = None,
-                         exception: Optional[Exception] = None
+                         status_code: int | None = None,
+                         response: str | None = None,
+                         exception: Exception | None = None
                          ) -> None:
         self._log_response(logging.INFO if method == 'HEAD' and status_code == 404 else logging.WARN,
                            status_code, duration, full_url, method, response, exception)
@@ -109,7 +107,7 @@ class AzulConnection(Connection):
     # is received, since it is only then that it is passed to our overrides of
     # ``log_request_success`` and ``log_request_fail``.
 
-    def _full_url(self, url: str, params: Optional[Mapping[str, Any]]) -> str:
+    def _full_url(self, url: str, params: Mapping[str, Any] | None) -> str:
         full_url = self.host + self.url_prefix + url
         if params:
             full_url = f'{full_url}?{urlencode(params)}'
@@ -124,11 +122,11 @@ class AzulConnection(Connection):
 
     def _log_response(self,
                       log_level: int,
-                      status_code: Optional[int],
+                      status_code: int | None,
                       duration: float,
                       full_url: str,
                       method: str,
-                      response: Optional[str],
+                      response: str | None,
                       exception=None
                       ) -> None:
         status_code = 'no' if status_code is None else status_code
