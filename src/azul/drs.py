@@ -15,9 +15,6 @@ from enum import (
 import json
 import logging
 import time
-from typing import (
-    Optional,
-)
 
 import attr
 from furl import (
@@ -90,7 +87,7 @@ class AccessMethod(namedtuple('AccessMethod', 'scheme replica'), Enum):
 class Access:
     method: AccessMethod
     url: str
-    headers: Optional[Mapping[str, str]] = None
+    headers: Mapping[str, str] | None = None
 
 
 class DRSURI(metaclass=ABCMeta):
@@ -107,7 +104,7 @@ class DRSURI(metaclass=ABCMeta):
         return subcls.parse(drs_uri)
 
     @abstractmethod
-    def to_url(self, client: 'DRSClient', access_id: Optional[str] = None) -> furl:
+    def to_url(self, client: 'DRSClient', access_id: str | None = None) -> furl:
         """
         Translate the DRS URI into a DRS URL. All query params included in the
         DRS URI (eg '{drs_uri}?version=123') will be carried over to the DRS URL.
@@ -126,7 +123,7 @@ class RegularDRSURI(DRSURI):
     def parse(cls, drs_uri: str) -> 'RegularDRSURI':
         return cls(uri=furl(drs_uri))
 
-    def to_url(self, client: 'DRSClient', access_id: Optional[str] = None) -> furl:
+    def to_url(self, client: 'DRSClient', access_id: str | None = None) -> furl:
         url = self.uri.copy().set(scheme='https')
         url.set(path=drs_object_url_path(object_id=one(self.uri.path.segments),
                                          access_id=access_id))
@@ -169,7 +166,7 @@ class CompactDRSURI(DRSURI):
         return cls(namespace=prefix,
                    accession=accession)
 
-    def to_url(self, client: 'DRSClient', access_id: Optional[str] = None) -> furl:
+    def to_url(self, client: 'DRSClient', access_id: str | None = None) -> furl:
         url = client.id_client.resolve(self.namespace, self.accession)
         # The URL pattern registered at identifiers.org ought to replicate the
         # DRS spec, but we have to re-create the path using the spec because the
