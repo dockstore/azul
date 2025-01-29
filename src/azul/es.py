@@ -3,6 +3,7 @@ from typing import (
     Any,
     Collection,
     Mapping,
+    MutableMapping,
     Tuple,
     cast,
 )
@@ -66,11 +67,11 @@ class AzulConnection(Connection):
     def perform_request(self,
                         method: str,
                         url: str,
-                        params: Mapping[str, Any] | None = None,
+                        params: MutableMapping[str, Any] | None = None,
                         body: bytes | None = None,
                         timeout: int | float | None = None,
                         ignore: Collection[int] = (),
-                        headers: Mapping[str, str] | None = None
+                        headers: MutableMapping[str, str] | None = None
                         ) -> Tuple[int, Mapping[str, str], str]:
         self._log_request(method, self._full_url(url, params), headers, body)
         return super().perform_request(method, url, params, body, timeout, ignore, headers)
@@ -159,7 +160,7 @@ class AWSAuthHttpClient(urllib3.request.RequestMethods):
         self._inner = pool
         self._http_auth = http_auth
 
-    def urlopen(self,
+    def urlopen(self,  # type: ignore[override]
                 method: str,
                 url: str,
                 body: bytes | None = None,
@@ -201,7 +202,11 @@ class AWSAuthHttpClient(urllib3.request.RequestMethods):
 
 class AzulUrllib3HttpConnection(AzulConnection, Urllib3HttpConnection):
 
-    def __init__(self, *args, http_auth: BotoAWSRequestsAuth = None, **kwargs):
+    def __init__(self,
+                 *args,
+                 http_auth: BotoAWSRequestsAuth | None = None,
+                 **kwargs
+                 ) -> None:
         super().__init__(*args, **kwargs)
         if http_auth is not None:
             # We can't extend the pool class because we don't control the
