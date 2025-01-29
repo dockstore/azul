@@ -495,7 +495,7 @@ class BaseTransformer(Transformer, metaclass=ABCMeta):
             agg_cls = DateAggregator
         else:
             agg_cls = SimpleAggregator
-        return agg_cls(entity_type)
+        return agg_cls(cls.entity_type(), entity_type)
 
     def _replica_contents(self, entity: EntityReference) -> JSON:
         if entity == self.api_bundle.ref:

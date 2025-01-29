@@ -168,7 +168,7 @@ class BaseTransformer(Transformer, metaclass=ABCMeta):
             agg_cls = FileAggregator
         else:
             assert False, entity_type
-        return agg_cls(entity_type)
+        return agg_cls(cls.entity_type(), entity_type)
 
     def estimate(self, partition: BundlePartition) -> int:
         # Orphans are not considered when deciding whether to partition the
