@@ -181,6 +181,61 @@ class CannedManifestTestCase(CannedFileTestCase):
             with open(expected, 'w') as f:
                 f.write(actual)
 
+    def _assert_jsonl(self, expected: list[JSON], actual: Response):
+        """
+        Assert that the body of the given response is the expected JSON array,
+        disregarding any row ordering differences.
+
+        :param expected: a list of JSON objects.
+
+        :param actual: an HTTP response containing JSON objects separated by
+                       newlines
+        """
+        manifest = [
+            json.loads(row)
+            for row in actual.content.decode().splitlines()
+        ]
+
+        def sort_key(row: JSON) -> bytes:
+            return json_hash(row).digest()
+
+        manifest.sort(key=sort_key)
+        expected.sort(key=sort_key)
+        self.assertEqual(expected, manifest)
+
+    def _assert_pfb(self,
+                    expected_schema: JSON,
+                    expected_entities: JSONs,
+                    actual: Response):
+        """
+        Assert that the body of the given response contains a valid PFB manifest
+        matching the expected schema and content, disregarding differences in
+        the ordering of the PFB entities.
+
+        :param expected_schema: a PFB schema.
+
+        :param expected_entities: a list of PFB entities.
+
+        :param actual: an HTTP response containing a PFB manifest.
+        """
+        manifest = fastavro.reader(BytesIO(actual.content))
+        schema = manifest.writer_schema
+        # The ordering of the entities in the manifest depends on the order of
+        # the replica documents in the index. We haven't figured out how to
+        # ensure that this ordering is reliably deterministic, so we sort to
+        # make the test insensitive to it.
+        # FIXME: Document order of replicas is nondeterministic
+        #        https://github.com/DataBiosphere/azul/issues/6442
+        sort_key = compose_keys(none_safe_tuple_key(),
+                                # This is necessary to stabilize the ordering of
+                                # DUOS replicas, which have the same id as the
+                                # main dataset replica.
+                                lambda entity: (entity['id'], entity['object'].get('datarepo_row_id')))
+        expected_entities = sorted(expected_entities, key=sort_key)
+        entities = sorted(manifest, key=sort_key)
+        self.assertEqual(expected_schema, schema)
+        self.assertEqual(expected_entities, entities)
+
 
 class ManifestTestCase(WebServiceTestCase,
                        StorageServiceTestCase,
@@ -268,61 +323,6 @@ class ManifestTestCase(WebServiceTestCase,
         actual = list(csv.reader(actual, delimiter='\t'))
         actual[1:], expected[1:] = sorted(actual[1:]), sorted(expected[1:])
         self.assertEqual(expected, actual)
-
-    def _assert_jsonl(self, expected: list[JSON], actual: Response):
-        """
-        Assert that the body of the given response is the expected JSON array,
-        disregarding any row ordering differences.
-
-        :param expected: a list of JSON objects.
-
-        :param actual: an HTTP response containing JSON objects separated by
-                       newlines
-        """
-        manifest = [
-            json.loads(row)
-            for row in actual.content.decode().splitlines()
-        ]
-
-        def sort_key(row: JSON) -> bytes:
-            return json_hash(row).digest()
-
-        manifest.sort(key=sort_key)
-        expected.sort(key=sort_key)
-        self.assertEqual(expected, manifest)
-
-    def _assert_pfb(self,
-                    expected_schema: JSON,
-                    expected_entities: JSONs,
-                    actual: Response):
-        """
-        Assert that the body of the given response contains a valid PFB manifest
-        matching the expected schema and content, disregarding differences in
-        the ordering of the PFB entities.
-
-        :param expected_schema: a PFB schema.
-
-        :param expected_entities: a list of PFB entities.
-
-        :param actual: an HTTP response containing a PFB manifest.
-        """
-        manifest = fastavro.reader(BytesIO(actual.content))
-        schema = manifest.writer_schema
-        # The ordering of the entities in the manifest depends on the order of
-        # the replica documents in the index. We haven't figured out how to
-        # ensure that this ordering is reliably deterministic, so we sort to
-        # make the test insensitive to it.
-        # FIXME: Document order of replicas is nondeterministic
-        #        https://github.com/DataBiosphere/azul/issues/6442
-        sort_key = compose_keys(none_safe_tuple_key(),
-                                # This is necessary to stabilize the ordering of
-                                # DUOS replicas, which have the same id as the
-                                # main dataset replica.
-                                lambda entity: (entity['id'], entity['object'].get('datarepo_row_id')))
-        expected_entities = sorted(expected_entities, key=sort_key)
-        entities = sorted(manifest, key=sort_key)
-        self.assertEqual(expected_schema, schema)
-        self.assertEqual(expected_entities, entities)
 
     def _file_url(self, file_id, version):
         return str(self.base_url.set(path='/repository/files/' + file_id,
