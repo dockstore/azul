@@ -12,6 +12,7 @@ import azul.collections
 import azul.csp
 import azul.docker
 import azul.doctests
+import azul.drs
 import azul.dss
 import azul.exceptions
 import azul.files
@@ -76,6 +77,7 @@ def load_tests(_loader,
         azul.csp,
         azul.doctests,
         azul.docker,
+        azul.drs,
         azul.dss,
         azul.exceptions,
         azul.files,
