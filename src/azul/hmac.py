@@ -1,8 +1,5 @@
 import hashlib
 import logging
-from typing import (
-    Optional,
-)
 
 import chalice
 from http_message_signatures import (
@@ -55,7 +52,7 @@ class SignatureHelper(HTTPSignatureKeyResolver):
 
     def auth_from_request(self,
                           request: chalice.app.Request
-                          ) -> Optional[HMACAuthentication]:
+                          ) -> HMACAuthentication | None:
         try:
             request.headers['signature']
         except KeyError:
