@@ -497,13 +497,12 @@ class BaseTransformer(Transformer, metaclass=ABCMeta):
             agg_cls = SimpleAggregator
         return agg_cls(entity_type)
 
-    def _replicate(self, entity: EntityReference) -> tuple[str, JSON]:
+    def _replica_contents(self, entity: EntityReference) -> JSON:
         if entity == self.api_bundle.ref:
-            content = self.bundle.links
+            return self.bundle.links
         else:
             api_entity = self.api_bundle.entities[UUID(entity.entity_id)]
-            content = api_entity.json
-        return entity.entity_type, content
+            return api_entity.json
 
     def _find_ancestor_samples(self,
                                entity: api.LinkedEntity,
@@ -1383,6 +1382,8 @@ class TransformerVisitor(api.EntityVisitor):
 
     @property
     def entities(self) -> Iterable[EntityReference]:
+        # FIXME: Some replicas are still missing for HCA
+        #        https://github.com/DataBiosphere/azul/issues/6597
         for entity_dict in vars(self).values():
             for entity in entity_dict.values():
                 yield EntityReference(entity_type=entity.schema_name,
@@ -1743,6 +1744,9 @@ class ProjectTransformer(SingletonTransformer):
 
 
 class BundleTransformer(SingletonTransformer):
+
+    # FIXME: Some replicas are still missing for HCA
+    #        https://github.com/DataBiosphere/azul/issues/6597
 
     def _singleton_entity(self) -> DatedEntity:
         return BundleAsEntity(self.api_bundle)

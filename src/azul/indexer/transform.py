@@ -54,15 +54,18 @@ class Transformer(metaclass=ABCMeta):
         """
         raise NotImplementedError
 
-    @abstractmethod
-    def _replicate(self, entity: EntityReference) -> tuple[str, JSON]:
+    def _replica_type(self, entity: EntityReference) -> str:
         """
-        A tuple consisting of:
+        The name of the type of replica emitted by this transformer for a given
+        entity. See :py:attr:`Replica.replica_type`.
+        """
+        return entity.entity_type
 
-            1. The name of the type of replica emitted by this transformer for a
-               given entity. See :py:attr:`Replica.replica_type`.
-
-            2. The contents of the replica for that entity.
+    @abstractmethod
+    def _replica_contents(self, entity: EntityReference) -> JSON:
+        """
+        The contents of the replica emitted by this transformer for a given
+        entity.
         """
         raise NotImplementedError
 
@@ -136,7 +139,8 @@ class Transformer(metaclass=ABCMeta):
                  root_hub: EntityID,
                  file_hub: EntityID | None,
                  ) -> Replica:
-        replica_type, contents = self._replicate(entity)
+        replica_type = self._replica_type(entity)
+        contents = self._replica_contents(entity)
         coordinates = ReplicaCoordinates(content_hash=json_hash(contents).hexdigest(),
                                          entity=entity)
         return Replica(coordinates=coordinates,

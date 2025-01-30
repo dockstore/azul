@@ -192,9 +192,8 @@ class BaseTransformer(Transformer, metaclass=ABCMeta):
                    ) -> Iterable[Contribution | Replica]:
         raise NotImplementedError
 
-    def _replicate(self, entity: EntityReference) -> tuple[str, JSON]:
-        content = ChainMap(self.bundle.entities, self.bundle.orphans)[entity]
-        return entity.entity_type, content
+    def _replica_contents(self, entity: EntityReference) -> JSON:
+        return ChainMap(self.bundle.entities, self.bundle.orphans)[entity]
 
     def _convert_entity_type(self, entity_type: str) -> str:
         assert entity_type == 'bundle' or entity_type.startswith('anvil_'), entity_type
@@ -507,13 +506,24 @@ class SingletonTransformer(BaseTransformer, metaclass=ABCMeta):
         return self._entity(dataset, self._duos_types())
 
     def _is_duos(self, dataset: EntityReference) -> bool:
-        return 'duos_id' in self.bundle.entities[dataset]
+        try:
+            contents = self.bundle.entities[dataset]
+        except KeyError:
+            return False
+        else:
+            return 'duos_id' in contents
 
     def _dataset(self, dataset: EntityReference) -> MutableJSON:
         if self._is_duos(dataset):
             return self._duos(dataset)
         else:
             return super()._dataset(dataset)
+
+    def _replica_type(self, entity: EntityReference) -> str:
+        if entity.entity_type == 'anvil_dataset' and self._is_duos(entity):
+            return 'duos_dataset_registration'
+        else:
+            return super()._replica_type(entity)
 
     def _list_entities(self) -> Iterable[EntityReference]:
         # Suppress contributions for bundles that only contain orphans

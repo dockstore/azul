@@ -497,132 +497,89 @@
                         {
                             "name": "consent_group",
                             "namespace": "anvil_dataset",
-                            "type": [
-                                "null",
-                                {
-                                    "items": [
-                                        "null",
-                                        "string"
-                                    ],
-                                    "type": "array"
-                                }
-                            ]
+                            "type": {
+                                "items": [
+                                    "null",
+                                    "string"
+                                ],
+                                "type": "array"
+                            }
                         },
                         {
                             "name": "data_modality",
                             "namespace": "anvil_dataset",
-                            "type": [
-                                "null",
-                                {
-                                    "items": [
-                                        "null",
-                                        "string"
-                                    ],
-                                    "type": "array"
-                                }
-                            ]
+                            "type": {
+                                "items": [
+                                    "null",
+                                    "string"
+                                ],
+                                "type": "array"
+                            }
                         },
                         {
                             "name": "data_use_permission",
                             "namespace": "anvil_dataset",
-                            "type": [
-                                "null",
-                                {
-                                    "items": [
-                                        "null",
-                                        "string"
-                                    ],
-                                    "type": "array"
-                                }
-                            ]
+                            "type": {
+                                "items": [
+                                    "null",
+                                    "string"
+                                ],
+                                "type": "array"
+                            }
                         },
                         {
                             "name": "datarepo_row_id",
                             "namespace": "anvil_dataset",
-                            "type": [
-                                "null",
-                                "string"
-                            ]
+                            "type": "string"
                         },
                         {
                             "name": "dataset_id",
                             "namespace": "anvil_dataset",
-                            "type": [
-                                "null",
-                                "string"
-                            ]
-                        },
-                        {
-                            "name": "description",
-                            "namespace": "anvil_dataset",
-                            "type": [
-                                "null",
-                                "string"
-                            ]
-                        },
-                        {
-                            "name": "duos_id",
-                            "namespace": "anvil_dataset",
-                            "type": [
-                                "null",
-                                "string"
-                            ]
+                            "type": "string"
                         },
                         {
                             "name": "owner",
                             "namespace": "anvil_dataset",
-                            "type": [
-                                "null",
-                                {
-                                    "items": [
-                                        "null",
-                                        "string"
-                                    ],
-                                    "type": "array"
-                                }
-                            ]
+                            "type": {
+                                "items": [
+                                    "null",
+                                    "string"
+                                ],
+                                "type": "array"
+                            }
                         },
                         {
                             "name": "principal_investigator",
                             "namespace": "anvil_dataset",
-                            "type": [
-                                "null",
-                                {
-                                    "items": [
-                                        "null",
-                                        "string"
-                                    ],
-                                    "type": "array"
-                                }
-                            ]
+                            "type": {
+                                "items": [
+                                    "null",
+                                    "string"
+                                ],
+                                "type": "array"
+                            }
                         },
                         {
                             "name": "registered_identifier",
                             "namespace": "anvil_dataset",
-                            "type": [
-                                "null",
-                                {
-                                    "items": [
-                                        "null",
-                                        "string"
-                                    ],
-                                    "type": "array"
-                                }
-                            ]
+                            "type": {
+                                "items": [
+                                    "null",
+                                    "string"
+                                ],
+                                "type": "array"
+                            }
                         },
                         {
                             "name": "source_datarepo_row_ids",
                             "namespace": "anvil_dataset",
-                            "type": [
-                                "null",
-                                {
-                                    "items": [
-                                        "null",
-                                        "string"
-                                    ],
-                                    "type": "array"
-                                }
-                            ]
+                            "type": {
+                                "items": [
+                                    "null",
+                                    "string"
+                                ],
+                                "type": "array"
+                            }
                         },
                         {
                             "name": "title",
@@ -1165,6 +1122,32 @@
                         }
                     ],
                     "name": "anvil_variantcallingactivity",
+                    "type": "record"
+                },
+                {
+                    "fields": [
+                        {
+                            "name": "dataset_id",
+                            "namespace": "duos_dataset_registration",
+                            "type": "string"
+                        },
+                        {
+                            "name": "description",
+                            "namespace": "duos_dataset_registration",
+                            "type": "string"
+                        },
+                        {
+                            "name": "duos_id",
+                            "namespace": "duos_dataset_registration",
+                            "type": "string"
+                        },
+                        {
+                            "name": "version",
+                            "namespace": "duos_dataset_registration",
+                            "type": "string"
+                        }
+                    ],
+                    "name": "duos_dataset_registration",
                     "type": "record"
                 },
                 {

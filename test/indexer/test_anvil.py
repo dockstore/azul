@@ -257,6 +257,8 @@ class TestAnvilIndexerWithIndexesSetUp(AnvilIndexerTestCase):
                     # These fields are populated only in the DUOS bundle
                     self.assertEqual('Study description from DUOS', contents['description'])
                     self.assertEqual('DUOS-000000', contents['duos_id'])
+                    # This field is present in both bundles
+                    self.assertEqual('52ee7665-7033-63f2-a8d9-ce8e32666739', contents['dataset_id'])
             else:
                 self.fail(qualifier)
         self.assertDictEqual(doc_counts, {
