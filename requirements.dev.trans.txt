@@ -1,6 +1,6 @@
 blessed==1.20.0
 blinker==1.9.0
-botocore-stubs==1.36.8
+botocore-stubs==1.36.10
 brotli==1.1.0
 click==8.1.8
 colorama==0.4.6
@@ -28,12 +28,12 @@ mypy-boto3-apigateway==1.36.0
 mypy-boto3-cloudwatch==1.36.0
 mypy-boto3-dynamodb==1.36.0
 mypy-boto3-ec2==1.36.8
-mypy-boto3-ecr==1.36.0
+mypy-boto3-ecr==1.36.10
 mypy-boto3-es==1.36.0
 mypy-boto3-iam==1.36.0
 mypy-boto3-kms==1.36.0
 mypy-boto3-lambda==1.36.0
-mypy-boto3-s3==1.36.0
+mypy-boto3-s3==1.36.9
 mypy-boto3-secretsmanager==1.36.0
 mypy-boto3-securityhub==1.36.0
 mypy-boto3-sns==1.36.3
@@ -51,7 +51,7 @@ pyflakes==3.2.0
 pyjwt==2.10.1
 pynacl==1.5.0
 pyparsing==3.2.1
-pyzmq==26.2.0
+pyzmq==26.2.1
 readchar==4.2.1
 referencing==0.36.2
 requests-toolbelt==1.0.0
