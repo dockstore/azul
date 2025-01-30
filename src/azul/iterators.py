@@ -8,10 +8,11 @@ from functools import (
 from itertools import (
     islice,
 )
-import random as _random
+import random
 from typing import (
     Callable,
     TypeVar,
+    cast,
 )
 
 from azul import (
@@ -62,14 +63,16 @@ class generable(Iterable[T]):
 def reservoir_sample(k: int,
                      it: Iterable[T],
                      *,
-                     random: _random.Random = _random
+                     # The cast is safe because the `random` module has a
+                     # function for every method in the `random.Random` class.
+                     random: random.Random = cast(random.Random, random)
                      ) -> list[T]:
     """
     Return a random choice of a given size from an iterable.
 
     https://stackoverflow.com/a/35671225/4171119
 
-    >>> r = _random.Random(42)
+    >>> r = random.Random(42)
 
     >>> reservoir_sample(5, '', random=r)
     []
