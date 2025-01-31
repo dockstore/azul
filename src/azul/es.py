@@ -50,7 +50,9 @@ class CachedBotoAWSRequestsAuth(BotoAWSRequestsAuth):
         # envhook.py to use cached credentials for the AssumeRoleProvider. This
         # avoids repeated entry of MFA tokens when running this code locally.
         # noinspection PyProtectedMember
-        self._refreshable_credentials = aws.boto3_session.get_credentials()
+        credentials = aws.boto3_session.get_credentials()
+        assert credentials is not None, R'Need credentials'
+        self._refreshable_credentials = credentials
 
 
 class AzulConnection(Connection):

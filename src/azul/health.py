@@ -64,6 +64,7 @@ from azul.service.storage_service import (
 )
 from azul.types import (
     JSON,
+    MutableJSON,
 )
 
 log = logging.getLogger(__name__)
@@ -214,7 +215,7 @@ class Health:
         Returns information about the SQS queues used by the indexer.
         """
         sqs = aws.resource('sqs', azul_logging=True)
-        response = {'up': True}
+        response: MutableJSON = {'up': True}
         for queue in config.all_queue_names:
             try:
                 queue_instance = sqs.get_queue_by_name(QueueName=queue).attributes

@@ -148,7 +148,7 @@ class OAuth2Client(HasCachedHttpClient):
             # Actual service account credentials
             require(token_info['email_verified'] == 'true',
                     'Service account email is not verified')
-            require(token_info['email'] == self.credentials.service_account_email,
+            require(token_info['email'] == credentials.service_account_email,
                     'Service account email does not match')
         elif isinstance(credentials, TokenCredentials):
             authorized_party = token_info['azp']

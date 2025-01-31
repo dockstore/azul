@@ -34,6 +34,7 @@ from chalice import (
 from chalice.app import (
     BadRequestError,
     CaseInsensitiveMapping,
+    HeadersType,
     MultiDict,
     NotFoundError,
     Request,
@@ -190,7 +191,9 @@ class AzulChaliceApp(Chalice):
 
         old_handler = chalice.app.EventSourceHandler.__call__
         if old_handler.__code__ != patched_event_source_handler.__code__:
-            chalice.app.EventSourceHandler.__call__ = patched_event_source_handler
+            setattr(chalice.app.EventSourceHandler,
+                    '__call__',
+                    patched_event_source_handler)
 
     def _logging_middleware(self, event, get_response):
         self._log_request()
@@ -461,6 +464,7 @@ class AzulChaliceApp(Chalice):
 
     def _log_request(self):
         if log.isEnabledFor(logging.INFO):
+            assert self.current_request is not None
             context = self.current_request.context
             request_info = {
                 'query': self.current_request.query_params,
@@ -615,7 +619,8 @@ class AzulChaliceApp(Chalice):
             try:
                 metric_alarms = getattr(f, 'metric_alarms')
             except AttributeError:
-                metric_alarms = f.metric_alarms = []
+                metric_alarms = []
+                setattr(f, 'metric_alarms', metric_alarms)
             metric_alarms.append(self)
             return f
 
@@ -663,7 +668,7 @@ class AzulChaliceApp(Chalice):
 
         def __call__(self, f):
             assert isinstance(f, chalice.app.EventSourceHandler), f
-            f.retry = self
+            setattr(f, 'retry', self)
             return f
 
     @property
@@ -693,7 +698,9 @@ class AzulChaliceApp(Chalice):
             }
         )
         def swagger_redirect():
-            headers = {'Location': str(self.base_url.set(path='swagger/index.html'))}
+            headers: HeadersType = {
+                'Location': str(self.base_url.set(path='swagger/index.html'))
+            }
             return Response(status_code=301, body='', headers=headers)
 
         @self.route(
@@ -744,7 +751,7 @@ class AzulChaliceApp(Chalice):
                     for path, method in self.non_interactive_routes
                 ])
             })
-            headers = {'Content-Type': 'application/javascript'}
+            headers: HeadersType = {'Content-Type': 'application/javascript'}
             return Response(status_code=200, body=body, headers=headers)
 
         @self.route(
@@ -861,7 +868,7 @@ class AzulChaliceApp(Chalice):
                 ('Allow', '/$'),
                 ('Allow', '/swagger/')
             ])
-            headers = {'Content-Type': 'text/plain'}
+            headers: HeadersType = {'Content-Type': 'text/plain'}
             return Response(status_code=200, headers=headers, body=body)
 
         return locals()
