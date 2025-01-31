@@ -1,8 +1,11 @@
 import json
 import os
 from unittest.mock import (
+    PropertyMock,
     patch,
 )
+
+import git
 
 from azul.modules import (
     load_script,
@@ -14,7 +17,7 @@ from azul_test_case import (
 
 class TestCheckBranch(AzulUnitTestCase):
 
-    def test(self):
+    def test_check_branch(self):
         script = load_script('check_branch')
         check_branch = script.check_branch
 
@@ -71,17 +74,77 @@ class TestCheckBranch(AzulUnitTestCase):
                              "Branch 'feature/foo' cannot be deployed to 'prod', "
                              "only one of {'sandbox'} or personal deployments.")
 
-        variables = ['CI_COMMIT_REF_NAME', 'GITHUB_BASE_REF', 'GITHUB_HEAD_REF']
+    def test_target_branch(self):
+        script = load_script('check_branch')
 
-        for variable in variables:
-            if variable == 'GITHUB_HEAD_REF':
-                branches = ['foo/bar']
-            else:
-                branches = ['develop', 'prod']
-            for branch in branches:
-                with patch.dict(os.environ) as env:
-                    for var in variables:
-                        env.pop(var, None)
-                    env[var] = branch
-                    with self.subTest(branch=branch, variable=variable):
-                        self.assertEqual(branch, script.target_branch())
+        develop, prod = 'develop', 'prod'
+        feature, merge = 'issues/foo/1234-bar', '2345/merge'
+        cases = [
+            (
+                'Local build',
+                feature,
+                {},
+                feature
+            ),
+            (
+                'Local build with detached head',
+                None,
+                {},
+                None
+            ),
+            (
+                'GitHub building develop',
+                develop,
+                {'GITHUB_REF_NAME': develop},
+                develop
+            ),
+            (
+                'GitHub building prod',
+                prod,
+                {'GITHUB_REF_NAME': prod},
+                prod
+            ),
+            (
+                'GitHub PR against develop',
+                merge,
+                {
+                    'GITHUB_REF_NAME': merge,
+                    'GITHUB_HEAD_REF': feature,
+                    'GITHUB_BASE_REF': develop
+                },
+                develop
+            ),
+            (
+                'GitHub PR against prod',
+                merge,
+                {
+                    'GITHUB_REF_NAME': merge,
+                    'GITHUB_HEAD_REF': feature,
+                    'GITHUB_BASE_REF': prod
+                },
+                prod
+            ),
+            (
+                'Sandbox build on GitLab',
+                None,
+                {'CI_COMMIT_REF_NAME': feature},
+                feature
+            ),
+            (
+                'Non-sandbox build on GitLab',
+                None,
+                {'CI_COMMIT_REF_NAME': develop},
+                develop
+            ),
+        ]
+        variables = {v for case in cases for v in case[2]}
+        for sub_test, current_branch, new_env, target_branch in cases:
+            with self.subTest(sub_test):
+                with patch.object(git.Repo, 'head', new_callable=PropertyMock) as head:
+                    head.return_value.is_detached = current_branch is None
+                    head.return_value.reference.name = current_branch
+                    with patch.dict(os.environ) as env:
+                        for variable in variables:
+                            env.pop(variable, None)
+                        env.update(new_env)
+                        self.assertEqual(target_branch, script.target_branch())

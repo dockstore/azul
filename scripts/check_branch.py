@@ -52,7 +52,32 @@ def target_branch() -> str | None:
     built or, if the build is for a feature branch involving a pull request, the
     base branch of that feature branch.
     """
-    for variable in 'CI_COMMIT_REF_NAME', 'GITHUB_BASE_REF', 'GITHUB_HEAD_REF':
+    # The comments on the environment variable names below are taken from
+    #
+    # https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/store-information-in-variables
+    #
+    # and
+    #
+    # https://docs.gitlab.com/ee/ci/variables/predefined_variables.html
+    #
+    for variable in [
+        # The name of the base ref or target branch of the pull request in a
+        # workflow run. This is only set when the event that triggers a workflow
+        # run is either pull_request or pull_request_target. For example, main.
+        #
+        'GITHUB_BASE_REF',
+
+        # The short ref name of the branch or tag that triggered the workflow
+        # run. This value matches the branch or tag name shown on GitHub. For
+        # example, feature-branch-1. For pull requests, the format is
+        # <pr_number>/merge.
+        #
+        'GITHUB_REF_NAME',
+
+        # The branch or tag name for which project is built.
+        #
+        'CI_COMMIT_REF_NAME',
+    ]:
         try:
             branch = os.environ[variable]
         except KeyError:
@@ -60,7 +85,7 @@ def target_branch() -> str | None:
         else:
             return branch
     repo = git.Repo(config.project_root)
-    return None if repo.head.is_detached else repo.active_branch.name
+    return None if repo.head.is_detached else repo.head.reference.name
 
 
 def main(argv):
