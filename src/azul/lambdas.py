@@ -3,6 +3,7 @@ import logging
 import time
 from typing import (
     Optional,
+    TYPE_CHECKING,
 )
 
 import attr
@@ -11,7 +12,6 @@ from more_itertools import (
 )
 
 from azul import (
-    JSON,
     R,
     cache,
     config,
@@ -22,6 +22,11 @@ from azul.deployment import (
 from azul.modules import (
     load_app_module,
 )
+
+if TYPE_CHECKING:
+    from mypy_boto3_lambda.type_defs import (
+        FunctionConfigurationTypeDef,
+    )
 
 log = logging.getLogger(__name__)
 
@@ -72,7 +77,7 @@ class Lambda:
         ))
 
     @classmethod
-    def from_response(cls, response: JSON) -> 'Lambda':
+    def from_response(cls, response: 'FunctionConfigurationTypeDef') -> 'Lambda':
         name = response['FunctionName']
         role = response['Role']
         try:
