@@ -10,7 +10,6 @@ import logging
 from typing import (
     TYPE_CHECKING,
     TypedDict,
-    Union,
 )
 
 import attr
@@ -41,7 +40,7 @@ from azul.http import (
 
 log = logging.getLogger(__name__)
 
-ScopedCredentials = Union[ServiceAccountCredentials, TokenCredentials]
+ScopedCredentials = ServiceAccountCredentials | TokenCredentials
 
 
 class CredentialsProvider(metaclass=ABCMeta):
