@@ -7,8 +7,7 @@ from typing import (
     Optional,
 )
 
-ma = 1  # managed access
-pop = 2  # remove snapshot
+pop = 1  # remove snapshot
 
 
 def mksrc(source_type: Literal['bigquery', 'parquet'],
@@ -19,7 +18,7 @@ def mksrc(source_type: Literal['bigquery', 'parquet'],
           prefix: str = ''
           ) -> tuple[str, str | None]:
     project = '_'.join(snapshot.split('_')[1:-3])
-    assert flags <= ma | pop
+    assert flags <= pop
     source = None if flags & pop else ':'.join([
         'tdr',
         source_type,
@@ -90,7 +89,6 @@ def env() -> Mapping[str, Optional[str]]:
         'AZUL_DEPLOYMENT_STAGE': 'tempdev',
 
         'AZUL_DOMAIN_NAME': 'temp.gi.ucsc.edu',
-        'AZUL_PRIVATE_API': '0',
 
         'AZUL_S3_BUCKET': 'edu-ucsc-gi-platform-temp-dev-storage-{AZUL_DEPLOYMENT_STAGE}.{AWS_DEFAULT_REGION}',
 

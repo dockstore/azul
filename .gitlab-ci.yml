@@ -90,6 +90,7 @@ test:
     - make anvil_schema
     - make check_clean
     - make pep8
+    - mypy
     - AZUL_DEBUG=0 make test
 
 deploy:

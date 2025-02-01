@@ -59,6 +59,7 @@ jobs:
           make anvil_schema
           make check_clean
           make pep8
+          mypy
           AZUL_DEBUG=0 GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }} make test
           make check_clean
           coverage xml
@@ -137,13 +138,12 @@ jobs:
           cache: 'pip'
           cache-dependency-path: 'requirements.dev.txt'
 
-      - uses: 'github/codeql-action/init@v2'
+      - uses: 'github/codeql-action/init@v3'
         with:
           languages: '${{ matrix.language }}'
-          setup-python-dependencies: false
           config-file: './.github/codeql/codeql-config.yml'
           queries: 'security-and-quality'
 
-      - uses: 'github/codeql-action/analyze@v2'
+      - uses: 'github/codeql-action/analyze@v3'
         with:
           category: '/language:${{matrix.language}}'

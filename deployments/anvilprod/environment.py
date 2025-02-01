@@ -7,8 +7,7 @@ from typing import (
     Optional,
 )
 
-ma = 1  # managed access
-pop = 2  # remove snapshot
+pop = 1  # remove snapshot
 
 
 def mksrc(source_type: Literal['bigquery', 'parquet'],
@@ -19,7 +18,7 @@ def mksrc(source_type: Literal['bigquery', 'parquet'],
           prefix: str = ''
           ) -> tuple[str, str | None]:
     project = '_'.join(snapshot.split('_')[1:-3])
-    assert flags <= ma | pop
+    assert flags <= pop
     source = None if flags & pop else ':'.join([
         'tdr',
         source_type,
@@ -704,7 +703,7 @@ anvil7_sources = mkdict(anvil6_sources, 257, mkdelta([
     # @formatter:on
 ]))
 
-anvil8_sources = mkdict(anvil7_sources, 257, mkdelta([
+anvil8_sources = mkdict(anvil7_sources, 256, mkdelta([
     # @formatter:off
     mksrc('bigquery', 'datarepo-6fd2f543', 'ANVIL_1000G_PRIMED_data_model_20240410_ANV5_202409251724'),
     mksrc('bigquery', 'datarepo-13858a9f', 'ANVIL_1000G_high_coverage_2019_20230517_ANV5_202409231755'),
@@ -809,6 +808,7 @@ anvil8_sources = mkdict(anvil7_sources, 257, mkdelta([
     mksrc('bigquery', 'datarepo-5d222190', 'ANVIL_CMG_Yale_DS_BPEAKD_20240113_ANV5_202410011754'),
     mksrc('bigquery', 'datarepo-fe056168', 'ANVIL_CMG_Yale_DS_RD_20240113_ANV5_202410011804'),
     mksrc('bigquery', 'datarepo-06182245', 'ANVIL_CMG_Yale_DS_THAL_IRB_20240113_ANV5_202410011814'),
+    mksrc('bigquery', 'datarepo-ad307392', 'ANVIL_CMG_Yale_GRU_20221020_ANV5_202402281628', pop),
     mksrc('bigquery', 'datarepo-35779fe0', 'ANVIL_CMG_Yale_HMB_20221020_ANV5_202410011825'),
     mksrc('bigquery', 'datarepo-cebe6de0', 'ANVIL_CMG_Yale_HMB_GSO_20221020_ANV5_202410011834'),
     mksrc('bigquery', 'datarepo-5c7f0d2a', 'ANVIL_CMG_Yale_HMB_IRB_20240113_ANV5_202410011846'),
@@ -966,7 +966,6 @@ def env() -> Mapping[str, Optional[str]]:
         'AZUL_DEPLOYMENT_STAGE': 'anvilprod',
 
         'AZUL_DOMAIN_NAME': 'explore.anvilproject.org',
-        'AZUL_PRIVATE_API': '0',
 
         'AZUL_CATALOGS': json.dumps({
             f'{catalog}{suffix}': dict(atlas=atlas,

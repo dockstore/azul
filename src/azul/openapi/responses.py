@@ -4,7 +4,7 @@ from azul.openapi import (
     schema,
 )
 from azul.openapi.schema import (
-    TYPE,
+    Form,
 )
 from azul.types import (
     AnyJSON,
@@ -22,7 +22,7 @@ def json_content(schema: JSON, **kwargs: AnyJSON) -> JSON:
     }
 
 
-def header(type_: TYPE, **kwargs: PrimitiveJSON) -> JSON:
+def header(form: Form, **kwargs: PrimitiveJSON) -> JSON:
     """
     Returns the schema and description for a response header.
 
@@ -38,6 +38,6 @@ def header(type_: TYPE, **kwargs: PrimitiveJSON) -> JSON:
     """
     format_description_key(kwargs)
     return {
-        'schema': schema.make_type(type_),
+        'schema': schema.make(form),
         **kwargs
     }

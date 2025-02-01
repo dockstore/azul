@@ -16,7 +16,7 @@ from more_itertools import (
 )
 
 from azul import (
-    require,
+    R,
 )
 from azul.strings import (
     single_quote as sq,
@@ -96,17 +96,17 @@ class CSP:
         >>> parse(";")
         Traceback (most recent call last):
         ...
-        azul.RequirementError: ('Invalid directive', '')
+        AssertionError: R('Invalid directive', '')
 
         >>> parse('img_src;')
         Traceback (most recent call last):
         ...
-        azul.RequirementError: ('Invalid directive', 'img_src')
+        AssertionError: R('Invalid directive', 'img_src')
 
         >>> parse('img-src a,b')
         Traceback (most recent call last):
         ...
-        azul.RequirementError: ('Invalid directive', 'img-src a,b')
+        AssertionError: R('Invalid directive', 'img-src a,b')
         """
         # https://www.w3.org/TR/CSP2/#policy-syntax
         directive_re = re.compile(r'[ \t]*([a-zA-Z0-9-]+)'
@@ -115,10 +115,10 @@ class CSP:
                                   # semicolon (0x3B).
                                   r'(?:[ \t]([ \t\x21-\x2B\x2D-\x3A\x3C-\xFE]*))?')
         wsp_re = re.compile(r'[ \t]+')
-        directives = defaultdict(list)
+        directives: dict[str, list[str]] = defaultdict(list)
         for directive in csp.split(';'):
             match = directive_re.fullmatch(directive)
-            require(match is not None, 'Invalid directive', directive)
+            assert match is not None, R('Invalid directive', directive)
             name, values = match.groups()
             values = [] if values is None else filter(None, wsp_re.split(values))
             directives[name].extend(values)
@@ -144,7 +144,7 @@ class CSP:
         >>> validate(f"script-src 'self' 'nonce-{invalid}'")
         Traceback (most recent call last):
         ...
-        azul.RequirementError: ('Invalid value', "'nonce-0a*/0a*/0a*/0a*/0a*/0a*/0a*/0a*/0a*/0a*/0a*'")
+        AssertionError: R('Invalid value', "'nonce-0a*/0a*/0a*/0a*/0a*/0a*/0a*/0a*/0a*/0a*/0a*'")
 
         Nonce is too short:
 
@@ -152,7 +152,7 @@ class CSP:
         >>> validate(f"script-src 'self' 'nonce-{invalid}'")
         Traceback (most recent call last):
         ...
-        azul.RequirementError: ('Invalid value', "'nonce-0a+/0a+/0a+/0a+/0a+/0a+/0a+/0a+/0a+/0a+/0a'")
+        AssertionError: R('Invalid value', "'nonce-0a+/0a+/0a+/0a+/0a+/0a+/0a+/0a+/0a+/0a+/0a'")
 
         Nonce is too long:
 
@@ -160,24 +160,24 @@ class CSP:
         >>> validate(f"script-src 'self' 'nonce-{invalid}'")
         Traceback (most recent call last):
         ...
-        azul.RequirementError: ('Invalid value', "'nonce-0a+/0a+/0a+/0a+/0a+/0a+/0a+/0a+/0a+/0a+/0a+/'")
+        AssertionError: R('Invalid value', "'nonce-0a+/0a+/0a+/0a+/0a+/0a+/0a+/0a+/0a+/0a+/0a+/'")
 
         Other invalid combinations:
 
         >>> validate("frame-ancestors 'none' 'none'")
         Traceback (most recent call last):
         ...
-        azul.RequirementError: ("'none' can only appear alone", ["'none'", "'none'"])
+        AssertionError: R("'none' must appear alone", ["'none'", "'none'"])
 
         >>> validate("frame-ancestors 'self' 'none'")
         Traceback (most recent call last):
         ...
-        azul.RequirementError: ("'none' can only appear alone", ["'self'", "'none'"])
+        AssertionError: R("'none' must appear alone", ["'self'", "'none'"])
 
         >>> validate("img-src 'self' data: 'self'")
         Traceback (most recent call last):
         ...
-        azul.RequirementError: ('Duplicated value', ["'self'", 'data:', "'self'"])
+        AssertionError: R('Duplicated value', ["'self'", 'data:', "'self'"])
         """
         self_, none, data = sq('self'), sq('none'), 'data:'
         value_res = prepend(self.nonce_re.pattern, map(re.escape, [self_, none, data]))
@@ -185,10 +185,10 @@ class CSP:
         for name, values in self.directives.items():
             for value in values:
                 match = value_re.fullmatch(value)
-                require(match is not None, 'Invalid value', value)
-            require(values == [none] or none not in values,
-                    f'{none} can only appear alone', values)
-            require(len(values) == len(set(values)), 'Duplicated value', values)
+                assert match is not None, R('Invalid value', value)
+            assert values == [none] or none not in values, R(
+                f'{none} must appear alone', values)
+            assert len(values) == len(set(values)), R('Duplicated value', values)
 
     def nonce(self) -> str | None:
         """

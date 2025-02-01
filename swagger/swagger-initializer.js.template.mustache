@@ -17,19 +17,17 @@ window.onload = function() {
   }
 
   window.ui = SwaggerUIBundle({
-    url: {{{DEPLOYMENT_PATH}}},
+    url: {{{OPENAPI_SPEC}}},
     dom_id: '#swagger-ui',
     deepLinking: true,
     presets: [
-      SwaggerUIBundle.presets.apis,
-      SwaggerUIStandalonePreset
+      SwaggerUIBundle.presets.apis
     ],
     plugins: [
       SwaggerUIBundle.plugins.DownloadUrl,
       DisableTryItOutPlugin
     ],
-    oauth2RedirectUrl: {{{OAUTH2_REDIRECT_URL}}},
-    layout: "StandaloneLayout"
+    oauth2RedirectUrl: {{{OAUTH2_REDIRECT_URL}}}
   });
 
   const client_id = {{{OAUTH2_CLIENT_ID}}};

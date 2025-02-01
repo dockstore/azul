@@ -4,6 +4,9 @@ from collections.abc import (
 from contextlib import (
     contextmanager,
 )
+from functools import (
+    wraps,
+)
 import inspect
 import json
 import logging
@@ -17,7 +20,6 @@ import threading
 from typing import (
     Any,
     Callable,
-    Optional,
     TYPE_CHECKING,
     Tuple,
     TypeVar,
@@ -51,16 +53,33 @@ from azul.logging import (
     http_body_log_message,
 )
 from azul.types import (
-    JSON,
     JSONs,
 )
 
 if TYPE_CHECKING:
+    from azul import (
+        Config,
+    )
+    from mypy_boto3_apigateway import (
+        APIGatewayClient,
+    )
+    from mypy_boto3_cloudwatch import (
+        CloudWatchClient,
+    )
     from mypy_boto3_dynamodb import (
         DynamoDBClient,
     )
+    from mypy_boto3_ec2 import (
+        EC2Client,
+    )
     from mypy_boto3_ecr import (
         ECRClient,
+    )
+    from mypy_boto3_es import (
+        ElasticsearchServiceClient,
+    )
+    from mypy_boto3_es.type_defs import (
+        ElasticsearchDomainStatusTypeDef,
     )
     from mypy_boto3_iam import (
         IAMClient,
@@ -68,11 +87,29 @@ if TYPE_CHECKING:
     from mypy_boto3_kms import (
         KMSClient,
     )
+    from mypy_boto3_lambda import (
+        LambdaClient,
+    )
     from mypy_boto3_s3 import (
         S3Client,
     )
+    from mypy_boto3_secretsmanager import (
+        SecretsManagerClient,
+    )
+    from mypy_boto3_secretsmanager.type_defs import (
+        GetSecretValueResponseTypeDef,
+    )
+    from mypy_boto3_securityhub import (
+        SecurityHubClient,
+    )
+    from mypy_boto3_sns import (
+        SNSClient,
+    )
     from mypy_boto3_stepfunctions import (
         SFNClient,
+    )
+    from mypy_boto3_sts import (
+        STSClient,
     )
 
 log = logging.getLogger(__name__)
@@ -94,17 +131,21 @@ def _cache(func: Callable[..., R]) -> Callable[..., R]:
     def cached_func(_session, self, *args, **kwargs):
         return func(self, *args, **kwargs)
 
+    # We wrap the func again so that the boto3 session is included in the cache
+    # key. Changing the session should result in a new cache line. We use @wraps
+    # so that we can reach through to the .clear_cache attribute of the cache
+    # wrapper (see AWS.clear_caches below)
+
+    @wraps(cached_func)
     def wrapper(self, *args, **kwargs):
         return cached_func(self.boto3_session, self, *args, **kwargs)
-
-    wrapper.cache_clear = cached_func.cache_clear
 
     return wrapper
 
 
 class AWS:
     class _PerThread(threading.local):
-        session: Optional[boto3.session.Session] = None
+        session: boto3.session.Session | None = None
 
     def __init__(self) -> None:
         super().__init__()
@@ -126,14 +167,19 @@ class AWS:
                 method = cast(property, attribute.object).fget
             else:
                 continue
-            try:
-                # cache_clear is a documented method of the lru_cache wrapper
-                cache_clear = getattr(method, 'cache_clear')
-            except AttributeError:
-                pass
-            else:
-                log.debug('Clearing cache of %r', attribute.name)
-                cache_clear()
+            # `cache_clear` is a documented method of the lru_cache wrapper that
+            # wraps the cached method/property. This wrapper is wrapped again so
+            # need to reach through that outer wrapper. For flexibility we do
+            # this recursively.
+            while True:
+                if hasattr(method, 'cache_clear'):
+                    log.debug('Clearing cache of %r', attribute.name)
+                    method.cache_clear()
+                    break
+                elif hasattr(method, '__wrapped__'):
+                    method = method.__wrapped__
+                else:
+                    break
 
     @cached_property
     def profile(self):
@@ -151,27 +197,27 @@ class AWS:
         return self.client('s3', azul_logging=True)
 
     @property
-    def securityhub(self):
+    def securityhub(self) -> 'SecurityHubClient':
         return self.client('securityhub')
 
     @property
-    def sns(self):
+    def sns(self) -> 'SNSClient':
         return self.client('sns')
 
     @property
-    def sts(self):
+    def sts(self) -> 'STSClient':
         return self.client('sts')
 
     @property
-    def lambda_(self):
+    def lambda_(self) -> 'LambdaClient':
         return self.client('lambda')
 
     @property
-    def cloudwatch(self):
+    def cloudwatch(self) -> 'CloudWatchClient':
         return self.client('cloudwatch')
 
     @property
-    def apigateway(self):
+    def apigateway(self) -> 'APIGatewayClient':
         return self.client('apigateway')
 
     @property
@@ -188,7 +234,7 @@ class AWS:
         return one(self.iam.list_account_aliases()['AccountAliases'])
 
     @property
-    def es(self):
+    def es(self) -> 'ElasticsearchServiceClient':
         return self.client('es')
 
     @property
@@ -204,11 +250,11 @@ class AWS:
         return self.client('kms')
 
     @property
-    def secretsmanager(self):
+    def secretsmanager(self) -> 'SecretsManagerClient':
         return self.client('secretsmanager')
 
     @property
-    def ec2(self):
+    def ec2(self) -> 'EC2Client':
         return self.client('ec2')
 
     @property
@@ -216,14 +262,14 @@ class AWS:
         return self.client('dynamodb', azul_logging=True)
 
     @property
-    def es_endpoint(self) -> Optional[Netloc]:
+    def es_endpoint(self) -> Netloc | None:
         if config.es_endpoint:
             return config.es_endpoint
         else:
             return self._es_domain_status['Endpoints']['vpc'], 443
 
     @property
-    def es_instance_count(self) -> Optional[int]:
+    def es_instance_count(self) -> int | None:
         if config.es_endpoint:
             return config.es_instance_count
         else:
@@ -231,7 +277,7 @@ class AWS:
 
     @property
     @_cache
-    def _es_domain_status(self) -> Optional[JSON]:
+    def _es_domain_status(self) -> 'ElasticsearchDomainStatusTypeDef':
         """
         Return the status of the current deployment's Elasticsearch domain
         """
@@ -295,13 +341,13 @@ class AWS:
         return dss_config[bucket_key]
 
     @_cache
-    def _service_account_creds(self, secret_name: str) -> JSON:
+    def _service_account_creds(self, secret_name: str) -> 'GetSecretValueResponseTypeDef':
         sm = self.secretsmanager
         creds = sm.get_secret_value(SecretId=secret_name)
         return creds
 
     @contextmanager
-    def service_account_credentials(self, service_account: config.ServiceAccount):
+    def service_account_credentials(self, service_account: 'Config.ServiceAccount'):
         """
         A context manager that provides a temporary file containing the
         credentials of the Google service account that represents the Azul
@@ -342,7 +388,7 @@ class AWS:
         return self.assumed_role_credentials(role_arn)
 
     @contextmanager
-    def assumed_role_credentials(self, role_arn: Optional[str]):
+    def assumed_role_credentials(self, role_arn: str | None):
         """
         A context manager that causes the client() method to return boto3
         clients that use credentials obtained by assuming the given role as long
@@ -428,7 +474,10 @@ class AWS:
         return boto3.session.Session(botocore_session=session)
 
     @_cache
-    def client(self, service_name: str, *args, azul_logging: bool = False, **kwargs):
+    def client(self,
+               service_name: str,
+               region_name: str | None = None,
+               azul_logging: bool = False):
         """
         Outside of a context established by `.assumed_role_credentials()` this
         method returns a Boto3 client object of the same type as that of
@@ -450,12 +499,15 @@ class AWS:
 
         :param service_name: The name of an AWS service, e.g. 's3' or 'ec2'.
 
+        :param region_name: The name of the AWS region for the client to use
+                            when requesting the service
+
         :param azul_logging: Whether to log the client's requests and
                              responses. Note that using DEBUG level will
                              enable logging of request bodies, which could
                              contain sensitive or secret information.
         """
-        client = self.boto3_session.client(service_name, *args, **kwargs)
+        client = self.boto3_session.client(service_name, region_name=region_name)
         log.info('Allocated new Boto3 client for %r with ID %r',
                  service_name, id(client))
         if azul_logging:
@@ -471,7 +523,7 @@ class AWS:
                             event_name: str,
                             request: AWSPreparedRequest,
                             **_kwargs: Any
-                            ) -> Optional[AWSResponse]:
+                            ) -> AWSResponse | None:
         event_name = self._shorten_event_name(event_name, self._request_event_name)
         boto3_log.info('%s:\tMaking %s request to %s',
                        event_name,
@@ -487,7 +539,7 @@ class AWS:
                              *,
                              event_name: str,
                              **kwargs: Any
-                             ) -> Optional[AWSResponse]:
+                             ) -> AWSResponse | None:
         event_name = self._shorten_event_name(event_name, self._response_event_name)
         response, exception = kwargs['response_dict'], kwargs['exception']
         if exception is None:

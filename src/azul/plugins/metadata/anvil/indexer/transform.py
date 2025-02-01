@@ -500,13 +500,14 @@ class SingletonTransformer(BaseTransformer, metaclass=ABCMeta):
         return {
             'document_id': null_str,
             'description': null_str,
+            'duos_id': null_str,
         }
 
     def _duos(self, dataset: EntityReference) -> MutableJSON:
         return self._entity(dataset, self._duos_types())
 
     def _is_duos(self, dataset: EntityReference) -> bool:
-        return 'description' in self.bundle.entities[dataset]
+        return 'duos_id' in self.bundle.entities[dataset]
 
     def _dataset(self, dataset: EntityReference) -> MutableJSON:
         if self._is_duos(dataset):

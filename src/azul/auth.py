@@ -7,7 +7,6 @@ from inspect import (
 )
 from typing import (
     ClassVar,
-    Type,
 )
 
 import attr
@@ -68,9 +67,10 @@ class Authentication(metaclass=ABCMeta):
     def from_json(cls, json: JSON) -> 'Authentication':
         json = copy_json(json)
         cls_name = json.pop(cls._cls_field)
+        assert isinstance(cls_name, str)
         return cls._cls_for_name[cls_name](**json)
 
-    _cls_for_name: ClassVar[dict[str, Type['Authentication']]] = {}
+    _cls_for_name: ClassVar[dict[str, type['Authentication']]] = {}
 
     def __init_subclass__(cls) -> None:
         super().__init_subclass__()

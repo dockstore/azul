@@ -21,16 +21,17 @@ from pathlib import (
 import re
 import shlex
 from typing import (
+    Any,
     BinaryIO,
     ClassVar,
+    IO,
+    Literal,
     NotRequired,
-    Optional,
     Self,
-    TYPE_CHECKING,
     TextIO,
-    TypeVar,
     TypedDict,
-    Union,
+    final,
+    overload,
 )
 
 import attr
@@ -40,17 +41,26 @@ from furl import (
 )
 from more_itertools import (
     first,
+    one,
+)
+from typing_extensions import (
+    TypeIs,
+    deprecated,
 )
 
 import azul.caching
-from azul.caching import (
-    lru_cache_per_thread,
-)
 from azul.collections import (
     atuple,
 )
+from azul.openapi import (
+    format_description,
+)
 from azul.types import (
     JSON,
+    json_bool,
+    json_mapping,
+    json_sequence,
+    json_str,
 )
 from azul.vendored.frozendict import (
     frozendict,
@@ -62,28 +72,90 @@ Netloc = tuple[str, int]
 
 CatalogName = str
 
-cached_property = property if TYPE_CHECKING else azul.caching.CachedProperty
+cached_property = azul.caching.CachedProperty
 
 lru_cache = functools.lru_cache
 
-if TYPE_CHECKING:
-    def cache(f, /):
-        return f
-else:
-    cache = functools.cache
+cache = functools.cache
 
-if TYPE_CHECKING:
-    def cache_per_thread(f, /):
-        return f
-else:
-    def cache_per_thread(f, /):
-        return lru_cache_per_thread(maxsize=None)(f)
+
+def cache_per_thread(f, /):
+    return azul.caching.lru_cache_per_thread(maxsize=None)(f)
+
 
 #: A type alias for annotating the return value of methods that return a
 #: ``furl`` instance that can be modified without side effects in the object
 #: whose method returned it.
 #
 mutable_furl = furl
+
+
+@final
+class Sentinel(object):
+    """
+    Use an instance of this class instead of ``object()`` as the default value
+    for function arguments for which ``None`` isn't a suitable default value.
+    """
+
+    def is_(self, other: Any) -> TypeIs['Sentinel']:
+        """
+        Detect if the given argument is this sentinel, and if it isn't, that it
+        is no no other instance of this class.
+
+        :return: True, if the given value is this sentinel. False, if the given
+                 value is no sentinel. Otherwise, a requirement assertion is
+                 raised
+
+        A typical usage would look as follows:
+
+        >>> zero = Sentinel()
+
+        >>> def f(x: int | Sentinel = zero) -> list[int]:
+        ...     if zero.is_(x):
+        ...         x = 0
+        ...     # `x` is now narrowed to just `int`
+        ...     return [x]
+
+        This is equivalent to.
+
+        >>> def f(x: int | Sentinel = zero) -> list[int]:
+        ...     if x is zero:
+        ...         x = 0
+        ...     assert not isinstance(zero, Sentinel)
+        ...     return [x]
+
+        Without the narrowing done by this method, or by the assertion in the
+        second example, the type checker would reject the return statement
+        as it would consider its type to be ``list[x | Sentinel]``, not just
+        ``list[int]`` as required by the return type annotation of ``f``.
+        """
+        if self is other:
+            return True
+        else:
+            assert not isinstance(other, type(self)), R('Invalid sentinel')
+            return False
+
+
+def false() -> bool:
+    """
+    Use this to disable code while keeping it in scope for type checkers and
+    refactorings, but without tripping static detection of "dead" code. The
+    disablement is usually temporary (a work around) but may even be permanent,
+    in order to, say, document a hypothetical.
+
+    :return: Always ``False``
+
+    >>> if false():
+    ...     print('Entering the forbidden zone')
+    """
+    return False
+
+
+def true() -> bool:
+    """
+    See :meth:`false`
+    """
+    return True
 
 
 class Config:
@@ -141,7 +213,7 @@ class Config:
     _es_endpoint_env_name = 'AZUL_ES_ENDPOINT'
 
     @property
-    def es_endpoint(self) -> Optional[Netloc]:
+    def es_endpoint(self) -> Netloc | None:
         try:
             es_endpoint = self.environ[self._es_endpoint_env_name]
         except KeyError:
@@ -152,8 +224,8 @@ class Config:
 
     def es_endpoint_env(self,
                         *,
-                        es_endpoint: Union[Netloc, str],
-                        es_instance_count: Union[int, str]
+                        es_endpoint: Netloc | str,
+                        es_instance_count: int | str
                         ) -> Mapping[str, str]:
         if isinstance(es_endpoint, tuple):
             host, port = es_endpoint
@@ -213,11 +285,11 @@ class Config:
 
     storage_term = 'storage'
 
-    current = object()
+    current = Sentinel()
 
     def alb_access_log_path_prefix(self,
                                    *component: str,
-                                   deployment: Optional[str] = current,
+                                   deployment: str | None | Sentinel = current,
                                    ) -> str:
         """
         :param deployment: Which deployment name to use in the path. Omit this
@@ -230,7 +302,7 @@ class Config:
 
     def s3_access_log_path_prefix(self,
                                   *component: str,
-                                  deployment: Optional[str] = current,
+                                  deployment: str | None | Sentinel = current,
                                   ) -> str:
         """
         :param deployment: Which deployment name to use in the path. Omit this
@@ -243,10 +315,10 @@ class Config:
 
     def _log_path_prefix(self,
                          prefix: list[str],
-                         deployment: Optional[str],
+                         deployment: str | None | Sentinel,
                          *component: str,
                          ):
-        if deployment is self.current:
+        if self.current.is_(deployment):
             deployment = self.deployment_stage
         return '/'.join([*prefix, *atuple(deployment), *component])
 
@@ -291,7 +363,7 @@ class Config:
         return domain
 
     @property
-    def dss_endpoint(self) -> Optional[str]:
+    def dss_endpoint(self) -> str | None:
         if self.dss_source is None:
             return None
         else:
@@ -301,7 +373,7 @@ class Config:
             return SimpleSourceSpec.parse(self.dss_source).name
 
     @property
-    def dss_source(self) -> Optional[str]:
+    def dss_source(self) -> str | None:
         return self.environ.get('AZUL_DSS_SOURCE')
 
     def sources(self, catalog: CatalogName) -> Set[str]:
@@ -331,7 +403,7 @@ class Config:
         return furl(self.environ['AZUL_SAM_SERVICE_URL'])
 
     @property
-    def duos_service_url(self) -> Optional[mutable_furl]:
+    def duos_service_url(self) -> mutable_furl | None:
         url = self.environ.get('AZUL_DUOS_SERVICE_URL')
         return None if url is None else furl(url)
 
@@ -369,8 +441,8 @@ class Config:
 
     def dss_direct_access_role(self,
                                lambda_name: str,
-                               stage: Optional[str] = None
-                               ) -> Optional[str]:
+                               stage: str | None = None
+                               ) -> str | None:
         key = 'AZUL_DSS_DIRECT_ACCESS_ROLE'
         try:
             role_arn = self.environ[key]
@@ -392,10 +464,13 @@ class Config:
                     stage = default_stage
                 role_name = self.qualified_resource_name(lambda_name, stage=stage)
                 return f'arn:aws:iam::{account_id}:role/{role_name}'
-            except RequirementError:
-                # If we fail to parse the role name, we can't parameterize it
-                # and must return the ARN verbatim.
-                return role_arn
+            except AssertionError as e:
+                if R.caused(e):
+                    # If we fail to parse the role name, we can't parameterize it
+                    # and must return the ARN verbatim.
+                    return role_arn
+                else:
+                    raise
 
     @property
     def num_dss_workers(self) -> int:
@@ -471,7 +546,7 @@ class Config:
         result = {}
         for account in accounts.split(':'):
             account_id, *roles = map(str.strip, account.split(','))
-            require(account_id and roles and all(roles),
+            require(bool(account_id) and bool(roles) and all(roles),
                     'An account ID and at least one role must be specified', account)
             result[account_id] = roles
         return result
@@ -579,12 +654,12 @@ class Config:
         >>> f('foo-bar-dev')  # doctest: +NORMALIZE_WHITESPACE
         Traceback (most recent call last):
             ...
-        azul.RequirementError: ("Expected prefix 'azul'", 'foo', 'foo-bar-dev')
+        AssertionError: R("Expected prefix 'azul'", 'foo', 'foo-bar-dev')
 
         >>> f('azul-foo')  # doctest: +NORMALIZE_WHITESPACE
         Traceback (most recent call last):
             ...
-        azul.RequirementError: ('Expected 3 name components', \
+        AssertionError: R('Expected 3 name components', \
             ['azul', 'foo'], \
             'azul-foo')
 
@@ -607,26 +682,27 @@ class Config:
         >>> f('azul-0foo-dev')
         Traceback (most recent call last):
             ...
-        azul.RequirementError: ('Invalid resource name', '0foo')
+        AssertionError: R('Invalid resource name', '0foo')
 
         >>> f('azul-tallies_retry-0dev.fifo')
         Traceback (most recent call last):
             ...
-        azul.RequirementError: ('Invalid deployment name', '0dev.fifo')
+        AssertionError: R('Invalid deployment name', '0dev.fifo')
         """
         num_components = 3
         components = qualified_name.split(self.resource_name_separator,
                                           maxsplit=num_components - 1)
-        require(len(components) == num_components,
-                f'Expected {num_components!r} name components', components, qualified_name)
+        assert len(components) == num_components, R(
+            f'Expected {num_components!r} name components',
+            components, qualified_name)
         prefix, resource_name, deployment_stage = components
-        require(prefix == self.resource_prefix,
-                f'Expected prefix {self.resource_prefix!r}', prefix, qualified_name)
-        require(self._is_valid_term(resource_name),
-                'Invalid resource name', resource_name)
+        assert prefix == self.resource_prefix, R(
+            f'Expected prefix {self.resource_prefix!r}',
+            prefix, qualified_name)
+        assert self._is_valid_term(resource_name), R(
+            'Invalid resource name', resource_name)
         match = self.qualifier_re.match(deployment_stage)
-        reject(match is None,
-               'Invalid deployment name', deployment_stage)
+        assert match is not None, R('Invalid deployment name', deployment_stage)
         index = match.end()
         deployment_stage, suffix = deployment_stage[0:index], deployment_stage[index:]
         assert self._is_valid_term(deployment_stage), qualified_name
@@ -677,13 +753,13 @@ class Config:
     def service_name(self) -> str:
         return self.service_function_name()
 
-    def indexer_function_name(self, handler_name: Optional[str] = None):
+    def indexer_function_name(self, handler_name: str | None = None):
         return self._function_name('indexer', handler_name)
 
-    def service_function_name(self, handler_name: Optional[str] = None):
+    def service_function_name(self, handler_name: str | None = None):
         return self._function_name('service', handler_name)
 
-    def _function_name(self, lambda_name: str, handler_name: Optional[str]):
+    def _function_name(self, lambda_name: str, handler_name: str | None):
         if handler_name is None:
             return self.qualified_resource_name(lambda_name)
         else:
@@ -826,6 +902,10 @@ class Config:
         class Plugin:
             name: str
 
+            @classmethod
+            def from_json(cls, spec: JSON) -> Self:
+                return cls(name=json_str(spec['name']))
+
         name: str
         atlas: str
         internal: bool
@@ -883,16 +963,16 @@ class Config:
                 return name
 
         @classmethod
-        def from_json(cls, name: str, spec: JSON) -> 'Config.Catalog':
+        def from_json(cls, name: str, spec: JSON) -> Self:
             plugins = {
-                plugin_type: cls.Plugin(**plugin_spec)
-                for plugin_type, plugin_spec in spec['plugins'].items()
+                plugin_type: cls.Plugin.from_json(json_mapping(plugin_spec))
+                for plugin_type, plugin_spec in json_mapping(spec['plugins']).items()
             }
             return cls(name=name,
-                       atlas=spec['atlas'],
-                       internal=spec['internal'],
+                       atlas=json_str(spec['atlas']),
+                       internal=json_bool(spec['internal']),
                        plugins=plugins,
-                       sources=set(spec['sources']))
+                       sources=set(map(json_str, json_sequence(spec['sources']))))
 
         @classmethod
         def validate_name(cls, catalog, **kwargs):
@@ -925,29 +1005,29 @@ class Config:
         return first(self.catalogs)
 
     @property
-    def current_catalog(self) -> Optional[str]:
+    def current_catalog(self) -> str | None:
         return self.environ.get('azul_current_catalog')
 
-    def it_catalog_for(self, catalog: CatalogName) -> Optional[CatalogName]:
+    def it_catalog_for(self, catalog: CatalogName) -> CatalogName | None:
         it_catalog = self.catalogs[catalog].it_catalog
         assert it_catalog in self.integration_test_catalogs, it_catalog
         return it_catalog
 
-    def is_dss_enabled(self, catalog: Optional[str] = None) -> bool:
+    def is_dss_enabled(self, catalog: str | None = None) -> bool:
         return self._is_plugin_enabled('dss', catalog)
 
-    def is_tdr_enabled(self, catalog: Optional[str] = None) -> bool:
+    def is_tdr_enabled(self, catalog: str | None = None) -> bool:
         return self._is_plugin_enabled('tdr', catalog)
 
-    def is_hca_enabled(self, catalog: Optional[str] = None) -> bool:
+    def is_hca_enabled(self, catalog: str | None = None) -> bool:
         return self._is_plugin_enabled('hca', catalog)
 
-    def is_anvil_enabled(self, catalog: Optional[str] = None) -> bool:
+    def is_anvil_enabled(self, catalog: str | None = None) -> bool:
         return self._is_plugin_enabled('anvil', catalog)
 
     def _is_plugin_enabled(self,
                            plugin_prefix: str,
-                           catalog: Optional[str]
+                           catalog: str | None
                            ) -> bool:
         def predicate(catalog):
             return any(
@@ -1078,7 +1158,7 @@ class Config:
         return self.Deployment(self.deployment_stage)
 
     @property
-    def _shared_deployments(self) -> Mapping[Optional[str], Sequence[Deployment]]:
+    def _shared_deployments(self) -> Mapping[str | None, Sequence[Deployment]]:
         """
         Maps a branch name to a sequence of names of shared deployments the
         branch can be deployed to. The key of None signifies any other branch
@@ -1299,7 +1379,7 @@ class Config:
     def enable_gcp(self):
         return self.google_project() is not None
 
-    def google_project(self) -> Optional[str]:
+    def google_project(self) -> str | None:
         return self.environ.get('GOOGLE_PROJECT')
 
     class ServiceAccount(Enum):
@@ -1344,13 +1424,11 @@ class Config:
         ValueError: invalid literal for int() with base 10: '456/789'
         """
         value, sep, retry_value = value.partition('/')
-        value = int(value)
-        if sep:
-            retry_value = int(retry_value)
-        else:
-            assert not retry_value
+        if sep == '':
+            assert retry_value == ''
             retry_value = value
-        return retry_value if retry else value
+        # Using eager iif so that both values are validated with int()
+        return iif(retry, int(retry_value), int(value))
 
     def contribution_concurrency(self, *, retry: bool) -> int:
         return self._concurrency(self.environ['AZUL_CONTRIBUTION_CONCURRENCY'], retry)
@@ -1459,7 +1537,7 @@ class Config:
         return self.environ['azul_github_access_token']
 
     @property
-    def gitlab_access_token(self) -> Optional[str]:
+    def gitlab_access_token(self) -> str | None:
         return self.environ.get('azul_gitlab_access_token')
 
     @property
@@ -1488,7 +1566,7 @@ class Config:
     minimum_compression_size = 0
 
     @property
-    def google_oauth2_client_id(self) -> Optional[str]:
+    def google_oauth2_client_id(self) -> str | None:
         return self.environ.get('AZUL_GOOGLE_OAUTH2_CLIENT_ID')
 
     @property
@@ -1516,13 +1594,26 @@ class Config:
             import json
             return json.loads(value)
 
+    @property
+    def contact_us(self) -> str:
+        email = self.monitoring_email
+        return format_description(f'''
+
+            ## Contact us
+
+            For technical support please file an issue at
+            [GitHub](https://github.com/DataBiosphere/azul/issues) or email
+            `{email}`. To report a security concern or misconduct please email
+            `{email}`.
+        ''')
+
     @attr.s(frozen=True, kw_only=True, auto_attribs=True)
     class SlackIntegration:
         workspace_id: str
         channel_id: str
 
     @property
-    def slack_integration(self) -> Optional[SlackIntegration]:
+    def slack_integration(self) -> SlackIntegration | None:
 
         # FIXME: Eliminate local import
         #        https://github.com/DataBiosphere/azul/issues/3133
@@ -1611,13 +1702,17 @@ class Config:
 
     @property
     def waf_file_download_limit(self) -> FileDownloadLimit | None:
-        value = self.environ.get('AZUL_FILE_DOWNLOAD_RATE_LIMIT')
+        value = self.environ.get('azul_waf_download_rate_limit')
         if value is None:
             return None
         else:
             return self.FileDownloadLimit.parse(value)
 
     assert 100 <= waf_rate_rule_limit <= 2_000_000_000  # mandated by AWS
+
+    @property
+    def waf_bot_control(self) -> bool:
+        return self._boolean(self.environ['azul_waf_bot_control'])
 
     @property
     def vpc_cidr(self) -> str:
@@ -1635,12 +1730,101 @@ class Config:
 config: Config = Config()  # yes, the type hint does help PyCharm
 
 
-class RequirementError(RuntimeError):
+class R:
     """
-    Unlike assertions, unsatisfied requirements do not constitute a bug in the program.
+    R is short for Requirement. We think this abbreviation is justified by how
+    frequently this class is used.
+
+    Use an instance of this class as the second argument to `assert` in order to
+    express that the assertion fired due to an invalid input to a component of
+    the program, rather than a defect *in* the program component itself. A
+    program component can be a function, class or module. Individual methods
+    typically aren't components. A regular assertion firing constitutes a defect
+    inside the component, an unsatisfied requirement constitutes a defect
+    outside of it.
+
+    >>> foo = 1
+    >>> assert foo > 42, R('Invalid foo', foo)
+    Traceback (most recent call last):
+    ...
+    AssertionError: R('Invalid foo', 1)
+
+    There are two advantages to using `assert` to enforce requirements as
+    opposed to the now deprecated :func:`require()` or :func:`reject()`: One
+    advantage is that the second argument to assert is evaluated lazily, thereby
+    avoiding potentially expensive operations in case the assert does not fire.
+
+    >>> foo = 43
+    >>> assert foo > 42, R('Invalid foo', (foo:=0))
+    >>> foo
+    43
+
+    The second advantage is that `assert` can help type checkers to infer a more
+    narrow type:
+
+    >>> strict = True
+    >>> def f(x:int | None) -> bytes:
+    ...     if strict:
+    ...         assert x is not None, R('x may not be None')
+    ...         return x.to_bytes()
     """
 
+    @classmethod
+    def caused(cls, e: AssertionError) -> bool:
+        """
+        Use this method to check if the given exception was raised due to an
+        unsatisfied requirement. Typical usage looks as follows:
 
+        >>> try:
+        ...     foo = 1
+        ...     assert foo > 42, R('Invalid foo', foo)
+        ... except AssertionError as e:
+        ...     if R.caused(e):
+        ...         pass  # handle the unsatisfied requirement
+        ...     else:
+        ...         raise  # some other type of assertion
+        """
+        return bool(e.args) and isinstance(e.args[0], cls)
+
+    def __init__(self, message: str, *args):
+        super().__init__()
+        self.args = message, *args
+
+    def __repr__(self):
+        class_name = type(self).__name__
+        match self.args:
+            case (message, ):
+                return f'{class_name}({message!r})'
+            case args:
+                return class_name + repr(args)
+
+
+@deprecated("Use 'assert False, R(…)' instead", category=None)
+class RequirementError(AssertionError):
+
+    def __init__(self, *args):
+        # Unlike the R() constructor, the deprecated reject() and require()
+        # methods don't enforce that a message is being passed. To work around
+        # this while also maintaining backwards compatibility, we insert a
+        # placeholder and remove it in ``__str__()`` below.
+        super().__init__(R('placeholder', *args))
+
+    def __str__(self) -> str:
+        # Unpack the Requirement instance, remove the placeholder and emulate
+        # BaseException.__str__
+        #
+        # https://github.com/python/cpython/blob/v3.12.8/Objects/exceptions.c#L118
+        #
+        match one(self.args).args[1:]:
+            case ():
+                return ''
+            case (message, ):
+                return str(message)
+            case args:
+                return str(args)
+
+
+@deprecated("Use 'assert …, R(…)' instead", category=None)
 def require(condition: bool, *args, exception: type = RequirementError):
     """
     Raise a RequirementError, or an instance of the given exception class, if
@@ -1659,6 +1843,7 @@ def require(condition: bool, *args, exception: type = RequirementError):
     reject(not condition, *args, exception=exception)
 
 
+@deprecated("Use 'assert not …, R(…)' instead", category=None)
 def reject(condition: bool, *args, exception: type = RequirementError):
     """
     Raise a RequirementError, or an instance of the given exception class, if
@@ -1678,9 +1863,24 @@ def reject(condition: bool, *args, exception: type = RequirementError):
         raise exception(*args)
 
 
+@overload
 def open_resource(*path: str,
-                  package_root: Optional[str] = None,
-                  binary=False) -> Union[TextIO, BinaryIO]:
+                  package_root: str | None = None,
+                  binary: Literal[False] = False
+                  ) -> TextIO: ...
+
+
+@overload
+def open_resource(*path: str,
+                  package_root: str | None = None,
+                  binary: Literal[True]
+                  ) -> BinaryIO: ...
+
+
+def open_resource(*path: str,
+                  package_root: str | None = None,
+                  binary: bool = False
+                  ) -> IO[Any]:
     """
     Return a file object for the resources at the given path. A resource is
     a source file that can be loaded at runtime. Resources typically aren't
@@ -1734,13 +1934,10 @@ def str_to_bool(string: str):
         raise ValueError(string)
 
 
-absent = object()
-
-T = TypeVar('T')
-E = TypeVar('E')
+absent = Sentinel()
 
 
-def iif(condition: bool, then: T, otherwise: E = absent) -> Union[T, E]:
+def iif[T, E](condition: bool, then: T, otherwise: E | Sentinel = absent) -> T | E:
     """
     An alternative to ``if`` expressions, that, in certain situations, might
     be more convenient or readable, such as when the ``else`` branch
@@ -1785,11 +1982,11 @@ def iif(condition: bool, then: T, otherwise: E = absent) -> Union[T, E]:
     if condition:
         return then
     else:
-        if otherwise is absent:
+        if absent.is_(otherwise):
             return type(then)()
         else:
             return otherwise
 
 
-def either(value: T | None, alternative: E) -> T | E:
+def either[T, E](value: T | None, alternative: E) -> T | E:
     return alternative if value is None else value

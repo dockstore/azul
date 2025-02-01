@@ -1,8 +1,4 @@
 import logging
-from typing import (
-    Optional,
-    Union,
-)
 
 from google.cloud.bigquery_reservation_v1 import (
     Assignment,
@@ -34,6 +30,14 @@ from azul.deployment import (
 
 log = logging.getLogger(__name__)
 
+ResourcePager = (
+    ListCapacityCommitmentsPager |
+    ListReservationsPager |
+    ListAssignmentsPager
+)
+
+Resource = CapacityCommitment | Reservation | Assignment
+
 
 class BigQueryReservation:
     _reservation_id = 'default'
@@ -48,8 +52,8 @@ class BigQueryReservation:
         'assignment': '/reservations/-'
     }
 
-    reservation: Optional[Reservation]
-    assignment: Optional[Assignment]
+    reservation: Reservation | None
+    assignment: Assignment | None
     location: str
 
     def __init__(self,
@@ -96,7 +100,7 @@ class BigQueryReservation:
                                                  location=self.location)
 
     @property
-    def is_active(self) -> Optional[bool]:
+    def is_active(self) -> bool | None:
         resource_statuses = {
             self.reservation is not None,
             self.assignment is not None
@@ -107,7 +111,7 @@ class BigQueryReservation:
             return None
 
     @property
-    def update_time(self) -> Optional[float]:
+    def update_time(self) -> float | None:
         """
         The time at which the current Reservation was updated as a Unix
         timestamp, or None if is there is no Reservation.
@@ -122,6 +126,7 @@ class BigQueryReservation:
         self._assign_slots()
         self.refresh()
         if not self.dry_run:
+            assert self.reservation is not None
             if not self.is_active:
                 raise RuntimeError('Failed to activate slots')
             if self.reservation.autoscale.max_slots < self.slots:
@@ -159,13 +164,15 @@ class BigQueryReservation:
                 if self.dry_run:
                     log.info('Would increase reservation capacity to %d', self.slots)
                 else:
+                    assert self.reservation is not None
                     log.info('Increasing reservation capacity to %d', self.slots)
                     self.reservation.autoscale.max_slots = self.slots
-                    self.reservation = self._client.update_reservation(
+                    reservation = self._client.update_reservation(
                         reservation=self.reservation,
                         update_mask='autoscale'
                     )
-                    log.info('Reservation now has capacity %d', self.reservation.autoscale.max_slots)
+                    log.info('Reservation now has capacity %d', reservation.autoscale.max_slots)
+                    self.reservation = reservation
 
     def _assign_slots(self) -> None:
         """
@@ -183,7 +190,9 @@ class BigQueryReservation:
                 log.info('Would assign slots to reservation %r in location %r',
                          reservation_name, self.location)
             else:
-                require(self.reservation is not None)
+                # FIXME: Mutability of BigQueryReservation confuses type checker
+                #        https://github.com/DataBiosphere/azul/issues/6834
+                assert self.reservation is not None
                 log.info('Assigning slots to reservation %r in location %r',
                          self.reservation.name, self.location)
                 assignment = self._client.create_assignment(parent=self.reservation.name,
@@ -216,20 +225,8 @@ class BigQueryReservation:
         if not self.dry_run and self.is_active is not False:
             raise RuntimeError(f'Failed to delete slots in location {self.location!r}')
 
-    ResourcePager = Union[
-        ListCapacityCommitmentsPager,
-        ListReservationsPager,
-        ListAssignmentsPager
-    ]
-
-    Resource = Union[
-        CapacityCommitment,
-        Reservation,
-        Assignment
-    ]
-
-    def _single_resource(self, resources: ResourcePager) -> Optional[Resource]:
-        resources = list(resources)
+    def _single_resource(self, resources: ResourcePager) -> Resource | None:
+        resources: list[Resource] = list(resources)
         try:
             resource, *extras = resources
         except ValueError:

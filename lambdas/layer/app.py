@@ -14,6 +14,6 @@ app = AzulChaliceApp(app_name=config.qualified_resource_name('dependencies'),
                      spec={})
 
 
-@app.route('/', method_spec={})
+@app.route('/', spec={})
 def foo():
     pass

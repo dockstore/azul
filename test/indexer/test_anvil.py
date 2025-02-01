@@ -75,7 +75,7 @@ class DUOSTestCase(TDRTestCase, ABC):
 
     mock_duos_url = furl('https:://mock_duos.lan')
 
-    duos_id = 'foo'
+    duos_id = 'DUOS-000000'
     duos_description = 'Study description from DUOS'
 
     @classmethod
@@ -93,6 +93,9 @@ class DUOSTestCase(TDRTestCase, ABC):
                                                }
                                            })),
                                            Mock(spec=HTTPResponse, status=200, data=json.dumps({
+                                               'consentGroups': [{
+                                                   'datasetIdentifier': cls.duos_id
+                                               }],
                                                'studyDescription': cls.duos_description
                                            }))
                                        ]))
@@ -251,8 +254,9 @@ class TestAnvilIndexerWithIndexesSetUp(AnvilIndexerTestCase):
                     # These fields are populated only in the primary bundle
                     self.assertEqual(dataset_ref.entity_id, contents['document_id'])
                     self.assertEqual(['phs000693'], contents['registered_identifier'])
-                    # This field is populated only in the DUOS bundle
+                    # These fields are populated only in the DUOS bundle
                     self.assertEqual('Study description from DUOS', contents['description'])
+                    self.assertEqual('DUOS-000000', contents['duos_id'])
             else:
                 self.fail(qualifier)
         self.assertDictEqual(doc_counts, {

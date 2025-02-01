@@ -44,9 +44,10 @@ from more_itertools import (
 )
 
 from azul import (
-    RequirementError,
+    R,
     cached_property,
     config,
+    true,
 )
 from azul.collections import (
     NestedDict,
@@ -1629,7 +1630,7 @@ class TestDCP1IndexerWithIndexesSetUp(DCP1IndexerTestCase):
                 sample = one(contents['samples'])
                 self.assertEqual(sample['organ'], sample['effective_organ'])
                 if qualifier == 'samples':
-                    self.assertTrue(sample['effective_organ'] in {'Brain 1', 'Brain 2', 'Brain 3'})
+                    self.assertIn(sample['effective_organ'], {'Brain 1', 'Brain 2', 'Brain 3'})
                 else:
                     self.assertEqual(set(sample['effective_organ']), {'Brain 1', 'Brain 2', 'Brain 3'})
 
@@ -1901,7 +1902,7 @@ class TestDCP1IndexerWithIndexesSetUp(DCP1IndexerTestCase):
                     self.assertEqual(sample['biomaterial_id'], entity['biomaterial_id'])
                 else:
                     assert False, doc_type
-                self.assertTrue(sample['document_id'] in document_ids)
+                self.assertIn(sample['document_id'], document_ids)
                 self.assertEqual(one(contents['specimens'])['organ'], ['blood'] if aggregate else 'blood')
                 self.assertEqual(one(contents['specimens'])['organ_part'], ['venous blood'])
                 self.assertEqual(len(contents['cell_lines']), 1 if aggregate else 2)
@@ -2006,7 +2007,7 @@ class TestDCP1IndexerWithIndexesSetUp(DCP1IndexerTestCase):
                         #        should have all the standard fields of a donor inner
                         #        entity with values of `None`.
                         #        https://github.com/databiosphere/azul/issues/3152
-                        self.assertEqual([] if True else [donor_none], contents['donors'])
+                        self.assertEqual([] if true() else [donor_none], contents['donors'])
                     else:
                         assert False, sample_id
                 else:
@@ -2152,8 +2153,9 @@ class TestDCP1IndexerWithIndexesSetUp(DCP1IndexerTestCase):
         contributor = project['contributors'][0]
         assert contributor['institution'] == 'Lund University'
         contributor['institution'] += ' || LabMED'
-        with self.assertRaisesRegex(RequirementError, "'||' is disallowed"):
+        with self.assertRaisesRegex(AssertionError, "'||' is disallowed") as cm:
             self._index_bundle(bundle)
+        self.assertTrue(R.caused(cm.exception))
 
     def test_replica_update(self):
         contents = {'replica': {}}

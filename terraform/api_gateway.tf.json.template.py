@@ -7,6 +7,7 @@ import json
 from azul import (
     cached_property,
     config,
+    iif,
 )
 from azul.chalice import (
     AzulChaliceApp,
@@ -195,44 +196,46 @@ emit_tf({
                     'rule': [
                         {**rule, 'priority': i}
                         for i, rule in enumerate([
-                            *([] if file_download_limit is None else [{
-                                'name': 'FileDownloadRateLimit',
-                                'statement': {
-                                    'rate_based_statement': {
-                                        'limit': file_download_limit.rate_limit,
-                                        'evaluation_window_sec': file_download_limit.evaluation_window,
-                                        'aggregate_key_type': 'CONSTANT',
-                                        'scope_down_statement': {
-                                            'regex_match_statement': {
-                                                'regex_string': '^(/fetch)?/repository/files',
-                                                'field_to_match': {'uri_path': {}},
-                                                'text_transformation': {
-                                                    'priority': 0,
-                                                    'type': 'NONE'
+                            *([] if file_download_limit is None else [
+                                {
+                                    'name': 'FileDownloadRateLimit',
+                                    'statement': {
+                                        'rate_based_statement': {
+                                            'limit': file_download_limit.rate_limit,
+                                            'evaluation_window_sec': file_download_limit.evaluation_window,
+                                            'aggregate_key_type': 'CONSTANT',
+                                            'scope_down_statement': {
+                                                'regex_match_statement': {
+                                                    'regex_string': '^(/fetch)?/repository/files',
+                                                    'field_to_match': {'uri_path': {}},
+                                                    'text_transformation': {
+                                                        'priority': 0,
+                                                        'type': 'NONE'
+                                                    }
                                                 }
                                             }
                                         }
-                                    }
-                                },
-                                'action': {
-                                    'block': {
-                                        'custom_response': {
-                                            'response_code': 429,
-                                            'response_header': [
-                                                {
-                                                    'name': 'Retry-After',
-                                                    'value': str(file_download_limit.retry_after),
-                                                }
-                                            ]
+                                    },
+                                    'action': {
+                                        'block': {
+                                            'custom_response': {
+                                                'response_code': 429,
+                                                'response_header': [
+                                                    {
+                                                        'name': 'Retry-After',
+                                                        'value': str(file_download_limit.retry_after),
+                                                    }
+                                                ]
+                                            }
                                         }
+                                    },
+                                    'visibility_config': {
+                                        'metric_name': 'FileDownloadRateLimit',
+                                        'sampled_requests_enabled': True,
+                                        'cloudwatch_metrics_enabled': True
                                     }
-                                },
-                                'visibility_config': {
-                                    'metric_name': 'FileDownloadRateLimit',
-                                    'sampled_requests_enabled': True,
-                                    'cloudwatch_metrics_enabled': True
                                 }
-                            }]),
+                            ]),
                             *[
                                 {
                                     'name': name,
@@ -378,6 +381,86 @@ emit_tf({
                                     'cloudwatch_metrics_enabled': True
                                 }
                             },
+                            *iif(config.waf_bot_control, [
+                                {
+                                    'name': 'AWS-AWSManagedRulesBotControlRuleSet',
+                                    'statement': {
+                                        'managed_rule_group_statement': {
+                                            'name': 'AWSManagedRulesBotControlRuleSet',
+                                            'vendor_name': 'AWS',
+                                            'version': 'Version_3.1',
+                                            'scope_down_statement': {
+                                                'not_statement': {
+                                                    'statement': {
+                                                        'regex_match_statement': {
+                                                            # Keep consistent with the rules in the response of the
+                                                            # /robots.txt route in src/azul/chalice.py
+                                                            'regex_string': r'^/($|swagger/|robots.txt$)',
+                                                            'field_to_match': {'uri_path': {}},
+                                                            'text_transformation': {
+                                                                'priority': 0,
+                                                                'type': 'NONE'
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            'managed_rule_group_configs': [
+                                                {
+                                                    'aws_managed_rules_bot_control_rule_set': {
+                                                        'inspection_level': 'COMMON'
+                                                    }
+                                                }
+                                            ],
+                                            'rule_action_override': [
+                                                {
+                                                    'name': name,
+                                                    'action_to_use': {
+                                                        "count": {}
+                                                    }
+                                                } for name in [
+                                                    'CategoryHttpLibrary',
+                                                    'SignalNonBrowserUserAgent',
+                                                    'SignalAutomatedBrowser',
+                                                    'CategoryMiscellaneous',
+                                                ]
+                                            ]
+                                        }
+                                    },
+                                    'override_action': {
+                                        'none': {}
+                                    },
+                                    'visibility_config': {
+                                        'metric_name': 'AWS-AWSManagedRulesBotControlRuleSet',
+                                        'sampled_requests_enabled': True,
+                                        'cloudwatch_metrics_enabled': True
+                                    }
+                                },
+                                {
+                                    # It's undocumented what bots are considered
+                                    # "verified". While the above managed rule
+                                    # only labels requests from "verified" bots,
+                                    # this rule completely blocks those labeled
+                                    # requests. The managed rule is scoped down
+                                    # to URLs dissallowed in robots.txt, so this
+                                    # rule shouldn't affect well-behaved bot.
+                                    'name': 'BlockVerifiedBotsRule',
+                                    'statement': {
+                                        'label_match_statement': {
+                                            'scope': 'LABEL',
+                                            'key': 'awswaf:managed:aws:bot-control:bot:verified'
+                                        }
+                                    },
+                                    'action': {
+                                        'block': {}
+                                    },
+                                    "visibility_config": {
+                                        'metric_name': 'BlockVerifiedBotsRule',
+                                        'sampled_requests_enabled': True,
+                                        'cloudwatch_metrics_enabled': True
+                                    }
+                                }
+                            ])
                         ])
                     ],
                     'scope': 'REGIONAL',

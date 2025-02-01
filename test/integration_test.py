@@ -91,6 +91,7 @@ from azul import (
     cached_property,
     config,
     drs,
+    false,
 )
 from azul.auth import (
     OAuth2,
@@ -265,7 +266,7 @@ class IntegrationTestCase(AzulTestCase, metaclass=ABCMeta):
         # The unregistered service account should not have access to any sources
         with self.assertRaises(RequirementError) as cm:
             tdr.snapshot_names_by_id()
-        msg = one(cm.exception.args)
+        msg = str(cm.exception)
         expected_msg_prefix = f'The service account (SA) {email!r} is not authorized'
         self.assertEqual(expected_msg_prefix, msg[:len(expected_msg_prefix)])
         return tdr
@@ -462,8 +463,7 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
         if index and delete:
             # FIXME: Test delete notifications
             #        https://github.com/DataBiosphere/azul/issues/3548
-            # noinspection PyUnreachableCode
-            if False:
+            if false():
                 with self._service_account_credentials:
                     for catalog in catalogs:
                         self._assert_catalog_empty(catalog.name)
@@ -493,7 +493,7 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
             assert False, catalog
         service_paths = {
             '/': None,
-            '/openapi': None,
+            '/openapi.json': None,
             # the version endpoint is tested separately
             '/index/summary': None,
             f'/index/{bundle_index}': {
@@ -562,7 +562,9 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
                             response = self._check_endpoint(PUT, '/manifest/files', args=args, fetch=fetch)
                             self._manifest_validators[format](catalog, response)
 
-                        num_workers = 3
+                        # FIXME: Set number of workers back to 3
+                        #        https://github.com/DataBiosphere/azul/issues/6850
+                        num_workers = 1
                         with ThreadPoolExecutor(max_workers=num_workers) as tpe:
                             results = list(tpe.map(worker, range(num_workers)))
 
@@ -1716,7 +1718,7 @@ class OpenAPIIntegrationTest(AzulTestCase):
                 self.assertEqual(response.headers['content-type'], 'text/html')
                 self.assertGreater(len(response.content), 0)
                 # validate OpenAPI spec
-                url.set(path='/openapi')
+                url.set(path='/openapi.json')
                 response = requests.get(str(url))
                 response.raise_for_status()
                 spec = response.json()
@@ -1904,7 +1906,7 @@ class SwaggerResourceIntegrationTest(AzulTestCase):
                 ('..%2Fdoes-not-exist', 403),
             ]:
                 with self.subTest(component=component, file=file):
-                    response = http.request(GET, str(base_url / 'static' / file))
+                    response = http.request(GET, str(base_url / 'swagger' / file))
                     self.assertEqual(expected_status, response.status)
 
 
@@ -1945,10 +1947,10 @@ class ResponseHeadersTest(AzulTestCase):
         short_cache = 'public, max-age=60, must-revalidate'
         long_cache = 'public, max-age=86400, must-revalidate'
         test_cases = {
-            '/static/index.html': long_cache,
-            '/static/swagger-initializer.js': short_cache,
-            '/static/swagger-ui.css': long_cache,
-            '/openapi': short_cache,
+            '/swagger/index.html': long_cache,
+            '/swagger/swagger-initializer.js': short_cache,
+            '/swagger/swagger-ui.css': long_cache,
+            '/openapi.json': short_cache,
             '/oauth2_redirect': no_cache,
             '/health/basic': no_cache
         }

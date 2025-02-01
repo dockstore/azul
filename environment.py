@@ -236,7 +236,7 @@ def env() -> Mapping[str, Optional[str]]:
         # `gitlab` components, as well as building and pushing the executor
         # image (see terraform/gitlab/runner/Dockerfile for how).
         #
-        'azul_docker_version': '27.4.0',
+        'azul_docker_version': '27.5.0',
 
         # The version of Python used throughout the system.
         #
@@ -264,7 +264,7 @@ def env() -> Mapping[str, Optional[str]]:
         # `make -C terraform check_schema`, and committing the resulting
         # changes.
         #
-        'azul_terraform_version': '1.9.8',
+        'azul_terraform_version': '1.10.4',
 
         # When building the Azul image on a FIPS mode enabled system (e.g.
         # GitLab), this variable should be set to `/proc/sys/crypto`, the path
@@ -296,32 +296,32 @@ def env() -> Mapping[str, Optional[str]]:
                 'url': 'https://hub.docker.com/_/python',
             },
             'pycharm': {
-                'ref': 'docker.io/ucscgi/azul-pycharm:2024.3.1-40',
+                'ref': 'docker.io/ucscgi/azul-pycharm:2024.3.1.1-42',
                 'url': 'https://hub.docker.com/repository/docker/ucscgi/azul-pycharm',
                 'is_custom': True
             },
             'elasticsearch': {
-                'ref': 'docker.io/ucscgi/azul-elasticsearch:7.17.26-33',
+                'ref': 'docker.io/ucscgi/azul-elasticsearch:7.17.27-35',
                 'url': 'https://hub.docker.com/repository/docker/ucscgi/azul-elasticsearch',
                 'is_custom': True
             },
             'bigquery_emulator': {
-                'ref': 'docker.io/ucscgi/azul-bigquery-emulator:0.4.4-19',
+                'ref': 'docker.io/ucscgi/azul-bigquery-emulator:0.4.4-21',
                 'url': 'https://hub.docker.com/repository/docker/ucscgi/azul-bigquery-emulator',
                 'is_custom': True
             },
             # Updating any of the four images below additionally requires
             # redeploying the `gitlab` TF component.
             'clamav': {
-                'ref': 'docker.io/clamav/clamav:1.4.1-17',
+                'ref': 'docker.io/clamav/clamav:1.4.1-21',
                 'url': 'https://hub.docker.com/r/clamav/clamav'
             },
             'gitlab': {
-                'ref': 'docker.io/gitlab/gitlab-ce:17.6.2-ce.0',
+                'ref': 'docker.io/gitlab/gitlab-ce:17.7.2-ce.0',
                 'url': 'https://hub.docker.com/r/gitlab/gitlab-ce'
             },
             'gitlab_runner': {
-                'ref': 'docker.io/gitlab/gitlab-runner:ubuntu-v17.6.0',
+                'ref': 'docker.io/gitlab/gitlab-runner:ubuntu-v17.7.0',
                 'url': 'https://hub.docker.com/r/gitlab/gitlab-runner'
             },
             'dind': {
@@ -678,7 +678,7 @@ def env() -> Mapping[str, Optional[str]]:
         'azul_gitlab_user': None,
 
         'PYTHONPATH': '{project_root}/src:{project_root}/test',
-        'MYPYPATH': '{project_root}/stubs',
+        'MYPYPATH': '{project_root}/src:{project_root}/stubs',
 
         # The path of a directory containing a wheel for each runtime
         # dependency. Settng this variable causes our fork of Chalice to skip
@@ -946,5 +946,13 @@ def env() -> Mapping[str, Optional[str]]:
         # for restrictions on the supported values for `<limit>` ("Rate limit")
         # and `<window>` ("Evaluation window").
         #
-        'AZUL_FILE_DOWNLOAD_RATE_LIMIT': None
+        'azul_waf_download_rate_limit': None,
+
+        # Wether to enable bot control in AWS WAF. Setting this to 1 will enable
+        # two rules aimed at blocking requests from suspected and verified bots.
+        # As of January 2024, this will incur monthly cost of $10 per ACL plus
+        # $1 per one million requests above ten million requests. The blocking
+        # only applies to URLs disallowed via robots.txt.
+        #
+        'azul_waf_bot_control': '0'
     }

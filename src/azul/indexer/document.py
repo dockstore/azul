@@ -676,7 +676,7 @@ class FieldType(Generic[N, T], metaclass=ABCMeta):
         """
         The JSONSchema describing fields of this type in OpenAPI specifications.
         """
-        return schema.make_type(self.native_type)
+        return schema.schema(self.native_type)
 
     def from_api(self, value: AnyJSON) -> N:
         """
@@ -820,7 +820,7 @@ class Nullable(FieldType[Optional[N], T]):
 
     @property
     def api_schema(self) -> JSON:
-        return schema.nullable(schema.make_type(self.optional_type))
+        return schema.nullable(schema.make(self.optional_type))
 
 
 class NullableScalar(Nullable[N, T], metaclass=ABCMeta):
@@ -828,7 +828,7 @@ class NullableScalar(Nullable[N, T], metaclass=ABCMeta):
     def api_filter_schema(self, relation: str) -> JSON:
         if relation == 'within':
             # The LHS operand of a range relation can't be null
-            api_type = schema.make_type(self.optional_type)
+            api_type = schema.make(self.optional_type)
             return self._api_range_schema(api_type)
         else:
             return super().api_filter_schema(relation)
@@ -990,7 +990,7 @@ class Nested(PassThrough[JSON]):
         kwargs = dict(additionalProperties=False)
         if required:
             kwargs['required'] = required
-        return schema.object_type(properties, **kwargs)
+        return schema.object(properties=properties, **kwargs)
 
     def filter(self, relation: str, values: list[JSON]) -> list[JSON]:
         nested_object = one(values)
