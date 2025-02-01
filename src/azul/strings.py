@@ -1,8 +1,7 @@
 from typing import (
     Iterable,
-    Optional,
     Sequence,
-    TypeVar,
+    overload,
 )
 
 from more_itertools import (
@@ -19,7 +18,15 @@ def to_camel_case(text: str) -> str:
     return camel_cased[0].lower() + camel_cased[1:]
 
 
-def departition(before: Optional[str], sep: str, after: Optional[str]) -> str:
+@overload
+def departition(before: str, sep: str, after: str | None) -> str: ...
+
+
+@overload
+def departition(before: str | None, sep: str, after: str) -> str: ...
+
+
+def departition(before: str | None, sep: str, after: str | None) -> str:
     """
     >>> departition(None, '.', 'after')
     'after'
@@ -31,6 +38,7 @@ def departition(before: Optional[str], sep: str, after: Optional[str]) -> str:
     'before.after'
     """
     if before is None:
+        assert after is not None
         return after
     elif after is None:
         return before
@@ -105,7 +113,7 @@ def join_grammatically(strings: Sequence[str],
     return joiner.join([*head, last_joiner.join(tail)])
 
 
-def splitter(sep: Optional[str] = None, maxsplit: int = -1):
+def splitter(sep: str | None = None, maxsplit: int = -1):
     """
     Main use case:
 
@@ -124,10 +132,7 @@ def splitter(sep: Optional[str] = None, maxsplit: int = -1):
     return lambda s: s.split(sep, maxsplit)
 
 
-STRING = TypeVar('STRING', str, bytes)
-
-
-def trunc_ellipses(s: STRING, /, max_len: int) -> STRING:
+def trunc_ellipses[T:(bytes, str, bytearray)](s: T, /, max_len: int) -> T:
     """
     Truncates a string (bytes array) to the specified length, appending an
     ellipses character (sequence of three dots) to indicate truncation, if the
@@ -171,11 +176,14 @@ def trunc_ellipses(s: STRING, /, max_len: int) -> STRING:
     >>> trunc_ellipses(b'0123', 3)
     b'...'
 
+    >>> trunc_ellipses(bytearray(b'012345'), 5)
+    bytearray(b'01...')
+
     >>> # noinspection PyTypeChecker
     >>> trunc_ellipses(0, 0)
     Traceback (most recent call last):
     ...
-    TypeError: ('First argument must be str or bytes', <class 'int'>)
+    TypeError: ('First argument must be str, bytes or bytearray', <class 'int'>)
 
     >>> # noinspection PyTypeChecker
     >>> trunc_ellipses('', 0.0)
@@ -185,10 +193,11 @@ def trunc_ellipses(s: STRING, /, max_len: int) -> STRING:
     """
     if isinstance(s, str):
         ellipses = '…'
-    elif isinstance(s, bytes):
+    elif isinstance(s, (bytes, bytearray)):
         ellipses = b'...'
     else:
-        raise TypeError('First argument must be str or bytes', type(s))
+        raise TypeError('First argument must be str, bytes or bytearray',
+                        type(s))
     if not isinstance(max_len, int):
         raise TypeError('max_len argument must be int', type(max_len))
     if len(s) > max_len:
@@ -200,7 +209,7 @@ def trunc_ellipses(s: STRING, /, max_len: int) -> STRING:
     return s
 
 
-def longest_common_prefix(strings: Iterable[str]) -> Optional[str]:
+def longest_common_prefix(strings: Iterable[str]) -> str | None:
     """
     >>> lcs = longest_common_prefix
     >>> lcs([])
@@ -223,6 +232,7 @@ def longest_common_prefix(strings: Iterable[str]) -> Optional[str]:
     s1, s2 = minmax(strings, default=(None, None))
     if s1 is None:
         return None
+    assert s2 is not None
     for i, c in enumerate(s1):
         if s2[i] != c:
             return s1[:i]

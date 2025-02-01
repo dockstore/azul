@@ -21,8 +21,10 @@ from typing import (
     Any,
     Callable,
     Protocol,
+    Self,
     TypeVar,
     Union,
+    overload,
 )
 
 
@@ -47,7 +49,7 @@ def dict_merge(dicts: Iterable[Mapping]) -> dict:
 
 
 # noinspection PyPep8Naming
-class deep_dict_merge:
+class deep_dict_merge[K, V](dict):
     """
     Recursively merge the given dictionaries. If more than one dictionary
     contains a given key, and all values associated with this key are themselves
@@ -86,29 +88,29 @@ class deep_dict_merge:
     {}
     """
 
-    def __new__(cls, *dicts: Mapping) -> dict:
-        return cls.from_iterable(dicts)
+    def __init__(self, *maps: Mapping[K, V]):
+        super().__init__()
+        self.merge(maps)
 
     @classmethod
-    def from_iterable(cls, dicts: Iterable[Mapping], /) -> dict:
-        merged = {}
-        for m in dicts:
+    def from_iterable(cls, maps: Iterable[Mapping[K, V]], /) -> Self:
+        self = cls()
+        self.merge(maps)
+        return self
+
+    def merge(self, maps: Iterable[Mapping[K, V]]):
+        for m in maps:
             for k, v2 in m.items():
-                v1 = merged.setdefault(k, v2)
+                v1 = self.setdefault(k, v2)
                 if v1 != v2:
                     if isinstance(v1, Mapping) and isinstance(v2, Mapping):
-                        merged[k] = deep_dict_merge(v1, v2)
+                        self[k] = type(self)(v1, v2)
                     else:
                         raise ValueError(f'{v1!r} != {v2!r}')
-        return merged
 
 
-K = TypeVar('K')
-V = TypeVar('V')
-
-
-def explode_dict(d: Mapping[K, Union[V, list[V], set[V], tuple[V]]]
-                 ) -> Iterable[dict[K, V]]:
+def explode_dict[K, V](d: Mapping[K, Union[V, list[V], set[V], tuple[V]]]
+                       ) -> Iterable[dict[K, V]]:
     """
     An iterable of dictionaries, one dictionary for every possible combination
     of items from iterable values in the argument dictionary. Only instances of
@@ -132,7 +134,7 @@ def explode_dict(d: Mapping[K, Union[V, list[V], set[V], tuple[V]]]
         yield dict(zip(d.keys(), t))
 
 
-def none_safe_apply(f: Callable[[K], V], o: K | None) -> V | None:
+def none_safe_apply[K, V](f: Callable[[K], V], o: K | None) -> V | None:
     """
     >>> none_safe_apply(str, 123)
     '123'
@@ -243,10 +245,20 @@ def compose_keys(f: Callable, g: Callable) -> Callable:
     return lambda v: f(g(v))
 
 
-def adict(seq: Union[Mapping[K, V], Iterable[tuple[K, V]]] = None,
-          /,
-          **kwargs: V
-          ) -> dict[K, V]:
+@overload
+def adict[K, V](seq: Mapping[K, V] | Iterable[tuple[K, V]] | None = None,
+                /
+                ) -> dict[K, V]: ...
+
+
+@overload
+def adict[K, V](seq: Mapping[str, V] | Iterable[tuple[str, V]] | None = None,
+                /,
+                **kwargs: V
+                ) -> dict[str, V]: ...
+
+
+def adict(seq=None, /, **kwargs):
     """
     Like dict() but ignores keyword arguments that are None. Really only useful
     for literals. May be inefficient for large arguments.
@@ -286,7 +298,7 @@ def _athing(cls: type, *args):
     return cls(arg for arg in args if arg is not None)
 
 
-def atuple(*args: V) -> tuple[V, ...]:
+def atuple[V](*args: V | None) -> tuple[V, ...]:
     """
     >>> atuple()
     ()
@@ -300,7 +312,7 @@ def atuple(*args: V) -> tuple[V, ...]:
     return _athing(tuple, *args)
 
 
-def alist(*args: V) -> list[V]:
+def alist[V](*args: V | None) -> list[V]:
     """
     >>> alist()
     []
@@ -314,7 +326,7 @@ def alist(*args: V) -> list[V]:
     return _athing(list, *args)
 
 
-def aset(*args: V) -> set[V]:
+def aset[V](*args: V | None) -> set[V]:
     """
     >>> aset()
     set()
@@ -379,7 +391,8 @@ class SupportsGetItem(Protocol[_KT_contra, _VT_co]):
 def getitem(d: SupportsGetItem[_KT_contra, _VT_co],
             k: _KT_contra,
             /,
-            default: _VT_co | None = None) -> _VT_co:
+            default: _VT_co | None = None
+            ) -> _VT_co | None:
     """
     For mappings that implement ``.__getitem__()`` but forego the recommended
     implementation of ``.get()``:
@@ -426,7 +439,7 @@ def getitem(d: SupportsGetItem[_KT_contra, _VT_co],
         return default
 
 
-class OrderedSet(MutableSet[K]):
+class OrderedSet[K](MutableSet[K]):
     """
     A mutable set that maintains insertion order. Unlike similar implementations
     of the same name floating around on the internet, it is not a sequence.
@@ -487,7 +500,7 @@ class OrderedSet(MutableSet[K]):
         """
         return self.inner.keys() == other
 
-    def __contains__(self, member: K) -> bool:
+    def __contains__(self, member) -> bool:
         """
         >>> 'a' in OrderedSet(['a', 'b'])
         True

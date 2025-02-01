@@ -16,6 +16,7 @@ import json
 import logging
 import time
 from typing import (
+    Self,
     cast,
 )
 import uuid
@@ -76,7 +77,7 @@ class Action(Enum):
     delete = auto()
 
     @classmethod
-    def from_json(cls, action: str):
+    def from_json(cls, action: str) -> Self:
         try:
             return Action[action]
         except KeyError:
@@ -84,14 +85,6 @@ class Action(Enum):
 
     def to_json(self) -> str:
         return self.name
-
-    def is_delete(self) -> bool:
-        if self is self.delete:
-            return True
-        elif self is self.add:
-            return False
-        else:
-            assert False
 
 
 class IndexController(AppController):
@@ -176,7 +169,7 @@ class IndexController(AppController):
                     notification = message['notification']
                     catalog = message['catalog']
                     assert catalog is not None
-                    delete = action.is_delete()
+                    delete = action is Action.delete
                     contributions, replicas = self.transform(catalog, notification, delete)
 
                     log.info('Writing %i contributions to index.', len(contributions))

@@ -32,7 +32,7 @@ import requests
 
 from azul import (
     CatalogName,
-    RequirementError,
+    R,
     cache,
     cached_property,
     config,
@@ -118,8 +118,11 @@ class HealthController(AppController):
             keys = keys.split(',')
             try:
                 body = self._health.as_json(keys)
-            except RequirementError:
-                body = {'Message': 'Invalid health keys'}
+            except AssertionError as e:
+                if R.caused(e):
+                    body = {'Message': 'Invalid health keys'}
+                else:
+                    raise
         else:
             body = {'Message': 'Invalid health keys'}
         return self._make_response(body)
@@ -379,8 +382,8 @@ class HealthApp(AzulChaliceApp):
                         ''') if len(health_keys) > 1 else ''),
                         **responses.json_content(
                             schema.object(
-                                additional_properties=schema.object(
-                                    additional_properties=True,
+                                additionalProperties=schema.object(
+                                    additionalProperties=True,
                                     up=schema.enum(up)
                                 ),
                                 up=schema.enum(up)
@@ -398,7 +401,7 @@ class HealthApp(AzulChaliceApp):
             '/health',
             methods=['GET'],
             cors=True,
-            method_spec={
+            spec={
                 'summary': 'Complete health check',
                 'description': format_description(f'''
                             Health check of the {_app_name} REST API and all
@@ -420,7 +423,7 @@ class HealthApp(AzulChaliceApp):
             '/health/basic',
             methods=['GET'],
             cors=True,
-            method_spec={
+            spec={
                 'summary': 'Basic health check',
                 'description': format_description(f'''
                                 Health check of only the REST API itself, excluding other
@@ -438,7 +441,7 @@ class HealthApp(AzulChaliceApp):
             '/health/cached',
             methods=['GET'],
             cors=True,
-            method_spec={
+            spec={
                 'summary': 'Cached health check for continuous monitoring',
                 'description': format_description(f'''
                                 Return a cached copy of the
@@ -459,7 +462,7 @@ class HealthApp(AzulChaliceApp):
             '/health/fast',
             methods=['GET'],
             cors=True,
-            method_spec={
+            spec={
                 'summary': 'Fast health check',
                 'description': format_description('''
                                 Performance-optimized health check of the REST API and other
@@ -479,7 +482,7 @@ class HealthApp(AzulChaliceApp):
             '/health/{keys}',
             methods=['GET'],
             cors=True,
-            method_spec={
+            spec={
                 'summary': 'Selective health check',
                 'description': format_description('''
                                 This endpoint allows clients to request a health check on a
@@ -492,7 +495,7 @@ class HealthApp(AzulChaliceApp):
                 'parameters': [
                     params.path(
                         'keys',
-                        type_=schema.array(schema.enum(*sorted(Health.all_keys))),
+                        form=schema.array(schema.enum(*sorted(Health.all_keys))),
                         description='''
                                         A comma-separated list of keys selecting the health
                                         checks to be performed. Each key corresponds to an

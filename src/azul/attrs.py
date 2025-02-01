@@ -52,8 +52,8 @@ def as_annotated():
     ... # doctest: +NORMALIZE_WHITESPACE
     Traceback (most recent call last):
     ...
-    TypeError: ('y', set(), (<class 'collections.abc.Sequence'>,
-    <class 'collections.abc.Mapping'>, <class 'str'>, <class 'int'>,
+    TypeError: ('y', set(), (<class 'collections.abc.Mapping'>,
+    <class 'collections.abc.Sequence'>, <class 'str'>, <class 'int'>,
     <class 'float'>, <class 'bool'>, <class 'NoneType'>))
 
     Note that you cannot share one return value of this function between more
@@ -111,13 +111,13 @@ class _AsAnnotated:
     def _reify(self, field):
         # reify() isn't exactly cheap so we'll cache its result
         if self._cache is None:
-            reified_type = reify(field.type)
-            self._cache = field, reified_type
+            reified_types = reify(field.type)
+            self._cache = field, reified_types
         else:
-            cached_field, reified_type = self._cache
+            cached_field, reified_types = self._cache
             require(cached_field == field,
                     'Validator cannot be shared among fields', cached_field, field)
-        return reified_type
+        return reified_types
 
     def __repr__(self):
         return 'as_annotated()'

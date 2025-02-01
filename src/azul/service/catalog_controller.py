@@ -27,15 +27,15 @@ class CatalogController(ServiceAppController):
     def list_catalogs(self) -> schema.object(
         default_catalog=str,
         catalogs=schema.object(
-            additional_properties=schema.object(
+            additionalProperties=schema.object(
                 atlas=str,
                 internal=bool,
                 plugins=schema.object(
-                    additional_properties=schema.object(
+                    additionalProperties=schema.object(
                         name=str,
                         sources=schema.optional(schema.array(str)),
                         indices=schema.optional(schema.object(
-                            additional_properties=schema.object(
+                            additionalProperties=schema.object(
                                 default_sort=str,
                                 default_order=str
                             )

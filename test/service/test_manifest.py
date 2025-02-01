@@ -1760,6 +1760,10 @@ class TestAnvilManifests(AnvilManifestTestCase):
     def test_compact_manifest(self):
         response = self._get_manifest(ManifestFormat.compact, filters={})
         self.assertEqual(200, response.status_code)
+        # The `duos_id` field is absent from manifests since there is only one
+        # DUOS bundle per dataset, and that bundle only contributes to outer
+        # entities of the `datasets` type, not to entities of the other types,
+        # such as files, which the manifest is generated from.
         expected = [
             (
                 'bundles.bundle_uuid',

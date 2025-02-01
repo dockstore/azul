@@ -39,6 +39,7 @@ from more_itertools import (
 
 from azul import (
     CatalogName,
+    R,
     RequirementError,
     cache,
     cached_property,
@@ -130,6 +131,12 @@ spec = {
     'openapi': '3.0.1',
     'info': {
         'title': config.service_name,
+        # The version property should be updated in any PR connected to an issue
+        # labeled `API`. Increment the major version for backwards incompatible
+        # changes and reset the minor version to zero. Otherwise, increment only
+        # the minor version for backwards compatible changes. A backwards
+        # compatible change is one that does not require updates to clients.
+        'version': '12.2',
         'description': fd(f'''
             # Overview
 
@@ -222,13 +229,7 @@ spec = {
             Also notice that there is only one file. When querying a particular
             index, the corresponding entity will always be a singleton like
             this.
-        '''),
-        # This property should be updated in any PR connected to an issue
-        # labeled `API`. Increment the major version for backwards incompatible
-        # changes and reset the minor version to zero. Otherwise, increment only
-        # the minor version for backwards compatible changes. A backwards
-        # compatible change is one that does not require updates to clients.
-        'version': '10.1'
+        ''')
     },
     'tags': [
         {
@@ -414,8 +415,11 @@ class ServiceApp(HealthApp):
                                    search_before=sb,
                                    search_after=sa,
                                    self_url=self.self_url)
-        except RequirementError as e:
-            raise ChaliceViewError(repr(e.args))
+        except AssertionError as e:
+            if R.caused(e):
+                raise ChaliceViewError(repr(e.args))
+            else:
+                raise
 
     def file_url(self,
                  *,
@@ -474,7 +478,7 @@ globals().update(app.default_routes())
     enabled=config.google_oauth2_client_id is not None,
     cache_control='no-store',
     interactive=False,
-    method_spec={
+    spec={
         'summary': 'Destination endpoint for Google OAuth 2.0 redirects',
         'tags': ['Auxiliary'],
         'responses': {
@@ -533,8 +537,11 @@ min_page_size = 1
 def validate_catalog(catalog):
     try:
         config.Catalog.validate_name(catalog)
-    except RequirementError as e:
-        raise BRE(e)
+    except AssertionError as e:
+        if R.caused(e):
+            raise BRE(e)
+        else:
+            raise
     else:
         if catalog not in config.catalogs:
             raise NotFoundError(f'Catalog name {catalog!r} does not exist. '
@@ -602,9 +609,12 @@ def validate_filters(filters):
                               f'parameter entry for `{field}` is not a single-item list')
                 try:
                     require(isinstance(nested, dict))
-                except RequirementError:
-                    raise BRE(f'The value of the `is` relation in the `filters` '
-                              f'parameter entry for `{field}` must contain a dictionary')
+                except AssertionError as e:
+                    if R.caused(e):
+                        raise BRE(f'The value of the `is` relation in the `filters` '
+                                  f'parameter entry for `{field}` must contain a dictionary')
+                    else:
+                        raise
                 extra_props = nested.keys() - field_type.properties.keys()
                 if extra_props:
                     raise BRE(f'The value of the `is` relation in the `filters` '
@@ -615,8 +625,11 @@ def validate_organism_age_filter(values):
     for value in values:
         try:
             value_and_unit.to_index(value)
-        except RequirementError as e:
-            raise BRE(e)
+        except AssertionError as e:
+            if R.caused(e):
+                raise BRE(e)
+            else:
+                raise
 
 
 def validate_field(field: str, *, include_synthetic: bool = False):
@@ -747,7 +760,7 @@ def validate_params(query_params: Mapping[str, str],
                 raise BRE(f'Invalid value for `{param_name}`')
 
 
-deprecated_method_spec = {
+deprecated_spec = {
     'summary': 'This endpoint will be removed in the future.',
     'tags': ['Deprecated'],
     'deprecated': True
@@ -758,7 +771,7 @@ deprecated_method_spec = {
     '/index/catalogs',
     methods=['GET'],
     cors=True,
-    method_spec={
+    spec={
         'summary': 'List all available catalogs.',
         'tags': ['Index'],
         'responses': {
@@ -789,10 +802,10 @@ def list_catalogs():
     return app.catalog_controller.list_catalogs()
 
 
-generic_object_spec = schema.object(additional_properties=True)
+generic_object_spec = schema.object(additionalProperties=True)
 array_of_object_spec = schema.array(generic_object_spec)
 hit_spec = schema.object(
-    additional_properties=True,
+    additionalProperties=True,
     protocols=array_of_object_spec,
     entryId=str,
     sources=array_of_object_spec,
@@ -815,7 +828,7 @@ def _filter_schema(field_type: FieldType) -> JSON:
     relations = field_type.supported_filter_relations
 
     def filter_schema(relation: str) -> JSON:
-        return schema.object_type(
+        return schema.object(
             properties={relation: schema.array(field_type.api_filter_schema(relation))},
             required=[relation],
             additionalProperties=False
@@ -831,7 +844,7 @@ types = app.repository_controller.field_types(app.catalog)
 
 filters_param_spec = params.query(
     'filters',
-    schema.optional(application_json(schema.object_type(
+    schema.optional(application_json(schema.object(
         default='{}',
         example={'cellCount': {'within': [[10000, 1000000000]]}},
         properties={
@@ -878,8 +891,8 @@ filters_param_spec = params.query(
 
 catalog_param_spec = params.query(
     'catalog',
-    schema.optional(schema.with_default(app.catalog,
-                                        type_=schema.enum(*config.catalogs))),
+    schema.optional(schema.default(app.catalog,
+                                   form=schema.enum(*config.catalogs))),
     description='The name of the catalog to query.')
 
 
@@ -894,7 +907,7 @@ def repository_search_params_spec():
         ),
         params.query(
             'size',
-            schema.optional(schema.with_default(10, type_=schema.in_range(min_page_size, None))),
+            schema.optional(schema.default(10, form=schema.range(min_page_size, None))),
             description=fd('''
                 The number of hits included per page. The maximum size allowed
                 depends on the catalog and entity type.
@@ -1074,7 +1087,7 @@ repository_summary_spec = {
 @app.route(
     '/index/{entity_type}',
     methods=['GET'],
-    method_spec=repository_search_spec(post=False),
+    spec=repository_search_spec(post=False),
     cors=True
 )
 # FIXME: Properly document the POST version of /index
@@ -1083,19 +1096,19 @@ repository_summary_spec = {
     '/index/{entity_type}',
     methods=['POST'],
     content_types=['application/json'],
-    method_spec=repository_search_spec(post=True),
+    spec=repository_search_spec(post=True),
     cors=True
 )
 @app.route(
     '/index/{entity_type}',
     methods=['HEAD'],
-    method_spec=repository_head_search_spec(),
+    spec=repository_head_search_spec(),
     cors=True
 )
 @app.route(
     '/index/{entity_type}/{entity_id}',
     methods=['GET'],
-    method_spec=repository_id_spec(),
+    spec=repository_id_spec(),
     cors=True
 )
 def repository_search(entity_type: str, entity_id: Optional[str] = None) -> JSON:
@@ -1128,7 +1141,7 @@ def _hoist_parameters(query_params, request):
     '/index/summary',
     methods=['GET'],
     cors=True,
-    method_spec={
+    spec={
         'summary': 'Statistics on the data present across all entities.',
         'responses': {
             '200': {
@@ -1152,7 +1165,7 @@ def _hoist_parameters(query_params, request):
                 '''),
                 **responses.json_content(
                     schema.object(
-                        additional_properties=True,
+                        additionalProperties=True,
                         organTypes=schema.array(str),
                         totalFileSize=float,
                         fileTypeSummaries=array_of_object_spec,
@@ -1173,7 +1186,7 @@ def _hoist_parameters(query_params, request):
 @app.route(
     '/index/summary',
     methods=['HEAD'],
-    method_spec={
+    spec={
         **repository_head_spec(for_summary=True),
         **repository_summary_spec
     }
@@ -1213,7 +1226,7 @@ def manifest_route(*, fetch: bool, initiate: bool):
                 '''))
             ]
         },
-        method_spec={
+        spec={
             'tags': ['Manifests'],
             'summary':
                 (
@@ -1302,7 +1315,7 @@ def manifest_route(*, fetch: bool, initiate: bool):
                                 format.value
                                 for format in app.metadata_plugin.manifest_formats
                             ],
-                            type_=str
+                            form=str
                         )
                     ),
                     description=f'''
@@ -1594,7 +1607,7 @@ repository_files_spec = {
     methods=['GET'],
     interactive=False,
     cors=True,
-    method_spec={
+    spec={
         **repository_files_spec,
         'summary': 'Redirect to a URL for downloading a given data file from the '
                    'underlying repository',
@@ -1661,7 +1674,7 @@ def repository_files(file_uuid: str) -> Response:
     '/fetch/repository/files/{file_uuid}',
     methods=['GET'],
     cors=True,
-    method_spec={
+    spec={
         **repository_files_spec,
         'summary': 'Request a URL for downloading a given data file',
         'responses': {
@@ -1747,7 +1760,7 @@ def _repository_files(file_uuid: str, fetch: bool) -> MutableJSON:
     '/repository/sources',
     methods=['GET'],
     cors=True,
-    method_spec={
+    spec={
         'summary': 'List available data sources',
         'tags': ['Repository'],
         'parameters': [catalog_param_spec],
@@ -1799,7 +1812,7 @@ drs_spec_description = fd('''
     methods=['GET'],
     enabled=config.is_dss_enabled(),
     cors=True,
-    method_spec={
+    spec={
         'summary': 'Get file DRS object',
         'tags': ['DRS'],
         'description': fd('''
@@ -1847,7 +1860,7 @@ def get_data_object(file_uuid):
     methods=['GET'],
     enabled=config.is_dss_enabled(),
     cors=True,
-    method_spec={
+    spec={
         'summary': 'Get a file with an access ID',
         'description': fd('''
             This endpoint returns a URL that can be used to fetch the bytes of a
@@ -1898,7 +1911,7 @@ def get_data_object_access(file_uuid, access_id):
     methods=['GET'],
     enabled=config.is_dss_enabled(),
     cors=True,
-    method_spec=deprecated_method_spec
+    spec=deprecated_spec
 )
 def dos_get_data_object(file_uuid):
     """

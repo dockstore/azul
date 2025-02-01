@@ -1,6 +1,7 @@
 # Python
 *.pyc
 __pycache__/
+.mypy_cache/
 # Python coverage
 /.coverage
 /.coverage.*

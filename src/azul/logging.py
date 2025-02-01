@@ -3,6 +3,7 @@ from contextlib import (
 )
 import logging
 from typing import (
+    IO,
     Optional,
 )
 
@@ -12,9 +13,6 @@ from more_itertools import (
 )
 
 import azul
-from azul import (
-    config,
-)
 from azul.chalice import (
     AzulChaliceApp,
 )
@@ -151,7 +149,7 @@ def silenced_es_logger():
     client. If other threads use the ES client concurrently, their logging will
     be affected, too.
     """
-    if config.debug > 1:
+    if azul.config.debug > 1:
         yield
     else:
         patched_log_level = silent_es_log_level()
@@ -166,7 +164,7 @@ def silenced_es_logger():
 
 
 def http_body_log_message(body_type: str,
-                          body: bytes | bytearray | str | None,
+                          body: bytes | bytearray | str | IO[bytes] | IO[str] | None,
                           *,
                           verbatim: bool = False,
                           ) -> str:
@@ -177,7 +175,8 @@ def http_body_log_message(body_type: str,
             if isinstance(body, (bytes, bytearray)):
                 body = body.decode(errors='ignore')
         else:
-            body = trunc_ellipses(body, max_len=128)
+            # https://github.com/python/typing/discussions/1911
+            body = trunc_ellipses(body, max_len=128)  # type: ignore[type-var]
         return f'… with {body_type} body {body!r}'
     else:
         return f'… with nonprintable body ({type(body)!r})'

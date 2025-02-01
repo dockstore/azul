@@ -1,6 +1,12 @@
+from contextlib import (
+    contextmanager,
+)
 import json
 from pathlib import (
     Path,
+)
+from typing import (
+    Any,
 )
 from unittest.mock import (
     PropertyMock,
@@ -12,6 +18,7 @@ from furl import (
 )
 
 from azul import (
+    cached_property,
     config,
 )
 from azul.chalice import (
@@ -36,38 +43,40 @@ def main():
     }
 
     lambda_name = Path.cwd().name
+    assert lambda_name in config.lambda_names(), lambda_name
 
     # To create a normalized OpenAPI document, we patch any
     # deployment-specific variables that affect the document.
+    with (
+        patch_config('catalogs', catalogs),
+        patch_config(f'{lambda_name}_function_name', f'azul-{lambda_name}-dev'),
+        patch_config('enable_log_forwarding', False),
+        patch_config('enable_replicas', True),
+        patch_config('monitoring_email', 'azul-group@ucsc.edu')
+    ):
+        lambda_endpoint = furl('http://localhost')
+        with patch.object(target=AzulChaliceApp,
+                          attribute='base_url',
+                          new=lambda_endpoint):
+            app_module = load_app_module(lambda_name)
+            assert app_module.app.base_url == lambda_endpoint
+            app_spec = app_module.app.spec()
+            doc_path = Path(config.project_root) / 'lambdas' / lambda_name / 'openapi.json'
+            with write_file_atomically(doc_path) as file:
+                json.dump(app_spec, file, indent=4)
+
+
+@contextmanager
+def patch_config(attribute_name: str, value: Any):
+    old_value = getattr(type(config), attribute_name)
+    is_property = isinstance(old_value, (property, cached_property))
     with patch.object(target=type(config),
-                      attribute='catalogs',
-                      new_callable=PropertyMock,
-                      return_value=catalogs):
-        assert config.catalogs == catalogs
-        with patch.object(target=config,
-                          attribute=f'{lambda_name}_function_name',
-                          return_value=f'azul-{lambda_name}-dev'):
-            assert getattr(config, f'{lambda_name}_name') == f'azul-{lambda_name}-dev'
-            with patch.object(target=type(config),
-                              attribute='enable_log_forwarding',
-                              new_callable=PropertyMock,
-                              return_value=False):
-                assert not config.enable_log_forwarding
-                with patch.object(target=type(config),
-                                  attribute='enable_replicas',
-                                  new_callable=PropertyMock,
-                                  return_value=True):
-                    assert config.enable_replicas
-                    lambda_endpoint = furl('http://localhost')
-                    with patch.object(target=AzulChaliceApp,
-                                      attribute='base_url',
-                                      new=lambda_endpoint):
-                        app_module = load_app_module(lambda_name)
-                        assert app_module.app.base_url == lambda_endpoint
-                        app_spec = app_module.app.spec()
-                        doc_path = Path(config.project_root) / 'lambdas' / lambda_name / 'openapi.json'
-                        with write_file_atomically(doc_path) as file:
-                            json.dump(app_spec, file, indent=4)
+                      attribute=attribute_name,
+                      new_callable=PropertyMock if is_property else None,
+                      return_value=value):
+        new_value = getattr(config, attribute_name)
+        assert value == (new_value() if callable(old_value) else new_value)
+        yield
 
 
 if __name__ == '__main__':
