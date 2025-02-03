@@ -20,6 +20,7 @@ from azul import (
 )
 from azul.types import (
     AnyJSON,
+    AnyMutableJSON,
     CompositeJSON,
     JSON,
     JSONArray,
@@ -27,6 +28,17 @@ from azul.types import (
     MutableJSON,
     MutableJSONArray,
 )
+
+
+def copy_any_json(v: AnyJSON) -> AnyMutableJSON:
+    """
+    Same as :func:`copy_json` but additionally allows passing primitive values
+    for which it simply returns the argument.
+    """
+    if v is None or isinstance(v, (str, int, float, bool)):
+        return v
+    else:
+        return copy_json(v)
 
 
 @overload

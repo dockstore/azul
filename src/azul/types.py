@@ -8,6 +8,7 @@ from types import (
 from typing import (
     Any,
     ForwardRef,
+    Iterable,
     Optional,
     Protocol,
     TypeAliasType,
@@ -20,6 +21,12 @@ from typing import (
 from azul.collections import (
     OrderedSet,
 )
+
+
+def not_none[T](v: T | None) -> T:
+    assert v is not None
+    return v
+
 
 PrimitiveJSON = str | int | float | bool | None
 
@@ -50,6 +57,20 @@ def json_sequence(v: AnyJSON) -> JSONArray:
     return v
 
 
+def json_composite(v: AnyJSON) -> CompositeJSON:
+    assert isinstance(v, (dict, list)), type(v)
+    return v
+
+
+def json_item_mappings(vs: AnyJSON) -> Iterable[tuple[str, JSON]]:
+    for k, v in json_mapping(vs).items():
+        yield k, json_mapping(v)
+
+
+def json_element_mappings(vs: AnyJSON) -> Iterable[JSON]:
+    return map(json_mapping, json_sequence(vs))
+
+
 def json_dict(v: AnyMutableJSON) -> MutableJSON:
     assert isinstance(v, dict), type(v)
     return v
@@ -58,6 +79,15 @@ def json_dict(v: AnyMutableJSON) -> MutableJSON:
 def json_list(v: AnyMutableJSON) -> MutableJSONArray:
     assert isinstance(v, list), type(v)
     return v
+
+
+def json_item_dicts(vs: AnyMutableJSON) -> Iterable[tuple[str, MutableJSON]]:
+    for k, v in json_dict(vs).items():
+        yield k, json_dict(v)
+
+
+def json_element_dicts(vs: AnyMutableJSON) -> Iterable[MutableJSON]:
+    return map(json_dict, json_list(vs))
 
 
 def json_str(v: AnyMutableJSON | AnyJSON) -> str:
