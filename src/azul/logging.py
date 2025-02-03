@@ -4,6 +4,7 @@ from contextlib import (
 import logging
 from typing import (
     IO,
+    Literal,
     Optional,
     TYPE_CHECKING,
 )
@@ -166,7 +167,10 @@ def silenced_es_logger():
             assert es_log.level == original_log_level
 
 
-def http_body_log_message(body_type: str,
+type BodyType = Literal['request', 'response']
+
+
+def http_body_log_message(body_type: BodyType,
                           body: bytes | bytearray | str | IO[bytes] | IO[str] | None,
                           *,
                           verbatim: bool = False,
