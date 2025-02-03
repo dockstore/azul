@@ -868,10 +868,11 @@ class Config:
     class Catalog:
         """
         >>> plugins = dict(metadata=dict(name='hca'), repository=dict(name='tdr_hca'))
-        >>> kwargs = dict(atlas='hca', plugins=plugins, sources='')
+        >>> kwargs = dict(atlas='hca', plugins=plugins, sources=[])
         >>> c = Config.Catalog.from_json
 
-        >>> c(name='dcp', spec=dict(internal=False, **kwargs)) # doctest: +NORMALIZE_WHITESPACE
+        >>> c(name='dcp', spec=dict(internal=False, **kwargs))
+        ... # doctest: +NORMALIZE_WHITESPACE
         Config.Catalog(name='dcp',
                        atlas='hca',
                        internal=False,
@@ -891,7 +892,8 @@ class Config:
         >>> c(name='a' * 61 + '-it', spec=dict(internal=True, **kwargs)).is_integration_test_catalog
         True
 
-        >>> c(name='a' * 62 + '-it', spec=dict(internal=True, **kwargs)) # doctest: +NORMALIZE_WHITESPACE
+        >>> c(name='a' * 62 + '-it', spec=dict(internal=True, **kwargs))
+        ... # doctest: +NORMALIZE_WHITESPACE
         Traceback (most recent call last):
         ...
         azul.RequirementError: ('Catalog name is invalid',

@@ -23,10 +23,6 @@ from azul.collections import (
 
 PrimitiveJSON = str | int | float | bool | None
 
-# Not every instance of Mapping or Sequence can be fed to json.dump() but those
-# two generic types are the most specific *immutable* super-types of `list`,
-# `tuple` and `dict`:
-
 type AnyJSON = JSON | JSONArray | PrimitiveJSON
 type JSON = Mapping[str, AnyJSON]
 type JSONArray = Sequence[AnyJSON]
@@ -45,47 +41,47 @@ type MutableFlatJSON = dict[str, PrimitiveJSON]
 
 
 def json_mapping(v: AnyJSON) -> JSON:
-    assert isinstance(v, Mapping)
+    assert isinstance(v, Mapping), type(v)
     return v
 
 
 def json_sequence(v: AnyJSON) -> JSONArray:
-    assert isinstance(v, Sequence)
+    assert isinstance(v, Sequence) and not isinstance(v, str), type(v)
     return v
 
 
 def json_dict(v: AnyMutableJSON) -> MutableJSON:
-    assert isinstance(v, dict)
+    assert isinstance(v, dict), type(v)
     return v
 
 
 def json_list(v: AnyMutableJSON) -> MutableJSONArray:
-    assert isinstance(v, list)
+    assert isinstance(v, list), type(v)
     return v
 
 
 def json_str(v: AnyMutableJSON | AnyJSON) -> str:
-    assert isinstance(v, str)
+    assert isinstance(v, str), type(v)
     return v
 
 
 def json_int(v: AnyMutableJSON | AnyJSON) -> int:
-    assert isinstance(v, int)
+    assert isinstance(v, int), type(v)
     return v
 
 
 def json_float(v: AnyMutableJSON | AnyJSON) -> float:
-    assert isinstance(v, float)
+    assert isinstance(v, float), type(v)
     return v
 
 
 def json_bool(v: AnyMutableJSON | AnyJSON) -> bool:
-    assert isinstance(v, bool)
+    assert isinstance(v, bool), type(v)
     return v
 
 
 def json_none(v: AnyMutableJSON | AnyJSON) -> None:
-    assert v is None
+    assert v is None, type(v)
     return v
 
 
