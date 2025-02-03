@@ -8,9 +8,6 @@ from datetime import (
 import email.utils
 import re
 import time
-from typing import (
-    Optional,
-)
 
 from azul import (
     require,
@@ -87,7 +84,7 @@ class AdjustedRemainingTime(RemainingTime):
         return max(0.0, self._actual.get() + self._offset)
 
 
-def parse_http_date(http_date: str, base_time: Optional[float] = None) -> float:
+def parse_http_date(http_date: str, base_time: float | None = None) -> float:
     """
     Convert an HTTP date string to a Python timestamp (UNIX time).
 
@@ -107,12 +104,12 @@ def parse_http_date(http_date: str, base_time: Optional[float] = None) -> float:
     if base_time is None:
         base_time = time.time()
     try:
-        http_date = int(http_date)
+        relative = int(http_date)
     except ValueError:
-        http_date = email.utils.parsedate_to_datetime(http_date)
-        return http_date.timestamp()
+        absolute = email.utils.parsedate_to_datetime(http_date)
+        return absolute.timestamp()
     else:
-        return base_time + float(http_date)
+        return base_time + float(relative)
 
 
 dcp2_datetime_format = '%Y-%m-%dT%H:%M:%S.%f%z'
