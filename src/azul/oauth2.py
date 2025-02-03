@@ -28,6 +28,7 @@ from google.oauth2.service_account import (
 import urllib3.request
 
 from azul import (
+    R,
     cached_property,
     config,
     reject,
@@ -73,6 +74,14 @@ class OAuth2Client(HasCachedHttpClient):
     @property
     def credentials(self) -> ScopedCredentials:
         return self.credentials_provider.scoped_credentials()
+
+    @property
+    def service_account_credentials(self) -> ServiceAccountCredentials:
+        credentials = self.credentials
+        assert isinstance(credentials, ServiceAccountCredentials), R(
+            'Expecting service account credentials', type(credentials)
+        )
+        return credentials
 
     # The AuthorizedHttp class declares the second constructor argument to be a
     # PoolManager instance but, except for __del__, doesn't actually use methods
