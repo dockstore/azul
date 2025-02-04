@@ -8,17 +8,17 @@ import importlib.util
 import os
 from typing import (
     Any,
-    Optional,
 )
 
 from azul import (
+    R,
     config,
 )
 
 
 def load_module(path: str,
                 module_name: str,
-                module_attributes: Optional[Mapping[str, Any]] = None):
+                module_attributes: Mapping[str, Any] | None = None):
     """
     Load a module from the .py file at the given path without affecting
     `sys.path` or `sys.modules`.
@@ -37,6 +37,7 @@ def load_module(path: str,
     :return: the module
     """
     spec = importlib.util.spec_from_file_location(module_name, path)
+    assert spec is not None, R('Unable to load module', module_name, path)
     module = importlib.util.module_from_spec(spec)
     if module_attributes is not None:
         for k, v in module_attributes.items():

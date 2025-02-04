@@ -1,6 +1,3 @@
-from collections.abc import (
-    Mapping,
-)
 from contextlib import (
     contextmanager,
 )
@@ -9,12 +6,15 @@ import os
 import sys
 import tempfile
 from typing import (
-    Any,
-    Optional,
+    IO,
+)
+
+from azul.types import (
+    AnyJSON,
 )
 
 
-def emit(json_doc: Optional[Mapping[str, Any]]):
+def emit(json_doc: AnyJSON | None):
     with emit_text(remove=json_doc is None) as f:
         json.dump(json_doc, f, indent=4)
 
@@ -22,6 +22,7 @@ def emit(json_doc: Optional[Mapping[str, Any]]):
 @contextmanager
 def emit_text(*, remove: bool = False):
     path = sys.argv[1]
+    f: IO[str]
     if remove:
         try:
             os.unlink(path)

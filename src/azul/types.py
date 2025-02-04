@@ -8,6 +8,7 @@ from types import (
 from typing import (
     Any,
     ForwardRef,
+    Iterable,
     Optional,
     Protocol,
     TypeAliasType,
@@ -21,11 +22,13 @@ from azul.collections import (
     OrderedSet,
 )
 
-PrimitiveJSON = str | int | float | bool | None
 
-# Not every instance of Mapping or Sequence can be fed to json.dump() but those
-# two generic types are the most specific *immutable* super-types of `list`,
-# `tuple` and `dict`:
+def not_none[T](v: T | None) -> T:
+    assert v is not None
+    return v
+
+
+PrimitiveJSON = str | int | float | bool | None
 
 type AnyJSON = JSON | JSONArray | PrimitiveJSON
 type JSON = Mapping[str, AnyJSON]
@@ -45,47 +48,70 @@ type MutableFlatJSON = dict[str, PrimitiveJSON]
 
 
 def json_mapping(v: AnyJSON) -> JSON:
-    assert isinstance(v, Mapping)
+    assert isinstance(v, Mapping), type(v)
     return v
 
 
 def json_sequence(v: AnyJSON) -> JSONArray:
-    assert isinstance(v, Sequence)
+    assert isinstance(v, Sequence) and not isinstance(v, str), type(v)
     return v
 
 
+def json_composite(v: AnyJSON) -> CompositeJSON:
+    assert isinstance(v, (dict, list)), type(v)
+    return v
+
+
+def json_item_mappings(vs: AnyJSON) -> Iterable[tuple[str, JSON]]:
+    for k, v in json_mapping(vs).items():
+        yield k, json_mapping(v)
+
+
+def json_element_mappings(vs: AnyJSON) -> Iterable[JSON]:
+    return map(json_mapping, json_sequence(vs))
+
+
 def json_dict(v: AnyMutableJSON) -> MutableJSON:
-    assert isinstance(v, dict)
+    assert isinstance(v, dict), type(v)
     return v
 
 
 def json_list(v: AnyMutableJSON) -> MutableJSONArray:
-    assert isinstance(v, list)
+    assert isinstance(v, list), type(v)
     return v
 
 
+def json_item_dicts(vs: AnyMutableJSON) -> Iterable[tuple[str, MutableJSON]]:
+    for k, v in json_dict(vs).items():
+        yield k, json_dict(v)
+
+
+def json_element_dicts(vs: AnyMutableJSON) -> Iterable[MutableJSON]:
+    return map(json_dict, json_list(vs))
+
+
 def json_str(v: AnyMutableJSON | AnyJSON) -> str:
-    assert isinstance(v, str)
+    assert isinstance(v, str), type(v)
     return v
 
 
 def json_int(v: AnyMutableJSON | AnyJSON) -> int:
-    assert isinstance(v, int)
+    assert isinstance(v, int), type(v)
     return v
 
 
 def json_float(v: AnyMutableJSON | AnyJSON) -> float:
-    assert isinstance(v, float)
+    assert isinstance(v, float), type(v)
     return v
 
 
 def json_bool(v: AnyMutableJSON | AnyJSON) -> bool:
-    assert isinstance(v, bool)
+    assert isinstance(v, bool), type(v)
     return v
 
 
 def json_none(v: AnyMutableJSON | AnyJSON) -> None:
-    assert v is None
+    assert v is None, type(v)
     return v
 
 

@@ -15,15 +15,22 @@ class InternMeta(type):
     Note also that this metaclass never releases the memory used by instances of
     its instances.
 
+    >>> from typing import ClassVar
+
     >>> class C(metaclass=InternMeta):
-    ...     def __init__(self, x):
+    ...     i: ClassVar[int] = 0
+    ...     def __init__(self, x:int):
+    ...         C.i += 1
     ...         self.x = x
 
     >>> C(1) is C(1)
     True
-
+    >>> C.i
+    1
     >>> C(1) is C(2)
     False
+    >>> C.i
+    2
 
     Instances of an instance of this metaclass should be immutable.
 
@@ -59,15 +66,6 @@ class InternMeta(type):
     False
     """
 
-    def __init__(cls, name, bases, namespace) -> None:
-        super().__init__(name, bases, namespace)
-        old_new = cls.__new__
-
-        @lru_cache
-        def __new__(_cls, *args, **kwargs):
-            assert _cls is cls
-            _self = old_new(_cls)
-            _self.__init__(*args, **kwargs)
-            return _self
-
-        cls.__new__ = __new__
+    @lru_cache
+    def __call__(cls, *args, **kwargs):
+        return super().__call__(*args, **kwargs)
