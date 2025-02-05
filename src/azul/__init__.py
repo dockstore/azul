@@ -1809,6 +1809,25 @@ class Config:
                                   name='rate_limit_alarm',
                                   value=waf_rate_limit.value * 2)
 
+    #: The rate limit per IP for requests that trigger a manifest generation
+    #:
+    waf_rate_limit_manifests = RateLimit(name='rate_limit_manifests',
+                                         value=10,
+                                         period=10 * 60,
+                                         retry_after=30)
+
+    #: The rate limit for file download requests
+    #:
+    #: We aim for a global limit of 60 file downloads per 10 minutes. Based on
+    #: an observed average of 2.9 distinct IPs concurrently downloading files
+    #: in any 10-minute window, the maximum per-IP request rate we can allow is
+    #: 20/10min, or 10/5min.
+    #:
+    waf_rate_limit_files = RateLimit(name='rate_limit_files',
+                                     value=10,
+                                     period=5 * 60,
+                                     retry_after=30)
+
     @property
     def waf_bot_control(self) -> bool:
         return self._boolean(self.environ['azul_waf_bot_control'])

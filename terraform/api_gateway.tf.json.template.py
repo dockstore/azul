@@ -2,8 +2,15 @@ from dataclasses import (
     dataclass,
 )
 import importlib
+from ipaddress import (
+    IPv4Address,
+)
 import json
+import logging
 
+from furl import (
+    furl,
+)
 from more_itertools import (
     one,
 )
@@ -20,6 +27,12 @@ from azul.chalice import (
 from azul.deployment import (
     aws,
 )
+from azul.http import (
+    http_client,
+)
+from azul.logging import (
+    configure_script_logging,
+)
 from azul.modules import (
     load_app_module,
 )
@@ -32,8 +45,12 @@ from azul.terraform import (
     vpc,
 )
 from azul.types import (
+    JSON,
     JSONs,
 )
+
+log = logging.getLogger(__name__)
+configure_script_logging(log)
 
 
 @dataclass(frozen=True)
@@ -110,6 +127,18 @@ def check_waf_rules(rules: JSONs) -> JSONs:
     return rules
 
 
+def public_ip() -> IPv4Address:
+    """
+    Return the public IPv4 address of the machine running this code.
+    """
+    url = furl('https://checkip.amazonaws.com')
+    http = http_client(log)
+    response = http.request('GET', str(url))
+    assert response.status == 200, R('Unexpected response', response)
+    ip_address = response.data.decode().strip()
+    return IPv4Address(ip_address)
+
+
 zones_by_domain = {
     domain: Zone.for_domain(domain)
     for app in apps
@@ -143,6 +172,38 @@ api_gateway_log_format = {
     'stage': '$context.stage',
     'status': '$context.status'
 }
+
+
+def waf_match_method(http_method: str) -> JSON:
+    return {
+        'byte_match_statement': {
+            'field_to_match': {
+                'method': {}
+            },
+            'positional_constraint': 'EXACTLY',
+            'search_string': http_method,
+            'text_transformation': {
+                'priority': 0,
+                'type': 'NONE'
+            }
+        }
+    }
+
+
+def waf_match_path(path_regex: str) -> JSON:
+    return {
+        'regex_match_statement': {
+            'regex_string': path_regex,
+            'field_to_match': {
+                'uri_path': {}
+            },
+            'text_transformation': {
+                'priority': 0,
+                'type': 'NONE'
+            }
+        }
+    }
+
 
 emit_tf({
     'data': [
@@ -223,6 +284,27 @@ emit_tf({
     ],
     'resource': [
         {
+            'aws_wafv2_ip_set': {
+                # The IPs in this set are exempted from the rate limit on
+                # service API requests so as to avoid the integration tests from
+                # tripping them. We include the IP of the GitLab instance as
+                # well as that of the machine deploying this set because those
+                # are the machines most likely to run the integration tests.
+                #
+                'it_v4_ips': {
+                    'name': config.qualified_resource_name('it_v4_ips'),
+                    'scope': 'REGIONAL',
+                    'ip_address_version': 'IPV4',
+                    'addresses': [
+                        f'{public_ip()}/32',
+                        *[
+                            # Data source defined in data_sources.tf.json
+                            f'${{data.aws_nat_gateway.gitlab_{zone}.public_ip}}/32'
+                            for zone in range(vpc.num_zones)
+                        ]
+                    ]
+                }
+            },
             'aws_wafv2_web_acl': {
                 'api_gateway': {
                     'name': config.qualified_resource_name('api_gateway'),
@@ -393,18 +475,9 @@ emit_tf({
                                             'version': 'Version_3.1',
                                             'scope_down_statement': {
                                                 'not_statement': {
-                                                    'statement': {
-                                                        'regex_match_statement': {
-                                                            # Keep consistent with the rules in the response of the
-                                                            # /robots.txt route in src/azul/chalice.py
-                                                            'regex_string': r'^/($|swagger/|robots.txt$)',
-                                                            'field_to_match': {'uri_path': {}},
-                                                            'text_transformation': {
-                                                                'priority': 0,
-                                                                'type': 'NONE'
-                                                            }
-                                                        }
-                                                    }
+                                                    # Keep consistent with the rules in the response of the
+                                                    # /robots.txt route in src/azul/chalice.py
+                                                    'statement': waf_match_path(r'^/($|swagger/|robots.txt$)')
                                                 }
                                             },
                                             'managed_rule_group_configs': [
@@ -503,6 +576,77 @@ emit_tf({
                                 for rate_limit in [
                                     config.waf_rate_limit_alarm,
                                     config.waf_rate_limit,
+                                ]
+                            ],
+                            {
+                                # See it_v4_ips above
+                                'name': 'allow_it_requests',
+                                'statement': {
+                                    'and_statement': [
+                                        {
+                                            'statement': [
+                                                {
+                                                    'ip_set_reference_statement': {
+                                                        'arn': '${aws_wafv2_ip_set.%s.arn}' % 'it_v4_ips'
+                                                    }
+                                                },
+                                                waf_match_method('PUT'),
+                                                waf_match_path('^(/fetch)?/manifest/files')
+                                            ]
+                                        }
+                                    ]
+                                },
+                                'action': {
+                                    'allow': {}
+                                },
+                                'visibility_config': {
+                                    'metric_name': 'allow_it_requests',
+                                    'sampled_requests_enabled': True,
+                                    'cloudwatch_metrics_enabled': True
+                                }
+                            },
+                            *[
+                                {
+                                    'name': limit.name,
+                                    'statement': {
+                                        'rate_based_statement': {
+                                            'limit': limit.value,
+                                            'evaluation_window_sec': limit.period,
+                                            'aggregate_key_type': 'IP',
+                                            'scope_down_statement': {
+                                                'and_statement': [
+                                                    {
+                                                        'statement': [
+                                                            waf_match_method(method),
+                                                            waf_match_path(path)
+                                                        ]
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    'action': {
+                                        'block': {
+                                            'custom_response': {
+                                                'response_code': 429,
+                                                'response_header': [
+                                                    {
+                                                        'name': 'Retry-After',
+                                                        'value': str(limit.retry_after)
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    'visibility_config': {
+                                        'metric_name': limit.name,
+                                        'sampled_requests_enabled': True,
+                                        'cloudwatch_metrics_enabled': True
+                                    }
+                                }
+                                for method, path, limit in [
+                                    ('GET', '^(/fetch)?/repository/files', config.waf_rate_limit_files),
+                                    ('PUT', '^(/fetch)?/manifest/files', config.waf_rate_limit_manifests)
                                 ]
                             ]
                         ])
