@@ -192,6 +192,8 @@ class TDRHCABundle(HCABundle[TDRBundleFQID], TDRBundle):
             self.stitched.add(entity.entity_id)
         if entity.entity_type.endswith('_file'):
             descriptor = json.loads(row['descriptor'])
+            # FIXME: Move validation of descriptor to the metadata API
+            #        https://github.com/DataBiosphere/azul/issues/6299
             Entity.validate_described_by(descriptor)
             self._add_manifest_entry(entity,
                                      name=row['file_name'],
