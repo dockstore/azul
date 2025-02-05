@@ -63,9 +63,9 @@
             }
         }
     },
-    "docker.io/ucscgi/azul-bigquery-emulator:0.4.4-22": {
-        "digest": "sha256:73136ff0770d78a319ea0ffccac33bca59febba3e37dd887fde0ccc4155fb740",
-        "id": "sha256:5cc13d4dc2a08872dbdb8beb19d28b13cbd2b8d233326e6760465fcee760a94f",
+    "docker.io/ucscgi/azul-bigquery-emulator:0.4.4-23": {
+        "digest": "sha256:7cc2a338d78f06e5ac397faa2e7f7524c375d8e63ca7ea6f6f863c8be4088a43",
+        "id": "sha256:0ad0f5ef87496801a8885b2c6b561d1f1f6f670e18b1cf4abaa1b384dbf704c2",
         "platform": "linux/amd64"
     },
     "docker.io/clamav/clamav:1.4.2-23": {
