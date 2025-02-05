@@ -144,8 +144,6 @@ api_gateway_log_format = {
     'status': '$context.status'
 }
 
-file_download_limit = config.waf_file_download_limit
-
 emit_tf({
     'data': [
         {
@@ -234,46 +232,6 @@ emit_tf({
                     'rule': check_waf_rules([
                         {**rule, 'priority': i}
                         for i, rule in enumerate([
-                            *([] if file_download_limit is None else [
-                                {
-                                    'name': 'FileDownloadRateLimit',
-                                    'statement': {
-                                        'rate_based_statement': {
-                                            'limit': file_download_limit.rate_limit,
-                                            'evaluation_window_sec': file_download_limit.evaluation_window,
-                                            'aggregate_key_type': 'CONSTANT',
-                                            'scope_down_statement': {
-                                                'regex_match_statement': {
-                                                    'regex_string': '^(/fetch)?/repository/files',
-                                                    'field_to_match': {'uri_path': {}},
-                                                    'text_transformation': {
-                                                        'priority': 0,
-                                                        'type': 'NONE'
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    },
-                                    'action': {
-                                        'block': {
-                                            'custom_response': {
-                                                'response_code': 429,
-                                                'response_header': [
-                                                    {
-                                                        'name': 'Retry-After',
-                                                        'value': str(file_download_limit.retry_after),
-                                                    }
-                                                ]
-                                            }
-                                        }
-                                    },
-                                    'visibility_config': {
-                                        'metric_name': 'FileDownloadRateLimit',
-                                        'sampled_requests_enabled': True,
-                                        'cloudwatch_metrics_enabled': True
-                                    }
-                                }
-                            ]),
                             *[
                                 {
                                     'name': name,

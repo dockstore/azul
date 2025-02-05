@@ -1782,34 +1782,6 @@ class Config:
 
     waf_rate_rule_limit = 1000
 
-    @frozen(kw_only=True)
-    class FileDownloadLimit:
-        rate_limit: int
-        evaluation_window: int
-        assumed_request_concurrency: float
-
-        @classmethod
-        def parse(cls, s: str) -> Self:
-            rate, s = s.split('/')
-            window, concurrency = s.split('@')
-            return cls(rate_limit=int(rate),
-                       evaluation_window=int(window),
-                       assumed_request_concurrency=float(concurrency))
-
-        @property
-        def retry_after(self) -> int:
-            return round(self.evaluation_window /
-                         self.rate_limit *
-                         self.assumed_request_concurrency)
-
-    @property
-    def waf_file_download_limit(self) -> FileDownloadLimit | None:
-        value = self.environ.get('azul_waf_download_rate_limit')
-        if value is None:
-            return None
-        else:
-            return self.FileDownloadLimit.parse(value)
-
     assert 100 <= waf_rate_rule_limit <= 2_000_000_000  # mandated by AWS
 
     @property
