@@ -73,7 +73,7 @@ class DUOSTestCase(TDRTestCase, ABC):
         super().setUpClass()
         cls._patch_duos()
 
-    mock_duos_url = furl('https:://mock_duos.lan')
+    mock_duos_url = furl('https://mock_duos.lan')
 
     duos_id = 'DUOS-000000'
     duos_description = 'Study description from DUOS'
