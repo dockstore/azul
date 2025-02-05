@@ -25,7 +25,6 @@ from azul import (
     cache,
     cached_property,
     config,
-    iif,
     require,
 )
 from azul.chalice import (
@@ -81,7 +80,7 @@ class TerraformSchema:
 
 class Terraform:
 
-    def taggable_resource_types(self) -> Sequence[str]:
+    def taggable_resource_types(self) -> set[str]:
         schema = self.schema.document
         version = schema['format_version']
         require(version == '1.0', 'Unexpected format version', version)
@@ -90,11 +89,11 @@ class Terraform:
             for provider in schema['provider_schemas'].values()
             if 'resource_schemas' in provider
         )
-        return [
+        return {
             resource_type
             for resource_type, resource in resources
             if 'tags' in resource['block']['attributes']
-        ]
+        }
 
     def run(self, *args: str, **kwargs) -> str:
         args = ['terraform', *args]
@@ -246,7 +245,7 @@ def _transform_tf(tf_config: JSON, *, tag_resources: bool = True) -> JSON:
     Add tags to all taggable resources and change the `name` tag to `Name`
     for tagged AWS resources.
     """
-    taggable_types = terraform.taggable_resource_types()
+    taggable_types = terraform.taggable_resource_types() if tag_resources else {}
     return json_mapping(_sanitize_tf({
         block_name: _sanitize_tf([
             _sanitize_tf({
@@ -254,11 +253,10 @@ def _transform_tf(tf_config: JSON, *, tag_resources: bool = True) -> JSON:
                     {
                         resource_name: {
                             **resource,
-                            **iif(
-                                tag_resources
-                                and block_name == 'resource'
-                                and resource_type in taggable_types,
+                            **(
                                 _tagged_resource(resource_type, resource_name, resource)
+                                if block_name == 'resource' and resource_type in taggable_types else
+                                {}
                             )
                         }
                     }
