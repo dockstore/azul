@@ -483,22 +483,22 @@ class Plugin(TDRPlugin[TDRAnvilBundle, TDRSourceSpec, TDRSourceRef, TDRAnvilBund
 
     def _duos_bundle(self, bundle_fqid: TDRAnvilBundleFQID) -> TDRAnvilBundle:
         assert not bundle_fqid.is_batched, bundle_fqid
-        duos_id, duos_info = self.tdr.get_duos(bundle_fqid.source)
-        description = None if duos_info is None else duos_info.get('studyDescription')
         ref, row = self._get_dataset(bundle_fqid.source.spec)
         expected_entity_id = change_version(bundle_fqid.uuid,
                                             self.bundle_uuid_version,
                                             self.datarepo_row_uuid_version)
         assert ref.entity_id == expected_entity_id, (ref, bundle_fqid)
         bundle = TDRAnvilBundle(fqid=bundle_fqid)
-        entity_row = {
-            'duos_id': duos_id,
-            'description': description,
-            'dataset_id': row['dataset_id']
-        }
-        bundle.add_entity(ref, self._version, entity_row)
         # Classify as orphan to suppress the emission of a contribution
         bundle.add_entity(ref, self._version, dict(row), is_orphan=True)
+        duos_id, duos_info = self.tdr.get_duos(bundle_fqid.source)
+        if duos_id is not None:
+            entity_row = {
+                'duos_id': duos_id,
+                'description': duos_info.get('studyDescription'),
+                'dataset_id': row['dataset_id']
+            }
+            bundle.add_entity(ref, self._version, entity_row)
         return bundle
 
     def _replica_bundle(self, bundle_fqid: TDRAnvilBundleFQID) -> TDRAnvilBundle:
