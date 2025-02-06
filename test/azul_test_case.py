@@ -5,6 +5,7 @@ from abc import (
 from collections.abc import (
     Set,
 )
+import contextlib
 from contextlib import (
     AbstractContextManager,
 )
@@ -16,6 +17,7 @@ from re import (
     escape,
 )
 from typing import (
+    Iterable,
     Optional,
 )
 from unittest import (
@@ -218,6 +220,13 @@ class AzulTestCase(TestCase):
             cleanup = instance.stop
         instance.start()
         self.addCleanup(cleanup)
+
+    @contextlib.contextmanager
+    def stacked_patches(self, patches: Iterable[patch]):
+        with contextlib.ExitStack() as context:
+            for cm in patches:
+                context.enter_context(cm)
+            yield
 
 
 class AlwaysTearDownTestCase(TestCase):
