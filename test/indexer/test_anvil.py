@@ -218,6 +218,35 @@ class TestAnvilIndexer(AnvilIndexerTestCase,
                 self.assertEqual(canned_bundle.links, bundle.links)
                 self.assertEqual(canned_bundle.orphans, bundle.orphans)
 
+    def test_absent_duos_id(self):
+        source_ref = self.source
+        self._make_mock_tdr_tables(source_ref)
+        cases = {
+            'Absent duosFirecloudGroup': [
+                {'name': self.source.spec.name}
+            ],
+            'Empty duosFirecloudGroup': [
+                {
+                    'name': self.source.spec.name,
+                    'duosFirecloudGroup': {}
+                }
+            ],
+            'Null duosId': [
+                {
+                    'name': self.source.spec.name,
+                    'duosFirecloudGroup': {'duosId': None}
+                }
+            ]
+        }
+        for sub_test, response_bodies in cases.items():
+            with self.subTest(sub_test):
+                with self.stacked_patches(self._duos_patches(response_bodies)):
+                    plugin = self.plugin_for_source_spec(source_ref.spec)
+                    bundle = plugin.fetch_bundle(self.duos_bundle())
+                    self.assertIsInstance(bundle, TDRAnvilBundle)
+                    self.assertEqual({}, bundle.entities)
+                    self.assertEqual(1, len(bundle.orphans))
+
 
 class TestAnvilIndexerWithIndexesSetUp(AnvilIndexerTestCase):
     """
