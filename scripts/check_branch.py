@@ -1,7 +1,6 @@
 import os
 import sys
 from typing import (
-    Optional,
     Sequence,
 )
 
@@ -16,7 +15,7 @@ Ensure that the currently checked out branch matches the selected deployment
 """
 
 
-def default_deployment(branch: Optional[str]) -> Optional[str]:
+def default_deployment(branch: str | None) -> str | None:
     deployments = config.shared_deployments_for_branch(branch)
     return None if deployments is None else deployments[0].name
 
@@ -24,9 +23,9 @@ def default_deployment(branch: Optional[str]) -> Optional[str]:
 class BranchDeploymentMismatch(Exception):
 
     def __init__(self,
-                 branch: Optional[str],
+                 branch: str | None,
                  deployment: config.Deployment,
-                 allowed: Optional[Sequence[config.Deployment]]
+                 allowed: Sequence[config.Deployment] | None
                  ) -> None:
         branch = 'Detached head' if branch is None else f'Branch {branch!r}'
         if allowed is None:
@@ -37,7 +36,7 @@ class BranchDeploymentMismatch(Exception):
                          f'only {allowed}personal deployments.')
 
 
-def check_branch(branch: Optional[str], deployment: str) -> None:
+def check_branch(branch: str | None, deployment: str) -> None:
     deployment = config.Deployment(deployment)
     if deployment.is_shared:
         deployments = config.shared_deployments_for_branch(branch)
@@ -45,21 +44,48 @@ def check_branch(branch: Optional[str], deployment: str) -> None:
             raise BranchDeploymentMismatch(branch, deployment, deployments)
 
 
-def gitlab_branch() -> Optional[str]:
+def target_branch() -> str | None:
     """
-    Return the current branch if we're on GitLab, else `None`
+    In a local clone, this method returns the name of the branch currently
+    checked out or ``None``, if no branch is checked out (detached HEAD). On
+    GitHub and GitLab this returns the name of either the branch currently being
+    built or, if the build is for a feature branch involving a pull request, the
+    base branch of that feature branch.
     """
-    # Gitlab checks out a specific commit which results in a detached HEAD
-    # (no active branch). Extract the branch name from the runner environment.
-    return os.environ.get('CI_COMMIT_REF_NAME')
+    # The comments on the environment variable names below are taken from
+    #
+    # https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/store-information-in-variables
+    #
+    # and
+    #
+    # https://docs.gitlab.com/ee/ci/variables/predefined_variables.html
+    #
+    for variable in [
+        # The name of the base ref or target branch of the pull request in a
+        # workflow run. This is only set when the event that triggers a workflow
+        # run is either pull_request or pull_request_target. For example, main.
+        #
+        'GITHUB_BASE_REF',
 
+        # The short ref name of the branch or tag that triggered the workflow
+        # run. This value matches the branch or tag name shown on GitHub. For
+        # example, feature-branch-1. For pull requests, the format is
+        # <pr_number>/merge.
+        #
+        'GITHUB_REF_NAME',
 
-def local_branch() -> Optional[str]:
-    """
-    Return `None` if detached head, else the current branch
-    """
+        # The branch or tag name for which project is built.
+        #
+        'CI_COMMIT_REF_NAME',
+    ]:
+        try:
+            branch = os.environ[variable]
+        except KeyError:
+            pass
+        else:
+            return branch
     repo = git.Repo(config.project_root)
-    return None if repo.head.is_detached else repo.active_branch.name
+    return None if repo.head.is_detached else repo.head.reference.name
 
 
 def main(argv):
@@ -71,7 +97,7 @@ def main(argv):
                         help='Print the deployment matching the current branch or exit '
                              'with non-zero status code if no such deployment exists.')
     args = parser.parse_args(argv)
-    branch = gitlab_branch() or local_branch()
+    branch = target_branch()
     if args.print:
         deployment = default_deployment(branch)
         if deployment is None:

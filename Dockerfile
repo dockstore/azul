@@ -64,15 +64,15 @@ RUN --mount=type=bind,source=fips_enabled,target=${azul_proc_sys_crypto}/fips_en
 #
 RUN mkdir /build
 WORKDIR /build
-ENV project_root=/build
 
 # Install Azul dependencies
 #
 ARG PIP_DISABLE_PIP_VERSION_CHECK
 ENV PIP_DISABLE_PIP_VERSION_CHECK=${PIP_DISABLE_PIP_VERSION_CHECK}
-COPY requirements*.txt common.mk Makefile ./
+COPY environment requirements*.txt common.mk Makefile ./
 ARG make_target
-RUN make virtualenv \
+RUN source environment \
+    && make virtualenv \
     && source .venv/bin/activate \
     && make $make_target \
     && rm requirements*.txt common.mk Makefile
