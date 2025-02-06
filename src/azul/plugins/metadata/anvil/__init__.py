@@ -339,9 +339,7 @@ class Plugin(MetadataPlugin[AnvilBundle]):
         else:
             return super().verbatim_pfb_entity_id(replica)
 
-    def verbatim_pfb_schema(self,
-                            replicas: list[JSON]
-                            ) -> list[JSON]:
+    def verbatim_pfb_schema(self, replicas: list[JSON]) -> list[JSON]:
         table_schemas_by_name = {
             schema['name']: schema
             for schema in anvil_schema['tables']
