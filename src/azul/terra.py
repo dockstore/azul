@@ -664,7 +664,7 @@ class TDRClient(SAMClient):
         body = self._retrieve_source(source)
         try:
             duos_id = json_str(json_dict(body['duosFirecloudGroup'])['duosId'])
-        except (KeyError, TypeError):
+        except (KeyError, AssertionError):
             log.warning('No DUOS ID available for %r', source.spec)
             return None, None
         else:
