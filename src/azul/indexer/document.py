@@ -19,7 +19,6 @@ from typing import (
     Generic,
     Self,
     Sequence,
-    Type,
     TypeVar,
     cast,
     get_args,
@@ -648,7 +647,7 @@ class FieldType(Generic[N, T], metaclass=ABCMeta):
     es_sort_mode: str = 'min'
     allow_sorting_by_empty_lists: bool = True
 
-    def __init__(self, native_type: Type[N], translated_type: Type[T]):
+    def __init__(self, native_type: type[N], translated_type: type[T]):
         self.native_type = native_type
         self.translated_type = translated_type
 
@@ -735,7 +734,7 @@ class FieldType(Generic[N, T], metaclass=ABCMeta):
 class PassThrough(Generic[T], FieldType[T, T]):
     allow_sorting_by_empty_lists = False
 
-    def __init__(self, translated_type: Type[T], *, es_type: str | None):
+    def __init__(self, translated_type: type[T], *, es_type: str | None):
         super().__init__(translated_type, translated_type)
         self._es_type = es_type
 
@@ -798,7 +797,7 @@ pass_thru_bool = PassThrough(bool, es_type='boolean')
 
 class Nullable(FieldType[N | None, T]):
 
-    def __init__(self, native_type: Type[N], translated_type: Type[T]) -> None:
+    def __init__(self, native_type: type[N], translated_type: type[T]) -> None:
         super().__init__(native_type | None, translated_type)
 
     @property
@@ -869,7 +868,7 @@ class NullableNumber(Generic[U], NullableScalar[U, JSONNumber]):
     null_value = sys.maxsize - 1023
     assert null_value == int(float(null_value))
 
-    def __init__(self, native_type: Type[U], es_type: str) -> None:
+    def __init__(self, native_type: type[U], es_type: str) -> None:
         assert issubclass(native_type, get_args(JSONNumber))
         super().__init__(native_type, JSONNumber)
         self._es_type = es_type
