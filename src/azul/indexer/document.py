@@ -17,12 +17,10 @@ import sys
 from typing import (
     ClassVar,
     Generic,
-    Optional,
     Self,
     Sequence,
     Type,
     TypeVar,
-    Union,
     cast,
     get_args,
 )
@@ -480,7 +478,7 @@ class DocumentCoordinates(Generic[E], metaclass=ABCMeta):
         raise NotImplementedError
 
     def with_catalog(self,
-                     catalog: Optional[CatalogName]
+                     catalog: CatalogName | None
                      ) -> 'DocumentCoordinates[CataloguedEntityReference]':
         """
         Return coordinates for the given catalog. Only works for instances that
@@ -656,7 +654,7 @@ class FieldType(Generic[N, T], metaclass=ABCMeta):
 
     @property
     @abstractmethod
-    def es_type(self) -> Optional[str]:
+    def es_type(self) -> str | None:
         raise NotImplementedError
 
     @abstractmethod
@@ -737,7 +735,7 @@ class FieldType(Generic[N, T], metaclass=ABCMeta):
 class PassThrough(Generic[T], FieldType[T, T]):
     allow_sorting_by_empty_lists = False
 
-    def __init__(self, translated_type: Type[T], *, es_type: Optional[str]):
+    def __init__(self, translated_type: Type[T], *, es_type: str | None):
         super().__init__(translated_type, translated_type)
         self._es_type = es_type
 
@@ -798,10 +796,10 @@ pass_thru_float = NumericPassThrough(float, es_type='double')
 pass_thru_bool = PassThrough(bool, es_type='boolean')
 
 
-class Nullable(FieldType[Optional[N], T]):
+class Nullable(FieldType[N | None, T]):
 
     def __init__(self, native_type: Type[N], translated_type: Type[T]) -> None:
-        super().__init__(Optional[native_type], translated_type)
+        super().__init__(native_type | None, translated_type)
 
     @property
     def optional_type(self):
@@ -846,10 +844,10 @@ class NullableString(Nullable[str, str]):
     def __init__(self):
         super().__init__(str, str)
 
-    def to_index(self, value: Optional[str]) -> str:
+    def to_index(self, value: str | None) -> str:
         return self.null_string if value is None else value
 
-    def from_index(self, value: str) -> Optional[str]:
+    def from_index(self, value: str) -> str | None:
         return None if value == self.null_string else value
 
 
@@ -859,9 +857,9 @@ null_str = NullableString()
 # in its index, JSON does not. Since all payloads to and from Elasticsearch are
 # serialized as JSON we have to be prepared to get 1 back when we write 1.0.
 
-JSONNumber = Union[int, float]
+JSONNumber = int | float
 
-U = TypeVar('U', bound=Union[bool, int, float])
+U = TypeVar('U', bound=bool | int | float)
 
 
 class NullableNumber(Generic[U], NullableScalar[U, JSONNumber]):
@@ -877,17 +875,17 @@ class NullableNumber(Generic[U], NullableScalar[U, JSONNumber]):
         self._es_type = es_type
 
     @property
-    def es_type(self) -> Optional[str]:
+    def es_type(self) -> str | None:
         return self._es_type
 
-    def to_index(self, value: Optional[U]) -> JSONNumber:
+    def to_index(self, value: U | None) -> JSONNumber:
         if value is None:
             return self.null_value
         else:
             assert value < self.null_value, (value, self.null_value)
             return value
 
-    def from_index(self, value: JSONNumber) -> Optional[U]:
+    def from_index(self, value: JSONNumber) -> U | None:
         if value == self.null_value:
             return None
         else:
@@ -933,11 +931,11 @@ class NullableBool(NullableNumber[bool]):
     def __init__(self):
         super().__init__(bool, 'boolean')
 
-    def to_index(self, value: Optional[bool]) -> JSONNumber:
+    def to_index(self, value: bool | None) -> JSONNumber:
         value = {False: 0, True: 1, None: None}[value]
         return super().to_index(value)
 
-    def from_index(self, value: JSONNumber) -> Optional[bool]:
+    def from_index(self, value: JSONNumber) -> bool | None:
         value = super().from_index(value)
         return {0: False, 1: True, None: None}[value]
 
@@ -953,14 +951,14 @@ class NullableDateTime(Nullable[str, str]):
     es_type = 'date'
     null = format_dcp2_datetime(datetime(9999, 1, 1, tzinfo=timezone.utc))
 
-    def to_index(self, value: Optional[str]) -> str:
+    def to_index(self, value: str | None) -> str:
         if value is None:
             return self.null
         else:
             parse_dcp2_datetime(value)
             return value
 
-    def from_index(self, value: str) -> Optional[str]:
+    def from_index(self, value: str) -> str | None:
         if value == self.null:
             return None
         else:
@@ -1010,7 +1008,7 @@ class ClosedRange(Generic[P], FieldType[Range[P], JSON]):
         self.ends_type = ends_type
 
     @property
-    def es_type(self) -> Optional[str]:
+    def es_type(self) -> str | None:
         return None
 
     def to_index(self, value: Range[P]) -> JSON:
@@ -1050,10 +1048,10 @@ class ClosedRange(Generic[P], FieldType[Range[P], JSON]):
         return result
 
 
-FieldTypes4 = Union[Mapping[str, FieldType], Sequence[FieldType], FieldType]
-FieldTypes3 = Union[Mapping[str, FieldTypes4], Sequence[FieldType], FieldType]
-FieldTypes2 = Union[Mapping[str, FieldTypes3], Sequence[FieldType], FieldType]
-FieldTypes1 = Union[Mapping[str, FieldTypes2], Sequence[FieldType], FieldType]
+FieldTypes4 = Mapping[str, FieldType] | Sequence[FieldType] | FieldType
+FieldTypes3 = Mapping[str, FieldTypes4] | Sequence[FieldType] | FieldType
+FieldTypes2 = Mapping[str, FieldTypes3] | Sequence[FieldType] | FieldType
+FieldTypes1 = Mapping[str, FieldTypes2] | Sequence[FieldType] | FieldType
 FieldTypes = Mapping[str, FieldTypes1]
 CataloguedFieldTypes = Mapping[CatalogName, FieldTypes]
 
@@ -1084,7 +1082,7 @@ class Document(Generic[C], metaclass=ABCMeta):
 
     coordinates: C
 
-    version: Optional[InternalVersion]
+    version: InternalVersion | None
 
     # In the index, the `contents` property is always present and never null in
     # documents. In instances of the Aggregate subclass, this attribute is None
@@ -1092,7 +1090,7 @@ class Document(Generic[C], metaclass=ABCMeta):
     # index while intentionally excluding that property for efficiency. In
     # instances of the Contribution subclass, this attribute is never None.
     #
-    contents: Optional[JSON]
+    contents: JSON | None
 
     @property
     def entity(self) -> EntityReference:
@@ -1126,7 +1124,7 @@ class Document(Generic[C], metaclass=ABCMeta):
     @classmethod
     def translate_fields(cls,
                          doc: AnyJSON,
-                         field_types: Union[FieldType, FieldTypes],
+                         field_types: FieldType | FieldTypes,
                          *,
                          forward: bool,
                          allowed_paths: list[FieldPath] | None = None,
@@ -1239,7 +1237,7 @@ class Document(Generic[C], metaclass=ABCMeta):
                   *,
                   coordinates: C,
                   document: JSON,
-                  version: Optional[InternalVersion],
+                  version: InternalVersion | None,
                   **kwargs,
                   ) -> Self:
         # noinspection PyArgumentList
@@ -1265,7 +1263,7 @@ class Document(Generic[C], metaclass=ABCMeta):
                    field_types: CataloguedFieldTypes,
                    hit: JSON,
                    *,
-                   coordinates: Optional[DocumentCoordinates[CataloguedEntityReference]] = None
+                   coordinates: DocumentCoordinates[CataloguedEntityReference] | None = None
                    ) -> Self:
         if coordinates is None:
             coordinates = DocumentCoordinates.from_hit(hit)
@@ -1286,7 +1284,7 @@ class Document(Generic[C], metaclass=ABCMeta):
                              version=version)
 
     def to_index(self,
-                 catalog: Optional[CatalogName],
+                 catalog: CatalogName | None,
                  field_types: CataloguedFieldTypes
                  ) -> JSON:
         """
@@ -1368,7 +1366,7 @@ class Contribution(Document[ContributionCoordinates[E]]):
                   *,
                   coordinates: C,
                   document: JSON,
-                  version: Optional[InternalVersion],
+                  version: InternalVersion | None,
                   **kwargs
                   ) -> Self:
         self = super().from_json(coordinates=coordinates,
@@ -1406,7 +1404,7 @@ class Contribution(Document[ContributionCoordinates[E]]):
 @attr.s(frozen=False, kw_only=True, auto_attribs=True)
 class Aggregate(Document[AggregateCoordinates]):
     sources: set[DocumentSource]
-    bundles: Optional[list[BundleFQIDJSON]]
+    bundles: list[BundleFQIDJSON] | None
     num_contributions: int
 
     def __attrs_post_init__(self):
@@ -1433,7 +1431,7 @@ class Aggregate(Document[AggregateCoordinates]):
                   *,
                   coordinates: C,
                   document: JSON,
-                  version: Optional[InternalVersion],
+                  version: InternalVersion | None,
                   **kwargs
                   ) -> Self:
         self = super().from_json(coordinates=coordinates,
