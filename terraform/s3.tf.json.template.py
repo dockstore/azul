@@ -14,7 +14,7 @@ from azul.terraform import (
 tf_config = {
     'data': {
         'aws_s3_bucket': {
-            'logs': {
+            config.logs_term: {
                 'bucket': aws.logs_bucket,
             }
         },
@@ -27,8 +27,8 @@ tf_config = {
             }
         },
         'aws_s3_bucket_lifecycle_configuration': {
-            'storage': {
-                'bucket': '${aws_s3_bucket.storage.id}',
+            config.storage_term: {
+                'bucket': '${aws_s3_bucket.%s.id}' % config.storage_term,
                 'rule': {
                     'id': 'manifests',
                     'status': 'Enabled',
@@ -45,12 +45,12 @@ tf_config = {
             }
         },
         'aws_s3_bucket_logging': {
-            'storage': {
-                'bucket': '${aws_s3_bucket.storage.id}',
-                'target_bucket': '${data.aws_s3_bucket.logs.id}',
+            config.storage_term: {
+                'bucket': '${aws_s3_bucket.%s.id}' % config.storage_term,
+                'target_bucket': '${data.aws_s3_bucket.%s.id}' % config.logs_term,
                 # Other S3 log deliveries, like ELB, implicitly put a slash
                 # after the prefix. S3 doesn't, so we add one explicitly.
-                'target_prefix': config.s3_access_log_path_prefix('storage') + '/'
+                'target_prefix': config.s3_access_log_path_prefix(config.storage_term) + '/'
             }
         }
     }
