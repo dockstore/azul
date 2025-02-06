@@ -34,7 +34,7 @@ from azul.http import (
     LimitedTimeoutException,
     TooManyRequestsException,
 )
-from azul.indexer.document import (
+from azul.indexer.field import (
     FieldType,
     pass_thru_bool,
 )

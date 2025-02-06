@@ -37,7 +37,7 @@ from azul import (
     config,
     reject,
 )
-from azul.indexer.document import (
+from azul.indexer.field import (
     ClosedRange,
     FieldTypes,
     Nested,

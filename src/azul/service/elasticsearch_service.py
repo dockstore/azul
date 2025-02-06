@@ -56,10 +56,12 @@ from azul.es import (
 from azul.indexer.document import (
     DocumentType,
     IndexName,
-    Nested,
 )
 from azul.indexer.document_service import (
     DocumentService,
+)
+from azul.indexer.field import (
+    Nested,
 )
 from azul.plugins import (
     DocumentSlice,

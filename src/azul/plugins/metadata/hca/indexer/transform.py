@@ -61,17 +61,19 @@ from azul.indexer.aggregate import (
     SimpleAggregator,
 )
 from azul.indexer.document import (
-    ClosedRange,
     Contribution,
     EntityID,
     EntityReference,
     EntityType,
+    Replica,
+)
+from azul.indexer.field import (
+    ClosedRange,
     FieldType,
     FieldTypes,
     Nested,
     NullableString,
     PassThrough,
-    Replica,
     null_bool,
     null_datetime,
     null_int,

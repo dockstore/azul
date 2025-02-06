@@ -105,6 +105,8 @@ from azul.deployment import (
 from azul.indexer.document import (
     DocumentType,
     FieldPath,
+)
+from azul.indexer.field import (
     FieldTypes,
     null_str,
 )

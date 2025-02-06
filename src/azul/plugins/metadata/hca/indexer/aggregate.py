@@ -37,6 +37,8 @@ from azul.indexer.aggregate import (
 )
 from azul.indexer.document import (
     Aggregate,
+)
+from azul.indexer.field import (
     FieldTypes,
     null_int,
 )

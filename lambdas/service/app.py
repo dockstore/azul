@@ -70,6 +70,8 @@ from azul.health import (
 )
 from azul.indexer.document import (
     EntityType,
+)
+from azul.indexer.field import (
     FieldType,
     Nested,
 )

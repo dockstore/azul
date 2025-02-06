@@ -19,9 +19,11 @@ from azul.collections import (
 )
 from azul.indexer.document import (
     Aggregate,
-    CataloguedFieldTypes,
     Contribution,
     Document,
+)
+from azul.indexer.field import (
+    CataloguedFieldTypes,
     FieldType,
     FieldTypes,
     Nested,
