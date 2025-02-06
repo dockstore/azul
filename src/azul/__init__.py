@@ -1782,7 +1782,7 @@ class Config:
 
     waf_rate_rule_limit = 1000
 
-    assert 100 <= waf_rate_rule_limit <= 2_000_000_000  # mandated by AWS
+    assert 10 <= waf_rate_rule_limit <= 2_000_000_000  # mandated by AWS
 
     @property
     def waf_bot_control(self) -> bool:
