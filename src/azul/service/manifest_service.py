@@ -2056,6 +2056,9 @@ class VerbatimManifestGenerator(FileBasedManifestGenerator, metaclass=ABCMeta):
                 document_id
                 for entity_type in self.hot_entity_types
                 for inner_entity in getitem(hit['contents'], entity_type, ())
+                # `document_id` is a scalar (string) when the inner and outer
+                # entity types match, and an array otherwise. `None` should not
+                # occur.
                 for document_id in always_iterable(inner_entity['document_id'])
             ]
             yield self.ReplicaKeys(hub_id=hit['entity_id'],
