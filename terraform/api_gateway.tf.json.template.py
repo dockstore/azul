@@ -303,10 +303,11 @@ emit_tf({
                             },
                             *[
                                 {
-                                    'name': name,
+                                    'name': rate_limit.name,
                                     'statement': {
                                         'rate_based_statement': {
-                                            'limit': limit,
+                                            'limit': rate_limit.value,
+                                            'evaluation_window_sec': rate_limit.period,
                                             'aggregate_key_type': 'IP'
                                         }
                                     },
@@ -317,14 +318,14 @@ emit_tf({
                                                 'response_header': [
                                                     {
                                                         'name': 'Retry-After',
-                                                        'value': str(config.waf_rate_rule_retry_after)
+                                                        'value': str(rate_limit.retry_after)
                                                     }
                                                 ]
                                             }
                                         }
                                     },
                                     'visibility_config': {
-                                        'metric_name': name,
+                                        'metric_name': rate_limit.name,
                                         'sampled_requests_enabled': True,
                                         'cloudwatch_metrics_enabled': True
                                     }
@@ -337,9 +338,9 @@ emit_tf({
                                 # threshold size since once a rate rule is
                                 # tripped, it will prevent evaluation of any
                                 # following rules.
-                                for name, limit in [
-                                    (config.waf_rate_alarm_rule_name, config.waf_rate_rule_limit * 2),
-                                    (config.waf_rate_rule_name, config.waf_rate_rule_limit),
+                                for rate_limit in [
+                                    config.waf_rate_limit_alarm,
+                                    config.waf_rate_limit,
                                 ]
                             ],
                             {

@@ -1776,13 +1776,38 @@ class Config:
 
     waf_rate_alarm_rule_name = 'rate_limit_alarm'
 
-    waf_rate_rule_period = 300  # seconds; this value is fixed by AWS
+    @frozen(kw_only=True)
+    class RateLimit:
+        #: Name of the WAF rule
+        name: str
 
-    waf_rate_rule_retry_after = 30  # seconds
+        #: Number of requests per evaluation window
+        value: int
 
-    waf_rate_rule_limit = 1000
+        #: WAF rate limit evaluation window in seconds
+        period: int
 
-    assert 10 <= waf_rate_rule_limit <= 2_000_000_000  # mandated by AWS
+        #: Value of the Retry-After response header in seconds
+        retry_after: int
+
+        def __attrs_post_init__(self):
+            # Allowed range of the rate limit mandated by AWS
+            assert 10 <= self.value <= 2_000_000_000, R(
+                'Rate limit out of range', self)
+            # Valid values for the evaluation window mandated by AWS
+            assert self.period in [60, 120, 300, 600], R(
+                'Invalid period', self)
+
+    #: The rate limit per IP before WAF starts rejecting requests
+    waf_rate_limit = RateLimit(name='rate_limit',
+                               value=1000,
+                               period=5 * 60,
+                               retry_after=30)
+
+    #: The rate limit per IP before a CloudWatch alarm is raised
+    waf_rate_limit_alarm = evolve(waf_rate_limit,
+                                  name='rate_limit_alarm',
+                                  value=waf_rate_limit.value * 2)
 
     @property
     def waf_bot_control(self) -> bool:
