@@ -50,7 +50,29 @@ emit_tf(
                         'fifo_queue': True,
                         'name': config.tallies_queue.to_fail.name,
                         'message_retention_seconds': 14 * 24 * 60 * 60,
-                    }
+                    },
+                    **(
+                        {
+                            config.mirror_queue.unqual_name: {
+                                'name': config.mirror_queue.name,
+                                'fifo_queue': True,
+                                'message_retention_seconds': 7 * 24 * 60 * 60,
+                                'visibility_timeout_seconds': config.mirror_lambda_timeout() + 10,
+                                'redrive_policy': json.dumps({
+                                    'maxReceiveCount': 1,
+                                    'deadLetterTargetArn': '${aws_sqs_queue.%s.arn}'
+                                                           % config.mirror_queue.to_fail.unqual_name
+                                })
+                            },
+                            config.mirror_queue.to_fail.unqual_name: {
+                                'name': config.mirror_queue.to_fail.name,
+                                'fifo_queue': True,
+                                'message_retention_seconds': 14 * 24 * 60 * 60,
+                            }
+                        }
+                        if config.enable_mirroring else
+                        {}
+                    )
                 }
             }
         ]

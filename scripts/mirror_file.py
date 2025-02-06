@@ -1,5 +1,5 @@
 """
-Copy a file in an HCA catalog from TDR to the current deployment's storage
+Copy a file in an HCA catalog from TDR to the current deployment's mirroring
 bucket and print a signed URL to the file's destination. Authentication is not
 supported, so the file must be publicly accessible.
 """
@@ -18,6 +18,9 @@ from azul.args import (
 )
 from azul.azulclient import (
     AzulClient,
+)
+from azul.deployment import (
+    aws,
 )
 from azul.drs import (
     AccessMethod,
@@ -77,6 +80,7 @@ def object_key(file: JSON) -> str:
 
 
 def mirror_file(catalog: CatalogName, file_uuid: str, part_size: int) -> str:
+    assert config.enable_mirroring, R('Mirroring must be enabled')
     assert config.is_tdr_enabled(catalog), R('Only TDR catalogs are supported')
     assert config.is_hca_enabled(catalog), R('Only HCA catalogs are supported')
     # https://docs.aws.amazon.com/AmazonS3/latest/userguide/qfacts.html
@@ -85,7 +89,7 @@ def mirror_file(catalog: CatalogName, file_uuid: str, part_size: int) -> str:
     file = get_file(catalog, file_uuid)
     download_url = get_download_url(catalog, file)
     key = object_key(file)
-    storage = StorageService()
+    storage = StorageService(bucket_name=aws.mirror_bucket)
     upload = storage.create_multipart_upload(key, content_type=file['content-type'])
 
     total_size = file['size']

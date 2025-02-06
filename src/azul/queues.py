@@ -426,7 +426,10 @@ class Queues:
                 try:
                     function = functions_by_queue[queue_name]
                 except KeyError:
-                    assert queue_name in config.fail_queue_names
+                    assert queue_name in {
+                        *config.fail_queue_names,
+                        config.mirror_queue.name
+                    }
                 else:
                     if queue_name == config.notifications_queue.name:
                         # Prevent new notifications from being added

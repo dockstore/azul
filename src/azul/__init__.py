@@ -285,6 +285,8 @@ class Config:
 
     storage_term = 'storage'
 
+    mirror_term = 'mirror'
+
     current = Sentinel()
 
     def alb_access_log_path_prefix(self,
@@ -1323,6 +1325,9 @@ class Config:
     def aggregation_lambda_timeout(self, *, retry: bool) -> int:
         return (10 if retry else 1) * 60
 
+    def mirror_lambda_timeout(self) -> int:
+        return 15
+
     service_lambda_timeout = 15 * 60
 
     api_gateway_timeout = 29
@@ -1494,16 +1499,22 @@ class Config:
 
     notifications_queue = Queue('notifications')
     tallies_queue = Queue('tallies', fifo=True)
+    mirror_queue = Queue('mirror', fifo=True)
 
     @property
     def all_queue_names(self) -> list[str]:
-        return self.indexer_queue_names + self.fail_queue_names
+        return [
+            *self.indexer_queue_names,
+            *self.fail_queue_names,
+            *([self.mirror_queue.name] if self.enable_mirroring else []),
+        ]
 
     @property
     def fail_queue_names(self) -> list[str]:
         return [
             self.tallies_queue.to_fail.name,
             self.notifications_queue.to_fail.name,
+            *([self.mirror_queue.to_fail.name] if self.enable_mirroring else []),
         ]
 
     @property
@@ -1516,7 +1527,10 @@ class Config:
 
     @property
     def work_queue_names(self) -> list[str]:
-        return self.indexer_queue_names
+        return [
+            *self.indexer_queue_names,
+            *([self.mirror_queue.name] if self.enable_mirroring else []),
+        ]
 
     url_shortener_whitelist = [
         r'([^.]+\.)*humancellatlas\.org',
@@ -1750,6 +1764,10 @@ class Config:
     @property
     def it_flags(self) -> set[str]:
         return set(self.environ.get('azul_it_flags', '').split())
+
+    @property
+    def enable_mirroring(self) -> bool:
+        return self._boolean(self.environ['AZUL_MIRRORING_ENABLED'])
 
 
 config: Config = Config()  # yes, the type hint does help PyCharm
