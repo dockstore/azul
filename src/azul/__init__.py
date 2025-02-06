@@ -1482,7 +1482,7 @@ class Config:
 
     @property
     def all_queue_names(self) -> list[str]:
-        return self.work_queue_names + self.fail_queue_names
+        return self.indexer_queue_names + self.fail_queue_names
 
     @property
     def fail_queue_names(self) -> list[str]:
@@ -1492,7 +1492,7 @@ class Config:
         ]
 
     @property
-    def work_queue_names(self) -> list[str]:
+    def indexer_queue_names(self) -> list[str]:
         return [
             queue_name(retry=retry)
             for queue_name in (self.notifications_queue_name, self.tallies_queue_name)
