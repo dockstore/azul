@@ -13,22 +13,22 @@ emit_tf(
             {
                 'aws_sqs_queue': {
                     **{
-                        config.unqual_notifications_queue_name(retry=retry): {
-                            'name': config.notifications_queue_name(retry=retry),
+                        config.notifications_queue.derive(retry=retry).unqual_name: {
+                            'name': config.notifications_queue.derive(retry=retry).name,
                             'visibility_timeout_seconds': config.contribution_lambda_timeout(retry=retry) + 10,
                             'message_retention_seconds': 7 * 24 * 60 * 60,
                             'redrive_policy': json.dumps({
                                 'maxReceiveCount': 9 if retry else 1,
                                 'deadLetterTargetArn': '${aws_sqs_queue.%s.arn}'
-                                                       % config.unqual_notifications_queue_name(retry=not retry,
-                                                                                                fail=retry)
+                                                       % config.notifications_queue.derive(retry=not retry,
+                                                                                           fail=retry).unqual_name
                             })
                         }
                         for retry in (False, True)
                     },
                     **{
-                        config.unqual_tallies_queue_name(retry=retry): {
-                            'name': config.tallies_queue_name(retry=retry),
+                        config.tallies_queue.derive(retry=retry).unqual_name: {
+                            'name': config.tallies_queue.derive(retry=retry).name,
                             'fifo_queue': True,
                             'delay_seconds': config.es_refresh_interval + 9,
                             'visibility_timeout_seconds': config.aggregation_lambda_timeout(retry=retry) + 10,
@@ -36,18 +36,19 @@ emit_tf(
                             'redrive_policy': json.dumps({
                                 'maxReceiveCount': 9 if retry else 1,
                                 'deadLetterTargetArn': '${aws_sqs_queue.%s.arn}'
-                                                       % config.unqual_tallies_queue_name(retry=not retry, fail=retry)
+                                                       % config.tallies_queue.derive(retry=not retry,
+                                                                                     fail=retry).unqual_name
                             })
                         }
                         for retry in (False, True)
                     },
-                    config.unqual_notifications_queue_name(fail=True): {
-                        'name': config.notifications_queue_name(fail=True),
+                    config.notifications_queue.to_fail.unqual_name: {
+                        'name': config.notifications_queue.to_fail.name,
                         'message_retention_seconds': 14 * 24 * 60 * 60,
                     },
-                    config.unqual_tallies_queue_name(fail=True): {
+                    config.tallies_queue.to_fail.unqual_name: {
                         'fifo_queue': True,
-                        'name': config.tallies_queue_name(fail=True),
+                        'name': config.tallies_queue.to_fail.name,
                         'message_retention_seconds': 14 * 24 * 60 * 60,
                     }
                 }

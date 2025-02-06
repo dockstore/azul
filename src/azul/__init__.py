@@ -1457,28 +1457,43 @@ class Config:
     def bigquery_batch_mode(self) -> bool:
         return self._boolean(self.environ['AZUL_BIGQUERY_BATCH_MODE'])
 
-    def notifications_queue_name(self, *, retry=False, fail=False) -> str:
-        name = self.unqual_notifications_queue_name(retry=retry, fail=fail)
-        return self.qualified_resource_name(name)
+    @attr.s(frozen=True, kw_only=False, auto_attribs=True)
+    class Queue:
+        basename: str
+        retry: bool = attr.ib(default=False, kw_only=True)
+        fail: bool = attr.ib(default=False, kw_only=True)
+        fifo: bool = attr.ib(default=False, kw_only=True)
 
-    def unqual_notifications_queue_name(self, *, retry=False, fail=False):
-        return self._unqual_queue_name('notifications', retry, fail)
+        def __attrs_post_init__(self):
+            assert not (self.retry and self.fail), self
 
-    def tallies_queue_name(self, *, retry=False, fail=False) -> str:
-        name = self.unqual_tallies_queue_name(retry=retry, fail=fail)
-        return self.qualified_resource_name(name, suffix='.fifo')
+        @property
+        def unqual_name(self) -> str:
+            parts = [self.basename]
+            if self.retry:
+                parts.append('retry')
+            elif self.fail:
+                parts.append('fail')
+            return '_'.join(parts)
 
-    def unqual_tallies_queue_name(self, *, retry=False, fail=False):
-        return self._unqual_queue_name('tallies', retry, fail)
+        @property
+        def name(self) -> str:
+            return config.qualified_resource_name(self.unqual_name,
+                                                  **({'suffix': '.fifo'} if self.fifo else {}))
 
-    def _unqual_queue_name(self, basename: str, retry: bool, fail: bool) -> str:
-        parts = [basename]
-        if fail:
-            assert not retry
-            parts.append('fail')
-        elif retry:
-            parts.append('retry')
-        return '_'.join(parts)
+        @property
+        def to_retry(self) -> Self:
+            return self.derive(retry=True)
+
+        @property
+        def to_fail(self) -> Self:
+            return self.derive(fail=True)
+
+        def derive(self, *, retry: bool = False, fail: bool = False) -> Self:
+            return attr.evolve(self, retry=retry, fail=fail)
+
+    notifications_queue = Queue('notifications')
+    tallies_queue = Queue('tallies', fifo=True)
 
     @property
     def all_queue_names(self) -> list[str]:
@@ -1487,17 +1502,21 @@ class Config:
     @property
     def fail_queue_names(self) -> list[str]:
         return [
-            self.tallies_queue_name(fail=True),
-            self.notifications_queue_name(fail=True)
+            self.tallies_queue.to_fail.name,
+            self.notifications_queue.to_fail.name,
         ]
 
     @property
     def indexer_queue_names(self) -> list[str]:
         return [
-            queue_name(retry=retry)
-            for queue_name in (self.notifications_queue_name, self.tallies_queue_name)
+            q.derive(retry=retry).name
+            for q in [self.notifications_queue, self.tallies_queue]
             for retry in (False, True)
         ]
+
+    @property
+    def work_queue_names(self) -> list[str]:
+        return self.indexer_queue_names
 
     url_shortener_whitelist = [
         r'([^.]+\.)*humancellatlas\.org',

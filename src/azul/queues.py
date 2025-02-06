@@ -428,7 +428,7 @@ class Queues:
                 except KeyError:
                     assert queue_name in config.fail_queue_names
                 else:
-                    if queue_name == config.notifications_queue_name():
+                    if queue_name == config.notifications_queue.name:
                         # Prevent new notifications from being added
                         submit(self._manage_lambda, config.indexer_name, enable)
                     submit(self._manage_sqs_push, function, queue, enable)

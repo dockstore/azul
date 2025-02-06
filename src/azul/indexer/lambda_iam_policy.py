@@ -51,7 +51,7 @@ policy = {
             ],
             "Resource": [
                 f"arn:aws:sqs:{aws.region_name}:{aws.account}:{name}"
-                for name in config.indexer_queue_names
+                for name in config.work_queue_names
             ]
         },
         {

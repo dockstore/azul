@@ -240,7 +240,7 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
 
     @cached_property
     def notifications_queue(self):
-        return self.sqs.get_queue_by_name(QueueName=config.notifications_queue_name())
+        return self.sqs.get_queue_by_name(QueueName=config.notifications_queue.name)
 
     def remote_reindex(self,
                        catalog: CatalogName,
