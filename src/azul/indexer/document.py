@@ -35,9 +35,8 @@ from more_itertools import (
 
 from azul import (
     CatalogName,
+    R,
     config,
-    reject,
-    require,
 )
 from azul.enums import (
     auto,
@@ -163,7 +162,7 @@ class IndexName:
         ...           doc_type=DocumentType.contribution)
         Traceback (most recent call last):
         ...
-        azul.RequirementError: ('Version must be 2', 1)
+        AssertionError: R('Version must be 2', 1)
 
         >>> IndexName(version=2,
         ...           deployment='dev',
@@ -172,7 +171,7 @@ class IndexName:
         ...           doc_type=DocumentType.contribution)
         Traceback (most recent call last):
         ...
-        azul.RequirementError: ('Catalog name is required', None)
+        AssertionError: R('Catalog name is required', None)
 
         >>> IndexName(version=2,
         ...           deployment='_',
@@ -212,27 +211,27 @@ class IndexName:
         ...               doc_type=DocumentType.replica))
         Traceback (most recent call last):
         ...
-        azul.RequirementError: ('Unexpected replica qualifier', 'foo')
+        AssertionError: R('Unexpected replica qualifier', 'foo')
         """
         config.validate_prefix(self.prefix)
-        require(self.version == 2, 'Version must be 2', self.version)
+        assert self.version == 2, R('Version must be 2', self.version)
         config.validate_deployment_name(self.deployment)
-        require(self.catalog is not None, 'Catalog name is required', self.catalog)
+        assert self.catalog is not None, R('Catalog name is required', self.catalog)
         config.Catalog.validate_name(self.catalog)
         config.validate_qualifier(self.qualifier)
         if self.doc_type is DocumentType.replica:
             # To shorten the string representation of replica index names, we
             # expect the qualifier and document type to be the same string.
-            require(self.qualifier == self.doc_type.value,
-                    'Unexpected replica qualifier', self.qualifier)
+            assert self.qualifier == self.doc_type.value, R(
+                'Unexpected replica qualifier', self.qualifier)
         assert '_' not in self.prefix, self.prefix
         assert '_' not in self.deployment, self.deployment
         assert self.catalog is None or '_' not in self.catalog, self.catalog
 
     def validate(self):
-        require(self.deployment == config.deployment_stage,
-                'Index name does not use current deployment',
-                self, config.deployment_stage)
+        assert self.deployment == config.deployment_stage, R(
+            'Index name does not use current deployment',
+            self, config.deployment_stage)
 
     @classmethod
     def create(cls,
@@ -255,17 +254,17 @@ class IndexName:
         >>> IndexName.parse('azul_dev')
         Traceback (most recent call last):
         ...
-        azul.RequirementError: ('Too few index name elements', ['azul', 'dev'])
+        AssertionError: R('Too few index name elements', ['azul', 'dev'])
 
         >>> IndexName.parse('azul_foo_dev')
         Traceback (most recent call last):
         ...
-        azul.RequirementError: Version is required
+        AssertionError: R('Version is required')
 
         >>> IndexName.parse('azl_v2_dev_main_foo')
         Traceback (most recent call last):
         ...
-        azul.RequirementError: ('Unexpected prefix', 'azul', 'azl')
+        AssertionError: R('Unexpected prefix', 'azul', 'azl')
 
         >>> IndexName.parse('azul_v2_dev_main_foo')
         ... # doctest: +NORMALIZE_WHITESPACE
@@ -324,17 +323,17 @@ class IndexName:
         >>> IndexName.parse('azul_v3_bla')
         Traceback (most recent call last):
         ...
-        azul.RequirementError: ('Version must be 2', 3)
+        AssertionError: R('Version must be 2', 3)
         """
         index_name = index_name.split('_')
-        require(len(index_name) > 2, 'Too few index name elements', index_name)
+        assert len(index_name) > 2, R('Too few index name elements', index_name)
         prefix, *index_name = index_name
-        require(prefix == cls.prefix, 'Unexpected prefix', cls.prefix, prefix)
+        assert prefix == cls.prefix, R('Unexpected prefix', cls.prefix, prefix)
         version = cls.index_name_version_re.fullmatch(index_name[0])
-        reject(version is None, 'Version is required')
+        assert version is not None, R('Version is required')
         _, *index_name = index_name
         version = int(version.group(1))
-        require(version == 2, 'Version must be 2', version)
+        assert version == 2, R('Version must be 2', version)
         deployment, catalog, *index_name = index_name
         if index_name[-1] == DocumentType.aggregate.value:
             *index_name, _ = index_name
@@ -406,7 +405,7 @@ class IndexName:
         else:
             assert False, self.doc_type
         assert self.version == 2, self
-        require(self.catalog is not None, self.catalog)
+        assert self.catalog is not None, R('Catalog is required')
         return '_'.join([
             self.prefix,
             f'v{self.version}',
