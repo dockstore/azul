@@ -236,7 +236,7 @@ format: check_venv check_docker
 
 .PHONY: test
 test: check_python
-	coverage run -m unittest discover test --verbose
+	coverage run -m unittest discover --verbose --durations 0 test
 
 .PHONY: test_list
 test_list: check_python
@@ -249,7 +249,7 @@ tag: check_branch
 
 .PHONY: integration_test
 integration_test: check_python check_branch $(project_root)/lambdas/service/.chalice/config.json
-	python -m unittest -v integration_test
+	python -m unittest --verbose --durations 0 integration_test
 
 .PHONY: check_clean
 check_clean: check_env

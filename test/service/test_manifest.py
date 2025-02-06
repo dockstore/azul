@@ -181,6 +181,63 @@ class CannedManifestTestCase(CannedFileTestCase):
             with open(expected, 'w') as f:
                 f.write(actual)
 
+    def _assert_jsonl(self, expected: list[JSON], actual: Response):
+        """
+        Assert that the body of the given response is the expected JSON array,
+        disregarding any row ordering differences.
+
+        :param expected: a list of JSON objects.
+
+        :param actual: an HTTP response containing JSON objects separated by
+                       newlines
+        """
+        manifest = [
+            json.loads(row)
+            for row in actual.content.decode().splitlines()
+        ]
+
+        def sort_key(row: JSON) -> bytes:
+            return json_hash(row).digest()
+
+        manifest.sort(key=sort_key)
+        expected.sort(key=sort_key)
+        # The canned manifests are saved as a JSON array instead of JSON Lines
+        # so that changes to the files are easier to read
+        self.assertEqual(expected, manifest)
+
+    def _assert_pfb(self,
+                    expected_schema: JSON,
+                    expected_entities: JSONs,
+                    actual: Response):
+        """
+        Assert that the body of the given response contains a valid PFB manifest
+        matching the expected schema and content, disregarding differences in
+        the ordering of the PFB entities.
+
+        :param expected_schema: a PFB schema.
+
+        :param expected_entities: a list of PFB entities.
+
+        :param actual: an HTTP response containing a PFB manifest.
+        """
+        manifest = fastavro.reader(BytesIO(actual.content))
+        schema = manifest.writer_schema
+        # The ordering of the entities in the manifest depends on the order of
+        # the replica documents in the index. We haven't figured out how to
+        # ensure that this ordering is reliably deterministic, so we sort to
+        # make the test insensitive to it.
+        # FIXME: Document order of replicas is nondeterministic
+        #        https://github.com/DataBiosphere/azul/issues/6442
+        sort_key = compose_keys(none_safe_tuple_key(),
+                                # This is necessary to stabilize the ordering of
+                                # DUOS replicas, which have the same id as the
+                                # main dataset replica.
+                                lambda entity: (entity['id'], entity['object'].get('datarepo_row_id')))
+        expected_entities = sorted(expected_entities, key=sort_key)
+        entities = sorted(manifest, key=sort_key)
+        self.assertEqual(expected_schema, schema)
+        self.assertEqual(expected_entities, entities)
+
 
 class ManifestTestCase(WebServiceTestCase,
                        StorageServiceTestCase,
@@ -268,61 +325,6 @@ class ManifestTestCase(WebServiceTestCase,
         actual = list(csv.reader(actual, delimiter='\t'))
         actual[1:], expected[1:] = sorted(actual[1:]), sorted(expected[1:])
         self.assertEqual(expected, actual)
-
-    def _assert_jsonl(self, expected: list[JSON], actual: Response):
-        """
-        Assert that the body of the given response is the expected JSON array,
-        disregarding any row ordering differences.
-
-        :param expected: a list of JSON objects.
-
-        :param actual: an HTTP response containing JSON objects separated by
-                       newlines
-        """
-        manifest = [
-            json.loads(row)
-            for row in actual.content.decode().splitlines()
-        ]
-
-        def sort_key(row: JSON) -> bytes:
-            return json_hash(row).digest()
-
-        manifest.sort(key=sort_key)
-        expected.sort(key=sort_key)
-        self.assertEqual(expected, manifest)
-
-    def _assert_pfb(self,
-                    expected_schema: JSON,
-                    expected_entities: JSONs,
-                    actual: Response):
-        """
-        Assert that the body of the given response contains a valid PFB manifest
-        matching the expected schema and content, disregarding differences in
-        the ordering of the PFB entities.
-
-        :param expected_schema: a PFB schema.
-
-        :param expected_entities: a list of PFB entities.
-
-        :param actual: an HTTP response containing a PFB manifest.
-        """
-        manifest = fastavro.reader(BytesIO(actual.content))
-        schema = manifest.writer_schema
-        # The ordering of the entities in the manifest depends on the order of
-        # the replica documents in the index. We haven't figured out how to
-        # ensure that this ordering is reliably deterministic, so we sort to
-        # make the test insensitive to it.
-        # FIXME: Document order of replicas is nondeterministic
-        #        https://github.com/DataBiosphere/azul/issues/6442
-        sort_key = compose_keys(none_safe_tuple_key(),
-                                # This is necessary to stabilize the ordering of
-                                # DUOS replicas, which have the same id as the
-                                # main dataset replica.
-                                lambda entity: (entity['id'], entity['object'].get('datarepo_row_id')))
-        expected_entities = sorted(expected_entities, key=sort_key)
-        entities = sorted(manifest, key=sort_key)
-        self.assertEqual(expected_schema, schema)
-        self.assertEqual(expected_entities, entities)
 
     def _file_url(self, file_id, version):
         return str(self.base_url.set(path='/repository/files/' + file_id,
@@ -1379,36 +1381,19 @@ class TestManifests(DCP1ManifestTestCase):
                         self.assertEqual(expected_cd, actual_cd)
 
     def test_verbatim_jsonl_manifest(self):
-        expected = []
-        for bundle in self.bundles():
-            bundle = self._load_canned_bundle(bundle)
-            expected.append({
-                'type': 'links',
-                'value': bundle.links
-            })
-            for ref in [
-                'cell_suspension/412898c5-5b9b-4907-b07c-e9b89666e204',
-                'project/e8642221-4c2c-4fd7-b926-a68bce363c88',
-                'sequence_file/70d1af4a-82c8-478a-8960-e9028b3616ca',
-                'sequence_file/0c5ac7c0-817e-40d4-b1b1-34c3d5cfecdb',
-                'specimen_from_organism/a21dc760-a500-4236-bcff-da34a0e873d2',
-                'donor_organism/7b07b9d0-cc0e-4098-9f64-f4a569f7d746',
-                'library_preparation_protocol/9c32cf70-3ed7-4720-badc-5ee71e8a38af',
-                'sequencing_protocol/61e629ed-0135-4492-ac8a-5c4ab3ccca8a',
-                'process/771ddaf6-3a4f-4314-97fe-6294ff8e25a4'
-            ]:
-                expected.append({
-                    'type': EntityReference.parse(ref).entity_type,
-                    'value': bundle.metadata[ref],
-                })
-
         response = self._get_manifest(ManifestFormat.verbatim_jsonl, {})
         self.assertEqual(200, response.status_code)
+        path = ['verbatim', 'jsonl', 'hca', 'manifest.json']
+        # FIXME: Some replicas are still missing for HCA
+        #        https://github.com/DataBiosphere/azul/issues/6597
+        expected = self._load_canned_manifest(*path)
         self._assert_jsonl(expected, response)
 
     def test_verbatim_pfb_manifest(self):
         response = self._get_manifest(ManifestFormat.verbatim_pfb, filters={})
         self.assertEqual(200, response.status_code)
+        # FIXME: Some replicas are still missing for HCA
+        #        https://github.com/DataBiosphere/azul/issues/6597
         canned_pfb = self._load_canned_pfb('verbatim', 'pfb', 'hca')
         expected_schema, expected_entities = canned_pfb
         self._assert_pfb(expected_schema, expected_entities, response)
@@ -2147,7 +2132,10 @@ class TestAnvilManifests(AnvilManifestTestCase):
     }
 
     def test_verbatim_jsonl_manifest(self):
-        all_entities, linked_entities = self._canned_entities()
+        base_path = ['verbatim', 'jsonl', 'anvil']
+        linked_rows = self._load_canned_manifest(*base_path, 'linked.json')
+        all_rows = linked_rows + self._load_canned_manifest(*base_path, 'orphans.json')
+
         cases = [
             ({}, True),
             (self.dataset_title_filters, True),
@@ -2159,28 +2147,8 @@ class TestAnvilManifests(AnvilManifestTestCase):
             with self.subTest(filters=filters):
                 response = self._get_manifest(ManifestFormat.verbatim_jsonl, filters=filters)
                 self.assertEqual(200, response.status_code)
-                expected_rows = list(all_entities if expect_orphans else linked_entities)
+                expected_rows = all_rows if expect_orphans else linked_rows
                 self._assert_jsonl(expected_rows, response)
-
-    def _canned_entities(self):
-
-        def hash_entities(entities: dict[EntityReference, JSON]) -> dict[str, JSON]:
-            return {
-                json_hash(contents).digest(): {
-                    'type': ref.entity_type,
-                    'value': contents
-                }
-                for ref, contents in entities.items()
-            }
-
-        linked_entities_by_hash, all_entities_by_hash = {}, {}
-        for bundle_fqid in self.bundles():
-            bundle = self._load_canned_bundle(bundle_fqid)
-            linked_entities_by_hash.update(hash_entities(bundle.entities))
-            all_entities_by_hash.update(hash_entities(bundle.orphans))
-        all_entities_by_hash.update(linked_entities_by_hash)
-
-        return all_entities_by_hash.values(), linked_entities_by_hash.values()
 
     def test_verbatim_pfb_manifest(self):
         canned_pfb = self._load_canned_pfb('verbatim', 'pfb', 'anvil')
