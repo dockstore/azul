@@ -470,6 +470,9 @@ class MetadataPlugin(Plugin[BUNDLE]):
     def manifest_config(self) -> ManifestConfig:
         raise NotImplementedError
 
+    def verbatim_pfb_entity_id(self, replica: JSON) -> str:
+        return replica['entity_id']
+
     def verbatim_pfb_schema(self,
                             replicas: list[JSON]
                             ) -> list[JSON]:

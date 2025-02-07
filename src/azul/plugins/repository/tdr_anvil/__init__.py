@@ -491,7 +491,11 @@ class Plugin(TDRPlugin[TDRAnvilBundle, TDRSourceSpec, TDRSourceRef, TDRAnvilBund
                                             self.datarepo_row_uuid_version)
         assert ref.entity_id == expected_entity_id, (ref, bundle_fqid)
         bundle = TDRAnvilBundle(fqid=bundle_fqid)
-        entity_row = {'duos_id': duos_id, 'description': description}
+        entity_row = {
+            'duos_id': duos_id,
+            'description': description,
+            'dataset_id': row['dataset_id']
+        }
         bundle.add_entity(ref, self._version, entity_row)
         # Classify as orphan to suppress the emission of a contribution
         bundle.add_entity(ref, self._version, dict(row), is_orphan=True)

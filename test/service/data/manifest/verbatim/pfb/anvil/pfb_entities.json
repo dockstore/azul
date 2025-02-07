@@ -91,6 +91,13 @@
                 },
                 {
                     "links": [],
+                    "name": "duos_dataset_registration",
+                    "ontology_reference": "",
+                    "properties": [],
+                    "values": {}
+                },
+                {
+                    "links": [],
                     "name": "non_schema_orphan_table",
                     "ontology_reference": "",
                     "properties": [],
@@ -101,21 +108,13 @@
         "relations": []
     },
     {
-        "id": "2370f948-2783-4eb6-afea-e022897f4dcf",
-        "name": "anvil_dataset",
+        "id": "DUOS-000000",
+        "name": "duos_dataset_registration",
         "object": {
-            "consent_group": null,
-            "data_modality": null,
-            "data_use_permission": null,
-            "datarepo_row_id": null,
-            "dataset_id": null,
+            "dataset_id": "52ee7665-7033-63f2-a8d9-ce8e32666739",
             "description": "Study description from DUOS",
             "duos_id": "DUOS-000000",
-            "owner": null,
-            "principal_investigator": null,
-            "registered_identifier": null,
-            "source_datarepo_row_ids": null,
-            "title": null
+            "version": "2022-06-01T00:00:00.000000Z"
         },
         "relations": []
     },
@@ -282,8 +281,6 @@
             ],
             "datarepo_row_id": "2370f948-2783-4eb6-afea-e022897f4dcf",
             "dataset_id": "52ee7665-7033-63f2-a8d9-ce8e32666739",
-            "description": null,
-            "duos_id": null,
             "owner": [
                 "Debbie Nickerson"
             ],

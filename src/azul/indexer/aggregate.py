@@ -485,7 +485,8 @@ class UniqueValueCountAccumulator(SetAccumulator):
 
 class EntityAggregator(metaclass=ABCMeta):
 
-    def __init__(self, entity_type: EntityType):
+    def __init__(self, outer_entity_type: EntityType, entity_type: EntityType):
+        self.outer_entity_type = outer_entity_type
         self.entity_type = entity_type
 
     def _transform_entity(self, entity: JSON) -> JSON:
@@ -520,8 +521,8 @@ class SimpleAggregator(EntityAggregator):
             if accumulator is not None:
                 result[k] = accumulator.get()
                 if accumulator.dropped > 0:
-                    log.warning('Values were dropped %d times while aggregating %s.%s',
-                                accumulator.dropped, self.entity_type, k)
+                    log.warning('Values were dropped %d times while aggregating %s.%s into %s',
+                                accumulator.dropped, self.entity_type, k, self.outer_entity_type)
         return result
 
     def _accumulate(self,

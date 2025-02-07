@@ -347,7 +347,7 @@ class Config:
         # KMS requires that aliases start with '/alias'
         return 'alias/' + self.qualified_resource_name(self.manifest_kms_key_tf_name)
 
-    audit_log_retention_days = 180  # FedRAMP mandates 90 days
+    audit_log_retention_days = 365
 
     @property
     def es_timeout(self) -> int:
