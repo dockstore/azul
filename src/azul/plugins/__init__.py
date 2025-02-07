@@ -65,6 +65,7 @@ from azul.indexer.transform import (
 from azul.types import (
     JSON,
     MutableJSON,
+    MutableJSONs,
     get_generic_type_params,
 )
 
@@ -473,27 +474,38 @@ class MetadataPlugin(Plugin[BUNDLE]):
     def verbatim_pfb_entity_id(self, replica: JSON) -> str:
         return replica['entity_id']
 
-    def verbatim_pfb_schema(self,
-                            replicas: list[JSON]
-                            ) -> list[JSON]:
+    def verbatim_pfb_schema(self, replicas: list[JSON]) -> list[JSON]:
         """
-        Generate a PFB schema for the verbatim manifest. The default,
-        metadata-agnostic implementation loads all replica documents into memory
-        and dynamically generates a schema based on their observed shapes. This
-        results in inconsistencies in the schema depending on the manifest
-        contents, so subclasses should override this method if their metadata
-        adheres to an authoritative schema that can be known in advance.
+        Generate the azul-specific parts of the PFB schema for the verbatim
+        manifest. The default, metadata-agnostic implementation loads all
+        replica documents into memory and dynamically generates a schema based
+        on their observed shapes. This results in inconsistencies in the schema
+        depending on the manifest contents, so subclasses should override this
+        method if their metadata adheres to an authoritative schema that can be
+        known in advance.
 
         :param replicas: The replica documents to be described by the PFB schema
 
-        :return: a tuple of
-            1. the set of entity types defined by the PFB schema
-            2. a PFB schema describing the provided replicas
+        :return: a list of PFB entity schemas describing the replicas
         """
         from azul.service import (
             avro_pfb,
         )
         return avro_pfb.pfb_schema_from_replicas(replicas)
+
+    def verbatim_pfb_relations(self, replica: JSON) -> list[tuple[str, str]]:
+        """
+        A list of the replicas that the given replica references/depends on,
+        represented as (replica_type, entity_id) pairs.
+        """
+        return []
+
+    def verbatim_pfb_links(self, replica_type: str) -> MutableJSONs:
+        """
+        Express the relationships of the given replica type as PFB links
+        (https://uc-cdis.github.io/pypfb/#link).
+        """
+        return []
 
     @abstractmethod
     def document_slice(self, entity_type: str) -> DocumentSlice | None:

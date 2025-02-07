@@ -15,6 +15,7 @@ from operator import (
 )
 from typing import (
     ClassVar,
+    Mapping,
     MutableSet,
     Self,
 )
@@ -63,6 +64,7 @@ from azul.types import (
     AnyMutableJSON,
     JSON,
     MutableJSON,
+    MutableJSONs,
 )
 
 log = logging.getLogger(__name__)
@@ -261,8 +263,18 @@ class PFBRelation:
         return cls(dst_id=entity.id, dst_name=entity.name)
 
 
-def pfb_metadata_entity(entity_types: Iterable[str],
-                        links: bool = True
+def pfb_links_from_field_types(field_types: FieldTypes) -> MutableJSON:
+    return {
+        entity_type: [] if entity_type == 'files' else [{
+            'multiplicity': 'MANY_TO_MANY',
+            'dst': 'files',
+            'name': 'files'
+        }]
+        for entity_type in field_types
+    }
+
+
+def pfb_metadata_entity(links_by_entity_type: Mapping[str, MutableJSONs],
                         ) -> MutableJSON:
     """
     The Metadata entity encodes the possible relationships between tables.
@@ -278,13 +290,10 @@ def pfb_metadata_entity(entity_types: Iterable[str],
                     'name': entity_type,
                     'ontology_reference': '',
                     'values': {},
-                    'links': [] if not links or entity_type == 'files' else [{
-                        'multiplicity': 'MANY_TO_MANY',
-                        'dst': 'files',
-                        'name': 'files'
-                    }],
+                    'links': links,
                     'properties': []
-                } for entity_type in entity_types
+                }
+                for entity_type, links in links_by_entity_type.items()
             ],
             'misc': {}
         }

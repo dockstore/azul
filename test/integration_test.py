@@ -1036,23 +1036,25 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
             # field contains an entity, the schema check therefore extends to
             # the various entity types.
             fastavro.validate(record, record_schema)
+            object = cast(MutableJSON, record['object'])
             if 0 == next(num_records):
                 # PFB requires a special `Metadata` entity to occur first. It is
                 # used to declare the relations between entity types, thereby
                 # expressing additional constraints on the `relations` field.
-                #
-                # FIXME: We don't currently declare relations
-                #        https://github.com/DataBiosphere/azul/issues/6066
-                #
-                # For now, we just check the `name` and the absence of an `id`.
                 self.assertEqual('Metadata', record['name'])
                 self.assertIsNone(record['id'])
+                nodes = cast(MutableJSONs, object['nodes'])
+                for node in nodes:
+                    for link in node['links']:
+                        self.assertIn(link['dst'], entity_types)
             # The following is redundant given the schema validation above but
             # we'll leave it in for illustration.
             fields = entity_types[record['name']]['fields']
-            fields_present = set(record['object'].keys())
+            fields_present = set(object.keys())
             fields_expected = set(f['name'] for f in fields)
             self.assertEqual(fields_present, fields_expected)
+            for relation in cast(MutableJSONs, record['relations']):
+                self.assertIn(relation['dst_name'], entity_types)
         # We expect to observe the special `Metadata` entity record and at least
         # one additional entity record
         self.assertGreater(next(num_records), 1)

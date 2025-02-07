@@ -6,14 +6,41 @@
             "misc": {},
             "nodes": [
                 {
-                    "links": [],
+                    "links": [
+                        {
+                            "dst": "anvil_file",
+                            "multiplicity": "MANY_TO_ONE",
+                            "name": "from_activity.used_file_id_to_file.file_id"
+                        },
+                        {
+                            "dst": "anvil_file",
+                            "multiplicity": "MANY_TO_ONE",
+                            "name": "from_activity.generated_file_id_to_file.file_id"
+                        },
+                        {
+                            "dst": "anvil_biosample",
+                            "multiplicity": "MANY_TO_ONE",
+                            "name": "from_activity.used_biosample_id_to_biosample.biosample_id"
+                        }
+                    ],
                     "name": "anvil_activity",
                     "ontology_reference": "",
                     "properties": [],
                     "values": {}
                 },
                 {
-                    "links": [],
+                    "links": [
+                        {
+                            "dst": "anvil_file",
+                            "multiplicity": "MANY_TO_ONE",
+                            "name": "from_alignmentactivity.used_file_id_to_file.file_id"
+                        },
+                        {
+                            "dst": "anvil_file",
+                            "multiplicity": "MANY_TO_ONE",
+                            "name": "from_alignmentactivity.generated_file_id_to_file.file_id"
+                        }
+                    ],
                     "name": "anvil_alignmentactivity",
                     "ontology_reference": "",
                     "properties": [],
@@ -27,14 +54,41 @@
                     "values": {}
                 },
                 {
-                    "links": [],
+                    "links": [
+                        {
+                            "dst": "anvil_antibody",
+                            "multiplicity": "MANY_TO_ONE",
+                            "name": "from_assayactivity.antibody_id_to_antibody.antibody_id"
+                        },
+                        {
+                            "dst": "anvil_file",
+                            "multiplicity": "MANY_TO_ONE",
+                            "name": "from_assayactivity.generated_file_id_to_file.file_id"
+                        },
+                        {
+                            "dst": "anvil_biosample",
+                            "multiplicity": "MANY_TO_ONE",
+                            "name": "from_assayactivity.used_biosample_id_to_biosample.biosample_id"
+                        }
+                    ],
                     "name": "anvil_assayactivity",
                     "ontology_reference": "",
                     "properties": [],
                     "values": {}
                 },
                 {
-                    "links": [],
+                    "links": [
+                        {
+                            "dst": "anvil_donor",
+                            "multiplicity": "MANY_TO_ONE",
+                            "name": "from_biosample.donor_id_to_donor.donor_id"
+                        },
+                        {
+                            "dst": "anvil_dataset",
+                            "multiplicity": "MANY_TO_ONE",
+                            "name": "from_biosample.part_of_dataset_id_to_dataset.dataset_id"
+                        }
+                    ],
                     "name": "anvil_biosample",
                     "ontology_reference": "",
                     "properties": [],
@@ -48,14 +102,26 @@
                     "values": {}
                 },
                 {
-                    "links": [],
+                    "links": [
+                        {
+                            "dst": "anvil_donor",
+                            "multiplicity": "MANY_TO_ONE",
+                            "name": "from_diagnosis.donor_id_to_donor.donor_id"
+                        }
+                    ],
                     "name": "anvil_diagnosis",
                     "ontology_reference": "",
                     "properties": [],
                     "values": {}
                 },
                 {
-                    "links": [],
+                    "links": [
+                        {
+                            "dst": "anvil_dataset",
+                            "multiplicity": "MANY_TO_ONE",
+                            "name": "from_donor.part_of_dataset_id_to_dataset.dataset_id"
+                        }
+                    ],
                     "name": "anvil_donor",
                     "ontology_reference": "",
                     "properties": [],
@@ -69,28 +135,62 @@
                     "values": {}
                 },
                 {
-                    "links": [],
+                    "links": [
+                        {
+                            "dst": "anvil_dataset",
+                            "multiplicity": "MANY_TO_ONE",
+                            "name": "from_project.generated_dataset_id_to_dataset.dataset_id"
+                        }
+                    ],
                     "name": "anvil_project",
                     "ontology_reference": "",
                     "properties": [],
                     "values": {}
                 },
                 {
-                    "links": [],
+                    "links": [
+                        {
+                            "dst": "anvil_file",
+                            "multiplicity": "MANY_TO_ONE",
+                            "name": "from_sequencingactivity.generated_file_id_to_file.file_id"
+                        },
+                        {
+                            "dst": "anvil_biosample",
+                            "multiplicity": "MANY_TO_ONE",
+                            "name": "from_sequencingactivity.used_biosample_id_to_biosample.biosample_id"
+                        }
+                    ],
                     "name": "anvil_sequencingactivity",
                     "ontology_reference": "",
                     "properties": [],
                     "values": {}
                 },
                 {
-                    "links": [],
+                    "links": [
+                        {
+                            "dst": "anvil_file",
+                            "multiplicity": "MANY_TO_ONE",
+                            "name": "from_variantcallingactivity.used_file_id_to_file.file_id"
+                        },
+                        {
+                            "dst": "anvil_file",
+                            "multiplicity": "MANY_TO_ONE",
+                            "name": "from_variantcallingactivity.generated_file_id_to_file.file_id"
+                        }
+                    ],
                     "name": "anvil_variantcallingactivity",
                     "ontology_reference": "",
                     "properties": [],
                     "values": {}
                 },
                 {
-                    "links": [],
+                    "links": [
+                        {
+                            "dst": "anvil_dataset",
+                            "multiplicity": "ONE_TO_ONE",
+                            "name": ""
+                        }
+                    ],
                     "name": "duos_dataset_registration",
                     "ontology_reference": "",
                     "properties": [],
@@ -116,10 +216,15 @@
             "duos_id": "DUOS-000000",
             "version": "2022-06-01T00:00:00.000000Z"
         },
-        "relations": []
+        "relations": [
+            {
+                "dst_name": "anvil_dataset",
+                "dst_id": "52ee7665-7033-63f2-a8d9-ce8e32666739"
+            }
+        ]
     },
     {
-        "id": "816e364e-1193-4e5b-a91a-14e4b009157c",
+        "id": "a60c5138-3749-f7cb-8714-52d389ad5231",
         "name": "anvil_sequencingactivity",
         "object": {
             "activity_type": "Sequencing",
@@ -137,7 +242,16 @@
                 "f9d40cf6-37b8-22f3-ce35-0dc614d2452b"
             ]
         },
-        "relations": []
+        "relations": [
+            {
+                "dst_name": "anvil_file",
+                "dst_id": "8b722e88-8103-49c1-b351-e64fa7c6ab37"
+            },
+            {
+                "dst_name": "anvil_biosample",
+                "dst_id": "f9d40cf6-37b8-22f3-ce35-0dc614d2452b"
+            }
+        ]
     },
     {
         "id": "28ed0f3a-157b-417b-a05a-48f57f9d3a34",
@@ -150,7 +264,7 @@
         "relations": []
     },
     {
-        "id": "826dea02-e274-4ffe-aabc-eb3db63ad068",
+        "id": "f9d40cf6-37b8-22f3-ce35-0dc614d2452b",
         "name": "anvil_biosample",
         "object": {
             "anatomical_site": null,
@@ -172,10 +286,19 @@
                 "sample:98048c3b-2525-4090-94fd-477de31f2608"
             ]
         },
-        "relations": []
+        "relations": [
+            {
+                "dst_name": "anvil_donor",
+                "dst_id": "1e2bd7e5-f45e-a391-daea-7c060be76acd"
+            },
+            {
+                "dst_name": "anvil_dataset",
+                "dst_id": "52ee7665-7033-63f2-a8d9-ce8e32666739"
+            }
+        ]
     },
     {
-        "id": "6b0f6c0f-5d80-4242-accb-840921351cd5",
+        "id": "1fab11f5-7eab-4318-9a58-68d8d06e0715",
         "name": "anvil_file",
         "object": {
             "data_modality": [],
@@ -196,7 +319,7 @@
         "relations": []
     },
     {
-        "id": "15d85d30-ad4a-4f50-87a8-a27f59dd1b5f",
+        "id": "5ebe9bc4-a1be-0ddf-7277-b1e88276d0f6",
         "name": "anvil_diagnosis",
         "object": {
             "datarepo_row_id": "15d85d30-ad4a-4f50-87a8-a27f59dd1b5f",
@@ -219,10 +342,15 @@
                 "subject:c23887a0-20c1-44e4-a09e-1c5dfdc2d0ef"
             ]
         },
-        "relations": []
+        "relations": [
+            {
+                "dst_name": "anvil_donor",
+                "dst_id": "1e2bd7e5-f45e-a391-daea-7c060be76acd"
+            }
+        ]
     },
     {
-        "id": "1509ef40-d1ba-440d-b298-16b7c173dcd4",
+        "id": "18b3be87-e26b-4376-0d8d-c1e370e90e07",
         "name": "anvil_sequencingactivity",
         "object": {
             "activity_type": "Sequencing",
@@ -240,10 +368,19 @@
                 "f9d40cf6-37b8-22f3-ce35-0dc614d2452b"
             ]
         },
-        "relations": []
+        "relations": [
+            {
+                "dst_name": "anvil_file",
+                "dst_id": "1e269f04-4347-4188-b060-1dcc69e71d67"
+            },
+            {
+                "dst_name": "anvil_biosample",
+                "dst_id": "f9d40cf6-37b8-22f3-ce35-0dc614d2452b"
+            }
+        ]
     },
     {
-        "id": "939a4bd3-86ed-4a8a-81f4-fbe0ee673461",
+        "id": "25ff8d32-18c9-fc3e-020a-5de20d35d906",
         "name": "anvil_diagnosis",
         "object": {
             "datarepo_row_id": "939a4bd3-86ed-4a8a-81f4-fbe0ee673461",
@@ -266,10 +403,15 @@
                 "subject:c23887a0-20c1-44e4-a09e-1c5dfdc2d0ef"
             ]
         },
-        "relations": []
+        "relations": [
+            {
+                "dst_name": "anvil_donor",
+                "dst_id":"1e2bd7e5-f45e-a391-daea-7c060be76acd"
+            }
+        ]
     },
     {
-        "id": "2370f948-2783-4eb6-afea-e022897f4dcf",
+        "id": "52ee7665-7033-63f2-a8d9-ce8e32666739",
         "name": "anvil_dataset",
         "object": {
             "consent_group": [
@@ -316,7 +458,7 @@
         "relations": []
     },
     {
-        "id": "15b76f9c-6b46-433f-851d-34e89f1b9ba6",
+        "id": "1e269f04-4347-4188-b060-1dcc69e71d67",
         "name": "anvil_file",
         "object": {
             "data_modality": [],
@@ -337,7 +479,7 @@
         "relations": []
     },
     {
-        "id": "bfd991f2-2797-4083-972a-da7c6d7f1b2e",
+        "id": "1e2bd7e5-f45e-a391-daea-7c060be76acd",
         "name": "anvil_donor",
         "object": {
             "datarepo_row_id": "bfd991f2-2797-4083-972a-da7c6d7f1b2e",
@@ -353,10 +495,15 @@
                 "subject:c23887a0-20c1-44e4-a09e-1c5dfdc2d0ef"
             ]
         },
-        "relations": []
+        "relations": [
+            {
+                "dst_name": "anvil_dataset",
+                "dst_id": "52ee7665-7033-63f2-a8d9-ce8e32666739"
+            }
+        ]
     },
     {
-        "id": "3b17377b-16b1-431c-9967-e5d01fc5923f",
+        "id": "8b722e88-8103-49c1-b351-e64fa7c6ab37",
         "name": "anvil_file",
         "object": {
             "data_modality": [],
