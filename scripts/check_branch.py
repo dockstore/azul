@@ -1,3 +1,4 @@
+import logging
 import os
 import sys
 from typing import (
@@ -9,10 +10,15 @@ import git
 from azul import (
     config,
 )
+from azul.logging import (
+    configure_script_logging,
+)
 
 """
 Ensure that the currently checked out branch matches the selected deployment
 """
+
+log = logging.getLogger(__name__)
 
 
 def default_deployment(branch: str | None) -> str | None:
@@ -83,9 +89,17 @@ def target_branch() -> str | None:
         except KeyError:
             pass
         else:
-            return branch
+            if branch:
+                log.info('Target branch is %r as defined in %r', branch, variable)
+                return branch
     repo = git.Repo(config.project_root)
-    return None if repo.head.is_detached else repo.head.reference.name
+    if repo.head.is_detached:
+        branch = None
+        log.info('Target branch is %r because HEAD is detached', branch)
+    else:
+        branch = repo.head.reference.name
+        log.info('Target branch is %r because it is checked out', branch)
+    return branch
 
 
 def main(argv):
@@ -109,4 +123,5 @@ def main(argv):
 
 
 if __name__ == '__main__':
+    configure_script_logging(log)
     main(sys.argv[1:])
