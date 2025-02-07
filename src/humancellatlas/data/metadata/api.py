@@ -29,7 +29,12 @@ from uuid import (
 )
 import warnings
 
+from furl import (
+    furl,
+)
+
 from azul import (
+    R,
     cached_property,
 )
 from azul.collections import (
@@ -97,6 +102,9 @@ class ManifestEntry:
                     setattr(self, f.name, value)
 
 
+valid_schema_domains = ['schema.humancellatlas.org']
+
+
 @dataclass(init=False)
 class Entity:
     json: JSON = field(repr=False)
@@ -110,13 +118,23 @@ class Entity:
                   json: JSON,
                   **kwargs):
         content = json.get('content', json)
-        described_by = content['describedBy']
-        schema_name = described_by.rpartition('/')[2]
+        described_by = cls.validate_described_by(content)
+        schema_name = described_by.path.segments[-1]
         try:
             sub_cls = entity_types[schema_name]
         except KeyError:
             raise TypeLookupError(described_by)
         return sub_cls(json, **kwargs)
+
+    @classmethod
+    def validate_described_by(cls, content: JSON) -> furl:
+        described_by = furl(content['describedBy'])
+        assert described_by.netloc in valid_schema_domains, R(
+            'Unexpected schema domain',
+            described_by,
+            valid_schema_domains
+        )
+        return described_by
 
     def __init__(self,
                  json: JSON
@@ -157,7 +175,7 @@ E = TypeVar('E', bound=Entity)
 
 class TypeLookupError(Exception):
 
-    def __init__(self, described_by: str) -> None:
+    def __init__(self, described_by: furl) -> None:
         super().__init__(f"No entity type for schema URL '{described_by}'")
 
 
@@ -953,6 +971,7 @@ class Bundle:
 
         self.entities = {**self.projects, **self.biomaterials, **self.processes, **self.protocols, **self.files}
 
+        Entity.validate_described_by(links_json)
         schema_version = tuple(map(int, links_json['schema_version'].split('.')))
         self.links = list(chain.from_iterable(
             Link.from_json(link, schema_version)
