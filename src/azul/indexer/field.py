@@ -454,9 +454,6 @@ class ClosedRange(Generic[P], FieldType[Range[P], JSON]):
         return result
 
 
-FieldTypes4 = Mapping[str, FieldType] | Sequence[FieldType] | FieldType
-FieldTypes3 = Mapping[str, FieldTypes4] | Sequence[FieldType] | FieldType
-FieldTypes2 = Mapping[str, FieldTypes3] | Sequence[FieldType] | FieldType
-FieldTypes1 = Mapping[str, FieldTypes2] | Sequence[FieldType] | FieldType
-FieldTypes = Mapping[str, FieldTypes1]
-CataloguedFieldTypes = Mapping[CatalogName, FieldTypes]
+type FieldTypes1 = Mapping[str, FieldTypes1] | Sequence[FieldType] | FieldType
+type FieldTypes = Mapping[str, FieldTypes1]
+type CataloguedFieldTypes = Mapping[CatalogName, FieldTypes]

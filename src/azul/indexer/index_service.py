@@ -977,7 +977,7 @@ class IndexWriter:
         if doc.op_type is OpType.create:
             try:
                 doc.op_type = OpType.index
-            except AttributeError:
+            except NotImplementedError:
                 # We don't expect all Document types will let us modify op_type
                 warn()
             else:

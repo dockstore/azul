@@ -7,6 +7,7 @@ from types import (
 )
 from typing import (
     Any,
+    Callable,
     ForwardRef,
     Iterable,
     Optional,
@@ -45,6 +46,10 @@ type MutableJSONArray = list[AnyMutableJSON]
 type MutableJSONs = list[MutableJSON]
 type MutableCompositeJSON = MutableJSON | MutableJSONArray
 type MutableFlatJSON = dict[str, PrimitiveJSON]
+
+
+def optional[A, R](f: Callable[[A], R], v: A) -> R | None:
+    return v if v is None else f(v)
 
 
 def json_mapping(v: AnyJSON) -> JSON:

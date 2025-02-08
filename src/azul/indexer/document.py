@@ -8,10 +8,9 @@ from enum import (
 import re
 from typing import (
     ClassVar,
-    Generic,
     Self,
-    TypeVar,
     cast,
+    overload,
 )
 
 import attr
@@ -48,10 +47,16 @@ from azul.types import (
     AnyJSON,
     AnyMutableJSON,
     JSON,
+    JSONs,
+    MutableJSON,
+    json_int,
+    json_mapping,
+    json_str,
+    optional,
 )
 
-EntityID = str
-EntityType = str
+type EntityID = str
+type EntityType = str
 
 
 @attr.s(frozen=True, auto_attribs=True, kw_only=True, slots=True)
@@ -80,9 +85,6 @@ class CataloguedEntityReference(EntityReference):
         return cls(catalog=catalog,
                    entity_type=entity.entity_type,
                    entity_id=entity.entity_id)
-
-
-E = TypeVar('E', bound=EntityReference)
 
 
 class DocumentType(Enum):
@@ -403,8 +405,11 @@ class IndexName:
         ])
 
 
+type CataloguedDocumentCoordinates = DocumentCoordinates[CataloguedEntityReference]
+
+
 @attr.s(frozen=True, auto_attribs=True, kw_only=True, slots=True)
-class DocumentCoordinates(Generic[E], metaclass=ABCMeta):
+class DocumentCoordinates[E: EntityReference](metaclass=ABCMeta):
     """
     The coordinates of a document ultimately define two strings: 1) the name of
     the Elasticsearch index that contains the document and 2) the unique ID by
@@ -441,12 +446,11 @@ class DocumentCoordinates(Generic[E], metaclass=ABCMeta):
         raise NotImplementedError
 
     @classmethod
-    def from_hit(cls,
-                 hit: JSON
-                 ) -> 'DocumentCoordinates[CataloguedEntityReference]':
-        index_name = IndexName.parse(hit['_index'])
+    def from_hit(cls, hit: JSON) -> CataloguedDocumentCoordinates:
+        index_name = IndexName.parse(json_str(hit['_index']))
         index_name.validate()
-        document_id = hit['_id']
+        document_id = json_str(hit['_id'])
+        subcls: type[CataloguedDocumentCoordinates]
         if index_name.doc_type is DocumentType.contribution:
             subcls = ContributionCoordinates
         elif index_name.doc_type is DocumentType.aggregate:
@@ -463,12 +467,12 @@ class DocumentCoordinates(Generic[E], metaclass=ABCMeta):
     def _from_index(cls,
                     index_name: IndexName,
                     document_id: str
-                    ) -> 'DocumentCoordinates[CataloguedEntityReference]':
+                    ) -> CataloguedDocumentCoordinates:
         raise NotImplementedError
 
     def with_catalog(self,
                      catalog: CatalogName | None
-                     ) -> 'DocumentCoordinates[CataloguedEntityReference]':
+                     ) -> CataloguedDocumentCoordinates:
         """
         Return coordinates for the given catalog. Only works for instances that
         have no catalog or ones having the same catalog in which case `self` is
@@ -480,11 +484,15 @@ class DocumentCoordinates(Generic[E], metaclass=ABCMeta):
             return self
         else:
             assert catalog is not None
-            return attr.evolve(self, entity=CataloguedEntityReference.for_entity(catalog, self.entity))
+            entity = CataloguedEntityReference.for_entity(catalog, self.entity)
+            return attr.evolve(self, entity=entity)
+
+
+type CataloguedContributionCoordinates = ContributionCoordinates[CataloguedEntityReference]
 
 
 @attr.s(frozen=True, auto_attribs=True, kw_only=True, slots=True)
-class ContributionCoordinates(DocumentCoordinates[E], Generic[E]):
+class ContributionCoordinates[E: EntityReference](DocumentCoordinates[E]):
     """
     Coordinates of contribution documents. Contributions originate from a
     subgraph ("bundle") and represent either the addition of metadata to an
@@ -517,9 +525,10 @@ class ContributionCoordinates(DocumentCoordinates[E], Generic[E]):
     def _from_index(cls,
                     index_name: IndexName,
                     document_id: str
-                    ) -> 'ContributionCoordinates[CataloguedEntityReference]':
+                    ) -> CataloguedContributionCoordinates:
         entity_type = index_name.qualifier
         assert index_name.doc_type is DocumentType.contribution
+        deleted: str | bool
         entity_id, bundle_uuid, bundle_version, deleted = document_id.split('_')
         if deleted == 'deleted':
             deleted = True
@@ -530,9 +539,8 @@ class ContributionCoordinates(DocumentCoordinates[E], Generic[E]):
         entity = CataloguedEntityReference(catalog=index_name.catalog,
                                            entity_type=entity_type,
                                            entity_id=entity_id)
-        return cls(entity=entity,
-                   bundle=BundleFQID(uuid=bundle_uuid, version=bundle_version),
-                   deleted=deleted)
+        bundle = BundleFQID(uuid=bundle_uuid, version=bundle_version)
+        return ContributionCoordinates(entity=entity, bundle=bundle, deleted=deleted)
 
     def __str__(self) -> str:
         return ' '.join((
@@ -570,8 +578,11 @@ class AggregateCoordinates(DocumentCoordinates[CataloguedEntityReference]):
         return f'aggregate for {self.entity}'
 
 
+type CataloguedReplicaCoordinates = ReplicaCoordinates[CataloguedEntityReference]
+
+
 @attr.s(frozen=True, auto_attribs=True, kw_only=True, slots=True)
-class ReplicaCoordinates(DocumentCoordinates[E], Generic[E]):
+class ReplicaCoordinates[E: EntityReference](DocumentCoordinates[E]):
     """
     Coordinates of replica documents. Replicas are content-addressed, so these
     coordinates depend not only on the entity reference, but on the contents of
@@ -602,15 +613,15 @@ class ReplicaCoordinates(DocumentCoordinates[E], Generic[E]):
     def _from_index(cls,
                     index_name: IndexName,
                     document_id: str
-                    ) -> 'ReplicaCoordinates[CataloguedEntityReference]':
+                    ) -> CataloguedReplicaCoordinates:
         assert index_name.doc_type is DocumentType.replica, index_name
         assert index_name.qualifier == cls.index_qualifier, index_name
         # entity_type, the first component, may contain underscores
         entity_type, entity_id, content_hash = document_id.rsplit('_', 2)
-        return cls(content_hash=content_hash,
-                   entity=CataloguedEntityReference(catalog=index_name.catalog,
-                                                    entity_type=entity_type,
-                                                    entity_id=entity_id))
+        entity = CataloguedEntityReference(catalog=index_name.catalog,
+                                           entity_type=entity_type,
+                                           entity_id=entity_id)
+        return ReplicaCoordinates(content_hash=content_hash, entity=entity)
 
     def __str__(self) -> str:
         return f'replica of {self.entity}'
@@ -637,11 +648,8 @@ class OpType(Enum):
     update = auto()
 
 
-C = TypeVar('C', bound=DocumentCoordinates)
-
-
 @attr.s(frozen=False, kw_only=True, auto_attribs=True)
-class Document(Generic[C], metaclass=ABCMeta):
+class Document[C: DocumentCoordinates](metaclass=ABCMeta):
     needs_translation: ClassVar[bool] = True
 
     coordinates: C
@@ -669,12 +677,12 @@ class Document(Generic[C], metaclass=ABCMeta):
         raise NotImplementedError
 
     @op_type.setter
+    @abstractmethod
     def op_type(self, value: OpType):
         """
         Set the ES client method to use when writing this document to the index.
-        This setter is optional, concrete classes may not implement it. If they
-        don't, callers should gracefully handle the resulting AttributeError, as
-        that is what the Python runtime raises for the NotImplementedError.
+        This setter is optional, concrete classes may raise NotImplementedError
+        in their implementations and callers must gracefully handle that case.
         """
         raise NotImplementedError
 
@@ -684,6 +692,29 @@ class Document(Generic[C], metaclass=ABCMeta):
             'entity_id': null_str,
             'contents': field_types
         }
+
+    @classmethod
+    @overload
+    def translate_fields(cls,
+                         doc: JSON,
+                         field_types: FieldType | FieldTypes,
+                         *,
+                         forward: bool,
+                         allowed_paths: list[FieldPath] | None = None
+                         ) -> MutableJSON:
+        ...
+
+    @classmethod
+    @overload
+    def translate_fields(cls,
+                         doc: AnyJSON,
+                         field_types: FieldType | FieldTypes,
+                         *,
+                         forward: bool,
+                         allowed_paths: list[FieldPath] | None = None,
+                         path: FieldPath
+                         ) -> AnyMutableJSON:
+        ...
 
     @classmethod
     def translate_fields(cls,
@@ -804,11 +835,9 @@ class Document(Generic[C], metaclass=ABCMeta):
                   version: InternalVersion | None,
                   **kwargs,
                   ) -> Self:
-        # noinspection PyArgumentList
-        # https://youtrack.jetbrains.com/issue/PY-28506
         self = cls(coordinates=coordinates,
                    version=version,
-                   contents=document.get('contents'),
+                   contents=optional(json_mapping, document.get('contents')),
                    **kwargs)
         assert document['entity_id'] == self.entity.entity_id
         return self
@@ -827,24 +856,24 @@ class Document(Generic[C], metaclass=ABCMeta):
                    field_types: CataloguedFieldTypes,
                    hit: JSON,
                    *,
-                   coordinates: DocumentCoordinates[CataloguedEntityReference] | None = None
+                   coordinates: CataloguedDocumentCoordinates | None = None
                    ) -> Self:
         if coordinates is None:
             coordinates = DocumentCoordinates.from_hit(hit)
-        document = hit['_source']
+        document = json_mapping(hit['_source'])
         if cls.needs_translation:
             document = cls.translate_fields(document,
                                             field_types[coordinates.entity.catalog],
                                             forward=False)
         try:
-            version = hit['_seq_no'], hit['_primary_term']
+            version = json_int(hit['_seq_no']), json_int(hit['_primary_term'])
         except KeyError:
             assert '_seq_no' not in hit
             assert '_primary_term' not in hit
             version = None
 
         return cls.from_json(coordinates=coordinates,
-                             document=document,
+                             document=json_mapping(document),
                              version=version)
 
     def to_index(self,
@@ -865,7 +894,7 @@ class Document(Generic[C], metaclass=ABCMeta):
         :return: Request parameters for indexing
         """
         coordinates = self.coordinates.with_catalog(catalog)
-        result = {
+        result: dict[str, AnyJSON] = {
             'index': coordinates.index_name,
             'id': self.coordinates.document_id
         }
@@ -891,7 +920,7 @@ class DocumentSource(SourceRef[SimpleSourceSpec]):
 
 
 @attr.s(frozen=False, kw_only=True, auto_attribs=True)
-class Contribution(Document[ContributionCoordinates[E]]):
+class Contribution[E: EntityReference](Document[ContributionCoordinates[E]]):
     # This narrows the type declared in the superclass. See comment there.
     contents: JSON
     source: DocumentSource
@@ -928,7 +957,7 @@ class Contribution(Document[ContributionCoordinates[E]]):
     @classmethod
     def from_json(cls,
                   *,
-                  coordinates: C,
+                  coordinates: ContributionCoordinates[E],
                   document: JSON,
                   version: InternalVersion | None,
                   **kwargs
@@ -993,7 +1022,7 @@ class Aggregate(Document[AggregateCoordinates]):
     @classmethod
     def from_json(cls,
                   *,
-                  coordinates: C,
+                  coordinates: AggregateCoordinates,
                   document: JSON,
                   version: InternalVersion | None,
                   **kwargs
@@ -1019,8 +1048,8 @@ class Aggregate(Document[AggregateCoordinates]):
     def to_json(self) -> JSON:
         return dict(super().to_json(),
                     num_contributions=self.num_contributions,
-                    sources=[source.to_json() for source in self.sources],
-                    bundles=self.bundles)
+                    sources=cast(JSONs, [source.to_json() for source in self.sources]),
+                    bundles=cast(JSONs | None, self.bundles))
 
     @property
     def op_type(self) -> OpType:
@@ -1030,9 +1059,13 @@ class Aggregate(Document[AggregateCoordinates]):
             # Aggregates are deleted when their contents goes blank
             return OpType.delete
 
+    @op_type.setter
+    def op_type(self, value: OpType):
+        raise NotImplementedError
+
 
 @attr.s(frozen=False, kw_only=True, auto_attribs=True)
-class Replica(Document[ReplicaCoordinates[E]]):
+class Replica[E: EntityReference](Document[ReplicaCoordinates[E]]):
     """
     A verbatim copy of a metadata document
     """
@@ -1075,6 +1108,10 @@ class Replica(Document[ReplicaCoordinates[E]]):
     @property
     def op_type(self) -> OpType:
         return OpType.update
+
+    @op_type.setter
+    def op_type(self, value: OpType):
+        raise NotImplementedError
 
     def _body(self, field_types: FieldTypes) -> JSON:
         return {
