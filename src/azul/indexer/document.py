@@ -459,7 +459,7 @@ class DocumentCoordinates[E: EntityReference](metaclass=ABCMeta):
             subcls = ReplicaCoordinates
         else:
             assert False, index_name.doc_type
-        assert issubclass(subcls, cls)
+        assert issubclass(subcls, DocumentCoordinates)
         return subcls._from_index(index_name, document_id)
 
     @classmethod
@@ -470,13 +470,13 @@ class DocumentCoordinates[E: EntityReference](metaclass=ABCMeta):
                     ) -> CataloguedDocumentCoordinates:
         raise NotImplementedError
 
-    def with_catalog(self,
+    def with_catalog(self: 'DocumentCoordinates',
                      catalog: CatalogName | None
                      ) -> CataloguedDocumentCoordinates:
         """
         Return coordinates for the given catalog. Only works for instances that
-        have no catalog or ones having the same catalog in which case `self` is
-        returned.
+        have no catalog or ones having the same catalog in which case ``self``
+        is returned.
         """
         if isinstance(self.entity, CataloguedEntityReference):
             if catalog is not None:
@@ -872,9 +872,16 @@ class Document[C: DocumentCoordinates](metaclass=ABCMeta):
             assert '_primary_term' not in hit
             version = None
 
+        assert isinstance(coordinates, cls.coordinate_cls())
+
         return cls.from_json(coordinates=coordinates,
                              document=json_mapping(document),
                              version=version)
+
+    @classmethod
+    @abstractmethod
+    def coordinate_cls(cls) -> type[C]:
+        pass
 
     def to_index(self,
                  catalog: CatalogName | None,
@@ -921,6 +928,11 @@ class DocumentSource(SourceRef[SimpleSourceSpec]):
 
 @attr.s(frozen=False, kw_only=True, auto_attribs=True)
 class Contribution[E: EntityReference](Document[ContributionCoordinates[E]]):
+
+    @classmethod
+    def coordinate_cls(cls) -> type[ContributionCoordinates[E]]:
+        return ContributionCoordinates
+
     # This narrows the type declared in the superclass. See comment there.
     contents: JSON
     source: DocumentSource
@@ -967,7 +979,6 @@ class Contribution[E: EntityReference](Document[ContributionCoordinates[E]]):
                                  version=version,
                                  source=DocumentSource.from_json(cast(SourceJSON, document['source'])),
                                  **kwargs)
-        assert isinstance(self, Contribution)
         assert self.coordinates.document_id == document['document_id']
         assert self.coordinates.bundle.uuid == document['bundle_uuid']
         assert self.coordinates.bundle.version == document['bundle_version']
@@ -1003,6 +1014,10 @@ class Aggregate(Document[AggregateCoordinates]):
     def __attrs_post_init__(self):
         assert isinstance(self.coordinates, AggregateCoordinates)
         assert self.coordinates.doc_type is DocumentType.aggregate
+
+    @classmethod
+    def coordinate_cls(cls) -> type[AggregateCoordinates]:
+        return AggregateCoordinates
 
     @classmethod
     def field_types(cls, field_types: FieldTypes) -> FieldTypes:
@@ -1093,6 +1108,10 @@ class Replica[E: EntityReference](Document[ReplicaCoordinates[E]]):
     def __attrs_post_init__(self):
         assert isinstance(self.coordinates, ReplicaCoordinates)
         assert self.coordinates.doc_type is DocumentType.replica
+
+    @classmethod
+    def coordinate_cls(cls) -> type[ReplicaCoordinates]:
+        return ReplicaCoordinates
 
     @classmethod
     def field_types(cls, field_types: FieldTypes) -> FieldTypes:
