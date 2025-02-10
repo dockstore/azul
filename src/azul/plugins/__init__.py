@@ -216,7 +216,7 @@ class Plugin[BUNDLE: Bundle](metaclass=ABCMeta):
                    ) -> type[BUNDLE]:
         plugin_type_name = cls._plugin_type_name()
         plugin_cls = cls._load(plugin_type_name, plugin_package_name)
-        bundle_cls = get_generic_type_params(plugin_cls)[0]
+        bundle_cls, = get_generic_type_params(plugin_cls, root=Plugin)
         assert isinstance(bundle_cls, type)
         assert issubclass(bundle_cls, Bundle), bundle_cls
         return cast(type[BUNDLE], bundle_cls)
@@ -609,7 +609,7 @@ class RepositoryPlugin[BUNDLE: Bundle,
     @cached_property
     def _generic_params(self) -> tuple:
         types = Bundle, SourceSpec, SourceRef, SourcedBundleFQID
-        params = get_generic_type_params(type(self), *types)
+        params = get_generic_type_params(type(self), *types, root=RepositoryPlugin)
         bundle_cls, spec_cls, ref_cls, fqid_cls = params
         assert isinstance(fqid_cls, type)
         assert issubclass(fqid_cls, SourcedBundleFQID)

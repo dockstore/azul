@@ -4,6 +4,7 @@ from collections.abc import (
 )
 from types import (
     UnionType,
+    get_original_bases,
 )
 from typing import (
     Any,
@@ -266,54 +267,177 @@ def reify(t):
 
 
 def get_generic_type_params(cls: type,
-                            *required_types: type
+                            *required_types: type,
+                            root: type | None = None,
                             ) -> tuple[type | TypeVar | ForwardRef, ...]:
     """
-    Inspect and validate the type parameters of a subclass of `typing.Generic`.
+    Inspect and optionally verify the type parameterization of a generic class,
+    or a class derived from a generic class.
 
-    The type of each returned parameter may be a type, a `typing.TypeVar`, or a
-    `typing.ForwardRef`, depending on how the parameter is written in the
-    inspected class's definition. `*required_types` can be used to assert the
-    superclasses of parameters that are types.
+    Each of the returned values is either an instance of ``type``, of
+    ``typing.TypeVar``, or of ``typing.ForwardRef``, depending on how the
+    parameter is written in the definition of the root class.
 
-    >>> class A[T]:
-    ...     pass
-    >>> class B(A[int]):
-    ...     pass
-    >>> class C(A['foo']):
-    ...     pass
+    Caveat: This function was only tested with classes that use the syntax from
+    PEP-695 to define type parameters. Every class in the ancestry of the given
+    class must use the new syntax. Note that PEP-695 introduced semantic changes
+    as well, mostly with respect to scoping and variance.
+
+    Caveat: This function was not tested with multiple inheritance. It should
+    generally, work but diamond-shaped ancestry may be problematic.
+
+    :param cls: The class to be inspected
+
+    :param root: The upper bound up to which the ancestry of ``cls`` is
+                 inspected. If this argument is ``None``, only the first parent
+                 of ``cls`` is inspected. Otherwise, the ancestry of ``cls`` is
+                 searched for ``root``. The search is "height-first", as in
+                 depth-first but going upwards. If the root is found in the
+                 ancestry, the parameterization of every ancestor on the lineage
+                 from ``cls`` to ``root`` is then inspected.
+
+    :param required_types: If the i-th type parameter (type variable) of the
+                           root class is bound to a concrete type, i.e. is set
+                           to an instance of ``type``, then that type must be a
+                           subtype of the i-th element of ``required_types``.
+                           Somewhat surprisingly, this function ignores elements
+                           of ``required_types`` for which the corresponding
+                           type parameter of the root class is still free or a
+                           forward reference.
+
+    A generic class:
+
+    >>> class A[T1, T2]: pass
 
     >>> get_generic_type_params(A)
-    (T,)
+    (T1, T2)
 
-    >>> get_generic_type_params(A, str)
-    (T,)
+    Both T1 and T2 are instances of ``TypeVar``.
+
+    For free type variables, any specied expected types are ignored.
+
+    >>> get_generic_type_params(A, str, bytes)
+    (T1, T2)
+
+    A non-generic subclass:
+
+    >>> class B(A[int, float]): pass
 
     >>> get_generic_type_params(B)
-    (<class 'int'>,)
+    (<class 'int'>, <class 'float'>)
 
-    >>> get_generic_type_params(B, str)
+    The second type parameter (``float``) is not a subclass of ``str``:
+
+    >>> get_generic_type_params(B, int, str)
     Traceback (most recent call last):
     ...
-    AssertionError: (<class 'int'>, <class 'str'>)
+    AssertionError: R('Type mismatch', <class 'float'>, <class 'str'>)
 
-    >>> get_generic_type_params(B, int, int)
+    Mismatched arity:
+
+    >>> get_generic_type_params(B, int)
     Traceback (most recent call last):
     ...
-    AssertionError: 1
+    AssertionError: R('Expected 1 type(s), got 2')
+
+    A non-generic subclass, using a forward reference. The reference is
+    returned:
+
+    >>> class C(A['foo', int]): pass
 
     >>> get_generic_type_params(C)
-    (ForwardRef('foo'),)
+    (ForwardRef('foo'), <class 'int'>)
+
+    A generic class that binds the first of the parent's parameters, but leaves
+    the second one open:
+
+    >>> class D[T](A[int, T]): pass
+
+    >>> get_generic_type_params(D)
+    (<class 'int'>, T)
+
+    A non-generic subclass that binds the remaining parameter as well:
+
+    >>> class E(D[float]): pass
+
+    The value that E bind's D's parameter to:
+
+    >>> get_generic_type_params(E)
+    (<class 'float'>,)
+
+    The equivalent invocation explicitly specifying the first parent class:
+
+    >>> get_generic_type_params(E, root=D)
+    (<class 'float'>,)
+
+    E does not inherit B, so an empty tuple is returned:
+
+    >>> get_generic_type_params(E, root=B)
+    ()
+
+    Last but not least, the most useful invocation: specifying the oldest
+    generic ancestor as the root. This invocation returns the parameterization
+    of E's grandparent.
+
+    >>> get_generic_type_params(E, root=A)
+    (<class 'int'>, <class 'float'>)
+
+    Same as above but through a parent that binds the second of the
+    grandparent's parameters:
+
+    >>> class F[T](A[T, int]): pass
+    >>> class G(F[float]): pass
+    >>> get_generic_type_params(G, root=A)
+    (<class 'float'>, <class 'int'>)
+
+    A parent swapping the grandparent's type parameters:
+
+    >>> class H[T1, T2](A[T2, T1]): pass
+    >>> class J(H[int, float]): pass
+    >>> get_generic_type_params(J, root=A)
+    (<class 'float'>, <class 'int'>)
     """
-    base_cls = getattr(cls, '__orig_bases__')[0]
-    types = get_args(base_cls)
-    if required_types:
-        assert len(required_types) == len(types), len(types)
-        for required_type, type_ in zip(required_types, types):
-            if isinstance(type_, type):
-                assert issubclass(type_, required_type), (type_, required_type)
+
+    def ancestors(cls) -> tuple[type, ...]:
+        for base in get_original_bases(cls):
+            origin = get_origin(base)
+            if origin is None:
+                return ()
+            elif origin is root:
+                return (base,)
             else:
-                assert isinstance(type_, (TypeVar, ForwardRef)), type_
+                lineage = ancestors(origin)
+                if lineage:
+                    return base, *lineage
+        return ()
+
+    if root is None:
+        base = get_original_bases(cls)[0]
+        assert base is not None
+        types = get_args(base)
+    else:
+        types = ()
+        mapping: dict[TypeVar, type | TypeVar] = {}
+        for base in ancestors(cls):
+            origin = get_origin(base)
+            params = origin.__type_params__
+            types = get_args(base)
+            types = tuple(mapping.get(v, v) for v in types)
+            mapping = {k: v for k, v in zip(params, types)}
+
+    if required_types:
+        from azul import (
+            R,
+        )
+        assert len(required_types) == len(types), R(
+            f'Expected {len(required_types)} type(s), got {len(types)}')
+        for required, actual in zip(required_types, types):
+            if isinstance(actual, type):
+                assert issubclass(actual, required), R(
+                    'Type mismatch', actual, required)
+            else:
+                assert isinstance(actual, (TypeVar, ForwardRef)), R(
+                    'Expecting type, type variable or forward reference', actual)
     return types
 
 
