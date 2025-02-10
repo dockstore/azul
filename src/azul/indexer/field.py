@@ -8,10 +8,8 @@ from datetime import (
 )
 import sys
 from typing import (
-    Generic,
     Mapping,
     Sequence,
-    TypeVar,
     get_args,
 )
 
@@ -37,20 +35,23 @@ from azul.types import (
     reify,
 )
 
-# The native type of the field in documents as they are being created by a
-# transformer or processed by an aggregator.
-N = TypeVar('N')
+# A type variable ``N`` denotes the native type of a field in documents as they
+# are being created by a transformer or processed by an aggregator.
 
-# The type of the field in a document just before it's being written to the
-# index. Think "translated type".
-T = TypeVar('T', bound=AnyJSON)
-
-P = TypeVar('P', bound=PrimitiveJSON)
-
-Range = tuple[P, P]
+# A type variable ``T`` denotes the type of a field in a document just before
+# it's being written to the index. Think "translated type".
 
 
-class FieldType(Generic[N, T], metaclass=ABCMeta):
+type Range[P: PrimitiveJSON] = tuple[P, P]
+
+# While Elasticsearch distinguishes between integers and floating point numbers
+# in its index, JSON does not. Since all payloads to and from Elasticsearch are
+# serialized as JSON we have to be prepared to get 1 back when we write 1.0.
+
+JSONNumber = int | float
+
+
+class FieldType[N, T: AnyJSON](metaclass=ABCMeta):
     shadowed: bool = False
     es_sort_mode: str = 'min'
     allow_sorting_by_empty_lists: bool = True
@@ -139,7 +140,7 @@ class FieldType(Generic[N, T], metaclass=ABCMeta):
             return list(map(self.to_index, values))
 
 
-class PassThrough(Generic[T], FieldType[T, T]):
+class PassThrough[T: AnyJSON](FieldType[T, T]):
     allow_sorting_by_empty_lists = False
 
     def __init__(self, translated_type: type[T], *, es_type: str | None):
@@ -162,7 +163,7 @@ class PassThrough(Generic[T], FieldType[T, T]):
 pass_thru_json: PassThrough[JSON] = PassThrough(JSON, es_type=None)
 
 
-class NumericPassThrough(PassThrough[T]):
+class NumericPassThrough[T: AnyJSON](PassThrough[T]):
 
     @property
     def supported_filter_relations(self) -> tuple[str, ...]:
@@ -203,7 +204,7 @@ pass_thru_float = NumericPassThrough(float, es_type='double')
 pass_thru_bool = PassThrough(bool, es_type='boolean')
 
 
-class Nullable(FieldType[N | None, T]):
+class Nullable[N, T: AnyJSON](FieldType[N | None, T]):
 
     def __init__(self, native_type: type[N], translated_type: type[T]) -> None:
         super().__init__(native_type | None, translated_type)
@@ -227,7 +228,7 @@ class Nullable(FieldType[N | None, T]):
         return schema.nullable(schema.make(self.optional_type))
 
 
-class NullableScalar(Nullable[N, T], metaclass=ABCMeta):
+class NullableScalar[N, T: AnyJSON](Nullable[N, T], metaclass=ABCMeta):
 
     def api_filter_schema(self, relation: str) -> JSON:
         if relation == 'within':
@@ -260,16 +261,8 @@ class NullableString(Nullable[str, str]):
 
 null_str = NullableString()
 
-# While Elasticsearch distinguishes between integers and floating point numbers
-# in its index, JSON does not. Since all payloads to and from Elasticsearch are
-# serialized as JSON we have to be prepared to get 1 back when we write 1.0.
 
-JSONNumber = int | float
-
-U = TypeVar('U', bound=bool | int | float)
-
-
-class NullableNumber(Generic[U], NullableScalar[U, JSONNumber]):
+class NullableNumber[U: bool | int | float](NullableScalar[U, JSONNumber]):
     shadowed = True
     # Maximum int that can be represented as a 64-bit int and double IEEE
     # floating point number. This prevents loss when converting between the two.
@@ -298,7 +291,7 @@ class NullableNumber(Generic[U], NullableScalar[U, JSONNumber]):
         else:
             return self.optional_type(value)
 
-    def from_api(self, value: AnyJSON) -> N:
+    def from_api(self, value: AnyJSON) -> U:
         """
         1.0 is a valid JSONSchema `integer`
 
@@ -407,7 +400,7 @@ class Nested(PassThrough[JSON]):
         return [query_filters]
 
 
-class ClosedRange(Generic[P], FieldType[Range[P], JSON]):
+class ClosedRange[P: PrimitiveJSON](FieldType[Range[P], JSON]):
 
     def __init__(self, ends_type: FieldType[P, P]):
         super().__init__(Range[P], JSON)
