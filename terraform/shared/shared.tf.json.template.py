@@ -331,29 +331,20 @@ tf_config = {
                     }
                 }
             },
-            'logs': {
-                'bucket': '${aws_s3_bucket.logs.id}',
-                'rule': {
-                    'id': 'expire',
-                    'status': 'Enabled',
-                    'filter': {
-                    },
-                    'expiration': {
-                        'days': config.audit_log_retention_days
+            **{
+                bucket: {
+                    'bucket': '${aws_s3_bucket.%s.id}' % bucket,
+                    'rule': {
+                        'id': 'expire',
+                        'status': 'Enabled',
+                        'filter': {
+                        },
+                        'expiration': {
+                            'days': config.audit_log_retention_days
+                        }
                     }
                 }
-            },
-            'trail': {
-                'bucket': '${aws_s3_bucket.logs.id}',
-                'rule': {
-                    'id': 'expire',
-                    'status': 'Enabled',
-                    'filter': {
-                    },
-                    'expiration': {
-                        'days': config.audit_log_retention_days
-                    }
-                }
+                for bucket in ['logs', 'trail']
             }
         },
         'aws_s3_bucket_versioning': {
