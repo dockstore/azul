@@ -428,6 +428,8 @@ class Queues:
                 except KeyError:
                     assert queue_name in {
                         *config.fail_queue_names,
+                        # FIXME: Implement mirror_source
+                        #        https://github.com/DataBiosphere/azul/issues/6860
                         config.mirror_queue.name
                     }
                 else:
