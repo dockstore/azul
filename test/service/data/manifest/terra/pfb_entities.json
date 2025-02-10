@@ -514,6 +514,9 @@
             "document_id": [
                 "6615efae-fca8-4dd2-a223-9cfcf30fe94d"
             ],
+            "duos_id": [
+                null
+            ],
             "estimated_cell_count": null,
             "institutions": [
                 "Fake Institution"
@@ -863,6 +866,9 @@
             ],
             "document_id": [
                 "e8642221-4c2c-4fd7-b926-a68bce363c88"
+            ],
+            "duos_id": [
+                null
             ],
             "estimated_cell_count": null,
             "institutions": [
@@ -3304,6 +3310,9 @@
             ],
             "document_id": [
                 "90bf705c-d891-5ce2-aa54-094488b445c6"
+            ],
+            "duos_id": [
+                null
             ],
             "estimated_cell_count": 10000,
             "institutions": [

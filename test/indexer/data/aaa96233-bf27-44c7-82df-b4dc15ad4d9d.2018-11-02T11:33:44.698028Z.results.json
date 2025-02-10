@@ -325,7 +325,8 @@
                         "tissue_atlas": [],
                         "estimated_cell_count": 9223372036854774784,
                         "estimated_cell_count_": null,
-                        "data_use_restriction": "~null"
+                        "data_use_restriction": "~null",
+                        "duos_id": "~null"
                     }
                 ],
                 "matrices": [],
@@ -574,7 +575,8 @@
                         "tissue_atlas": [],
                         "estimated_cell_count": 9223372036854774784,
                         "estimated_cell_count_": null,
-                        "data_use_restriction": "~null"
+                        "data_use_restriction": "~null",
+                        "duos_id": "~null"
                     }
                 ],
                 "dates": [
@@ -818,7 +820,8 @@
                         "tissue_atlas": [],
                         "estimated_cell_count": 9223372036854774784,
                         "estimated_cell_count_": null,
-                        "data_use_restriction": "~null"
+                        "data_use_restriction": "~null",
+                        "duos_id": "~null"
                     }
                 ],
                 "dates": [
@@ -1087,7 +1090,8 @@
                         "tissue_atlas": [],
                         "estimated_cell_count": 9223372036854774784,
                         "estimated_cell_count_": null,
-                        "data_use_restriction": "~null"
+                        "data_use_restriction": "~null",
+                        "duos_id": "~null"
                     }
                 ],
                 "dates": [
@@ -1356,7 +1360,8 @@
                         "tissue_atlas": [],
                         "estimated_cell_count": 9223372036854774784,
                         "estimated_cell_count_": null,
-                        "data_use_restriction": "~null"
+                        "data_use_restriction": "~null",
+                        "duos_id": "~null"
                     }
                 ],
                 "matrices": [],
@@ -1676,7 +1681,8 @@
                         "tissue_atlas": [],
                         "estimated_cell_count": 9223372036854774784,
                         "estimated_cell_count_": null,
-                        "data_use_restriction": ["~null"]
+                        "data_use_restriction": ["~null"],
+                        "duos_id": ["~null"]
                     }
                 ],
                 "matrices": [],
@@ -1981,7 +1987,8 @@
                         "tissue_atlas": [],
                         "estimated_cell_count": 9223372036854774784,
                         "estimated_cell_count_": null,
-                        "data_use_restriction": ["~null"]
+                        "data_use_restriction": ["~null"],
+                        "duos_id": ["~null"]
                     }
                 ],
                 "dates": [
@@ -2284,7 +2291,8 @@
                         "tissue_atlas": [],
                         "estimated_cell_count": 9223372036854774784,
                         "estimated_cell_count_": null,
-                        "data_use_restriction": ["~null"]
+                        "data_use_restriction": ["~null"],
+                        "duos_id": ["~null"]
                     }
                 ],
                 "dates": [
@@ -2547,7 +2555,8 @@
                         "tissue_atlas": [],
                         "estimated_cell_count": 9223372036854774784,
                         "estimated_cell_count_": null,
-                        "data_use_restriction": ["~null"]
+                        "data_use_restriction": ["~null"],
+                        "duos_id": ["~null"]
                     }
                 ],
                 "dates": [
@@ -2873,7 +2882,8 @@
                         "tissue_atlas": [],
                         "estimated_cell_count": 9223372036854774784,
                         "estimated_cell_count_": null,
-                        "data_use_restriction": "~null"
+                        "data_use_restriction": "~null",
+                        "duos_id": "~null"
                     }
                 ],
                 "matrices": [],
@@ -3151,7 +3161,8 @@
                         "tissue_atlas": [],
                         "estimated_cell_count": 9223372036854774784,
                         "estimated_cell_count_": null,
-                        "data_use_restriction": "~null"
+                        "data_use_restriction": "~null",
+                        "duos_id": "~null"
                     }
                 ],
                 "dates": [
@@ -3433,7 +3444,8 @@
                         "tissue_atlas": [],
                         "estimated_cell_count": 9223372036854774784,
                         "estimated_cell_count_": null,
-                        "data_use_restriction": ["~null"]
+                        "data_use_restriction": ["~null"],
+                        "duos_id": ["~null"]
                     }
                 ],
                 "dates": [

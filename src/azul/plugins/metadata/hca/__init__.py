@@ -225,7 +225,8 @@ class Plugin(MetadataPlugin[HCABundle]):
                     'is_tissue_atlas_project': 'isTissueAtlasProject',
                     'tissue_atlas': 'tissueAtlas',
                     'bionetwork_name': 'bionetworkName',
-                    'data_use_restriction': 'dataUseRestriction'
+                    'data_use_restriction': 'dataUseRestriction',
+                    'duos_id': 'duosId'
                 },
                 'sequencing_protocols': {
                     'instrument_manufacturer_model': 'instrumentManufacturerModel',

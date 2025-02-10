@@ -1999,6 +1999,17 @@
                                 ],
                                 "type": "array"
                             }
+                        },
+                        {
+                            "name": "duos_id",
+                            "namespace": "projects",
+                            "type": {
+                                "items": [
+                                    "null",
+                                    "string"
+                                ],
+                                "type": "array"
+                            }
                         }
                     ],
                     "name": "projects",

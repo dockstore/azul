@@ -337,7 +337,8 @@ class HCASearchResponseStage(SearchResponseStage):
                 'isTissueAtlasProject': project['is_tissue_atlas_project'],
                 'tissueAtlas': project.get('tissue_atlas'),
                 'bionetworkName': project['bionetwork_name'],
-                'dataUseRestriction': project.get('data_use_restriction')
+                'dataUseRestriction': project.get('data_use_restriction'),
+                'duosId': project.get('duos_id')
             }
             if self.entity_type == 'projects':
                 translated_project['projectDescription'] = project.get('project_description', [])
