@@ -69,9 +69,9 @@ from azul.indexer.document import (
 )
 from azul.indexer.field import (
     ClosedRange,
-    FieldType,
     FieldTypes,
     Nested,
+    Nullable,
     NullableString,
     PassThrough,
     null_bool,
@@ -139,7 +139,12 @@ def _format_dcp2_datetime(d: datetime | None) -> str | None:
     return None if d is None else format_dcp2_datetime(d)
 
 
-class ValueAndUnit(FieldType[JSON, str]):
+class ValueAndUnit(Nullable[JSON, str]):
+    """
+    The type of document fields whose values consist of a numeric quantity and
+    a symbolic unit, such as the age of a donor organism at collection time.
+    """
+
     # FIXME: change the es_type for JSON to `nested`
     #        https://github.com/DataBiosphere/azul/issues/2621
     es_type = 'keyword'

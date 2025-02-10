@@ -7,20 +7,31 @@ from datetime import (
     timezone,
 )
 import sys
+from types import (
+    UnionType,
+)
 from typing import (
+    ClassVar,
+    Final,
+    Iterable,
     Mapping,
     Sequence,
-    get_args,
+    TypedDict,
+    cast,
 )
 
 from more_itertools import (
     first,
     one,
 )
+from typing_extensions import (
+    TypeAliasType,
+)
 
 from azul import (
     CatalogName,
     JSON,
+    cached_property,
 )
 from azul.openapi import (
     schema,
@@ -35,30 +46,67 @@ from azul.types import (
     reify,
 )
 
-# A type variable ``N`` denotes the native type of a field in documents as they
-# are being created by a transformer or processed by an aggregator.
+# A type variable named ``N`` denotes the native type of a field in documents as
+# they are being created by a transformer or processed by an aggregator.
+#
+# A type named variable ``X`` denotes the type of a field in a document just
+# before it's being written to the index. Think "index type".
 
-# A type variable ``T`` denotes the type of a field in a document just before
-# it's being written to the index. Think "translated type".
+#: The static (build time) type of a document field value
+#:
+type Form[T] = type[T] | TypeAliasType | UnionType
+
+#: The upper bound on the type of field values stored in the index:
+#:
+#: Note that while ``IndexRange`` *is* assignable to JSON, ``mypy`` doesn't
+#: realize that hence the need for the union in the definition.
+#:
+type IndexForm = AnyJSON | IndexRange
 
 
-type Range[P: PrimitiveJSON] = tuple[P, P]
-
-# While Elasticsearch distinguishes between integers and floating point numbers
-# in its index, JSON does not. Since all payloads to and from Elasticsearch are
-# serialized as JSON we have to be prepared to get 1 back when we write 1.0.
-
-JSONNumber = int | float
+#: The Elasticsearch index representation of ranges along with a factory
+#:
+class IndexRange[X: IndexForm](TypedDict):
+    gte: X
+    lte: X
 
 
-class FieldType[N, T: AnyJSON](metaclass=ABCMeta):
-    shadowed: bool = False
-    es_sort_mode: str = 'min'
-    allow_sorting_by_empty_lists: bool = True
+def index_range[X: IndexForm](gte: X, lte: X) -> IndexRange[X]:
+    return dict(gte=gte, lte=lte)
 
-    def __init__(self, native_type: type[N], translated_type: type[T]):
-        self.native_type = native_type
-        self.translated_type = translated_type
+
+#: The native and API representations of ranges
+#:
+type Range[E] = tuple[E, E]
+type ApiRange = Range[AnyJSON] | list[AnyJSON]
+
+#: While Elasticsearch distinguishes between integers and floating point numbers
+#: in its index, JSON does not. Since all payloads to and from Elasticsearch are
+#: serialized as JSON we have to be prepared to get 1 back when we write 1.0.
+#:
+type JSONNumber = int | float
+
+
+class FieldType[N, X: IndexForm](metaclass=ABCMeta):
+    shadowed: ClassVar[bool] = False
+    es_sort_mode: ClassVar[str] = 'min'
+    allow_sorting_by_empty_lists: ClassVar[bool] = True
+
+    def __init__(self, native_form: Form[N], translated_form: Form[X]):
+        self.native_form: Final[Form[N]] = native_form
+        self.index_form: Final[Form[X]] = translated_form
+
+    @cached_property
+    def native_types(self) -> tuple[type, ...]:
+        """
+        The possible runtime (reified) types of the value of document fields
+        of this type. This method returns a typle to account for the fact that
+        """
+        return reify(self.native_form)
+
+    @cached_property
+    def index_types(self) -> tuple[type, ...]:
+        return reify(self.index_form)
 
     @property
     @abstractmethod
@@ -66,11 +114,11 @@ class FieldType[N, T: AnyJSON](metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def to_index(self, value: N) -> T:
+    def to_index(self, value: N) -> X:
         raise NotImplementedError
 
     @abstractmethod
-    def from_index(self, value: T) -> N:
+    def from_index(self, value: X) -> N:
         raise NotImplementedError
 
     def to_tsv(self, value: N) -> str:
@@ -81,7 +129,7 @@ class FieldType[N, T: AnyJSON](metaclass=ABCMeta):
         """
         The JSONSchema describing fields of this type in OpenAPI specifications.
         """
-        return schema.schema(self.native_type)
+        return schema.coalesce(self.native_types)
 
     def from_api(self, value: AnyJSON) -> N:
         """
@@ -95,7 +143,7 @@ class FieldType[N, T: AnyJSON](metaclass=ABCMeta):
         in inputs to a REST API. Outputs like the body of a response use the
         native representation.
         """
-        assert isinstance(value, reify(self.native_type))
+        assert isinstance(value, self.native_types), (value, self)
         return value
 
     @property
@@ -114,41 +162,44 @@ class FieldType[N, T: AnyJSON](metaclass=ABCMeta):
         field of this type.
         """
         assert relation in self.supported_filter_relations, relation
-        api_type = self.api_schema
         if relation == 'is':
-            return api_type
+            return self.api_schema
         elif relation == 'within':
-            return self._api_range_schema(api_type)
+            return self._api_range_schema(self.api_schema)
         else:
             assert False, relation
 
     def _api_range_schema(self, api_schema: JSON) -> JSON:
         return schema.array(api_schema, minItems=2, maxItems=2)
 
-    def _api_range_to_index(self, value: Range[T]) -> JSON:
-        return {'gte': value[0], 'lte': value[1]}
+    def _range_to_index(self, value: Range[N]) -> IndexRange[X]:
+        gte, lte = value
+        return index_range(self.to_index(gte), self.to_index(lte))
 
-    def _from_api_range(self, value: AnyJSON) -> Range[T]:
+    def _from_api_range(self, value: AnyJSON) -> Range[N]:
         assert isinstance(value, (list, tuple)) and len(value) == 2, value
         gte, lte = value
         return self.from_api(gte), self.from_api(lte)
 
-    def filter(self, relation: str, values: list[AnyJSON]) -> list[T]:
+    def filter(self,
+               relation: str,
+               values: Iterable[AnyJSON | ApiRange]
+               ) -> Iterable[X | IndexRange[X]]:
         if relation == 'within':
-            return list(map(self._api_range_to_index, map(self._from_api_range, values)))
+            return list(map(self._range_to_index, map(self._from_api_range, values)))
         else:
-            return list(map(self.to_index, values))
+            return list(map(self.to_index, map(self.from_api, values)))
 
 
 class PassThrough[T: AnyJSON](FieldType[T, T]):
     allow_sorting_by_empty_lists = False
 
-    def __init__(self, translated_type: type[T], *, es_type: str | None):
-        super().__init__(translated_type, translated_type)
+    def __init__(self, type: Form[T], *, es_type: str | None):
+        super().__init__(type, type)
         self._es_type = es_type
 
     @property
-    def es_type(self) -> str:
+    def es_type(self) -> str | None:
         return self._es_type
 
     def to_index(self, value: T) -> T:
@@ -163,7 +214,7 @@ class PassThrough[T: AnyJSON](FieldType[T, T]):
 pass_thru_json: PassThrough[JSON] = PassThrough(JSON, es_type=None)
 
 
-class NumericPassThrough[T: AnyJSON](PassThrough[T]):
+class NumericPassThrough[T: JSONNumber](PassThrough[T]):
 
     @property
     def supported_filter_relations(self) -> tuple[str, ...]:
@@ -193,9 +244,12 @@ class NumericPassThrough[T: AnyJSON](PassThrough[T]):
         >>> pass_thru_float.from_api(1.1)
         1.1
         """
-        native_value = self.native_type(value)
+        assert isinstance(value, (int, float))
+        native_type, = self.native_types
+        native_value = native_type(value)
         assert native_value == value, value
-        return native_value
+        assert isinstance(native_value, native_type)
+        return cast(T, native_value)
 
 
 pass_thru_str = PassThrough(str, es_type='keyword')
@@ -204,36 +258,23 @@ pass_thru_float = NumericPassThrough(float, es_type='double')
 pass_thru_bool = PassThrough(bool, es_type='boolean')
 
 
-class Nullable[N, T: AnyJSON](FieldType[N | None, T]):
+class Nullable[N, X: IndexForm](FieldType[N | None, X], metaclass=ABCMeta):
 
-    def __init__(self, native_type: type[N], translated_type: type[T]) -> None:
-        super().__init__(native_type | None, translated_type)
-
-    @property
-    def optional_type(self):
-        native_type, none_type = get_args(self.native_type)
-        assert none_type is type(None)  # noqa: E721
-        return native_type
-
-    @abstractmethod
-    def to_index(self, value: N) -> T:
-        raise NotImplementedError
-
-    @abstractmethod
-    def from_index(self, value: T) -> N:
-        raise NotImplementedError
+    def __init__(self, native_type: type[N], translated_from: Form[X]) -> None:
+        self.native_type: Final[type[N]] = native_type
+        super().__init__(native_type | None, translated_from)
 
     @property
     def api_schema(self) -> JSON:
-        return schema.nullable(schema.make(self.optional_type))
+        return schema.nullable(schema.make(self.native_type))
 
 
-class NullableScalar[N, T: AnyJSON](Nullable[N, T], metaclass=ABCMeta):
+class NullableScalar[N, X: IndexForm](Nullable[N, X], metaclass=ABCMeta):
 
     def api_filter_schema(self, relation: str) -> JSON:
         if relation == 'within':
             # The LHS operand of a range relation can't be null
-            api_type = schema.make(self.optional_type)
+            api_type = schema.make(self.native_type)
             return self._api_range_schema(api_type)
         else:
             return super().api_filter_schema(relation)
@@ -270,7 +311,7 @@ class NullableNumber[U: bool | int | float](NullableScalar[U, JSONNumber]):
     assert null_value == int(float(null_value))
 
     def __init__(self, native_type: type[U], es_type: str) -> None:
-        assert issubclass(native_type, get_args(JSONNumber))
+        assert native_type in (bool, int, float)
         super().__init__(native_type, JSONNumber)
         self._es_type = es_type
 
@@ -281,6 +322,10 @@ class NullableNumber[U: bool | int | float](NullableScalar[U, JSONNumber]):
     def to_index(self, value: U | None) -> JSONNumber:
         if value is None:
             return self.null_value
+        elif value is False:
+            return 0
+        elif value is True:
+            return 1
         else:
             assert value < self.null_value, (value, self.null_value)
             return value
@@ -289,9 +334,17 @@ class NullableNumber[U: bool | int | float](NullableScalar[U, JSONNumber]):
         if value == self.null_value:
             return None
         else:
-            return self.optional_type(value)
+            return self._from_json(value)
 
-    def from_api(self, value: AnyJSON) -> U:
+    def _from_json(self, value: AnyJSON) -> U | None:
+        assert isinstance(value, (int, float))
+        native_type = self.native_type
+        native_value = native_type(value)
+        assert native_value == value, value
+        assert isinstance(native_value, native_type)
+        return native_value
+
+    def from_api(self, value: AnyJSON) -> U | None:
         """
         1.0 is a valid JSONSchema `integer`
 
@@ -315,9 +368,10 @@ class NullableNumber[U: bool | int | float](NullableScalar[U, JSONNumber]):
         >>> pass_thru_float.from_api(1.1)
         1.1
         """
-        native_value = self.optional_type(value)
-        assert native_value == value, value
-        return native_value
+        if value is None:
+            return None
+        else:
+            return self._from_json(value)
 
 
 null_int = NullableNumber(int, 'long')
@@ -329,14 +383,6 @@ class NullableBool(NullableNumber[bool]):
 
     def __init__(self):
         super().__init__(bool, 'boolean')
-
-    def to_index(self, value: bool | None) -> JSONNumber:
-        value = {False: 0, True: 1, None: None}[value]
-        return super().to_index(value)
-
-    def from_index(self, value: JSONNumber) -> bool | None:
-        value = super().from_index(value)
-        return {0: False, 1: True, None: None}[value]
 
     @property
     def supported_filter_relations(self) -> tuple[str, ...]:
@@ -383,38 +429,43 @@ class Nested(PassThrough[JSON]):
             properties[field] = field_type.api_filter_schema(relation)
             if not isinstance(field_type, Nullable):
                 required.append(field)
-        kwargs = dict(additionalProperties=False)
+        kwargs: dict[str, AnyJSON] = dict(additionalProperties=False)
         if required:
             kwargs['required'] = required
         return schema.object(properties=properties, **kwargs)
 
-    def filter(self, relation: str, values: list[JSON]) -> list[JSON]:
+    def filter(self,
+               relation: str,
+               values: Iterable[AnyJSON | ApiRange]
+               ) -> Iterable[JSON | IndexRange[JSON]]:
         nested_object = one(values)
         assert isinstance(nested_object, dict)
         query_filters = {}
         for nested_field, nested_value in nested_object.items():
             nested_type = self.properties[nested_field]
             to_index = nested_type.to_index
-            value = one(values)[nested_field]
-            query_filters[nested_field] = to_index(value)
+            query_filters[nested_field] = to_index(nested_value)
         return [query_filters]
 
 
-class ClosedRange[P: PrimitiveJSON](FieldType[Range[P], JSON]):
+class ClosedRange[N: PrimitiveJSON, X: IndexForm](FieldType[Range[N], IndexRange[X]]):
 
-    def __init__(self, ends_type: FieldType[P, P]):
-        super().__init__(Range[P], JSON)
+    def __init__(self, ends_type: FieldType[N, X]):
+        super().__init__(reify(Range[N]), reify(JSON))
         self.ends_type = ends_type
 
     @property
     def es_type(self) -> str | None:
         return None
 
-    def to_index(self, value: Range[P]) -> JSON:
-        return self._api_range_to_index(value)
+    def to_index(self, value: Range[N]) -> IndexRange[X]:
+        gte, lte = value
+        to_index = self.ends_type.to_index
+        return index_range(to_index(gte), to_index(lte))
 
-    def from_index(self, value: JSON) -> Range[P]:
-        return value['gte'], value['lte']
+    def from_index(self, value: IndexRange[X]) -> Range[N]:
+        from_index = self.ends_type.from_index
+        return from_index(value['gte']), from_index(value['lte'])
 
     @property
     def api_schema(self):
@@ -431,10 +482,13 @@ class ClosedRange[P: PrimitiveJSON](FieldType[Range[P], JSON]):
         else:
             return self.api_schema
 
-    def from_api(self, value: AnyJSON) -> Range[P]:
+    def from_api(self, value: AnyJSON) -> Range[N]:
         return self.ends_type._from_api_range(value)
 
-    def filter(self, relation: str, values: list[AnyJSON]) -> list[JSON]:
+    def filter(self,
+               relation: str,
+               values: Iterable[AnyJSON]
+               ) -> Iterable[IndexRange[X]]:
         result = []
         for value in values:
             if isinstance(value, list):
