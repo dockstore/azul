@@ -267,6 +267,8 @@ def reify(t):
 
 
 def derived_type_params(cls: type,
+                        /,
+                        *,
                         root: type | None = None,
                         ) -> tuple[type | TypeVar | ForwardRef, ...]:
     """
