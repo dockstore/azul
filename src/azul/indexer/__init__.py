@@ -37,7 +37,7 @@ from azul.types import (
     JSON,
     MutableJSON,
     SupportsLessAndGreaterThan,
-    get_generic_type_params,
+    derived_type_params,
 )
 from azul.uuids import (
     UUIDPartition,
@@ -561,7 +561,7 @@ class SourceRef[SOURCE_SPEC: SourceSpec](SupportsLessAndGreaterThan):
 
     @classmethod
     def spec_cls(cls) -> type[SOURCE_SPEC]:
-        spec_cls, = get_generic_type_params(cls, SourceSpec, root=SourceRef)
+        spec_cls, = derived_type_params(cls, SourceSpec, root=SourceRef)
         return cast(type[SOURCE_SPEC], spec_cls)
 
     def with_prefix(self, prefix: Prefix) -> Self:
@@ -594,7 +594,7 @@ class SourcedBundleFQID[SOURCE_REF: SourceRef](BundleFQID):
 
     @classmethod
     def source_ref_cls(cls) -> type[SOURCE_REF]:
-        ref_cls, = get_generic_type_params(cls, SourceRef, root=SourcedBundleFQID)
+        ref_cls, = derived_type_params(cls, SourceRef, root=SourcedBundleFQID)
         return cast(type[SOURCE_REF], ref_cls)
 
     @classmethod

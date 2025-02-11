@@ -266,10 +266,10 @@ def reify(t):
     return tuple(OrderedSet(reify(t)))
 
 
-def get_generic_type_params(cls: type,
-                            *required_types: type,
-                            root: type | None = None,
-                            ) -> tuple[type | TypeVar | ForwardRef, ...]:
+def derived_type_params(cls: type,
+                        *required_types: type,
+                        root: type | None = None,
+                        ) -> tuple[type | TypeVar | ForwardRef, ...]:
     """
     Inspect and optionally verify the type parameterization of a generic class,
     or a class derived from a generic class.
@@ -309,33 +309,33 @@ def get_generic_type_params(cls: type,
 
     >>> class A[T1, T2]: pass
 
-    >>> get_generic_type_params(A)
+    >>> derived_type_params(A)
     (T1, T2)
 
     Both T1 and T2 are instances of ``TypeVar``.
 
     For free type variables, any specied expected types are ignored.
 
-    >>> get_generic_type_params(A, str, bytes)
+    >>> derived_type_params(A, str, bytes)
     (T1, T2)
 
     A non-generic subclass:
 
     >>> class B(A[int, float]): pass
 
-    >>> get_generic_type_params(B)
+    >>> derived_type_params(B)
     (<class 'int'>, <class 'float'>)
 
     The second type parameter (``float``) is not a subclass of ``str``:
 
-    >>> get_generic_type_params(B, int, str)
+    >>> derived_type_params(B, int, str)
     Traceback (most recent call last):
     ...
     AssertionError: R('Type mismatch', <class 'float'>, <class 'str'>)
 
     Mismatched arity:
 
-    >>> get_generic_type_params(B, int)
+    >>> derived_type_params(B, int)
     Traceback (most recent call last):
     ...
     AssertionError: R('Expected 1 type(s), got 2')
@@ -345,7 +345,7 @@ def get_generic_type_params(cls: type,
 
     >>> class C(A['foo', int]): pass
 
-    >>> get_generic_type_params(C)
+    >>> derived_type_params(C)
     (ForwardRef('foo'), <class 'int'>)
 
     A generic class that binds the first of the parent's parameters, but leaves
@@ -353,7 +353,7 @@ def get_generic_type_params(cls: type,
 
     >>> class D[T](A[int, T]): pass
 
-    >>> get_generic_type_params(D)
+    >>> derived_type_params(D)
     (<class 'int'>, T)
 
     A non-generic subclass that binds the remaining parameter as well:
@@ -362,24 +362,24 @@ def get_generic_type_params(cls: type,
 
     The value that E bind's D's parameter to:
 
-    >>> get_generic_type_params(E)
+    >>> derived_type_params(E)
     (<class 'float'>,)
 
     The equivalent invocation explicitly specifying the first parent class:
 
-    >>> get_generic_type_params(E, root=D)
+    >>> derived_type_params(E, root=D)
     (<class 'float'>,)
 
     E does not inherit B, so an empty tuple is returned:
 
-    >>> get_generic_type_params(E, root=B)
+    >>> derived_type_params(E, root=B)
     ()
 
     Last but not least, the most useful invocation: specifying the oldest
     generic ancestor as the root. This invocation returns the parameterization
     of E's grandparent.
 
-    >>> get_generic_type_params(E, root=A)
+    >>> derived_type_params(E, root=A)
     (<class 'int'>, <class 'float'>)
 
     Same as above but through a parent that binds the second of the
@@ -387,14 +387,14 @@ def get_generic_type_params(cls: type,
 
     >>> class F[T](A[T, int]): pass
     >>> class G(F[float]): pass
-    >>> get_generic_type_params(G, root=A)
+    >>> derived_type_params(G, root=A)
     (<class 'float'>, <class 'int'>)
 
     A parent swapping the grandparent's type parameters:
 
     >>> class H[T1, T2](A[T2, T1]): pass
     >>> class J(H[int, float]): pass
-    >>> get_generic_type_params(J, root=A)
+    >>> derived_type_params(J, root=A)
     (<class 'float'>, <class 'int'>)
     """
 
