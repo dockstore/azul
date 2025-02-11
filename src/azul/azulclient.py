@@ -3,7 +3,6 @@ from collections import (
 )
 from collections.abc import (
     Iterable,
-    Set,
 )
 from concurrent.futures import (
     Future,
@@ -21,7 +20,6 @@ from pprint import (
     PrettyPrinter,
 )
 from typing import (
-    Union,
     cast,
 )
 import uuid
@@ -214,12 +212,12 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
         if errors or missing:
             raise AzulClientNotificationError
 
-    def catalog_sources(self, catalog: CatalogName) -> Set[str]:
+    def catalog_sources(self, catalog: CatalogName) -> set[str]:
         return set(map(str, self.repository_plugin(catalog).sources))
 
     def list_bundles(self,
                      catalog: CatalogName,
-                     source: Union[str, SourceRef],
+                     source: str | SourceRef,
                      prefix: str
                      ) -> list[SourcedBundleFQID]:
         validate_uuid_prefix(prefix)
@@ -244,7 +242,7 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
 
     def remote_reindex(self,
                        catalog: CatalogName,
-                       sources: Set[str]):
+                       sources: set[str]):
 
         plugin = self.repository_plugin(catalog)
         for source_spec in sources:
