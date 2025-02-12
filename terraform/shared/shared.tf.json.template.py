@@ -344,7 +344,7 @@ tf_config = {
                         }
                     }
                 }
-                for bucket in ['logs', 'trail']
+                for bucket in ['aws_config', 'logs', 'trail']
             }
         },
         'aws_s3_bucket_versioning': {
