@@ -22,7 +22,8 @@ log = logging.getLogger(__name__)
 def main():
     tf_component = config.terraform_component
     if tf_component == '':
-        import_log_groups(lambda_function_log_groups())
+        log_groups = lambda_function_log_groups() | api_gateway_execution_log_groups()
+        import_log_groups(log_groups)
     elif tf_component in ('browser', 'gitlab'):
         pass
     elif tf_component == 'shared':
@@ -55,6 +56,20 @@ def lambda_function_log_groups() -> dict[str, str]:
                     name = log_group_name(resource_name + '_lambda')
                     log_group = '/aws/lambda/' + resource_def['function_name']
                     log_groups[name] = log_group
+    return log_groups
+
+
+def api_gateway_execution_log_groups() -> dict[str, str]:
+    api_client = boto3.client('apigateway')
+    paginator = api_client.get_paginator('get_rest_apis')
+    log_groups = {}
+    for api_page in paginator.paginate():
+        for api in api_page['items']:
+            name, stage = config.unqualified_resource_name(api['name'])
+            if stage == config.deployment_stage:
+                name = log_group_name(name + '_api_execution')
+                log_group = f"API-Gateway-Execution-Logs_{api['id']}/{stage}"
+                log_groups[name] = log_group
     return log_groups
 
 
