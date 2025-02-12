@@ -1028,6 +1028,7 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
         # to other entities, as an array of nested Avro records, each record
         # containing the `name` and `id` of the referenced entity.
         record_fqids = set()
+        relations = set()
         for record in reader:
             # Every record must follow the schema. Since each record's `object`
             # field contains an entity, the schema check therefore extends to
@@ -1035,7 +1036,7 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
             fastavro.validate(record, record_schema)
             object = cast(MutableJSON, record['object'])
             record_id, record_name = record['id'], record['name']
-            record_fqids.add((record_id, record_name))
+            record_fqids.add((record_name, record_id))
             if len(record_fqids) == 1:
                 # PFB requires a special `Metadata` entity to occur first. It is
                 # used to declare the relations between entity types, thereby
@@ -1053,10 +1054,13 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
             fields_expected = set(f['name'] for f in fields)
             self.assertEqual(fields_present, fields_expected)
             for relation in cast(MutableJSONs, record['relations']):
-                self.assertIn(relation['dst_name'], entity_types)
+                relations.add((relation['dst_name'], relation['dst_id']))
         # We expect to observe the special `Metadata` entity record and at least
         # one additional entity record
         self.assertGreater(len(record_fqids), 1)
+        # Terra will reject the handover if a relation references a record that
+        # isn't present in the manifest
+        self.assertIsSubset(relations, record_fqids)
 
     def _read_csv_manifest(self, file: IO[bytes]) -> csv.DictReader:
         text = TextIOWrapper(file)

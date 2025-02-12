@@ -2192,6 +2192,10 @@ class TestAnvilManifests(AnvilManifestTestCase):
                 filtered = [e for e in part if e['name'] != 'non_schema_orphan_table']
                 assert len(filtered) < len(part), 'Expected to filter orphan references'
                 part[:] = filtered
+            # To avoid dangling references, relations are only populated when
+            # including orphans
+            for entity in expected_entities:
+                entity['relations'].clear()
             for filters in [
                 self.neutral_file_filters,
                 {**self.neutral_file_filters, **self.dataset_title_filters}
