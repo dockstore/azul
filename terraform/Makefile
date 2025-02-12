@@ -38,6 +38,7 @@ rename_resources: validate
 
 .PHONY: import_resources
 import_resources: rename_resources
+	python $(project_root)/scripts/import_cloudwatch_log_groups.py
 
 .PHONY: plan
 plan: import_resources

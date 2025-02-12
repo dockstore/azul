@@ -1,4 +1,9 @@
+import json
+
 import boto3
+from more_itertools import (
+    one,
+)
 
 from azul import (
     config,
@@ -17,7 +22,7 @@ log = logging.getLogger(__name__)
 def main():
     tf_component = config.terraform_component
     if tf_component == '':
-        pass
+        import_log_groups(lambda_function_log_groups())
     elif tf_component in ('browser', 'gitlab'):
         pass
     elif tf_component == 'shared':
@@ -35,6 +40,22 @@ def chatbot_log_groups() -> dict[str, str]:
     name = log_group_name('chatbot')
     log_group = '/aws/chatbot/' + config.qualified_resource_name('chatbot')
     return {name: log_group}
+
+
+def lambda_function_log_groups() -> dict[str, str]:
+    tf_path = config.project_root + '/terraform/api_gateway.tf.json'
+    with open(tf_path, 'r') as f:
+        tf_json = json.load(f)
+    log_groups = {}
+    for resources_by_type in tf_json['resource']:
+        resource_type, resources = one(resources_by_type.items())
+        if resource_type == 'aws_lambda_function':
+            for resource in resources:
+                for resource_name, resource_def in resource.items():
+                    name = log_group_name(resource_name + '_lambda')
+                    log_group = '/aws/lambda/' + resource_def['function_name']
+                    log_groups[name] = log_group
+    return log_groups
 
 
 def import_log_groups(log_groups: dict[str, str]) -> None:

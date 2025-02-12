@@ -769,6 +769,15 @@ class Chalice:
             resource['source_code_hash'] = '${filebase64sha256("%s")}' % package_zip
             resource['filename'] = package_zip
 
+        assert 'aws_cloudwatch_log_group' not in resources
+        resources['aws_cloudwatch_log_group'] = {
+            f'{resource_name}_lambda': {
+                'name': f'/aws/lambda/{resource['function_name']}',
+                'retention_in_days': config.audit_log_retention_days
+            }
+            for resource_name, resource in resources['aws_lambda_function'].items()
+        }
+
         for resource_type, argument in [
             ('aws_cloudwatch_event_rule', 'name'),
             ('aws_cloudwatch_event_target', 'target_id')
