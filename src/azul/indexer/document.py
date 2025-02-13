@@ -1325,7 +1325,7 @@ class Document(Generic[C], metaclass=ABCMeta):
         return body
 
 
-class DocumentSource(SourceRef[SimpleSourceSpec, SourceRef]):
+class DocumentSource(SourceRef[SimpleSourceSpec]):
     pass
 
 

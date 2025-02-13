@@ -7,7 +7,6 @@ from pathlib import (
     Path,
 )
 from typing import (
-    Generic,
     Literal,
     Optional,
     Type,
@@ -27,7 +26,6 @@ from azul import (
     config,
 )
 from azul.indexer import (
-    BUNDLE,
     Bundle,
     BundleFQID,
     SourcedBundleFQID,
@@ -124,7 +122,7 @@ class CannedFileTestCase(AzulUnitTestCase):
             return json.load(infile)
 
 
-class CannedBundleTestCase(CannedFileTestCase, Generic[BUNDLE]):
+class CannedBundleTestCase[BUNDLE: Bundle](CannedFileTestCase):
     """
     A test case that loads a canned bundle, i.e. a can containing the input to
     tests involving a metadata plugin or the expected output of tests involving

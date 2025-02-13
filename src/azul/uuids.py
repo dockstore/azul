@@ -4,8 +4,7 @@ from hashlib import (
 import math
 from typing import (
     ClassVar,
-    Generic,
-    TypeVar,
+    Self,
 )
 from uuid import (
     UUID,
@@ -17,6 +16,10 @@ from azul import (
     JSON,
     reject,
     require,
+)
+from azul.types import (
+    MutableJSON,
+    json_int,
 )
 
 
@@ -134,11 +137,15 @@ def change_version(uuid: str, old_version: int, new_version: int) -> str:
     return uuid
 
 
-UUID_PARTITION = TypeVar('UUID_PARTITION', bound='UUIDPartition')
+class UUIDPartitionMeta(type):
+
+    def __init__(cls, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        attr.s(frozen=True, kw_only=True, auto_attribs=True)(cls)
+        cls.root = cls(prefix_length=0, prefix=0)
 
 
-@attr.s(frozen=True, kw_only=True, auto_attribs=True)
-class UUIDPartition(Generic[UUID_PARTITION]):
+class UUIDPartition(metaclass=UUIDPartitionMeta):
     """
     A binary partitioning of the UUID space. Most partitionings of the UUID
     space use a prefix of the hexadecimal representation of UUIDs. This class
@@ -147,7 +154,7 @@ class UUIDPartition(Generic[UUID_PARTITION]):
     prefix_length: int
     prefix: int
 
-    root: ClassVar[UUID_PARTITION]  # see metaclass above
+    root: ClassVar[Self]  # see metaclass above
 
     # This stub is only needed to aid PyCharm's type inference. Without this,
     # a constructor invocation that doesn't refer to the class explicitly, but
@@ -163,11 +170,15 @@ class UUIDPartition(Generic[UUID_PARTITION]):
         require(0 <= self.prefix < 2 ** self.prefix_length)
 
     @classmethod
-    def from_json(cls, partition: JSON) -> UUID_PARTITION:
-        return cls(**partition)
+    def from_json(cls, json: JSON) -> Self:
+        return cls(prefix_length=json_int(json['prefix_length']),
+                   prefix=json_int(json['prefix']))
 
-    def to_json(self) -> JSON:
-        return attr.asdict(self)
+    def to_json(self) -> MutableJSON:
+        return {
+            'prefix_length': self.prefix_length,
+            'prefix': self.prefix
+        }
 
     def contains(self, member: UUID) -> bool:
         """
@@ -183,13 +194,14 @@ class UUIDPartition(Generic[UUID_PARTITION]):
         shift = 128 - self.prefix_length
         return member.int >> shift == self.prefix
 
-    def divide(self, num_divisions: int) -> list[UUID_PARTITION]:
+    def divide(self, num_divisions: int) -> list[Self]:
         """
         Divide this partition into a set of at least the given number of
         sub-partitions. The length of the return value will always be the
         smallest a power of two that is greater than ``num_divisions`.
 
-        >>> sorted(UUIDPartition.root.divide(3)) # doctest: +NORMALIZE_WHITESPACE
+        >>> sorted(UUIDPartition.root.divide(3))
+        ... # doctest: +NORMALIZE_WHITESPACE
         [UUIDPartition(prefix_length=2, prefix=0),\
         UUIDPartition(prefix_length=2, prefix=1),\
         UUIDPartition(prefix_length=2, prefix=2),\
@@ -246,17 +258,6 @@ class UUIDPartition(Generic[UUID_PARTITION]):
             return format(i, f'0{hex_len}x')[:hex_len]
 
         return '-'.join(map(hex, (lo, hi)))
-
-    def __init_subclass__(cls) -> None:
-        super().__init_subclass__()
-        cls.init_cls()
-
-    @classmethod
-    def init_cls(cls):
-        cls.root = cls(prefix=0, prefix_length=0)
-
-
-UUIDPartition.init_cls()
 
 
 def uuid5_for_bytes(namespace: UUID, name: bytes) -> UUID:

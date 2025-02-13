@@ -282,7 +282,7 @@ class TDRHCABundle(HCABundle[TDRBundleFQID], TDRBundle):
             return file_id
 
 
-class Plugin(TDRPlugin[TDRHCABundle, TDRSourceSpec, TDRSourceRef, TDRBundleFQID]):
+class Plugin(TDRPlugin[TDRHCABundle, TDRBundleFQID]):
 
     def count_bundles(self, source: TDRSourceSpec) -> int:
         prefix = '' if source.prefix is None else source.prefix.common

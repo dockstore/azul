@@ -82,7 +82,7 @@ from azul.http import (
     Propagate429HttpClient,
 )
 from azul.indexer import (
-    SourceRef as BaseSourceRef,
+    SourceRef,
     SourceSpec,
 )
 from azul.oauth2 import (
@@ -219,7 +219,7 @@ class TDRSourceSpec(SourceSpec):
         return '.'.join((self.subdomain, self.name, table_name))
 
 
-class TDRSourceRef(BaseSourceRef[TDRSourceSpec, 'TDRSourceRef']):
+class TDRSourceRef(SourceRef[TDRSourceSpec]):
     pass
 
 
