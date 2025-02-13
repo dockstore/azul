@@ -267,12 +267,11 @@ def reify(t):
 
 
 def derived_type_params(cls: type,
-                        *required_types: type,
                         root: type | None = None,
                         ) -> tuple[type | TypeVar | ForwardRef, ...]:
     """
-    Inspect and optionally verify the type parameterization of a generic class,
-    or a class derived from a generic class.
+    Inspect the type parameterization of a generic class, or a class derived
+    from a generic class.
 
     Each of the returned values is either an instance of ``type``, of
     ``typing.TypeVar``, or of ``typing.ForwardRef``, depending on how the
@@ -296,15 +295,6 @@ def derived_type_params(cls: type,
                  ancestry, the parameterization of every ancestor on the lineage
                  from ``cls`` to ``root`` is then inspected.
 
-    :param required_types: If the i-th type parameter (type variable) of the
-                           root class is bound to a concrete type, i.e. is set
-                           to an instance of ``type``, then that type must be a
-                           subtype of the i-th element of ``required_types``.
-                           Somewhat surprisingly, this function ignores elements
-                           of ``required_types`` for which the corresponding
-                           type parameter of the root class is still free or a
-                           forward reference.
-
     A generic class:
 
     >>> class A[T1, T2]: pass
@@ -314,31 +304,12 @@ def derived_type_params(cls: type,
 
     Both T1 and T2 are instances of ``TypeVar``.
 
-    For free type variables, any specied expected types are ignored.
-
-    >>> derived_type_params(A, str, bytes)
-    (T1, T2)
-
     A non-generic subclass:
 
     >>> class B(A[int, float]): pass
 
     >>> derived_type_params(B)
     (<class 'int'>, <class 'float'>)
-
-    The second type parameter (``float``) is not a subclass of ``str``:
-
-    >>> derived_type_params(B, int, str)
-    Traceback (most recent call last):
-    ...
-    AssertionError: R('Type mismatch', <class 'float'>, <class 'str'>)
-
-    Mismatched arity:
-
-    >>> derived_type_params(B, int)
-    Traceback (most recent call last):
-    ...
-    AssertionError: R('Expected 1 type(s), got 2')
 
     A non-generic subclass, using a forward reference. The reference is
     returned:
@@ -370,10 +341,12 @@ def derived_type_params(cls: type,
     >>> derived_type_params(E, root=D)
     (<class 'float'>,)
 
-    E does not inherit B, so an empty tuple is returned:
+    E does not inherit B, so an exception is raised:
 
     >>> derived_type_params(E, root=B)
-    ()
+    Traceback (most recent call last):
+    ...
+    TypeError: ('Root is not an ancestor', <class 'azul.types.B'>, <class 'azul.types.E'>)
 
     Last but not least, the most useful invocation: specifying the oldest
     generic ancestor as the root. This invocation returns the parameterization
@@ -396,7 +369,17 @@ def derived_type_params(cls: type,
     >>> class J(H[int, float]): pass
     >>> derived_type_params(J, root=A)
     (<class 'float'>, <class 'int'>)
+
+    >>> t1, t2 = derived_type_params(A)
+    >>> derived_type_params(t1)
+    Traceback (most recent call last):
+    ...
+    AssertionError: R('Not a type', T1, <class 'typing.TypeVar'>)
     """
+    from azul import (
+        R,
+    )
+    assert isinstance(cls, type), R('Not a type', cls, type(cls))
 
     def ancestors(cls) -> tuple[type, ...]:
         for base in get_original_bases(cls):
@@ -413,32 +396,25 @@ def derived_type_params(cls: type,
 
     if root is None:
         base = get_original_bases(cls)[0]
-        assert base is not None
-        types = get_args(base)
+        return get_args(base)
     else:
-        types = ()
-        mapping: dict[TypeVar, type | TypeVar] = {}
-        for base in ancestors(cls):
-            origin = get_origin(base)
-            params = origin.__type_params__
-            types = get_args(base)
-            types = tuple(mapping.get(v, v) for v in types)
-            mapping = {k: v for k, v in zip(params, types)}
-
-    if required_types:
-        from azul import (
-            R,
-        )
-        assert len(required_types) == len(types), R(
-            f'Expected {len(required_types)} type(s), got {len(types)}')
-        for required, actual in zip(required_types, types):
-            if isinstance(actual, type):
-                assert issubclass(actual, required), R(
-                    'Type mismatch', actual, required)
-            else:
-                assert isinstance(actual, (TypeVar, ForwardRef)), R(
-                    'Expecting type, type variable or forward reference', actual)
-    return types
+        bases = iter(ancestors(cls))
+        if None is (base := next(bases, None)):
+            raise TypeError('Root is not an ancestor', root, cls)
+        else:
+            mapping = None
+            while True:
+                values = get_args(base)
+                if mapping:
+                    values = tuple(mapping.get(value, value) for value in values)
+                if None is (next_base := next(bases, None)):
+                    return values
+                else:
+                    origin = get_origin(base)
+                    assert origin is not None, (base, type(base))
+                    params = origin.__type_params__
+                    mapping = {param: value for param, value in zip(params, values)}
+                    base = next_base
 
 
 class SupportsLessAndGreaterThan(Protocol):

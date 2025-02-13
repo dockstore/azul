@@ -561,7 +561,9 @@ class SourceRef[SOURCE_SPEC: SourceSpec](SupportsLessAndGreaterThan):
 
     @classmethod
     def spec_cls(cls) -> type[SOURCE_SPEC]:
-        spec_cls, = derived_type_params(cls, SourceSpec, root=SourceRef)
+        spec_cls, = derived_type_params(cls, root=SourceRef)
+        assert isinstance(spec_cls, type)
+        assert issubclass(spec_cls, SourceSpec)
         return cast(type[SOURCE_SPEC], spec_cls)
 
     def with_prefix(self, prefix: Prefix) -> Self:
@@ -594,7 +596,9 @@ class SourcedBundleFQID[SOURCE_REF: SourceRef](BundleFQID):
 
     @classmethod
     def source_ref_cls(cls) -> type[SOURCE_REF]:
-        ref_cls, = derived_type_params(cls, SourceRef, root=SourcedBundleFQID)
+        ref_cls, = derived_type_params(cls, root=SourcedBundleFQID)
+        assert isinstance(ref_cls, type)
+        assert issubclass(ref_cls, SourceRef)
         return cast(type[SOURCE_REF], ref_cls)
 
     @classmethod

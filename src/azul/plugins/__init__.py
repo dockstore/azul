@@ -607,21 +607,15 @@ class RepositoryPlugin[BUNDLE: Bundle,
         return {source.id for source in self.list_sources(authentication)}
 
     @cached_property
-    def _generic_params(self) -> tuple:
-        types = Bundle, SourceSpec, SourceRef, SourcedBundleFQID
-        params = derived_type_params(type(self), *types, root=RepositoryPlugin)
-        bundle_cls, spec_cls, ref_cls, fqid_cls = params
-        assert isinstance(fqid_cls, type)
-        assert issubclass(fqid_cls, SourcedBundleFQID)
-        assert fqid_cls.source_ref_cls() is ref_cls
-        assert isinstance(ref_cls, type)
-        assert issubclass(ref_cls, SourceRef)
-        assert ref_cls.spec_cls() is spec_cls
-        return bundle_cls, spec_cls, ref_cls, fqid_cls
+    def _generic_params(self) -> tuple[type, ...]:
+        params = derived_type_params(type(self), root=RepositoryPlugin)
+        assert all(isinstance(p, type) for p in params)
+        return cast(tuple[type, ...], params)
 
     @property
     def _source_ref_cls(self) -> type[SOURCE_REF]:
         bundle_cls, spec_cls, ref_cls, fqid_cls = self._generic_params
+        assert issubclass(ref_cls, SourceRef)
         return ref_cls
 
     def source_from_json(self, ref: SourceJSON) -> SOURCE_REF:
@@ -634,6 +628,7 @@ class RepositoryPlugin[BUNDLE: Bundle,
     @property
     def _bundle_fqid_cls(self) -> type[BUNDLE_FQID]:
         bundle_cls, spec_cls, ref_cls, fqid_cls = self._generic_params
+        assert issubclass(fqid_cls, SourcedBundleFQID)
         return fqid_cls
 
     def bundle_fqid_from_json(self, fqid: SourcedBundleFQIDJSON) -> BUNDLE_FQID:
@@ -646,6 +641,7 @@ class RepositoryPlugin[BUNDLE: Bundle,
     @property
     def _bundle_cls(self) -> type[BUNDLE]:
         bundle_cls, spec_cls, ref_cls, fqid_cls = self._generic_params
+        assert issubclass(bundle_cls, Bundle)
         return bundle_cls
 
     def resolve_source(self, spec: str) -> SOURCE_REF:
