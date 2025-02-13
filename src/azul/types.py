@@ -377,6 +377,29 @@ def derived_type_params(cls: type,
     Traceback (most recent call last):
     ...
     AssertionError: R('Not a type', T1, <class 'typing.TypeVar'>)
+
+    Ancestry that includes a non-generic base cass:
+
+    >>> class K(E): pass
+    >>> derived_type_params(K)
+    ()
+    >>> derived_type_params(K, root=E)
+    ()
+    >>> derived_type_params(K, root=D)
+    (<class 'float'>,)
+    >>> derived_type_params(K, root=A)
+    (<class 'int'>, <class 'float'>)
+
+    Ancestry with two strains of type variables:
+
+    >>> class L[T3](E): pass
+    >>> class M(L[str]): pass
+    >>> derived_type_params(M)
+    (<class 'str'>,)
+    >>> derived_type_params(M, root=L)
+    (<class 'str'>,)
+    >>> derived_type_params(M, root=A)
+    (<class 'int'>, <class 'float'>)
     """
     from azul import (
         R,
@@ -387,8 +410,8 @@ def derived_type_params(cls: type,
         for base in get_original_bases(cls):
             origin = get_origin(base)
             if origin is None:
-                return ()
-            elif origin is root:
+                origin = base
+            if origin is root:
                 return (base,)
             else:
                 lineage = ancestors(origin)
@@ -413,9 +436,12 @@ def derived_type_params(cls: type,
                     return values
                 else:
                     origin = get_origin(base)
-                    assert origin is not None, (base, type(base))
-                    params = origin.__type_params__
-                    mapping = {param: value for param, value in zip(params, values)}
+                    if origin is None:
+                        mapping = None
+                    else:
+                        assert origin is not None, (base, type(base))
+                        params = origin.__type_params__
+                        mapping = {param: value for param, value in zip(params, values)}
                     base = next_base
 
 
