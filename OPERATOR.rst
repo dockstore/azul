@@ -302,9 +302,13 @@ separately.
 
 There are ways to dynamically determine the latest AMI released by CIS under the
 subscription but in the spirit of reproducible builds, we would rather pin the
-AMI ID and adopt updates at our own discretion to avoid unexpected failures. To
-obtain the latest compatible AMI ID, select the desired ``….gitlab`` component,
-say, ``_select dev.gitlab`` and run
+AMI ID and adopt updates at our own discretion to avoid unexpected failures.
+
+Note that the AMI versioning scheme (e.g., ``v01``, ``v11``) indicates the month
+of release, and is not a monotonically increasing value.
+
+To obtain the latest compatible AMI ID, select the desired ``….gitlab``
+component, say, ``_select dev.gitlab`` and run
 
 ::
 

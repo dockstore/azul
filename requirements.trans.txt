@@ -4,11 +4,11 @@ cachetools==5.5.1
 certifi==2025.1.31
 cffi==1.17.1
 charset-normalizer==3.4.1
-cryptography==44.0.0
+cryptography==44.0.1
 google-cloud-core==2.4.1
 google-crc32c==1.6.0
 google-resumable-media==2.7.2
-googleapis-common-protos==1.66.0
+googleapis-common-protos==1.67.0
 grpcio==1.70.0
 grpcio-status==1.62.3
 http_sfv==0.9.9
@@ -28,5 +28,5 @@ s3transfer==0.11.2
 setuptools-scm==5.0.2
 six==1.17.0
 typing_extensions==4.12.2
-tzlocal==5.2
+tzlocal==5.3
 wrapt==1.17.2
