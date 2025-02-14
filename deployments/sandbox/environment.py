@@ -161,8 +161,9 @@ dcp2_sources = mkdict({}, 105, mkdelta([
     mksrc('bigquery', 'datarepo-dev-96d8e08c', 'hca_dev_faeedcb0e0464be7b1ad80a3eeabb066__20210831_20210903'),
 ]))
 
-dcp3_sources = mkdict(dcp2_sources, 105, mkdelta([
+dcp3_sources = mkdict(dcp2_sources, 104, mkdelta([
     mksrc('bigquery', 'datarepo-dev-3d6d24ad', 'hca_dev_05657a599f9d4bb9b77b24be13aa5cea__20210827_20230215'),
+    mksrc('bigquery', 'datarepo-dev-76de829d', 'hca_dev_2043c65a1cf84828a6569e247d4e64f1__20210831_20210907', pop),
     mksrc('bigquery', 'datarepo-dev-b46086a9', 'hca_dev_51f02950ee254f4b8d0759aa99bb3498__20210827_20230215'),
     mksrc('bigquery', 'datarepo-dev-27c50fbc', 'hca_dev_c5f4661568de4cf4bbc2a0ae10f08243__20210827_20230215'),
     mksrc('bigquery', 'datarepo-dev-2a4ab485', 'hca_dev_d2111fac3fc44f429b6d32cd6a828267__20210830_20230215'),
@@ -176,10 +177,8 @@ lungmap_sources = mkdict({}, 2, mkdelta([
     mksrc('bigquery', 'datarepo-dev-8de6d66b', 'lungmap_dev_2620497955a349b28d2b53e0bdfcb176__20220404_20220404')
 ]))
 
-lm2_sources = mkdict(lungmap_sources, 5, mkdelta([
+lm2_sources = mkdict(lungmap_sources, 3, mkdelta([
     mksrc('bigquery', 'datarepo-dev-b47b6759', 'lungmap_dev_00f056f273ff43ac97ff69ca10e38c89__20220404_20220404_lm2'),
-    mksrc('bigquery', 'datarepo-dev-2e9ef7fd', 'lungmap_dev_20037472ea1d4ddb9cd356a11a6f0f76__20220401_20220404_lm2'),
-    mksrc('bigquery', 'datarepo-dev-d57fd0c5', 'lungmap_dev_f899709cae2c4bb988f0131142e6c7ec__20220401_20220629_lm2')
 ]))
 
 

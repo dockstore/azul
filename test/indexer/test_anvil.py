@@ -9,6 +9,7 @@ from operator import (
     itemgetter,
 )
 from typing import (
+    Iterable,
     Type,
     cast,
 )
@@ -49,6 +50,10 @@ from azul.plugins.repository.tdr_anvil import (
 from azul.terra import (
     TDRClient,
 )
+from azul.types import (
+    JSONs,
+    MutableJSONs,
+)
 from azul_test_case import (
     TDRTestCase,
 )
@@ -68,37 +73,37 @@ def setUpModule():
 
 class DUOSTestCase(TDRTestCase, ABC):
 
-    @classmethod
-    def setUpClass(cls) -> None:
-        super().setUpClass()
-        cls._patch_duos()
+    def _mock_normal_duos(self):
+        for p in self._duos_patches(self.normal_response_bodies):
+            self.addPatch(p)
 
-    mock_duos_url = furl('https:://mock_duos.lan')
+    @property
+    def normal_response_bodies(self) -> MutableJSONs:
+        duos_id = 'DUOS-000000'
+        return [
+            # TDR's /snapshots/{snapshot_id} response:
+            {
+                'name': self.source.spec.name,
+                'duosFirecloudGroup': {'duosId': duos_id}
+            },
+            # DUOS' /dataset/registration/{duos_id}:
+            {
+                'consentGroups': [{'datasetIdentifier': duos_id}],
+                'studyDescription': 'Study description from DUOS'
+            }
+        ]
 
-    duos_id = 'DUOS-000000'
-    duos_description = 'Study description from DUOS'
-
-    @classmethod
-    def _patch_duos(cls) -> None:
-        cls.addClassPatch(patch.object(type(config),
-                                       'duos_service_url',
-                                       new=PropertyMock(return_value=cls.mock_duos_url)))
-        cls.addClassPatch(patch.object(TDRClient,
-                                       '_request',
-                                       side_effect=[
-                                           Mock(spec=HTTPResponse, status=200, data=json.dumps({
-                                               'name': cls.source.spec.name,
-                                               'duosFirecloudGroup': {
-                                                   'duosId': cls.duos_id
-                                               }
-                                           })),
-                                           Mock(spec=HTTPResponse, status=200, data=json.dumps({
-                                               'consentGroups': [{
-                                                   'datasetIdentifier': cls.duos_id
-                                               }],
-                                               'studyDescription': cls.duos_description
-                                           }))
-                                       ]))
+    def _duos_patches(self, bodies: JSONs) -> Iterable[patch]:
+        responses = [
+            Mock(spec=HTTPResponse, status=200, data=json.dumps(body))
+            for body in bodies
+        ]
+        mock_url = PropertyMock(return_value=furl('https://mock_duos.lan'))
+        patches = [
+            patch.object(type(config), 'duos_service_url', new=mock_url),
+            patch.object(TDRClient, '_request', side_effect=responses)
+        ]
+        return patches
 
 
 class AnvilIndexerTestCase(AnvilCannedBundleTestCase, IndexerTestCase):
@@ -173,6 +178,7 @@ class TestAnvilIndexer(AnvilIndexerTestCase,
                         self.index_service.delete_indices(self.catalog)
 
     def test_list_and_fetch_bundles(self):
+        self._mock_normal_duos()
         source_ref = self.source
         self._make_mock_tdr_tables(source_ref)
         canned_bundle_fqids = [
@@ -211,6 +217,35 @@ class TestAnvilIndexer(AnvilIndexerTestCase,
                 self.assertEqual(canned_bundle.entities, bundle.entities)
                 self.assertEqual(canned_bundle.links, bundle.links)
                 self.assertEqual(canned_bundle.orphans, bundle.orphans)
+
+    def test_absent_duos_id(self):
+        source_ref = self.source
+        self._make_mock_tdr_tables(source_ref)
+        cases = {
+            'Absent duosFirecloudGroup': [
+                {'name': self.source.spec.name}
+            ],
+            'Empty duosFirecloudGroup': [
+                {
+                    'name': self.source.spec.name,
+                    'duosFirecloudGroup': {}
+                }
+            ],
+            'Null duosId': [
+                {
+                    'name': self.source.spec.name,
+                    'duosFirecloudGroup': {'duosId': None}
+                }
+            ]
+        }
+        for sub_test, response_bodies in cases.items():
+            with self.subTest(sub_test):
+                with self.stacked_patches(self._duos_patches(response_bodies)):
+                    plugin = self.plugin_for_source_spec(source_ref.spec)
+                    bundle = plugin.fetch_bundle(self.duos_bundle())
+                    self.assertIsInstance(bundle, TDRAnvilBundle)
+                    self.assertEqual({}, bundle.entities)
+                    self.assertEqual(1, len(bundle.orphans))
 
 
 class TestAnvilIndexerWithIndexesSetUp(AnvilIndexerTestCase):

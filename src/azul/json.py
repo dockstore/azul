@@ -8,60 +8,48 @@ from io import (
 )
 import json
 from typing import (
-    Union,
-    cast,
+    overload,
 )
 
+from more_itertools.more import (
+    mark_ends,
+)
+
+from azul import (
+    R,
+)
 from azul.types import (
     AnyJSON,
+    AnyMutableJSON,
     CompositeJSON,
     JSON,
-    JSONs,
+    JSONArray,
     MutableCompositeJSON,
     MutableJSON,
-    MutableJSONs,
+    MutableJSONArray,
 )
 
 
-def copy_json(o: JSON, *path: Union[str, int]) -> MutableJSON:
+def copy_any_json(v: AnyJSON) -> AnyMutableJSON:
     """
-    Make a new, mutable copy of a JSON object.
-
-    This is a convenience wrapper of :func:`copy_composite_json` that expresses
-    the covariance between argument and return types.
-
-    >>> a = {'a': [1, 2]}
-    >>> b = copy_json(a)
-    >>> b['a'].append(3)
-    >>> b
-    {'a': [1, 2, 3]}
-    >>> a
-    {'a': [1, 2]}
+    Same as :func:`copy_json` but additionally allows passing primitive values
+    for which it simply returns the argument.
     """
-    return copy_composite_json(o, *path)
+    if v is None or isinstance(v, (str, int, float, bool)):
+        return v
+    else:
+        return copy_json(v)
 
 
-def copy_jsons(o: JSONs, *path: Union[str, int]) -> MutableJSONs:
-    """
-    Make a new, mutable copy of a JSON array.
-
-    This is a convenience wrapper of :func:`copy_composite_json` that expresses
-    the covariance between argument and return types.
-
-    >>> a = [{'a': [1, 2]}, {'b': 3}]
-    >>> b = copy_jsons(a)
-    >>> b[0]['a'].append(3)
-    >>> b
-    [{'a': [1, 2, 3]}, {'b': 3}]
-    >>> a
-    [{'a': [1, 2]}, {'b': 3}]
-    """
-    return cast(MutableJSONs, copy_composite_json(o, *path))
+@overload
+def copy_json(tree: JSON, *path: str | int) -> MutableJSON: ...
 
 
-def copy_composite_json(tree: CompositeJSON,
-                        *path: Union[str, int]
-                        ) -> MutableCompositeJSON:
+@overload
+def copy_json(tree: JSONArray, *path: str | int) -> MutableJSONArray: ...
+
+
+def copy_json(tree: CompositeJSON, *path: str | int) -> MutableCompositeJSON:
     """
     Make a mutable, deep copy of the given JSON structure, or some part of it.
 
@@ -82,7 +70,41 @@ def copy_composite_json(tree: CompositeJSON,
                  This process repeats until the end of the path is reached at
                  which time a deep copy of the resulting list will be made.
 
-    Create a JSON tree with two branches, ``l`` and ``r``:
+    >>> o = {'a': [1, 2]}
+    >>> c = copy_json(o)
+    >>> c['a'].append(3)
+    >>> c
+    {'a': [1, 2, 3]}
+    >>> o
+    {'a': [1, 2]}
+
+    >>> o = [{'a': [1, 2]}, {'b': 3}]
+    >>> c = copy_json(o)
+    >>> c[0]['a'].append(3)
+    >>> c
+    [{'a': [1, 2, 3]}, {'b': 3}]
+    >>> o
+    [{'a': [1, 2]}, {'b': 3}]
+
+    Only composite JSON can be copied, primitives cannot.
+
+    >>> copy_json(1)
+    Traceback (most recent call last):
+    ...
+    AssertionError: R('First argument must be dict or list', <class 'int'>)
+
+    Despite the argument being declared as immutable JSON, we don't actually
+    support immutable sequences or mappings. The immutable types from
+    ``azul.typing`` are only meant to prevent mutations statically, not enforced
+    at runtime. That's why a tuple, an immutable sequence, is rejected:
+
+    >>> copy_json(())
+    Traceback (most recent call last):
+    ...
+    AssertionError: R('First argument must be dict or list', <class 'tuple'>)
+
+    For a more complicated example, we create a JSON tree with two branches,
+    ``l`` and ``r``:
 
     >>> o = {'l': {'ll': [1, 2]}, 'r': {'rr': {'rrr': [3, 4]}}}
 
@@ -142,29 +164,25 @@ def copy_composite_json(tree: CompositeJSON,
     ...
     TypeError: Path element 0 cannot be used to traverse a value of <class 'dict'>
     """
+    assert isinstance(tree, (dict, list)), R(
+        'First argument must be dict or list', type(tree)
+    )
     if path:
-        *path, last = path
-        tree = node = copy(tree)
-        for element in path:
-            _check_node(node, element)
-            assert isinstance(node, (dict, list))
-            node[element] = copy(node[element])
-            node = node[element]
-        _check_node(node, last)
-        assert isinstance(node, (dict, list))
-        node[last] = deepcopy(node[last])
+        node = tree = copy(tree)
+        for is_first, is_last, element in mark_ends(path):
+            f = deepcopy if is_last else copy
+            if isinstance(node, dict) and isinstance(element, str):
+                node[element] = f(node[element])
+                node = node[element]
+            elif isinstance(node, list) and isinstance(element, int):
+                node[element] = f(node[element])
+                node = node[element]
+            else:
+                raise TypeError(f'Path element {element!r} cannot be used '
+                                f'to traverse a value of {type(node)}')
     else:
         tree = deepcopy(tree)
-    return cast(MutableCompositeJSON, tree)
-
-
-def _check_node(node, path_element):
-    if not (
-        isinstance(node, dict) and isinstance(path_element, str)
-        or isinstance(node, list) and isinstance(path_element, int)
-    ):
-        raise TypeError(f'Path element {path_element!r} cannot be used '
-                        f'to traverse a value of {type(node)}')
+    return tree
 
 
 def json_head(n: int, o: AnyJSON) -> str:

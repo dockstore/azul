@@ -10,7 +10,6 @@ import logging
 from typing import (
     TYPE_CHECKING,
     TypedDict,
-    Union,
 )
 
 import attr
@@ -29,6 +28,7 @@ from google.oauth2.service_account import (
 import urllib3.request
 
 from azul import (
+    R,
     cached_property,
     config,
     reject,
@@ -41,7 +41,7 @@ from azul.http import (
 
 log = logging.getLogger(__name__)
 
-ScopedCredentials = Union[ServiceAccountCredentials, TokenCredentials]
+ScopedCredentials = ServiceAccountCredentials | TokenCredentials
 
 
 class CredentialsProvider(metaclass=ABCMeta):
@@ -74,6 +74,14 @@ class OAuth2Client(HasCachedHttpClient):
     @property
     def credentials(self) -> ScopedCredentials:
         return self.credentials_provider.scoped_credentials()
+
+    @property
+    def service_account_credentials(self) -> ServiceAccountCredentials:
+        credentials = self.credentials
+        assert isinstance(credentials, ServiceAccountCredentials), R(
+            'Expecting service account credentials', type(credentials)
+        )
+        return credentials
 
     # The AuthorizedHttp class declares the second constructor argument to be a
     # PoolManager instance but, except for __del__, doesn't actually use methods
@@ -149,7 +157,7 @@ class OAuth2Client(HasCachedHttpClient):
             # Actual service account credentials
             require(token_info['email_verified'] == 'true',
                     'Service account email is not verified')
-            require(token_info['email'] == self.credentials.service_account_email,
+            require(token_info['email'] == credentials.service_account_email,
                     'Service account email does not match')
         elif isinstance(credentials, TokenCredentials):
             authorized_party = token_info['azp']

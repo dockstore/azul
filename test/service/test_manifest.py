@@ -2212,7 +2212,8 @@ class TestPFB(CannedManifestTestCase):
         self._assert_pfb_schema(schema)
 
     def test_pfb_metadata_object(self):
-        metadata_entity = avro_pfb.pfb_metadata_entity(FileTransformer.field_types())
+        links = avro_pfb.pfb_links_from_field_types(FileTransformer.field_types())
+        metadata_entity = avro_pfb.pfb_metadata_entity(links)
         field_types = FileTransformer.field_types()
         schema = avro_pfb.pfb_schema_from_field_types(field_types)
         parsed_schema = fastavro.parse_schema(cast(dict, schema))

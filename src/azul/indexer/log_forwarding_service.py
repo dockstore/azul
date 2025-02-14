@@ -124,7 +124,15 @@ class S3AccessLogForwardingService(LogForwardingService):
 
     def _read_log(self, response: StreamingBody) -> Iterable[str]:
         for line in response.iter_lines():
-            yield line.decode('ascii')
+            # AWS does not document what encoding is used for these log objects.
+            # Using Latin-1 ensures the log forwarder won't fail due to decoding
+            # errors, since every octet is a valid Latin-1 character. The
+            # strings will be re-encoded using UTF-8, so the binary content of
+            # the CloudWatch log messages will differ from the S3 log if the
+            # latter contains characters that can't be encoded using UTF-8. This
+            # decision was made to minimize time spent diagnosing these decoding
+            # errors.
+            yield line.decode('latin1')
 
     def _parse_log_lines(self, file_body: Iterable[str]) -> Iterator[MutableJSON]:
         for message in super()._parse_log_lines(file_body):

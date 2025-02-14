@@ -5,6 +5,7 @@ from abc import (
 from collections.abc import (
     Set,
 )
+import contextlib
 from contextlib import (
     AbstractContextManager,
 )
@@ -16,6 +17,7 @@ from re import (
     escape,
 )
 from typing import (
+    Iterable,
     Optional,
 )
 from unittest import (
@@ -60,6 +62,9 @@ from azul.plugins.repository.tdr_hca import (
 )
 from azul.terra import (
     TDRSourceSpec,
+)
+from humancellatlas.data.metadata import (
+    api,
 )
 
 log = get_test_logger(__name__)
@@ -118,9 +123,6 @@ class AzulTestCase(TestCase):
                 RE(r'.+humancellatlas\.data\.metadata\.api\.LibraryPreparationProcess'),
                 RE(r'.*humancellatlas\.data\.metadata\.api\.SequencingProcess'),
 
-                # FIXME: Upgrade tenacity
-                #        https://github.com/DataBiosphere/azul/issues/2070
-                '"@coroutine" decorator is deprecated since Python 3.8, use "async def" instead',
                 # FIXME: https://github.com/DataBiosphere/azul/issues/2758
                 'OpenJDK 64-Bit Server VM warning: Option UseConcMarkSweepGC was deprecated',
 
@@ -222,6 +224,13 @@ class AzulTestCase(TestCase):
         instance.start()
         self.addCleanup(cleanup)
 
+    @contextlib.contextmanager
+    def stacked_patches(self, patches: Iterable[patch]):
+        with contextlib.ExitStack() as context:
+            for cm in patches:
+                context.enter_context(cm)
+            yield
+
 
 class AlwaysTearDownTestCase(TestCase):
     """
@@ -275,6 +284,7 @@ class AzulUnitTestCase(AzulTestCase):
         cls._patch_aws_region()
         cls._patch_dss_query_prefix()
         cls._patch_lambda_env()
+        cls._patch_valid_schema_domains()
 
     def setUp(self) -> None:
         super().setUp()
@@ -363,6 +373,19 @@ class AzulUnitTestCase(AzulTestCase):
     def _patch_lambda_env(cls):
         cls.addClassPatch(patch.dict(os.environ,
                                      AWS_LAMBDA_FUNCTION_NAME='unit-tests'))
+
+    valid_schema_domains = [
+        'schema.humancellatlas.org',
+        'schema.dev.data.humancellatlas.org',
+        'schema.staging.data.humancellatlas.org',
+        'schema.integration.data.humancellatlas.org',
+    ]
+
+    @classmethod
+    def _patch_valid_schema_domains(cls):
+        cls.addClassPatch(patch.object(target=api,
+                                       attribute='valid_schema_domains',
+                                       new=cls.valid_schema_domains))
 
 
 class CatalogTestCase(AzulUnitTestCase, metaclass=ABCMeta):

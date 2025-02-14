@@ -262,11 +262,12 @@ class AWS:
         return self.client('dynamodb', azul_logging=True)
 
     @property
-    def es_endpoint(self) -> Netloc | None:
-        if config.es_endpoint:
-            return config.es_endpoint
-        else:
+    def es_endpoint(self) -> Netloc:
+        endpoint = config.es_endpoint
+        if endpoint is None:
             return self._es_domain_status['Endpoints']['vpc'], 443
+        else:
+            return endpoint
 
     @property
     def es_instance_count(self) -> int | None:

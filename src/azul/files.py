@@ -7,9 +7,6 @@ from os import (
 )
 import os.path
 import tempfile
-from typing import (
-    Union,
-)
 
 
 @contextmanager
@@ -26,7 +23,7 @@ def write_file_atomically(path, mode=0o644):
         raise
 
 
-def file_sha1(path: Union[str, PathLike]) -> str:
+def file_sha1(path: str | PathLike) -> str:
     """
     >>> file_sha1('/dev/null')
     'da39a3ee5e6b4b0d3255bfef95601890afd80709'

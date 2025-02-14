@@ -35,6 +35,9 @@ from more_itertools import (
     one,
 )
 
+from azul import (
+    JSON,
+)
 from azul.indexer.document import (
     EntityReference,
 )
@@ -55,6 +58,7 @@ from humancellatlas.data.metadata.api import (
     ImagingProtocol,
     LibraryPreparationProtocol,
     Project,
+    Protocol,
     SequenceFile,
     SequencingProtocol,
     SpecimenFromOrganism,
@@ -752,6 +756,40 @@ class TestAccessorApi(AzulUnitTestCase):
             self.assertEqual(set(), with_bang_after)
             with_slash_after = set(f1 for f1 in files_after if '/' in f1)
             self.assertEqual(expected_slash_after, with_slash_after)
+
+
+class TestSchema(AzulUnitTestCase):
+
+    def _entity_json(self, schema_domain: str) -> JSON:
+        return {
+            'content': {
+                'describedBy': f'https://{schema_domain}/type/protocol/7.1.0/protocol',
+                'protocol_core': {
+                    'protocol_id': 'test-protocol'
+                },
+                'schema_type': 'protocol'
+            },
+            'hca_ingest': {
+                'document_id': '7f91c388-0197-4c55-bf62-1e8268951e03',
+                'submissionDate': '2024-01-01T00:00:01.000Z',
+            }
+        }
+
+    def test_valid_schema_domain(self):
+        json_body = self._entity_json(schema_domain='schema.humancellatlas.org')
+        protocol = Protocol.from_json(json_body)
+        self.assertIsInstance(protocol, Protocol)
+
+    def test_invalid_schema_domain(self):
+        json_body = self._entity_json(schema_domain='foo.humancellatlas.org')
+        with self.assertRaises(AssertionError) as cm:
+            Protocol.from_json(json_body)
+        expected = (
+            'Unexpected schema domain',
+            furl('https://foo.humancellatlas.org/type/protocol/7.1.0/protocol'),
+            self.valid_schema_domains
+        )
+        self.assertEqual(expected, cm.exception.args[0].args)
 
 
 def load_tests(_loader, tests, _ignore):

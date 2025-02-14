@@ -2,7 +2,7 @@
 name: Dependency upgrades
 about: Issue template for bi-weekly dependency upgrades
 title: Upgrade dependencies
-labels: orange,operator,infra,enh,debt 
+labels: orange,operator,infra,debt 
 _start: 2023-11-27T09:00
 _period: 14 days
 ---

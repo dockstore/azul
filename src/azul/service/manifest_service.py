@@ -130,6 +130,9 @@ from azul.service import (
     Filters,
     avro_pfb,
 )
+from azul.service.avro_pfb import (
+    PFBRelation,
+)
 from azul.service.elasticsearch_service import (
     ElasticsearchService,
     Pagination,
@@ -1741,7 +1744,8 @@ class PFBManifestGenerator(FileBasedManifestGenerator):
         for doc in self._all_docs_sorted():
             converter.add_doc(doc)
 
-        entity = avro_pfb.pfb_metadata_entity(field_types)
+        links = avro_pfb.pfb_links_from_field_types(field_types)
+        entity = avro_pfb.pfb_metadata_entity(links)
         entities = itertools.chain([entity], converter.entities())
 
         fd, path = mkstemp(suffix='.avro')
@@ -2056,6 +2060,9 @@ class VerbatimManifestGenerator(FileBasedManifestGenerator, metaclass=ABCMeta):
                 document_id
                 for entity_type in self.hot_entity_types
                 for inner_entity in getitem(hit['contents'], entity_type, ())
+                # `document_id` is a scalar (string) when the inner and outer
+                # entity types match, and an array otherwise. `None` should not
+                # occur.
                 for document_id in always_iterable(inner_entity['document_id'])
             ]
             yield self.ReplicaKeys(hub_id=hit['entity_id'],
@@ -2143,15 +2150,24 @@ class PFBVerbatimManifestGenerator(VerbatimManifestGenerator):
         replica_schemas = plugin.verbatim_pfb_schema(replicas)
         # Ensure field order is consistent for unit tests
         replica_schemas.sort(key=itemgetter('name'))
-        replica_types = [s['name'] for s in replica_schemas]
+        links = {
+            replica_type: plugin.verbatim_pfb_links(replica_type)
+            for replica_type in ([s['name'] for s in replica_schemas])
+        }
+        pfb_metadata_entity = avro_pfb.pfb_metadata_entity(links)
         pfb_schema = avro_pfb.avro_pfb_schema(replica_schemas)
-        pfb_metadata_entity = avro_pfb.pfb_metadata_entity(replica_types, links=False)
 
         def pfb_entities():
             yield pfb_metadata_entity
             for replica in replicas:
                 id = plugin.verbatim_pfb_entity_id(replica)
-                yield avro_pfb.PFBEntity.for_replica(id, dict(replica)).to_json(())
+                relations = plugin.verbatim_pfb_relations(replica)
+                entity = avro_pfb.PFBEntity.for_replica(id, dict(replica))
+                entity_relations = [
+                    PFBRelation(dst_name=replica_type, dst_id=entity_id)
+                    for replica_type, entity_id in relations
+                ]
+                yield entity.to_json(entity_relations)
 
         fd, path = mkstemp(suffix=f'.{self.file_name_extension()}')
         os.close(fd)
