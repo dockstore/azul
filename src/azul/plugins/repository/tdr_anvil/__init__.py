@@ -11,7 +11,7 @@ from typing import (
     AbstractSet,
     Callable,
     Iterable,
-    cast,
+    Self,
 )
 import uuid
 
@@ -175,8 +175,20 @@ class TDRAnvilBundleFQID(TDRBundleFQID):
     table_name: str
     batch_prefix: str | None
 
+    @classmethod
+    def from_json(cls, json: TDRAnvilBundleFQIDJSON) -> Self:  # type: ignore[override]
+        return cls(uuid=json['uuid'],
+                   version=json['version'],
+                   source=cls.source_ref_cls().from_json(json['source']),
+                   table_name=json['table_name'],
+                   batch_prefix=json['batch_prefix'])
+
     def to_json(self) -> TDRAnvilBundleFQIDJSON:
-        return cast(TDRAnvilBundleFQIDJSON, super().to_json())
+        return {
+            **super().to_json(),
+            'table_name': self.table_name,
+            'batch_prefix': self.batch_prefix
+        }
 
     def __attrs_post_init__(self):
         should_be_batched = BundleType.is_batched(self.table_name)
@@ -223,7 +235,7 @@ class TDRAnvilBundle(AnvilBundle[TDRAnvilBundleFQID], TDRBundle):
         EntityLink.group_by_activity(self.links)
 
 
-class Plugin(TDRPlugin[TDRAnvilBundle, TDRSourceSpec, TDRSourceRef, TDRAnvilBundleFQID]):
+class Plugin(TDRPlugin[TDRAnvilBundle, TDRAnvilBundleFQID]):
 
     @cached_property
     def _version(self):

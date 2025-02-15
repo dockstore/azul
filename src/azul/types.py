@@ -4,9 +4,11 @@ from collections.abc import (
 )
 from types import (
     UnionType,
+    get_original_bases,
 )
 from typing import (
     Any,
+    Callable,
     ForwardRef,
     Iterable,
     Optional,
@@ -45,6 +47,10 @@ type MutableJSONArray = list[AnyMutableJSON]
 type MutableJSONs = list[MutableJSON]
 type MutableCompositeJSON = MutableJSON | MutableJSONArray
 type MutableFlatJSON = dict[str, PrimitiveJSON]
+
+
+def optional[A, R](f: Callable[[A], R], v: A) -> R | None:
+    return v if v is None else f(v)
 
 
 def json_mapping(v: AnyJSON) -> JSON:
@@ -260,56 +266,183 @@ def reify(t):
     return tuple(OrderedSet(reify(t)))
 
 
-def get_generic_type_params(cls: type,
-                            *required_types: type
-                            ) -> tuple[type | TypeVar | ForwardRef, ...]:
+def derived_type_params(cls: type,
+                        /,
+                        *,
+                        root: type | None = None,
+                        ) -> tuple[type | TypeVar | ForwardRef, ...]:
     """
-    Inspect and validate the type parameters of a subclass of `typing.Generic`.
+    Inspect the type parameterization of a generic class, or a class derived
+    from a generic class.
 
-    The type of each returned parameter may be a type, a `typing.TypeVar`, or a
-    `typing.ForwardRef`, depending on how the parameter is written in the
-    inspected class's definition. `*required_types` can be used to assert the
-    superclasses of parameters that are types.
+    Each of the returned values is either an instance of ``type``, of
+    ``typing.TypeVar``, or of ``typing.ForwardRef``, depending on how the
+    parameter is written in the definition of the root class.
 
-    >>> class A[T]:
-    ...     pass
-    >>> class B(A[int]):
-    ...     pass
-    >>> class C(A['foo']):
-    ...     pass
+    Caveat: This function was only tested with classes that use the syntax from
+    PEP-695 to define type parameters. Every class in the ancestry of the given
+    class must use the new syntax. Note that PEP-695 introduced semantic changes
+    as well, mostly with respect to scoping and variance.
 
-    >>> get_generic_type_params(A)
-    (T,)
+    Caveat: This function was not tested with multiple inheritance. It should
+    generally, work but diamond-shaped ancestry may be problematic.
 
-    >>> get_generic_type_params(A, str)
-    (T,)
+    :param cls: The class to be inspected
 
-    >>> get_generic_type_params(B)
-    (<class 'int'>,)
+    :param root: The upper bound up to which the ancestry of ``cls`` is
+                 inspected. If this argument is ``None``, only the first parent
+                 of ``cls`` is inspected. Otherwise, the ancestry of ``cls`` is
+                 searched for ``root``. The search is "height-first", as in
+                 depth-first but going upwards. If the root is found in the
+                 ancestry, the parameterization of every ancestor on the lineage
+                 from ``cls`` to ``root`` is then inspected.
 
-    >>> get_generic_type_params(B, str)
+    A generic class:
+
+    >>> class A[T1, T2]: pass
+
+    >>> derived_type_params(A)
+    (T1, T2)
+
+    Both T1 and T2 are instances of ``TypeVar``.
+
+    A non-generic subclass:
+
+    >>> class B(A[int, float]): pass
+
+    >>> derived_type_params(B)
+    (<class 'int'>, <class 'float'>)
+
+    A non-generic subclass, using a forward reference. The reference is
+    returned:
+
+    >>> class C(A['foo', int]): pass
+
+    >>> derived_type_params(C)
+    (ForwardRef('foo'), <class 'int'>)
+
+    A generic class that binds the first of the parent's parameters, but leaves
+    the second one open:
+
+    >>> class D[T](A[int, T]): pass
+
+    >>> derived_type_params(D)
+    (<class 'int'>, T)
+
+    A non-generic subclass that binds the remaining parameter as well:
+
+    >>> class E(D[float]): pass
+
+    The value that E bind's D's parameter to:
+
+    >>> derived_type_params(E)
+    (<class 'float'>,)
+
+    The equivalent invocation explicitly specifying the first parent class:
+
+    >>> derived_type_params(E, root=D)
+    (<class 'float'>,)
+
+    E does not inherit B, so an exception is raised:
+
+    >>> derived_type_params(E, root=B)
     Traceback (most recent call last):
     ...
-    AssertionError: (<class 'int'>, <class 'str'>)
+    TypeError: ('Root is not an ancestor', <class 'azul.types.B'>, <class 'azul.types.E'>)
 
-    >>> get_generic_type_params(B, int, int)
+    Last but not least, the most useful invocation: specifying the oldest
+    generic ancestor as the root. This invocation returns the parameterization
+    of E's grandparent.
+
+    >>> derived_type_params(E, root=A)
+    (<class 'int'>, <class 'float'>)
+
+    Same as above but through a parent that binds the second of the
+    grandparent's parameters:
+
+    >>> class F[T](A[T, int]): pass
+    >>> class G(F[float]): pass
+    >>> derived_type_params(G, root=A)
+    (<class 'float'>, <class 'int'>)
+
+    A parent swapping the grandparent's type parameters:
+
+    >>> class H[T1, T2](A[T2, T1]): pass
+    >>> class J(H[int, float]): pass
+    >>> derived_type_params(J, root=A)
+    (<class 'float'>, <class 'int'>)
+
+    >>> t1, t2 = derived_type_params(A)
+    >>> derived_type_params(t1)
     Traceback (most recent call last):
     ...
-    AssertionError: 1
+    AssertionError: R('Not a type', T1, <class 'typing.TypeVar'>)
 
-    >>> get_generic_type_params(C)
-    (ForwardRef('foo'),)
+    Ancestry that includes a non-generic base cass:
+
+    >>> class K(E): pass
+    >>> derived_type_params(K)
+    ()
+    >>> derived_type_params(K, root=E)
+    ()
+    >>> derived_type_params(K, root=D)
+    (<class 'float'>,)
+    >>> derived_type_params(K, root=A)
+    (<class 'int'>, <class 'float'>)
+
+    Ancestry with two strains of type variables:
+
+    >>> class L[T3](E): pass
+    >>> class M(L[str]): pass
+    >>> derived_type_params(M)
+    (<class 'str'>,)
+    >>> derived_type_params(M, root=L)
+    (<class 'str'>,)
+    >>> derived_type_params(M, root=A)
+    (<class 'int'>, <class 'float'>)
     """
-    base_cls = getattr(cls, '__orig_bases__')[0]
-    types = get_args(base_cls)
-    if required_types:
-        assert len(required_types) == len(types), len(types)
-        for required_type, type_ in zip(required_types, types):
-            if isinstance(type_, type):
-                assert issubclass(type_, required_type), (type_, required_type)
+    from azul import (
+        R,
+    )
+    assert isinstance(cls, type), R('Not a type', cls, type(cls))
+
+    def ancestors(cls) -> tuple[type, ...]:
+        for base in get_original_bases(cls):
+            origin = get_origin(base)
+            if origin is None:
+                origin = base
+            if origin is root:
+                return (base,)
             else:
-                assert isinstance(type_, (TypeVar, ForwardRef)), type_
-    return types
+                lineage = ancestors(origin)
+                if lineage:
+                    return base, *lineage
+        return ()
+
+    if root is None:
+        base = get_original_bases(cls)[0]
+        return get_args(base)
+    else:
+        bases = iter(ancestors(cls))
+        if None is (base := next(bases, None)):
+            raise TypeError('Root is not an ancestor', root, cls)
+        else:
+            mapping = None
+            while True:
+                values = get_args(base)
+                if mapping:
+                    values = tuple(mapping.get(value, value) for value in values)
+                if None is (next_base := next(bases, None)):
+                    return values
+                else:
+                    origin = get_origin(base)
+                    if origin is None:
+                        mapping = None
+                    else:
+                        assert origin is not None, (base, type(base))
+                        params = origin.__type_params__
+                        mapping = {param: value for param, value in zip(params, values)}
+                    base = next_base
 
 
 class SupportsLessAndGreaterThan(Protocol):

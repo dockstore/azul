@@ -12,13 +12,13 @@ from inspect import (
 from typing import (
     AbstractSet,
     ClassVar,
-    Generic,
     Iterable,
     Mapping,
+    Self,
     Sequence,
     TYPE_CHECKING,
-    TypeVar,
     TypedDict,
+    cast,
 )
 
 import attr
@@ -38,12 +38,8 @@ from azul.drs import (
     DRSClient,
 )
 from azul.indexer import (
-    BUNDLE,
-    BUNDLE_FQID,
     Bundle,
     Prefix,
-    SOURCE_REF,
-    SOURCE_SPEC,
     SourceJSON,
     SourceRef,
     SourceSpec,
@@ -66,7 +62,8 @@ from azul.types import (
     JSON,
     MutableJSON,
     MutableJSONs,
-    get_generic_type_params,
+    derived_type_params,
+    json_str,
 )
 
 if TYPE_CHECKING:
@@ -161,10 +158,7 @@ class ManifestFormat(Enum):
     verbatim_pfb = 'verbatim.pfb'
 
 
-T = TypeVar('T', bound='Plugin')
-
-
-class Plugin(Generic[BUNDLE], metaclass=ABCMeta):
+class Plugin[BUNDLE: Bundle](metaclass=ABCMeta):
     """
     A base class for Azul plugins. Concrete plugins shouldn't inherit this
     class directly but one of the subclasses of this class. This class just
@@ -173,7 +167,7 @@ class Plugin(Generic[BUNDLE], metaclass=ABCMeta):
     """
 
     @classmethod
-    def load(cls: type[T], catalog: CatalogName) -> type[T]:
+    def load(cls, catalog: CatalogName) -> type[Self]:
         """
         Load and return one of the concrete subclasses of the class this method
         is called on. Which concrete class is returned depends on how the
@@ -189,11 +183,11 @@ class Plugin(Generic[BUNDLE], metaclass=ABCMeta):
         return cls._load(plugin_type_name, plugin_package_name)
 
     @classmethod
-    def types(cls) -> Sequence[type['Plugin']]:
+    def types(cls) -> Sequence[type[Self]]:
         return cls.__subclasses__()
 
     @classmethod
-    def type_for_name(cls, plugin_type_name: str) -> type[T]:
+    def type_for_name(cls, plugin_type_name: str) -> type[Self]:
         """
         Return the plugin type for the given name.
 
@@ -222,9 +216,10 @@ class Plugin(Generic[BUNDLE], metaclass=ABCMeta):
                    ) -> type[BUNDLE]:
         plugin_type_name = cls._plugin_type_name()
         plugin_cls = cls._load(plugin_type_name, plugin_package_name)
-        bundle_cls = get_generic_type_params(plugin_cls)[0]
+        bundle_cls, = derived_type_params(plugin_cls, root=Plugin)
+        assert isinstance(bundle_cls, type)
         assert issubclass(bundle_cls, Bundle), bundle_cls
-        return bundle_cls
+        return cast(type[BUNDLE], bundle_cls)
 
     @classmethod
     def _plugin_type_name(cls) -> str:
@@ -234,7 +229,7 @@ class Plugin(Generic[BUNDLE], metaclass=ABCMeta):
         return plugin_type_name
 
     @classmethod
-    def _load(cls, plugin_type_name: str, plugin_package_name: str) -> type[T]:
+    def _load(cls, plugin_type_name: str, plugin_package_name: str) -> type[Self]:
         plugin_package_path = f'{__name__}.{plugin_type_name}.{plugin_package_name}'
         plugin_module = importlib.import_module(plugin_package_path)
         plugin_cls = getattr(plugin_module, 'Plugin')
@@ -242,7 +237,7 @@ class Plugin(Generic[BUNDLE], metaclass=ABCMeta):
         return plugin_cls
 
 
-class MetadataPlugin(Plugin[BUNDLE]):
+class MetadataPlugin[BUNDLE: Bundle](Plugin[BUNDLE]):
 
     @classmethod
     def type_name(cls) -> str:
@@ -281,15 +276,17 @@ class MetadataPlugin(Plugin[BUNDLE]):
         """
         return Aggregate
 
-    string_mapping = {
-        'type': 'text',
-        'fields': {
-            'keyword': {
-                'type': 'keyword',
-                'ignore_above': 256
+    @property
+    def string_mapping(self):
+        return {
+            'type': 'text',
+            'fields': {
+                'keyword': {
+                    'type': 'keyword',
+                    'ignore_above': 256
+                }
             }
         }
-    }
 
     range_mapping = {
         # A float (single precision IEEE-754) can represent all integers up to
@@ -405,7 +402,7 @@ class MetadataPlugin(Plugin[BUNDLE]):
             else:
                 assert False, v
 
-        inversion = {}
+        inversion: dict[FieldName, FieldPath] = {}
         for v, path in invert(self._field_mapping):
             other_path = inversion.setdefault(v, path)
             assert other_path == path, (
@@ -472,7 +469,7 @@ class MetadataPlugin(Plugin[BUNDLE]):
         raise NotImplementedError
 
     def verbatim_pfb_entity_id(self, replica: JSON) -> str:
-        return replica['entity_id']
+        return json_str(replica['entity_id'])
 
     def verbatim_pfb_schema(self, replicas: list[JSON]) -> list[JSON]:
         """
@@ -537,8 +534,12 @@ class MetadataPlugin(Plugin[BUNDLE]):
         raise NotImplementedError
 
 
-class RepositoryPlugin(Plugin[BUNDLE],
-                       Generic[BUNDLE, SOURCE_SPEC, SOURCE_REF, BUNDLE_FQID]):
+class RepositoryPlugin[BUNDLE: Bundle,
+                       SOURCE_SPEC: SourceSpec,
+                       SOURCE_REF: SourceRef,
+                       BUNDLE_FQID: SourcedBundleFQID](
+    Plugin[BUNDLE]
+):
 
     @classmethod
     def type_name(cls) -> str:
@@ -606,19 +607,15 @@ class RepositoryPlugin(Plugin[BUNDLE],
         return {source.id for source in self.list_sources(authentication)}
 
     @cached_property
-    def _generic_params(self) -> tuple:
-        bundle_cls, spec_cls, ref_cls, fqid_cls = get_generic_type_params(type(self),
-                                                                          Bundle,
-                                                                          SourceSpec,
-                                                                          SourceRef,
-                                                                          SourcedBundleFQID)
-        assert fqid_cls.source_ref_cls() is ref_cls
-        assert ref_cls.spec_cls() is spec_cls
-        return bundle_cls, spec_cls, ref_cls, fqid_cls
+    def _generic_params(self) -> tuple[type, ...]:
+        params = derived_type_params(type(self), root=RepositoryPlugin)
+        assert all(isinstance(p, type) for p in params)
+        return cast(tuple[type, ...], params)
 
     @property
     def _source_ref_cls(self) -> type[SOURCE_REF]:
         bundle_cls, spec_cls, ref_cls, fqid_cls = self._generic_params
+        assert issubclass(ref_cls, SourceRef)
         return ref_cls
 
     def source_from_json(self, ref: SourceJSON) -> SOURCE_REF:
@@ -631,6 +628,7 @@ class RepositoryPlugin(Plugin[BUNDLE],
     @property
     def _bundle_fqid_cls(self) -> type[BUNDLE_FQID]:
         bundle_cls, spec_cls, ref_cls, fqid_cls = self._generic_params
+        assert issubclass(fqid_cls, SourcedBundleFQID)
         return fqid_cls
 
     def bundle_fqid_from_json(self, fqid: SourcedBundleFQIDJSON) -> BUNDLE_FQID:
@@ -643,6 +641,7 @@ class RepositoryPlugin(Plugin[BUNDLE],
     @property
     def _bundle_cls(self) -> type[BUNDLE]:
         bundle_cls, spec_cls, ref_cls, fqid_cls = self._generic_params
+        assert issubclass(bundle_cls, Bundle)
         return bundle_cls
 
     def resolve_source(self, spec: str) -> SOURCE_REF:

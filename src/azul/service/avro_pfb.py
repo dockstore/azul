@@ -37,7 +37,7 @@ from azul import (
     config,
     reject,
 )
-from azul.indexer.document import (
+from azul.indexer.field import (
     ClosedRange,
     FieldTypes,
     Nested,
@@ -608,7 +608,7 @@ def _entity_schema_recursive(field_types: FieldTypes,
                     'type': 'array',
                     'items': {
                         'type': 'array',
-                        'items': _json_to_pfb_types[field_type.ends_type.native_type]
+                        'items': _json_to_pfb_types[one(field_type.ends_type.native_types)]
                     }
                 }
             }

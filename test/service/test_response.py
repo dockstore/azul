@@ -49,6 +49,8 @@ from azul.indexer import (
 from azul.indexer.document import (
     DocumentType,
     IndexName,
+)
+from azul.indexer.field import (
     null_str,
 )
 from azul.indexer.index_service import (

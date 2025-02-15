@@ -66,6 +66,8 @@ from azul.indexer.document import (
     IndexName,
     Replica,
     ReplicaCoordinates,
+)
+from azul.indexer.field import (
     null_bool,
     null_int,
     null_str,

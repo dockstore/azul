@@ -68,7 +68,6 @@ from azul.indexer.document import (
     AggregateCoordinates,
     CataloguedContribution,
     CataloguedEntityReference,
-    CataloguedFieldTypes,
     Contribution,
     Document,
     DocumentCoordinates,
@@ -83,6 +82,9 @@ from azul.indexer.document import (
 )
 from azul.indexer.document_service import (
     DocumentService,
+)
+from azul.indexer.field import (
+    CataloguedFieldTypes,
 )
 from azul.indexer.transform import (
     Transformer,
@@ -975,7 +977,7 @@ class IndexWriter:
         if doc.op_type is OpType.create:
             try:
                 doc.op_type = OpType.index
-            except AttributeError:
+            except NotImplementedError:
                 # We don't expect all Document types will let us modify op_type
                 warn()
             else:

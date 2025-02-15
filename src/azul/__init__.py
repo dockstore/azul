@@ -933,7 +933,7 @@ class Config:
                 Plugin,
                 RepositoryPlugin,
             )
-            all_types = set(p.type_name() for p in Plugin.types())
+            all_types = set(p.type_name() for p in Plugin[Bundle].types())
             configured_types = self.plugins.keys()
             require(all_types == configured_types,
                     'Catalog is missing or has extra plugin types',

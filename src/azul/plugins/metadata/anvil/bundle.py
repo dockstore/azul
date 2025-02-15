@@ -1,5 +1,5 @@
 from abc import (
-    ABC,
+    ABCMeta,
 )
 from collections import (
     defaultdict,
@@ -22,8 +22,8 @@ from azul.collections import (
     none_safe_apply,
 )
 from azul.indexer import (
-    BUNDLE_FQID,
     Bundle,
+    SourcedBundleFQID,
 )
 from azul.indexer.document import (
     EntityReference,
@@ -115,7 +115,8 @@ class KeyLink(Link[KeyReference]):
 
 
 @attrs.define(kw_only=True)
-class AnvilBundle(Bundle[BUNDLE_FQID], ABC):
+class AnvilBundle[BUNDLE_FQID: SourcedBundleFQID](Bundle[BUNDLE_FQID],
+                                                  metaclass=ABCMeta):
     # The `entity_type` attribute of these keys contains the entities' BigQuery
     # table name (e.g. `anvil_sequencingactivity`), not the entity type used for
     # the contributions (e.g. `activities`). The metadata plugin converts from

@@ -1,13 +1,16 @@
 from abc import (
-    ABC,
+    ABCMeta,
 )
 import logging
+from typing import (
+    Self,
+)
 
 import attrs
 
 from azul.indexer import (
-    BUNDLE_FQID,
     Bundle,
+    SourcedBundleFQID,
 )
 from azul.types import (
     JSON,
@@ -18,7 +21,8 @@ log = logging.getLogger(__name__)
 
 
 @attrs.define(kw_only=True)
-class HCABundle(Bundle[BUNDLE_FQID], ABC):
+class HCABundle[BUNDLE_FQID: SourcedBundleFQID](Bundle[BUNDLE_FQID],
+                                                metaclass=ABCMeta):
     manifest: MutableJSON
     """
     Each item of the `manifest` attribute's value has this shape:
@@ -52,7 +56,7 @@ class HCABundle(Bundle[BUNDLE_FQID], ABC):
         }
 
     @classmethod
-    def from_json(cls, fqid: BUNDLE_FQID, json_: JSON) -> 'Bundle':
+    def from_json(cls, fqid: BUNDLE_FQID, json_: JSON) -> Self:
         manifest = json_['manifest']
         metadata = json_['metadata']
         links = json_['links']
