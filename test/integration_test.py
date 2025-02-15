@@ -18,9 +18,6 @@ from io import (
     BytesIO,
     TextIOWrapper,
 )
-from itertools import (
-    count,
-)
 import json
 import os
 from pathlib import (
@@ -1030,34 +1027,40 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
         # field of the containing record. The `relations` field holds references
         # to other entities, as an array of nested Avro records, each record
         # containing the `name` and `id` of the referenced entity.
-        num_records = count()
+        record_fqids = set()
+        relations = set()
         for record in reader:
             # Every record must follow the schema. Since each record's `object`
             # field contains an entity, the schema check therefore extends to
             # the various entity types.
             fastavro.validate(record, record_schema)
             object = cast(MutableJSON, record['object'])
-            if 0 == next(num_records):
+            record_id, record_name = record['id'], record['name']
+            record_fqids.add((record_name, record_id))
+            if len(record_fqids) == 1:
                 # PFB requires a special `Metadata` entity to occur first. It is
                 # used to declare the relations between entity types, thereby
                 # expressing additional constraints on the `relations` field.
-                self.assertEqual('Metadata', record['name'])
-                self.assertIsNone(record['id'])
+                self.assertEqual('Metadata', record_name)
+                self.assertIsNone(record_id)
                 nodes = cast(MutableJSONs, object['nodes'])
                 for node in nodes:
                     for link in node['links']:
                         self.assertIn(link['dst'], entity_types)
             # The following is redundant given the schema validation above but
             # we'll leave it in for illustration.
-            fields = entity_types[record['name']]['fields']
+            fields = entity_types[record_name]['fields']
             fields_present = set(object.keys())
             fields_expected = set(f['name'] for f in fields)
             self.assertEqual(fields_present, fields_expected)
             for relation in cast(MutableJSONs, record['relations']):
-                self.assertIn(relation['dst_name'], entity_types)
+                relations.add((relation['dst_name'], relation['dst_id']))
         # We expect to observe the special `Metadata` entity record and at least
         # one additional entity record
-        self.assertGreater(next(num_records), 1)
+        self.assertGreater(len(record_fqids), 1)
+        # Terra will reject the handover if a relation references a record that
+        # isn't present in the manifest
+        self.assertIsSubset(relations, record_fqids)
 
     def _read_csv_manifest(self, file: IO[bytes]) -> csv.DictReader:
         text = TextIOWrapper(file)
