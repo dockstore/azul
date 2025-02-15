@@ -17,6 +17,7 @@ from typing import (
     Self,
     Sequence,
     TYPE_CHECKING,
+    TypeVar,
     TypedDict,
     cast,
 )
@@ -216,7 +217,7 @@ class Plugin[BUNDLE: Bundle](metaclass=ABCMeta):
                    ) -> type[BUNDLE]:
         plugin_type_name = cls._plugin_type_name()
         plugin_cls = cls._load(plugin_type_name, plugin_package_name)
-        bundle_cls, = derived_type_params(plugin_cls, root=Plugin)
+        bundle_cls = derived_type_params(plugin_cls, root=Plugin)[BUNDLE]
         assert isinstance(bundle_cls, type)
         assert issubclass(bundle_cls, Bundle), bundle_cls
         return cast(type[BUNDLE], bundle_cls)
@@ -607,14 +608,14 @@ class RepositoryPlugin[BUNDLE: Bundle,
         return {source.id for source in self.list_sources(authentication)}
 
     @cached_property
-    def _generic_params(self) -> tuple[type, ...]:
+    def _generic_params(self) -> dict[TypeVar, type]:
         params = derived_type_params(type(self), root=RepositoryPlugin)
-        assert all(isinstance(p, type) for p in params)
-        return cast(tuple[type, ...], params)
+        assert all(isinstance(p, type) for p in params.values())
+        return cast(dict[TypeVar, type], params)
 
     @property
     def _source_ref_cls(self) -> type[SOURCE_REF]:
-        bundle_cls, spec_cls, ref_cls, fqid_cls = self._generic_params
+        ref_cls = self._generic_params[SOURCE_REF]
         assert issubclass(ref_cls, SourceRef)
         return ref_cls
 
@@ -627,7 +628,7 @@ class RepositoryPlugin[BUNDLE: Bundle,
 
     @property
     def _bundle_fqid_cls(self) -> type[BUNDLE_FQID]:
-        bundle_cls, spec_cls, ref_cls, fqid_cls = self._generic_params
+        fqid_cls = self._generic_params[BUNDLE_FQID]
         assert issubclass(fqid_cls, SourcedBundleFQID)
         return fqid_cls
 
@@ -640,7 +641,7 @@ class RepositoryPlugin[BUNDLE: Bundle,
 
     @property
     def _bundle_cls(self) -> type[BUNDLE]:
-        bundle_cls, spec_cls, ref_cls, fqid_cls = self._generic_params
+        bundle_cls = self._generic_params[BUNDLE]
         assert issubclass(bundle_cls, Bundle)
         return bundle_cls
 

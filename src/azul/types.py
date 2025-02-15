@@ -266,11 +266,10 @@ def reify(t):
     return tuple(OrderedSet(reify(t)))
 
 
-def derived_type_params(cls: type,
-                        /,
-                        *,
-                        root: type | None = None,
-                        ) -> tuple[type | TypeVar | ForwardRef, ...]:
+type TypeParams = dict[TypeVar, type | TypeVar | ForwardRef]
+
+
+def derived_type_params(cls: type, /, *, root: Any = None) -> TypeParams:
     """
     Inspect the type parameterization of a generic class, or a class derived
     from a generic class.
@@ -278,6 +277,26 @@ def derived_type_params(cls: type,
     Each of the returned values is either an instance of ``type``, of
     ``typing.TypeVar``, or of ``typing.ForwardRef``, depending on how the
     parameter is written in the definition of the root class.
+
+    The most common use case is to let a method in a potentially abstract base
+    class determine the value of a type parameter that is bound by deriving
+    from the class:
+
+    >>> class Base[T]:
+    ...     def make(self, s):
+    ...         cls = type(self)
+    ...         params = derived_type_params(cls, root=Base)
+    ...         t = params[T]
+    ...         assert isinstance(t, type)
+    ...         return t(s)
+
+    >>> class IntBase(Base[int]): ...
+    >>> IntBase().make('1')
+    1
+
+    >>> class FloatBase(Base[float]): ...
+    >>> FloatBase().make('1')
+    1.0
 
     Caveat: This function was only tested with classes that use the syntax from
     PEP-695 to define type parameters. Every class in the ancestry of the given
@@ -297,51 +316,60 @@ def derived_type_params(cls: type,
                  ancestry, the parameterization of every ancestor on the lineage
                  from ``cls`` to ``root`` is then inspected.
 
+    :return: A dictionary mapping a type parameter (an instance of
+             ``typing.TypeVar``) to its value. The value could be a reified
+             type (an instance of ``type``), another type variable
+             (``typing.TypeVar``) or a forward reference. For details on the
+             latter two scenarios, refer to the examples below.
+
     A generic class:
 
-    >>> class A[T1, T2]: pass
+    >>> class A[T1, T2]:
+    ...     @classmethod
+    ...     def t1(cls):
+    ...         return derived_type_params(cls, root=A)[T1]
+
+    Its parent (``object``) doesn't have any type parameters to be bound.
 
     >>> derived_type_params(A)
-    (T1, T2)
-
-    Both T1 and T2 are instances of ``TypeVar``.
+    {}
 
     A non-generic subclass:
 
-    >>> class B(A[int, float]): pass
+    >>> class B(A[int, float]): ...
 
     >>> derived_type_params(B)
-    (<class 'int'>, <class 'float'>)
+    {T1: <class 'int'>, T2: <class 'float'>}
 
     A non-generic subclass, using a forward reference. The reference is
     returned:
 
-    >>> class C(A['foo', int]): pass
+    >>> class C(A['foo', int]): ...
 
     >>> derived_type_params(C)
-    (ForwardRef('foo'), <class 'int'>)
+    {T1: ForwardRef('foo'), T2: <class 'int'>}
 
     A generic class that binds the first of the parent's parameters, but leaves
     the second one open:
 
-    >>> class D[T](A[int, T]): pass
+    >>> class D[T](A[int, T]): ...
 
     >>> derived_type_params(D)
-    (<class 'int'>, T)
+    {T1: <class 'int'>, T2: T}
 
     A non-generic subclass that binds the remaining parameter as well:
 
-    >>> class E(D[float]): pass
+    >>> class E(D[float]): ...
 
     The value that E bind's D's parameter to:
 
     >>> derived_type_params(E)
-    (<class 'float'>,)
+    {T: <class 'float'>}
 
     The equivalent invocation explicitly specifying the first parent class:
 
     >>> derived_type_params(E, root=D)
-    (<class 'float'>,)
+    {T: <class 'float'>}
 
     E does not inherit B, so an exception is raised:
 
@@ -355,58 +383,60 @@ def derived_type_params(cls: type,
     of E's grandparent.
 
     >>> derived_type_params(E, root=A)
-    (<class 'int'>, <class 'float'>)
+    {T1: <class 'int'>, T2: <class 'float'>}
 
     Same as above but through a parent that binds the second of the
     grandparent's parameters:
 
-    >>> class F[T](A[T, int]): pass
-    >>> class G(F[float]): pass
+    >>> class F[T3](A[T3, int]): ...
+    >>> class G(F[float]): ...
     >>> derived_type_params(G, root=A)
-    (<class 'float'>, <class 'int'>)
+    {T1: <class 'float'>, T2: <class 'int'>}
 
     A parent swapping the grandparent's type parameters:
 
-    >>> class H[T1, T2](A[T2, T1]): pass
-    >>> class J(H[int, float]): pass
-    >>> derived_type_params(J, root=A)
-    (<class 'float'>, <class 'int'>)
+    >>> class H[T1, T2](A[T2, T1]): ...
+    >>> class J(H[int, float]): ...
+    >>> (params := derived_type_params(J, root=A))
+    {T1: <class 'float'>, T2: <class 'int'>}
 
-    >>> t1, t2 = derived_type_params(A)
-    >>> derived_type_params(t1)
+    The first argument must be a type.
+
+    >>> from more_itertools import first
+    >>> derived_type_params(first(params.keys()))
     Traceback (most recent call last):
     ...
     AssertionError: R('Not a type', T1, <class 'typing.TypeVar'>)
 
     Ancestry that includes a non-generic base cass:
 
-    >>> class K(E): pass
+    >>> class K(E): ...
     >>> derived_type_params(K)
-    ()
+    {}
     >>> derived_type_params(K, root=E)
-    ()
+    {}
     >>> derived_type_params(K, root=D)
-    (<class 'float'>,)
+    {T: <class 'float'>}
     >>> derived_type_params(K, root=A)
-    (<class 'int'>, <class 'float'>)
+    {T1: <class 'int'>, T2: <class 'float'>}
 
     Ancestry with two strains of type variables:
 
-    >>> class L[T3](E): pass
-    >>> class M(L[str]): pass
+    >>> class L[T3](E): ...
+    >>> class M(L[str]): ...
     >>> derived_type_params(M)
-    (<class 'str'>,)
+    {T3: <class 'str'>}
     >>> derived_type_params(M, root=L)
-    (<class 'str'>,)
+    {T3: <class 'str'>}
     >>> derived_type_params(M, root=A)
-    (<class 'int'>, <class 'float'>)
+    {T1: <class 'int'>, T2: <class 'float'>}
     """
     from azul import (
         R,
     )
     assert isinstance(cls, type), R('Not a type', cls, type(cls))
 
-    def ancestors(cls) -> tuple[type, ...]:
+    def ancestors(cls) -> tuple[Any, ...]:
         for base in get_original_bases(cls):
             origin = get_origin(base)
             if origin is None:
@@ -420,29 +450,27 @@ def derived_type_params(cls: type,
         return ()
 
     if root is None:
-        base = get_original_bases(cls)[0]
-        return get_args(base)
+        root = get_original_bases(cls)[0]
+        bases = (root,)
     else:
-        bases = iter(ancestors(cls))
-        if None is (base := next(bases, None)):
+        bases = ancestors(cls)
+        if not bases:
             raise TypeError('Root is not an ancestor', root, cls)
+
+    mapping: TypeParams = {}
+    for base in bases:
+        values = get_args(base)
+        values = tuple(mapping.get(value, value) for value in values)
+        assert all(isinstance(value, (type, ForwardRef, TypeVar)) for value in values)
+        origin = get_origin(base)
+        if origin is None:
+            mapping = {}
         else:
-            mapping = None
-            while True:
-                values = get_args(base)
-                if mapping:
-                    values = tuple(mapping.get(value, value) for value in values)
-                if None is (next_base := next(bases, None)):
-                    return values
-                else:
-                    origin = get_origin(base)
-                    if origin is None:
-                        mapping = None
-                    else:
-                        assert origin is not None, (base, type(base))
-                        params = origin.__type_params__
-                        mapping = {param: value for param, value in zip(params, values)}
-                    base = next_base
+            params = origin.__type_params__
+            assert all(isinstance(param, TypeVar) for param in params)
+            mapping = dict(zip(params, values))
+    assert base is root or origin is root
+    return mapping
 
 
 class SupportsLessAndGreaterThan(Protocol):

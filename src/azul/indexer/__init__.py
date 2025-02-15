@@ -561,7 +561,7 @@ class SourceRef[SOURCE_SPEC: SourceSpec](SupportsLessAndGreaterThan):
 
     @classmethod
     def spec_cls(cls) -> type[SOURCE_SPEC]:
-        spec_cls, = derived_type_params(cls, root=SourceRef)
+        spec_cls = derived_type_params(cls, root=SourceRef)[SOURCE_SPEC]
         assert isinstance(spec_cls, type)
         assert issubclass(spec_cls, SourceSpec)
         return cast(type[SOURCE_SPEC], spec_cls)
@@ -596,7 +596,7 @@ class SourcedBundleFQID[SOURCE_REF: SourceRef](BundleFQID):
 
     @classmethod
     def source_ref_cls(cls) -> type[SOURCE_REF]:
-        ref_cls, = derived_type_params(cls, root=SourcedBundleFQID)
+        ref_cls = derived_type_params(cls, root=SourcedBundleFQID)[SOURCE_REF]
         assert isinstance(ref_cls, type)
         assert issubclass(ref_cls, SourceRef)
         return cast(type[SOURCE_REF], ref_cls)
