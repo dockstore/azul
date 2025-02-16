@@ -12,6 +12,9 @@ from enum import (
     Enum,
 )
 import http
+from itertools import (
+    batched,
+)
 import json
 import logging
 import time
@@ -303,7 +306,8 @@ class IndexController(AppController):
                 # Hopefully this is more or less atomic. If we crash below here,
                 # tallies will be inflated because some or all deferrals have
                 # been sent and the original tallies will be returned.
-                self._tallies_queue(retry=retry).send_messages(Entries=entries)
+                for batch in batched(entries, 10):
+                    self._tallies_queue(retry=retry).send_messages(Entries=batch)
 
         except BaseException:
             # Note that another problematic outcome is for the Lambda invocation
