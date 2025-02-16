@@ -108,6 +108,7 @@ from azul_test_case import (
 )
 from indexer import (
     DCP1CannedBundleTestCase,
+    DCP2CannedBundleTestCase,
     IndexerTestCase,
 )
 
@@ -177,6 +178,10 @@ class DCP1IndexerTestCase(DCP1CannedBundleTestCase, IndexerTestCase):
         contributions, replicas = transforms
         cls.index_service.replicate(cls.catalog, replicas)
         return cls.index_service.contribute(cls.catalog, contributions)
+
+
+class DCP2IndexerTestCase(DCP2CannedBundleTestCase, IndexerTestCase):
+    pass
 
 
 class TestDCP1Indexer(DCP1IndexerTestCase):
