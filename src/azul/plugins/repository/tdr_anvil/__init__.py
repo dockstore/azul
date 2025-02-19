@@ -11,7 +11,6 @@ from typing import (
     AbstractSet,
     Callable,
     Iterable,
-    Self,
 )
 import uuid
 
@@ -35,7 +34,6 @@ from azul.drs import (
 )
 from azul.indexer import (
     Prefix,
-    SourcedBundleFQIDJSON,
 )
 from azul.indexer.document import (
     EntityReference,
@@ -165,30 +163,10 @@ class BundleType(Enum):
         return table_name not in (cls.primary.value, cls.duos.value)
 
 
-class TDRAnvilBundleFQIDJSON(SourcedBundleFQIDJSON):
-    table_name: str
-    batch_prefix: str | None
-
-
 @attrs.frozen(kw_only=True, eq=False)
 class TDRAnvilBundleFQID(TDRBundleFQID):
     table_name: str
     batch_prefix: str | None
-
-    @classmethod
-    def from_json(cls, json: TDRAnvilBundleFQIDJSON) -> Self:  # type: ignore[override]
-        return cls(uuid=json['uuid'],
-                   version=json['version'],
-                   source=cls.source_ref_cls().from_json(json['source']),
-                   table_name=json['table_name'],
-                   batch_prefix=json['batch_prefix'])
-
-    def to_json(self) -> TDRAnvilBundleFQIDJSON:
-        return {
-            **super().to_json(),
-            'table_name': self.table_name,
-            'batch_prefix': self.batch_prefix
-        }
 
     def __attrs_post_init__(self):
         should_be_batched = BundleType.is_batched(self.table_name)

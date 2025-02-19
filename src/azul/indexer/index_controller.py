@@ -20,7 +20,6 @@ import logging
 import time
 from typing import (
     Self,
-    cast,
 )
 import uuid
 
@@ -56,7 +55,6 @@ from azul.hmac import (
 )
 from azul.indexer import (
     BundlePartition,
-    SourcedBundleFQIDJSON,
 )
 from azul.indexer.document import (
     Contribution,
@@ -69,6 +67,7 @@ from azul.indexer.index_service import (
 )
 from azul.types import (
     JSON,
+    json_dict,
 )
 
 log = logging.getLogger(__name__)
@@ -215,9 +214,7 @@ class IndexController(AppController):
         representing one metadata entity in the index. Replicas of the original,
         untransformed metadata are returned as well.
         """
-        # FIXME: Adopt `trycast` for casting JSON to TypeDict
-        #        https://github.com/DataBiosphere/azul/issues/5171
-        bundle_fqid = cast(SourcedBundleFQIDJSON, notification['bundle_fqid'])
+        bundle_fqid = json_dict(notification['bundle_fqid'])
         try:
             partition = notification['partition']
         except KeyError:

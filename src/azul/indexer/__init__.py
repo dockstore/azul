@@ -20,7 +20,6 @@ from typing import (
     Iterable,
     Iterator,
     Self,
-    TypedDict,
     cast,
     final,
 )
@@ -30,7 +29,14 @@ import attrs
 from azul import (
     R,
     config,
+    json_str,
     reject,
+)
+from azul.attrs import (
+    SerializableAttrs,
+)
+from azul.json import (
+    Serializable,
 )
 from azul.types import (
     AnyJSON,
@@ -50,17 +56,12 @@ BundleUUID = str
 BundleVersion = str
 
 
-class BundleFQIDJSON(TypedDict):
-    uuid: BundleUUID
-    version: BundleVersion
-
-
 # PyCharm can't handle mixing `attrs` with `total_ordering` and falsely claims
 # that comparison operators besides `__lt__` are not defined.
 # noinspection PyDataclass
 @attrs.frozen(kw_only=True, eq=False)
 @total_ordering
-class BundleFQID:
+class BundleFQID(SerializableAttrs):
     """
     A fully qualified bundle identifier. The attributes defined in this class
     must always be sufficient to decide whether two instances of this class or
@@ -128,7 +129,7 @@ class BundleFQID:
     def __hash__(self) -> int:
         return hash(self._nucleus())
 
-    def __init_subclass__(cls, **kwargs):
+    def __init_subclass__(cls):
         """
         >>> @attrs.frozen(kw_only=True)
         ... class FooBundleFQID(SourcedBundleFQID):
@@ -141,7 +142,7 @@ class BundleFQID:
         ... class FooBundleFQID(SourcedBundleFQID):
         ...     foo: str
         """
-        super().__init_subclass__(**kwargs)
+        super().__init_subclass__()
         assert cls.__eq__ is BundleFQID.__eq__, cls
         assert cls.__hash__ is BundleFQID.__hash__, cls
 
@@ -167,17 +168,6 @@ class BundleFQID:
         True
         """
         return self._nucleus() < other._nucleus()
-
-    @classmethod
-    def from_json(cls, json: BundleFQIDJSON) -> Self:
-        return cls(uuid=json['uuid'],
-                   version=json['version'])
-
-    def to_json(self) -> BundleFQIDJSON:
-        return {
-            'uuid': self.uuid,
-            'version': self.version
-        }
 
 
 @attrs.frozen(kw_only=True)
@@ -370,7 +360,7 @@ Prefix.of_everything = Prefix.parse('/0')
 
 
 @attrs.frozen(kw_only=True)
-class SourceSpec(metaclass=ABCMeta):
+class SourceSpec(Serializable, metaclass=ABCMeta):
     """
     The name of a repository source containing bundles to index. A repository
     has at least one source. Repository plugins whose repository source names
@@ -393,6 +383,13 @@ class SourceSpec(metaclass=ABCMeta):
         reject(sep == '', 'Invalid source specification', spec)
         prefix = Prefix.parse(prefix) if prefix else None
         return rest, prefix
+
+    @classmethod
+    def from_json(cls, json: AnyJSON) -> Self:
+        return cls.parse(json_str(json))
+
+    def to_json(self) -> AnyJSON:
+        return str(self)
 
     @property
     def _prefix_str(self) -> str:
@@ -467,13 +464,9 @@ class SimpleSourceSpec(SourceSpec):
         return f'{self.name}:{self._prefix_str}'
 
 
-class SourceJSON(TypedDict):
-    id: str
-    spec: str
-
-
 @attrs.frozen(kw_only=True, order=True)
-class SourceRef[SOURCE_SPEC: SourceSpec](SupportsLessAndGreaterThan):
+class SourceRef[SOURCE_SPEC: SourceSpec](SerializableAttrs,
+                                         SupportsLessAndGreaterThan):
     """
     A reference to a repository source containing bundles to index. A repository
     has at least one source. A source is primarily referenced by its ID but we
@@ -552,13 +545,6 @@ class SourceRef[SOURCE_SPEC: SourceSpec](SupportsLessAndGreaterThan):
             assert self.spec == spec, (self.spec, spec)
             return self
 
-    def to_json(self) -> SourceJSON:
-        return dict(id=self.id, spec=str(self.spec))
-
-    @classmethod
-    def from_json(cls, ref: SourceJSON) -> Self:
-        return cls(id=ref['id'], spec=cls.spec_cls().parse(ref['spec']))
-
     @classmethod
     def spec_cls(cls) -> type[SOURCE_SPEC]:
         spec_cls = derived_type_params(cls, root=SourceRef)[SOURCE_SPEC]
@@ -568,10 +554,6 @@ class SourceRef[SOURCE_SPEC: SourceSpec](SupportsLessAndGreaterThan):
 
     def with_prefix(self, prefix: Prefix) -> Self:
         return attrs.evolve(self, spec=attrs.evolve(self.spec, prefix=prefix))
-
-
-class SourcedBundleFQIDJSON(BundleFQIDJSON):
-    source: SourceJSON
 
 
 @attrs.frozen(kw_only=True, eq=False)
@@ -600,18 +582,6 @@ class SourcedBundleFQID[SOURCE_REF: SourceRef](BundleFQID):
         assert isinstance(ref_cls, type)
         assert issubclass(ref_cls, SourceRef)
         return cast(type[SOURCE_REF], ref_cls)
-
-    @classmethod
-    def from_json(cls, json: SourcedBundleFQIDJSON) -> Self:  # type: ignore[override]
-        return cls(uuid=json['uuid'],
-                   version=json['version'],
-                   source=cls.source_ref_cls().from_json(json['source']))
-
-    def to_json(self) -> SourcedBundleFQIDJSON:
-        return {
-            **super().to_json(),
-            'source': self.source.to_json()
-        }
 
 
 @attrs.define(kw_only=True)

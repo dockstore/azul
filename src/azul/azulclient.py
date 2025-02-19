@@ -43,6 +43,7 @@ from azul import (
     cache,
     cached_property,
     config,
+    json_mapping,
 )
 from azul.es import (
     ESClientFactory,
@@ -54,7 +55,6 @@ from azul.http import (
     HasCachedHttpClient,
 )
 from azul.indexer import (
-    SourceJSON,
     SourceRef,
     SourcedBundleFQID,
 )
@@ -94,7 +94,7 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
         # only variant that would ever occur in the wild.
         return {
             'transaction_id': str(uuid.uuid4()),
-            'bundle_fqid': cast(JSON, bundle_fqid.to_json())
+            'bundle_fqid': bundle_fqid.to_json()
         }
 
     def bundle_message(self,
@@ -267,11 +267,9 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
     def remote_reindex_partition(self, message: JSON) -> None:
         catalog, prefix = message['catalog'], message['prefix']
         assert isinstance(catalog, str) and isinstance(prefix, str)
-        # FIXME: Adopt `trycast` for casting JSON to TypeDict
-        #        https://github.com/DataBiosphere/azul/issues/5171
-        source = cast(SourceJSON, message['source'])
+        source = json_mapping(message['source'])
         validate_uuid_prefix(prefix)
-        source = self.repository_plugin(catalog).source_from_json(source)
+        source = self.repository_plugin(catalog).source_ref_cls.from_json(source)
         bundle_fqids = self.list_bundles(catalog, source, prefix)
         # All AnVIL bundles and entities use the same version
         if not config.is_anvil_enabled(catalog):

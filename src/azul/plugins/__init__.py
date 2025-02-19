@@ -41,11 +41,9 @@ from azul.drs import (
 from azul.indexer import (
     Bundle,
     Prefix,
-    SourceJSON,
     SourceRef,
     SourceSpec,
     SourcedBundleFQID,
-    SourcedBundleFQIDJSON,
 )
 from azul.indexer.document import (
     Aggregate,
@@ -614,36 +612,16 @@ class RepositoryPlugin[BUNDLE: Bundle,
         return cast(dict[TypeVar, type], params)
 
     @property
-    def _source_ref_cls(self) -> type[SOURCE_REF]:
+    def source_ref_cls(self) -> type[SOURCE_REF]:
         ref_cls = self._generic_params[SOURCE_REF]
         assert issubclass(ref_cls, SourceRef)
         return ref_cls
 
-    def source_from_json(self, ref: SourceJSON) -> SOURCE_REF:
-        """
-        Instantiate a :class:`SourceRef` from its JSON representation. The
-        expected input format matches the output format of `SourceRef.to_json`.
-        """
-        return self._source_ref_cls.from_json(ref)
-
     @property
-    def _bundle_fqid_cls(self) -> type[BUNDLE_FQID]:
+    def bundle_fqid_cls(self) -> type[BUNDLE_FQID]:
         fqid_cls = self._generic_params[BUNDLE_FQID]
         assert issubclass(fqid_cls, SourcedBundleFQID)
         return fqid_cls
-
-    def bundle_fqid_from_json(self, fqid: SourcedBundleFQIDJSON) -> BUNDLE_FQID:
-        """
-        Instantiate a :class:`SourcedBundleFQID` from its JSON representation.
-        The expected input matches the output format of `SourcedBundleFQID.to_json`.
-        """
-        return self._bundle_fqid_cls.from_json(fqid)
-
-    @property
-    def _bundle_cls(self) -> type[BUNDLE]:
-        bundle_cls = self._generic_params[BUNDLE]
-        assert issubclass(bundle_cls, Bundle)
-        return bundle_cls
 
     def resolve_source(self, spec: str) -> SOURCE_REF:
         """
@@ -651,7 +629,7 @@ class RepositoryPlugin[BUNDLE: Bundle,
         matching the given specification or raise an exception if no such source
         exists.
         """
-        ref_cls = self._source_ref_cls
+        ref_cls = self.source_ref_cls
         spec = ref_cls.spec_cls().parse(spec)
         id = self._lookup_source_id(spec)
         return ref_cls(id=id, spec=spec)

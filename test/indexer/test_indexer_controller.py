@@ -10,6 +10,7 @@ from functools import (
 import json
 from unittest.mock import (
     MagicMock,
+    PropertyMock,
     call,
     patch,
 )
@@ -240,7 +241,7 @@ class TestIndexController(DCP2IndexerTestCase, SqsTestCase):
             notified_fqids = list(map(self._fqid_from_notification, notifications))
             notified_bundles = [bundles[fqid] for fqid in notified_fqids]
             mock_plugin.fetch_bundle.side_effect = notified_bundles
-            mock_plugin.bundle_fqid_from_json.side_effect = TDRBundleFQID.from_json
+            type(mock_plugin).bundle_fqid_cls = PropertyMock(return_value=TDRBundleFQID)
             mock_plugin.sources = [source]
             with patch.object(IndexService, 'repository_plugin', return_value=mock_plugin):
                 with patch.object(BundlePartition, 'max_partition_size', 4):
@@ -248,8 +249,6 @@ class TestIndexController(DCP2IndexerTestCase, SqsTestCase):
                     self.controller.contribute(event)
 
             # Assert plugin calls by controller
-            expected_calls = [call(fqid.to_json()) for fqid in notified_fqids]
-            self.assertEqual(expected_calls, mock_plugin.bundle_fqid_from_json.mock_calls)
             expected_calls = list(map(call, notified_fqids))
             self.assertEqual(expected_calls, mock_plugin.fetch_bundle.mock_calls)
 
