@@ -120,7 +120,6 @@ from azul.http import (
 )
 from azul.indexer import (
     Prefix,
-    SourceJSON,
     SourceRef,
     SourceSpec,
     SourcedBundleFQID,
@@ -1280,9 +1279,9 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
         special_fields = self.metadata_plugin(catalog).special_fields
         for hit in hits:
             source, bundle = one(hit['sources']), one(hit['bundles'])
-            source = SourceJSON(id=source[special_fields.source_id],
-                                spec=source[special_fields.source_spec])
-            source = self.repository_plugin(catalog).source_from_json(source)
+            source = dict(id=source[special_fields.source_id],
+                          spec=source[special_fields.source_spec])
+            source = self.repository_plugin(catalog).source_ref_cls.from_json(source)
             bundle_fqid = SourcedBundleFQID(uuid=bundle[special_fields.bundle_uuid],
                                             version=bundle[special_fields.bundle_version],
                                             source=source)

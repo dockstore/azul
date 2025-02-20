@@ -12,12 +12,14 @@ from enum import (
     Enum,
 )
 import http
+from itertools import (
+    batched,
+)
 import json
 import logging
 import time
 from typing import (
     Self,
-    cast,
 )
 import uuid
 
@@ -53,7 +55,6 @@ from azul.hmac import (
 )
 from azul.indexer import (
     BundlePartition,
-    SourcedBundleFQIDJSON,
 )
 from azul.indexer.document import (
     Contribution,
@@ -66,6 +67,7 @@ from azul.indexer.index_service import (
 )
 from azul.types import (
     JSON,
+    json_dict,
 )
 
 log = logging.getLogger(__name__)
@@ -212,9 +214,7 @@ class IndexController(AppController):
         representing one metadata entity in the index. Replicas of the original,
         untransformed metadata are returned as well.
         """
-        # FIXME: Adopt `trycast` for casting JSON to TypeDict
-        #        https://github.com/DataBiosphere/azul/issues/5171
-        bundle_fqid = cast(SourcedBundleFQIDJSON, notification['bundle_fqid'])
+        bundle_fqid = json_dict(notification['bundle_fqid'])
         try:
             partition = notification['partition']
         except KeyError:
@@ -303,7 +303,8 @@ class IndexController(AppController):
                 # Hopefully this is more or less atomic. If we crash below here,
                 # tallies will be inflated because some or all deferrals have
                 # been sent and the original tallies will be returned.
-                self._tallies_queue(retry=retry).send_messages(Entries=entries)
+                for batch in batched(entries, 10):
+                    self._tallies_queue(retry=retry).send_messages(Entries=batch)
 
         except BaseException:
             # Note that another problematic outcome is for the Lambda invocation

@@ -9,7 +9,6 @@ import re
 from typing import (
     ClassVar,
     Self,
-    cast,
     overload,
 )
 
@@ -22,15 +21,14 @@ from azul import (
     CatalogName,
     R,
     config,
+    json_sequence,
 )
 from azul.enums import (
     auto,
 )
 from azul.indexer import (
     BundleFQID,
-    BundleFQIDJSON,
     SimpleSourceSpec,
-    SourceJSON,
     SourceRef,
 )
 from azul.indexer.field import (
@@ -47,7 +45,6 @@ from azul.types import (
     AnyJSON,
     AnyMutableJSON,
     JSON,
-    JSONs,
     MutableJSON,
     json_int,
     json_mapping,
@@ -977,7 +974,7 @@ class Contribution[E: EntityReference](Document[ContributionCoordinates[E]]):
         self = super().from_json(coordinates=coordinates,
                                  document=document,
                                  version=version,
-                                 source=DocumentSource.from_json(cast(SourceJSON, document['source'])),
+                                 source=DocumentSource.from_json(document['source']),
                                  **kwargs)
         assert self.coordinates.document_id == document['document_id']
         assert self.coordinates.bundle.uuid == document['bundle_uuid']
@@ -1008,7 +1005,7 @@ class Contribution[E: EntityReference](Document[ContributionCoordinates[E]]):
 @attr.s(frozen=False, kw_only=True, auto_attribs=True)
 class Aggregate(Document[AggregateCoordinates]):
     sources: set[DocumentSource]
-    bundles: list[BundleFQIDJSON] | None
+    bundles: list[BundleFQID] | None
     num_contributions: int
 
     def __attrs_post_init__(self):
@@ -1042,13 +1039,16 @@ class Aggregate(Document[AggregateCoordinates]):
                   version: InternalVersion | None,
                   **kwargs
                   ) -> Self:
+        sources = set(map(DocumentSource.from_json, json_sequence(document['sources'])))
+        bundles = optional(json_sequence, document.get('bundles'))
+        bundles = None if bundles is None else list(map(BundleFQID.from_json, bundles))
+        num_contributions = json_int(document['num_contributions'])
         self = super().from_json(coordinates=coordinates,
                                  document=document,
                                  version=version,
-                                 num_contributions=document['num_contributions'],
-                                 sources=set(map(DocumentSource.from_json,
-                                                 cast(list[SourceJSON], document['sources']))),
-                                 bundles=document.get('bundles'))
+                                 num_contributions=num_contributions,
+                                 sources=sources,
+                                 bundles=bundles)
         assert isinstance(self, Aggregate)
         return self
 
@@ -1061,10 +1061,15 @@ class Aggregate(Document[AggregateCoordinates]):
         ]
 
     def to_json(self) -> JSON:
+        sources = [source.to_json() for source in self.sources]
+        if self.bundles is None:
+            bundles = None
+        else:
+            bundles = [bundle.to_json() for bundle in self.bundles]
         return dict(super().to_json(),
                     num_contributions=self.num_contributions,
-                    sources=cast(JSONs, [source.to_json() for source in self.sources]),
-                    bundles=cast(JSONs | None, self.bundles))
+                    sources=sources,
+                    bundles=bundles)
 
     @property
     def op_type(self) -> OpType:

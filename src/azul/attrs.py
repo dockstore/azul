@@ -1,18 +1,47 @@
+from abc import (
+    ABCMeta,
+    abstractmethod,
+)
+from types import (
+    UnionType,
+)
 from typing import (
+    Any,
+    Callable,
     Optional,
+    Self,
     Tuple,
+    TypeVar,
     Union,
+    get_args,
+    get_origin,
 )
 from uuid import (
     UUID,
 )
 
+from attr import (
+    AttrsInstance,
+)
 import attrs
+from more_itertools import (
+    flatten,
+    one,
+)
 
 from azul import (
+    JSON,
+    R,
+    json_mapping,
     require,
 )
+from azul.json import (
+    Serializable,
+)
 from azul.types import (
+    AnyJSON,
+    PrimitiveJSON,
+    derived_type_params,
     reify,
 )
 
@@ -129,3 +158,345 @@ def is_uuid(version):
             raise TypeError(f'Not a UUID{version}', field.name, value)
 
     return validator
+
+
+type Source = list[str | tuple[str, ...] | Source]
+
+
+class SerializableAttrs(Serializable, AttrsInstance):
+    """
+    >>> @attrs.frozen(kw_only=True)
+    ... class InnerBase(SerializableAttrs):
+    ...     x: int
+
+    >>> @attrs.frozen(kw_only=True)
+    ... class MiddleInner[T](InnerBase):
+    ...     y: T | None
+
+    >>> @attrs.frozen(kw_only=True)
+    ... class Inner(MiddleInner[str]): ...
+
+    >>> @attrs.frozen(kw_only=True)
+    ... class OuterBase[X, T: InnerBase](SerializableAttrs):
+    ...     inner: T
+
+    >>> class MiddleOuter[X](OuterBase[X, Inner]): ...
+
+    >>> class Outer(MiddleOuter[float]): ...
+
+    >>> outer = Outer(inner=Inner(x=1, y='b'))
+    >>> outer.to_json()
+    {'inner': {'x': 1, 'y': 'b'}}
+
+    >>> Outer.from_json(outer.to_json())
+    Outer(inner=Inner(x=1, y='b'))
+
+    >>> Outer.from_json({'inner': {'x': 'bad', 'y': 'b'}})
+    Traceback (most recent call last):
+    ...
+    ValueError: ('Invalid type of value', <class 'str'>, 'expecting', <class 'int'>)
+
+    >>> Outer.from_json({'inner': {'x': 1, 'y': None}})
+    Outer(inner=Inner(x=1, y=None))
+
+    A class with custom serialization (float serialized as string):
+
+    >>> @attrs.frozen(kw_only=True)
+    ... class CustomBase(SerializableAttrs):
+    ...     x: float
+    ...
+    ...     def to_json(self) -> JSON:
+    ...         return super().to_json() | {'x': str(self.x)}
+    ...
+    ...     @classmethod
+    ...     def _from_json(cls, json: JSON) -> dict[str, Any]:
+    ...         return dict(super()._from_json(json), x=float(json['x']))
+
+    >>> @attrs.frozen(kw_only=True)
+    ... class Custom(CustomBase):
+    ...     y: str
+
+    >>> Custom(x=1.23, y='y').to_json()
+    {'x': '1.23', 'y': 'y'}
+
+    >>> Custom.from_json({'x': '1.23', 'y': 'y'})
+    Custom(x=1.23, y='y')
+    """
+
+    @classmethod
+    def from_json(cls, json: AnyJSON) -> Self:
+        assert not cls._deferred_fields, R(
+            'Class has fields of unknown type', cls._deferred_fields)
+        kwargs = cls._from_json(json_mapping(json))
+        return cls(**kwargs)
+
+    @classmethod
+    def _from_json(cls, json: JSON) -> dict[str, Any]:
+        """
+        Return a dictionary with keyword arguments for the constructor. An
+        override must call the overridden method via super() but only need to
+        populate keyword arguments for the fields defined by the class that
+        overrides the method. Typically, the overrides in subclasses will be
+        generated automatically but if a subclass explicitly defines an
+        override, it will be left alone.
+        """
+        return {}
+
+    def to_json(self) -> dict[str, AnyJSON]:
+        """
+        Typically, the overrides in subclasses will be generated automatically
+        but if a subclass explicitly defines an override, it will be left alone.
+        """
+        return {}
+
+    def __init_subclass__(cls):
+        super().__init_subclass__()
+        try:
+            fields = attrs.fields(cls)
+        except attrs.exceptions.NotAnAttrsClassError:
+            pass
+        else:
+            cls._instrument(fields)
+
+    @classmethod
+    def __attrs_init_subclass__(cls):
+        cls._instrument(attrs.fields(cls))
+
+    #: The names of fields that we weren't able to generate code for in this
+    #: class because at least one of them was annotated with a variable type.
+    #: Generic descendants that use free type variables in their attrs field
+    #: annotations override this attribute to a non-empty set. The
+    #: responsibility to handle deferred fields falls on the descendant that
+    #: binds the last remaining free type variable.
+    #:
+    _deferred_fields: frozenset[str] = frozenset()
+
+    @classmethod
+    def _instrument(cls, fields: list[attrs.Attribute]):
+        """
+        Add overrides for to_json and _from_json to the given class. The
+        overrides will handle the serialization and deserialization of the
+        fields defined by the class, not those that it inherits. An override
+        will only be added if the class doesn't already provide one. This method
+        must be idempotent because it may be invoked twice for the same class,
+        before and after the attrs decorator did its work. Even for slotted
+        classes this method will be invoked twice, albeit the second time on a
+        copy of the class.
+        """
+        # When slots=True (the default for attrs.define), attrs makes a copy of
+        # the class so the subclass hook will be invoked twice, once for the
+        # original class, and again for the copy. The copy is likely to have
+        # additional fields defined so we need to start from scratch and reset
+        # any left-overs that would interfere with that.
+        #
+        if '_deferred_fields' in cls.__dict__:
+            del cls._deferred_fields
+        owned_fields = [
+            field
+            for field in fields
+            if field.name in cls.__annotations__ or field.name in cls._deferred_fields
+        ]
+        if owned_fields:
+            deferred_fields = cls._make(owned_fields)
+            if deferred_fields != cls._deferred_fields:
+                cls._deferred_fields = deferred_fields
+
+    @classmethod
+    def _make(cls, fields: list[attrs.Attribute]) -> frozenset[str]:
+        try:
+            _from_json = cls._make_from_json(fields)
+        except cls.Strategy.MustDefer:
+            deferred_fields = frozenset(field.name for field in fields)
+        else:
+            cls._define(_from_json)
+            deferred_fields = frozenset()
+            to_json = cls._make_to_json(fields)
+            cls._define(to_json)
+        return deferred_fields
+
+    @classmethod
+    def _make_from_json(cls, fields: list[attrs.Attribute]) -> Callable:
+        globals = {cls.__name__: cls}
+        source = cls._indent([
+            '@classmethod',
+            'def _from_json(cls, json):', [
+                f'kwargs = super({cls.__name__}, cls)._from_json(json)',
+                *flatten(
+                    [
+                        f'x = json["{field.name}"]',
+                        *(cls.Deserializer(cls, field, globals).handle()),
+                        f'kwargs["{field.name}"] = x'
+                    ]
+                    for field in fields
+                ),
+                'return kwargs'
+            ]
+        ])
+        return cls._compile(source, globals)
+
+    @classmethod
+    def _make_to_json(cls, fields: list[attrs.Attribute]) -> Callable:
+        globals = {cls.__name__: cls}
+        to_json = cls._indent([
+            'def to_json(self):', [
+                # Using the super() shortcut would require messing with the
+                # ``__closure__`` attribute of the function, and, we assume,
+                # would be slower.
+                f'json = super({cls.__name__}, self).to_json()',
+                *flatten(
+                    [
+                        f'x = self.{field.name}',
+                        'x = ' + cls.Serializer(cls, field, globals).handle(),
+                        f'json["{field.name}"] = x'
+                    ]
+                    for field in fields
+                ),
+                'return json'
+            ]
+        ])
+        return cls._compile(to_json, globals)
+
+    @classmethod
+    def _indent(cls, source: Source, level=0):
+        """
+        Indent and join the given list of source code items. An item can be
+        either a line, a tuple of words, or a nested list of items. The
+        indentation of lines is based on the nesting of the lists. Lines are
+        joined with a newline character, words are joined with a comma.
+        """
+        return '\n'.join(
+            cls._indent(v, level + 1)
+            if isinstance(v, list) else
+            ' ' * level * 4 + (', '.join(v) if isinstance(v, tuple) else v)
+            for v in source
+        )
+
+    @classmethod
+    def _compile(cls, source: str, globals: dict[str, Any]):
+        """
+        Compile a function definition from the given source & context
+        """
+        bytecode = compile(source, cls.__module__, 'exec')
+        locals: dict[str, Any] = {}
+        eval(bytecode, globals, locals)
+        function = one(locals.values())
+        return function
+
+    @classmethod
+    def _define(cls, function: Callable) -> None:
+        """
+        Add the given function as a method of the class to be instrumented
+        """
+        name = function.__name__
+        marker = '__azul_serializable__'
+        method = cls.__dict__.get(name)
+        # We should never replace a custom definition. However, an
+        # instrumentation during attrs' subclass hook must replace
+        # the definition from the standard subclass hook.
+        if method is None or hasattr(method, marker):
+            setattr(function, marker, None)
+            setattr(cls, name, function)
+
+    @attrs.frozen
+    class Strategy[T](metaclass=ABCMeta):
+        cls: type['SerializableAttrs']
+        field: attrs.Attribute
+        globals: dict[str, Any]
+
+        class MustDefer(Exception):
+            pass
+
+        def handle(self) -> T:
+            return self._handle(self._reify(self.field.type))
+
+        def _owner(self) -> type:
+            """
+            Find the nearest ancestor that introduced the given field
+            """
+            for base in self.cls.__mro__:
+                if self.field.name in base.__annotations__:
+                    assert isinstance(base, type)
+                    assert issubclass(base, SerializableAttrs)
+                    return base
+            assert False
+
+        def _reify(self, field_type: Any) -> Any:
+            """
+            Resolve the type parameters of the given type, or raise
+            MustDefer if that's not possible.
+            """
+            while isinstance(field_type, TypeVar):
+                owner = self._owner()
+                if owner is self.cls:
+                    raise self.MustDefer
+                params = derived_type_params(self.cls, root=owner)
+                try:
+                    field_type = params[field_type]
+                except KeyError:
+                    raise self.MustDefer
+            return field_type
+
+        def _handle(self, field_type: Any):
+            if isinstance(field_type, type):
+                if field_type in reify(PrimitiveJSON):
+                    return self._primitive(field_type)
+                elif issubclass(field_type, Serializable):
+                    inner_cls_name = field_type.__name__
+                    self.globals[inner_cls_name] = field_type
+                    return self._serializable(inner_cls_name)
+            else:
+                origin = get_origin(field_type)
+                if origin in (Union, UnionType):
+                    arg_types = set(get_args(field_type))
+                    arg_types.discard(type(None))
+                    if len(arg_types) == 1:
+                        field_type = self._reify(one(arg_types))
+                        return self._optional(field_type)
+            raise TypeError('Unserializable field', field_type, self.field)
+
+        @abstractmethod
+        def _primitive(self, field_type: type) -> T:
+            raise NotImplementedError
+
+        @abstractmethod
+        def _optional(self, field_type: type) -> T:
+            raise NotImplementedError
+
+        @abstractmethod
+        def _serializable(self, inner_cls_name: str) -> T:
+            raise NotImplementedError
+
+    class Deserializer(Strategy[Source]):
+
+        def _optional(self, field_type: type) -> Source:
+            return [
+                'if x is not None:', self._handle(field_type)
+            ]
+
+        def _serializable(self, inner_cls_name: str) -> Source:
+            return [
+                f'x = {inner_cls_name}.from_json(x)'
+            ]
+
+        def _primitive(self, field_type: type) -> Source:
+            return [
+                f'if not isinstance(x, {field_type.__name__}):', [
+                    'raise ValueError(', (
+                        '"Invalid type of value"',
+                        'type(x)',
+                        '"expecting"',
+                        field_type.__name__,
+                    ), ')'
+                ]
+            ]
+
+    class Serializer(Strategy[str]):
+
+        def _primitive(self, field_type: type) -> str:
+            return 'x'
+
+        def _optional(self, field_type: type) -> str:
+            return 'x'
+
+        def _serializable(self, inner_cls_name: str) -> str:
+            return 'x.to_json()'
