@@ -1020,22 +1020,7 @@ tf_config = {
                         'aws_ecr_repository.' + image.tf_repository
                     ],
                     'triggers': {
-                        'script_hash': '${filesha256("%s/scripts/manage_images.py")}' % config.project_root,
-                        'manifest_hash': '${filesha256("%s/docker_images.json")}' % config.project_root
-                    },
-                    'lifecycle': {
-                        # While `triggers` above only accepts strings, this
-                        # property accepts entire resources. Any change to the
-                        # image repository resource should cause the image
-                        # copying to be kicked off again. The copying is
-                        # idempotent, and efficiently so with respect to
-                        # bandwidth consumption, but it still takes a couple
-                        # minutes, even if all of the destination images are
-                        # already in place, so we'd still like to avoid running
-                        # it unnecessarily.
-                        'replace_triggered_by': [
-                            'aws_ecr_repository.' + image.tf_repository
-                        ]
+                        'always': '${timestamp()}'
                     },
                     'provisioner': {
                         'local-exec': {
@@ -1088,15 +1073,7 @@ tf_config = {
                         'null_resource.cleanup'
                     ],
                     'triggers': {
-                        'script_hash': '${filesha256("%s/scripts/manage_images.py")}' % config.project_root,
-                        'manifest_hash': '${filesha256("%s/docker_images.json")}' % config.project_root,
-                        'images': ','.join(sorted(image.tf_image for image in images)),
-                        'keep_unused': json.dumps(config.terraform_keep_unused)
-                    },
-                    'lifecycle': {
-                        'replace_triggered_by': [
-                            'aws_ecr_repository.' + tf_repository
-                        ]
+                        'always': '${timestamp()}'
                     },
                     'provisioner': {
                         'local-exec': {
