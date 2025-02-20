@@ -79,6 +79,9 @@ def object_key(file: JSON) -> str:
 def mirror_file(catalog: CatalogName, file_uuid: str, part_size: int) -> str:
     assert config.is_tdr_enabled(catalog), R('Only TDR catalogs are supported')
     assert config.is_hca_enabled(catalog), R('Only HCA catalogs are supported')
+    # https://docs.aws.amazon.com/AmazonS3/latest/userguide/qfacts.html
+    assert 5 * 2 ** 20 <= part_size <= 5 * 2 ** 30, R(
+        'Invalid part size', part_size)
     file = get_file(catalog, file_uuid)
     download_url = get_download_url(catalog, file)
     key = object_key(file)
