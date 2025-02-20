@@ -10,6 +10,7 @@ import sys
 
 from azul import (
     CatalogName,
+    R,
     config,
 )
 from azul.args import (
@@ -76,8 +77,8 @@ def object_key(file: JSON) -> str:
 
 
 def mirror_file(catalog: CatalogName, file_uuid: str, part_size: int) -> str:
-    assert config.is_tdr_enabled(catalog), 'Only TDR catalogs are supported'
-    assert config.is_hca_enabled(catalog), 'Only HCA catalogs are supported'
+    assert config.is_tdr_enabled(catalog), R('Only TDR catalogs are supported')
+    assert config.is_hca_enabled(catalog), R('Only HCA catalogs are supported')
     file = get_file(catalog, file_uuid)
     download_url = get_download_url(catalog, file)
     key = object_key(file)
@@ -86,7 +87,8 @@ def mirror_file(catalog: CatalogName, file_uuid: str, part_size: int) -> str:
 
     total_size = file['size']
     part_count = math.ceil(total_size / part_size)
-    assert part_count <= 10000, (total_size, part_size, part_count)
+    assert part_count <= 10000, R('Part size is too small for this file',
+                                  total_size, part_size, part_count)
 
     def file_part(part_number: int) -> str:
         start = part_number * part_size
