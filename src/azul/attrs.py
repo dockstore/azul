@@ -317,17 +317,20 @@ class SerializableAttrs(Serializable, attrs.AttrsInstance):
         # additional fields defined so we need to start from scratch and reset
         # any left-overs that would interfere with that.
         #
-        if '_deferred_fields' in cls.__dict__:
-            del cls._deferred_fields
-        owned_fields = [
-            field
-            for field in fields
-            if field.name in cls.__annotations__ or field.name in cls._deferred_fields
-        ]
-        if owned_fields:
-            deferred_fields = cls._make(owned_fields)
-            if deferred_fields != cls._deferred_fields:
-                cls._deferred_fields = deferred_fields
+        if cls._has_custom('to_json') and cls._has_custom('_from_json'):
+            pass
+        else:
+            if '_deferred_fields' in cls.__dict__:
+                del cls._deferred_fields
+            owned_fields = [
+                field
+                for field in fields
+                if field.name in cls.__annotations__ or field.name in cls._deferred_fields
+            ]
+            if owned_fields:
+                deferred_fields = cls._make(owned_fields)
+                if deferred_fields != cls._deferred_fields:
+                    cls._deferred_fields = deferred_fields
 
     @classmethod
     def _make(cls, fields: list[attrs.Attribute]) -> frozenset[str]:
@@ -421,20 +424,26 @@ class SerializableAttrs(Serializable, attrs.AttrsInstance):
         function = one(locals.values())
         return function
 
+    _method_marker = '__azul_serializable__'
+
+    @classmethod
+    def _has_custom(cls, method_name):
+        method = cls.__dict__.get(method_name)
+        return method is not None and not hasattr(method, cls._method_marker)
+
     @classmethod
     def _define(cls, function: Callable) -> None:
         """
         Add the given function as a method of the class to be instrumented
         """
-        name = function.__name__
-        marker = '__azul_serializable__'
-        method = cls.__dict__.get(name)
+        method_name = function.__name__
+        custom = cls._has_custom(method_name)
         # We should never replace a custom definition. However, an
         # instrumentation during attrs' subclass hook must replace
         # the definition from the standard subclass hook.
-        if method is None or hasattr(method, marker):
-            setattr(function, marker, None)
-            setattr(cls, name, function)
+        if not custom:
+            setattr(function, cls._method_marker, None)
+            setattr(cls, method_name, function)
 
     @attrs.frozen
     class Strategy[T](metaclass=ABCMeta):
