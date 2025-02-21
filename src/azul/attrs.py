@@ -13,6 +13,7 @@ from typing import (
     Tuple,
     TypeVar,
     Union,
+    final,
     get_args,
     get_origin,
 )
@@ -221,6 +222,7 @@ class SerializableAttrs(Serializable, attrs.AttrsInstance):
     """
 
     @classmethod
+    @final
     def from_json(cls, json: AnyJSON) -> Self:
         assert not cls._deferred_fields, R(
             'Class has fields of unknown type', cls._deferred_fields)
