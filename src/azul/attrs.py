@@ -20,9 +20,6 @@ from uuid import (
     UUID,
 )
 
-from attr import (
-    AttrsInstance,
-)
 import attrs
 from more_itertools import (
     flatten,
@@ -30,9 +27,7 @@ from more_itertools import (
 )
 
 from azul import (
-    JSON,
     R,
-    json_mapping,
     require,
 )
 from azul.json import (
@@ -40,8 +35,10 @@ from azul.json import (
 )
 from azul.types import (
     AnyJSON,
+    JSON,
     PrimitiveJSON,
     derived_type_params,
+    json_mapping,
     reify,
 )
 
@@ -163,7 +160,7 @@ def is_uuid(version):
 type Source = list[str | tuple[str, ...] | Source]
 
 
-class SerializableAttrs(Serializable, AttrsInstance):
+class SerializableAttrs(Serializable, attrs.AttrsInstance):
     """
     >>> @attrs.frozen(kw_only=True)
     ... class InnerBase(SerializableAttrs):
