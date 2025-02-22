@@ -1732,14 +1732,10 @@ class TestAnvilManifests(AnvilManifestTestCase):
     @classmethod
     def bundles(cls) -> list[SourcedBundleFQID]:
         return [
-            cls.bundle_fqid(uuid='2370f948-2783-aeb6-afea-e022897f4dcf',
-                            version=cls.version),
-            cls.bundle_fqid(uuid='c67e7adb-1a9c-a3b9-bc91-eb10a428374a',
-                            version=cls.version),
-            cls.bundle_fqid(uuid='826dea02-e274-affe-aabc-eb3db63ad068',
-                            version=cls.version),
-            cls.bundle_fqid(uuid='9a135c9a-069b-a90e-b588-eaf8d1aeeac9',
-                            version=cls.version)
+            cls.bundle_fqid(uuid='2370f948-2783-aeb6-afea-e022897f4dcf'),
+            cls.bundle_fqid(uuid='c67e7adb-1a9c-a3b9-bc91-eb10a428374a'),
+            cls.bundle_fqid(uuid='826dea02-e274-affe-aabc-eb3db63ad068'),
+            cls.bundle_fqid(uuid='9a135c9a-069b-a90e-b588-eaf8d1aeeac9')
         ]
 
     def test_compact_manifest(self):

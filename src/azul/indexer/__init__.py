@@ -41,7 +41,6 @@ from azul.json import (
 from azul.types import (
     AnyJSON,
     JSON,
-    MutableJSON,
     SupportsLessAndGreaterThan,
     derived_type_params,
 )
@@ -585,7 +584,7 @@ class SourcedBundleFQID[SOURCE_REF: SourceRef](BundleFQID):
 
 
 @attrs.define(kw_only=True)
-class Bundle[BUNDLE_FQID: BundleFQID](metaclass=ABCMeta):
+class Bundle[BUNDLE_FQID: BundleFQID](SerializableAttrs, metaclass=ABCMeta):
     fqid: BUNDLE_FQID
 
     @property
@@ -631,14 +630,6 @@ class Bundle[BUNDLE_FQID: BundleFQID](metaclass=ABCMeta):
         Short string prepended to the file extension to distinguish between
         canned bundle formats originating from different plugins.
         """
-        raise NotImplementedError
-
-    @classmethod
-    def from_json(cls, fqid: BUNDLE_FQID, json_: JSON) -> 'Bundle':
-        raise NotImplementedError
-
-    @abstractmethod
-    def to_json(self) -> MutableJSON:
         raise NotImplementedError
 
 

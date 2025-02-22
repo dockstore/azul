@@ -63,9 +63,6 @@ from azul.bigquery import (
 from azul.docker import (
     resolve_docker_image_for_launch,
 )
-from azul.indexer import (
-    SourcedBundleFQID,
-)
 from azul.logging import (
     configure_test_logging,
     get_test_logger,
@@ -266,10 +263,6 @@ class TestTDRHCAPlugin(DCP2CannedBundleTestCase,
     def _plugin_cls(cls) -> Type[tdr_hca.Plugin]:
         return tdr_hca.Plugin
 
-    bundle_fqid = SourcedBundleFQID(source=DCP2CannedBundleTestCase.source,
-                                    uuid='1b6d8348-d6e9-406a-aa6a-7ee886e52bf9',
-                                    version='2019-09-24T09:35:06.958773Z')
-
     def test_list_bundles(self):
         source = self.source
         current_version = '2001-01-01T00:00:00.100001Z'
@@ -292,7 +285,9 @@ class TestTDRHCAPlugin(DCP2CannedBundleTestCase,
         ])
 
     def test_fetch_bundle(self):
-        bundle = self._load_canned_bundle(self.bundle_fqid)
+        fqid = self.bundle_fqid(uuid='1b6d8348-d6e9-406a-aa6a-7ee886e52bf9',
+                                version='2019-09-24T09:35:06.958773Z')
+        bundle = self._load_canned_bundle(fqid)
         # Test valid links
         self._test_fetch_bundle(bundle, load_tables=True)
         # Test invalid links by modifying the canned bundle
@@ -335,9 +330,9 @@ class TestTDRHCAPlugin(DCP2CannedBundleTestCase,
             'b0c2c714-45ee-4759-a32b-8ccbbcf911d4',
             'bd4939c1-a078-43bd-8477-99ae59ceb555',
         ]
-        bundle = self._load_canned_bundle(SourcedBundleFQID(source=self.source,
-                                                            uuid=downstream_uuid,
-                                                            version='2020-08-10T21:24:26.174274Z'))
+        fqid = self.bundle_fqid(uuid=downstream_uuid,
+                                version='2020-08-10T21:24:26.174274Z')
+        bundle = self._load_canned_bundle(fqid)
         assert len(bundle.stitched) > 0
         with self.assertLogs(plugin_log, level=logging.DEBUG) as cm:
             self._test_fetch_bundle(bundle, load_tables=True)

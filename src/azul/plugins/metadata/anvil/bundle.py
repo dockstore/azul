@@ -9,6 +9,7 @@ from itertools import (
 )
 from typing import (
     AbstractSet,
+    Any,
     Generic,
     Mapping,
     Self,
@@ -138,20 +139,21 @@ class AnvilBundle[BUNDLE_FQID: SourcedBundleFQID](Bundle[BUNDLE_FQID],
             }
 
         return {
+            **super().to_json(),
             'entities': to_json(self.entities),
             'orphans': to_json(self.orphans),
             'links': [link.to_json() for link in sorted(self.links)]
         }
 
     @classmethod
-    def from_json(cls, fqid: BUNDLE_FQID, json_: JSON) -> Self:
+    def _from_json(cls, json: JSON) -> dict[str, Any]:
         def from_json(entities):
             return {
                 EntityReference.parse(entity_ref): entity
                 for entity_ref, entity in entities.items()
             }
 
-        return cls(fqid=fqid,
-                   entities=from_json(json_['entities']),
-                   links=set(map(EntityLink.from_json, json_['links'])),
-                   orphans=from_json(json_['orphans']))
+        return dict(super()._from_json(json),
+                    entities=from_json(json['entities']),
+                    links=set(map(EntityLink.from_json, json['links'])),
+                    orphans=from_json(json['orphans']))
