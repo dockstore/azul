@@ -42,7 +42,12 @@ from azul.json import (
 )
 from azul.types import (
     AnyJSON,
+    CompositeJSON,
     JSON,
+    JSONArray,
+    MutableCompositeJSON,
+    MutableJSON,
+    MutableJSONArray,
     PrimitiveJSON,
     derived_type_params,
     json_mapping,
@@ -232,6 +237,13 @@ class SerializableAttrs(Serializable, attrs.AttrsInstance):
 
     >>> Custom.from_json({'x': '1.23', 'y': 'y'})
     Custom(x=1.23, y='y')
+
+    >>> @attrs.frozen(kw_only=True)
+    ... class Embedded(SerializableAttrs):
+    ...     x: JSON
+
+    >>> Embedded(x={'y': 12}).to_json()
+    {'x': {'y': 12}}
     """
 
     @classmethod
@@ -478,21 +490,28 @@ class SerializableAttrs(Serializable, attrs.AttrsInstance):
                     self.globals[inner_cls_name] = field_type
                     return self._serializable(x, inner_cls_name)
             else:
-                origin = get_origin(field_type)
-                if origin in (Union, UnionType):
-                    arg_types = set(get_args(field_type))
-                    arg_types.discard(type(None))
-                    if len(arg_types) == 1:
-                        field_type = self._reify(one(arg_types))
-                        return self._optional(x, field_type)
-                elif issubclass(origin, list):
-                    item_type = one(get_args(field_type))
-                    item_type = self._reify(item_type)
-                    return self._list(x, item_type)
+                if field_type in (JSON, CompositeJSON, JSONArray, MutableJSON, MutableCompositeJSON, MutableJSONArray):
+                    return self._embedded_json(x, one(reify(field_type)))
+                else:
+                    origin = get_origin(field_type)
+                    if origin in (Union, UnionType):
+                        arg_types = set(get_args(field_type))
+                        arg_types.discard(type(None))
+                        if len(arg_types) == 1:
+                            field_type = self._reify(one(arg_types))
+                            return self._optional(x, field_type)
+                    elif issubclass(origin, list):
+                        item_type = one(get_args(field_type))
+                        item_type = self._reify(item_type)
+                        return self._list(x, item_type)
             raise TypeError('Unserializable field', field_type, self.field)
 
         @abstractmethod
         def _primitive(self, x: str, field_type: type) -> T:
+            raise NotImplementedError
+
+        @abstractmethod
+        def _embedded_json(self, x: str, field_type: type) -> T:
             raise NotImplementedError
 
         @abstractmethod
@@ -535,6 +554,10 @@ class SerializableAttrs(Serializable, attrs.AttrsInstance):
                 ]
             ]
 
+        def _embedded_json(self, x: str, field_type: type) -> Source:
+            self.globals[field_type.__name__] = field_type
+            return self._primitive(x, field_type)
+
         def _list(self, x: str, item_type: type) -> Source:
             depth = next(self.depth)
             l, v = f'l{depth}', f'v{depth}'
@@ -557,6 +580,9 @@ class SerializableAttrs(Serializable, attrs.AttrsInstance):
     class Serializer(Strategy[str]):
 
         def _primitive(self, x: str, field_type: type) -> str:
+            return x
+
+        def _embedded_json(self, x: str, field_type: type) -> str:
             return x
 
         def _optional(self, x: str, field_type: type) -> str:
