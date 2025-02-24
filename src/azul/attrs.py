@@ -345,8 +345,7 @@ class SerializableAttrs(Serializable, attrs.AttrsInstance):
                 *flatten(
                     [
                         f'x = self.{field.name}',
-                        'x = ' + cls.Serializer(cls, field, globals).handle(),
-                        f'json["{field.name}"] = x'
+                        f'json["{field.name}"] = ' + cls.Serializer(cls, field, globals).handle()
                     ]
                     for field in fields
                 ),
