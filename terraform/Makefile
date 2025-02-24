@@ -38,6 +38,8 @@ rename_resources: validate
 
 .PHONY: import_resources
 import_resources: rename_resources
+	@# FIXME: Remove once the log groups have been imported into all deployments
+	@#        https://github.com/DataBiosphere/azul/issues/6911
 	python $(project_root)/scripts/import_cloudwatch_log_groups.py
 
 .PHONY: plan

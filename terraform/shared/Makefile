@@ -31,6 +31,8 @@ rename_resources: config
 .PHONY: import_resources
 import_resources: rename_resources
 	python $(project_root)/scripts/import_default_vpc.py
+	@# FIXME: Remove once the log groups have been imported into all deployments
+	@#        https://github.com/DataBiosphere/azul/issues/6911
 	python $(project_root)/scripts/import_cloudwatch_log_groups.py
 
 .PHONY: apply
