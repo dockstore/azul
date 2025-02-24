@@ -479,12 +479,12 @@ class SerializableAttrs(Serializable, attrs.AttrsInstance):
         def _primitive(self, field_type: type) -> Source:
             return [
                 f'if not isinstance(x, {field_type.__name__}):', [
-                    'raise ValueError(', (
+                    'raise ValueError(', [(
                         '"Invalid type of value"',
                         'type(x)',
                         '"expecting"',
                         field_type.__name__,
-                    ), ')'
+                    )], ')'
                 ]
             ]
 
