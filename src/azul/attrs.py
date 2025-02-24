@@ -244,6 +244,16 @@ class SerializableAttrs(Serializable, attrs.AttrsInstance):
 
     >>> Embedded(x={'y': 12}).to_json()
     {'x': {'y': 12}}
+
+    >>> @attrs.frozen(kw_only=True)
+    ... class WithDicts(SerializableAttrs):
+    ...     inners: dict[int, Inner]
+
+    >>> WithDicts(inners={1: Inner(x=1, y='b')}).to_json()
+    {'inners': {1: {'x': 1, 'y': 'b'}}}
+
+    >>> WithDicts.from_json({'inners': {1: {'x': 1, 'y': 'b'}}})
+    WithDicts(inners={1: Inner(x=1, y='b')})
     """
 
     @classmethod
@@ -513,6 +523,9 @@ class SerializableAttrs(Serializable, attrs.AttrsInstance):
                         item_type = one(get_args(field_type))
                         item_type = self._reify(item_type)
                         return self._list(x, item_type)
+                    elif issubclass(origin, dict):
+                        key_type, value_type = map(self._reify, get_args(field_type))
+                        return self._dict(x, key_type, value_type)
             raise TypeError('Unserializable field', field_type, self.field)
 
         @abstractmethod
@@ -533,6 +546,10 @@ class SerializableAttrs(Serializable, attrs.AttrsInstance):
 
         @abstractmethod
         def _list(self, x: str, item_type: type) -> T:
+            raise NotImplementedError
+
+        @abstractmethod
+        def _dict(self, x: str, key_type: type, value_type: type) -> T:
             raise NotImplementedError
 
         @abstractmethod
@@ -579,6 +596,19 @@ class SerializableAttrs(Serializable, attrs.AttrsInstance):
                 f'{x} = {l}'
             ]
 
+        def _dict(self, x: str, key_type: type, value_type: type) -> Source:
+            level = next(self.depth)
+            d, k, v = f'd{level}', f'k{level}', f'v{level}'
+            return [
+                f'{d} = {{}}',
+                f'for {k},{v} in {x}.items():', [
+                    *self._handle(k, key_type),
+                    *self._handle(v, value_type),
+                    f'{d}[{k}] = {v}'
+                ],
+                f'{x} = {d}'
+            ]
+
         def _custom(self, x: str, metadata: 'SerializableAttrs.Metadata') -> Source:
             var_name = self.field.name + '_from_json'
             self.globals[var_name] = not_none(metadata['from_json'])
@@ -605,6 +635,12 @@ class SerializableAttrs(Serializable, attrs.AttrsInstance):
             v = f'v{depth}'
             v_ = self._handle(v, item_type)
             return f'[({v_}) for {v} in {x}]'
+
+        def _dict(self, x: str, key_type: type, value_type: type) -> str:
+            level = next(self.depth)
+            k, v = f'k{level}', f'v{level}'
+            k_, v_ = self._handle(k, key_type), self._handle(v, value_type)
+            return f'{{{k_}: {v_} for {k}, {v} in x.items()}}'
 
         def _custom(self, x: str, metadata: 'SerializableAttrs.Metadata') -> str:
             var_name = self.field.name + '_to_json'
