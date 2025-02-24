@@ -2,12 +2,16 @@ from abc import (
     ABCMeta,
     abstractmethod,
 )
+from itertools import (
+    count,
+)
 from types import (
     UnionType,
 )
 from typing import (
     Any,
     Callable,
+    Iterator,
     Optional,
     Self,
     Tuple,
@@ -176,26 +180,32 @@ class SerializableAttrs(Serializable, attrs.AttrsInstance):
 
     >>> @attrs.frozen(kw_only=True)
     ... class OuterBase[X, T: InnerBase](SerializableAttrs):
-    ...     inner: T
+    ...     inner: list[T] | None
 
     >>> class MiddleOuter[X](OuterBase[X, Inner]): ...
 
     >>> class Outer(MiddleOuter[float]): ...
 
-    >>> outer = Outer(inner=Inner(x=1, y='b'))
+    >>> outer = Outer(inner=[Inner(x=1, y='b')])
     >>> outer.to_json()
-    {'inner': {'x': 1, 'y': 'b'}}
+    {'inner': [{'x': 1, 'y': 'b'}]}
 
     >>> Outer.from_json(outer.to_json())
-    Outer(inner=Inner(x=1, y='b'))
+    Outer(inner=[Inner(x=1, y='b')])
 
-    >>> Outer.from_json({'inner': {'x': 'bad', 'y': 'b'}})
+    >>> Outer(inner=None).to_json()
+    {'inner': None}
+
+    >>> Outer.from_json({'inner': None})
+    Outer(inner=None)
+
+    >>> Outer.from_json({'inner': [{'x': 'bad', 'y': 'b'}]})
     Traceback (most recent call last):
     ...
     ValueError: ('Invalid type of value', <class 'str'>, 'expecting', <class 'int'>)
 
-    >>> Outer.from_json({'inner': {'x': 1, 'y': None}})
-    Outer(inner=Inner(x=1, y=None))
+    >>> Outer.from_json({'inner': [{'x': 1, 'y': None}]})
+    Outer(inner=[Inner(x=1, y=None)])
 
     A class with custom serialization (float serialized as string):
 
@@ -323,7 +333,7 @@ class SerializableAttrs(Serializable, attrs.AttrsInstance):
                 *flatten(
                     [
                         f'x = json["{field.name}"]',
-                        *(cls.Deserializer(cls, field, globals).handle()),
+                        *(cls.Deserializer(cls, field, globals).handle('x')),
                         f'kwargs["{field.name}"] = x'
                     ]
                     for field in fields
@@ -345,7 +355,7 @@ class SerializableAttrs(Serializable, attrs.AttrsInstance):
                 *flatten(
                     [
                         f'x = self.{field.name}',
-                        f'json["{field.name}"] = ' + cls.Serializer(cls, field, globals).handle()
+                        f'json["{field.name}"] = ' + cls.Serializer(cls, field, globals).handle('x')
                     ]
                     for field in fields
                 ),
@@ -400,12 +410,13 @@ class SerializableAttrs(Serializable, attrs.AttrsInstance):
         cls: type['SerializableAttrs']
         field: attrs.Attribute
         globals: dict[str, Any]
+        depth: Iterator[int] = attrs.field(factory=count)
 
         class MustDefer(Exception):
             pass
 
-        def handle(self) -> T:
-            return self._handle(self._reify(self.field.type))
+        def handle(self, x: str) -> T:
+            return self._handle(x, self._reify(self.field.type))
 
         def _owner(self) -> type:
             """
@@ -434,14 +445,14 @@ class SerializableAttrs(Serializable, attrs.AttrsInstance):
                     raise self.MustDefer
             return field_type
 
-        def _handle(self, field_type: Any):
+        def _handle(self, x: str, field_type: Any):
             if isinstance(field_type, type):
                 if field_type in reify(PrimitiveJSON):
-                    return self._primitive(field_type)
+                    return self._primitive(x, field_type)
                 elif issubclass(field_type, Serializable):
                     inner_cls_name = field_type.__name__
                     self.globals[inner_cls_name] = field_type
-                    return self._serializable(inner_cls_name)
+                    return self._serializable(x, inner_cls_name)
             else:
                 origin = get_origin(field_type)
                 if origin in (Union, UnionType):
@@ -449,52 +460,78 @@ class SerializableAttrs(Serializable, attrs.AttrsInstance):
                     arg_types.discard(type(None))
                     if len(arg_types) == 1:
                         field_type = self._reify(one(arg_types))
-                        return self._optional(field_type)
+                        return self._optional(x, field_type)
+                elif issubclass(origin, list):
+                    item_type = one(get_args(field_type))
+                    item_type = self._reify(item_type)
+                    return self._list(x, item_type)
             raise TypeError('Unserializable field', field_type, self.field)
 
         @abstractmethod
-        def _primitive(self, field_type: type) -> T:
+        def _primitive(self, x: str, field_type: type) -> T:
             raise NotImplementedError
 
         @abstractmethod
-        def _optional(self, field_type: type) -> T:
+        def _optional(self, x: str, field_type: type) -> T:
             raise NotImplementedError
 
         @abstractmethod
-        def _serializable(self, inner_cls_name: str) -> T:
+        def _serializable(self, x: str, inner_cls_name: str) -> T:
+            raise NotImplementedError
+
+        @abstractmethod
+        def _list(self, x: str, item_type: type) -> T:
             raise NotImplementedError
 
     class Deserializer(Strategy[Source]):
 
-        def _optional(self, field_type: type) -> Source:
+        def _optional(self, x: str, field_type: type) -> Source:
             return [
-                'if x is not None:', self._handle(field_type)
+                f'if {x} is not None:', self._handle(x, field_type)
             ]
 
-        def _serializable(self, inner_cls_name: str) -> Source:
+        def _serializable(self, x: str, inner_cls_name: str) -> Source:
             return [
-                f'x = {inner_cls_name}.from_json(x)'
+                f'{x} = {inner_cls_name}.from_json({x})'
             ]
 
-        def _primitive(self, field_type: type) -> Source:
+        def _primitive(self, x: str, field_type: type) -> Source:
             return [
-                f'if not isinstance(x, {field_type.__name__}):', [
+                f'if not isinstance({x}, {field_type.__name__}):', [
                     'raise ValueError(', [(
                         '"Invalid type of value"',
-                        'type(x)',
+                        f'type({x})',
                         '"expecting"',
                         field_type.__name__,
                     )], ')'
                 ]
             ]
 
+        def _list(self, x: str, item_type: type) -> Source:
+            depth = next(self.depth)
+            l, v = f'l{depth}', f'v{depth}'
+            return [
+                f'{l} = []',
+                f'for {v} in {x}:', [
+                    *self._handle(v, item_type),
+                    f'{l}.append({v})'
+                ],
+                f'{x} = {l}'
+            ]
+
     class Serializer(Strategy[str]):
 
-        def _primitive(self, field_type: type) -> str:
-            return 'x'
+        def _primitive(self, x: str, field_type: type) -> str:
+            return x
 
-        def _optional(self, field_type: type) -> str:
-            return 'x'
+        def _optional(self, x: str, field_type: type) -> str:
+            return f'{x} if {x} is None else ({self._handle(x, field_type)})'
 
-        def _serializable(self, inner_cls_name: str) -> str:
-            return 'x.to_json()'
+        def _serializable(self, x: str, inner_cls_name: str) -> str:
+            return f'{x}.to_json()'
+
+        def _list(self, x: str, item_type: type) -> str:
+            depth = next(self.depth)
+            v = f'v{depth}'
+            v_ = self._handle(v, item_type)
+            return f'[({v_}) for {v} in {x}]'
