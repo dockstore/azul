@@ -29,14 +29,13 @@ import attrs
 from azul import (
     R,
     config,
-    json_str,
     reject,
 )
 from azul.attrs import (
     SerializableAttrs,
 )
 from azul.json import (
-    Serializable,
+    Parseable,
 )
 from azul.types import (
     AnyJSON,
@@ -359,7 +358,7 @@ Prefix.of_everything = Prefix.parse('/0')
 
 
 @attrs.frozen(kw_only=True)
-class SourceSpec(Serializable, metaclass=ABCMeta):
+class SourceSpec(Parseable, metaclass=ABCMeta):
     """
     The name of a repository source containing bundles to index. A repository
     has at least one source. Repository plugins whose repository source names
@@ -382,13 +381,6 @@ class SourceSpec(Serializable, metaclass=ABCMeta):
         reject(sep == '', 'Invalid source specification', spec)
         prefix = Prefix.parse(prefix) if prefix else None
         return rest, prefix
-
-    @classmethod
-    def from_json(cls, json: AnyJSON) -> Self:
-        return cls.parse(json_str(json))
-
-    def to_json(self) -> AnyJSON:
-        return str(self)
 
     @property
     def _prefix_str(self) -> str:

@@ -8,16 +8,16 @@ from itertools import (
     chain,
 )
 from typing import (
-    AbstractSet,
-    Any,
-    Generic,
     Mapping,
     Self,
-    TypeVar,
 )
 
 import attrs
 
+from azul.attrs import (
+    SerializableAttrs,
+    serializable,
+)
 from azul.collections import (
     aset,
     none_safe_apply,
@@ -31,7 +31,6 @@ from azul.indexer.document import (
     EntityType,
 )
 from azul.types import (
-    JSON,
     MutableJSON,
 )
 
@@ -44,40 +43,26 @@ Key = str
 
 
 @attrs.frozen(kw_only=True)
-class KeyReference:
+class KeyReference(SerializableAttrs):
     key: Key
     entity_type: EntityType
 
 
-REF = TypeVar('REF', bound=EntityReference | KeyReference)
+def ref_set_field():
+    return serializable(attrs.field(),
+                        from_json=lambda x: frozenset(map(EntityReference.parse, x)),
+                        to_json=lambda x: sorted(map(str, x)))
 
 
 @attrs.frozen(kw_only=True, order=False)
-class Link(Generic[REF]):
-    inputs: AbstractSet[REF] = attrs.field(factory=frozenset,
-                                           converter=frozenset)
-
-    activity: REF | None = attrs.field(default=None)
-
-    outputs: AbstractSet[REF] = attrs.field(factory=frozenset,
-                                            converter=frozenset)
+class Link[REF: EntityReference | KeyReference](SerializableAttrs):
+    inputs: frozenset[REF] = ref_set_field()
+    activity: REF | None = None
+    outputs: frozenset[REF] = ref_set_field()
 
     @property
-    def all_entities(self) -> AbstractSet[REF]:
+    def all_entities(self) -> frozenset[REF]:
         return self.inputs | self.outputs | aset(self.activity)
-
-    @classmethod
-    def from_json(cls, link: JSON) -> Self:
-        return cls(inputs=set(map(EntityReference.parse, link['inputs'])),
-                   activity=none_safe_apply(EntityReference.parse, link['activity']),
-                   outputs=set(map(EntityReference.parse, link['outputs'])))
-
-    def to_json(self) -> MutableJSON:
-        return {
-            'inputs': sorted(map(str, self.inputs)),
-            'activity': none_safe_apply(str, self.activity),
-            'outputs': sorted(map(str, self.outputs))
-        }
 
     @classmethod
     def group_by_activity(cls, links: set[Self]):
@@ -110,9 +95,9 @@ class KeyLink(Link[KeyReference]):
                        entities_by_key: Mapping[KeyReference, EntityReference]
                        ) -> EntityLink:
         lookup = entities_by_key.__getitem__
-        return EntityLink(inputs=set(map(lookup, self.inputs)),
+        return EntityLink(inputs=frozenset(map(lookup, self.inputs)),
                           activity=none_safe_apply(lookup, self.activity),
-                          outputs=set(map(lookup, self.outputs)))
+                          outputs=frozenset(map(lookup, self.outputs)))
 
 
 @attrs.define(kw_only=True)
@@ -123,37 +108,14 @@ class AnvilBundle[BUNDLE_FQID: SourcedBundleFQID](Bundle[BUNDLE_FQID],
     # the contributions (e.g. `activities`). The metadata plugin converts from
     # the former to the latter during transformation.
     entities: dict[EntityReference, MutableJSON] = attrs.field(factory=dict)
-    links: set[EntityLink] = attrs.field(factory=set)
+    links: set[EntityLink] = serializable(
+        attrs.field(factory=set),
+        from_json=lambda x: set(EntityLink.from_json(v) for v in x),
+        to_json=lambda x: [v.to_json() for v in sorted(x)]
+    )
     orphans: dict[EntityReference, MutableJSON] = attrs.field(factory=dict)
 
     def reject_joiner(self):
         # We can skip the `links` attribute because the only strings it contains
         # are UUIDs and table names
         self._reject_joiner(chain(self.entities.values(), self.orphans.values()))
-
-    def to_json(self) -> MutableJSON:
-        def to_json(entities):
-            return {
-                str(entity_ref): entity
-                for entity_ref, entity in sorted(entities.items())
-            }
-
-        return {
-            **super().to_json(),
-            'entities': to_json(self.entities),
-            'orphans': to_json(self.orphans),
-            'links': [link.to_json() for link in sorted(self.links)]
-        }
-
-    @classmethod
-    def _from_json(cls, json: JSON) -> dict[str, Any]:
-        def from_json(entities):
-            return {
-                EntityReference.parse(entity_ref): entity
-                for entity_ref, entity in entities.items()
-            }
-
-        return dict(super()._from_json(json),
-                    entities=from_json(json['entities']),
-                    links=set(map(EntityLink.from_json, json['links'])),
-                    orphans=from_json(json['orphans']))
