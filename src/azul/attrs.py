@@ -17,6 +17,7 @@ from typing import (
     Optional,
     Self,
     Tuple,
+    TypeAliasType,
     TypeVar,
     TypedDict,
     Union,
@@ -512,7 +513,20 @@ class SerializableAttrs(Serializable, attrs.AttrsInstance):
                     raise self.MustDefer
             return field_type
 
+        embedded_json_types = (
+            JSON,
+            CompositeJSON,
+            JSONArray,
+            MutableJSON,
+            MutableCompositeJSON,
+            MutableJSONArray
+        )
+
         def _handle(self, x: str, field_type: Any):
+            if field_type in self.embedded_json_types:
+                return self._embedded_json(x, one(reify(field_type)))
+            elif isinstance(field_type, TypeAliasType):
+                field_type = field_type.__value__
             if isinstance(field_type, type):
                 if field_type in reify(PrimitiveJSON):
                     return self._primitive(x, field_type)
@@ -521,23 +535,20 @@ class SerializableAttrs(Serializable, attrs.AttrsInstance):
                     self.globals[inner_cls_name] = field_type
                     return self._serializable(x, inner_cls_name)
             else:
-                if field_type in (JSON, CompositeJSON, JSONArray, MutableJSON, MutableCompositeJSON, MutableJSONArray):
-                    return self._embedded_json(x, one(reify(field_type)))
-                else:
-                    origin = get_origin(field_type)
-                    if origin in (Union, UnionType):
-                        arg_types = set(get_args(field_type))
-                        arg_types.discard(type(None))
-                        if len(arg_types) == 1:
-                            field_type = self._reify(one(arg_types))
-                            return self._optional(x, field_type)
-                    elif issubclass(origin, list):
-                        item_type = one(get_args(field_type))
-                        item_type = self._reify(item_type)
-                        return self._list(x, item_type)
-                    elif issubclass(origin, dict):
-                        key_type, value_type = map(self._reify, get_args(field_type))
-                        return self._dict(x, key_type, value_type)
+                origin = get_origin(field_type)
+                if origin in (Union, UnionType):
+                    arg_types = set(get_args(field_type))
+                    arg_types.discard(type(None))
+                    if len(arg_types) == 1:
+                        field_type = self._reify(one(arg_types))
+                        return self._optional(x, field_type)
+                elif issubclass(origin, list):
+                    item_type = one(get_args(field_type))
+                    item_type = self._reify(item_type)
+                    return self._list(x, item_type)
+                elif issubclass(origin, dict):
+                    key_type, value_type = map(self._reify, get_args(field_type))
+                    return self._dict(x, key_type, value_type)
             raise TypeError('Unserializable field', field_type, self.field)
 
         @abstractmethod
