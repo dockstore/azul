@@ -25,6 +25,11 @@ jobs:
       - name: 'Run unit tests and other checks'
         run: |
           source environment  # load global defaults
+          # This override prevents the check_branch script from raising an
+          # exception when running the CI for chained PRs, which are a special
+          # case in which the target branch is not associated with any shared
+          # deployment.
+          azul_shared_deployments='{"": ["dev"], "prod": ["prod"], "anvilprod": ["anvilprod"]}'
           make virtualenv
           source .venv/bin/activate
           make requirements
