@@ -391,11 +391,30 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
         """
         Test with small page sizes to make sure paging works.
         """
+        # Without a filter, the test takes so long that there's a real risk of
+        # failure due to new snapshots being added mid-test.
+        snapshot_filters_by_deployment = {
+            'anvildev': 'anvil_',  # ~5 snapshots
+            'dev': 'hca_dev_5',  # ~10 snapshots
+            'anvilprod': 'anvil_page_',  # ~13 snapshots
+            'prod': '_dcp37'  # ~13 snapshots
+        }
+        filter = snapshot_filters_by_deployment[config.main_deployment_stage]
         for page_size in 1, 2:
             with self.subTest(page_size=page_size):
                 with mock.patch.object(TDRClient, 'page_size', page_size):
-                    paged_snapshots = self._public_tdr_client.snapshot_names_by_id()
-                snapshots = self._public_tdr_client.snapshot_names_by_id()
+                    paged_snapshots = self._tdr_client.snapshot_names_by_id(filter=filter)
+                snapshots = self._tdr_client.snapshot_names_by_id(filter=filter)
+                self.assertLess(len(snapshots), 20)
+                # Show that multiple pages were fetched, via the pigeonhole
+                # principle, and under the assumption that the TDR client
+                # correctly implements paging, and doesn't, for example, ignore
+                # the page size parameter. This test is designed to detect
+                # problems in the server-side implementation of paging, or our
+                # understanding of it. There is a unit test
+                # (test_list_snapshots_paging) dedicated to ensuring that the
+                # client-side implementation of paging is correct.
+                self.assertGreater(len(paged_snapshots), page_size)
                 self.assertEqual(snapshots, paged_snapshots)
 
     def test_indexing(self):
