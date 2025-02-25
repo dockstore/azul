@@ -389,13 +389,14 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
 
     def test_snapshot_listing(self):
         """
-        Test with a small page size to be sure paging works
+        Test with small page sizes to make sure paging works.
         """
-        page_size = 5
-        with mock.patch.object(TDRClient, 'page_size', page_size):
-            paged_snapshots = self._public_tdr_client.snapshot_names_by_id()
-        snapshots = self._public_tdr_client.snapshot_names_by_id()
-        self.assertEqual(snapshots, paged_snapshots)
+        for page_size in 1, 2:
+            with self.subTest(page_size=page_size):
+                with mock.patch.object(TDRClient, 'page_size', page_size):
+                    paged_snapshots = self._public_tdr_client.snapshot_names_by_id()
+                snapshots = self._public_tdr_client.snapshot_names_by_id()
+                self.assertEqual(snapshots, paged_snapshots)
 
     def test_indexing(self):
 
