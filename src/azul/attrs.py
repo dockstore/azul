@@ -5,6 +5,7 @@ from abc import (
 from itertools import (
     count,
 )
+import logging
 from types import (
     UnionType,
 )
@@ -35,6 +36,7 @@ from more_itertools import (
 
 from azul import (
     R,
+    config,
     require,
 )
 from azul.json import (
@@ -54,6 +56,8 @@ from azul.types import (
     not_none,
     reify,
 )
+
+log = logging.getLogger(__name__)
 
 
 def strict_auto(*args, **kwargs):
@@ -428,6 +432,9 @@ class SerializableAttrs(Serializable, attrs.AttrsInstance):
         """
         Compile a function definition from the given source & context
         """
+        if config.debug > 1:
+            log.debug('Generating code for method in %r with globals %r. '
+                      'See next line for body of method.\n%s', cls, globals, source)
         bytecode = compile(source, cls.__module__, 'exec')
         locals: dict[str, Any] = {}
         eval(bytecode, globals, locals)
