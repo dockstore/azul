@@ -263,8 +263,7 @@ class SerializableAttrs(Serializable, attrs.AttrsInstance):
     @classmethod
     @final
     def from_json(cls, json: AnyJSON) -> Self:
-        assert not cls._deferred_fields, R(
-            'Class has fields of unknown type', cls._deferred_fields)
+        cls._assert_concrete()
         kwargs = cls._from_json(json_mapping(json))
         return cls(**kwargs)
 
@@ -285,7 +284,13 @@ class SerializableAttrs(Serializable, attrs.AttrsInstance):
         Typically, the overrides in subclasses will be generated automatically
         but if a subclass explicitly defines an override, it will be left alone.
         """
+        self._assert_concrete()
         return {}
+
+    @classmethod
+    def _assert_concrete(cls):
+        assert not cls._deferred_fields, R(
+            'Class has fields of unknown type', cls._deferred_fields)
 
     class Metadata(TypedDict):
         from_json: Callable[[AnyJSON], Any] | None
