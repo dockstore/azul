@@ -285,19 +285,20 @@ class Queues:
             lengths[queue_name] = length
         return total, lengths
 
-    def wait_to_stabilize(self) -> int:
+    def wait_to_stabilize(self, queue_names: Iterable[str], timeout: int) -> int:
         """
-        Wait for the indexer queues to reach a steady state.
+        Wait for queues to reach a steady state.
+
+        :param queue_names: Which queues to wait for.
+
+        :param timeout: The highest timeout among lambda functions receiving
+                        messages from the queues.
+
+        :return: The total final length of the stabilized queues. The only
+                 observable is zero; otherwise, an exception is raised.
         """
         sleep_time = 10
-        # Indexing can still succeed after a transient stall. A stall's
-        # transience cannot be proven until all lambdas and their respective
-        # retries repeatedly time out, but this would result in an unreasonably
-        # long wait time. Waiting for just one retry is sufficient to
-        # accommodate the most probable scenarios for transient stalls.
-        timeout = max(config.contribution_lambda_timeout(retry=True),
-                      config.aggregation_lambda_timeout(retry=True))
-        queues = self.get_queues(config.indexer_queue_names)
+        queues = self.get_queues(queue_names)
         maxlen = ceil(timeout / sleep_time)
         total_lengths: deque[int] = deque(maxlen=maxlen)
         # Two minutes to safely accommodate SQS eventual consistency window of

@@ -536,7 +536,14 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
         Wait for indexer to begin processing notifications, then wait for work
         to finish.
         """
-        self.queues.wait_to_stabilize()
+        # Indexing can still succeed after a transient stall. A stall's
+        # transience cannot be proven until all lambdas and their respective
+        # retries repeatedly time out, but this would result in an unreasonably
+        # long wait time. Waiting for just one retry is sufficient to
+        # accommodate the most probable scenarios for transient stalls.
+        timeout = max(config.contribution_lambda_timeout(retry=True),
+                      config.aggregation_lambda_timeout(retry=True))
+        self.queues.wait_to_stabilize(config.indexer_queue_names, timeout)
 
 
 class AzulClientError(RuntimeError):
