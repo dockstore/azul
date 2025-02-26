@@ -250,7 +250,7 @@ def env() -> Mapping[str, Optional[str]]:
         # and committing the resulting changes. It also requires redeploying the
         # `shared` component.
         #
-        'azul_python_version': '3.12.8',
+        'azul_python_version': '3.12.9',
 
         # The version of Terraform used throughout the system.
         #
@@ -296,24 +296,24 @@ def env() -> Mapping[str, Optional[str]]:
                 'url': 'https://hub.docker.com/_/python',
             },
             'pycharm': {
-                'ref': 'docker.io/ucscgi/azul-pycharm:2024.3.2-44',
+                'ref': 'docker.io/ucscgi/azul-pycharm:2024.3.3-45',
                 'url': 'https://hub.docker.com/repository/docker/ucscgi/azul-pycharm',
                 'is_custom': True
             },
             'elasticsearch': {
-                'ref': 'docker.io/ucscgi/azul-elasticsearch:7.17.27-37',
+                'ref': 'docker.io/ucscgi/azul-elasticsearch:7.17.27-38',
                 'url': 'https://hub.docker.com/repository/docker/ucscgi/azul-elasticsearch',
                 'is_custom': True
             },
             'bigquery_emulator': {
-                'ref': 'docker.io/ucscgi/azul-bigquery-emulator:0.4.4-23',
+                'ref': 'docker.io/ucscgi/azul-bigquery-emulator:0.4.4-24',
                 'url': 'https://hub.docker.com/repository/docker/ucscgi/azul-bigquery-emulator',
                 'is_custom': True
             },
             # Updating any of the four images below additionally requires
             # redeploying the `gitlab` TF component.
             'clamav': {
-                'ref': 'docker.io/clamav/clamav:1.4.2-25',
+                'ref': 'docker.io/clamav/clamav:1.4.2-27',
                 'url': 'https://hub.docker.com/r/clamav/clamav'
             },
             'gitlab': {
