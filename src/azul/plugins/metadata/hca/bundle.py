@@ -2,18 +2,17 @@ from abc import (
     ABCMeta,
 )
 import logging
-from typing import (
-    Self,
-)
 
 import attrs
 
+from azul.attrs import (
+    serializable,
+)
 from azul.indexer import (
     Bundle,
     SourcedBundleFQID,
 )
 from azul.types import (
-    JSON,
     MutableJSON,
 )
 
@@ -41,32 +40,10 @@ class HCABundle[BUNDLE_FQID: SourcedBundleFQID](Bundle[BUNDLE_FQID],
     """
     metadata: MutableJSON
     links: MutableJSON
-    stitched: set[str] = attrs.field(factory=set)
+    stitched: set[str] = serializable(attrs.field(factory=set),
+                                      to_json=sorted,
+                                      from_json=set)
 
     def reject_joiner(self):
         # We can skip the `stitched` attribute because it only contains UUIDs
         self._reject_joiner([self.manifest, self.metadata, self.links])
-
-    def to_json(self) -> MutableJSON:
-        return {
-            'manifest': self.manifest,
-            'metadata': self.metadata,
-            'links': self.links,
-            'stitched': sorted(self.stitched)
-        }
-
-    @classmethod
-    def from_json(cls, fqid: BUNDLE_FQID, json_: JSON) -> Self:
-        manifest = json_['manifest']
-        metadata = json_['metadata']
-        links = json_['links']
-        stitched = json_['stitched']
-        assert isinstance(manifest, dict), manifest
-        assert isinstance(metadata, dict), metadata
-        assert isinstance(links, dict), links
-        assert isinstance(stitched, list), stitched
-        return cls(fqid=fqid,
-                   manifest=manifest,
-                   metadata=metadata,
-                   links=links,
-                   stitched=set(stitched))

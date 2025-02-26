@@ -28,6 +28,7 @@ from azul.types import (
     MutableCompositeJSON,
     MutableJSON,
     MutableJSONArray,
+    json_str,
 )
 
 
@@ -263,4 +264,25 @@ class Serializable:
         """
         Serialize this instance to JSON in a form suitable for :meth:`from_json`
         """
+        raise NotImplementedError
+
+
+class Parseable(Serializable):
+    """
+    A class whose instances have a string representation that can be used in
+    JSON documents.
+    """
+
+    @classmethod
+    def from_json(cls, json: AnyJSON) -> Self:
+        return cls.parse(json_str(json))
+
+    def to_json(self) -> AnyJSON:
+        return str(self)
+
+    def __str__(self) -> str:
+        raise NotImplementedError
+
+    @classmethod
+    def parse(cls, value: str) -> Self:
         raise NotImplementedError

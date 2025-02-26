@@ -151,7 +151,7 @@ from azul.plugins import (
     RepositoryPlugin,
 )
 from azul.plugins.metadata.anvil.bundle import (
-    Link,
+    EntityLink,
 )
 from azul.plugins.repository.tdr_anvil import (
     BundleType,
@@ -1824,7 +1824,7 @@ class CanBundleScriptIntegrationTest(IntegrationTestCase):
                 entities = set(map(EntityReference.parse, entities.keys()))
                 if len(entities) > 1:
                     linked_entities = frozenset().union(*(
-                        Link.from_json(link).all_entities
+                        EntityLink.from_json(link).all_entities
                         for link in links
                     ))
                     self.assertEqual(entities, linked_entities)

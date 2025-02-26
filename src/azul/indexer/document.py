@@ -41,6 +41,9 @@ from azul.indexer.field import (
     pass_thru_json,
     pass_thru_str,
 )
+from azul.json import (
+    Parseable,
+)
 from azul.types import (
     AnyJSON,
     AnyMutableJSON,
@@ -57,7 +60,7 @@ type EntityType = str
 
 
 @attr.s(frozen=True, auto_attribs=True, kw_only=True, slots=True)
-class EntityReference:
+class EntityReference(Parseable):
     entity_type: EntityType
     entity_id: EntityID
 

@@ -225,8 +225,6 @@ class TDRHCABundle(HCABundle[TDRBundleFQID], TDRBundle):
         'project_id'
     }
 
-    _suffix = 'tdr.'
-
     def _add_manifest_entry(self,
                             entity: EntityReference,
                             *,
