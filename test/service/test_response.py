@@ -3502,7 +3502,7 @@ class TestResponseFields(IndexResponseTestCase):
         self.assertEqual({None: 2, 'Lung': 1, 'Retina': 1, 'Blood': 1}, terms)
 
     def test_data_use_restriction(self):
-        field, value = 'dataUseRestriction', 'NRES'
+        field, value = 'dataUseRestriction', 'GRU'
         params = {
             'catalog': self.catalog,
             'sort': field,

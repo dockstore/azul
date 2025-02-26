@@ -396,7 +396,8 @@
             "supplementary_links": [
                 "ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE84nnn/GSE84465/suppl/GSE84465_GBM_All_data.csv.gz,ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE84nnn/GSE84465/suppl/GSE84465_RAW.tar"
             ],
-            "data_use_restriction": "NRES",
+            "data_use_restriction": "GRU",
+            "duos_id": "DUOS-999999",
             "insdc_project_accessions": [
                 "SRP079058"
             ],
