@@ -616,6 +616,11 @@ def env() -> Mapping[str, Optional[str]]:
         #
         'AZUL_ENABLE_MONITORING': '0',
 
+        # Whether to include relations in manifests of the verbatim PFB format
+        # (1 yes, 0 no).
+        #
+        'AZUL_ENABLE_VERBATIM_RELATIONS': '1',
+
         # Identifies the DSS repository endpoint and prefix to index.
         # The syntax in EBNF is:
         #

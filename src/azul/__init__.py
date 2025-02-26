@@ -836,6 +836,10 @@ class Config:
         return self.deployment_stage == self.main_deployment_stage
 
     @property
+    def enable_verbatim_relations(self) -> bool:
+        return self._boolean(self.environ['AZUL_ENABLE_VERBATIM_RELATIONS'])
+
+    @property
     def es_instance_type(self) -> str:
         return self.environ['AZUL_ES_INSTANCE_TYPE']
 
