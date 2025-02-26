@@ -186,7 +186,7 @@ def post_notification(catalog: CatalogName, action: str):
                   threshold=int(96000 / config.contribution_concurrency(retry=False)),
                   period=5 * 60)
 @app.on_sqs_message(
-    queue=config.notifications_queue_name(),
+    queue=config.notifications_queue.name,
     batch_size=1
 )
 def contribute(event: chalice.app.SQSEvent):
@@ -200,7 +200,7 @@ def contribute(event: chalice.app.SQSEvent):
                   threshold=int(37760 / config.aggregation_concurrency(retry=False)),
                   period=5 * 60)
 @app.on_sqs_message(
-    queue=config.tallies_queue_name(),
+    queue=config.tallies_queue.name,
     batch_size=IndexController.document_batch_size
 )
 def aggregate(event: chalice.app.SQSEvent):
@@ -217,7 +217,7 @@ def aggregate(event: chalice.app.SQSEvent):
                   threshold=0,
                   period=5 * 60)
 @app.on_sqs_message(
-    queue=config.tallies_queue_name(retry=True),
+    queue=config.tallies_queue.to_retry.name,
     batch_size=IndexController.document_batch_size
 )
 def aggregate_retry(event: chalice.app.SQSEvent):
@@ -234,7 +234,7 @@ def aggregate_retry(event: chalice.app.SQSEvent):
                   threshold=int(31760 / config.contribution_concurrency(retry=True)),
                   period=5 * 60)
 @app.on_sqs_message(
-    queue=config.notifications_queue_name(retry=True),
+    queue=config.notifications_queue.to_retry.name,
     batch_size=1
 )
 def contribute_retry(event: chalice.app.SQSEvent):

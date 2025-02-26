@@ -240,7 +240,7 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
 
     @cached_property
     def notifications_queue(self):
-        return self.sqs.get_queue_by_name(QueueName=config.notifications_queue_name())
+        return self.sqs.get_queue_by_name(QueueName=config.notifications_queue.name)
 
     def remote_reindex(self,
                        catalog: CatalogName,
@@ -475,19 +475,19 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
 
         :param create_indices: whether to create the indexes at the end.
         """
-        work_queues = self.queues.get_queues(config.work_queue_names)
+        indexer_queues = self.queues.get_queues(config.indexer_queue_names)
         if purge_queues:
             log.info('Disabling lambdas ...')
-            self.queues.manage_lambdas(work_queues, enable=False)
-            log.info('Purging queues: %s', ', '.join(work_queues.keys()))
-            self.queues.purge_queues_unsafely(work_queues)
+            self.queues.manage_lambdas(indexer_queues, enable=False)
+            log.info('Purging queues: %s', ', '.join(indexer_queues.keys()))
+            self.queues.purge_queues_unsafely(indexer_queues)
         if delete_indices:
             log.info('Deleting indices ...')
             for catalog in catalogs:
                 self.delete_all_indices(catalog)
         if purge_queues:
             log.info('Re-enabling lambdas ...')
-            self.queues.manage_lambdas(work_queues, enable=True)
+            self.queues.manage_lambdas(indexer_queues, enable=True)
         if create_indices:
             log.info('Creating indices ...')
             for catalog in catalogs:

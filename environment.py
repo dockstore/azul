@@ -633,6 +633,11 @@ def env() -> Mapping[str, Optional[str]]:
         #
         'AZUL_DSS_SOURCE': None,
 
+        # Mirror data files from the indexed repository in a dedicated S3 bucket
+        # (1 yes, 0 no).
+        #
+        'AZUL_MIRRORING_ENABLED': '0',
+
         # A short string (no punctuation allowed) that identifies a Terraform
         # component i.e., a distinct set of Terraform resources to be deployed
         # together but separately from resources in other components. They are
