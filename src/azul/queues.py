@@ -1,3 +1,4 @@
+import builtins
 from collections import (
     deque,
 )
@@ -24,7 +25,7 @@ from math import (
 import os
 import time
 from typing import (
-    Any,
+    TYPE_CHECKING,
 )
 
 import more_itertools
@@ -51,7 +52,11 @@ from azul.modules import (
 
 log = logging.getLogger(__name__)
 
-Queue = Any  # place-holder for boto3's SQS queue resource
+if TYPE_CHECKING:
+    from mypy_boto3_sqs.service_resource import (
+        Message,
+        Queue,
+    )
 
 
 class Queues:
@@ -92,8 +97,8 @@ class Queues:
         log.info(f'Finished writing {path!r}')
         self._cleanup_messages(queue, messages)
 
-    def _get_messages(self, queue):
-        messages = []
+    def _get_messages(self, queue: 'Queue') -> builtins.list['Message']:
+        messages: list['Message'] = []
         while True:
             message_batch = queue.receive_messages(AttributeNames=['All'],
                                                    MaxNumberOfMessages=10,
@@ -184,14 +189,14 @@ class Queues:
     def azul_queues(self):
         return self.get_queues(config.all_queue_names)
 
-    def get_queues(self, queue_names: Iterable[str]) -> Mapping[str, Queue]:
+    def get_queues(self, queue_names: Iterable[str]) -> Mapping[str, 'Queue']:
         return {
             queue_name: self.sqs.get_queue_by_name(QueueName=queue_name)
             for queue_name in queue_names
         }
 
     def _get_queue_lengths(self,
-                           queues: Mapping[str, Queue]
+                           queues: Mapping[str, 'Queue']
                            ) -> tuple[int, Mapping[str, int]]:
         """
         Count the number of messages in the given queues.
@@ -202,14 +207,14 @@ class Queues:
                  dictionary mapping each queue's name to the number of messages
                  in that queue.
         """
-        attributes = [
-            'ApproximateNumberOfMessages' + suffix
-            for suffix in ('', 'NotVisible', 'Delayed')
-        ]
         total, lengths = 0, {}
         for queue_name, queue in queues.items():
             queue.reload()
-            message_counts = [int(queue.attributes[attribute]) for attribute in attributes]
+            message_counts = [
+                int(queue.attributes['ApproximateNumberOfMessages']),
+                int(queue.attributes['ApproximateNumberOfMessagesNotVisible']),
+                int(queue.attributes['ApproximateNumberOfMessagesDelayed']),
+            ]
             length = sum(message_counts)
             log.debug('Queue %s has %i message(s) (%i available, %i in flight and %i delayed).',
                       queue_name, length, *message_counts)
@@ -230,11 +235,12 @@ class Queues:
         timeout = max(config.contribution_lambda_timeout(retry=True),
                       config.aggregation_lambda_timeout(retry=True))
         queues = self.get_queues(config.work_queue_names)
-        total_lengths = deque(maxlen=ceil(timeout / sleep_time))
+        maxlen = ceil(timeout / sleep_time)
+        total_lengths: deque[int] = deque(maxlen=maxlen)
         # Two minutes to safely accommodate SQS eventual consistency window of
         # one minute. For more info, read WARNING section on
         # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/sqs.html#SQS.Client.get_queue_attributes
-        assert total_lengths.maxlen * sleep_time >= 2 * 60
+        assert maxlen * sleep_time >= 2 * 60
 
         while True:
             # Determine queue lengths
@@ -246,7 +252,7 @@ class Queues:
                      list(reversed(total_lengths)))
 
             min_num_zeros = 60 // sleep_time
-            assert min_num_zeros <= total_lengths.maxlen, min_num_zeros
+            assert min_num_zeros <= maxlen, min_num_zeros
             num_total_lengths = len(total_lengths)
             if num_total_lengths >= min_num_zeros:
                 if not any(islice(reversed(total_lengths), min_num_zeros)):
@@ -320,22 +326,22 @@ class Queues:
     def purge_all(self):
         self.purge_queues_safely(self.azul_queues())
 
-    def purge_queues_safely(self, queues: Mapping[str, Queue]):
+    def purge_queues_safely(self, queues: Mapping[str, 'Queue']):
         self.manage_lambdas(queues, enable=False)
         self.purge_queues_unsafely(queues)
         self.manage_lambdas(queues, enable=True)
 
-    def purge_queues_unsafely(self, queues: Mapping[str, Queue]):
+    def purge_queues_unsafely(self, queues: Mapping[str, 'Queue']):
         with ThreadPoolExecutor(max_workers=len(queues)) as tpe:
             futures = [tpe.submit(self._purge_queue, queue) for queue in queues.values()]
             self._handle_futures(futures)
 
-    def _purge_queue(self, queue: Queue):
+    def _purge_queue(self, queue: 'Queue'):
         log.info('Purging queue %r', queue.url)
         queue.purge()
         self._wait_for_queue_empty(queue)
 
-    def _wait_for_queue_idle(self, queue: Queue):
+    def _wait_for_queue_idle(self, queue: 'Queue'):
         while True:
             num_inflight_messages = int(queue.attributes['ApproximateNumberOfMessagesNotVisible'])
             if num_inflight_messages == 0:
@@ -344,11 +350,13 @@ class Queues:
             time.sleep(3)
             queue.reload()
 
-    def _wait_for_queue_empty(self, queue: Queue):
-        # Gotta have some fun some of the time
-        attribute_names = tuple(map('ApproximateNumberOfMessages'.__add__, ('', 'Delayed', 'NotVisible')))
+    def _wait_for_queue_empty(self, queue: 'Queue'):
         while True:
-            num_messages = sum(map(int, map(queue.attributes.get, attribute_names)))
+            num_messages = (
+                int(queue.attributes['ApproximateNumberOfMessages']) +
+                int(queue.attributes['ApproximateNumberOfMessagesDelayed']) +
+                int(queue.attributes['ApproximateNumberOfMessages'])
+            )
             if num_messages == 0:
                 break
             log.info('Queue %r still has %i messages', queue.url, num_messages)
@@ -359,16 +367,15 @@ class Queues:
         lambda_ = aws.lambda_
         response = lambda_.list_event_source_mappings(FunctionName=function_name,
                                                       EventSourceArn=queue.attributes['QueueArn'])
-        mapping = one(response['EventSourceMappings'])
+        mapping_uuid = one(response['EventSourceMappings'])['UUID']
 
         def update_():
             log.info('%s push from %r to lambda function %r',
                      'Enabling' if enable else 'Disabling', queue.url, function_name)
-            lambda_.update_event_source_mapping(UUID=mapping['UUID'],
-                                                Enabled=enable)
+            lambda_.update_event_source_mapping(UUID=mapping_uuid, Enabled=enable)
 
+        state = one(response['EventSourceMappings'])['State']
         while True:
-            state = mapping['State']
             log.info('Push from %r to lambda function %r is in state %r.',
                      queue.url, function_name, state)
             if state in ('Disabling', 'Enabling', 'Updating'):
@@ -386,7 +393,7 @@ class Queues:
             else:
                 raise NotImplementedError(state)
             time.sleep(3)
-            mapping = lambda_.get_event_source_mapping(UUID=mapping['UUID'])
+            state = lambda_.get_event_source_mapping(UUID=mapping_uuid)['State']
 
     def functions_by_queue(self) -> Mapping[str, str]:
         """
@@ -403,7 +410,7 @@ class Queues:
         assert not invalid_queues, invalid_queues
         return functions_by_queue
 
-    def manage_lambdas(self, queues: Mapping[str, Queue], enable: bool):
+    def manage_lambdas(self, queues: Mapping[str, 'Queue'], enable: bool):
         """
         Enable or disable the readers and writers of the given queues.
         """

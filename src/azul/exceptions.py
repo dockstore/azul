@@ -1,6 +1,5 @@
 from typing import (
     Callable,
-    Optional,
     Type,
     TypeVar,
 )
@@ -10,55 +9,51 @@ R = TypeVar('R')
 
 
 def catch(f: Callable[..., R],
+          exception_cls: Type[E],
+          /,
           *args,
-          exception_cls_to_catch: Type[E] = Exception,
           **kwargs
-          ) -> tuple[Optional[E], Optional[R]]:
+          ) -> tuple[E, None] | tuple[None, R]:
     """
     Invoke the given callable. If the callable raises an instance of the
     specified exception class, return that exception, otherwise return the
     result of the callable.
 
-    :param f: the callable to invoke
+    :param f: The callable to invoke
 
-    :param args: positional arguments to the callable
+    :param exception_cls: The class of exceptions to catch
 
-    :param exception_cls_to_catch: class of exceptions to catch. The name is
-           intentionally long in order to avoid collisions with the keyword
-           arguments to the callable.
+    :param args: Positional arguments to the callable
 
-    :param kwargs: keyword arguments to the callable
+    :param kwargs: Keyword arguments to the callable
 
-    :return: Either a tuple of None and the return value of the callable or
-             a tuple of the exception raised by the callable and None.
+    :return: Either a tuple of None and the return value of the callable or a
+             tuple of the exception raised by the callable and None
 
-    >>> catch(int, '42')
+    >>> catch(int, Exception, '42')
     (None, 42)
 
-    >>> catch(int, '42', base=16)
+    >>> catch(int, Exception, '42', base=16)
     (None, 66)
 
-    >>> catch(int, '')
+    >>> catch(int, ValueError, '')
     (ValueError("invalid literal for int() with base 10: ''"), None)
 
-    >>> catch(int, '', exception_cls_to_catch=ValueError)
+    >>> catch(int, BaseException, '')
     (ValueError("invalid literal for int() with base 10: ''"), None)
 
-    >>> catch(int, '', exception_cls_to_catch=BaseException)
-    (ValueError("invalid literal for int() with base 10: ''"), None)
-
-    >>> catch(int, '', exception_cls_to_catch=NotImplementedError)
+    >>> catch(int, NotImplementedError, '')
     Traceback (most recent call last):
     ...
     ValueError: invalid literal for int() with base 10: ''
 
-    >>> catch(int, '', base=16)
+    >>> catch(int, ValueError, '', base=16)
     (ValueError("invalid literal for int() with base 16: ''"), None)
 
-    >>> catch(int, '', base=16, exception_cls_to_catch=ValueError)
+    >>> catch(int, ValueError, '', base=16)
     (ValueError("invalid literal for int() with base 16: ''"), None)
     """
     try:
         return None, f(*args, **kwargs)
-    except exception_cls_to_catch as e:
+    except exception_cls as e:
         return e, None

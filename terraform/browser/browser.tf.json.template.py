@@ -22,7 +22,6 @@ from azul import (
     JSON,
     cached_property,
     config,
-    false,
     iif,
 )
 from azul.collections import (
@@ -462,14 +461,7 @@ def bucket_origin_id(bucket):
 
 
 def bucket_regional_domain_name(bucket):
-    if false():
-        return '${aws_s3_bucket.%s.bucket_regional_domain_name}' % bucket  # noqa
-    else:
-        assert config.region == 'us-east-1'
-        # FIXME: Remove workaround for
-        #        https://github.com/hashicorp/terraform-provider-aws/issues/15102
-        #        https://github.com/DataBiosphere/azul/issues/5257
-        return aws.qualified_bucket_name(bucket) + '.s3.us-east-1.amazonaws.com'
+    return '${aws_s3_bucket.%s.bucket_regional_domain_name}' % bucket
 
 
 def cloudfront_function(script: Path):

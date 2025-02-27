@@ -23,7 +23,6 @@ from logging import (
 import time
 from typing import (
     IO,
-    Optional,
     TYPE_CHECKING,
 )
 from urllib.parse import (
@@ -99,8 +98,8 @@ class StorageService:
     def put(self,
             object_key: str,
             data: bytes,
-            content_type: Optional[str] = None,
-            tagging: Optional[Tagging] = None,
+            content_type: str | None = None,
+            tagging: Tagging | None = None,
             **kwargs):
         self._s3.put_object(Bucket=self.bucket_name,
                             Key=object_key,
@@ -110,8 +109,8 @@ class StorageService:
 
     def create_multipart_upload(self,
                                 object_key: str,
-                                content_type: Optional[str] = None,
-                                tagging: Optional[Tagging] = None) -> MultipartUpload:
+                                content_type: str | None = None,
+                                tagging: Tagging | None = None) -> MultipartUpload:
         kwargs = self._object_creation_kwargs(content_type=content_type,
                                               tagging=tagging)
         return self._create_multipart_upload(object_key=object_key, **kwargs)
@@ -148,8 +147,8 @@ class StorageService:
     def upload(self,
                file_path: str,
                object_key: str,
-               content_type: Optional[str] = None,
-               tagging: Optional[Tagging] = None):
+               content_type: str | None = None,
+               tagging: Tagging | None = None):
         self._s3.upload_file(Filename=file_path,
                              Bucket=self.bucket_name,
                              Key=object_key,
@@ -160,8 +159,8 @@ class StorageService:
             self.put_object_tagging(object_key, tagging)
 
     def _object_creation_kwargs(self, *,
-                                content_type: Optional[str] = None,
-                                tagging: Optional[Tagging] = None):
+                                content_type: str | None = None,
+                                tagging: Tagging | None = None):
         kwargs = {}
         if content_type is not None:
             kwargs['ContentType'] = content_type
@@ -169,7 +168,7 @@ class StorageService:
             kwargs['Tagging'] = urlencode(tagging)
         return kwargs
 
-    def get_presigned_url(self, key: str, file_name: Optional[str] = None) -> str:
+    def get_presigned_url(self, key: str, file_name: str | None = None) -> str:
         """
         Return a pre-signed URL to the given key.
 
@@ -264,7 +263,7 @@ class StorageService:
 
 @dataclass
 class Part:
-    etag: Optional[str]  # If ETag is defined, the content is already pushed to S3.
+    etag: str | None  # If ETag is defined, the content is already pushed to S3.
     part_number: int
     content: bytes
 

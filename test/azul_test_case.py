@@ -5,6 +5,7 @@ from abc import (
 from collections.abc import (
     Set,
 )
+import contextlib
 from contextlib import (
     AbstractContextManager,
 )
@@ -16,6 +17,7 @@ from re import (
     escape,
 )
 from typing import (
+    Iterable,
     Optional,
 )
 from unittest import (
@@ -118,9 +120,6 @@ class AzulTestCase(TestCase):
                 RE(r'.+humancellatlas\.data\.metadata\.api\.LibraryPreparationProcess'),
                 RE(r'.*humancellatlas\.data\.metadata\.api\.SequencingProcess'),
 
-                # FIXME: Upgrade tenacity
-                #        https://github.com/DataBiosphere/azul/issues/2070
-                '"@coroutine" decorator is deprecated since Python 3.8, use "async def" instead',
                 # FIXME: https://github.com/DataBiosphere/azul/issues/2758
                 'OpenJDK 64-Bit Server VM warning: Option UseConcMarkSweepGC was deprecated',
 
@@ -221,6 +220,13 @@ class AzulTestCase(TestCase):
             cleanup = instance.stop
         instance.start()
         self.addCleanup(cleanup)
+
+    @contextlib.contextmanager
+    def stacked_patches(self, patches: Iterable[patch]):
+        with contextlib.ExitStack() as context:
+            for cm in patches:
+                context.enter_context(cm)
+            yield
 
 
 class AlwaysTearDownTestCase(TestCase):

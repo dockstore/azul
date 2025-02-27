@@ -24,13 +24,14 @@ jobs:
 
       - name: 'Run unit tests and other checks'
         run: |
-          source environment
-          _link dev
-          _refresh
-
+          source environment  # load global defaults
           make virtualenv
           source .venv/bin/activate
           make requirements
+          deployment=$(python scripts/check_branch.py --print)
+          _link $deployment
+          _refresh
+
 
           make environment.boot
 

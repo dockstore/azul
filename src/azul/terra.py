@@ -56,6 +56,7 @@ import urllib3.request
 import urllib3.response
 
 from azul import (
+    Config,
     R,
     RequirementError,
     cache,
@@ -96,6 +97,10 @@ from azul.strings import (
 from azul.types import (
     JSON,
     MutableJSON,
+    json_dict,
+    json_int,
+    json_list,
+    json_str,
 )
 
 log = logging.getLogger(__name__)
@@ -227,7 +232,7 @@ class TerraCredentialsProvider(CredentialsProvider, metaclass=ABCMeta):
 
 @attrs.frozen(kw_only=True)
 class ServiceAccountCredentialsProvider(TerraCredentialsProvider):
-    service_account: config.ServiceAccount
+    service_account: Config.ServiceAccount
 
     def oauth2_scopes(self) -> Sequence[str]:
         # Minimum scopes required for SAM registration
@@ -360,7 +365,7 @@ class SAMClient(TerraClient):
 
         https://github.com/DataBiosphere/jade-data-repo/blob/develop/docs/register-sa-with-sam.md
         """
-        email = self.credentials.service_account_email
+        email = self.service_account_credentials.service_account_email
         url = config.sam_service_url.set(path='/register/user/v1')
         response = self._request('POST', url, body='')
         if response.status == 201:
@@ -417,16 +422,16 @@ class TDRClient(SAMClient):
                 actual_project, source_spec.subdomain)
         storage = one(
             resource
-            for resource in source['storage']
-            if resource['cloudResource'] == 'bigquery'
+            for resource in map(json_dict, json_list(source['storage']))
+            if json_str(resource['cloudResource']) == 'bigquery'
         )
-        actual_location = storage['region']
+        actual_location = json_str(storage['region'])
         # Uppercase is standard for multi-regions in the documentation but TDR
         # returns 'us' in lowercase
         require(actual_location.lower() == config.tdr_source_location.lower(),
                 'Actual storage location of TDR source differs from configured one',
                 actual_location, config.tdr_source_location)
-        return source['id']
+        return json_str(source['id'])
 
     def _retrieve_source(self, source: TDRSourceRef) -> MutableJSON:
         endpoint = self._repository_endpoint('snapshots', source.id)
@@ -441,11 +446,11 @@ class TDRClient(SAMClient):
         endpoint.set(args=dict(filter=source.name, limit='2'))
         response = self._request('GET', endpoint)
         response = self._check_response(endpoint, response)
-        total = response['filteredTotal']
+        total = json_int(response['filteredTotal'])
         if total == 0:
             raise self._insufficient_access(str(endpoint))
         elif total == 1:
-            return one(response['items'])
+            return json_dict(one(json_list(response['items'])))
         else:
             raise TerraNameConflictException(endpoint, source.name, response)
 
@@ -477,19 +482,20 @@ class TDRClient(SAMClient):
         return bigquery.Client(project=project, credentials=self.credentials)
 
     def run_sql(self, query: str) -> BigQueryRows:
-        bigquery = self._bigquery(self.credentials.project_id)
+        bigquery = self._bigquery(self.service_account_credentials.project_id)
         if log.isEnabledFor(logging.DEBUG):
             log.debug('Query (%r characters total): %r',
                       len(query), self._trunc_query(query))
+        job: QueryJob
         if config.bigquery_batch_mode:
             job_config = QueryJobConfig(priority=QueryPriority.BATCH)
-            job: QueryJob = bigquery.query(query, job_config=job_config)
+            job = bigquery.query(query, job_config=job_config)
             result = job.result()
         else:
             delays = (10, 20, 40, 80)
             assert sum(delays) < config.contribution_lambda_timeout(retry=False)
             for attempt, delay in enumerate((*delays, None)):
-                job: QueryJob = bigquery.query(query)
+                job = bigquery.query(query)
                 try:
                     result = job.result()
                 except (BadRequest, Forbidden, InternalServerError, ServiceUnavailable) as e:
@@ -513,7 +519,7 @@ class TDRClient(SAMClient):
         return result
 
     def list_tables(self, source: TDRSourceSpec) -> set[str]:
-        bigquery = self._bigquery(self.credentials.project_id)
+        bigquery = self._bigquery(self.service_account_credentials.project_id)
         ref = DatasetReference(project=source.subdomain, dataset_id=source.name)
         return {
             table.to_api_repr()['tableReference']['tableId']
@@ -540,7 +546,9 @@ class TDRClient(SAMClient):
         return config.tdr_service_url.set(path=('api', 'repository', 'v1', *path))
 
     def _duos_endpoint(self, *path: str) -> mutable_furl:
-        return config.duos_service_url.set(path=('api', *path))
+        url = config.duos_service_url
+        assert url is not None
+        return url.set(path=('api', *path))
 
     def _check_response(self,
                         endpoint: furl,
@@ -565,7 +573,7 @@ class TDRClient(SAMClient):
         endpoint = self._repository_endpoint('snapshots', 'roleMap')
         response = self._request('GET', endpoint)
         response = self._check_response(endpoint, response)
-        return set(response['roleMap'].keys())
+        return set(json_dict(response['roleMap']).keys())
 
     def snapshot_names_by_id(self,
                              *,
@@ -603,11 +611,11 @@ class TDRClient(SAMClient):
             response = self._request('GET', endpoint)
             response = self._check_response(endpoint, response)
             snapshots.update({
-                snapshot['id']: snapshot['name']
-                for snapshot in response['items']
+                json_str(snapshot['id']): json_str(snapshot['name'])
+                for snapshot in map(json_dict, json_list(response['items']))
             })
             after = len(snapshots)
-            total = response['filteredTotal']
+            total = json_int(response['filteredTotal'])
             if after == total:
                 break
             elif after > total or after == before:
@@ -653,10 +661,10 @@ class TDRClient(SAMClient):
     def get_duos(self,
                  source: TDRSourceRef
                  ) -> tuple[str, MutableJSON] | tuple[None, None]:
-        response = self._retrieve_source(source)
+        body = self._retrieve_source(source)
         try:
-            duos_id = response['duosFirecloudGroup']['duosId']
-        except (KeyError, TypeError):
+            duos_id = json_str(json_dict(body['duosFirecloudGroup'])['duosId'])
+        except (KeyError, AssertionError):
             log.warning('No DUOS ID available for %r', source.spec)
             return None, None
         else:
@@ -667,8 +675,8 @@ class TDRClient(SAMClient):
                             duos_id, source.spec)
                 return None, None
             else:
-                response = self._check_response(url, response)
-                consent_group = one(response['consentGroups'])
-                require(duos_id == consent_group['datasetIdentifier'],
+                body = self._check_response(url, response)
+                consent_group = json_dict(one(json_list(body['consentGroups'])))
+                require(duos_id == json_str(consent_group['datasetIdentifier']),
                         'Mismatched identifiers', duos_id, consent_group)
-                return duos_id, response
+                return duos_id, body

@@ -13,9 +13,6 @@ from concurrent.futures import (
 import logging
 import threading
 import time
-from typing import (
-    Optional,
-)
 
 from azul import (
     require,
@@ -155,10 +152,10 @@ class DeferredTaskExecutor(metaclass=ABCMeta):
         """
         raise NotImplementedError
 
-    def __init__(self, num_workers: Optional[int] = None) -> None:
+    def __init__(self, num_workers: int | None = None) -> None:
         super().__init__()
         self.tpe = ThreadPoolExecutor(max_workers=num_workers)
-        self.futures = set()
+        self.futures: set[Future] = set()
 
     def run(self) -> list[BaseException]:
         """
@@ -173,9 +170,9 @@ class DeferredTaskExecutor(metaclass=ABCMeta):
     def _defer(self,
                callable_,
                *args,
-               run_after: Optional[Iterable[Future]] = None,
-               start_time: Optional[float] = None,
-               delay: Optional[float] = None,
+               run_after: Iterable[Future] | None = None,
+               start_time: float | None = None,
+               delay: float | None = None,
                **kwargs) -> Future:
         """
         Invoke the given callable (typically a method of this class or a function nested in a method) with the given
@@ -226,7 +223,7 @@ class DeferredTaskExecutor(metaclass=ABCMeta):
     class UnsatisfiedDependency(RuntimeError):
         pass
 
-    def _check_run_after(self, run_after: Iterable[Future]) -> Optional[bool]:
+    def _check_run_after(self, run_after: Iterable[Future]) -> bool | None:
         for future in run_after:
             while True:
                 if future.done():
