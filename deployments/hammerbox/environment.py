@@ -275,7 +275,7 @@ anvil4_sources = mkdict(anvil3_sources, 200, mkdelta([
     # @formatter:on
 ]))
 
-anvil5_sources = mkdict(anvil4_sources, 262, mkdelta([
+anvil5_sources = mkdict(anvil4_sources, 261, mkdelta([
     # @formatter:off
     mksrc('bigquery', 'datarepo-3c30a9a2', 'ANVIL_1000G_high_coverage_2019_20230517_ANV5_202403030329'),
     mksrc('bigquery', 'datarepo-adf70694', 'ANVIL_ALS_FTD_ALS_AssociatedGenes_GRU_v1_20231221_ANV5_202401112025'),
@@ -364,7 +364,7 @@ anvil5_sources = mkdict(anvil4_sources, 262, mkdelta([
     mksrc('bigquery', 'datarepo-b6a95447', 'ANVIL_ccdg_broad_ai_ibd_daly_mccauley_wes_20240104_ANV5_202403041049'),
     mksrc('bigquery', 'datarepo-df7a6188', 'ANVIL_ccdg_broad_ai_ibd_daly_mcgovern_gsa_20240118_ANV5_202402062140'),
     mksrc('bigquery', 'datarepo-5cd83e88', 'ANVIL_ccdg_broad_ai_ibd_daly_mcgovern_niddk_wes_20240104_ANV5_202403041057'), # noqa E501
-    mksrc('bigquery', 'datarepo-fa7e066f', 'ANVIL_ccdg_broad_ai_ibd_daly_mcgovern_share_wes_20240104_ANV5_202401121556'), # noqa E501
+    mksrc('bigquery', 'datarepo-fa7e066f', 'ANVIL_ccdg_broad_ai_ibd_daly_mcgovern_share_wes_20240104_ANV5_202401121556', pop), # noqa E501
     mksrc('bigquery', 'datarepo-2def0ed8', 'ANVIL_ccdg_broad_ai_ibd_daly_moayyedi_imagine_gsa_20240105_ANV5_202401121603'), # noqa E501
     mksrc('bigquery', 'datarepo-6e9fe586', 'ANVIL_ccdg_broad_ai_ibd_daly_moayyedi_imagine_wes_20240105_ANV5_202403041109'), # noqa E501
     mksrc('bigquery', 'datarepo-1f3dab2b', 'ANVIL_ccdg_broad_ai_ibd_daly_pekow_share_gsa_20240105_ANV5_202401121646'),
@@ -381,7 +381,7 @@ anvil5_sources = mkdict(anvil4_sources, 262, mkdelta([
     # @formatter:on
 ]))
 
-anvil6_sources = mkdict(anvil5_sources, 250, mkdelta([
+anvil6_sources = mkdict(anvil5_sources, 249, mkdelta([
     # @formatter:off
     mksrc('bigquery', 'datarepo-38af6304', 'ANVIL_1000G_PRIMED_data_model_20240410_ANV5_202404101419'),
     mksrc('bigquery', 'datarepo-1a86e7ca', 'ANVIL_CCDG_Baylor_CVD_AFib_Groningen_WGS_20221122_ANV5_202304242224', pop),
@@ -692,7 +692,7 @@ anvil6_sources = mkdict(anvil5_sources, 250, mkdelta([
     # @formatter:on
 ]))
 
-anvil7_sources = mkdict(anvil6_sources, 257, mkdelta([
+anvil7_sources = mkdict(anvil6_sources, 256, mkdelta([
     # @formatter:off
     mksrc('bigquery', 'datarepo-c9e438dc', 'ANVIL_CCDG_Broad_NP_Epilepsy_GBRUCL_DS_EARET_MDS_WES_20221026_ANV5_202406261957'), # noqa E501
     mksrc('bigquery', 'datarepo-90a1d452', 'ANVIL_GREGoR_R01_GRU_20240208_ANV5_202407011515'),
@@ -705,7 +705,7 @@ anvil7_sources = mkdict(anvil6_sources, 257, mkdelta([
     # @formatter:on
 ]))
 
-anvil8_sources = mkdict(anvil7_sources, 256, mkdelta([
+anvil8_sources = mkdict(anvil7_sources, 255, mkdelta([
     # @formatter:off
     mksrc('bigquery', 'datarepo-6fd2f543', 'ANVIL_1000G_PRIMED_data_model_20240410_ANV5_202409251724'),
     mksrc('bigquery', 'datarepo-13858a9f', 'ANVIL_1000G_high_coverage_2019_20230517_ANV5_202409231755'),
@@ -804,7 +804,6 @@ anvil8_sources = mkdict(anvil7_sources, 256, mkdelta([
     mksrc('bigquery', 'datarepo-8302ff1f', 'ANVIL_CCDG_NYGC_NP_Autism_SAGE_WGS_20230605_ANV5_202409302144'),
     mksrc('bigquery', 'datarepo-443d8d20', 'ANVIL_CCDG_NYGC_NP_Autism_SSC_WGS_20230605_ANV5_202409302154'),
     mksrc('bigquery', 'datarepo-660280f8', 'ANVIL_CCDG_WashU_CVD_EOCAD_WashU_CAD_DS_WGS_20230525_ANV5_202409302255'),
-    mksrc('bigquery', 'datarepo-d36f3ea3', 'ANVIL_CCDG_WashU_CVD_EOCAD_WashU_CAD_GRU_IRB_WGS_20230525_ANV5_202409302305'), # noqa E501
     mksrc('bigquery', 'datarepo-c2a2b724', 'ANVIL_CMG_YALE_DS_MC_20221026_ANV5_202409302315'),
     mksrc('bigquery', 'datarepo-f961f617', 'ANVIL_CMG_YALE_DS_RARED_20221020_ANV5_202409251714'),
     mksrc('bigquery', 'datarepo-5d222190', 'ANVIL_CMG_Yale_DS_BPEAKD_20240113_ANV5_202410011754'),
@@ -897,7 +896,6 @@ anvil8_sources = mkdict(anvil7_sources, 256, mkdelta([
     mksrc('bigquery', 'datarepo-5dd9d83b', 'ANVIL_ccdg_broad_ai_ibd_daly_louis_wes_20240104_ANV5_202409242011'),
     mksrc('bigquery', 'datarepo-f11a2ad0', 'ANVIL_ccdg_broad_ai_ibd_daly_mccauley_wes_20240104_ANV5_202409242021'),
     mksrc('bigquery', 'datarepo-2b74b327', 'ANVIL_ccdg_broad_ai_ibd_daly_mcgovern_niddk_wes_20240104_ANV5_202409242032'), # noqa E501
-    mksrc('bigquery', 'datarepo-b36de71b', 'ANVIL_ccdg_broad_ai_ibd_daly_mcgovern_share_wes_20240104_ANV5_202409261554'), # noqa E501
     mksrc('bigquery', 'datarepo-91cac0e9', 'ANVIL_ccdg_broad_ai_ibd_daly_moayyedi_imagine_gsa_20240105_ANV5_202409261605'), # noqa E501
     mksrc('bigquery', 'datarepo-1cde4183', 'ANVIL_ccdg_broad_ai_ibd_daly_newberry_share_gsa_20240105_ANV5_202409261616'), # noqa E501
     mksrc('bigquery', 'datarepo-7a369c1e', 'ANVIL_ccdg_broad_ai_ibd_daly_newberry_share_wes_20240105_ANV5_202409242046'), # noqa E501

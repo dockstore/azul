@@ -39,6 +39,9 @@ from google.auth.credentials import (
 from google.cloud import (
     bigquery,
 )
+from google.oauth2.service_account import (
+    Credentials as ServiceAccountCredentials,
+)
 from more_itertools import (
     first,
     one,
@@ -128,8 +131,8 @@ class MockTDRClient(TDRClient):
 
 
 @attr.s(frozen=True, auto_attribs=True)
-class MockCredentials(AnonymousCredentials):
-    project_id: str
+class MockCredentials(ServiceAccountCredentials):
+    _project_id: str
 
 
 @attr.s(frozen=True, auto_attribs=True)
@@ -140,7 +143,6 @@ class MockCredentialsProvider(TerraCredentialsProvider):
         pass
 
     def scoped_credentials(self) -> ScopedCredentials:
-        # noinspection PyTypeChecker
         return MockCredentials(self.project_id)
 
     def oauth2_scopes(self) -> Sequence[str]:

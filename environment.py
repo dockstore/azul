@@ -236,7 +236,7 @@ def env() -> Mapping[str, Optional[str]]:
         # `gitlab` components, as well as building and pushing the executor
         # image (see terraform/gitlab/runner/Dockerfile for how).
         #
-        'azul_docker_version': '27.5.0',
+        'azul_docker_version': '27.5.1',
 
         # The version of Python used throughout the system.
         #
@@ -261,10 +261,10 @@ def env() -> Mapping[str, Optional[str]]:
         # because it is referenced in the early stages of the GitLab build.
         #
         # Modifying this variable requires running `make environment.boot` and
-        # `make -C terraform check_schema`, and committing the resulting
+        # `make -C terraform update_schema`, and committing the resulting
         # changes.
         #
-        'azul_terraform_version': '1.10.4',
+        'azul_terraform_version': '1.10.5',
 
         # When building the Azul image on a FIPS mode enabled system (e.g.
         # GitLab), this variable should be set to `/proc/sys/crypto`, the path
@@ -296,32 +296,32 @@ def env() -> Mapping[str, Optional[str]]:
                 'url': 'https://hub.docker.com/_/python',
             },
             'pycharm': {
-                'ref': 'docker.io/ucscgi/azul-pycharm:2024.3.1.1-42',
+                'ref': 'docker.io/ucscgi/azul-pycharm:2024.3.1.1-43',
                 'url': 'https://hub.docker.com/repository/docker/ucscgi/azul-pycharm',
                 'is_custom': True
             },
             'elasticsearch': {
-                'ref': 'docker.io/ucscgi/azul-elasticsearch:7.17.27-35',
+                'ref': 'docker.io/ucscgi/azul-elasticsearch:7.17.27-36',
                 'url': 'https://hub.docker.com/repository/docker/ucscgi/azul-elasticsearch',
                 'is_custom': True
             },
             'bigquery_emulator': {
-                'ref': 'docker.io/ucscgi/azul-bigquery-emulator:0.4.4-21',
+                'ref': 'docker.io/ucscgi/azul-bigquery-emulator:0.4.4-22',
                 'url': 'https://hub.docker.com/repository/docker/ucscgi/azul-bigquery-emulator',
                 'is_custom': True
             },
             # Updating any of the four images below additionally requires
             # redeploying the `gitlab` TF component.
             'clamav': {
-                'ref': 'docker.io/clamav/clamav:1.4.1-21',
+                'ref': 'docker.io/clamav/clamav:1.4.2-23',
                 'url': 'https://hub.docker.com/r/clamav/clamav'
             },
             'gitlab': {
-                'ref': 'docker.io/gitlab/gitlab-ce:17.7.2-ce.0',
+                'ref': 'docker.io/gitlab/gitlab-ce:17.8.1-ce.0',
                 'url': 'https://hub.docker.com/r/gitlab/gitlab-ce'
             },
             'gitlab_runner': {
-                'ref': 'docker.io/gitlab/gitlab-runner:ubuntu-v17.7.0',
+                'ref': 'docker.io/gitlab/gitlab-runner:ubuntu-v17.8.3',
                 'url': 'https://hub.docker.com/r/gitlab/gitlab-runner'
             },
             'dind': {

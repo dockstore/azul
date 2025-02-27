@@ -868,10 +868,11 @@ class Config:
     class Catalog:
         """
         >>> plugins = dict(metadata=dict(name='hca'), repository=dict(name='tdr_hca'))
-        >>> kwargs = dict(atlas='hca', plugins=plugins, sources='')
+        >>> kwargs = dict(atlas='hca', plugins=plugins, sources=[])
         >>> c = Config.Catalog.from_json
 
-        >>> c(name='dcp', spec=dict(internal=False, **kwargs)) # doctest: +NORMALIZE_WHITESPACE
+        >>> c(name='dcp', spec=dict(internal=False, **kwargs))
+        ... # doctest: +NORMALIZE_WHITESPACE
         Config.Catalog(name='dcp',
                        atlas='hca',
                        internal=False,
@@ -891,7 +892,8 @@ class Config:
         >>> c(name='a' * 61 + '-it', spec=dict(internal=True, **kwargs)).is_integration_test_catalog
         True
 
-        >>> c(name='a' * 62 + '-it', spec=dict(internal=True, **kwargs)) # doctest: +NORMALIZE_WHITESPACE
+        >>> c(name='a' * 62 + '-it', spec=dict(internal=True, **kwargs))
+        ... # doctest: +NORMALIZE_WHITESPACE
         Traceback (most recent call last):
         ...
         azul.RequirementError: ('Catalog name is invalid',
@@ -923,6 +925,9 @@ class Config:
         def __attrs_post_init__(self):
             self.validate_name(self.name)
             # Import locally to avoid cyclical import
+            from azul.indexer import (
+                Bundle,
+            )
             from azul.plugins import (
                 MetadataPlugin,
                 Plugin,
@@ -936,11 +941,12 @@ class Config:
             if self.internal:
                 assert self.is_integration_test_catalog is True, self
 
+            repository_bundle_cls: type[Bundle]
+            metadata_bundle_cls: type[Bundle]
             repository_bundle_cls, metadata_bundle_cls = (
                 plugin_type.bundle_cls(self.plugins[plugin_type.type_name()].name)
                 for plugin_type in [RepositoryPlugin, MetadataPlugin]
             )
-
             require(issubclass(repository_bundle_cls, metadata_bundle_cls),
                     'Catalog combines incompatible metadata and repository plugins',
                     self.name, repository_bundle_cls, metadata_bundle_cls)

@@ -16,8 +16,7 @@ from pathlib import (
 )
 import subprocess
 from typing import (
-    Optional,
-    TypeVar,
+    Mapping,
 )
 
 import attr
@@ -35,17 +34,25 @@ from azul.deployment import (
     aws,
 )
 from azul.json import (
+    copy_any_json,
     copy_json,
 )
 from azul.template import (
     emit,
 )
 from azul.types import (
-    AnyJSON,
+    AnyMutableJSON,
     CompositeJSON,
     JSON,
     JSONs,
     MutableJSON,
+    json_composite,
+    json_dict,
+    json_item_dicts,
+    json_item_mappings,
+    json_mapping,
+    json_str,
+    not_none,
 )
 
 log = logging.getLogger(__name__)
@@ -73,7 +80,7 @@ class TerraformSchema:
 
 class Terraform:
 
-    def taggable_resource_types(self) -> Sequence[str]:
+    def taggable_resource_types(self) -> set[str]:
         schema = self.schema.document
         version = schema['format_version']
         require(version == '1.0', 'Unexpected format version', version)
@@ -82,11 +89,11 @@ class Terraform:
             for provider in schema['provider_schemas'].values()
             if 'resource_schemas' in provider
         )
-        return [
+        return {
             resource_type
             for resource_type, resource in resources
             if 'tags' in resource['block']['attributes']
-        ]
+        }
 
     def run(self, *args: str, **kwargs) -> str:
         args = ['terraform', *args]
@@ -145,10 +152,11 @@ terraform = Terraform()
 del Terraform
 
 
-def emit_tf(config: Optional[JSON], *, tag_resources: bool = True) -> None:
-    if config is not None:
-        config = _transform_tf(config, tag_resources=tag_resources)
-    emit(config)
+def emit_tf(config: JSON | None, *, tag_resources: bool = True) -> None:
+    if config is None:
+        emit(config)
+    else:
+        emit(_transform_tf(config, tag_resources=tag_resources))
 
 
 def _sanitize_tf(tf_config: CompositeJSON) -> CompositeJSON:
@@ -163,53 +171,71 @@ def _sanitize_tf(tf_config: CompositeJSON) -> CompositeJSON:
         At least one object property is required, whose name represents the resource
         block's type.
     """
-    if isinstance(tf_config, dict):
+    if isinstance(tf_config, Mapping):
         return {k: v for k, v in tf_config.items() if v}
-    elif isinstance(tf_config, list):
+    elif isinstance(tf_config, Sequence):
         return [v for v in tf_config if v]
     else:
         assert False, type(tf_config)
 
 
-def _normalize_tf(tf_config: CompositeJSON) -> Iterable[tuple[str, AnyJSON]]:
+def _normalize_tf(tf_config: CompositeJSON) -> Iterable[tuple[str, JSON]]:
     """
     Certain levels of a Terraform JSON structure can either be a single
     dictionary or a list of dictionaries. For example, these are equivalent:
 
-        {"resource": {"resource_type": {"resource_id": {"foo": ...}}}}
-        {"resource": [{"resource_type": {"resource_id": {"foo": ...}}}]}
+        {"resource": {"<type>": {"<name>": {"foo": ...}}}}
+        {"resource": [{"<type>": {"<name>": {"foo": ...}}}]}
 
     So are these:
 
-        {"resource": {"type": {"id": {"foo": ...}, "id2": {"bar": ...}}}}
-        {"resource": {"type": [{"id": {"foo": ...}}, {"id2": {"bar": ...}}]}}
+        {"resource": {"<type>": {"<name>": {"foo": ...}, "<name2>": {"bar": ...}}}}
+        {"resource": {"<type>": [{"<name>": {"foo": ...}}, {"<name2>": {"bar": ...}}]}}
 
     This function normalizes input to prefer the second form of both cases to
     make parsing Terraform configuration simpler. It returns an iterator of the
     dictionary entries in the argument, regardless which form is used.
 
-    >>> list(_normalize_tf({}))
+    >>> def n(c):
+    ...     return list(_normalize_tf(c))
+
+    >>> n({})
     []
 
-    >>> list(_normalize_tf({'foo': 'bar'}))
-    [('foo', 'bar')]
+    A Singleton dict:
 
-    >>> list(_normalize_tf([{'foo': 'bar'}]))
-    [('foo', 'bar')]
+    >>> n({'t': {'r':{}}})
+    [('t', {'r': {}})]
 
-    >>> list(_normalize_tf({"foo": "bar", "baz": "qux"}))
-    [('foo', 'bar'), ('baz', 'qux')]
+    A singleton list of a singleton dict:
 
-    >>> list(_normalize_tf([{"foo": "bar"}, {"baz": "qux"}]))
-    [('foo', 'bar'), ('baz', 'qux')]
+    >>> n([{'t': {'r': {}}}])
+    [('t', {'r': {}})]
 
-    >>> list(_normalize_tf([{"foo": "bar", "baz": "qux"}]))
-    [('foo', 'bar'), ('baz', 'qux')]
+    A two-entry dict:
+
+    >>> n({"t1": {"r1": {}}, "t2": {"r2" :{}}})
+    [('t1', {'r1': {}}), ('t2', {'r2': {}})]
+
+    A two-entry list of singleton dicts:
+
+    >>> n([{"t1": {"r1": {}}}, {"t2": {"r2": {}}}])
+    [('t1', {'r1': {}}), ('t2', {'r2': {}})]
+
+    A singleton list of a two-entry dict:
+
+    >>> n([{"t1": {"r1": {}}, "t2": {"r2": {}}}])
+    [('t1', {'r1': {}}), ('t2', {'r2': {}})]
+
+    A two-entry list of two-entry dicts:
+
+    >>> n([{"t1": {"r1": {}}, "t2": {"r2": {}}}, {"t1": {"r3": {}}, "t2": {"r4": {}}}])
+    [('t1', {'r1': {}}), ('t2', {'r2': {}}), ('t1', {'r3': {}}), ('t2', {'r4': {}})]
     """
-    if isinstance(tf_config, dict):
-        return tf_config.items()
-    elif isinstance(tf_config, list):
-        return chain.from_iterable(d.items() for d in tf_config)
+    if isinstance(tf_config, Mapping):
+        return json_item_mappings(tf_config)
+    elif isinstance(tf_config, Sequence):
+        return chain.from_iterable(map(json_item_mappings, tf_config))
     else:
         assert False, type(tf_config)
 
@@ -219,62 +245,75 @@ def _transform_tf(tf_config: JSON, *, tag_resources: bool = True) -> JSON:
     Add tags to all taggable resources and change the `name` tag to `Name`
     for tagged AWS resources.
     """
-    taggable_types = terraform.taggable_resource_types()
-    return _sanitize_tf({
-        section_key: _sanitize_tf([
+    taggable_types = terraform.taggable_resource_types() if tag_resources else {}
+    return json_mapping(_sanitize_tf({
+        block_name: _sanitize_tf([
             _sanitize_tf({
                 resource_type: _sanitize_tf([
                     {
-                        resource_name: resource | {
-                            'tags': _adjust_name_tag(resource_type,
-                                                     _tags(resource_name, **resource.get('tags', {})))
+                        resource_name: {
+                            **resource,
+                            **(
+                                _tagged_resource(resource_type, resource_name, resource)
+                                if block_name == 'resource' and resource_type in taggable_types else
+                                {}
+                            )
                         }
-                        if tag_resources and section_key == 'resource' and resource_type in taggable_types else
-                        resource
                     }
-                    for resource_name, resource in _normalize_tf(resources)
+                    for resource_name, resource in _normalize_tf(json_composite(resources))
                 ])
             })
-            for resource_type, resources in _normalize_tf(section)
+            for resource_type, resources in _normalize_tf(json_composite(block))
         ])
-        if section_key in {'data', 'resource'} else
-        section
-        for section_key, section in tf_config.items()
-    })
+        if block_name in {'data', 'resource'} else
+        block
+        for block_name, block in tf_config.items()
+    }))
 
 
-def _tags(resource_name: str, **overrides: str) -> dict[str, str]:
+def _tagged_resource(resource_type: str, resource_name: str, resource: JSON) -> JSON:
+    tags = json_mapping(resource.get('tags', {}))
+    return {
+        'tags': _tags(resource_type, resource_name, tags)
+    }
+
+
+def _tags(resource_type: str, resource_name: str, tags: JSON) -> JSON:
     """
     Return tags named for cloud resources based on :class:`azul.Config`.
 
-    :param resource_name: The Terraform name of the resource.
+    :param resource_type: The Terraform resource type
 
-    :param overrides: Additional tags that override the defaults.
+    :param resource_name: The Terraform name of the resource
+
+    :param tags: Additional tags that override the defaults
 
     >>> from azul.doctests import assert_json
-    >>> assert_json(_tags('service'))  #doctest: +ELLIPSIS
+    >>> assert_json(_tags('aws_instance', 'service', {}))
+    ... #doctest: +ELLIPSIS
     {
         "billing": "...",
         "service": "azul",
         "deployment": "...",
         "owner": ...,
-        "name": "azul-service-...",
+        "Name": "azul-service-...",
         "component": "azul-service"
     }
 
     >>> from azul.doctests import assert_json
-    >>> assert_json(_tags('service', billing='foo'))  #doctest: +ELLIPSIS
+    >>> assert_json(_tags('aws_instance', 'service', {'billing' : 'foo'}))
+    ... #doctest: +ELLIPSIS
     {
         "billing": "foo",
         "service": "azul",
         "deployment": "...",
         "owner": ...,
-        "name": "azul-service-...",
+        "Name": "azul-service-...",
         "component": "azul-service"
     }
     """
     component = f'{config.resource_prefix}-{resource_name}'
-    return {
+    tags = {
         'billing': config.billing,
         'service': config.resource_prefix,
         'deployment': config.deployment_stage,
@@ -291,13 +330,8 @@ def _tags(resource_name: str, **overrides: str) -> dict[str, str]:
                 'component': component
             }
         ),
-        **overrides
+        **tags
     }
-
-
-def _adjust_name_tag(resource_type: str,
-                     tags: dict[str, str]
-                     ) -> dict[str, str]:
     return {
         'Name' if k == 'name' and resource_type.startswith('aws_') else k: v
         for k, v in tags.items()
@@ -326,20 +360,22 @@ def block_public_s3_bucket_access(tf_config: JSON) -> JSON:
     to every bucket in a given Terraform configuration. The argument is not
     modified but the return value may share parts of the argument.
     """
-    key = 'resource'
-    tf_config = copy_json(tf_config, key)
-    tf_config[key]['aws_s3_bucket_public_access_block'] = {
+    tf_config = copy_json(tf_config, 'resource')
+    resources = json_dict(tf_config['resource'])
+    bucket_resources = json_dict(resources['aws_s3_bucket'])
+    resources['aws_s3_bucket_public_access_block'] = {
         resource_name: {
             **(
                 {'provider': resource['provider']}
-                if 'provider' in resource else {}
+                if 'provider' in resource else
+                {}
             ),
             'bucket': '${aws_s3_bucket.%s.id}' % resource_name,
             'block_public_acls': True,
             'block_public_policy': True,
             'ignore_public_acls': True,
             'restrict_public_buckets': True
-        } for resource_name, resource in tf_config[key]['aws_s3_bucket'].items()
+        } for resource_name, resource in json_item_dicts(bucket_resources)
     }
     return tf_config
 
@@ -348,13 +384,15 @@ def enable_s3_bucket_inventory(tf_config: JSON,
                                dest_bucket_ref: str = 'data.aws_s3_bucket.logs',
                                /,
                                ) -> JSON:
-    key = 'resource'
-    tf_config = copy_json(tf_config, key)
-    tf_config[key]['aws_s3_bucket_inventory'] = {
+    tf_config = copy_json(tf_config, 'resource')
+    resources = json_dict(tf_config['resource'])
+    bucket_resources = json_dict(resources['aws_s3_bucket'])
+    resources['aws_s3_bucket_inventory'] = {
         resource_name: {
             **(
                 {'provider': resource['provider']}
-                if 'provider' in resource else {}
+                if 'provider' in resource else
+                {}
             ),
             'bucket': '${aws_s3_bucket.%s.id}' % resource_name,
             'name': config.qualified_resource_name('inventory'),
@@ -384,7 +422,7 @@ def enable_s3_bucket_inventory(tf_config: JSON,
                 'ObjectLockRetainUntilDate',
                 'ObjectLockLegalHoldStatus'
             ]
-        } for resource_name, resource in tf_config[key]['aws_s3_bucket'].items()
+        } for resource_name, resource in json_item_dicts(bucket_resources)
     }
     return tf_config
 
@@ -397,13 +435,15 @@ def set_empty_s3_bucket_lifecycle_config(tf_config: JSON) -> JSON:
     configuration. The argument is not modified but the return value may share
     parts of the argument.
     """
-    key = 'resource'
-    tf_config = copy_json(tf_config, key)
+    tf_config = copy_json(tf_config, 'resource')
+    resources = json_dict(tf_config['resource'])
+    lifecycles = resources.get('aws_s3_bucket_lifecycle_configuration', {})
     explicit = {
-        lifecycle_config['bucket'].split('.')[1]
-        for lifecycle_config in tf_config[key].get('aws_s3_bucket_lifecycle_configuration', {}).values()
+        json_str(lifecycle_config['bucket']).split('.')[1]
+        for _, lifecycle_config in json_item_dicts(lifecycles)
     }
-    for resource_name, bucket in tf_config[key].get('aws_s3_bucket', {}).items():
+    buckets = resources.get('aws_s3_bucket', {})
+    for resource_name, bucket in json_item_dicts(buckets):
         if resource_name not in explicit:
             # We can't create a completely empty policy, but a disabled policy
             # achieves the goal of preventing/removing policies that originate
@@ -414,9 +454,6 @@ def set_empty_s3_bucket_lifecycle_config(tf_config: JSON) -> JSON:
                 'expiration': {'days': 36500}
             })
     return tf_config
-
-
-U = TypeVar('U', bound=AnyJSON)
 
 
 class Chalice:
@@ -491,7 +528,7 @@ class Chalice:
         ...     },
         ...     'data': {
         ...         'aws_foo': {
-        ...             'bar': ''
+        ...             'bar': {}
         ...         }
         ...     },
         ...     "resource": {
@@ -531,7 +568,7 @@ class Chalice:
             },
             "data": {
                 "aws_foo": {
-                    "indexer_bar": ""
+                    "indexer_bar": {}
                 }
             },
             "resource": {
@@ -576,25 +613,25 @@ class Chalice:
             return new
 
         # Translate the definitions
-        tf_config = {
+        tf_result: MutableJSON = {
             block_name: {
                 resource_type: {
-                    rename(block_name, resource_type, resource_name): resource
-                    for resource_name, resource in resources.items()
+                    rename(block_name, resource_type, resource_name): copy_json(resource)
+                    for resource_name, resource in json_item_mappings(resources)
                 }
-                for resource_type, resources in block.items()
+                for resource_type, resources in json_item_mappings(block)
             }
             if block_name in ('resource', 'data') else
             {
-                rename(block_name, None, name): value
-                for name, value in block.items()
+                rename(block_name, None, name): copy_any_json(value)
+                for name, value in json_mapping(block).items()
             }
             if block_name == 'locals' else
-            block
+            copy_any_json(block)
             for block_name, block in tf_config.items()
         }
 
-        def ref(block_name, resource_type, name):
+        def ref(block_name: str, resource_type: str, name: str) -> str:
             if block_name == 'resource':
                 return '.'.join([resource_type, name])
             elif block_name == 'locals':
@@ -608,19 +645,21 @@ class Chalice:
         }
         assert len(ref_map) == len(renamed)
         # Sort in reverse so that keys that are prefixes of other keys go last
-        ref_map = sorted(ref_map.items(), reverse=True)
+        rev_ref_map = sorted(ref_map.items(), reverse=True)
 
-        def patch_refs(v: U) -> U:
+        def patch_refs(v: AnyMutableJSON) -> AnyMutableJSON:
             if isinstance(v, dict):
-                return {k: patch_refs(v) for k, v in v.items()}
+                return {k: patch_refs(v) for k, v in json_dict(v).items()}
             elif isinstance(v, list):
                 return list(map(patch_refs, v))
             elif isinstance(v, str):
-                for old_ref, new_ref in ref_map:
+                for old_ref, new_ref in rev_ref_map:
                     v = v.replace(old_ref, new_ref)
-            return v
+                return v
+            else:
+                return v
 
-        return patch_refs(tf_config)
+        return json_dict(patch_refs(tf_result))
 
     def rename_chalice_resource_in_tf_state(self, reference: str) -> str:
         """
@@ -655,7 +694,7 @@ class Chalice:
         assert prefix == 'chalice'
         return self.rename_chalice_resource(module, reference)
 
-    def rename_chalice_resource(self, app_name: str, reference: str) -> str:
+    def rename_chalice_resource(self, app_name: str, reference: list[str]) -> str:
         """
         Translate the resource and data references found in Terraform
         configuration generated by Chalice.
@@ -720,7 +759,7 @@ class Chalice:
                     '${aws_elasticsearch_domain.index.endpoint}:443'
                 ),
                 es_instance_count=(
-                    aws.es_instance_count
+                    not_none(aws.es_instance_count)
                     if config.share_es_domain else
                     '${aws_elasticsearch_domain.index.cluster_config[0].instance_count}'
                 )

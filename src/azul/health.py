@@ -1,7 +1,6 @@
 from collections.abc import (
     Iterable,
     Mapping,
-    Set,
 )
 from itertools import (
     chain,
@@ -12,7 +11,6 @@ import random
 import time
 from typing import (
     ClassVar,
-    Optional,
 )
 
 import attr
@@ -36,6 +34,7 @@ from azul import (
     cache,
     cached_property,
     config,
+    json_bool,
     lru_cache,
     require,
 )
@@ -110,14 +109,13 @@ class HealthController(AppController):
     def health(self) -> Response:
         return self._make_response(self._health.as_json(Health.all_keys))
 
-    def custom_health(self, keys: Optional[str]) -> Response:
+    def custom_health(self, keys: str | None) -> Response:
         if keys is None:
             body = self._health.as_json(Health.all_keys)
         elif isinstance(keys, str):
             assert keys  # Chalice maps empty string to None
-            keys = keys.split(',')
             try:
-                body = self._health.as_json(keys)
+                body = self._health.as_json(keys.split(','))
             except AssertionError as e:
                 if R.caused(e):
                     body = {'Message': 'Invalid health keys'}
@@ -187,9 +185,9 @@ class Health:
         return self.controller.lambda_name
 
     def as_json(self, keys: Iterable[str]) -> JSON:
-        keys = set(keys)
+        keys = frozenset(keys)
         if keys:
-            require(keys.issubset(self.all_keys))
+            require(keys <= self.all_keys)
         else:
             keys = self.all_keys
         json = {k: getattr(self, k) for k in sorted(keys)}
@@ -201,13 +199,15 @@ class Health:
         """
         Indicates whether the companion REST API responds to HTTP requests.
         """
-        response: MutableJSON = {
+        response = {
             lambda_name: self._lambda(lambda_name)
             for lambda_name in config.lambda_names()
             if lambda_name != self.lambda_name
         }
-        response['up'] = all(v['up'] for v in response.values())
-        return response
+        return {
+            'up': all(json_bool(v['up']) for v in response.values()),
+            **response
+        }
 
     @health_property
     def queues(self):
@@ -215,7 +215,7 @@ class Health:
         Returns information about the SQS queues used by the indexer.
         """
         sqs = aws.resource('sqs', azul_logging=True)
-        response = {'up': True}
+        response: MutableJSON = {'up': True}
         for queue in config.all_queue_names:
             try:
                 queue_instance = sqs.get_queue_by_name(QueueName=queue).attributes
@@ -325,7 +325,7 @@ class Health:
         p for p in locals().values() if isinstance(p, health_property)
     )
 
-    all_keys: ClassVar[Set[str]] = frozenset(p.key for p in all_properties)
+    all_keys: ClassVar[frozenset[str]] = frozenset(p.key for p in all_properties)
 
 
 class HealthApp(AzulChaliceApp):
@@ -504,7 +504,7 @@ class HealthApp(AzulChaliceApp):
                 ]
             }
         )
-        def custom_health(keys: Optional[str] = None):
+        def custom_health(keys: str | None = None):
             return self.health_controller.custom_health(keys)
 
         @self.metric_alarm(metric=LambdaMetric.errors,

@@ -1,8 +1,5 @@
 import hashlib
 import logging
-from typing import (
-    Optional,
-)
 
 import chalice
 from http_message_signatures import (
@@ -19,6 +16,7 @@ from more_itertools import (
 )
 import requests
 import requests.sessions
+import requests.structures
 
 from azul import (
     cached_property,
@@ -55,7 +53,7 @@ class SignatureHelper(HTTPSignatureKeyResolver):
 
     def auth_from_request(self,
                           request: chalice.app.Request
-                          ) -> Optional[HMACAuthentication]:
+                          ) -> HMACAuthentication | None:
         try:
             request.headers['signature']
         except KeyError:
@@ -95,7 +93,10 @@ class SignatureHelper(HTTPSignatureKeyResolver):
         return response
 
     def sign(self, request: requests.PreparedRequest):
-        digest = hashlib.sha256(request.body).digest()
+        body = request.body
+        assert body is not None
+        digest = hashlib.sha256(body).digest()
+        assert isinstance(request.headers, requests.structures.CaseInsensitiveDict)
         request.headers['Content-Digest'] = str(http_sfv.Dictionary({'sha-256': digest}))
         key, key_id = aws.get_hmac_key_and_id()
         self.signer.sign(request,
