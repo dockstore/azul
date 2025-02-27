@@ -36,9 +36,6 @@ from azul.azulclient import (
     Action,
     AzulClient,
 )
-from azul.chalice import (
-    AppController,
-)
 from azul.deployment import (
     aws,
 )
@@ -47,6 +44,9 @@ from azul.hmac import (
 )
 from azul.indexer import (
     BundlePartition,
+)
+from azul.indexer.action_controller import (
+    ActionController,
 )
 from azul.indexer.document import (
     Contribution,
@@ -65,7 +65,7 @@ from azul.types import (
 log = logging.getLogger(__name__)
 
 
-class IndexController(AppController):
+class IndexController(ActionController):
     # The number of documents to be queued in a single SQS `send_messages`.
     # Theoretically, larger batches are better but SQS currently limits the
     # batch size to 10.
@@ -81,7 +81,7 @@ class IndexController(AppController):
         if isinstance(request.authentication, HMACAuthentication):
             assert request.authentication.identity() is not None
             config.Catalog.validate_name(catalog, exception=chalice.BadRequestError)
-            action = Action.from_json(action)
+            action = self._load_action(action)
             notification = request.json_body
             log.info('Received notification %r for catalog %r', notification, catalog)
             self._validate_notification(notification)
@@ -141,7 +141,7 @@ class IndexController(AppController):
                      message, attempts)
             start = time.time()
             try:
-                action = Action[message['action']]
+                action = self._load_action(message['action'])
                 if action is Action.reindex:
                     AzulClient().remote_reindex_partition(message)
                 else:

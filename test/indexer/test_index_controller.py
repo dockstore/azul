@@ -17,6 +17,7 @@ from unittest.mock import (
 
 import attrs
 from chalice.app import (
+    BadRequestError,
     SQSRecord,
 )
 from elasticsearch import (
@@ -150,7 +151,7 @@ class TestIndexController(DCP2IndexerTestCase, SqsTestCase):
                                        notification='bar',
                                        catalog=self.catalog))
         ]
-        self.assertRaises(KeyError, self.controller.contribute, event)
+        self.assertRaises(BadRequestError, self.controller.contribute, event)
 
     @patch.object(TDRPlugin, 'resolve_source')
     def test_remote_reindex(self, resolve_source):

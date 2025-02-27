@@ -30,7 +30,6 @@ from typing import (
 import uuid
 
 import attrs
-import chalice
 from more_itertools import (
     chunked,
 )
@@ -44,6 +43,7 @@ from urllib3.exceptions import (
 
 from azul import (
     CatalogName,
+    R,
     cache,
     cached_property,
     config,
@@ -94,7 +94,7 @@ class Action(Enum):
         try:
             return cls[action]
         except KeyError:
-            raise chalice.BadRequestError
+            assert False, R('Invalid action', action)
 
     def to_json(self) -> str:
         return self.name
