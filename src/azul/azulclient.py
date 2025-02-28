@@ -292,7 +292,7 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
                 return self.reindex_message(catalog, source_ref, partition_prefix)
 
             messages = map(message, source_ref.spec.prefix.partition_prefixes())
-            for batch in chunked(messages, 10):
+            for batch in chunked(messages, Queues.batch_size):
                 entries = [
                     dict(Id=str(i), MessageBody=json.dumps(message))
                     for i, message in enumerate(batch)
@@ -322,7 +322,7 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
 
     def queue_notifications(self, messages: Iterable[JSON]) -> int:
         num_messages = 0
-        for batch in chunked(messages, 10):
+        for batch in chunked(messages, Queues.batch_size):
             entries = [
                 dict(Id=str(i), MessageBody=json.dumps(message))
                 for i, message in enumerate(batch)

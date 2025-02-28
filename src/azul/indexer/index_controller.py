@@ -60,6 +60,9 @@ from azul.indexer.index_service import (
     CataloguedEntityReference,
     IndexService,
 )
+from azul.queues import (
+    Queues,
+)
 from azul.types import (
     JSON,
     json_dict,
@@ -75,11 +78,6 @@ log = logging.getLogger(__name__)
 
 
 class IndexController(ActionController[IndexAction]):
-    # The number of documents to be queued in a single SQS `send_messages`.
-    # Theoretically, larger batches are better but SQS currently limits the
-    # batch size to 10.
-    #
-    document_batch_size = 10
 
     @cached_property
     def index_service(self) -> IndexService:
@@ -183,7 +181,7 @@ class IndexController(ActionController[IndexAction]):
 
                     log.info('Queueing %i entities for aggregating a total of %i contributions.',
                              len(tallies), sum(tally.num_contributions for tally in tallies))
-                    for batch in chunked(tallies, self.document_batch_size):
+                    for batch in chunked(tallies, Queues.batch_size):
                         entries = [dict(tally.to_message(), Id=str(i)) for i, tally in enumerate(batch)]
                         self._tallies_queue().send_messages(Entries=entries)
             except BaseException:
@@ -293,7 +291,7 @@ class IndexController(ActionController[IndexAction]):
                 # Hopefully this is more or less atomic. If we crash below here,
                 # tallies will be inflated because some or all deferrals have
                 # been sent and the original tallies will be returned.
-                for batch in batched(entries, 10):
+                for batch in batched(entries, Queues.batch_size):
                     self._tallies_queue(retry=retry).send_messages(Entries=batch)
 
         except BaseException:

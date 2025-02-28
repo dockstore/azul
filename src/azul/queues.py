@@ -72,6 +72,14 @@ if TYPE_CHECKING:
 
 
 class Queues:
+    #: The number of messages to be queued in a single SQS SendMessageBatch
+    #: action. Theoretically, larger batches are better but SQS currently limits
+    #: the SendMessageBatch size to 10. This is also used to configure the
+    #: number of SQS messages that Lambda delivers to a function bound to a
+    #: queue. Lambda can deliver at most 10 FIFO messages or 10,000 standard
+    #: messages.
+    #:
+    batch_size = 10
 
     def __init__(self, delete: bool = False, json_body: bool = True):
         self._delete = delete
@@ -126,7 +134,7 @@ class Queues:
         return messages
 
     def _cleanup_messages(self, queue: 'Queue', messages: Iterable['Message']):
-        message_batches = list(more_itertools.chunked(messages, 10))
+        message_batches = list(more_itertools.chunked(messages, self.batch_size))
         if self._delete:
             log.info('Removing messages from queue %r', queue.url)
             self._delete_messages(message_batches, queue)
@@ -314,7 +322,7 @@ class Queues:
             else:
                 raise RuntimeError(f'Cannot feed messages originating from {orig_queue!r} to {queue.url!r}. '
                                    f'Use --force to override.')
-        message_batches = list(more_itertools.chunked(messages, 10))
+        message_batches = list(more_itertools.chunked(messages, self.batch_size))
 
         def _cleanup():
             if self._delete:

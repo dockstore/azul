@@ -43,6 +43,9 @@ from azul.openapi import (
 from azul.openapi.responses import (
     json_content,
 )
+from azul.queues import (
+    Queues,
+)
 
 log = logging.getLogger(__name__)
 
@@ -203,7 +206,7 @@ def contribute(event: chalice.app.SQSEvent):
                   period=5 * 60)
 @app.on_sqs_message(
     queue=config.tallies_queue.name,
-    batch_size=IndexController.document_batch_size
+    batch_size=Queues.batch_size
 )
 def aggregate(event: chalice.app.SQSEvent):
     app.index_controller.aggregate(event)
@@ -220,7 +223,7 @@ def aggregate(event: chalice.app.SQSEvent):
                   period=5 * 60)
 @app.on_sqs_message(
     queue=config.tallies_queue.to_retry.name,
-    batch_size=IndexController.document_batch_size
+    batch_size=Queues.batch_size
 )
 def aggregate_retry(event: chalice.app.SQSEvent):
     app.index_controller.aggregate(event, retry=True)
