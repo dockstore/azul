@@ -1507,11 +1507,7 @@ class Config:
 
     @property
     def all_queue_names(self) -> list[str]:
-        return [
-            *self.indexer_queue_names,
-            *self.fail_queue_names,
-            *([self.mirror_queue.name] if self.enable_mirroring else []),
-        ]
+        return self.work_queue_names + self.fail_queue_names
 
     @property
     def fail_queue_names(self) -> list[str]:
