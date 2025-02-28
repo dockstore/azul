@@ -1329,7 +1329,7 @@ class Config:
     def aggregation_lambda_timeout(self, *, retry: bool) -> int:
         return (10 if retry else 1) * 60
 
-    mirror_lambda_timeout = 15
+    mirror_lambda_timeout = 3 * 60
 
     service_lambda_timeout = 15 * 60
 
@@ -1449,6 +1449,10 @@ class Config:
 
     def aggregation_concurrency(self, *, retry: bool) -> int:
         return self._concurrency(self.environ['AZUL_AGGREGATION_CONCURRENCY'], retry)
+
+    @property
+    def mirroring_concurrency(self) -> int:
+        return int(self.environ['AZUL_MIRRORING_CONCURRENCY'])
 
     @property
     def bigquery_reserved_slots(self) -> int:

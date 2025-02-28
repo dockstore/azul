@@ -53,6 +53,17 @@ emit({
                     'lambda_memory_size': 6500,
                     'lambda_timeout': config.aggregation_lambda_timeout(retry=True)
                 },
+                **(
+                    {
+                        indexer.mirror.name: {
+                            'reserved_concurrency': config.mirroring_concurrency,
+                            'lambda_memory_size': 256,
+                            'lambda_timeout': config.mirror_lambda_timeout
+                        },
+                    }
+                    if config.enable_mirroring else
+                    {}
+                ),
                 indexer.update_health_cache.name: {
                     'lambda_memory_size': 128,
                     'lambda_timeout': config.health_cache_lambda_timeout

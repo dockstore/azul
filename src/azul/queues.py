@@ -490,12 +490,7 @@ class Queues:
                 try:
                     function = functions_by_queue[queue_name]
                 except KeyError:
-                    assert queue_name in {
-                        *config.fail_queue_names,
-                        # FIXME: Implement mirror_source
-                        #        https://github.com/DataBiosphere/azul/issues/6860
-                        config.mirror_queue.name
-                    }
+                    assert queue_name in config.fail_queue_names
                 else:
                     if queue_name == config.notifications_queue.name:
                         # Prevent new notifications from being added

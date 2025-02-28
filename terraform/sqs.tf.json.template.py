@@ -59,7 +59,7 @@ emit_tf(
                                 'message_retention_seconds': 7 * 24 * 60 * 60,
                                 'visibility_timeout_seconds': config.mirror_lambda_timeout + 10,
                                 'redrive_policy': json.dumps({
-                                    'maxReceiveCount': 1,
+                                    'maxReceiveCount': 10,
                                     'deadLetterTargetArn': '${aws_sqs_queue.%s.arn}'
                                                            % config.mirror_queue.to_fail.unqual_name
                                 })

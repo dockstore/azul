@@ -611,6 +611,12 @@ def env() -> Mapping[str, Optional[str]]:
         'AZUL_CONTRIBUTION_CONCURRENCY': '64',
         'AZUL_AGGREGATION_CONCURRENCY': '64',
 
+        # The number of concurrently running lambda executions for file
+        # mirroring. See the previous paragraph for technical details. There is
+        # no retry concurrency. No effect if ``AZUL_MIRRORING_ENABLED`` is zero.
+        #
+        'AZUL_MIRRORING_CONCURRENCY': '8',
+
         # Collect and monitor important health metrics of the deployment (1 yes, 0 no).
         # Typically only enabled on main deployments.
         #

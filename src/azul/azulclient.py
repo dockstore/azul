@@ -73,6 +73,7 @@ from azul.plugins import (
 )
 from azul.queues import (
     Queues,
+    SQSFifoMessage,
     SQSMessage,
 )
 from azul.types import (
@@ -109,6 +110,11 @@ class IndexAction(Action):
     reindex = auto()
     add = auto()
     delete = auto()
+
+
+class MirrorAction(Action):
+    mirror_source = auto()
+    mirror_partition = auto()
 
 
 @attrs.frozen(kw_only=True)
@@ -155,6 +161,28 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
                         ) -> SQSMessage:
         return SQSMessage({
             'action': IndexAction.reindex.to_json(),
+            'catalog': catalog,
+            'source': cast(JSON, source.to_json()),
+            'prefix': prefix
+        })
+
+    def mirror_source_message(self,
+                              catalog: CatalogName,
+                              source: SourceRef
+                              ) -> SQSFifoMessage:
+        return SQSFifoMessage({
+            'action': MirrorAction.mirror_source.to_json(),
+            'catalog': catalog,
+            'source': cast(JSON, source.to_json()),
+        })
+
+    def mirror_partition_message(self,
+                                 catalog: CatalogName,
+                                 source: SourceRef,
+                                 prefix: str
+                                 ) -> SQSFifoMessage:
+        return SQSFifoMessage({
+            'action': MirrorAction.mirror_partition.to_json(),
             'catalog': catalog,
             'source': cast(JSON, source.to_json()),
             'prefix': prefix
@@ -280,6 +308,10 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
         name = config.tallies_queue.derive(retry=retry).name
         return aws.sqs_queue(name)
 
+    def mirror_queue(self):
+        name = config.mirror_queue.name
+        return aws.sqs_queue(name)
+
     def remote_reindex(self,
                        catalog: CatalogName,
                        sources: set[str]):
@@ -333,6 +365,9 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
                       ) -> int:
         queue = self.tallies_queue(retry=retry)
         return self.queues.send_messages(queue, messages)
+
+    def queue_mirror_messages(self, messages: Iterable[SQSMessage]) -> int:
+        return self.queues.send_messages(self.mirror_queue(), messages)
 
     @classmethod
     def filter_obsolete_bundle_versions(cls,
@@ -544,6 +579,39 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
         timeout = max(config.contribution_lambda_timeout(retry=True),
                       config.aggregation_lambda_timeout(retry=True))
         self.queues.wait_to_stabilize(config.indexer_queue_names, timeout)
+
+    def wait_for_mirroring(self):
+        self.queues.wait_to_stabilize([config.mirror_queue.name],
+                                      config.mirror_lambda_timeout)
+
+    def is_queue_empty(self, queue_name: str) -> bool:
+        queues = self.queues.get_queues([queue_name])
+        length, _ = self.queues.get_queue_lengths(queues)
+        return length == 0
+
+    def remote_mirror(self, catalog: CatalogName, sources: Iterable[SourceRef]):
+        plugin = self.repository_plugin(catalog)
+
+        def message(source: SourceRef):
+            source = plugin.partition_source(catalog, source)
+            log.info('Mirroring files in source %r from catalog %r',
+                     str(source.spec), catalog)
+            return self.mirror_source_message(catalog, source)
+
+        messages = map(message, sources)
+        self.queue_mirror_messages(messages)
+
+    def mirror_source(self, catalog: CatalogName, source_json: JSON):
+        plugin = self.repository_plugin(catalog)
+        source = plugin.source_ref_cls.from_json(source_json)
+
+        def message(prefix: str) -> SQSMessage:
+            log.info('Mirroring files in partition %r of source %r from catalog %r',
+                     prefix, str(source.spec), catalog)
+            return self.mirror_partition_message(catalog, source, prefix)
+
+        messages = map(message, source.spec.prefix.partition_prefixes())
+        self.queue_mirror_messages(messages)
 
 
 class AzulClientError(RuntimeError):
