@@ -1329,8 +1329,7 @@ class Config:
     def aggregation_lambda_timeout(self, *, retry: bool) -> int:
         return (10 if retry else 1) * 60
 
-    def mirror_lambda_timeout(self) -> int:
-        return 15
+    mirror_lambda_timeout = 15
 
     service_lambda_timeout = 15 * 60
 
