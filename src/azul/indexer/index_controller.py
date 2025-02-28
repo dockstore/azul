@@ -8,9 +8,6 @@ from dataclasses import (
     dataclass,
     replace,
 )
-from enum import (
-    Enum,
-)
 import http
 from itertools import (
     batched,
@@ -18,9 +15,6 @@ from itertools import (
 import json
 import logging
 import time
-from typing import (
-    Self,
-)
 import uuid
 
 import chalice
@@ -39,6 +33,7 @@ from azul import (
     config,
 )
 from azul.azulclient import (
+    Action,
     AzulClient,
 )
 from azul.chalice import (
@@ -46,9 +41,6 @@ from azul.chalice import (
 )
 from azul.deployment import (
     aws,
-)
-from azul.enums import (
-    auto,
 )
 from azul.hmac import (
     HMACAuthentication,
@@ -71,22 +63,6 @@ from azul.types import (
 )
 
 log = logging.getLogger(__name__)
-
-
-class Action(Enum):
-    reindex = auto()
-    add = auto()
-    delete = auto()
-
-    @classmethod
-    def from_json(cls, action: str) -> Self:
-        try:
-            return Action[action]
-        except KeyError:
-            raise chalice.BadRequestError
-
-    def to_json(self) -> str:
-        return self.name
 
 
 class IndexController(AppController):

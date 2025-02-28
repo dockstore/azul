@@ -10,6 +10,9 @@ from azul import (
     cached_property,
     config,
 )
+from azul.azulclient import (
+    Action,
+)
 from azul.chalice import (
     LambdaMetric,
 )
@@ -24,7 +27,6 @@ from azul.hmac import (
     SignatureHelper,
 )
 from azul.indexer.index_controller import (
-    Action,
     IndexController,
 )
 from azul.indexer.log_forwarding_controller import (

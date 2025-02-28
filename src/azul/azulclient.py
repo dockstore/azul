@@ -8,6 +8,10 @@ from concurrent.futures import (
     Future,
     ThreadPoolExecutor,
 )
+from enum import (
+    Enum,
+    auto,
+)
 from functools import (
     partial,
 )
@@ -20,11 +24,13 @@ from pprint import (
     PrettyPrinter,
 )
 from typing import (
+    Self,
     cast,
 )
 import uuid
 
 import attrs
+import chalice
 from more_itertools import (
     chunked,
 )
@@ -78,6 +84,22 @@ from azul.uuids import (
 log = logging.getLogger(__name__)
 
 
+class Action(Enum):
+    reindex = auto()
+    add = auto()
+    delete = auto()
+
+    @classmethod
+    def from_json(cls, action: str) -> Self:
+        try:
+            return cls[action]
+        except KeyError:
+            raise chalice.BadRequestError
+
+    def to_json(self) -> str:
+        return self.name
+
+
 @attrs.frozen(kw_only=True)
 class AzulClient(SignatureHelper, HasCachedHttpClient):
     num_workers: int = 16
@@ -103,7 +125,7 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
                        bundle_fqid: SourcedBundleFQID
                        ) -> JSON:
         return {
-            'action': 'add',
+            'action': Action.add.to_json(),
             'notification': self.notification(bundle_fqid),
             'catalog': catalog
         }
@@ -114,7 +136,7 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
                         prefix: str
                         ) -> JSON:
         return {
-            'action': 'reindex',
+            'action': Action.reindex.to_json(),
             'catalog': catalog,
             'source': cast(JSON, source.to_json()),
             'prefix': prefix
