@@ -157,6 +157,9 @@ from azul.plugins.repository.tdr_anvil import (
     BundleType,
     TDRAnvilBundleFQID,
 )
+from azul.queues import (
+    SQSMessage,
+)
 from azul.service.async_manifest_service import (
     Token,
 )
@@ -400,7 +403,7 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
         class Catalog:
             name: CatalogName
             bundles: set[SourcedBundleFQID]
-            notifications: list[JSON]
+            notifications: list[SQSMessage]
             public_source: SourceRef
             ma_source: SourceRef | None
 
@@ -1246,7 +1249,7 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
     def _prepare_notifications(self,
                                catalog: CatalogName,
                                sources: Iterable[SourceRef]
-                               ) -> tuple[JSONs, set[SourcedBundleFQID]]:
+                               ) -> tuple[list[SQSMessage], set[SourcedBundleFQID]]:
         plugin = self.repository_plugin(catalog)
         bundle_fqids = set()
         notifications = []

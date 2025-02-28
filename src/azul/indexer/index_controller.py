@@ -62,6 +62,7 @@ from azul.indexer.index_service import (
 )
 from azul.queues import (
     Queues,
+    SQSFifoMessage,
 )
 from azul.types import (
     JSON,
@@ -107,13 +108,9 @@ class IndexController(ActionController[IndexAction]):
                             catalog: CatalogName,
                             *,
                             retry: bool = False):
-        message = {
-            'catalog': catalog,
-            'action': action.to_json(),
-            'notification': notification
-        }
+        message = self.client.notification_message(catalog, notification, action)
         queue = self._notifications_queue(retry=retry)
-        queue.send_message(MessageBody=json.dumps(message))
+        queue.send_message(**message.to_entry())
         log.info('Queued notification message %r', message)
 
     def _validate_notification(self, notification):
@@ -182,7 +179,10 @@ class IndexController(ActionController[IndexAction]):
                     log.info('Queueing %i entities for aggregating a total of %i contributions.',
                              len(tallies), sum(tally.num_contributions for tally in tallies))
                     for batch in chunked(tallies, Queues.batch_size):
-                        entries = [dict(tally.to_message(), Id=str(i)) for i, tally in enumerate(batch)]
+                        entries = [
+                            tally.to_message().to_batch_entry(i)
+                            for i, tally in enumerate(batch)
+                        ]
                         self._tallies_queue().send_messages(Entries=entries)
             except BaseException:
                 log.warning(f'Worker failed to handle message {message}.', exc_info=True)
@@ -287,7 +287,10 @@ class IndexController(ActionController[IndexAction]):
                 for tally in deferrals:
                     log.info('Deferring aggregation of %i contribution(s) to entity %s',
                              tally.num_contributions, tally.entity)
-                entries = [dict(tally.to_message(), Id=str(i)) for i, tally in enumerate(deferrals)]
+                entries = [
+                    tally.to_message().to_batch_entry(i)
+                    for i, tally in enumerate(deferrals)
+                ]
                 # Hopefully this is more or less atomic. If we crash below here,
                 # tallies will be inflated because some or all deferrals have
                 # been sent and the original tallies will be returned.
@@ -354,10 +357,9 @@ class DocumentTally:
             'num_contributions': self.num_contributions
         }
 
-    def to_message(self) -> JSON:
-        return dict(MessageBody=json.dumps(self.to_json()),
-                    MessageGroupId=str(self.entity),
-                    MessageDeduplicationId=str(uuid.uuid4()))
+    def to_message(self) -> SQSFifoMessage:
+        return SQSFifoMessage(self.to_json(),
+                              group_id=str(self.entity))
 
     def consolidate(self, others: list['DocumentTally']) -> 'DocumentTally':
         assert all(

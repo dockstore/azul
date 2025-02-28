@@ -18,7 +18,6 @@ from functools import (
 from itertools import (
     groupby,
 )
-import json
 import logging
 from pprint import (
     PrettyPrinter,
@@ -77,6 +76,7 @@ from azul.plugins import (
 )
 from azul.queues import (
     Queues,
+    SQSMessage,
 )
 from azul.types import (
     AnyJSON,
@@ -135,27 +135,34 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
             'bundle_fqid': bundle_fqid.to_json()
         }
 
+    def notification_message(self,
+                             catalog: CatalogName,
+                             notification: JSON,
+                             action: IndexAction = IndexAction.add,
+                             ) -> SQSMessage:
+        return SQSMessage({
+            'action': action.to_json(),
+            'notification': notification,
+            'catalog': catalog
+        })
+
     def bundle_message(self,
                        catalog: CatalogName,
                        bundle_fqid: SourcedBundleFQID
-                       ) -> JSON:
-        return {
-            'action': IndexAction.add.to_json(),
-            'notification': self.notification(bundle_fqid),
-            'catalog': catalog
-        }
+                       ) -> SQSMessage:
+        return self.notification_message(catalog, self.notification(bundle_fqid))
 
     def reindex_message(self,
                         catalog: CatalogName,
                         source: SourceRef,
                         prefix: str
-                        ) -> JSON:
-        return {
+                        ) -> SQSMessage:
+        return SQSMessage({
             'action': IndexAction.reindex.to_json(),
             'catalog': catalog,
             'source': cast(JSON, source.to_json()),
             'prefix': prefix
-        }
+        })
 
     def local_reindex(self, catalog: CatalogName, prefix: str) -> int:
         notifications = [
@@ -286,7 +293,7 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
             source_ref = plugin.resolve_source(source_spec)
             source_ref = plugin.partition_source(catalog, source_ref)
 
-            def message(partition_prefix: str) -> JSON:
+            def message(partition_prefix: str) -> SQSMessage:
                 log.info('Remotely reindexing prefix %r of source_ref %r into catalog %r',
                          partition_prefix, str(source_ref.spec), catalog)
                 return self.reindex_message(catalog, source_ref, partition_prefix)
@@ -294,7 +301,7 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
             messages = map(message, source_ref.spec.prefix.partition_prefixes())
             for batch in chunked(messages, Queues.batch_size):
                 entries = [
-                    dict(Id=str(i), MessageBody=json.dumps(message))
+                    message.to_batch_entry(i)
                     for i, message in enumerate(batch)
                 ]
                 self.notifications_queue.send_messages(Entries=entries)
@@ -320,11 +327,11 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
         log.info('Successfully queued %i notification(s) for prefix %s of '
                  'source %r', num_messages, prefix, source)
 
-    def queue_notifications(self, messages: Iterable[JSON]) -> int:
+    def queue_notifications(self, messages: Iterable[SQSMessage]) -> int:
         num_messages = 0
         for batch in chunked(messages, Queues.batch_size):
             entries = [
-                dict(Id=str(i), MessageBody=json.dumps(message))
+                message.to_batch_entry(i)
                 for i, message in enumerate(batch)
             ]
             self.notifications_queue.send_messages(Entries=entries)

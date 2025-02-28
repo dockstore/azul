@@ -211,9 +211,7 @@ class TestIndexController(DCP2IndexerTestCase, SqsTestCase):
 
         # Synthesize initial notifications
         notifications = [
-            dict(action='add',
-                 catalog=self.catalog,
-                 notification=self.client.notification(fqid))
+            self.client.bundle_message(self.catalog, fqid).body
             for fqid in fqids
         ]
 

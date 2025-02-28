@@ -29,7 +29,9 @@ from typing import (
     TYPE_CHECKING,
     cast,
 )
+import uuid
 
+import attrs
 import more_itertools
 from more_itertools import (
     one,
@@ -63,12 +65,37 @@ if TYPE_CHECKING:
     from mypy_boto3_sqs.type_defs import (
         ChangeMessageVisibilityBatchRequestEntryTypeDef,
         SendMessageBatchRequestEntryTypeDef,
+        SendMessageRequestQueueSendMessageTypeDef,
     )
     from mypy_boto3_sqs.service_resource import (
         Message,
         Queue,
         SQSServiceResource,
     )
+
+
+@attrs.frozen(auto_attribs=True)
+class SQSMessage:
+    body: JSON = attrs.field(kw_only=False)
+
+    def to_entry(self) -> 'SendMessageRequestQueueSendMessageTypeDef':
+        return {'MessageBody': json.dumps(self.body)}
+
+    def to_batch_entry(self, id: int) -> 'SendMessageBatchRequestEntryTypeDef':
+        return {**self.to_entry(), 'Id': str(id)}
+
+
+@attrs.frozen(auto_attribs=True)
+class SQSFifoMessage(SQSMessage):
+    group_id: str = attrs.field(kw_only=True, factory=lambda: str(uuid.uuid4()))
+    dedup_id: str = attrs.field(kw_only=True, factory=lambda: str(uuid.uuid4()))
+
+    def to_entry(self) -> 'SendMessageRequestQueueSendMessageTypeDef':
+        return {
+            **super().to_entry(),
+            'MessageGroupId': self.group_id,
+            'MessageDeduplicationId': self.dedup_id
+        }
 
 
 class Queues:
