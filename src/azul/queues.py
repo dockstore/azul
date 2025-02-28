@@ -258,9 +258,9 @@ class Queues:
             for queue_name in queue_names
         }
 
-    def _get_queue_lengths(self,
-                           queues: Mapping[str, 'Queue']
-                           ) -> tuple[int, dict[str, int]]:
+    def get_queue_lengths(self,
+                          queues: Mapping[str, 'Queue']
+                          ) -> tuple[int, dict[str, int]]:
         """
         Count the number of messages in the given queues.
 
@@ -308,7 +308,7 @@ class Queues:
 
         while True:
             # Determine queue lengths
-            total_length, queue_lengths = self._get_queue_lengths(queues)
+            total_length, queue_lengths = self.get_queue_lengths(queues)
             total_lengths.append(total_length)
             log.info('Counting %i messages in %i queues.',
                      total_length, len(queue_lengths))
