@@ -117,7 +117,8 @@ class IndexController(AppController):
     def _queue_notification(self,
                             action: Action,
                             notification: JSON,
-                            catalog: CatalogName, *,
+                            catalog: CatalogName,
+                            *,
                             retry: bool = False):
         message = {
             'catalog': catalog,
