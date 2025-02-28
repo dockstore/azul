@@ -280,9 +280,13 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
     def sqs(self) -> 'SQSServiceResource':
         return aws.resource('sqs')
 
-    @cached_property
-    def notifications_queue(self) -> 'Queue':
-        return self.sqs.get_queue_by_name(QueueName=config.notifications_queue.name)
+    def notifications_queue(self, *, retry: bool = False) -> 'Queue':
+        name = config.notifications_queue.derive(retry=retry).name
+        return self.sqs.get_queue_by_name(QueueName=name)
+
+    def tallies_queue(self, *, retry: bool = False) -> 'Queue':
+        name = config.tallies_queue.derive(retry=retry).name
+        return self.sqs.get_queue_by_name(QueueName=name)
 
     def remote_reindex(self,
                        catalog: CatalogName,
@@ -304,7 +308,7 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
                     message.to_batch_entry(i)
                     for i, message in enumerate(batch)
                 ]
-                self.notifications_queue.send_messages(Entries=entries)
+                self.notifications_queue().send_messages(Entries=entries)
 
     def remote_reindex_partition(self, message: JSON) -> None:
         catalog, prefix = message['catalog'], message['prefix']
@@ -334,7 +338,7 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
                 message.to_batch_entry(i)
                 for i, message in enumerate(batch)
             ]
-            self.notifications_queue.send_messages(Entries=entries)
+            self.notifications_queue().send_messages(Entries=entries)
             num_messages += len(batch)
         return num_messages
 

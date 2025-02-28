@@ -15,9 +15,6 @@ from itertools import (
 import json
 import logging
 import time
-from typing import (
-    TYPE_CHECKING,
-)
 import uuid
 
 import chalice
@@ -38,9 +35,6 @@ from azul import (
 from azul.azulclient import (
     AzulClient,
     IndexAction,
-)
-from azul.deployment import (
-    aws,
 )
 from azul.hmac import (
     HMACAuthentication,
@@ -68,12 +62,6 @@ from azul.types import (
     JSON,
     json_dict,
 )
-
-if TYPE_CHECKING:
-    from mypy_boto3_sqs.service_resource import (
-        Queue,
-        SQSServiceResource,
-    )
 
 log = logging.getLogger(__name__)
 
@@ -109,7 +97,7 @@ class IndexController(ActionController[IndexAction]):
                             *,
                             retry: bool = False):
         message = self.client.notification_message(catalog, notification, action)
-        queue = self._notifications_queue(retry=retry)
+        queue = self.client.notifications_queue(retry=retry)
         queue.send_message(**message.to_entry())
         log.info('Queued notification message %r', message)
 
@@ -183,7 +171,7 @@ class IndexController(ActionController[IndexAction]):
                             tally.to_message().to_batch_entry(i)
                             for i, tally in enumerate(batch)
                         ]
-                        self._tallies_queue().send_messages(Entries=entries)
+                        self.client.tallies_queue().send_messages(Entries=entries)
             except BaseException:
                 log.warning(f'Worker failed to handle message {message}.', exc_info=True)
                 raise
@@ -295,26 +283,13 @@ class IndexController(ActionController[IndexAction]):
                 # tallies will be inflated because some or all deferrals have
                 # been sent and the original tallies will be returned.
                 for batch in batched(entries, Queues.batch_size):
-                    self._tallies_queue(retry=retry).send_messages(Entries=batch)
+                    self.client.tallies_queue(retry=retry).send_messages(Entries=batch)
 
         except BaseException:
             # Note that another problematic outcome is for the Lambda invocation
             # to time out, in which case this log message will not be written.
             log.warning('Failed to aggregate tallies: %r', tallies_by_entity.values(), exc_info=True)
             raise
-
-    @property
-    def _sqs(self) -> 'SQSServiceResource':
-        return aws.resource('sqs')
-
-    def _queue(self, queue_name) -> 'Queue':
-        return self._sqs.get_queue_by_name(QueueName=queue_name)
-
-    def _notifications_queue(self, retry: bool = False) -> 'Queue':
-        return self._queue(config.notifications_queue.derive(retry=retry).name)
-
-    def _tallies_queue(self, retry: bool = False) -> 'Queue':
-        return self._queue(config.tallies_queue.derive(retry=retry).name)
 
 
 @dataclass(frozen=True)

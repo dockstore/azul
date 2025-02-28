@@ -113,22 +113,6 @@ class TestIndexController(DCP2IndexerTestCase, SqsTestCase):
         }
         return SQSRecord(event_dict=event_dict, context={})
 
-    @property
-    def _notifications_queue(self):
-        return self.controller._notifications_queue()
-
-    @property
-    def _notifications_retry_queue(self):
-        return self.controller._notifications_queue(retry=True)
-
-    @property
-    def _tallies_queue(self):
-        return self.controller._tallies_queue()
-
-    @property
-    def _tallies_retry_queue(self):
-        return self.controller._tallies_queue(retry=True)
-
     def _read_queue(self, queue) -> MutableJSONs:
         messages = self.queue_manager.read_messages(queue)
         # For unknown reasons, Moto 4.0.6 requires reading the queues a second
@@ -160,7 +144,7 @@ class TestIndexController(DCP2IndexerTestCase, SqsTestCase):
         self.index_service.repository_plugin(self.catalog)._assert_source(source)
         self._create_mock_queues()
         self.client.remote_reindex(self.catalog, {str(source.spec)})
-        notification = one(self._read_queue(self._notifications_queue))
+        notification = one(self._read_queue(self.client.notifications_queue()))
         expected_notification = dict(action='reindex',
                                      catalog=self.catalog,
                                      source=source.to_json(),
@@ -177,7 +161,7 @@ class TestIndexController(DCP2IndexerTestCase, SqsTestCase):
         with patch.object(Plugin, 'list_bundles', return_value=bundle_fqids):
             self.controller.contribute(event)
 
-        notification = one(self._read_queue(self._notifications_queue))
+        notification = one(self._read_queue(self.client.notifications_queue()))
         expected_source = dict(id=source.id, spec=str(source.spec))
         source = notification['notification']['bundle_fqid']['source']
         self.assertEqual(expected_source, source)
@@ -252,7 +236,7 @@ class TestIndexController(DCP2IndexerTestCase, SqsTestCase):
             self.assertEqual(expected_calls, mock_plugin.fetch_bundle.mock_calls)
 
             # Assert partitioned notifications, straight from the retry queue
-            notifications = self._read_queue(self._notifications_retry_queue)
+            notifications = self._read_queue(self.client.notifications_queue(retry=True))
             # Fingerprint the partitions from the resulting notifications
             partitions = defaultdict(set)
             for n in notifications:
@@ -273,7 +257,7 @@ class TestIndexController(DCP2IndexerTestCase, SqsTestCase):
                 self.assertEqual({}, partitions)
 
         # We got a tally of one for each
-        tallies = self._read_queue(self._tallies_queue)
+        tallies = self._read_queue(self.client.tallies_queue())
         digest = self._digest_tallies(tallies)
         self.assertEqual(expected_digest, digest)
 
@@ -287,7 +271,7 @@ class TestIndexController(DCP2IndexerTestCase, SqsTestCase):
             else:
                 self.fail()
 
-        self.assertEqual([], self._read_queue(self._tallies_queue))
+        self.assertEqual([], self._read_queue(self.client.tallies_queue()))
 
         # Poison the two project and the two bundle tallies, by simulating
         # a number of failed attempts at processing them
@@ -303,7 +287,7 @@ class TestIndexController(DCP2IndexerTestCase, SqsTestCase):
         ]
         self.controller.aggregate(notifications, retry=True)
 
-        tallies = self._read_queue(self._tallies_retry_queue)
+        tallies = self._read_queue(self.client.tallies_queue(retry=True))
         digest = self._digest_tallies(tallies)
         # The two project tallies were consolidated (despite being poisoned) and
         # the resulting tally was deferred
@@ -318,8 +302,8 @@ class TestIndexController(DCP2IndexerTestCase, SqsTestCase):
         self.controller.aggregate(notifications, retry=True)
 
         # All tallies were referred
-        self.assertEqual([], self._read_queue(self._tallies_retry_queue))
-        self.assertEqual([], self._read_queue(self._tallies_queue))
+        self.assertEqual([], self._read_queue(self.client.tallies_queue()))
+        self.assertEqual([], self._read_queue(self.client.tallies_queue(retry=True)))
 
     def _digest_tallies(self, tallies):
         entities = defaultdict(list)

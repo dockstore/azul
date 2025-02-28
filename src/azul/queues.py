@@ -379,8 +379,8 @@ class Queues:
                 os.unlink(path)
 
     def purge(self, queue_name: str):
-        queue = self.sqs.get_queue_by_name(QueueName=queue_name)
-        self.purge_queues_safely({queue_name: queue})
+        queues = self.get_queues([queue_name])
+        self.purge_queues_safely(queues)
 
     def purge_all(self):
         self.purge_queues_safely(self.all_queues())
