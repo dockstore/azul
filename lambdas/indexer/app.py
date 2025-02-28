@@ -11,7 +11,7 @@ from azul import (
     config,
 )
 from azul.azulclient import (
-    Action,
+    IndexAction,
 )
 from azul.chalice import (
     LambdaMetric,
@@ -155,7 +155,7 @@ globals().update(app.default_routes())
                         schema.enum(*config.catalogs),
                         description='The name of the catalog to notify.'),
             params.path('action',
-                        schema.enum(Action.add.name, Action.delete.name),
+                        schema.enum(IndexAction.add.name, IndexAction.delete.name),
                         description='Which action to perform.'),
             params.header('signature',
                           str,

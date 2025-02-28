@@ -9,13 +9,18 @@ from azul.azulclient import (
 from azul.chalice import (
     AppController,
 )
+from azul.types import (
+    derived_type_params,
+)
 
 
-class ActionController(AppController):
+class ActionController[A: Action](AppController):
 
-    def _load_action(self, action: str) -> Action:
+    def _load_action(self, action: str) -> A:
+        action_cls = derived_type_params(type(self), root=ActionController)[A]
+        assert issubclass(action_cls, Action), action_cls
         try:
-            action = Action.from_json(action)
+            action = action_cls.from_json(action)
         except AssertionError as e:
             if R.caused(e):
                 raise chalice.BadRequestError(repr(e.args))

@@ -33,8 +33,8 @@ from azul import (
     config,
 )
 from azul.azulclient import (
-    Action,
     AzulClient,
+    IndexAction,
 )
 from azul.deployment import (
     aws,
@@ -65,7 +65,7 @@ from azul.types import (
 log = logging.getLogger(__name__)
 
 
-class IndexController(ActionController):
+class IndexController(ActionController[IndexAction]):
     # The number of documents to be queued in a single SQS `send_messages`.
     # Theoretically, larger batches are better but SQS currently limits the
     # batch size to 10.
@@ -91,7 +91,7 @@ class IndexController(ActionController):
             raise UnauthorizedError()
 
     def _queue_notification(self,
-                            action: Action,
+                            action: IndexAction,
                             notification: JSON,
                             catalog: CatalogName,
                             *,
@@ -142,13 +142,13 @@ class IndexController(ActionController):
             start = time.time()
             try:
                 action = self._load_action(message['action'])
-                if action is Action.reindex:
+                if action is IndexAction.reindex:
                     AzulClient().remote_reindex_partition(message)
                 else:
                     notification = message['notification']
                     catalog = message['catalog']
                     assert catalog is not None
-                    delete = action is Action.delete
+                    delete = action is IndexAction.delete
                     contributions, replicas = self.transform(catalog, notification, delete)
 
                     log.info('Writing %i contributions to index.', len(contributions))
@@ -205,7 +205,7 @@ class IndexController(ActionController):
         if isinstance(result, BundlePartition):
             for partition in results:
                 notification = dict(notification, partition=partition.to_json())
-                action = Action.delete if delete else Action.add
+                action = IndexAction.delete if delete else IndexAction.add
                 # There's a good chance that the partition will also fail in
                 # the non-retry Lambda function so we'll go straight to retry.
                 self._queue_notification(action, notification, catalog, retry=True)

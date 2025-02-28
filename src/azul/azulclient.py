@@ -89,9 +89,6 @@ log = logging.getLogger(__name__)
 
 
 class Action(Serializable, Enum):
-    reindex = auto()
-    add = auto()
-    delete = auto()
 
     @classmethod
     def from_json(cls, action: AnyJSON) -> Self:
@@ -103,6 +100,12 @@ class Action(Serializable, Enum):
 
     def to_json(self) -> str:
         return self.name
+
+
+class IndexAction(Action):
+    reindex = auto()
+    add = auto()
+    delete = auto()
 
 
 @attrs.frozen(kw_only=True)
@@ -130,7 +133,7 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
                        bundle_fqid: SourcedBundleFQID
                        ) -> JSON:
         return {
-            'action': Action.add.to_json(),
+            'action': IndexAction.add.to_json(),
             'notification': self.notification(bundle_fqid),
             'catalog': catalog
         }
@@ -141,7 +144,7 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
                         prefix: str
                         ) -> JSON:
         return {
-            'action': Action.reindex.to_json(),
+            'action': IndexAction.reindex.to_json(),
             'catalog': catalog,
             'source': cast(JSON, source.to_json()),
             'prefix': prefix
