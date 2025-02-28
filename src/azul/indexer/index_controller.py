@@ -76,6 +76,10 @@ class IndexController(ActionController[IndexAction]):
     def index_service(self):
         return IndexService()
 
+    @cached_property
+    def client(self) -> AzulClient:
+        return AzulClient()
+
     def handle_notification(self, catalog: CatalogName, action: str):
         request = self.current_request
         if isinstance(request.authentication, HMACAuthentication):
@@ -143,7 +147,7 @@ class IndexController(ActionController[IndexAction]):
             try:
                 action = self._load_action(message['action'])
                 if action is IndexAction.reindex:
-                    AzulClient().remote_reindex_partition(message)
+                    self.client.remote_reindex_partition(message)
                 else:
                     notification = message['notification']
                     catalog = message['catalog']
