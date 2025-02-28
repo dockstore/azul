@@ -30,9 +30,6 @@ from typing import (
 import uuid
 
 import attrs
-from more_itertools import (
-    chunked,
-)
 import requests
 from urllib3 import (
     HTTPResponse,
@@ -303,12 +300,7 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
                 return self.reindex_message(catalog, source_ref, partition_prefix)
 
             messages = map(message, source_ref.spec.prefix.partition_prefixes())
-            for batch in chunked(messages, Queues.batch_size):
-                entries = [
-                    message.to_batch_entry(i)
-                    for i, message in enumerate(batch)
-                ]
-                self.notifications_queue().send_messages(Entries=entries)
+            self.queue_notifications(messages)
 
     def remote_reindex_partition(self, message: JSON) -> None:
         catalog, prefix = message['catalog'], message['prefix']
@@ -331,16 +323,21 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
         log.info('Successfully queued %i notification(s) for prefix %s of '
                  'source %r', num_messages, prefix, source)
 
-    def queue_notifications(self, messages: Iterable[SQSMessage]) -> int:
-        num_messages = 0
-        for batch in chunked(messages, Queues.batch_size):
-            entries = [
-                message.to_batch_entry(i)
-                for i, message in enumerate(batch)
-            ]
-            self.notifications_queue().send_messages(Entries=entries)
-            num_messages += len(batch)
-        return num_messages
+    def queue_notifications(self,
+                            messages: Iterable[SQSMessage],
+                            *,
+                            retry: bool = False
+                            ) -> int:
+        queue = self.notifications_queue(retry=retry)
+        return self.queues.send_messages(queue, messages)
+
+    def queue_tallies(self,
+                      messages: Iterable[SQSMessage],
+                      *,
+                      retry: bool = False
+                      ) -> int:
+        queue = self.tallies_queue(retry=retry)
+        return self.queues.send_messages(queue, messages)
 
     @classmethod
     def filter_obsolete_bundle_versions(cls,

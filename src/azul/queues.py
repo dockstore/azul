@@ -34,6 +34,7 @@ import uuid
 import attrs
 import more_itertools
 from more_itertools import (
+    chunked,
     one,
 )
 
@@ -159,6 +160,14 @@ class Queues:
         messages = self._get_messages(queue)
         self._cleanup_messages(queue, messages)
         return messages
+
+    def send_messages(self, queue: 'Queue', messages: Iterable[SQSMessage]) -> int:
+        num_messages = 0
+        for batch in chunked(messages, self.batch_size):
+            entries = [message.to_batch_entry(i) for i, message in enumerate(batch)]
+            queue.send_messages(Entries=entries)
+            num_messages += len(batch)
+        return num_messages
 
     def _cleanup_messages(self, queue: 'Queue', messages: Iterable['Message']):
         message_batches = list(more_itertools.chunked(messages, self.batch_size))

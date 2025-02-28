@@ -9,9 +9,6 @@ from dataclasses import (
     replace,
 )
 import http
-from itertools import (
-    batched,
-)
 import json
 import logging
 import time
@@ -23,7 +20,6 @@ from chalice.app import (
     UnauthorizedError,
 )
 from more_itertools import (
-    chunked,
     first,
 )
 
@@ -55,7 +51,6 @@ from azul.indexer.index_service import (
     IndexService,
 )
 from azul.queues import (
-    Queues,
     SQSFifoMessage,
 )
 from azul.types import (
@@ -166,12 +161,8 @@ class IndexController(ActionController[IndexAction]):
 
                     log.info('Queueing %i entities for aggregating a total of %i contributions.',
                              len(tallies), sum(tally.num_contributions for tally in tallies))
-                    for batch in chunked(tallies, Queues.batch_size):
-                        entries = [
-                            tally.to_message().to_batch_entry(i)
-                            for i, tally in enumerate(batch)
-                        ]
-                        self.client.tallies_queue().send_messages(Entries=entries)
+                    messages = (tally.to_message() for tally in tallies)
+                    self.client.queue_tallies(messages)
             except BaseException:
                 log.warning(f'Worker failed to handle message {message}.', exc_info=True)
                 raise
@@ -275,15 +266,11 @@ class IndexController(ActionController[IndexAction]):
                 for tally in deferrals:
                     log.info('Deferring aggregation of %i contribution(s) to entity %s',
                              tally.num_contributions, tally.entity)
-                entries = [
-                    tally.to_message().to_batch_entry(i)
-                    for i, tally in enumerate(deferrals)
-                ]
+                messages = (tally.to_message() for tally in deferrals)
                 # Hopefully this is more or less atomic. If we crash below here,
                 # tallies will be inflated because some or all deferrals have
                 # been sent and the original tallies will be returned.
-                for batch in batched(entries, Queues.batch_size):
-                    self.client.tallies_queue(retry=retry).send_messages(Entries=batch)
+                self.client.queue_tallies(messages, retry=retry)
 
         except BaseException:
             # Note that another problematic outcome is for the Lambda invocation
