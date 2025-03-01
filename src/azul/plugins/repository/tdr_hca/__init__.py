@@ -67,6 +67,9 @@ from azul.types import (
     JSONs,
     is_optional,
 )
+from humancellatlas.data.metadata.api import (
+    Entity,
+)
 
 log = logging.getLogger(__name__)
 
@@ -189,6 +192,9 @@ class TDRHCABundle(HCABundle[TDRBundleFQID], TDRBundle):
             self.stitched.add(entity.entity_id)
         if entity.entity_type.endswith('_file'):
             descriptor = json.loads(row['descriptor'])
+            # FIXME: Move validation of descriptor to the metadata API
+            #        https://github.com/DataBiosphere/azul/issues/6299
+            Entity.validate_described_by(descriptor)
             self._add_manifest_entry(entity,
                                      name=row['file_name'],
                                      uuid=descriptor['file_id'],
@@ -218,8 +224,6 @@ class TDRHCABundle(HCABundle[TDRBundleFQID], TDRBundle):
     links_columns: ClassVar[set[str]] = metadata_columns | {
         'project_id'
     }
-
-    _suffix = 'tdr.'
 
     def _add_manifest_entry(self,
                             entity: EntityReference,
@@ -276,7 +280,7 @@ class TDRHCABundle(HCABundle[TDRBundleFQID], TDRBundle):
             return file_id
 
 
-class Plugin(TDRPlugin[TDRHCABundle, TDRSourceSpec, TDRSourceRef, TDRBundleFQID]):
+class Plugin(TDRPlugin[TDRHCABundle, TDRBundleFQID]):
 
     def count_bundles(self, source: TDRSourceSpec) -> int:
         prefix = '' if source.prefix is None else source.prefix.common

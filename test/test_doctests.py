@@ -124,5 +124,6 @@ def load_tests(_loader,
 
 
 if __name__ == '__main__':
+    setUpModule()
     runner = unittest.TextTestRunner()
     runner.run(load_tests(None, unittest.TestSuite(), None))

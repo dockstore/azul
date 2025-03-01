@@ -68,7 +68,7 @@ dashboard_body = {
                         'AWS/SQS',
                         'ApproximateNumberOfMessagesVisible',
                         'QueueName',
-                        config.notifications_queue_name(),
+                        config.notifications_queue.name,
                         {
                             'id': 'nv',
                             'visible': False
@@ -107,7 +107,7 @@ dashboard_body = {
                         'AWS/SQS',
                         'ApproximateNumberOfMessagesVisible',
                         'QueueName',
-                        config.notifications_queue_name(retry=True),
+                        config.notifications_queue.to_retry.name,
                         {
                             'id': 'nrv',
                             'visible': False
@@ -146,7 +146,7 @@ dashboard_body = {
                         'AWS/SQS',
                         'ApproximateNumberOfMessagesVisible',
                         'QueueName',
-                        config.notifications_queue_name(fail=True),
+                        config.notifications_queue.to_fail.name,
                         {
                             'id': 'nfv',
                             'visible': False
@@ -185,7 +185,7 @@ dashboard_body = {
                         'AWS/SQS',
                         'ApproximateNumberOfMessagesVisible',
                         'QueueName',
-                        config.tallies_queue_name(),
+                        config.tallies_queue.name,
                         {
                             'id': 'tv',
                             'visible': False
@@ -224,7 +224,7 @@ dashboard_body = {
                         'AWS/SQS',
                         'ApproximateNumberOfMessagesVisible',
                         'QueueName',
-                        config.tallies_queue_name(retry=True),
+                        config.tallies_queue.to_retry.name,
                         {
                             'id': 'trv',
                             'visible': False
@@ -263,7 +263,7 @@ dashboard_body = {
                         'AWS/SQS',
                         'ApproximateNumberOfMessagesVisible',
                         'QueueName',
-                        config.tallies_queue_name(fail=True),
+                        config.tallies_queue.to_fail.name,
                         {
                             'id': 'tfv',
                             'visible': False
@@ -987,7 +987,7 @@ dashboard_body = {
                         'AWS/SQS',
                         'ApproximateNumberOfMessagesVisible',
                         'QueueName',
-                        config.notifications_queue_name(),
+                        config.notifications_queue.name,
                         {
                             'id': 'nv',
                             'visible': False
@@ -1026,7 +1026,7 @@ dashboard_body = {
                         'AWS/SQS',
                         'ApproximateNumberOfMessagesVisible',
                         'QueueName',
-                        config.notifications_queue_name(retry=True),
+                        config.notifications_queue.to_retry.name,
                         {
                             'id': 'nrv',
                             'visible': False
@@ -1065,7 +1065,7 @@ dashboard_body = {
                         'AWS/SQS',
                         'ApproximateNumberOfMessagesVisible',
                         'QueueName',
-                        config.notifications_queue_name(fail=True),
+                        config.notifications_queue.to_fail.name,
                         {
                             'id': 'nfv',
                             'visible': False
@@ -1104,7 +1104,7 @@ dashboard_body = {
                         'AWS/SQS',
                         'ApproximateNumberOfMessagesVisible',
                         'QueueName',
-                        config.tallies_queue_name(),
+                        config.tallies_queue.name,
                         {
                             'id': 'tv',
                             'visible': False
@@ -1143,7 +1143,7 @@ dashboard_body = {
                         'AWS/SQS',
                         'ApproximateNumberOfMessagesVisible',
                         'QueueName',
-                        config.tallies_queue_name(retry=True),
+                        config.tallies_queue.to_retry.name,
                         {
                             'id': 'trv',
                             'visible': False
@@ -1182,7 +1182,7 @@ dashboard_body = {
                         'AWS/SQS',
                         'ApproximateNumberOfMessagesVisible',
                         'QueueName',
-                        config.tallies_queue_name(fail=True),
+                        config.tallies_queue.to_fail.name,
                         {
                             'id': 'tfv',
                             'visible': False
@@ -1269,7 +1269,7 @@ dashboard_body = {
                         'AWS/SQS',
                         'NumberOfEmptyReceives',
                         'QueueName',
-                        config.notifications_queue_name(),
+                        config.notifications_queue.name,
                         {
                             'id': 'm1',
                             'visible': False,
@@ -1280,7 +1280,7 @@ dashboard_body = {
                         'AWS/SQS',
                         'NumberOfEmptyReceives',
                         'QueueName',
-                        config.notifications_queue_name(retry=True),
+                        config.notifications_queue.to_retry.name,
                         {
                             'id': 'm2',
                             'visible': False,
@@ -1291,7 +1291,7 @@ dashboard_body = {
                         'AWS/SQS',
                         'NumberOfEmptyReceives',
                         'QueueName',
-                        config.tallies_queue_name(),
+                        config.tallies_queue.name,
                         {
                             'id': 'm3',
                             'visible': False,
@@ -1302,7 +1302,7 @@ dashboard_body = {
                         'AWS/SQS',
                         'NumberOfEmptyReceives',
                         'QueueName',
-                        config.tallies_queue_name(retry=True),
+                        config.tallies_queue.to_retry.name,
                         {
                             'id': 'm4',
                             'visible': False,
@@ -1388,7 +1388,7 @@ dashboard_body = {
                         'AWS/SQS',
                         'ApproximateNumberOfMessagesVisible',
                         'QueueName',
-                        config.notifications_queue_name(),
+                        config.notifications_queue.name,
                         {
                             'id': 'nv',
                             'visible': False
@@ -1418,7 +1418,7 @@ dashboard_body = {
                         '.',
                         'ApproximateNumberOfMessagesVisible',
                         '.',
-                        config.notifications_queue_name(retry=True),
+                        config.notifications_queue.to_retry.name,
                         {
                             'id': 'nrv',
                             'visible': False
@@ -1457,7 +1457,7 @@ dashboard_body = {
                         'AWS/SQS',
                         'ApproximateNumberOfMessagesVisible',
                         'QueueName',
-                        config.tallies_queue_name(),
+                        config.tallies_queue.name,
                         {
                             'id': 'tv',
                             'visible': False
@@ -1487,7 +1487,7 @@ dashboard_body = {
                         '.',
                         'ApproximateNumberOfMessagesVisible',
                         '.',
-                        config.tallies_queue_name(retry=True),
+                        config.tallies_queue.to_retry.name,
                         {
                             'id': 'trv',
                             'visible': False
@@ -1563,28 +1563,28 @@ dashboard_body = {
                         'AWS/SQS',
                         'ApproximateNumberOfMessagesNotVisible',
                         'QueueName',
-                        config.notifications_queue_name(),
+                        config.notifications_queue.name,
                         {
                             'label': 'notifications'
                         }
                     ],
                     [
                         '...',
-                        config.notifications_queue_name(retry=True),
+                        config.notifications_queue.to_retry.name,
                         {
                             'label': 'notifications_retry'
                         }
                     ],
                     [
                         '...',
-                        config.tallies_queue_name(),
+                        config.tallies_queue.name,
                         {
                             'label': 'tallies'
                         }
                     ],
                     [
                         '...',
-                        config.tallies_queue_name(retry=True),
+                        config.tallies_queue.to_retry.name,
                         {
                             'label': 'tallies_retry'
                         }

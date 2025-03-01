@@ -1732,14 +1732,10 @@ class TestAnvilManifests(AnvilManifestTestCase):
     @classmethod
     def bundles(cls) -> list[SourcedBundleFQID]:
         return [
-            cls.bundle_fqid(uuid='2370f948-2783-aeb6-afea-e022897f4dcf',
-                            version=cls.version),
-            cls.bundle_fqid(uuid='c67e7adb-1a9c-a3b9-bc91-eb10a428374a',
-                            version=cls.version),
-            cls.bundle_fqid(uuid='826dea02-e274-affe-aabc-eb3db63ad068',
-                            version=cls.version),
-            cls.bundle_fqid(uuid='9a135c9a-069b-a90e-b588-eaf8d1aeeac9',
-                            version=cls.version)
+            cls.bundle_fqid(uuid='2370f948-2783-aeb6-afea-e022897f4dcf'),
+            cls.bundle_fqid(uuid='c67e7adb-1a9c-a3b9-bc91-eb10a428374a'),
+            cls.bundle_fqid(uuid='826dea02-e274-affe-aabc-eb3db63ad068'),
+            cls.bundle_fqid(uuid='9a135c9a-069b-a90e-b588-eaf8d1aeeac9')
         ]
 
     def test_compact_manifest(self):
@@ -2192,6 +2188,10 @@ class TestAnvilManifests(AnvilManifestTestCase):
                 filtered = [e for e in part if e['name'] != 'non_schema_orphan_table']
                 assert len(filtered) < len(part), 'Expected to filter orphan references'
                 part[:] = filtered
+            # To avoid dangling references, relations are only populated when
+            # including orphans
+            for entity in expected_entities:
+                entity['relations'].clear()
             for filters in [
                 self.neutral_file_filters,
                 {**self.neutral_file_filters, **self.dataset_title_filters}
@@ -2212,7 +2212,8 @@ class TestPFB(CannedManifestTestCase):
         self._assert_pfb_schema(schema)
 
     def test_pfb_metadata_object(self):
-        metadata_entity = avro_pfb.pfb_metadata_entity(FileTransformer.field_types())
+        links = avro_pfb.pfb_links_from_field_types(FileTransformer.field_types())
+        metadata_entity = avro_pfb.pfb_metadata_entity(links)
         field_types = FileTransformer.field_types()
         schema = avro_pfb.pfb_schema_from_field_types(field_types)
         parsed_schema = fastavro.parse_schema(cast(dict, schema))

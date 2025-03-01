@@ -22,7 +22,7 @@ log = logging.getLogger(__name__)
 http = http_client(log)
 
 repository_url = 'https://raw.githubusercontent.com/swagger-api/swagger-ui'
-tag = 'v5.18.2'
+tag = 'v5.19.0'
 files = [
     'index.html',
     'swagger-ui.css',

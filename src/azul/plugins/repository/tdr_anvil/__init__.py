@@ -11,7 +11,6 @@ from typing import (
     AbstractSet,
     Callable,
     Iterable,
-    cast,
 )
 import uuid
 
@@ -30,12 +29,14 @@ from azul.bigquery import (
     BigQueryRow,
     backtick,
 )
+from azul.collections import (
+    singleton,
+)
 from azul.drs import (
     DRSURI,
 )
 from azul.indexer import (
     Prefix,
-    SourcedBundleFQIDJSON,
 )
 from azul.indexer.document import (
     EntityReference,
@@ -165,18 +166,10 @@ class BundleType(Enum):
         return table_name not in (cls.primary.value, cls.duos.value)
 
 
-class TDRAnvilBundleFQIDJSON(SourcedBundleFQIDJSON):
-    table_name: str
-    batch_prefix: str | None
-
-
 @attrs.frozen(kw_only=True, eq=False)
 class TDRAnvilBundleFQID(TDRBundleFQID):
     table_name: str
     batch_prefix: str | None
-
-    def to_json(self) -> TDRAnvilBundleFQIDJSON:
-        return cast(TDRAnvilBundleFQIDJSON, super().to_json())
 
     def __attrs_post_init__(self):
         should_be_batched = BundleType.is_batched(self.table_name)
@@ -223,7 +216,7 @@ class TDRAnvilBundle(AnvilBundle[TDRAnvilBundleFQID], TDRBundle):
         EntityLink.group_by_activity(self.links)
 
 
-class Plugin(TDRPlugin[TDRAnvilBundle, TDRSourceSpec, TDRSourceRef, TDRAnvilBundleFQID]):
+class Plugin(TDRPlugin[TDRAnvilBundle, TDRAnvilBundleFQID]):
 
     @cached_property
     def _version(self):
@@ -457,10 +450,11 @@ class Plugin(TDRPlugin[TDRAnvilBundle, TDRSourceSpec, TDRSourceRef, TDRAnvilBund
                     require(donor_dataset_id == dataset_id, donor_dataset_id, dataset_id)
             for row in sorted(rows, key=itemgetter(pk_column)):
                 key = KeyReference(key=row[pk_column], entity_type=entity_type)
-                entity = EntityReference(entity_id=row['datarepo_row_id'], entity_type=entity_type)
+                entity = EntityReference(entity_id=row['datarepo_row_id'],
+                                         entity_type=entity_type)
                 entities_by_key[key] = entity
                 result.add_entity(entity, self._version, row)
-        result.add_links((link.to_entity_link(entities_by_key) for link in links))
+        result.add_links(link.to_entity_link(entities_by_key) for link in links)
         return result
 
     def _supplementary_bundle(self, bundle_fqid: TDRAnvilBundleFQID) -> TDRAnvilBundle:
@@ -478,7 +472,10 @@ class Plugin(TDRPlugin[TDRAnvilBundle, TDRSourceSpec, TDRSourceRef, TDRAnvilBund
                 linked_file_refs.add(file_ref)
         dataset_ref, dataset_row = self._get_dataset(source)
         result.add_entity(dataset_ref, self._version, dict(dataset_row))
-        result.add_links([EntityLink(inputs={dataset_ref}, outputs=linked_file_refs)])
+        result.add_links([
+            EntityLink(inputs=singleton(dataset_ref),
+                       outputs=frozenset(linked_file_refs))
+        ])
         return result
 
     def _duos_bundle(self, bundle_fqid: TDRAnvilBundleFQID) -> TDRAnvilBundle:
@@ -620,15 +617,15 @@ class Plugin(TDRPlugin[TDRAnvilBundle, TDRSourceSpec, TDRSourceRef, TDRAnvilBund
             ''')
             result: KeyLinks = set()
             for row in rows:
-                downstream_ref = KeyReference(entity_type='anvil_biosample',
-                                              key=row['biosample_id'])
-                result.add(KeyLink(outputs={downstream_ref},
-                                   inputs={KeyReference(entity_type='anvil_dataset',
-                                                        key=one(row['part_of_dataset_id']))}))
+                outputs = singleton(KeyReference(entity_type='anvil_biosample',
+                                                 key=row['biosample_id']))
+                inputs = singleton(KeyReference(entity_type='anvil_dataset',
+                                                key=one(row['part_of_dataset_id'])))
+                result.add(KeyLink(outputs=outputs, inputs=inputs))
                 for donor_id in row['donor_id']:
-                    result.add(KeyLink(outputs={downstream_ref},
-                                       inputs={KeyReference(entity_type='anvil_donor',
-                                                            key=donor_id)}))
+                    inputs = singleton(KeyReference(entity_type='anvil_donor',
+                                                    key=donor_id))
+                    result.add(KeyLink(outputs=outputs, inputs=inputs))
             return result
         else:
             return set()
@@ -691,17 +688,23 @@ class Plugin(TDRPlugin[TDRAnvilBundle, TDRSourceSpec, TDRSourceRef, TDRAnvilBund
             ''')
             return {
                 KeyLink(
-                    activity=KeyReference(entity_type=row['activity_table'], key=row['activity_id']),
+                    activity=KeyReference(entity_type=row['activity_table'],
+                                          key=row['activity_id']),
                     # The generated link is not a complete representation of the
                     # upstream activity because it does not include generated files
                     # that are not ancestors of the downstream file
-                    outputs={KeyReference(entity_type='anvil_file', key=row['generated_file_id'])},
-                    inputs={
-                        KeyReference(entity_type=entity_type, key=key)
-                        for entity_type, column in [('anvil_file', 'uses_file_id'),
-                                                    ('anvil_biosample', 'uses_biosample_id')]
+                    outputs=singleton(
+                        KeyReference(entity_type='anvil_file',
+                                     key=row['generated_file_id'])),
+                    inputs=frozenset(
+                        KeyReference(entity_type=entity_type,
+                                     key=key)
+                        for entity_type, column in [
+                            ('anvil_file', 'uses_file_id'),
+                            ('anvil_biosample', 'uses_biosample_id')
+                        ]
                         for key in row[column]
-                    }
+                    )
                 )
                 for row in rows
             }
@@ -719,9 +722,14 @@ class Plugin(TDRPlugin[TDRAnvilBundle, TDRSourceSpec, TDRSourceRef, TDRAnvilBund
                 WHERE dgn.donor_id IN ({', '.join(map(repr, donor_ids))})
             ''')
             return {
-                KeyLink(inputs={KeyReference(key=row['diagnosis_id'], entity_type='anvil_diagnosis')},
-                        outputs={KeyReference(key=row['donor_id'], entity_type='anvil_donor')},
-                        activity=None)
+                KeyLink(
+                    inputs=singleton(
+                        KeyReference(key=row['diagnosis_id'],
+                                     entity_type='anvil_diagnosis')),
+                    outputs=singleton(
+                        KeyReference(key=row['donor_id'],
+                                     entity_type='anvil_donor')),
+                    activity=None)
                 for row in rows
             }
         else:
@@ -764,12 +772,18 @@ class Plugin(TDRPlugin[TDRAnvilBundle, TDRSourceSpec, TDRSourceRef, TDRAnvilBund
                 WHERE biosample_id IN ({', '.join(map(repr, biosample_ids))})
             ''')
             return {
-                KeyLink(inputs={KeyReference(key=row['biosample_id'], entity_type='anvil_biosample')},
-                        outputs={
-                            KeyReference(key=output_id, entity_type='anvil_file')
-                            for output_id in row['generated_file_id']
-                        },
-                        activity=KeyReference(key=row['activity_id'], entity_type=row['activity_table']))
+                KeyLink(
+                    inputs=singleton(
+                        KeyReference(key=row['biosample_id'],
+                                     entity_type='anvil_biosample')
+                    ),
+                    outputs=frozenset(
+                        KeyReference(key=output_id,
+                                     entity_type='anvil_file')
+                        for output_id in row['generated_file_id']
+                    ),
+                    activity=KeyReference(key=row['activity_id'],
+                                          entity_type=row['activity_table']))
                 for row in rows
             }
         else:
@@ -810,12 +824,17 @@ class Plugin(TDRPlugin[TDRAnvilBundle, TDRSourceSpec, TDRSourceRef, TDRAnvilBund
                 WHERE used_file_id IN ({', '.join(map(repr, file_ids))})
             ''')
             return {
-                KeyLink(inputs={KeyReference(key=row['used_file_id'], entity_type='anvil_file')},
-                        outputs={
-                            KeyReference(key=file_id, entity_type='anvil_file')
-                            for file_id in row['generated_file_id']
-                        },
-                        activity=KeyReference(key=row['activity_id'], entity_type=row['activity_table']))
+                KeyLink(
+                    inputs=singleton(
+                        KeyReference(key=row['used_file_id'],
+                                     entity_type='anvil_file')),
+                    outputs=frozenset(
+                        KeyReference(key=file_id,
+                                     entity_type='anvil_file')
+                        for file_id in row['generated_file_id']
+                    ),
+                    activity=KeyReference(key=row['activity_id'],
+                                          entity_type=row['activity_table']))
                 for row in rows
             }
         else:

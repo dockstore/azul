@@ -7,7 +7,6 @@ from pathlib import (
     Path,
 )
 from typing import (
-    Generic,
     Literal,
     Optional,
     Type,
@@ -27,7 +26,6 @@ from azul import (
     config,
 )
 from azul.indexer import (
-    BUNDLE,
     Bundle,
     BundleFQID,
     SourcedBundleFQID,
@@ -45,9 +43,15 @@ from azul.plugins import (
 )
 from azul.plugins.repository.dss import (
     DSSBundle,
+    DSSBundleFQID,
+)
+from azul.plugins.repository.tdr import (
+    TDRBundleFQID,
 )
 from azul.plugins.repository.tdr_anvil import (
+    BundleType,
     TDRAnvilBundle,
+    TDRAnvilBundleFQID,
 )
 from azul.plugins.repository.tdr_hca import (
     TDRHCABundle,
@@ -124,7 +128,7 @@ class CannedFileTestCase(AzulUnitTestCase):
             return json.load(infile)
 
 
-class CannedBundleTestCase(CannedFileTestCase, Generic[BUNDLE]):
+class CannedBundleTestCase[BUNDLE: Bundle](CannedFileTestCase):
     """
     A test case that loads a canned bundle, i.e. a can containing the input to
     tests involving a metadata plugin or the expected output of tests involving
@@ -137,10 +141,13 @@ class CannedBundleTestCase(CannedFileTestCase, Generic[BUNDLE]):
         raise NotImplementedError
 
     @classmethod
-    def _load_canned_bundle(cls, bundle: SourcedBundleFQID) -> BUNDLE:
+    def _load_canned_bundle(cls, fqid: SourcedBundleFQID) -> BUNDLE:
         bundle_cls = cls._bundle_cls()
-        bundle_json = cls._load_canned_file(bundle, bundle_cls.canning_qualifier())
-        return bundle_cls.from_json(bundle, bundle_json)
+        bundle_json = cls._load_canned_file(fqid, bundle_cls.canning_qualifier())
+        bundle_json['fqid'] = fqid.to_json()
+        bundle = bundle_cls.from_json(bundle_json)
+        assert bundle.fqid == fqid
+        return bundle
 
 
 class DCP1CannedBundleTestCase(DCP1TestCase, CannedBundleTestCase[DSSBundle]):
@@ -149,12 +156,24 @@ class DCP1CannedBundleTestCase(DCP1TestCase, CannedBundleTestCase[DSSBundle]):
     def _bundle_cls(cls) -> Type[DSSBundle]:
         return DSSBundle
 
+    @classmethod
+    def bundle_fqid(cls, *, uuid: str, version: str) -> DSSBundleFQID:
+        return DSSBundleFQID(source=cls.source,
+                             uuid=uuid,
+                             version=version)
+
 
 class DCP2CannedBundleTestCase(DCP2TestCase, CannedBundleTestCase[TDRHCABundle]):
 
     @classmethod
     def _bundle_cls(cls) -> Type[TDRHCABundle]:
         return TDRHCABundle
+
+    @classmethod
+    def bundle_fqid(cls, *, uuid: str, version: str) -> TDRBundleFQID:
+        return TDRBundleFQID(source=cls.source,
+                             uuid=uuid,
+                             version=version)
 
 
 class AnvilCannedBundleTestCase(AnvilTestCase, CannedBundleTestCase[TDRAnvilBundle]):
@@ -164,6 +183,18 @@ class AnvilCannedBundleTestCase(AnvilTestCase, CannedBundleTestCase[TDRAnvilBund
     @classmethod
     def _bundle_cls(cls) -> Type[TDRAnvilBundle]:
         return TDRAnvilBundle
+
+    @classmethod
+    def bundle_fqid(cls,
+                    *,
+                    uuid: str,
+                    table_name: str = BundleType.primary.value,
+                    ) -> TDRAnvilBundleFQID:
+        return TDRAnvilBundleFQID(source=cls.source,
+                                  uuid=uuid,
+                                  version=cls.version,
+                                  table_name=table_name,
+                                  batch_prefix='' if BundleType.is_batched(table_name) else None)
 
 
 class IndexerTestCase(CatalogTestCase,
@@ -176,12 +207,6 @@ class IndexerTestCase(CatalogTestCase,
     def setUpClass(cls):
         super().setUpClass()
         cls.index_service = ForcedRefreshIndexService()
-
-    @classmethod
-    def bundle_fqid(cls, *, uuid, version):
-        return SourcedBundleFQID(source=cls.source,
-                                 uuid=uuid,
-                                 version=version)
 
     def _get_all_hits(self):
         # Without `preserve_order`, hits are sorted by `_doc`, which is fastest

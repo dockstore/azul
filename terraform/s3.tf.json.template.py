@@ -14,7 +14,7 @@ from azul.terraform import (
 tf_config = {
     'data': {
         'aws_s3_bucket': {
-            'logs': {
+            config.logs_term: {
                 'bucket': aws.logs_bucket,
             }
         },
@@ -24,11 +24,20 @@ tf_config = {
             config.storage_term: {
                 'bucket': aws.storage_bucket,
                 'force_destroy': True
-            }
+            },
+            **(
+                {
+                    config.mirror_term: {
+                        'bucket': aws.mirror_bucket,
+                    }
+                }
+                if config.enable_mirroring else
+                {}
+            )
         },
         'aws_s3_bucket_lifecycle_configuration': {
-            'storage': {
-                'bucket': '${aws_s3_bucket.storage.id}',
+            config.storage_term: {
+                'bucket': '${aws_s3_bucket.%s.id}' % config.storage_term,
                 'rule': {
                     'id': 'manifests',
                     'status': 'Enabled',
@@ -42,16 +51,36 @@ tf_config = {
                         'days_after_initiation': 1
                     }
                 }
-            }
+            },
+            **(
+                {
+                    config.mirror_term: {
+                        'bucket': '${aws_s3_bucket.%s.id}' % config.mirror_term,
+                        'rule': {
+                            'id': 'mirror_cleanup',
+                            'status': 'Enabled',
+                            'abort_incomplete_multipart_upload': {
+                                'days_after_initiation': 1
+                            }
+                        }
+                    }
+                }
+                if config.enable_mirroring else
+                {}
+            )
         },
         'aws_s3_bucket_logging': {
-            'storage': {
-                'bucket': '${aws_s3_bucket.storage.id}',
-                'target_bucket': '${data.aws_s3_bucket.logs.id}',
+            bucket: {
+                'bucket': '${aws_s3_bucket.%s.id}' % bucket,
+                'target_bucket': '${data.aws_s3_bucket.%s.id}' % config.logs_term,
                 # Other S3 log deliveries, like ELB, implicitly put a slash
                 # after the prefix. S3 doesn't, so we add one explicitly.
-                'target_prefix': config.s3_access_log_path_prefix('storage') + '/'
+                'target_prefix': config.s3_access_log_path_prefix(bucket) + '/'
             }
+            for bucket in (
+                config.storage_term,
+                *([config.mirror_term] if config.enable_mirroring else [])
+            )
         }
     }
 }

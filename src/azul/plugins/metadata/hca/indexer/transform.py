@@ -61,17 +61,19 @@ from azul.indexer.aggregate import (
     SimpleAggregator,
 )
 from azul.indexer.document import (
-    ClosedRange,
     Contribution,
     EntityID,
     EntityReference,
     EntityType,
-    FieldType,
+    Replica,
+)
+from azul.indexer.field import (
+    ClosedRange,
     FieldTypes,
     Nested,
+    Nullable,
     NullableString,
     PassThrough,
-    Replica,
     null_bool,
     null_datetime,
     null_int,
@@ -137,7 +139,12 @@ def _format_dcp2_datetime(d: datetime | None) -> str | None:
     return None if d is None else format_dcp2_datetime(d)
 
 
-class ValueAndUnit(FieldType[JSON, str]):
+class ValueAndUnit(Nullable[JSON, str]):
+    """
+    The type of document fields whose values consist of a numeric quantity and
+    a symbolic unit, such as the age of a donor organism at collection time.
+    """
+
     # FIXME: change the es_type for JSON to `nested`
     #        https://github.com/DataBiosphere/azul/issues/2621
     es_type = 'keyword'
@@ -673,7 +680,8 @@ class BaseTransformer(Transformer, metaclass=ABCMeta):
             'tissue_atlas': [tissue_atlas],
             'bionetwork_name': [null_str],
             'estimated_cell_count': null_int,
-            'data_use_restriction': null_str
+            'data_use_restriction': null_str,
+            'duos_id': null_str
         }
 
     def _project(self, project: api.Project) -> MutableJSON:
@@ -721,7 +729,8 @@ class BaseTransformer(Transformer, metaclass=ABCMeta):
             'tissue_atlas': list(map(self._tissue_atlas, project.bionetworks)),
             'bionetwork_name': sorted(bionetwork.name for bionetwork in project.bionetworks),
             'estimated_cell_count': project.estimated_cell_count,
-            'data_use_restriction': project.data_use_restriction
+            'data_use_restriction': project.data_use_restriction,
+            'duos_id': project.duos_id
         }
 
     @classmethod

@@ -250,7 +250,7 @@ def env() -> Mapping[str, Optional[str]]:
         # and committing the resulting changes. It also requires redeploying the
         # `shared` component.
         #
-        'azul_python_version': '3.12.8',
+        'azul_python_version': '3.12.9',
 
         # The version of Terraform used throughout the system.
         #
@@ -296,28 +296,28 @@ def env() -> Mapping[str, Optional[str]]:
                 'url': 'https://hub.docker.com/_/python',
             },
             'pycharm': {
-                'ref': 'docker.io/ucscgi/azul-pycharm:2024.3.1.1-43',
+                'ref': 'docker.io/ucscgi/azul-pycharm:2024.3.3-45',
                 'url': 'https://hub.docker.com/repository/docker/ucscgi/azul-pycharm',
                 'is_custom': True
             },
             'elasticsearch': {
-                'ref': 'docker.io/ucscgi/azul-elasticsearch:7.17.27-36',
+                'ref': 'docker.io/ucscgi/azul-elasticsearch:7.17.27-38',
                 'url': 'https://hub.docker.com/repository/docker/ucscgi/azul-elasticsearch',
                 'is_custom': True
             },
             'bigquery_emulator': {
-                'ref': 'docker.io/ucscgi/azul-bigquery-emulator:0.4.4-22',
+                'ref': 'docker.io/ucscgi/azul-bigquery-emulator:0.4.4-24',
                 'url': 'https://hub.docker.com/repository/docker/ucscgi/azul-bigquery-emulator',
                 'is_custom': True
             },
             # Updating any of the four images below additionally requires
             # redeploying the `gitlab` TF component.
             'clamav': {
-                'ref': 'docker.io/clamav/clamav:1.4.2-23',
+                'ref': 'docker.io/clamav/clamav:1.4.2-27',
                 'url': 'https://hub.docker.com/r/clamav/clamav'
             },
             'gitlab': {
-                'ref': 'docker.io/gitlab/gitlab-ce:17.8.1-ce.0',
+                'ref': 'docker.io/gitlab/gitlab-ce:17.8.2-ce.0',
                 'url': 'https://hub.docker.com/r/gitlab/gitlab-ce'
             },
             'gitlab_runner': {
@@ -632,6 +632,11 @@ def env() -> Mapping[str, Optional[str]]:
         # https://dss.data.humancellatlas.org/v1:aa/1
         #
         'AZUL_DSS_SOURCE': None,
+
+        # Mirror data files from the indexed repository in a dedicated S3 bucket
+        # (1 yes, 0 no).
+        #
+        'AZUL_MIRRORING_ENABLED': '0',
 
         # A short string (no punctuation allowed) that identifies a Terraform
         # component i.e., a distinct set of Terraform resources to be deployed

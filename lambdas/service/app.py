@@ -70,6 +70,8 @@ from azul.health import (
 )
 from azul.indexer.document import (
     EntityType,
+)
+from azul.indexer.field import (
     FieldType,
     Nested,
 )
@@ -136,7 +138,7 @@ spec = {
         # changes and reset the minor version to zero. Otherwise, increment only
         # the minor version for backwards compatible changes. A backwards
         # compatible change is one that does not require updates to clients.
-        'version': '12.2',
+        'version': '12.3',
         'description': fd(f'''
             # Overview
 
