@@ -7,7 +7,6 @@ from collections import (
 from functools import (
     partial,
 )
-import json
 from unittest.mock import (
     MagicMock,
     PropertyMock,
@@ -18,7 +17,6 @@ from unittest.mock import (
 import attrs
 from chalice.app import (
     BadRequestError,
-    SQSRecord,
 )
 from elasticsearch import (
     TransportError,
@@ -30,12 +28,6 @@ from moto import (
     mock_aws,
 )
 
-from azul import (
-    queues,
-)
-from azul.azulclient import (
-    AzulClient,
-)
 from azul.indexer import (
     BundlePartition,
 )
@@ -63,9 +55,6 @@ from azul.plugins.repository.tdr_hca import (
 from azul.terra import (
     TDRSourceRef,
 )
-from azul.types import (
-    MutableJSONs,
-)
 from azul_test_case import (
     DCP2TestCase,
 )
@@ -73,7 +62,7 @@ from indexer.test_indexer import (
     DCP2IndexerTestCase,
 )
 from sqs_test_case import (
-    SqsTestCase,
+    WorkQueueTestCase,
 )
 
 log = get_test_logger(__name__)
@@ -85,7 +74,7 @@ def setUpModule():
 
 
 @mock_aws
-class TestIndexController(DCP2IndexerTestCase, SqsTestCase):
+class TestIndexController(DCP2IndexerTestCase, WorkQueueTestCase):
     source = DCP2TestCase.source.with_prefix(
         attrs.evolve(DCP2TestCase.source.spec.prefix,
                      partition=0)
@@ -94,33 +83,14 @@ class TestIndexController(DCP2IndexerTestCase, SqsTestCase):
     def setUp(self) -> None:
         super().setUp()
         self.index_service.create_indices(self.catalog)
-        self.client = AzulClient()
         app = MagicMock()
         self.controller = IndexController(app=app)
         app.catalog = self.catalog
         IndexController.index_service.fset(self.controller, self.index_service)
-        self.queue_manager = queues.Queues(delete=True)
 
     def tearDown(self):
         self.index_service.delete_indices(self.catalog)
         super().tearDown()
-
-    def _mock_sqs_record(self, body, *, attempts: int = 1):
-        event_dict = {
-            'body': json.dumps(body),
-            'receiptHandle': 'ThisWasARandomString',
-            'attributes': {'ApproximateReceiveCount': attempts}
-        }
-        return SQSRecord(event_dict=event_dict, context={})
-
-    def _read_queue(self, queue) -> MutableJSONs:
-        messages = self.queue_manager.read_messages(queue)
-        # For unknown reasons, Moto 4.0.6 requires reading the queues a second
-        # time whereas 2.0.6 didn't. It *is* more realistic, but I am not sure
-        # how reliable this is.
-        messages += self.queue_manager.read_messages(queue)
-        message_bodies = [json.loads(m.body) for m in messages]
-        return message_bodies
 
     def _fqid_from_notification(self, notification):
         fqid = notification['notification']['bundle_fqid']
