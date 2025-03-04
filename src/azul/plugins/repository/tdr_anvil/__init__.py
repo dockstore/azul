@@ -467,7 +467,7 @@ class Plugin(TDRPlugin[TDRAnvilBundle, TDRAnvilBundleFQID]):
         source = bundle_fqid.source.spec
         result = TDRAnvilBundle(fqid=bundle_fqid)
         linked_file_refs = set()
-        for file_ref, file_row in self._get_batch(bundle_fqid):
+        for file_ref, file_row in self._get_bundle_batch(bundle_fqid):
             is_supplementary = file_row['is_supplementary']
             result.add_entity(file_ref,
                               self._version,
@@ -512,7 +512,7 @@ class Plugin(TDRPlugin[TDRAnvilBundle, TDRAnvilBundleFQID]):
         assert bundle_fqid.is_batched, bundle_fqid
         source = bundle_fqid.source.spec
         result = TDRAnvilBundle(fqid=bundle_fqid)
-        batch = self._get_batch(bundle_fqid)
+        batch = self._get_bundle_batch(bundle_fqid)
         dataset = self._get_dataset(source)
         for (ref, row) in itertools.chain([dataset], batch):
             result.add_entity(ref, self._version, dict(row), is_orphan=True)
@@ -529,20 +529,29 @@ class Plugin(TDRPlugin[TDRAnvilBundle, TDRAnvilBundleFQID]):
         return ref, row
 
     def _get_batch(self,
-                   bundle_fqid: TDRAnvilBundleFQID
+                   source: TDRSourceSpec,
+                   table_name: str,
+                   batch_prefix: str,
+                   *,
+                   id_column: str
                    ) -> Iterable[tuple[EntityReference, BigQueryRow]]:
-        source = bundle_fqid.source.spec
-        batch_prefix = bundle_fqid.batch_prefix
-        table_name = bundle_fqid.table_name
         columns = self._columns(table_name)
         assert not any(map(str.isupper, batch_prefix)), source
         for row in self._run_sql(f'''
             SELECT {', '.join(sorted(columns))}
             FROM {backtick(self._full_table_name(source, table_name))}
-            WHERE STARTS_WITH(LOWER(datarepo_row_id), {batch_prefix!r})
+            WHERE STARTS_WITH(LOWER({id_column}), {batch_prefix!r})
         '''):
             ref = EntityReference(entity_type=table_name, entity_id=row['datarepo_row_id'])
             yield ref, row
+
+    def _get_bundle_batch(self,
+                          bundle_fqid: TDRAnvilBundleFQID
+                          ) -> Iterable[tuple[EntityReference, BigQueryRow]]:
+        return self._get_batch(bundle_fqid.source.spec,
+                               bundle_fqid.table_name,
+                               bundle_fqid.batch_prefix,
+                               id_column='datarepo_row_id')
 
     def _bundle_entity(self, bundle_fqid: TDRAnvilBundleFQID) -> KeyReference:
         source = bundle_fqid.source
