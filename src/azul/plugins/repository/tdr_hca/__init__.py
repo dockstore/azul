@@ -30,10 +30,14 @@ from more_itertools import (
 from azul import (
     R,
     config,
+    iif,
 )
 from azul.bigquery import (
     BigQueryRow,
     backtick,
+)
+from azul.collections import (
+    singleton,
 )
 from azul.drs import (
     RegularDRSURI,
@@ -163,21 +167,21 @@ class TDRHCABundle(HCABundle[TDRBundleFQID], TDRBundle):
                                       if isinstance(content, str)
                                       else content)
 
-    metadata_columns: ClassVar[set[str]] = {
+    metadata_columns: ClassVar[frozenset[str]] = singleton(
         'content'
-    }
+    )
 
-    data_columns: ClassVar[set[str]] = metadata_columns | {
+    data_columns: ClassVar[frozenset[str]] = frozenset({
         'descriptor',
         'JSON_EXTRACT_SCALAR(content, "$.file_core.file_name") AS file_name',
         'file_id'
-    }
+    })
 
     # `links_id` is omitted for consistency since the other sets do not include
     # the primary key
-    links_columns: ClassVar[set[str]] = metadata_columns | {
+    links_columns: ClassVar[frozenset[str]] = singleton(
         'project_id'
-    }
+    )
 
     def _add_manifest_entry(self,
                             entity: EntityReference,
@@ -389,11 +393,12 @@ class Plugin(TDRPlugin[TDRHCABundle, TDRBundleFQID]):
         """
         pk_column = entity_type + '_id'
         version_column = 'version'
-        non_pk_columns = (
-            TDRHCABundle.links_columns if entity_type == 'links'
-            else TDRHCABundle.data_columns if entity_type.endswith('_file')
-            else TDRHCABundle.metadata_columns
-        )
+        columns = {
+            pk_column,
+            *TDRHCABundle.metadata_columns,
+            *iif(entity_type == 'links', TDRHCABundle.links_columns),
+            *iif(entity_type.endswith('_file'), TDRHCABundle.data_columns)
+        }
         table_name = backtick(self._full_table_name(source, entity_type))
         entity_id_type = one(set(map(type, entity_ids)))
 
@@ -412,7 +417,7 @@ class Plugin(TDRPlugin[TDRHCABundle, TDRBundleFQID]):
             where_values = ((sq(str(entity_id)),) for entity_id in entity_ids)
             expected = entity_ids
         query = f'''
-            SELECT {', '.join({pk_column, *non_pk_columns})}
+            SELECT {', '.join(columns)}
             FROM {table_name}
             WHERE {self._in(where_columns, where_values)}
         '''
