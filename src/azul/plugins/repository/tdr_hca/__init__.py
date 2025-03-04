@@ -74,8 +74,8 @@ from azul.types import (
     MutableJSON,
     MutableJSONs,
 )
-from humancellatlas.data.metadata.api import (
-    Entity,
+from humancellatlas.data.metadata import (
+    api,
 )
 
 log = logging.getLogger(__name__)
@@ -187,7 +187,7 @@ class TDRHCABundle(HCABundle[TDRBundleFQID], TDRBundle):
         descriptor = json.loads(row['descriptor'])
         # FIXME: Move validation of descriptor to the metadata API
         #        https://github.com/DataBiosphere/azul/issues/6299
-        Entity.validate_described_by(descriptor)
+        api.Entity.validate_described_by(descriptor)
         return HCAFile.from_descriptor(descriptor,
                                        uuid=descriptor['file_id'],
                                        name=row['file_name'],
