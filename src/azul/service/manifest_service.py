@@ -2195,7 +2195,7 @@ class PFBVerbatimManifestGenerator(VerbatimManifestGenerator):
                 # can only occur on lower deployments, we make the inclusion of
                 # relations conditional on avoiding (2) and (3).
                 #
-                if self.include_orphans:
+                if config.enable_verbatim_relations and self.include_orphans:
                     relations = plugin.verbatim_pfb_relations(replica)
                     entity_relations = [
                         PFBRelation(dst_name=replica_type, dst_id=entity_id)
