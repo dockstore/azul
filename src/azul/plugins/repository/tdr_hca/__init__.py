@@ -50,6 +50,9 @@ from azul.indexer.document import (
     EntityReference,
     EntityType,
 )
+from azul.plugins.metadata.hca import (
+    HCAFile,
+)
 from azul.plugins.metadata.hca.bundle import (
     HCABundle,
 )
@@ -157,11 +160,7 @@ class TDRHCABundle(HCABundle[TDRBundleFQID], TDRBundle):
         if is_stitched:
             self.stitched.add(entity.entity_id)
         if entity.entity_type.endswith('_file'):
-            descriptor = json.loads(row['descriptor'])
-            # FIXME: Move validation of descriptor to the metadata API
-            #        https://github.com/DataBiosphere/azul/issues/6299
-            Entity.validate_described_by(descriptor)
-            self._add_manifest_entry(entity, row, descriptor)
+            self._add_manifest_entry(entity, self.file_from_row(row))
         content = row['content']
         self.metadata[str(entity)] = (json.loads(content)
                                       if isinstance(content, str)
@@ -183,26 +182,27 @@ class TDRHCABundle(HCABundle[TDRBundleFQID], TDRBundle):
         'project_id'
     )
 
+    @classmethod
+    def file_from_row(cls, row: BigQueryRow) -> HCAFile:
+        descriptor = json.loads(row['descriptor'])
+        # FIXME: Move validation of descriptor to the metadata API
+        #        https://github.com/DataBiosphere/azul/issues/6299
+        Entity.validate_described_by(descriptor)
+        return HCAFile.from_descriptor(descriptor,
+                                       uuid=descriptor['file_id'],
+                                       name=row['file_name'],
+                                       drs_uri=cls._parse_drs_uri(row['file_id'], descriptor))
+
     def _add_manifest_entry(self,
                             entity: EntityReference,
-                            row: BigQueryRow,
-                            descriptor: JSON
-                            ) -> None:
-        self.manifest[str(entity)] = {
-            'name': row['file_name'],
-            'uuid': descriptor['file_id'],
-            'version': descriptor['file_version'],
-            'content-type': f'{descriptor["content_type"]}; dcp-type=data',
-            'size': descriptor['size'],
-            'indexed': False,
-            'drs_uri': self._parse_drs_uri(row['file_id'], descriptor),
-            'sha256': descriptor['sha256'],
-            'sha1': descriptor.get('sha1'),
-            'crc32c': descriptor['crc32c'],
-            's3_etag': descriptor.get('s3_etag'),
-        }
+                            file: HCAFile) -> None:
+        file_json = file.to_json()
+        file_json['content-type'] = f'{file_json.pop("content_type")}; dcp-type=data'
+        file_json['indexed'] = False
+        self.manifest[str(entity)] = file_json
 
-    def _parse_drs_uri(self,
+    @classmethod
+    def _parse_drs_uri(cls,
                        file_id: str | None,
                        descriptor: JSON
                        ) -> str | None:

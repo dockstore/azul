@@ -13,6 +13,7 @@ from typing import (
     AbstractSet,
     ClassVar,
     Iterable,
+    Literal,
     Mapping,
     Self,
     Sequence,
@@ -31,6 +32,9 @@ from azul import (
     CatalogName,
     cached_property,
     config,
+)
+from azul.attrs import (
+    SerializableAttrs,
 )
 from azul.chalice import (
     Authentication,
@@ -535,6 +539,11 @@ class MetadataPlugin[BUNDLE: Bundle](Plugin[BUNDLE]):
     def filter_stage(self) -> 'type[FilterStage]':
         raise NotImplementedError
 
+    @property
+    @abstractmethod
+    def file_class(self) -> type['File']:
+        raise NotImplementedError
+
 
 class RepositoryPlugin[BUNDLE: Bundle,
                        SOURCE_SPEC: SourceSpec,
@@ -734,16 +743,21 @@ class RepositoryPlugin[BUNDLE: Bundle,
         raise NotImplementedError
 
 
-@attr.s(auto_attribs=True, kw_only=True)
-class RepositoryFileDownload(metaclass=ABCMeta):
-    #: The UUID of the file to be downloaded
-    file_uuid: str
+@attr.s(auto_attribs=True, frozen=True, kw_only=True)
+class File(SerializableAttrs, metaclass=ABCMeta):
+    """
+    A reference to a data file in the repository.
+    """
+
+    #: The UUID of the data file. Some plugins use the same UUID for the
+    #: file's metadata document.
+    uuid: str
 
     #: The name of the file on the user's disk.
-    file_name: str
+    name: str
 
     #: Optional version of the file. Defaults to the most recent version.
-    file_version: str | None
+    version: str | None
 
     #: The DRS URI of the file in the repository from which to download the
     #: file.
@@ -754,6 +768,36 @@ class RepositoryFileDownload(metaclass=ABCMeta):
     #: drs_uri``) usually require this to be set. Plugins that don't will
     #: ignore this.
     drs_uri: str | None
+
+    #: The file's size on disk, if known.
+    size: int | None = None
+
+    #: The file's MIME content type, if known
+    content_type: str | None = None
+
+    @classmethod
+    @abstractmethod
+    def from_hit(cls, hit: JSON) -> Self:
+        """
+        Instantiate this class from an entity aggregate document retrieved from
+        Elasticsearch.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def digest(self) -> tuple[str, Literal['sha256', 'sha1', 'md5']]:
+        """
+        A hexadecimal digest of the file's contents, and the type of digest used.
+        The set of supported digest types is limited to those we believe to
+        present an acceptable risk of hash collisions.
+        """
+        raise NotImplementedError
+
+
+@attr.s(auto_attribs=True, kw_only=True)
+class RepositoryFileDownload(metaclass=ABCMeta):
+    #: The file being downloaded
+    file: File
 
     #: True if the download of a file requires its DRS URI
     needs_drs_uri: ClassVar[bool] = False

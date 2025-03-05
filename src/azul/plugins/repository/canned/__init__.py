@@ -277,8 +277,8 @@ class CannedFileDownload(RepositoryFileDownload):
                authentication: Authentication | None
                ) -> None:
         assert isinstance(plugin, Plugin)
-        url = plugin._direct_file_url(file_uuid=self.file_uuid,
-                                      file_version=self.file_version)
+        url = plugin._direct_file_url(file_uuid=self.file.uuid,
+                                      file_version=self.file.version)
         self._location = url
 
     @property

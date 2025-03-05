@@ -15,6 +15,7 @@ from unittest.mock import (
     MagicMock,
 )
 
+import attr
 import certifi
 from chalice.config import (
     Config as ChaliceConfig,
@@ -49,6 +50,9 @@ from azul.http import (
 from azul.logging import (
     configure_test_logging,
     get_test_logger,
+)
+from azul.plugins.metadata.hca import (
+    HCAFile,
 )
 from azul.service.repository_service import (
     RepositoryService,
@@ -123,17 +127,19 @@ class TestRepositoryFilesWithTDR(DCP2TestCase, RepositoryFilesTestCase):
         organic_file_name = 'foo.txt'
         drs_path_id = 'v1_c99baa6f-24ce-4837-8c4a-47ca4ec9d292_b967ecc9-98b2-43c6-8bac-28c0a4fa7812'
         drs_uri = f'drs://{self._drs_domain_name}/{drs_path_id}'
-        file_doc = {
-            'name': organic_file_name,
-            'version': file_version,
-            'drs_uri': drs_uri,
-            'size': 1,
-        }
+        file = HCAFile(uuid=file_uuid,
+                       name=organic_file_name,
+                       version=file_version,
+                       drs_uri=drs_uri,
+                       size=1,
+                       content_type='text/plain',
+                       sha256='123',
+                       crc32c='abc')
         for fetch in True, False:
             with self.subTest(fetch=fetch):
                 with mock.patch.object(RepositoryService,
                                        'get_data_file',
-                                       return_value=file_doc):
+                                       return_value=file):
                     azul_url = self.base_url.set(path=['repository', 'files', file_uuid],
                                                  args=dict(catalog=self.catalog, version=file_version))
                     if fetch:
@@ -167,11 +173,11 @@ class TestRepositoryFilesWithTDR(DCP2TestCase, RepositoryFilesTestCase):
                             response = dict(response.headers)
                             self.assertUrlEqual(pre_signed_gs, response['Location'])
 
-        file_doc['drs_uri'] = None
+        file = attr.evolve(file, drs_uri=None)
         with self.subTest('phantom'):
             with mock.patch.object(RepositoryService,
                                    'get_data_file',
-                                   return_value=file_doc):
+                                   return_value=file):
                 response = client.request('GET', str(azul_url), redirect=False)
             self.assertEqual(response.status, 404)
 
@@ -273,13 +279,15 @@ class TestRepositoryFilesWithDSS(DCP1TestCase,
         file_uuid = '701c9a63-23da-4978-946b-7576b6ad088a'
         file_version = '2018-09-12T12:11:54.054628Z'
         organic_file_name = 'foo.txt'
-        file_doc = {
-            'name': organic_file_name,
-            'version': file_version,
-            'drs_uri': f'drs://{self._drs_domain_name}/{file_uuid}?version={file_version}',
-            'size': 3,
-        }
-        with mock.patch.object(RepositoryService, 'get_data_file', return_value=file_doc):
+        file = HCAFile(uuid=file_uuid,
+                       name=organic_file_name,
+                       version=file_version,
+                       drs_uri=f'drs://{self._drs_domain_name}/{file_uuid}?version={file_version}',
+                       size=3,
+                       content_type='text/plain',
+                       sha256='123',
+                       crc32c='abc')
+        with mock.patch.object(RepositoryService, 'get_data_file', return_value=file):
             args = {
                 'replica': 'aws',
                 'version': file_version
@@ -360,6 +368,7 @@ class TestRepositoryFilesWithDSS(DCP1TestCase,
                                 azul_url.args['requestIndex'] = '1'
                                 azul_url.args['fileName'] = file_name
                                 azul_url.args['replica'] = 'aws'
+                                azul_url.args['sha256'] = file.sha256
                                 self.assertUrlEqual(azul_url, location)
 
                                 helper.add(responses.Response(method='GET',

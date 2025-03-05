@@ -51,6 +51,9 @@ from azul.openapi import (
     responses,
     schema,
 )
+from azul.plugins import (
+    File,
+)
 from azul.service.repository_service import (
     RepositoryService,
 )
@@ -195,38 +198,38 @@ class DRSController(SourceController):
                 })
 
     @deprecated('DOS support will be removed')
-    def file_to_drs(self, catalog: CatalogName, file):
+    def file_to_drs(self, catalog: CatalogName, file: File):
         """
         Converts an aggregate file document to a DRS data object response.
         """
         urls = [
             self.file_url_func(catalog=catalog,
-                               file_uuid=file['uuid'],
-                               version=file['version'],
+                               file_uuid=file.uuid,
+                               version=file.version,
                                fetch=False,
                                wait='1',
-                               fileName=file['name']),
-            self._dos_gs_url(file['uuid'], file['version'])
+                               fileName=file.name),
+            self._dos_gs_url(file.uuid, file.version)
         ]
 
         return {
-            'id': file['uuid'],
+            'id': file.uuid,
             'urls': [
                 {
                     'url': str(url)
                 }
                 for url in urls
             ],
-            'size': str(file['size']),
+            'size': str(file.size),
             'checksums': [
                 {
-                    'checksum': file['sha256'],
+                    'checksum': file.sha256,
                     'type': 'sha256'
                 }
             ],
-            'aliases': [file['name']],
-            'version': file['version'],
-            'name': file['name']
+            'aliases': [file.name],
+            'version': file.version,
+            'name': file.name
         }
 
 

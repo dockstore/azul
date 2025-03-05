@@ -6,10 +6,14 @@ import json
 import logging
 import time
 from typing import (
+    Any,
+    Callable,
     TYPE_CHECKING,
     cast,
 )
 
+import attr
+import attrs
 from chalice import (
     BadRequestError,
     NotFoundError,
@@ -41,6 +45,7 @@ from azul.indexer.field import (
     pass_thru_bool,
 )
 from azul.plugins import (
+    File,
     RepositoryFileDownload,
     RepositoryPlugin,
 )
@@ -48,6 +53,7 @@ from azul.service import (
     BadArgumentException,
 )
 from azul.service.app_controller import (
+    Mandatory,
     validate_catalog,
     validate_params,
 )
@@ -64,6 +70,7 @@ from azul.service.source_controller import (
 )
 from azul.types import (
     JSON,
+    is_optional,
 )
 from azul.uuids import (
     InvalidUUIDError,
@@ -193,30 +200,30 @@ class RepositoryController(SourceController):
                       authentication: Authentication | None
                       ):
 
-        def validate_version(version: str):
-            # This function exists so the repository plugin can be lazily loaded
-            # instead of being loaded before `validate_params()` can run. This is
-            # desired since `validate_params()` validates the params in the order
-            # given, and we want the catalog to be validated before the repository
-            # plugin is loaded, which is an action that requires a valid catalog.
-            self.repository_plugin(catalog).validate_version(version)
-
+        # Check the catalog in a separate step so that the plugins can be loaded
+        # safely, since doing so requires a valid catalog. We need the metadata
+        # plugin to know which file parameters to expect, and the repository
+        # plugin to validate the file version.
         validate_params(query_params,
                         catalog=validate_catalog,
-                        version=validate_version,
-                        fileName=str,
-                        wait=self._validate_wait,
                         requestIndex=int,
+                        allow_extra_params=True)
+
+        request_index = int(query_params.get('requestIndex', '0'))
+
+        validate_params(query_params,
+                        catalog=str,
+                        requestIndex=int,
+                        wait=self._validate_wait,
                         replica=self._validate_replica,
-                        drsUri=str,
-                        token=str)
+                        token=str,
+                        **self._file_param_validators(catalog, request_index))
 
         file_version = query_params.get('version')
         replica = query_params.get('replica')
         file_name = query_params.get('fileName')
         drs_uri = query_params.get('drsUri')
         wait = query_params.get('wait')
-        request_index = int(query_params.get('requestIndex', '0'))
         token = query_params.get('token')
 
         plugin = self.repository_plugin(catalog)
@@ -232,15 +239,9 @@ class RepositoryController(SourceController):
             if file is None:
                 raise NotFoundError(f'Unable to find file {file_uuid!r}, '
                                     f'version {file_version!r} in catalog {catalog!r}')
-            file_version = file['version']
-            drs_uri = file['drs_uri']
-            file_size = file['size']
-            if file_name is None:
-                file_name = file['name']
+            file = attr.evolve(file, **adict(name=file_name, drs_uri=drs_uri))
         else:
-            file_size = None
-            assert file_version is not None
-            assert file_name is not None
+            file = self._file_from_request(catalog, file_uuid, query_params)
 
         try:
             range_specifier = headers['range']
@@ -248,7 +249,7 @@ class RepositoryController(SourceController):
             pass
         else:
             requested_range = self._parse_range_request_header(range_specifier)
-            if requested_range == [(file_size, None)]:
+            if requested_range == [(file.size, None)]:
                 # Due to https://github.com/curl/curl/issues/10521 which causes
                 # curl below 8.5.0 to fail when getting a 416 response for an
                 # attempt to resume a previously completed file download,
@@ -258,15 +259,10 @@ class RepositoryController(SourceController):
                 return {
                     'Status': 206,
                     'Content-Length': 0,
-                    'Content-Range': f'bytes */{file_size}'
+                    'Content-Range': f'bytes */{file.size}'
                 }
 
-        download = download_cls(file_uuid=file_uuid,
-                                file_name=file_name,
-                                file_version=file_version,
-                                drs_uri=drs_uri,
-                                replica=replica,
-                                token=token)
+        download = download_cls(file=file, replica=replica, token=token)
         try:
             download.update(plugin, authentication)
         except LimitedTimeoutException as e:
@@ -289,10 +285,7 @@ class RepositoryController(SourceController):
                     retry_after = round(retry_after - server_side_sleep)
                 else:
                     assert False, wait
-            query_params = adict(
-                version=download.file_version,
-                fileName=download.file_name,
-                drsUri=download.drs_uri,
+            query_params = self._file_to_request(download.file) | adict(
                 token=download.token,
                 replica=download.replica,
                 requestIndex=request_index + 1,
@@ -308,10 +301,7 @@ class RepositoryController(SourceController):
             }
         elif download.location is not None:
             log_data = {
-                'file_name': file_name,
-                'file_uuid': file_uuid,
-                'file_version': file_version,
-                'file_size': file_size,
+                **file.to_json(),
                 'catalog': catalog,
                 'fetch': fetch,
                 **{
@@ -325,7 +315,7 @@ class RepositoryController(SourceController):
                 'Location': download.location
             }
         else:
-            assert download.drs_uri is None, download
+            assert download.file.drs_uri is None, download
             raise NotFoundError(f'File {file_uuid!r} with version {file_version!r} '
                                 f'was found in catalog {catalog!r}, however no download is currently available')
 
@@ -355,3 +345,72 @@ class RepositoryController(SourceController):
     def _validate_replica(self, replica: str):
         if replica not in ('aws', 'gcp'):
             raise ValueError
+
+    def _file_param_validators(self,
+                               catalog: CatalogName,
+                               request_index: int
+                               ) -> dict[str, Callable[[Any], Any]]:
+        all_file_validators = dict(
+            version=self.repository_plugin(catalog).validate_version,
+            fileName=str,
+            drsUri=str,
+            sha256=str,
+            md5=str
+        )
+        result = {}
+        for a in attrs.fields(self._file_class(catalog)):
+            try:
+                param_name = self._file_params_by_field[a.name]
+            except KeyError:
+                assert a.name == 'uuid' or is_optional(a.type), a
+            else:
+                validator = all_file_validators[param_name]
+                if request_index > 0 and not is_optional(a.type):
+                    validator = Mandatory(validator)
+                result[param_name] = validator
+        return result
+
+    def _file_from_request(self,
+                           catalog: CatalogName,
+                           uuid: str,
+                           params: Mapping[str, str]
+                           ) -> File:
+        file_class = self._file_class(catalog)
+        fields = {}
+        for a in attrs.fields(file_class):
+            if a.name == 'uuid':
+                value = uuid
+            else:
+                try:
+                    # A KeyError here means we do not support passing the field as a query parameter
+                    param_name = self._file_params_by_field[a.name]
+                    # A KeyError here means we do support it, but no parameter was provided
+                    value = params[param_name]
+                except KeyError:
+                    assert is_optional(a.type), a
+                    value = None
+            fields[a.name] = value
+        return file_class.from_json(fields)
+
+    def _file_to_request(self, file: File) -> dict[str, str]:
+        params = {}
+        for a in attrs.fields(type(file)):
+            if a.name != 'uuid':
+                value = getattr(file, a.name)
+                param_name = self._file_params_by_field.get(a.name)
+                if param_name is None or not isinstance(value, str):
+                    assert is_optional(a.type), (a.name, file)
+                else:
+                    params[param_name] = value
+        return params
+
+    _file_params_by_field = {
+        'version': 'version',
+        'name': 'fileName',
+        'drs_uri': 'drsUri',
+        'sha256': 'sha256',
+        'md5': 'md5'
+    }
+
+    def _file_class(self, catalog: CatalogName) -> type[File]:
+        return self.service.metadata_plugin(catalog).file_class

@@ -11,6 +11,7 @@ from uuid import (
     uuid5,
 )
 
+import attrs
 from furl import (
     furl,
 )
@@ -221,13 +222,13 @@ class DSSFileDownload(RepositoryFileDownload):
                plugin: RepositoryPlugin,
                authentication: Authentication | None
                ) -> None:
-        self.drs_uri = None  # to shorten the retry URLs
+        self.file = attrs.evolve(self.file, drs_uri=None)  # to shorten the retry URLs
         if self.replica is None:
             self.replica = 'aws'
         assert isinstance(plugin, Plugin)
         # noinspection PyProtectedMember
-        dss_url = plugin._direct_file_url(file_uuid=self.file_uuid,
-                                          file_version=self.file_version,
+        dss_url = plugin._direct_file_url(file_uuid=self.file.uuid,
+                                          file_version=self.file.version,
                                           replica=self.replica,
                                           token=self.token)
         dss_response = requests.get(dss_url, allow_redirects=False)
@@ -239,7 +240,7 @@ class DSSFileDownload(RepositoryFileDownload):
             query = urllib.parse.parse_qs(location.query, strict_parsing=True)
             self.token = one(query['token'])
             self.replica = one(query['replica'])
-            self.file_version = one(query['version'])
+            self.file = attrs.evolve(self.file, version=one(query['version']))
             self._retry_after = retry_after
         elif dss_response.status_code == 302:
             location = dss_response.headers['Location']
@@ -257,7 +258,7 @@ class DSSFileDownload(RepositoryFileDownload):
                     params = {
                         'Bucket': bucket,
                         'Key': location.path[1:],
-                        'ResponseContentDisposition': 'attachment;filename=' + self.file_name,
+                        'ResponseContentDisposition': 'attachment;filename=' + self.file.name,
                     }
                     location = s3.generate_presigned_url(ClientMethod=s3.get_object.__name__,
                                                          ExpiresIn=round(expires - time.time()),
