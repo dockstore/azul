@@ -33,6 +33,7 @@ from typing import (
 )
 from unittest.mock import (
     MagicMock,
+    PropertyMock,
     patch,
 )
 import unittest.result
@@ -2147,20 +2148,26 @@ class TestAnvilManifests(AnvilManifestTestCase):
                 expected_rows = all_rows if expect_orphans else linked_rows
                 self._assert_jsonl(expected_rows, response)
 
-    def test_verbatim_pfb_manifest(self):
-        for orphans, filters in [
-            (True, {}),
-            (True, self.dataset_id_filters),
-            (True, self.dataset_title_filters),
-            (False, self.neutral_file_filters),
-            (False, {**self.neutral_file_filters, **self.dataset_title_filters})
-        ]:
-            with self.subTest(orphans=orphans, filters=filters):
-                expected_manifest = self._expected_pfb_manifest(orphans)
-                expected_schema, expected_entities = expected_manifest
-                response = self._get_manifest(ManifestFormat.verbatim_pfb, filters)
-                self.assertEqual(200, response.status_code)
-                self._assert_pfb(expected_schema, expected_entities, response)
+    def test_verbatim_pfb_manifest_with_relations(self):
+        self._test_verbatim_pfb_manifest(enable_relations=True)
+
+    def _test_verbatim_pfb_manifest(self, *, enable_relations: bool):
+        with patch.object(type(config),
+                          'enable_verbatim_relations',
+                          new=PropertyMock(return_value=enable_relations)):
+            for orphans, filters in [
+                (True, {}),
+                (True, self.dataset_id_filters),
+                (True, self.dataset_title_filters),
+                (False, self.neutral_file_filters),
+                (False, {**self.neutral_file_filters, **self.dataset_title_filters})
+            ]:
+                with self.subTest(orphans=orphans, relations=enable_relations, filters=filters):
+                    expected_manifest = self._expected_pfb_manifest(orphans)
+                    expected_schema, expected_entities = expected_manifest
+                    response = self._get_manifest(ManifestFormat.verbatim_pfb, filters)
+                    self.assertEqual(200, response.status_code)
+                    self._assert_pfb(expected_schema, expected_entities, response)
 
     @cache
     def _expected_pfb_manifest(self, include_orphans: bool) -> tuple[JSON, JSONs]:
