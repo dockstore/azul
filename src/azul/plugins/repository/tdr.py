@@ -30,6 +30,9 @@ from azul.auth import (
     Authentication,
     OAuth2,
 )
+from azul.bigquery import (
+    BigQueryRows,
+)
 from azul.drs import (
     AccessMethod,
     DRSClient,
@@ -208,7 +211,7 @@ class TDRPlugin[TDR_BUNDLE: TDRBundle,
     def format_version(cls, version: datetime.datetime) -> str:
         return format_dcp2_datetime(version)
 
-    def _run_sql(self, query):
+    def _run_sql(self, query) -> BigQueryRows:
         return self.tdr.run_sql(query)
 
     def _full_table_name(self, source: TDRSourceSpec, table_name: str) -> str:

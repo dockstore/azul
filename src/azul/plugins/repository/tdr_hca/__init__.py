@@ -66,6 +66,8 @@ from azul.terra import (
 from azul.types import (
     JSON,
     JSONs,
+    MutableJSON,
+    MutableJSONs,
     is_optional,
 )
 from humancellatlas.data.metadata.api import (
@@ -355,8 +357,8 @@ class Plugin(TDRPlugin[TDRHCABundle, TDRBundleFQID]):
         return bundle
 
     def _stitch_bundles(self,
-                        root_bundle: 'TDRHCABundle'
-                        ) -> tuple[EntitiesByType, Entities, list[JSON]]:
+                        root_bundle: TDRHCABundle
+                        ) -> tuple[EntitiesByType, Entities, MutableJSONs]:
         """
         Recursively follow dangling inputs to collect entities from upstream
         bundles, ensuring that no bundle is processed more than once.
@@ -366,7 +368,7 @@ class Plugin(TDRPlugin[TDRHCABundle, TDRBundleFQID]):
         root_entities = None
         unprocessed: set[TDRBundleFQID] = {root_bundle.fqid}
         processed: set[TDRBundleFQID] = set()
-        stitched_links: list[JSON] = []
+        stitched_links: MutableJSONs = []
         # Retrieving links in batches eliminates the risk of exceeding
         # BigQuery's maximum query size. Using a batches size 1000 appears to be
         # equally performant as retrieving the links without batching.
@@ -408,7 +410,7 @@ class Plugin(TDRPlugin[TDRHCABundle, TDRBundleFQID]):
 
     def _retrieve_links(self,
                         links_ids: set[TDRBundleFQID]
-                        ) -> dict[TDRBundleFQID, JSON]:
+                        ) -> dict[TDRBundleFQID, MutableJSON]:
         """
         Retrieve links entities from BigQuery and parse the `content` column.
         :param links_ids: Which links entities to retrieve.
@@ -523,7 +525,7 @@ class Plugin(TDRPlugin[TDRHCABundle, TDRBundleFQID]):
                 f'Dangling inputs not found in any bundle: {missing}')
         return bundles
 
-    def _merge_links(self, links_jsons: JSONs) -> JSON:
+    def _merge_links(self, links_jsons: MutableJSONs) -> MutableJSON:
         """
         Merge the links.json documents from multiple stitched bundles into a
         single document.
