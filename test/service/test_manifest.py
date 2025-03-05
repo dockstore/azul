@@ -2151,6 +2151,10 @@ class TestAnvilManifests(AnvilManifestTestCase):
     def test_verbatim_pfb_manifest_with_relations(self):
         self._test_verbatim_pfb_manifest(enable_relations=True)
 
+    # Due to manifest caching, these must be separate tests
+    def test_verbatim_pfb_manifest_without_relations(self):
+        self._test_verbatim_pfb_manifest(enable_relations=False)
+
     def _test_verbatim_pfb_manifest(self, *, enable_relations: bool):
         with patch.object(type(config),
                           'enable_verbatim_relations',
