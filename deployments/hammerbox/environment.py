@@ -934,6 +934,65 @@ anvil8_sources = mkdict(anvil7_sources, 255, mkdelta([
     # @formatter:on
 ]))
 
+anvil9_sources = mkdict(anvil8_sources, 286, mkdelta([
+    # @formatter:off
+    mksrc('bigquery', 'datarepo-b555b2f5', 'ANVIL_1000G_PRIMED_data_model_20240410_ANV5_202502211647'),
+    mksrc('bigquery', 'datarepo-265cde27', 'ANVIL_ALSCompute_Collection_GRU_20231016_ANV5_202410310107'),
+    mksrc('bigquery', 'datarepo-853bbf15', 'ANVIL_ALSCompute_Collection_HMB_20241018_ANV5_202410232001'),
+    mksrc('bigquery', 'datarepo-5216abda', 'ANVIL_CCDG_Broad_AI_IBD_McCauley_WGS_20240114_ANV5_202502052138'),
+    mksrc('bigquery', 'datarepo-078d7ad8', 'ANVIL_CCDG_Broad_CVD_AF_Figtree_BioHeart_Arrays_20250206_ANV5_202502201726'), # noqa E501
+    mksrc('bigquery', 'datarepo-ea743ee1', 'ANVIL_CCDG_Broad_CVD_AF_Figtree_BioHeart_HMB_WES_20250206_ANV5_202502201731'), # noqa E501
+    mksrc('bigquery', 'datarepo-088ebd14', 'ANVIL_CCDG_Broad_CVD_AF_GAPP_DS_MDS_Arrays_20250206_ANV5_202502201736'),
+    mksrc('bigquery', 'datarepo-147aff13', 'ANVIL_CCDG_Broad_CVD_AF_GAPP_DS_MDS_WES_20250206_ANV5_202502201740'),
+    mksrc('bigquery', 'datarepo-897ad869', 'ANVIL_CCDG_Broad_CVD_AF_Marcus_UCSF_Arrays_20250206_ANV5_202502201745'),
+    mksrc('bigquery', 'datarepo-ac2033df', 'ANVIL_CCDG_Broad_CVD_AF_Marcus_UCSF_HMB_WES_20250206_ANV5_202502201749'),
+    mksrc('bigquery', 'datarepo-190647f7', 'ANVIL_CCDG_Broad_CVD_AF_VAFAR_Arrays_20250219_ANV5_202502201753'),
+    mksrc('bigquery', 'datarepo-9694bb1c', 'ANVIL_CCDG_Broad_MI_ATVB_DS_CVD_WES_20250206_ANV5_202502201757'),
+    mksrc('bigquery', 'datarepo-6a7bfee9', 'ANVIL_CCDG_Broad_MI_BRAVE_GRU_WES_20250206_ANV5_202502201801'),
+    mksrc('bigquery', 'datarepo-12048ad1', 'ANVIL_CCDG_Broad_NP_Epilepsy_AUSALF_HMB_IRB_WES_20230128_ANV5_202502201806'), # noqa E501
+    mksrc('bigquery', 'datarepo-f101bba7', 'ANVIL_CCDG_Broad_NP_Epilepsy_AUSRMB_DS_EAED_IRB_WES_20230621_ANV5_202502201810'), # noqa E501
+    mksrc('bigquery', 'datarepo-1f264a75', 'ANVIL_CCDG_Broad_NP_Epilepsy_AUTMUV_DS_NS_ADLT_WES_20230128_ANV5_202502201814'), # noqa E501
+    mksrc('bigquery', 'datarepo-6d9ad64a', 'ANVIL_CCDG_Broad_NP_Epilepsy_AUTMUV_DS_NS_WES_20230314_ANV5_202502201818'),
+    mksrc('bigquery', 'datarepo-724f8958', 'ANVIL_CCDG_Broad_NP_Epilepsy_BRAUSP_DS_WES_20240201_ANV5_202502201822'),
+    mksrc('bigquery', 'datarepo-1d96b10b', 'ANVIL_CCDG_Broad_NP_Epilepsy_CANCAL_GRU_v2_WES_20240201_ANV5_202502201826'),
+    mksrc('bigquery', 'datarepo-aa7f9c50', 'ANVIL_CCDG_Broad_NP_Epilepsy_DEUUGS_DS_EP_MDS_WES_20240201_ANV5_202502201830'), # noqa E501
+    mksrc('bigquery', 'datarepo-aef3d233', 'ANVIL_CCDG_Broad_NP_Epilepsy_TWNCGM_HMB_NPU_AdultsONLY_WES_20240201_ANV5_202502201834'), # noqa E501
+    mksrc('bigquery', 'datarepo-95c60b51', 'ANVIL_CCDG_Broad_NP_Epilepsy_USALCH_HMB_WES_20230126_ANV5_202502201839'),
+    mksrc('bigquery', 'datarepo-b5486758', 'ANVIL_CCDG_Broad_NP_Epilepsy_USAMON_HMB_WES_20230131_ANV5_202502201843'),
+    mksrc('bigquery', 'datarepo-0ef2f4b9', 'ANVIL_CMG_UWASH_DS_BAV_IRB_PUB_RD_20250206_ANV5_202502201846'),
+    mksrc('bigquery', 'datarepo-e85fc320', 'ANVIL_CMG_UWASH_DS_BDIS_20250206_ANV5_202502201850'),
+    mksrc('bigquery', 'datarepo-a5e0fb2a', 'ANVIL_CMG_UWASH_DS_HFA_20250206_ANV5_202502201859'),
+    mksrc('bigquery', 'datarepo-28813dc5', 'ANVIL_CMG_UWASH_DS_NBIA_20250206_ANV5_202502201903'),
+    mksrc('bigquery', 'datarepo-418e6f5b', 'ANVIL_CMG_UWASH_HMB_20250219_ANV5_202502201916'),
+    mksrc('bigquery', 'datarepo-11e44295', 'ANVIL_CMG_UWASH_HMB_IRB_20250219_ANV5_202502201921'),
+    mksrc('bigquery', 'datarepo-2c303369', 'ANVIL_CMG_UWash_DS_CHDEF_20250224_ANV5_202502241753'),
+    mksrc('bigquery', 'datarepo-0e0af0a8', 'ANVIL_CMG_UWash_DS_EP_20250219_ANV5_202502201854'),
+    mksrc('bigquery', 'datarepo-766c47dd', 'ANVIL_CMG_UWash_GRU_20250224_ANV5_202502241706'),
+    mksrc('bigquery', 'datarepo-aa22e87e', 'ANVIL_CMG_UWash_GRU_IRB_20250224_ANV5_202502241723'),
+    mksrc('bigquery', 'datarepo-3f73ca7a', 'ANVIL_CMG_Yale_GRU_20221020_ANV5_202502070356'),
+    mksrc('bigquery', 'datarepo-7c44dbc8', 'ANVIL_CMH_GAFK_ES_20240301_ANV5_202502201925'),
+    mksrc('bigquery', 'datarepo-97f2fa00', 'ANVIL_CMH_GAFK_GS_long_read_20240301_ANV5_202502201932'),
+    mksrc('bigquery', 'datarepo-456a8996', 'ANVIL_CMH_GAFK_IlluminaGSA_20240311_ANV5_202502201937'),
+    mksrc('bigquery', 'datarepo-9263e232', 'ANVIL_CMH_GAFK_IsoSeq_20240113_ANV5_202502201941'),
+    mksrc('bigquery', 'datarepo-ef718b6b', 'ANVIL_CMH_GAFK_PacBio_methyl_tagged_20240311_ANV5_202502201945'),
+    mksrc('bigquery', 'datarepo-de339830', 'ANVIL_CMH_GAFK_WGS_20240113_ANV5_202502201948'),
+    mksrc('bigquery', 'datarepo-706dd75a', 'ANVIL_DepMap_HMB_20240827_ANV5_202410240027'),
+    mksrc('bigquery', 'datarepo-cab8b4b3', 'ANVIL_DepMap_HMB_R2_20250224_ANV5_202502241800'),
+    mksrc('bigquery', 'datarepo-9ebf9c60', 'AnVIL_ENCORE_293T_20250304_ANV5_202503042023'),
+    mksrc('bigquery', 'datarepo-d4765cad', 'AnVIL_ENCORE_RS293_20250304_ANV5_202503042020'),
+    mksrc('bigquery', 'datarepo-e944e571', 'ANVIL_GREGoR_R01_GRU_20240208_ANV5_202502202158'),
+    mksrc('bigquery', 'datarepo-24806158', 'ANVIL_GREGoR_R01_HMB_20240208_ANV5_202502202202'),
+    mksrc('bigquery', 'datarepo-37dbd6bc', 'ANVIL_GREGoR_R02_GRU_20241105_ANV5_202502202052'),
+    mksrc('bigquery', 'datarepo-88e6ae93', 'ANVIL_GREGoR_R02_HMB_20241105_ANV5_202502202131'),
+    mksrc('bigquery', 'datarepo-e3844840', 'ANVIL_GTEx_v10_hg38_20241105_ANV5_202502202206'),
+    mksrc('bigquery', 'datarepo-ec623ac1', 'ANVIL_HudsonAlpha_LR_v1_GRU_20241018_ANV5_202410240036'),
+    mksrc('bigquery', 'datarepo-46fcac4d', 'ANVIL_MAS_ISO_seq_20240113_ANV5_202409261333'),
+    mksrc('bigquery', 'datarepo-2e8d7a0e', 'ANVIL_NIMH_Broad_ConvergentNeuro_McCarroll_Eggan_CIRM_GRU_WGS_20240206_ANV5_202502202026'), # noqa E501
+    mksrc('bigquery', 'datarepo-14a38418', 'ANVIL_NIMH_Broad_WGSPD1_McCarroll_COGS_DS_WGS_20240113_ANV5_202502202034'),
+    mksrc('bigquery', 'datarepo-91ecebc5', 'ANVIL_NIMH_Broad_WGSPD_1_McCarroll_Braff_DS_WGS_20240304_ANV5_202502202030'), # noqa E501
+    # @formatter:on
+]))
+
 
 def env() -> Mapping[str, Optional[str]]:
     """
@@ -987,6 +1046,7 @@ def env() -> Mapping[str, Optional[str]]:
                                        sources=list(filter(None, sources.values())))
             for atlas, catalog, sources in [
                 ('anvil', 'anvil8', anvil8_sources),
+                ('anvil', 'anvil9', anvil9_sources),
             ]
             for suffix, internal in [
                 ('', False),
