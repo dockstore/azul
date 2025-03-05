@@ -431,7 +431,7 @@ class SimpleSourceSpec(SourceSpec):
     name: str
 
     @classmethod
-    def parse(cls, spec: str) -> 'SimpleSourceSpec':
+    def parse(cls, spec: str) -> Self:
         """
         >>> SimpleSourceSpec.parse('https://foo.edu:12/0') # doctest: +NORMALIZE_WHITESPACE
         SimpleSourceSpec(prefix=Prefix(common='12',

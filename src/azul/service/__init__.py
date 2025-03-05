@@ -7,6 +7,7 @@ import logging
 from typing import (
     Optional,
     Protocol,
+    Self,
     TypedDict,
 )
 
@@ -65,7 +66,7 @@ class Filters:
     source_ids: set[str]
 
     @classmethod
-    def from_json(cls, json: JSON) -> 'Filters':
+    def from_json(cls, json: JSON) -> Self:
         """
         Deserialize an instance of this class without reifying it.
         """
@@ -81,7 +82,7 @@ class Filters:
             'source_ids': sorted(self.source_ids)
         }
 
-    def update(self, filters: FiltersJSON) -> 'Filters':
+    def update(self, filters: FiltersJSON) -> Self:
         return attr.evolve(self, explicit={**self.explicit, **filters})
 
     def reify(self,

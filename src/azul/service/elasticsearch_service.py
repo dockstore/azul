@@ -16,6 +16,7 @@ from typing import (
     Any,
     Generic,
     Optional,
+    Self,
     TypeVar,
     TypedDict,
 )
@@ -487,7 +488,7 @@ class Pagination:
                 *,
                 search_before: Optional[SortKey],
                 search_after: Optional[SortKey]
-                ) -> 'Pagination':
+                ) -> Self:
         return attr.evolve(self,
                            search_before=search_before,
                            search_after=search_after)

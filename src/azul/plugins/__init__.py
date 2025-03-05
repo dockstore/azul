@@ -246,7 +246,7 @@ class MetadataPlugin[BUNDLE: Bundle](Plugin[BUNDLE]):
     # add the parameters to create() and make it abstract.
 
     @classmethod
-    def create(cls) -> 'MetadataPlugin':
+    def create(cls) -> Self:
         return cls()
 
     @abstractmethod
@@ -546,7 +546,7 @@ class RepositoryPlugin[BUNDLE: Bundle,
 
     @classmethod
     @abstractmethod
-    def create(cls, catalog: CatalogName) -> 'RepositoryPlugin':
+    def create(cls, catalog: CatalogName) -> Self:
         """
         Return a plugin instance suitable for populating the given catalog.
         """

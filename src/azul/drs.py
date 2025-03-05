@@ -15,6 +15,9 @@ from enum import (
 import json
 import logging
 import time
+from typing import (
+    Self,
+)
 
 import attr
 from furl import (
@@ -122,7 +125,7 @@ class RegularDRSURI(DRSURI):
         assert self.uri.scheme == 'drs', self.uri
 
     @classmethod
-    def parse(cls, drs_uri: str) -> 'RegularDRSURI':
+    def parse(cls, drs_uri: str) -> Self:
         return cls(uri=furl(drs_uri))
 
     def to_url(self, client: 'DRSClient', access_id: str | None = None) -> furl:
@@ -151,7 +154,7 @@ class CompactDRSURI(DRSURI):
         assert '/' not in self.namespace and '?' not in self.accession, self
 
     @classmethod
-    def parse(cls, drs_uri: str) -> 'CompactDRSURI':
+    def parse(cls, drs_uri: str) -> Self:
         scheme, netloc = drs_uri.split('://', 1)
         # Compact identifier-based URIs can be hard to parse when following
         # RFC3986, with the 'namespace:accession' part matching either the

@@ -16,6 +16,7 @@ from typing import (
     Any,
     ClassVar,
     Iterable,
+    Self,
     cast,
 )
 
@@ -87,7 +88,7 @@ class Links:
     supplementary_files: Entities = attr.Factory(set)
 
     @classmethod
-    def from_json(cls, project: EntityReference, links_json: JSON) -> 'Links':
+    def from_json(cls, project: EntityReference, links_json: JSON) -> Self:
         """
         A `links.json` file, in a more accessible form.
 
@@ -153,7 +154,7 @@ class Checksums:
         return {k: v for k, v in attr.asdict(self).items() if v is not None}
 
     @classmethod
-    def from_json(cls, json: JSON) -> 'Checksums':
+    def from_json(cls, json: JSON) -> Self:
         """
         >>> Checksums.from_json({'crc32c': 'a', 'sha256': 'c'})
         Checksums(crc32c='a', sha1=None, sha256='c', s3_etag=None)
