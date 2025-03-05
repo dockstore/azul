@@ -50,7 +50,6 @@ from more_itertools import (
 import urllib3
 
 from azul import (
-    RequirementError,
     cache,
     config,
 )
@@ -319,7 +318,7 @@ class TestTDRHCAPlugin(DCP2CannedBundleTestCase,
                 WHERE links_id = "{links_id}"
             ''')
             # Invoke code under test
-            with self.assertRaises(RequirementError):
+            with self.assertRaises(AssertionError):
                 self._test_fetch_bundle(bundle,
                                         load_tables=False)  # Avoid resetting tables to canned state
 

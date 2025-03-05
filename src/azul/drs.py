@@ -29,12 +29,10 @@ from more_itertools import (
 import urllib3.request
 
 from azul import (
-    RequirementError,
+    R,
     cache,
     cached_property,
     mutable_furl,
-    reject,
-    require,
 )
 from azul.http import (
     HasCachedHttpClient,
@@ -100,7 +98,7 @@ class DRSURI(metaclass=ABCMeta):
     @classmethod
     def parse(cls, drs_uri: str) -> 'DRSURI':
         prefix = 'drs://'
-        require(drs_uri.startswith(prefix), drs_uri)
+        assert drs_uri.startswith(prefix), R('Invalid DRS uri scheme', drs_uri)
         # "The colon character is not allowed in a hostname-based DRS URI".
         #
         # https://ga4gh.github.io/data-repository-service-schemas/preview/develop/docs/#_drs_uris
@@ -164,10 +162,10 @@ class CompactDRSURI(DRSURI):
         # https://ga4gh.github.io/data-repository-service-schemas/preview/develop/docs/#compact-identifier-based-drs-uris
         #
         prefix, accession = netloc.split(':', 1)
-        reject('/' in prefix,
-               'Compact identifiers with provider codes are not supported', drs_uri)
-        reject('?' in accession,
-               'Compact identifiers must not contain query parameters', drs_uri)
+        assert '/' not in prefix, R(
+            'Compact identifiers with provider codes are not supported', drs_uri)
+        assert '?' not in accession, R(
+            'Compact identifiers must not contain query parameters', drs_uri)
         return cls(namespace=prefix,
                    accession=accession)
 
@@ -176,8 +174,8 @@ class CompactDRSURI(DRSURI):
         # The URL pattern registered at identifiers.org ought to replicate the
         # DRS spec, but we have to re-create the path using the spec because the
         # registered pattern does not support embedding the access ID.
-        require(str(url.path) == drs_object_url_path(object_id=self.accession),
-                'Unexpected DRS URL format', url)
+        assert str(url.path) == drs_object_url_path(object_id=self.accession), R(
+            'Unexpected DRS URL format', url)
         url.set(path=drs_object_url_path(object_id=self.accession, access_id=access_id))
         return url
 
@@ -197,7 +195,8 @@ class IdentifiersDotOrgClient(HasCachedHttpClient):
         resource_name, url_pattern = self._namespace_to_host(namespace_id)
         log.info('Obtained URL pattern %r from resource %r', url_pattern, resource_name)
         placeholder = '{$id}'
-        require(placeholder in url_pattern, url_pattern)
+        assert placeholder in url_pattern, R(
+            'Missing accession placeholder in URL pattern', url_pattern)
         url = url_pattern.replace(placeholder, accession)
         return furl(url)
 
@@ -263,18 +262,21 @@ class DRSClient:
                     #
                     # https://github.com/ga4gh/data-repository-service-schemas/issues/360
                     # https://github.com/ga4gh/data-repository-service-schemas/issues/361
-                    require(access_method is AccessMethod.gs, access_method)
+                    assert access_method is AccessMethod.gs, R(
+                        'Unexpected access method', access_method)
                     return self._get_object_access(drs_uri, access_id, AccessMethod.https)
                 elif access_id is not None:
                     return self._get_object_access(drs_uri, access_id, access_method)
                 elif access_url is not None:
-                    require(furl(access_url['url']).scheme == access_method.scheme)
+                    scheme = furl(access_url['url']).scheme
+                    assert scheme == access_method.scheme, R(
+                        'Unexpected access URL scheme', scheme)
                     # We can't convert the signed URL into a furl object since
                     # the path can contain `%3A` which furl converts to `:`
                     return Access(method=access_method,
                                   url=access_url['url'])
                 else:
-                    raise RequirementError("'access_url' and 'access_id' are both missing")
+                    assert False, R("'access_url' and 'access_id' are both missing")
             elif response.status == 202:
                 wait_time = int(response.headers['retry-after'])
                 time.sleep(wait_time)
@@ -291,7 +293,9 @@ class DRSClient:
             response = self._request(url)
             if response.status == 200:
                 response_data = json_dict(json.loads(response.data))
-                require(furl(response_data['url']).scheme == access_method.scheme)
+                scheme = furl(response_data['url']).scheme
+                assert scheme == access_method.scheme, R(
+                    'Unexpected access URL scheme', scheme)
                 access_url = json_str(response_data['url'])
                 headers = response_data.get('headers')
                 if headers is None:

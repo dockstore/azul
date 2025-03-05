@@ -45,10 +45,9 @@ from more_itertools import (
 
 from azul import (
     CatalogName,
+    R,
     cached_property,
     config,
-    reject,
-    require,
 )
 from azul.es import (
     ESClientFactory,
@@ -131,8 +130,8 @@ class ElasticsearchChain(ElasticsearchStage[R0, R2]):
     outer: ElasticsearchStage[R1, R2]
 
     def __attrs_post_init__(self):
-        reject(isinstance(self.outer, ElasticsearchChain),
-               'Outer stage must not be a chain', type(self.outer))
+        assert not isinstance(self.outer, ElasticsearchChain), R(
+            'Outer stage must not be a chain', type(self.outer))
 
     def prepare_request(self, request: Search) -> Search:
         request = self.inner.prepare_request(request)
@@ -479,9 +478,12 @@ class Pagination:
 
     def _check_sort_key(self, sort_key):
         if sort_key is not None:
-            require(isinstance(sort_key, tuple), 'Not a tuple', sort_key)
-            require(len(sort_key) == 2, 'Not a tuple with two elements', sort_key)
-            require(isinstance(sort_key[1], str), 'Second sort key element not a string', sort_key)
+            assert isinstance(sort_key, tuple), R(
+                'Not a tuple', sort_key)
+            assert len(sort_key) == 2, R(
+                'Not a tuple with two elements', sort_key)
+            assert isinstance(sort_key[1], str), R(
+                'Second sort key element not a string', sort_key)
 
     def advance(self,
                 *,

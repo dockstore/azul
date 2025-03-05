@@ -18,10 +18,10 @@ from chalice import (
 
 from azul import (
     CatalogName,
+    R,
     cache,
     cached_property,
     config,
-    reject,
 )
 from azul.auth import (
     Authentication,
@@ -169,10 +169,10 @@ class RepositoryController(SourceController):
             if unit == 'bytes':
                 for range_spec in ranges.split(','):
                     start, end = range_spec.split('-')
-                    reject(start == '' and end == '', 'Empty range')
+                    assert start != '' or end != '', R('Empty range')
                     parsed_ranges.append((to_int_or_none(start), to_int_or_none(end)))
             else:
-                reject(unit == '', 'Empty range unit')
+                assert unit != '', R('Empty range unit')
         except Exception as e:
             raise BadRequestError(f'Invalid range specifier {range_specifier!r}') from e
         return parsed_ranges

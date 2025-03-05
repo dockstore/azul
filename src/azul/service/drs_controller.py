@@ -32,11 +32,11 @@ import requests
 
 from azul import (
     CatalogName,
+    R,
     cached_property,
     config,
     dss,
     mutable_furl,
-    require,
 )
 from azul.collections import (
     adict,
@@ -177,7 +177,7 @@ class DRSController(SourceController):
                 dss_response = requests.get(url, params=params, allow_redirects=False)
                 if dss_response.status_code == 302:
                     url = furl(dss_response.next.url)
-                    require(url.scheme == 'gs', url)
+                    assert url.scheme == 'gs', R('Expected a gs:// URL', url)
                     return url
                 elif dss_response.status_code == 301:
                     url = dss_response.next.url

@@ -29,9 +29,8 @@ from more_itertools import (
 )
 
 from azul import (
-    RequirementError,
+    R,
     config,
-    require,
 )
 from azul.bigquery import (
     BigQueryRow,
@@ -115,15 +114,15 @@ class Links:
                 associate = EntityReference(entity_type=link['entity']['entity_type'],
                                             entity_id=link['entity']['entity_id'])
                 # For MVP, only project entities can have associated supplementary files.
-                require(associate == project,
-                        'Supplementary file must be associated with the current project',
-                        project, associate)
+                assert associate == project, R(
+                    'Supplementary file must be associated with the current project',
+                    project, associate)
                 for entity in cast(JSONs, link['files']):
                     self.supplementary_files.add(
                         EntityReference(entity_type='supplementary_file',
                                         entity_id=entity['file_id']))
             else:
-                raise RequirementError('Unexpected link_type', link_type)
+                assert False, R('Unexpected link_type', link_type)
         return self
 
     def all_entities(self) -> Entities:
@@ -266,8 +265,9 @@ class TDRHCABundle(HCABundle[TDRBundleFQID], TDRBundle):
             try:
                 external_drs_uri = descriptor['drs_uri']
             except KeyError:
-                raise RequirementError('`file_id` is null and `drs_uri` '
-                                       'is not set in file descriptor', descriptor)
+                assert False, R(
+                    '`file_id` is null and `drs_uri` is not set in file descriptor',
+                    descriptor)
             else:
                 # FIXME: Support non-null DRS URIs in file descriptors
                 #        https://github.com/DataBiosphere/azul/issues/3631
@@ -279,7 +279,8 @@ class TDRHCABundle(HCABundle[TDRBundleFQID], TDRBundle):
             # This requirement prevent mismatches in the DRS domain, and ensures
             # that changes to the column syntax don't go undetected.
             parsed = RegularDRSURI.parse(file_id)
-            require(parsed.uri.netloc == config.tdr_service_url.netloc)
+            assert parsed.uri.netloc == config.tdr_service_url.netloc, R(
+                'Unexpected DRS URI location', parsed.uri)
             return file_id
 
 
@@ -319,7 +320,8 @@ class Plugin(TDRPlugin[TDRHCABundle, TDRBundleFQID]):
         iter_rows = self._run_sql(query)
         key = itemgetter(group_by)
         rows = sorted(iter_rows, key=key)
-        require(len(set(map(key, rows))) == len(rows), 'Expected unique keys', group_by)
+        assert len(set(map(key, rows))) == len(rows), R(
+            'Expected unique keys', group_by)
         return rows
 
     def _emulate_bundle(self, bundle_fqid: TDRBundleFQID) -> TDRHCABundle:
@@ -476,9 +478,9 @@ class Plugin(TDRPlugin[TDRHCABundle, TDRBundleFQID]):
         rows = self._query_unique_sorted(query, group_by=pk_column)
         log.debug('Retrieved %i entities of type %r', len(rows), entity_type)
         missing = expected - {row[pk_column] for row in rows}
-        require(not missing,
-                f'Found only {len(rows)} out of {len(entity_ids)} expected rows in {table_name}. '
-                f'Missing entities: {missing}')
+        assert not missing, R(
+            f'Found only {len(rows)} out of {len(entity_ids)} expected rows in {table_name}. '
+            f'Missing entities: {missing}')
         return rows
 
     def _in(self,
@@ -521,8 +523,7 @@ class Plugin(TDRPlugin[TDRHCABundle, TDRBundleFQID]):
                                       version=self.format_version(row['version'])))
             outputs_found.add(row['output_id'])
         missing = set(output_ids) - outputs_found
-        require(not missing,
-                f'Dangling inputs not found in any bundle: {missing}')
+        assert not missing, R(f'Dangling inputs not found in any bundle: {missing}')
         return bundles
 
     def _merge_links(self, links_jsons: MutableJSONs) -> MutableJSON:
