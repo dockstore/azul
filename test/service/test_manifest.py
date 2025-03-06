@@ -2167,16 +2167,24 @@ class TestAnvilManifests(AnvilManifestTestCase):
                 (False, {**self.neutral_file_filters, **self.dataset_title_filters})
             ]:
                 with self.subTest(orphans=orphans, relations=enable_relations, filters=filters):
-                    expected_manifest = self._expected_pfb_manifest(orphans)
+                    expected_manifest = self._expected_pfb_manifest(orphans, enable_relations)
                     expected_schema, expected_entities = expected_manifest
                     response = self._get_manifest(ManifestFormat.verbatim_pfb, filters)
                     self.assertEqual(200, response.status_code)
                     self._assert_pfb(expected_schema, expected_entities, response)
 
     @cache
-    def _expected_pfb_manifest(self, include_orphans: bool) -> tuple[JSON, JSONs]:
+    def _expected_pfb_manifest(self,
+                               include_orphans: bool,
+                               enable_relations: bool
+                               ) -> tuple[JSON, JSONs]:
         canned_pfb = self._load_canned_pfb('verbatim', 'pfb', 'anvil')
         pfb_schema, pfb_entities = canned_pfb
+        # To avoid dangling references, relations are only populated when
+        # including orphans
+        if not enable_relations or not include_orphans:
+            for entity in pfb_entities:
+                entity['relations'].clear()
         if not include_orphans:
             self.assertEqual('Entity', pfb_schema['name'])
             object_field_schema = one(
@@ -2197,10 +2205,6 @@ class TestAnvilManifests(AnvilManifestTestCase):
                 filtered = [e for e in part if e['name'] != 'non_schema_orphan_table']
                 assert len(filtered) < len(part), 'Expected to filter orphan references'
                 part[:] = filtered
-            # To avoid dangling references, relations are only populated when
-            # including orphans
-            for entity in pfb_entities:
-                entity['relations'].clear()
         return pfb_schema, pfb_entities
 
 
