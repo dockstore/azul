@@ -33,6 +33,7 @@ from typing import (
 )
 from unittest.mock import (
     MagicMock,
+    PropertyMock,
     patch,
 )
 import unittest.result
@@ -61,6 +62,7 @@ from requests import (
 
 from azul import (
     RequirementError,
+    cache,
     config,
 )
 from azul.collections import (
@@ -2146,58 +2148,64 @@ class TestAnvilManifests(AnvilManifestTestCase):
                 expected_rows = all_rows if expect_orphans else linked_rows
                 self._assert_jsonl(expected_rows, response)
 
-    def test_verbatim_pfb_manifest(self):
-        canned_pfb = self._load_canned_pfb('verbatim', 'pfb', 'anvil')
-        expected_schema, expected_entities = canned_pfb
+    def test_verbatim_pfb_manifest_with_relations(self):
+        self._test_verbatim_pfb_manifest(enable_relations=True)
 
-        def test(filters):
-            response = self._get_manifest(ManifestFormat.verbatim_pfb, filters)
-            self.assertEqual(200, response.status_code)
-            self._assert_pfb(expected_schema, expected_entities, response)
+    # Due to manifest caching, these must be separate tests
+    def test_verbatim_pfb_manifest_without_relations(self):
+        self._test_verbatim_pfb_manifest(enable_relations=False)
 
-        with self.subTest(orphans=True):
-            for filters in [
-                {},
-                self.dataset_id_filters,
-                self.dataset_title_filters
+    def _test_verbatim_pfb_manifest(self, *, enable_relations: bool):
+        with patch.object(type(config),
+                          'enable_verbatim_relations',
+                          new=PropertyMock(return_value=enable_relations)):
+            for orphans, filters in [
+                (True, {}),
+                (True, self.dataset_id_filters),
+                (True, self.dataset_title_filters),
+                (False, self.neutral_file_filters),
+                (False, {**self.neutral_file_filters, **self.dataset_title_filters})
             ]:
-                with self.subTest(filters=filters):
-                    test(filters)
+                with self.subTest(orphans=orphans, relations=enable_relations, filters=filters):
+                    expected_manifest = self._expected_pfb_manifest(orphans, enable_relations)
+                    expected_schema, expected_entities = expected_manifest
+                    response = self._get_manifest(ManifestFormat.verbatim_pfb, filters)
+                    self.assertEqual(200, response.status_code)
+                    self._assert_pfb(expected_schema, expected_entities, response)
 
-        with self.subTest(orphans=False):
-            # Dynamically edit out references to the orphaned entities (and
-            # their schemas) that are only expected when filtering by dataset
-            # ID. This subtest modifies the expectations in place, and therefore
-            # needs to come last.
-            self.assertEqual('Entity', expected_schema['name'])
+    @cache
+    def _expected_pfb_manifest(self,
+                               include_orphans: bool,
+                               enable_relations: bool
+                               ) -> tuple[JSON, JSONs]:
+        canned_pfb = self._load_canned_pfb('verbatim', 'pfb', 'anvil')
+        pfb_schema, pfb_entities = canned_pfb
+        # To avoid dangling references, relations are only populated when
+        # including orphans
+        if not enable_relations or not include_orphans:
+            for entity in pfb_entities:
+                entity['relations'].clear()
+        if not include_orphans:
+            self.assertEqual('Entity', pfb_schema['name'])
             object_field_schema = one(
                 field
-                for field in expected_schema['fields']
+                for field in pfb_schema['fields']
                 if field['name'] == 'object'
             )
             # The `object` field is of a union type, so the schema's `type`
             # property is an array
             schemas = object_field_schema['type']
             # The first AVRO record is the *metadata entity* in PFB terms,
-            # declaring higher level constraints that can't expressed in the
-            # AVRO schema
-            metadata_entity = expected_entities[0]
+            # declaring higher level constraints that can't be expressed in
+            # the AVRO schema
+            metadata_entity = pfb_entities[0]
             self.assertEqual('Metadata', metadata_entity['name'])
             higher_schemas = metadata_entity['object']['nodes']
-            for part in [schemas, higher_schemas, expected_entities]:
+            for part in [schemas, higher_schemas, pfb_entities]:
                 filtered = [e for e in part if e['name'] != 'non_schema_orphan_table']
                 assert len(filtered) < len(part), 'Expected to filter orphan references'
                 part[:] = filtered
-            # To avoid dangling references, relations are only populated when
-            # including orphans
-            for entity in expected_entities:
-                entity['relations'].clear()
-            for filters in [
-                self.neutral_file_filters,
-                {**self.neutral_file_filters, **self.dataset_title_filters}
-            ]:
-                with self.subTest(filters=filters):
-                    test(filters)
+        return pfb_schema, pfb_entities
 
 
 class TestPFB(CannedManifestTestCase):
