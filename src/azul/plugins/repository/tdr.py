@@ -8,6 +8,7 @@ import time
 from typing import (
     AbstractSet,
     Callable,
+    Self,
     TypeVar,
 )
 
@@ -34,10 +35,7 @@ from azul.drs import (
     DRSClient,
 )
 from azul.indexer import (
-    BUNDLE_FQID,
     Bundle,
-    SOURCE_REF,
-    SOURCE_SPEC,
     SourcedBundleFQID,
 )
 from azul.plugins import (
@@ -83,11 +81,19 @@ TDR_BUNDLE = TypeVar('TDR_BUNDLE', bound=TDRBundle)
 
 
 @attr.s(kw_only=True, auto_attribs=True, frozen=True)
-class TDRPlugin(RepositoryPlugin[TDR_BUNDLE, SOURCE_SPEC, SOURCE_REF, BUNDLE_FQID]):
+class TDRPlugin[TDR_BUNDLE: TDRBundle,
+                TDR_BUNDLE_FQID: TDRBundleFQID](
+    RepositoryPlugin[
+        TDR_BUNDLE,
+        TDRSourceSpec,
+        TDRSourceRef,
+        TDR_BUNDLE_FQID
+    ]
+):
     _sources: AbstractSet[TDRSourceSpec]
 
     @classmethod
-    def create(cls, catalog: CatalogName) -> 'RepositoryPlugin':
+    def create(cls, catalog: CatalogName) -> Self:
         return cls(sources=frozenset(
             TDRSourceSpec.parse(spec)
             for spec in config.sources(catalog))

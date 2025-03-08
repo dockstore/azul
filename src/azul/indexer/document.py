@@ -2,74 +2,65 @@ from abc import (
     ABCMeta,
     abstractmethod,
 )
-from collections.abc import (
-    Mapping,
-)
-from datetime import (
-    datetime,
-    timezone,
-)
 from enum import (
     Enum,
 )
 import re
-import sys
 from typing import (
     ClassVar,
-    Generic,
-    Optional,
     Self,
-    Sequence,
-    Type,
-    TypeVar,
-    Union,
-    cast,
-    get_args,
+    overload,
 )
 
 import attr
 from more_itertools import (
-    first,
     one,
 )
 
 from azul import (
     CatalogName,
+    R,
     config,
-    reject,
-    require,
+    json_sequence,
 )
 from azul.enums import (
     auto,
 )
 from azul.indexer import (
     BundleFQID,
-    BundleFQIDJSON,
     SimpleSourceSpec,
-    SourceJSON,
     SourceRef,
 )
-from azul.openapi import (
-    schema,
+from azul.indexer.field import (
+    CataloguedFieldTypes,
+    FieldType,
+    FieldTypes,
+    null_str,
+    pass_thru_bool,
+    pass_thru_int,
+    pass_thru_json,
+    pass_thru_str,
 )
-from azul.time import (
-    format_dcp2_datetime,
-    parse_dcp2_datetime,
+from azul.json import (
+    Parseable,
 )
 from azul.types import (
     AnyJSON,
     AnyMutableJSON,
     JSON,
-    PrimitiveJSON,
-    reify,
+    MutableJSON,
+    json_int,
+    json_mapping,
+    json_str,
+    optional,
 )
 
-EntityID = str
-EntityType = str
+type EntityID = str
+type EntityType = str
 
 
 @attr.s(frozen=True, auto_attribs=True, kw_only=True, slots=True)
-class EntityReference:
+class EntityReference(Parseable):
     entity_type: EntityType
     entity_id: EntityID
 
@@ -94,9 +85,6 @@ class CataloguedEntityReference(EntityReference):
         return cls(catalog=catalog,
                    entity_type=entity.entity_type,
                    entity_id=entity.entity_id)
-
-
-E = TypeVar('E', bound=EntityReference)
 
 
 class DocumentType(Enum):
@@ -163,7 +151,7 @@ class IndexName:
         ...           doc_type=DocumentType.contribution)
         Traceback (most recent call last):
         ...
-        azul.RequirementError: ('Version must be 2', 1)
+        AssertionError: R('Version must be 2', 1)
 
         >>> IndexName(version=2,
         ...           deployment='dev',
@@ -172,7 +160,7 @@ class IndexName:
         ...           doc_type=DocumentType.contribution)
         Traceback (most recent call last):
         ...
-        azul.RequirementError: ('Catalog name is required', None)
+        AssertionError: R('Catalog name is required', None)
 
         >>> IndexName(version=2,
         ...           deployment='_',
@@ -212,27 +200,27 @@ class IndexName:
         ...               doc_type=DocumentType.replica))
         Traceback (most recent call last):
         ...
-        azul.RequirementError: ('Unexpected replica qualifier', 'foo')
+        AssertionError: R('Unexpected replica qualifier', 'foo')
         """
         config.validate_prefix(self.prefix)
-        require(self.version == 2, 'Version must be 2', self.version)
+        assert self.version == 2, R('Version must be 2', self.version)
         config.validate_deployment_name(self.deployment)
-        require(self.catalog is not None, 'Catalog name is required', self.catalog)
+        assert self.catalog is not None, R('Catalog name is required', self.catalog)
         config.Catalog.validate_name(self.catalog)
         config.validate_qualifier(self.qualifier)
         if self.doc_type is DocumentType.replica:
             # To shorten the string representation of replica index names, we
             # expect the qualifier and document type to be the same string.
-            require(self.qualifier == self.doc_type.value,
-                    'Unexpected replica qualifier', self.qualifier)
+            assert self.qualifier == self.doc_type.value, R(
+                'Unexpected replica qualifier', self.qualifier)
         assert '_' not in self.prefix, self.prefix
         assert '_' not in self.deployment, self.deployment
         assert self.catalog is None or '_' not in self.catalog, self.catalog
 
     def validate(self):
-        require(self.deployment == config.deployment_stage,
-                'Index name does not use current deployment',
-                self, config.deployment_stage)
+        assert self.deployment == config.deployment_stage, R(
+            'Index name does not use current deployment',
+            self, config.deployment_stage)
 
     @classmethod
     def create(cls,
@@ -255,17 +243,17 @@ class IndexName:
         >>> IndexName.parse('azul_dev')
         Traceback (most recent call last):
         ...
-        azul.RequirementError: ('Too few index name elements', ['azul', 'dev'])
+        AssertionError: R('Too few index name elements', ['azul', 'dev'])
 
         >>> IndexName.parse('azul_foo_dev')
         Traceback (most recent call last):
         ...
-        azul.RequirementError: Version is required
+        AssertionError: R('Version is required')
 
         >>> IndexName.parse('azl_v2_dev_main_foo')
         Traceback (most recent call last):
         ...
-        azul.RequirementError: ('Unexpected prefix', 'azul', 'azl')
+        AssertionError: R('Unexpected prefix', 'azul', 'azl')
 
         >>> IndexName.parse('azul_v2_dev_main_foo')
         ... # doctest: +NORMALIZE_WHITESPACE
@@ -324,17 +312,17 @@ class IndexName:
         >>> IndexName.parse('azul_v3_bla')
         Traceback (most recent call last):
         ...
-        azul.RequirementError: ('Version must be 2', 3)
+        AssertionError: R('Version must be 2', 3)
         """
         index_name = index_name.split('_')
-        require(len(index_name) > 2, 'Too few index name elements', index_name)
+        assert len(index_name) > 2, R('Too few index name elements', index_name)
         prefix, *index_name = index_name
-        require(prefix == cls.prefix, 'Unexpected prefix', cls.prefix, prefix)
+        assert prefix == cls.prefix, R('Unexpected prefix', cls.prefix, prefix)
         version = cls.index_name_version_re.fullmatch(index_name[0])
-        reject(version is None, 'Version is required')
+        assert version is not None, R('Version is required')
         _, *index_name = index_name
         version = int(version.group(1))
-        require(version == 2, 'Version must be 2', version)
+        assert version == 2, R('Version must be 2', version)
         deployment, catalog, *index_name = index_name
         if index_name[-1] == DocumentType.aggregate.value:
             *index_name, _ = index_name
@@ -406,7 +394,7 @@ class IndexName:
         else:
             assert False, self.doc_type
         assert self.version == 2, self
-        require(self.catalog is not None, self.catalog)
+        assert self.catalog is not None, R('Catalog is required')
         return '_'.join([
             self.prefix,
             f'v{self.version}',
@@ -417,8 +405,11 @@ class IndexName:
         ])
 
 
+type CataloguedDocumentCoordinates = DocumentCoordinates[CataloguedEntityReference]
+
+
 @attr.s(frozen=True, auto_attribs=True, kw_only=True, slots=True)
-class DocumentCoordinates(Generic[E], metaclass=ABCMeta):
+class DocumentCoordinates[E: EntityReference](metaclass=ABCMeta):
     """
     The coordinates of a document ultimately define two strings: 1) the name of
     the Elasticsearch index that contains the document and 2) the unique ID by
@@ -455,12 +446,11 @@ class DocumentCoordinates(Generic[E], metaclass=ABCMeta):
         raise NotImplementedError
 
     @classmethod
-    def from_hit(cls,
-                 hit: JSON
-                 ) -> 'DocumentCoordinates[CataloguedEntityReference]':
-        index_name = IndexName.parse(hit['_index'])
+    def from_hit(cls, hit: JSON) -> CataloguedDocumentCoordinates:
+        index_name = IndexName.parse(json_str(hit['_index']))
         index_name.validate()
-        document_id = hit['_id']
+        document_id = json_str(hit['_id'])
+        subcls: type[CataloguedDocumentCoordinates]
         if index_name.doc_type is DocumentType.contribution:
             subcls = ContributionCoordinates
         elif index_name.doc_type is DocumentType.aggregate:
@@ -469,7 +459,7 @@ class DocumentCoordinates(Generic[E], metaclass=ABCMeta):
             subcls = ReplicaCoordinates
         else:
             assert False, index_name.doc_type
-        assert issubclass(subcls, cls)
+        assert issubclass(subcls, DocumentCoordinates)
         return subcls._from_index(index_name, document_id)
 
     @classmethod
@@ -477,16 +467,16 @@ class DocumentCoordinates(Generic[E], metaclass=ABCMeta):
     def _from_index(cls,
                     index_name: IndexName,
                     document_id: str
-                    ) -> 'DocumentCoordinates[CataloguedEntityReference]':
+                    ) -> CataloguedDocumentCoordinates:
         raise NotImplementedError
 
-    def with_catalog(self,
-                     catalog: Optional[CatalogName]
-                     ) -> 'DocumentCoordinates[CataloguedEntityReference]':
+    def with_catalog(self: 'DocumentCoordinates',
+                     catalog: CatalogName | None
+                     ) -> CataloguedDocumentCoordinates:
         """
         Return coordinates for the given catalog. Only works for instances that
-        have no catalog or ones having the same catalog in which case `self` is
-        returned.
+        have no catalog or ones having the same catalog in which case ``self``
+        is returned.
         """
         if isinstance(self.entity, CataloguedEntityReference):
             if catalog is not None:
@@ -494,11 +484,15 @@ class DocumentCoordinates(Generic[E], metaclass=ABCMeta):
             return self
         else:
             assert catalog is not None
-            return attr.evolve(self, entity=CataloguedEntityReference.for_entity(catalog, self.entity))
+            entity = CataloguedEntityReference.for_entity(catalog, self.entity)
+            return attr.evolve(self, entity=entity)
+
+
+type CataloguedContributionCoordinates = ContributionCoordinates[CataloguedEntityReference]
 
 
 @attr.s(frozen=True, auto_attribs=True, kw_only=True, slots=True)
-class ContributionCoordinates(DocumentCoordinates[E], Generic[E]):
+class ContributionCoordinates[E: EntityReference](DocumentCoordinates[E]):
     """
     Coordinates of contribution documents. Contributions originate from a
     subgraph ("bundle") and represent either the addition of metadata to an
@@ -531,9 +525,10 @@ class ContributionCoordinates(DocumentCoordinates[E], Generic[E]):
     def _from_index(cls,
                     index_name: IndexName,
                     document_id: str
-                    ) -> 'ContributionCoordinates[CataloguedEntityReference]':
+                    ) -> CataloguedContributionCoordinates:
         entity_type = index_name.qualifier
         assert index_name.doc_type is DocumentType.contribution
+        deleted: str | bool
         entity_id, bundle_uuid, bundle_version, deleted = document_id.split('_')
         if deleted == 'deleted':
             deleted = True
@@ -544,9 +539,8 @@ class ContributionCoordinates(DocumentCoordinates[E], Generic[E]):
         entity = CataloguedEntityReference(catalog=index_name.catalog,
                                            entity_type=entity_type,
                                            entity_id=entity_id)
-        return cls(entity=entity,
-                   bundle=BundleFQID(uuid=bundle_uuid, version=bundle_version),
-                   deleted=deleted)
+        bundle = BundleFQID(uuid=bundle_uuid, version=bundle_version)
+        return ContributionCoordinates(entity=entity, bundle=bundle, deleted=deleted)
 
     def __str__(self) -> str:
         return ' '.join((
@@ -584,8 +578,11 @@ class AggregateCoordinates(DocumentCoordinates[CataloguedEntityReference]):
         return f'aggregate for {self.entity}'
 
 
+type CataloguedReplicaCoordinates = ReplicaCoordinates[CataloguedEntityReference]
+
+
 @attr.s(frozen=True, auto_attribs=True, kw_only=True, slots=True)
-class ReplicaCoordinates(DocumentCoordinates[E], Generic[E]):
+class ReplicaCoordinates[E: EntityReference](DocumentCoordinates[E]):
     """
     Coordinates of replica documents. Replicas are content-addressed, so these
     coordinates depend not only on the entity reference, but on the contents of
@@ -616,15 +613,15 @@ class ReplicaCoordinates(DocumentCoordinates[E], Generic[E]):
     def _from_index(cls,
                     index_name: IndexName,
                     document_id: str
-                    ) -> 'ReplicaCoordinates[CataloguedEntityReference]':
+                    ) -> CataloguedReplicaCoordinates:
         assert index_name.doc_type is DocumentType.replica, index_name
         assert index_name.qualifier == cls.index_qualifier, index_name
         # entity_type, the first component, may contain underscores
         entity_type, entity_id, content_hash = document_id.rsplit('_', 2)
-        return cls(content_hash=content_hash,
-                   entity=CataloguedEntityReference(catalog=index_name.catalog,
-                                                    entity_type=entity_type,
-                                                    entity_id=entity_id))
+        entity = CataloguedEntityReference(catalog=index_name.catalog,
+                                           entity_type=entity_type,
+                                           entity_id=entity_id)
+        return ReplicaCoordinates(content_hash=content_hash, entity=entity)
 
     def __str__(self) -> str:
         return f'replica of {self.entity}'
@@ -632,431 +629,6 @@ class ReplicaCoordinates(DocumentCoordinates[E], Generic[E]):
 
 FieldPathElement = str
 FieldPath = tuple[FieldPathElement, ...]
-
-# The native type of the field in documents as they are being created by a
-# transformer or processed by an aggregator.
-N = TypeVar('N')
-
-# The type of the field in a document just before it's being written to the
-# index. Think "translated type".
-T = TypeVar('T', bound=AnyJSON)
-
-P = TypeVar('P', bound=PrimitiveJSON)
-
-Range = tuple[P, P]
-
-
-class FieldType(Generic[N, T], metaclass=ABCMeta):
-    shadowed: bool = False
-    es_sort_mode: str = 'min'
-    allow_sorting_by_empty_lists: bool = True
-
-    def __init__(self, native_type: Type[N], translated_type: Type[T]):
-        self.native_type = native_type
-        self.translated_type = translated_type
-
-    @property
-    @abstractmethod
-    def es_type(self) -> Optional[str]:
-        raise NotImplementedError
-
-    @abstractmethod
-    def to_index(self, value: N) -> T:
-        raise NotImplementedError
-
-    @abstractmethod
-    def from_index(self, value: T) -> N:
-        raise NotImplementedError
-
-    def to_tsv(self, value: N) -> str:
-        return '' if value is None else str(value)
-
-    @property
-    def api_schema(self) -> JSON:
-        """
-        The JSONSchema describing fields of this type in OpenAPI specifications.
-        """
-        return schema.schema(self.native_type)
-
-    def from_api(self, value: AnyJSON) -> N:
-        """
-        Convert a deserialized JSON value occurring as an input to a REST API
-        to the native representation of values of this field type.
-
-        The default implementation assumes that the REST API representation
-        of the value is already of the native type, and just returns the
-        argument. Subclasses must override this if the native and API
-        representations differ. An API representation of a field only occurs
-        in inputs to a REST API. Outputs like the body of a response use the
-        native representation.
-        """
-        assert isinstance(value, reify(self.native_type))
-        return value
-
-    @property
-    def supported_filter_relations(self) -> tuple[str, ...]:
-        """
-        The filter relations in which fields of this type can be used as a
-        left-handside. By default, this class only supports equality. A scalar
-        field type would override this method to include the `within` relation.
-        """
-        return 'is',
-
-    def api_filter_schema(self, relation: str) -> JSON:
-        """
-        The JSONSchema describing the right-handside operand of the given filter
-        relation in OpenAPI specifications when the left-handside operand is a
-        field of this type.
-        """
-        assert relation in self.supported_filter_relations, relation
-        api_type = self.api_schema
-        if relation == 'is':
-            return api_type
-        elif relation == 'within':
-            return self._api_range_schema(api_type)
-        else:
-            assert False, relation
-
-    def _api_range_schema(self, api_schema: JSON) -> JSON:
-        return schema.array(api_schema, minItems=2, maxItems=2)
-
-    def _api_range_to_index(self, value: Range[T]) -> JSON:
-        return {'gte': value[0], 'lte': value[1]}
-
-    def _from_api_range(self, value: AnyJSON) -> Range[T]:
-        assert isinstance(value, (list, tuple)) and len(value) == 2, value
-        gte, lte = value
-        return self.from_api(gte), self.from_api(lte)
-
-    def filter(self, relation: str, values: list[AnyJSON]) -> list[T]:
-        if relation == 'within':
-            return list(map(self._api_range_to_index, map(self._from_api_range, values)))
-        else:
-            return list(map(self.to_index, values))
-
-
-class PassThrough(Generic[T], FieldType[T, T]):
-    allow_sorting_by_empty_lists = False
-
-    def __init__(self, translated_type: Type[T], *, es_type: Optional[str]):
-        super().__init__(translated_type, translated_type)
-        self._es_type = es_type
-
-    @property
-    def es_type(self) -> str:
-        return self._es_type
-
-    def to_index(self, value: T) -> T:
-        return value
-
-    def from_index(self, value: T) -> T:
-        return value
-
-
-# FIXME: change the es_type for JSON to `nested`
-#        https://github.com/DataBiosphere/azul/issues/2621
-pass_thru_json: PassThrough[JSON] = PassThrough(JSON, es_type=None)
-
-
-class NumericPassThrough(PassThrough[T]):
-
-    @property
-    def supported_filter_relations(self) -> tuple[str, ...]:
-        return *super().supported_filter_relations, 'within'
-
-    def from_api(self, value: AnyJSON) -> T:
-        """
-        1.0 is a valid JSONSchema `integer`
-
-        >>> pass_thru_int.from_api(1.0)
-        1
-
-        1 is a valid JSONSchema `number`
-
-        >>> pass_thru_float.from_api(1)
-        1.0
-
-        1.1 is not a valid JSONSchema `integer`
-
-        >>> pass_thru_int.from_api(1.1)
-        Traceback (most recent call last):
-            ...
-        AssertionError: 1.1
-
-        1.1 is a valid JSONSchema `float`
-
-        >>> pass_thru_float.from_api(1.1)
-        1.1
-        """
-        native_value = self.native_type(value)
-        assert native_value == value, value
-        return native_value
-
-
-pass_thru_str = PassThrough(str, es_type='keyword')
-pass_thru_int = NumericPassThrough(int, es_type='long')
-pass_thru_float = NumericPassThrough(float, es_type='double')
-pass_thru_bool = PassThrough(bool, es_type='boolean')
-
-
-class Nullable(FieldType[Optional[N], T]):
-
-    def __init__(self, native_type: Type[N], translated_type: Type[T]) -> None:
-        super().__init__(Optional[native_type], translated_type)
-
-    @property
-    def optional_type(self):
-        native_type, none_type = get_args(self.native_type)
-        assert none_type is type(None)  # noqa: E721
-        return native_type
-
-    @abstractmethod
-    def to_index(self, value: N) -> T:
-        raise NotImplementedError
-
-    @abstractmethod
-    def from_index(self, value: T) -> N:
-        raise NotImplementedError
-
-    @property
-    def api_schema(self) -> JSON:
-        return schema.nullable(schema.make(self.optional_type))
-
-
-class NullableScalar(Nullable[N, T], metaclass=ABCMeta):
-
-    def api_filter_schema(self, relation: str) -> JSON:
-        if relation == 'within':
-            # The LHS operand of a range relation can't be null
-            api_type = schema.make(self.optional_type)
-            return self._api_range_schema(api_type)
-        else:
-            return super().api_filter_schema(relation)
-
-    @property
-    def supported_filter_relations(self) -> tuple[str, ...]:
-        return *super().supported_filter_relations, 'within'
-
-
-class NullableString(Nullable[str, str]):
-    # Note that the replacement values for `None` used for each data type
-    # ensure that `None` values are placed at the end of a sorted list.
-    null_string = '~null'
-    es_type = 'keyword'
-
-    def __init__(self):
-        super().__init__(str, str)
-
-    def to_index(self, value: Optional[str]) -> str:
-        return self.null_string if value is None else value
-
-    def from_index(self, value: str) -> Optional[str]:
-        return None if value == self.null_string else value
-
-
-null_str = NullableString()
-
-# While Elasticsearch distinguishes between integers and floating point numbers
-# in its index, JSON does not. Since all payloads to and from Elasticsearch are
-# serialized as JSON we have to be prepared to get 1 back when we write 1.0.
-
-JSONNumber = Union[int, float]
-
-U = TypeVar('U', bound=Union[bool, int, float])
-
-
-class NullableNumber(Generic[U], NullableScalar[U, JSONNumber]):
-    shadowed = True
-    # Maximum int that can be represented as a 64-bit int and double IEEE
-    # floating point number. This prevents loss when converting between the two.
-    null_value = sys.maxsize - 1023
-    assert null_value == int(float(null_value))
-
-    def __init__(self, native_type: Type[U], es_type: str) -> None:
-        assert issubclass(native_type, get_args(JSONNumber))
-        super().__init__(native_type, JSONNumber)
-        self._es_type = es_type
-
-    @property
-    def es_type(self) -> Optional[str]:
-        return self._es_type
-
-    def to_index(self, value: Optional[U]) -> JSONNumber:
-        if value is None:
-            return self.null_value
-        else:
-            assert value < self.null_value, (value, self.null_value)
-            return value
-
-    def from_index(self, value: JSONNumber) -> Optional[U]:
-        if value == self.null_value:
-            return None
-        else:
-            return self.optional_type(value)
-
-    def from_api(self, value: AnyJSON) -> N:
-        """
-        1.0 is a valid JSONSchema `integer`
-
-        >>> null_int.from_api(1.0)
-        1
-
-        1 is a valid JSONSchema `number`
-
-        >>> pass_thru_float.from_api(1)
-        1.0
-
-        1.1 is not a valid JSONSchema `integer`
-
-        >>> null_int.from_api(1.1)
-        Traceback (most recent call last):
-            ...
-        AssertionError: 1.1
-
-        1.1 is a valid JSONSchema `float`
-
-        >>> pass_thru_float.from_api(1.1)
-        1.1
-        """
-        native_value = self.optional_type(value)
-        assert native_value == value, value
-        return native_value
-
-
-null_int = NullableNumber(int, 'long')
-
-null_float = NullableNumber(float, 'double')
-
-
-class NullableBool(NullableNumber[bool]):
-    shadowed = False
-
-    def __init__(self):
-        super().__init__(bool, 'boolean')
-
-    def to_index(self, value: Optional[bool]) -> JSONNumber:
-        value = {False: 0, True: 1, None: None}[value]
-        return super().to_index(value)
-
-    def from_index(self, value: JSONNumber) -> Optional[bool]:
-        value = super().from_index(value)
-        return {0: False, 1: True, None: None}[value]
-
-    @property
-    def supported_filter_relations(self) -> tuple[str, ...]:
-        return 'is',  # no point in supporting range relation
-
-
-null_bool = NullableBool()
-
-
-class NullableDateTime(Nullable[str, str]):
-    es_type = 'date'
-    null = format_dcp2_datetime(datetime(9999, 1, 1, tzinfo=timezone.utc))
-
-    def to_index(self, value: Optional[str]) -> str:
-        if value is None:
-            return self.null
-        else:
-            parse_dcp2_datetime(value)
-            return value
-
-    def from_index(self, value: str) -> Optional[str]:
-        if value == self.null:
-            return None
-        else:
-            return value
-
-
-null_datetime: NullableDateTime = NullableDateTime(str, str)
-
-
-class Nested(PassThrough[JSON]):
-    properties: Mapping[str, FieldType]
-    agg_property: str
-
-    def __init__(self, **properties):
-        super().__init__(JSON, es_type='nested')
-        self.agg_property = first(properties.keys())
-        self.properties = properties
-
-    def api_filter_schema(self, relation: str) -> JSON:
-        assert relation == 'is'
-        properties, required = {}, []
-        for field, field_type in self.properties.items():
-            properties[field] = field_type.api_filter_schema(relation)
-            if not isinstance(field_type, Nullable):
-                required.append(field)
-        kwargs = dict(additionalProperties=False)
-        if required:
-            kwargs['required'] = required
-        return schema.object(properties=properties, **kwargs)
-
-    def filter(self, relation: str, values: list[JSON]) -> list[JSON]:
-        nested_object = one(values)
-        assert isinstance(nested_object, dict)
-        query_filters = {}
-        for nested_field, nested_value in nested_object.items():
-            nested_type = self.properties[nested_field]
-            to_index = nested_type.to_index
-            value = one(values)[nested_field]
-            query_filters[nested_field] = to_index(value)
-        return [query_filters]
-
-
-class ClosedRange(Generic[P], FieldType[Range[P], JSON]):
-
-    def __init__(self, ends_type: FieldType[P, P]):
-        super().__init__(Range[P], JSON)
-        self.ends_type = ends_type
-
-    @property
-    def es_type(self) -> Optional[str]:
-        return None
-
-    def to_index(self, value: Range[P]) -> JSON:
-        return self._api_range_to_index(value)
-
-    def from_index(self, value: JSON) -> Range[P]:
-        return value['gte'], value['lte']
-
-    @property
-    def api_schema(self):
-        return self._api_range_schema(self.ends_type.api_schema)
-
-    @property
-    def supported_filter_relations(self) -> tuple[str, ...]:
-        return 'is', 'within', 'contains', 'intersects'
-
-    def api_filter_schema(self, relation: str) -> JSON:
-        if relation == 'contains':
-            # A range can contain a range or a value
-            return schema.union(self.ends_type.api_schema, self.api_schema)
-        else:
-            return self.api_schema
-
-    def from_api(self, value: AnyJSON) -> Range[P]:
-        return self.ends_type._from_api_range(value)
-
-    def filter(self, relation: str, values: list[AnyJSON]) -> list[JSON]:
-        result = []
-        for value in values:
-            if isinstance(value, list):
-                pass
-            elif relation == 'contains' and isinstance(value, reify(PrimitiveJSON)):
-                value = [value, value]
-            else:
-                assert False, (relation, value)
-            result.append(self.to_index(self.from_api(value)))
-        return result
-
-
-FieldTypes4 = Union[Mapping[str, FieldType], Sequence[FieldType], FieldType]
-FieldTypes3 = Union[Mapping[str, FieldTypes4], Sequence[FieldType], FieldType]
-FieldTypes2 = Union[Mapping[str, FieldTypes3], Sequence[FieldType], FieldType]
-FieldTypes1 = Union[Mapping[str, FieldTypes2], Sequence[FieldType], FieldType]
-FieldTypes = Mapping[str, FieldTypes1]
-CataloguedFieldTypes = Mapping[CatalogName, FieldTypes]
 
 InternalVersion = tuple[int, int]
 
@@ -1076,16 +648,13 @@ class OpType(Enum):
     update = auto()
 
 
-C = TypeVar('C', bound=DocumentCoordinates)
-
-
 @attr.s(frozen=False, kw_only=True, auto_attribs=True)
-class Document(Generic[C], metaclass=ABCMeta):
+class Document[C: DocumentCoordinates](metaclass=ABCMeta):
     needs_translation: ClassVar[bool] = True
 
     coordinates: C
 
-    version: Optional[InternalVersion]
+    version: InternalVersion | None
 
     # In the index, the `contents` property is always present and never null in
     # documents. In instances of the Aggregate subclass, this attribute is None
@@ -1093,7 +662,7 @@ class Document(Generic[C], metaclass=ABCMeta):
     # index while intentionally excluding that property for efficiency. In
     # instances of the Contribution subclass, this attribute is never None.
     #
-    contents: Optional[JSON]
+    contents: JSON | None
 
     @property
     def entity(self) -> EntityReference:
@@ -1108,12 +677,12 @@ class Document(Generic[C], metaclass=ABCMeta):
         raise NotImplementedError
 
     @op_type.setter
+    @abstractmethod
     def op_type(self, value: OpType):
         """
         Set the ES client method to use when writing this document to the index.
-        This setter is optional, concrete classes may not implement it. If they
-        don't, callers should gracefully handle the resulting AttributeError, as
-        that is what the Python runtime raises for the NotImplementedError.
+        This setter is optional, concrete classes may raise NotImplementedError
+        in their implementations and callers must gracefully handle that case.
         """
         raise NotImplementedError
 
@@ -1125,9 +694,32 @@ class Document(Generic[C], metaclass=ABCMeta):
         }
 
     @classmethod
+    @overload
+    def translate_fields(cls,
+                         doc: JSON,
+                         field_types: FieldType | FieldTypes,
+                         *,
+                         forward: bool,
+                         allowed_paths: list[FieldPath] | None = None
+                         ) -> MutableJSON:
+        ...
+
+    @classmethod
+    @overload
     def translate_fields(cls,
                          doc: AnyJSON,
-                         field_types: Union[FieldType, FieldTypes],
+                         field_types: FieldType | FieldTypes,
+                         *,
+                         forward: bool,
+                         allowed_paths: list[FieldPath] | None = None,
+                         path: FieldPath
+                         ) -> AnyMutableJSON:
+        ...
+
+    @classmethod
+    def translate_fields(cls,
+                         doc: AnyJSON,
+                         field_types: FieldType | FieldTypes,
                          *,
                          forward: bool,
                          allowed_paths: list[FieldPath] | None = None,
@@ -1240,14 +832,12 @@ class Document(Generic[C], metaclass=ABCMeta):
                   *,
                   coordinates: C,
                   document: JSON,
-                  version: Optional[InternalVersion],
+                  version: InternalVersion | None,
                   **kwargs,
                   ) -> Self:
-        # noinspection PyArgumentList
-        # https://youtrack.jetbrains.com/issue/PY-28506
         self = cls(coordinates=coordinates,
                    version=version,
-                   contents=document.get('contents'),
+                   contents=optional(json_mapping, document.get('contents')),
                    **kwargs)
         assert document['entity_id'] == self.entity.entity_id
         return self
@@ -1266,28 +856,35 @@ class Document(Generic[C], metaclass=ABCMeta):
                    field_types: CataloguedFieldTypes,
                    hit: JSON,
                    *,
-                   coordinates: Optional[DocumentCoordinates[CataloguedEntityReference]] = None
+                   coordinates: CataloguedDocumentCoordinates | None = None
                    ) -> Self:
         if coordinates is None:
             coordinates = DocumentCoordinates.from_hit(hit)
-        document = hit['_source']
+        document = json_mapping(hit['_source'])
         if cls.needs_translation:
             document = cls.translate_fields(document,
                                             field_types[coordinates.entity.catalog],
                                             forward=False)
         try:
-            version = hit['_seq_no'], hit['_primary_term']
+            version = json_int(hit['_seq_no']), json_int(hit['_primary_term'])
         except KeyError:
             assert '_seq_no' not in hit
             assert '_primary_term' not in hit
             version = None
 
+        assert isinstance(coordinates, cls.coordinate_cls())
+
         return cls.from_json(coordinates=coordinates,
-                             document=document,
+                             document=json_mapping(document),
                              version=version)
 
+    @classmethod
+    @abstractmethod
+    def coordinate_cls(cls) -> type[C]:
+        pass
+
     def to_index(self,
-                 catalog: Optional[CatalogName],
+                 catalog: CatalogName | None,
                  field_types: CataloguedFieldTypes
                  ) -> JSON:
         """
@@ -1304,7 +901,7 @@ class Document(Generic[C], metaclass=ABCMeta):
         :return: Request parameters for indexing
         """
         coordinates = self.coordinates.with_catalog(catalog)
-        result = {
+        result: dict[str, AnyJSON] = {
             'index': coordinates.index_name,
             'id': self.coordinates.document_id
         }
@@ -1325,12 +922,17 @@ class Document(Generic[C], metaclass=ABCMeta):
         return body
 
 
-class DocumentSource(SourceRef[SimpleSourceSpec, SourceRef]):
+class DocumentSource(SourceRef[SimpleSourceSpec]):
     pass
 
 
 @attr.s(frozen=False, kw_only=True, auto_attribs=True)
-class Contribution(Document[ContributionCoordinates[E]]):
+class Contribution[E: EntityReference](Document[ContributionCoordinates[E]]):
+
+    @classmethod
+    def coordinate_cls(cls) -> type[ContributionCoordinates[E]]:
+        return ContributionCoordinates
+
     # This narrows the type declared in the superclass. See comment there.
     contents: JSON
     source: DocumentSource
@@ -1367,17 +969,16 @@ class Contribution(Document[ContributionCoordinates[E]]):
     @classmethod
     def from_json(cls,
                   *,
-                  coordinates: C,
+                  coordinates: ContributionCoordinates[E],
                   document: JSON,
-                  version: Optional[InternalVersion],
+                  version: InternalVersion | None,
                   **kwargs
                   ) -> Self:
         self = super().from_json(coordinates=coordinates,
                                  document=document,
                                  version=version,
-                                 source=DocumentSource.from_json(cast(SourceJSON, document['source'])),
+                                 source=DocumentSource.from_json(document['source']),
                                  **kwargs)
-        assert isinstance(self, Contribution)
         assert self.coordinates.document_id == document['document_id']
         assert self.coordinates.bundle.uuid == document['bundle_uuid']
         assert self.coordinates.bundle.version == document['bundle_version']
@@ -1407,12 +1008,16 @@ class Contribution(Document[ContributionCoordinates[E]]):
 @attr.s(frozen=False, kw_only=True, auto_attribs=True)
 class Aggregate(Document[AggregateCoordinates]):
     sources: set[DocumentSource]
-    bundles: Optional[list[BundleFQIDJSON]]
+    bundles: list[BundleFQID] | None
     num_contributions: int
 
     def __attrs_post_init__(self):
         assert isinstance(self.coordinates, AggregateCoordinates)
         assert self.coordinates.doc_type is DocumentType.aggregate
+
+    @classmethod
+    def coordinate_cls(cls) -> type[AggregateCoordinates]:
+        return AggregateCoordinates
 
     @classmethod
     def field_types(cls, field_types: FieldTypes) -> FieldTypes:
@@ -1432,18 +1037,21 @@ class Aggregate(Document[AggregateCoordinates]):
     @classmethod
     def from_json(cls,
                   *,
-                  coordinates: C,
+                  coordinates: AggregateCoordinates,
                   document: JSON,
-                  version: Optional[InternalVersion],
+                  version: InternalVersion | None,
                   **kwargs
                   ) -> Self:
+        sources = set(map(DocumentSource.from_json, json_sequence(document['sources'])))
+        bundles = optional(json_sequence, document.get('bundles'))
+        bundles = None if bundles is None else list(map(BundleFQID.from_json, bundles))
+        num_contributions = json_int(document['num_contributions'])
         self = super().from_json(coordinates=coordinates,
                                  document=document,
                                  version=version,
-                                 num_contributions=document['num_contributions'],
-                                 sources=set(map(DocumentSource.from_json,
-                                                 cast(list[SourceJSON], document['sources']))),
-                                 bundles=document.get('bundles'))
+                                 num_contributions=num_contributions,
+                                 sources=sources,
+                                 bundles=bundles)
         assert isinstance(self, Aggregate)
         return self
 
@@ -1456,10 +1064,15 @@ class Aggregate(Document[AggregateCoordinates]):
         ]
 
     def to_json(self) -> JSON:
+        sources = [source.to_json() for source in self.sources]
+        if self.bundles is None:
+            bundles = None
+        else:
+            bundles = [bundle.to_json() for bundle in self.bundles]
         return dict(super().to_json(),
                     num_contributions=self.num_contributions,
-                    sources=[source.to_json() for source in self.sources],
-                    bundles=self.bundles)
+                    sources=sources,
+                    bundles=bundles)
 
     @property
     def op_type(self) -> OpType:
@@ -1469,9 +1082,13 @@ class Aggregate(Document[AggregateCoordinates]):
             # Aggregates are deleted when their contents goes blank
             return OpType.delete
 
+    @op_type.setter
+    def op_type(self, value: OpType):
+        raise NotImplementedError
+
 
 @attr.s(frozen=False, kw_only=True, auto_attribs=True)
-class Replica(Document[ReplicaCoordinates[E]]):
+class Replica[E: EntityReference](Document[ReplicaCoordinates[E]]):
     """
     A verbatim copy of a metadata document
     """
@@ -1501,6 +1118,10 @@ class Replica(Document[ReplicaCoordinates[E]]):
         assert self.coordinates.doc_type is DocumentType.replica
 
     @classmethod
+    def coordinate_cls(cls) -> type[ReplicaCoordinates]:
+        return ReplicaCoordinates
+
+    @classmethod
     def field_types(cls, field_types: FieldTypes) -> FieldTypes:
         # Replicas do not undergo translation
         raise NotImplementedError
@@ -1514,6 +1135,10 @@ class Replica(Document[ReplicaCoordinates[E]]):
     @property
     def op_type(self) -> OpType:
         return OpType.update
+
+    @op_type.setter
+    def op_type(self, value: OpType):
+        raise NotImplementedError
 
     def _body(self, field_types: FieldTypes) -> JSON:
         return {

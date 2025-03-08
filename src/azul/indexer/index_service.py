@@ -55,10 +55,8 @@ from azul.es import (
 from azul.indexer import (
     Bundle,
     BundleFQID,
-    BundleFQIDJSON,
     BundlePartition,
     BundleUUID,
-    SourcedBundleFQIDJSON,
 )
 from azul.indexer.aggregate import (
     Entities,
@@ -68,7 +66,6 @@ from azul.indexer.document import (
     AggregateCoordinates,
     CataloguedContribution,
     CataloguedEntityReference,
-    CataloguedFieldTypes,
     Contribution,
     Document,
     DocumentCoordinates,
@@ -83,6 +80,9 @@ from azul.indexer.document import (
 )
 from azul.indexer.document_service import (
     DocumentService,
+)
+from azul.indexer.field import (
+    CataloguedFieldTypes,
 )
 from azul.indexer.transform import (
     Transformer,
@@ -192,12 +192,9 @@ class IndexService(DocumentService):
             []
         )
 
-    def fetch_bundle(self,
-                     catalog: CatalogName,
-                     bundle_fqid: SourcedBundleFQIDJSON
-                     ) -> Bundle:
+    def fetch_bundle(self, catalog: CatalogName, bundle_fqid: JSON) -> Bundle:
         plugin = self.repository_plugin(catalog)
-        bundle_fqid = plugin.bundle_fqid_from_json(bundle_fqid)
+        bundle_fqid = plugin.bundle_fqid_cls.from_json(bundle_fqid)
         return plugin.fetch_bundle(bundle_fqid)
 
     def index(self, catalog: CatalogName, bundle: Bundle) -> None:
@@ -711,8 +708,8 @@ class IndexService(DocumentService):
             transformer = transformers[entity.catalog, entity.entity_type]
             contents = self._aggregate_entity(transformer, contributions)
             bundles = [
-                BundleFQIDJSON(uuid=c.coordinates.bundle.uuid,
-                               version=c.coordinates.bundle.version)
+                BundleFQID(uuid=c.coordinates.bundle.uuid,
+                           version=c.coordinates.bundle.version)
                 for c in contributions
             ]
             # FIXME: Replace hard coded limit with a config property
@@ -975,7 +972,7 @@ class IndexWriter:
         if doc.op_type is OpType.create:
             try:
                 doc.op_type = OpType.index
-            except AttributeError:
+            except NotImplementedError:
                 # We don't expect all Document types will let us modify op_type
                 warn()
             else:

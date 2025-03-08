@@ -49,6 +49,8 @@ from azul.indexer import (
 from azul.indexer.document import (
     DocumentType,
     IndexName,
+)
+from azul.indexer.field import (
     null_str,
 )
 from azul.indexer.index_service import (
@@ -253,6 +255,7 @@ class TestIndexResponse(IndexResponseTestCase):
                         "tissueAtlas": [],
                         "estimatedCellCount": None,
                         "dataUseRestriction": [None],
+                        "duosId": [None],
                     }
                 ],
                 "protocols": [
@@ -586,6 +589,7 @@ class TestIndexResponse(IndexResponseTestCase):
                             "isTissueAtlasProject": False,
                             "accessions": [],
                             "dataUseRestriction": None,
+                            "duosId": None,
                         }
                     ],
                     "protocols": [
@@ -850,6 +854,7 @@ class TestIndexResponse(IndexResponseTestCase):
                             {"namespace": "insdc_study", "accession": "PRJNA000000"},
                         ],
                         "dataUseRestriction": None,
+                        "duosId": None,
                     }
                 ],
                 "protocols": [
@@ -3499,27 +3504,33 @@ class TestResponseFields(IndexResponseTestCase):
         }
         self.assertEqual({None: 2, 'Lung': 1, 'Retina': 1, 'Blood': 1}, terms)
 
-    def test_data_use_restriction(self):
-        field, value = 'dataUseRestriction', 'NRES'
-        params = {
-            'catalog': self.catalog,
-            'sort': field,
-            'filters': json.dumps({field: {'is': [value]}})
-        }
-        plugin = self.index_service.metadata_plugin(self.catalog)
-        for entity_type in plugin.exposed_indices:
-            url = self.base_url.set(path=('index', entity_type), args=params)
-            response = requests.get(url)
-            response.raise_for_status()
-            response = response.json()
-            facets = response['termFacets']
-            terms = {term['term'] for term in facets[field]['terms']}
-            self.assertEqual({None, value}, terms)
-            hits = response['hits']
-            self.assertGreater(len(hits), 0)
-            expected = value if entity_type == 'projects' else [value]
-            for hit in hits:
-                self.assertEqual(expected, one(hit['projects'])[field])
+    def test_data_use_and_duos_id(self):
+        test_data = [
+            ('dataUseRestriction', 'GRU'),
+            ('duosId', 'DUOS-999999')
+        ]
+        for field, value in test_data:
+            with self.subTest(field=field):
+                params = {
+                    'catalog': self.catalog,
+                    'sort': field,
+                    'filters': json.dumps({field: {'is': [value]}})
+                }
+                plugin = self.index_service.metadata_plugin(self.catalog)
+                for entity_type in plugin.exposed_indices:
+                    url = self.base_url.set(path=('index', entity_type), args=params)
+                    response = requests.get(url)
+                    response.raise_for_status()
+                    response = response.json()
+                    if field != 'duosId':
+                        facets = response['termFacets']
+                        terms = {term['term'] for term in facets[field]['terms']}
+                        self.assertEqual({None, value}, terms)
+                    hits = response['hits']
+                    self.assertGreater(len(hits), 0)
+                    expected = value if entity_type == 'projects' else [value]
+                    for hit in hits:
+                        self.assertEqual(expected, one(hit['projects'])[field])
 
 
 class TestUnpopulatedIndexResponse(IndexResponseTestCase):

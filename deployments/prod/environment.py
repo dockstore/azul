@@ -1480,4 +1480,6 @@ def env() -> Mapping[str, Optional[str]]:
         # number of daily downloads per region.
         #
         # 'azul_waf_download_rate_limit': '59/600@2.9'
+
+        'AZUL_ENABLE_VERBATIM_RELATIONS': '0',
     }

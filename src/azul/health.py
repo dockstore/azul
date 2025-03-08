@@ -244,9 +244,9 @@ class Health:
         """
         return {
             'up': True,
-            'unindexed_bundles': sum(self.queues[config.notifications_queue_name()].get('messages', {}).values()),
+            'unindexed_bundles': sum(self.queues[config.notifications_queue.name].get('messages', {}).values()),
             'unindexed_documents': sum(chain.from_iterable(
-                self.queues[config.tallies_queue_name(retry=retry)].get('messages', {}).values()
+                self.queues[config.tallies_queue.derive(retry=retry).name].get('messages', {}).values()
                 for retry in (False, True)
             ))
         }

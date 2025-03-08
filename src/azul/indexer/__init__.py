@@ -15,13 +15,12 @@ from threading import (
     RLock,
 )
 from typing import (
+    Any,
     ClassVar,
-    Generic,
     Iterable,
     Iterator,
     Self,
-    TypeVar,
-    TypedDict,
+    cast,
     final,
 )
 
@@ -32,12 +31,17 @@ from azul import (
     config,
     reject,
 )
+from azul.attrs import (
+    SerializableAttrs,
+)
+from azul.json import (
+    Parseable,
+)
 from azul.types import (
     AnyJSON,
     JSON,
-    MutableJSON,
     SupportsLessAndGreaterThan,
-    get_generic_type_params,
+    derived_type_params,
 )
 from azul.uuids import (
     UUIDPartition,
@@ -55,7 +59,7 @@ BundleVersion = str
 # noinspection PyDataclass
 @attrs.frozen(kw_only=True, eq=False)
 @total_ordering
-class BundleFQID:
+class BundleFQID(SerializableAttrs):
     """
     A fully qualified bundle identifier. The attributes defined in this class
     must always be sufficient to decide whether two instances of this class or
@@ -78,7 +82,7 @@ class BundleFQID:
     # equal. For the same reason, we can't use `typing.Self` in the signature
     # because it would constrain the RHS to instances of subclasses of the LHS.
     @final
-    def __eq__(self, other: 'BundleFQID') -> bool:
+    def __eq__(self, other: Any) -> bool:
         """
         >>> b1 = BundleFQID(uuid='a', version='b')
         >>> b2 = BundleFQID(uuid='a', version='b')
@@ -107,20 +111,23 @@ class BundleFQID:
         SourceRef(id='x', spec=SimpleSourceSpec(prefix=Prefix(common='', partition=0), name='y')),
         SourceRef(id='w', spec=SimpleSourceSpec(prefix=Prefix(common='', partition=0), name='z')))
         """
-        same_bundle = self._nucleus() == other._nucleus()
-        if (
-            same_bundle
-            and isinstance(self, SourcedBundleFQID)
-            and isinstance(other, SourcedBundleFQID)
-        ):
-            assert self.source == other.source, (self._nucleus(), self.source, other.source)
-        return same_bundle
+        if isinstance(other, BundleFQID):
+            same_bundle = self._nucleus() == other._nucleus()
+            if (
+                same_bundle
+                and isinstance(self, SourcedBundleFQID)
+                and isinstance(other, SourcedBundleFQID)
+            ):
+                assert self.source == other.source, (self._nucleus(), self.source, other.source)
+            return same_bundle
+        else:
+            return False
 
     @final
     def __hash__(self) -> int:
         return hash(self._nucleus())
 
-    def __init_subclass__(cls, **kwargs):
+    def __init_subclass__(cls):
         """
         >>> @attrs.frozen(kw_only=True)
         ... class FooBundleFQID(SourcedBundleFQID):
@@ -133,7 +140,7 @@ class BundleFQID:
         ... class FooBundleFQID(SourcedBundleFQID):
         ...     foo: str
         """
-        super().__init_subclass__(**kwargs)
+        super().__init_subclass__()
         assert cls.__eq__ is BundleFQID.__eq__, cls
         assert cls.__hash__ is BundleFQID.__hash__, cls
 
@@ -159,14 +166,6 @@ class BundleFQID:
         True
         """
         return self._nucleus() < other._nucleus()
-
-    def to_json(self) -> MutableJSON:
-        return attrs.asdict(self, recurse=False)
-
-
-class BundleFQIDJSON(TypedDict):
-    uuid: BundleUUID
-    version: BundleVersion
 
 
 @attrs.frozen(kw_only=True)
@@ -228,6 +227,7 @@ class Prefix:
         reject(prefix == '', 'Cannot parse an empty prefix source')
         reject(prefix.endswith(source_delimiter),
                'Prefix source cannot end in a delimiter', prefix, source_delimiter)
+        partition: str | int
         try:
             entry, partition = prefix.split(source_delimiter)
         except ValueError:
@@ -356,11 +356,9 @@ class Prefix:
 
 Prefix.of_everything = Prefix.parse('/0')
 
-SOURCE_SPEC = TypeVar('SOURCE_SPEC', bound='SourceSpec')
-
 
 @attrs.frozen(kw_only=True)
-class SourceSpec(Generic[SOURCE_SPEC], metaclass=ABCMeta):
+class SourceSpec(Parseable, metaclass=ABCMeta):
     """
     The name of a repository source containing bundles to index. A repository
     has at least one source. Repository plugins whose repository source names
@@ -374,7 +372,7 @@ class SourceSpec(Generic[SOURCE_SPEC], metaclass=ABCMeta):
 
     @classmethod
     @abstractmethod
-    def parse(cls, spec: str) -> SOURCE_SPEC:
+    def parse(cls, spec: str) -> Self:
         raise NotImplementedError
 
     @classmethod
@@ -406,7 +404,7 @@ class SourceSpec(Generic[SOURCE_SPEC], metaclass=ABCMeta):
 
 
 @attrs.frozen(kw_only=True)
-class SimpleSourceSpec(SourceSpec['SimpleSourceSpec']):
+class SimpleSourceSpec(SourceSpec):
     """
     Default implementation for unstructured source names.
     """
@@ -457,16 +455,9 @@ class SimpleSourceSpec(SourceSpec['SimpleSourceSpec']):
         return f'{self.name}:{self._prefix_str}'
 
 
-class SourceJSON(TypedDict):
-    id: str
-    spec: str
-
-
-SOURCE_REF = TypeVar('SOURCE_REF', bound='SourceRef')
-
-
 @attrs.frozen(kw_only=True, order=True)
-class SourceRef(SupportsLessAndGreaterThan, Generic[SOURCE_SPEC, SOURCE_REF]):
+class SourceRef[SOURCE_SPEC: SourceSpec](SerializableAttrs,
+                                         SupportsLessAndGreaterThan):
     """
     A reference to a repository source containing bundles to index. A repository
     has at least one source. A source is primarily referenced by its ID but we
@@ -498,10 +489,10 @@ class SourceRef(SupportsLessAndGreaterThan, Generic[SOURCE_SPEC, SOURCE_REF]):
     id: str = attrs.field(order=str.lower)
     spec: SOURCE_SPEC = attrs.field(order=False)
 
-    _lookup: ClassVar[dict[tuple[type['SourceRef'], str, 'SourceSpec'], 'SourceRef']] = {}
+    _lookup: ClassVar[dict[tuple[type['SourceRef'], str, SourceSpec], 'SourceRef']] = {}
     _lookup_lock = RLock()
 
-    def __new__(cls: type[SOURCE_REF], *, id: str, spec: SOURCE_SPEC) -> SOURCE_REF:
+    def __new__(cls, *, id: str, spec: SOURCE_SPEC) -> Self:
         """
         Interns instances by their ID and spec. Two different sources may still
         use the same ID or spec.
@@ -538,39 +529,26 @@ class SourceRef(SupportsLessAndGreaterThan, Generic[SOURCE_SPEC, SOURCE_REF]):
                 self = lookup[cls, id, spec]
             except KeyError:
                 self = super().__new__(cls)
-                # noinspection PyArgumentList
-                self.__init__(id=id, spec=spec)
+                cls.__init__(self, id=id, spec=spec)
                 lookup[cls, id, spec] = self
-            else:
-                assert self.id == id
-                assert self.spec == spec, (self.spec, spec)
+            assert isinstance(self, cls)
+            assert self.id == id
+            assert self.spec == spec, (self.spec, spec)
             return self
 
-    def to_json(self) -> SourceJSON:
-        return dict(id=self.id, spec=str(self.spec))
-
     @classmethod
-    def from_json(cls, ref: SourceJSON) -> 'SourceRef':
-        return cls(id=ref['id'], spec=cls.spec_cls().parse(ref['spec']))
-
-    @classmethod
-    def spec_cls(cls) -> type[SourceSpec]:
-        spec_cls, ref_cls = get_generic_type_params(cls, SourceSpec, SourceRef)
-        return spec_cls
+    def spec_cls(cls) -> type[SOURCE_SPEC]:
+        spec_cls = derived_type_params(cls, root=SourceRef)[SOURCE_SPEC]
+        assert isinstance(spec_cls, type)
+        assert issubclass(spec_cls, SourceSpec)
+        return cast(type[SOURCE_SPEC], spec_cls)
 
     def with_prefix(self, prefix: Prefix) -> Self:
         return attrs.evolve(self, spec=attrs.evolve(self.spec, prefix=prefix))
 
 
-class SourcedBundleFQIDJSON(BundleFQIDJSON):
-    source: SourceJSON
-
-
-BUNDLE_FQID = TypeVar('BUNDLE_FQID', bound='SourcedBundleFQID')
-
-
 @attrs.frozen(kw_only=True, eq=False)
-class SourcedBundleFQID(BundleFQID, Generic[SOURCE_REF]):
+class SourcedBundleFQID[SOURCE_REF: SourceRef](BundleFQID):
     """
     >>> spec = SimpleSourceSpec(name='', prefix=(Prefix(partition=0)))
     >>> list(sorted([
@@ -591,22 +569,14 @@ class SourcedBundleFQID(BundleFQID, Generic[SOURCE_REF]):
 
     @classmethod
     def source_ref_cls(cls) -> type[SOURCE_REF]:
-        ref_cls, = get_generic_type_params(cls, SourceRef)
-        return ref_cls
-
-    @classmethod
-    def from_json(cls, json: SourcedBundleFQIDJSON) -> 'SourcedBundleFQID':
-        json = dict(json)
-        source = cls.source_ref_cls().from_json(json.pop('source'))
-        return cls(source=source, **json)
-
-    def to_json(self) -> SourcedBundleFQIDJSON:
-        return dict(super().to_json(),
-                    source=self.source.to_json())
+        ref_cls = derived_type_params(cls, root=SourcedBundleFQID)[SOURCE_REF]
+        assert isinstance(ref_cls, type)
+        assert issubclass(ref_cls, SourceRef)
+        return cast(type[SOURCE_REF], ref_cls)
 
 
 @attrs.define(kw_only=True)
-class Bundle(Generic[BUNDLE_FQID], metaclass=ABCMeta):
+class Bundle[BUNDLE_FQID: BundleFQID](SerializableAttrs, metaclass=ABCMeta):
     fqid: BUNDLE_FQID
 
     @property
@@ -654,19 +624,8 @@ class Bundle(Generic[BUNDLE_FQID], metaclass=ABCMeta):
         """
         raise NotImplementedError
 
-    @classmethod
-    def from_json(cls, fqid: BUNDLE_FQID, json_: JSON) -> 'Bundle':
-        raise NotImplementedError
 
-    @abstractmethod
-    def to_json(self) -> MutableJSON:
-        raise NotImplementedError
-
-
-BUNDLE = TypeVar('BUNDLE', bound=Bundle)
-
-
-class BundlePartition(UUIDPartition['BundlePartition']):
+class BundlePartition(UUIDPartition):
     """
     A binary partitioning of the UUIDs of outer entities in a bundle.
     """

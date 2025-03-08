@@ -8,6 +8,7 @@ from io import (
 )
 import json
 from typing import (
+    Self,
     overload,
 )
 
@@ -27,6 +28,7 @@ from azul.types import (
     MutableCompositeJSON,
     MutableJSON,
     MutableJSONArray,
+    json_str,
 )
 
 
@@ -239,3 +241,48 @@ def json_hash(o: AnyJSON, hash=None):
     for chunk in encoder.iterencode(o):
         hash.update(chunk.encode())
     return hash
+
+
+class Serializable:
+    """
+    A class whose instances can be transformed to and from JSON
+    """
+
+    # This is more akin to an interface (like those in Java) as opposed to an
+    # abstract base class. We're intentionally refraining from using ABCMeta as
+    # a metaclass here so as to allow for implementations to be instances of a
+    # different metaclass.
+
+    @classmethod
+    def from_json(cls, json: AnyJSON) -> Self:
+        """
+        Deserialize an instance of this class from the given JSON value
+        """
+        raise NotImplementedError
+
+    def to_json(self) -> AnyJSON:
+        """
+        Serialize this instance to JSON in a form suitable for :meth:`from_json`
+        """
+        raise NotImplementedError
+
+
+class Parseable(Serializable):
+    """
+    A class whose instances have a string representation that can be used in
+    JSON documents.
+    """
+
+    @classmethod
+    def from_json(cls, json: AnyJSON) -> Self:
+        return cls.parse(json_str(json))
+
+    def to_json(self) -> AnyJSON:
+        return str(self)
+
+    def __str__(self) -> str:
+        raise NotImplementedError
+
+    @classmethod
+    def parse(cls, value: str) -> Self:
+        raise NotImplementedError

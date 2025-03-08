@@ -29,7 +29,6 @@ from azul.files import (
 )
 from azul.indexer import (
     Bundle,
-    SourcedBundleFQIDJSON,
 )
 from azul.logging import (
     configure_script_logging,
@@ -100,8 +99,8 @@ def fetch_bundle(source: str, fqid_args: JSON) -> Bundle:
             log.debug('Searching for %r in catalog %r', source, catalog)
             for plugin_source_spec in plugin.sources:
                 if source_ref.spec.eq_ignoring_prefix(plugin_source_spec):
-                    fqid = SourcedBundleFQIDJSON(source=source_ref.to_json(), **fqid_args)
-                    fqid = plugin.bundle_fqid_from_json(fqid)
+                    fqid = dict(fqid_args, source=source_ref.to_json())
+                    fqid = plugin.bundle_fqid_cls.from_json(fqid)
                     bundle = plugin.fetch_bundle(fqid)
                     log.info('Fetched bundle %r version %r from catalog %r.',
                              fqid.uuid, fqid.version, catalog)
@@ -115,10 +114,13 @@ def plugin_for(catalog):
 
 
 def save_bundle(bundle: Bundle, output_dir: str) -> None:
-    path = os.path.join(output_dir,
-                        f'{bundle.uuid}.{bundle.canning_qualifier()}.json')
+    file_name = f'{bundle.uuid}.{bundle.canning_qualifier()}.json'
+    path = os.path.join(output_dir, file_name)
+    bundle_json = bundle.to_json()
+    # We can bundles without the FQID so that we can mock it during tests
+    bundle_json.pop('fqid')
     with write_file_atomically(path) as f:
-        json.dump(bundle.to_json(), f, indent=4)
+        json.dump(bundle_json, f, indent=4)
     log.info('Successfully wrote %s', path)
 
 

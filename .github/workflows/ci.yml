@@ -25,13 +25,22 @@ jobs:
       - name: 'Run unit tests and other checks'
         run: |
           source environment  # load global defaults
+
+          # PRs targetting the `prod` branch should be built with the `prod`
+          # deployment selected. The same goes for push builds of the `prod`
+          # branch. Likewise for `anvilprod`. All other PR and push builds
+          # should select the `dev` deployment. Note that this includes chained
+          # PRs whose target branch is not a protected branch but another PR
+          # branch.
+          #
+          azul_shared_deployments='{"": ["dev"], "prod": ["prod"], "anvilprod": ["anvilprod"]}'
+
           make virtualenv
           source .venv/bin/activate
           make requirements
           deployment=$(python scripts/check_branch.py --print)
           _link $deployment
           _refresh
-
 
           make environment.boot
 
@@ -46,7 +55,7 @@ jobs:
           #        https://github.com/DataBiosphere/azul/issues/5188
           #
           export azul_docker_registry=""
-          
+
           # Hack: The use of chrgp compensates for a quirk of Docker. The
           # PyCharm image used by make format sets up a user called `developer`
           # and assigns it UID 1000. Actions is running as UID 1001. An
