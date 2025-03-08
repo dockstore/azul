@@ -63,7 +63,7 @@ from azul.terra import (
     TDRSourceRef,
 )
 from azul.types import (
-    JSONs,
+    MutableJSONs,
 )
 from azul_test_case import (
     DCP2TestCase,
@@ -128,14 +128,14 @@ class TestIndexController(DCP2IndexerTestCase, SqsTestCase):
     def _tallies_retry_queue(self):
         return self.controller._tallies_queue(retry=True)
 
-    def _read_queue(self, queue) -> JSONs:
+    def _read_queue(self, queue) -> MutableJSONs:
         messages = self.queue_manager.read_messages(queue)
         # For unknown reasons, Moto 4.0.6 requires reading the queues a second
-        # time whereas 2.0.6 didn't. It *is* more realistic but I am not sure
+        # time whereas 2.0.6 didn't. It *is* more realistic, but I am not sure
         # how reliable this is.
         messages += self.queue_manager.read_messages(queue)
-        tallies = [json.loads(m.body) for m in messages]
-        return tallies
+        message_bodies = [json.loads(m.body) for m in messages]
+        return message_bodies
 
     def _fqid_from_notification(self, notification):
         fqid = notification['notification']['bundle_fqid']
