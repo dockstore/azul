@@ -109,20 +109,6 @@ class DUOSTestCase(TDRTestCase, ABC):
 class AnvilIndexerTestCase(AnvilCannedBundleTestCase, IndexerTestCase):
 
     @classmethod
-    def bundle_fqid(cls,
-                    *,
-                    uuid,
-                    version=None,
-                    table_name=BundleType.primary.value,
-                    ) -> TDRAnvilBundleFQID:
-        assert version is None, 'All AnVIL bundles should use the same version'
-        return TDRAnvilBundleFQID(source=cls.source,
-                                  uuid=uuid,
-                                  version=cls.version,
-                                  table_name=table_name,
-                                  batch_prefix='' if BundleType.is_batched(table_name) else None)
-
-    @classmethod
     def primary_bundle(cls) -> TDRAnvilBundleFQID:
         return cls.bundle_fqid(uuid='826dea02-e274-affe-aabc-eb3db63ad068')
 

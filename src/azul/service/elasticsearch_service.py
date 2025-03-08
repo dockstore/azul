@@ -56,10 +56,12 @@ from azul.es import (
 from azul.indexer.document import (
     DocumentType,
     IndexName,
-    Nested,
 )
 from azul.indexer.document_service import (
     DocumentService,
+)
+from azul.indexer.field import (
+    Nested,
 )
 from azul.plugins import (
     DocumentSlice,
@@ -221,7 +223,7 @@ class FilterStage(_ElasticsearchStage[Response, Response]):
             relation, values = one(filter.items())
             field_type = self.service.field_type(catalog, field)
             values = field_type.filter(relation, values)
-            translated_filters[field] = {relation: values}
+            translated_filters[field] = {relation: list(values)}
         return translated_filters
 
     def prepare_query(self, skip_field_paths: tuple[FieldPath] = ()) -> Query:

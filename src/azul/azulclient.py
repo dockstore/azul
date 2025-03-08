@@ -43,6 +43,7 @@ from azul import (
     cache,
     cached_property,
     config,
+    json_mapping,
 )
 from azul.es import (
     ESClientFactory,
@@ -54,7 +55,6 @@ from azul.http import (
     HasCachedHttpClient,
 )
 from azul.indexer import (
-    SourceJSON,
     SourceRef,
     SourcedBundleFQID,
 )
@@ -94,7 +94,7 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
         # only variant that would ever occur in the wild.
         return {
             'transaction_id': str(uuid.uuid4()),
-            'bundle_fqid': cast(JSON, bundle_fqid.to_json())
+            'bundle_fqid': bundle_fqid.to_json()
         }
 
     def bundle_message(self,
@@ -240,7 +240,7 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
 
     @cached_property
     def notifications_queue(self):
-        return self.sqs.get_queue_by_name(QueueName=config.notifications_queue_name())
+        return self.sqs.get_queue_by_name(QueueName=config.notifications_queue.name)
 
     def remote_reindex(self,
                        catalog: CatalogName,
@@ -267,11 +267,9 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
     def remote_reindex_partition(self, message: JSON) -> None:
         catalog, prefix = message['catalog'], message['prefix']
         assert isinstance(catalog, str) and isinstance(prefix, str)
-        # FIXME: Adopt `trycast` for casting JSON to TypeDict
-        #        https://github.com/DataBiosphere/azul/issues/5171
-        source = cast(SourceJSON, message['source'])
+        source = json_mapping(message['source'])
         validate_uuid_prefix(prefix)
-        source = self.repository_plugin(catalog).source_from_json(source)
+        source = self.repository_plugin(catalog).source_ref_cls.from_json(source)
         bundle_fqids = self.list_bundles(catalog, source, prefix)
         # All AnVIL bundles and entities use the same version
         if not config.is_anvil_enabled(catalog):
@@ -477,19 +475,19 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
 
         :param create_indices: whether to create the indexes at the end.
         """
-        work_queues = self.queues.get_queues(config.work_queue_names)
+        indexer_queues = self.queues.get_queues(config.indexer_queue_names)
         if purge_queues:
             log.info('Disabling lambdas ...')
-            self.queues.manage_lambdas(work_queues, enable=False)
-            log.info('Purging queues: %s', ', '.join(work_queues.keys()))
-            self.queues.purge_queues_unsafely(work_queues)
+            self.queues.manage_lambdas(indexer_queues, enable=False)
+            log.info('Purging queues: %s', ', '.join(indexer_queues.keys()))
+            self.queues.purge_queues_unsafely(indexer_queues)
         if delete_indices:
             log.info('Deleting indices ...')
             for catalog in catalogs:
                 self.delete_all_indices(catalog)
         if purge_queues:
             log.info('Re-enabling lambdas ...')
-            self.queues.manage_lambdas(work_queues, enable=True)
+            self.queues.manage_lambdas(indexer_queues, enable=True)
         if create_indices:
             log.info('Creating indices ...')
             for catalog in catalogs:

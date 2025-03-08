@@ -59,7 +59,7 @@ from azul.types import (
 log = logging.getLogger(__name__)
 
 
-class DSSSourceRef(SourceRef[SimpleSourceSpec, 'DSSSourceRef']):
+class DSSSourceRef(SourceRef[SimpleSourceSpec]):
     """
     Subclass of `Source` to create new namespace for source IDs.
     """

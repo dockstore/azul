@@ -1,5 +1,6 @@
 import re
 from typing import (
+    Collection,
     Mapping,
     NamedTuple,
     TypeAliasType,
@@ -431,7 +432,7 @@ def schema(form: Form) -> JSON:
     >>> schema(None)
     {'type': 'null'}
     """
-    if form == JSON:
+    if form == JSON or form == one(reify(JSON)):
         return {'type': 'object'}
     elif form is None:
         return _primitive_types[type(form)]
@@ -479,6 +480,13 @@ def union(*ts: Form, for_openapi: bool = True) -> JSON:
     else:
         # … and the general form. OpenAPI 3.0 only supports the latter.
         return {'anyOf': ts}
+
+
+def coalesce(ts: Collection[Form]) -> JSON:
+    if len(ts) == 1:
+        return schema(one(ts))
+    else:
+        return union(*ts)
 
 
 def nullable(t: Form, for_openapi: bool = True) -> JSON:

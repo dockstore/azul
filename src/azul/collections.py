@@ -547,3 +547,7 @@ class OrderedSet[K](MutableSet[K]):
         OrderedSet(['a', 'b', 1, 2])
         """
         self.inner |= dict.fromkeys(members)
+
+
+def singleton[T](x: T) -> frozenset[T]:
+    return frozenset((x,))

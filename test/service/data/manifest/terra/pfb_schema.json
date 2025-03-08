@@ -1934,7 +1934,10 @@
                             "name": "is_tissue_atlas_project",
                             "namespace": "projects",
                             "type": {
-                                "items": ["null", "boolean"],
+                                "items": [
+                                    "null",
+                                    "boolean"
+                                ],
                                 "type": "array"
                             }
                         },
@@ -1946,17 +1949,23 @@
                                     "fields": [
                                         {
                                             "name": "atlas",
-                                               "namespace": "projects.tissue_atlas",
-                                               "type": ["null", "string"]
+                                            "namespace": "projects.tissue_atlas",
+                                            "type": [
+                                                "null",
+                                                "string"
+                                            ]
                                         },
                                         {
                                             "name": "version",
                                             "namespace": "projects.tissue_atlas",
-                                            "type": ["null", "string"]
+                                            "type": [
+                                                "null",
+                                                "string"
+                                            ]
                                         }
                                     ],
-                                   "name": "projects.tissue_atlas",
-                                   "type": "record"
+                                    "name": "projects.tissue_atlas",
+                                    "type": "record"
                                 },
                                 "type": "array"
                             }
@@ -1965,7 +1974,10 @@
                             "name": "bionetwork_name",
                             "namespace": "projects",
                             "type": {
-                                "items": ["null", "string"],
+                                "items": [
+                                    "null",
+                                    "string"
+                                ],
                                 "type": "array"
                             }
                         },
@@ -1981,7 +1993,21 @@
                             "name": "data_use_restriction",
                             "namespace": "projects",
                             "type": {
-                                "items": ["null", "string"],
+                                "items": [
+                                    "null",
+                                    "string"
+                                ],
+                                "type": "array"
+                            }
+                        },
+                        {
+                            "name": "duos_id",
+                            "namespace": "projects",
+                            "type": {
+                                "items": [
+                                    "null",
+                                    "string"
+                                ],
                                 "type": "array"
                             }
                         }

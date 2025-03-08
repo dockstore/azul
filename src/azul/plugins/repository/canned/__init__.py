@@ -42,7 +42,6 @@ from azul.http import (
     HasCachedHttpClient,
 )
 from azul.indexer import (
-    SOURCE_SPEC,
     SimpleSourceSpec,
     SourceRef,
     SourcedBundleFQID,
@@ -68,7 +67,7 @@ from humancellatlas.data.metadata.helpers.staging_area import (
 log = logging.getLogger(__name__)
 
 
-class CannedSourceRef(SourceRef[SimpleSourceSpec, 'CannedSourceRef']):
+class CannedSourceRef(SourceRef[SimpleSourceSpec]):
     pass
 
 
@@ -159,7 +158,7 @@ class Plugin(RepositoryPlugin[CannedBundle, SimpleSourceSpec, CannedSourceRef, C
                                                             ref)
             return factory.load_staging_area(path)
 
-    def count_bundles(self, source: SOURCE_SPEC) -> int:
+    def count_bundles(self, source: CannedSourceRef) -> int:
         staging_area = self.staging_area(source.spec.name)
         if source.prefix is None:
             return len(staging_area.links)

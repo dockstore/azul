@@ -8,13 +8,14 @@ from functools import (
     partial,
 )
 import json
-import os
 from unittest.mock import (
     MagicMock,
+    PropertyMock,
     call,
     patch,
 )
 
+import attrs
 from chalice.app import (
     SQSRecord,
 )
@@ -29,7 +30,6 @@ from moto import (
 )
 
 from azul import (
-    config,
     queues,
 )
 from azul.azulclient import (
@@ -52,16 +52,24 @@ from azul.logging import (
     configure_test_logging,
     get_test_logger,
 )
-from azul.plugins.repository.dss import (
-    DSSBundleFQID,
-    DSSSourceRef,
+from azul.plugins.repository.tdr import (
+    TDRBundleFQID,
+    TDRPlugin,
+)
+from azul.plugins.repository.tdr_hca import (
     Plugin,
+)
+from azul.terra import (
+    TDRSourceRef,
 )
 from azul.types import (
     JSONs,
 )
+from azul_test_case import (
+    DCP2TestCase,
+)
 from indexer.test_indexer import (
-    DCP1IndexerTestCase,
+    DCP2IndexerTestCase,
 )
 from sqs_test_case import (
     SqsTestCase,
@@ -76,8 +84,11 @@ def setUpModule():
 
 
 @mock_aws
-class TestIndexController(DCP1IndexerTestCase, SqsTestCase):
-    partition_prefix_length = 0
+class TestIndexController(DCP2IndexerTestCase, SqsTestCase):
+    source = DCP2TestCase.source.with_prefix(
+        attrs.evolve(DCP2TestCase.source.spec.prefix,
+                     partition=0)
+    )
 
     def setUp(self) -> None:
         super().setUp()
@@ -128,9 +139,9 @@ class TestIndexController(DCP1IndexerTestCase, SqsTestCase):
 
     def _fqid_from_notification(self, notification):
         fqid = notification['notification']['bundle_fqid']
-        return DSSBundleFQID(uuid=fqid['uuid'],
+        return TDRBundleFQID(uuid=fqid['uuid'],
                              version=fqid['version'],
-                             source=DSSSourceRef.from_json(fqid['source']))
+                             source=TDRSourceRef.from_json(fqid['source']))
 
     def test_invalid_notification(self):
         event = [
@@ -141,34 +152,34 @@ class TestIndexController(DCP1IndexerTestCase, SqsTestCase):
         ]
         self.assertRaises(KeyError, self.controller.contribute, event)
 
-    def test_remote_reindex(self):
-        with patch.dict(os.environ, dict(AZUL_DSS_QUERY_PREFIX='ff',
-                                         AZUL_DSS_SOURCE='foo_source:/0')):
-            source = DSSSourceRef.for_dss_source(config.dss_source)
-            self.index_service.repository_plugin(self.catalog)._assert_source(source)
-            self._create_mock_queues()
-            self.client.remote_reindex(self.catalog, {str(source.spec)})
-            notification = one(self._read_queue(self._notifications_queue))
-            expected_notification = dict(action='reindex',
-                                         catalog='test',
-                                         source=source.to_json(),
-                                         prefix='')
-            self.assertEqual(expected_notification, notification)
-            event = [self._mock_sqs_record(notification)]
+    @patch.object(TDRPlugin, 'resolve_source')
+    def test_remote_reindex(self, resolve_source):
+        source = self.source
+        resolve_source.return_value = source
+        self.index_service.repository_plugin(self.catalog)._assert_source(source)
+        self._create_mock_queues()
+        self.client.remote_reindex(self.catalog, {str(source.spec)})
+        notification = one(self._read_queue(self._notifications_queue))
+        expected_notification = dict(action='reindex',
+                                     catalog=self.catalog,
+                                     source=source.to_json(),
+                                     prefix='')
+        self.assertEqual(expected_notification, notification)
+        event = [self._mock_sqs_record(notification)]
 
-            bundle_fqids = [
-                DSSBundleFQID(source=source,
-                              uuid='ffa338fe-7554-4b5d-96a2-7df127a7640b',
-                              version='2018-03-28T15:10:23.074974Z')
-            ]
+        bundle_fqids = [
+            TDRBundleFQID(source=source,
+                          uuid='4426adc5-b3c5-5aab-ab86-51d8ce44dfbe',
+                          version='2020-08-10T21:24:26.174274Z')
+        ]
 
-            with patch.object(Plugin, 'list_bundles', return_value=bundle_fqids):
-                self.controller.contribute(event)
+        with patch.object(Plugin, 'list_bundles', return_value=bundle_fqids):
+            self.controller.contribute(event)
 
-            notification = one(self._read_queue(self._notifications_queue))
-            expected_source = dict(id=source.id, spec=str(source.spec))
-            source = notification['notification']['bundle_fqid']['source']
-            self.assertEqual(expected_source, source)
+        notification = one(self._read_queue(self._notifications_queue))
+        expected_source = dict(id=source.id, spec=str(source.spec))
+        source = notification['notification']['bundle_fqid']['source']
+        self.assertEqual(expected_source, source)
 
     def test_contribute_and_aggregate(self):
         """
@@ -181,14 +192,14 @@ class TestIndexController(DCP1IndexerTestCase, SqsTestCase):
         """
         self.maxDiff = None
         self._create_mock_queues()
-        source = DSSSourceRef.for_dss_source('foo_source:/0')
+        source = self.source
         fqids = [
-            DSSBundleFQID(source=source,
-                          uuid='56a338fe-7554-4b5d-96a2-7df127a7640b',
-                          version='2018-03-28T15:10:23.074974Z'),
-            DSSBundleFQID(source=source,
-                          uuid='b2216048-7eaa-45f4-8077-5a3fb4204953',
-                          version='2018-03-29T10:40:41.822717Z')
+            TDRBundleFQID(source=source,
+                          uuid='4426adc5-b3c5-5aab-ab86-51d8ce44dfbe',
+                          version='2020-08-10T21:24:26.174274Z'),
+            TDRBundleFQID(source=source,
+                          uuid='1b6d8348-d6e9-406a-aa6a-7ee886e52bf9',
+                          version='2019-09-24T09:35:06.958773Z')
         ]
 
         # Load canned bundles
@@ -225,12 +236,12 @@ class TestIndexController(DCP1IndexerTestCase, SqsTestCase):
             self.assertEqual([1, 1], expected_digest[entity_type])
 
         # Test partitioning and contribution
-        for i in range(2):
+        for i in range(3):
             mock_plugin = MagicMock()
             notified_fqids = list(map(self._fqid_from_notification, notifications))
             notified_bundles = [bundles[fqid] for fqid in notified_fqids]
             mock_plugin.fetch_bundle.side_effect = notified_bundles
-            mock_plugin.bundle_fqid_from_json.side_effect = DSSBundleFQID.from_json
+            type(mock_plugin).bundle_fqid_cls = PropertyMock(return_value=TDRBundleFQID)
             mock_plugin.sources = [source]
             with patch.object(IndexService, 'repository_plugin', return_value=mock_plugin):
                 with patch.object(BundlePartition, 'max_partition_size', 4):
@@ -238,30 +249,29 @@ class TestIndexController(DCP1IndexerTestCase, SqsTestCase):
                     self.controller.contribute(event)
 
             # Assert plugin calls by controller
-            expected_calls = [call(fqid.to_json()) for fqid in notified_fqids]
-            self.assertEqual(expected_calls, mock_plugin.bundle_fqid_from_json.mock_calls)
             expected_calls = list(map(call, notified_fqids))
             self.assertEqual(expected_calls, mock_plugin.fetch_bundle.mock_calls)
 
             # Assert partitioned notifications, straight from the retry queue
             notifications = self._read_queue(self._notifications_retry_queue)
+            # Fingerprint the partitions from the resulting notifications
+            partitions = defaultdict(set)
+            for n in notifications:
+                fqid = self._fqid_from_notification(n)
+                partition = BundlePartition.from_json(n['notification']['partition'])
+                partitions[fqid].add(partition)
+            partitions = {k: len(v) for k, v in partitions.items()}
             if i == 0:
-                # Fingerprint the partitions from the resulting notifications
-                partitions = defaultdict(set)
-                for n in notifications:
-                    fqid = self._fqid_from_notification(n)
-                    partition = BundlePartition.from_json(n['notification']['partition'])
-                    partitions[fqid].add(partition)
-                # Assert that each bundle was partitioned ...
-                self.assertEqual(partitions.keys(), set(fqids))
-                # ... into two partitions. The number of partitions depends on
-                # the patched max_partition_size above and the number of
-                # entities in the canned bundles.
-                self.assertEqual([2] * len(fqids), list(map(len, partitions.values())))
-            else:
+                # Assert that each bundle was partitioned. The number of
+                # partitions for each bundle depends on the the number of
+                # entities in that bundle and the patched max_partition_size
+                self.assertEqual({fqids[0]: 2, fqids[1]: 8}, partitions)
+            elif i == 1:
                 # The partitions resulting from the first iteration should not
                 # need to be partitioned again
-                self.assertEqual([], notifications)
+                self.assertEqual({fqids[1]: 2}, partitions)
+            elif i == 2:
+                self.assertEqual({}, partitions)
 
         # We got a tally of one for each
         tallies = self._read_queue(self._tallies_queue)

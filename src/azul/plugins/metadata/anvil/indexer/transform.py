@@ -53,8 +53,10 @@ from azul.indexer.document import (
     EntityID,
     EntityReference,
     EntityType,
-    FieldTypes,
     Replica,
+)
+from azul.indexer.field import (
+    FieldTypes,
     null_bool,
     null_int,
     null_str,

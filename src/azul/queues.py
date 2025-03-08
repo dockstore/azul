@@ -71,7 +71,7 @@ class Queues:
               f'{"Messages Available":^20s}'
               f'{"Messages In Flight":^20s}'
               f'{"Messages Delayed":^18s}\n')
-        queues = self.azul_queues()
+        queues = self.all_queues()
         for queue_name, queue in queues.items():
             print(f'{queue_name:<35s}'
                   f'{queue.attributes["ApproximateNumberOfMessages"]:^20s}'
@@ -87,7 +87,7 @@ class Queues:
         return aws.resource('sqs')
 
     def dump_all(self):
-        for queue_name, queue in self.azul_queues().items():
+        for queue_name, queue in self.all_queues().items():
             self._dump(queue, queue_name + '.json')
 
     def _dump(self, queue, path):
@@ -186,7 +186,7 @@ class Queues:
                 pass
         return result
 
-    def azul_queues(self):
+    def all_queues(self):
         return self.get_queues(config.all_queue_names)
 
     def get_queues(self, queue_names: Iterable[str]) -> Mapping[str, 'Queue']:
@@ -224,7 +224,7 @@ class Queues:
 
     def wait_to_stabilize(self) -> int:
         """
-        Wait for the work queues to reach a steady state.
+        Wait for the indexer queues to reach a steady state.
         """
         sleep_time = 10
         # Indexing can still succeed after a transient stall. A stall's
@@ -234,7 +234,7 @@ class Queues:
         # accommodate the most probable scenarios for transient stalls.
         timeout = max(config.contribution_lambda_timeout(retry=True),
                       config.aggregation_lambda_timeout(retry=True))
-        queues = self.get_queues(config.work_queue_names)
+        queues = self.get_queues(config.indexer_queue_names)
         maxlen = ceil(timeout / sleep_time)
         total_lengths: deque[int] = deque(maxlen=maxlen)
         # Two minutes to safely accommodate SQS eventual consistency window of
@@ -324,7 +324,7 @@ class Queues:
         self.purge_queues_safely({queue_name: queue})
 
     def purge_all(self):
-        self.purge_queues_safely(self.azul_queues())
+        self.purge_queues_safely(self.all_queues())
 
     def purge_queues_safely(self, queues: Mapping[str, 'Queue']):
         self.manage_lambdas(queues, enable=False)
@@ -426,9 +426,14 @@ class Queues:
                 try:
                     function = functions_by_queue[queue_name]
                 except KeyError:
-                    assert queue_name in config.fail_queue_names
+                    assert queue_name in {
+                        *config.fail_queue_names,
+                        # FIXME: Implement mirror_source
+                        #        https://github.com/DataBiosphere/azul/issues/6860
+                        config.mirror_queue.name
+                    }
                 else:
-                    if queue_name == config.notifications_queue_name():
+                    if queue_name == config.notifications_queue.name:
                         # Prevent new notifications from being added
                         submit(self._manage_lambda, config.indexer_name, enable)
                     submit(self._manage_sqs_push, function, queue, enable)

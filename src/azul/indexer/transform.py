@@ -28,9 +28,11 @@ from azul.indexer.document import (
     EntityID,
     EntityReference,
     EntityType,
-    FieldTypes,
     Replica,
     ReplicaCoordinates,
+)
+from azul.indexer.field import (
+    FieldTypes,
 )
 from azul.json import (
     json_hash,

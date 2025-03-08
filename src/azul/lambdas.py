@@ -58,7 +58,8 @@ class Lambda:
     def _contribution_lambda_names(cls) -> frozenset[str]:
         indexer = load_app_module('indexer')
         notification_queue_names = {
-            config.unqual_notifications_queue_name(retry=retry) for retry in (False, True)
+            config.notifications_queue.derive(retry=retry).unqual_name
+            for retry in (False, True)
         }
 
         def has_notification_queue(handler) -> bool:

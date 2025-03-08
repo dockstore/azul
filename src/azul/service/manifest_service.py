@@ -105,6 +105,8 @@ from azul.deployment import (
 from azul.indexer.document import (
     DocumentType,
     FieldPath,
+)
+from azul.indexer.field import (
     FieldTypes,
     null_str,
 )
@@ -129,6 +131,9 @@ from azul.service import (
     FileUrlFunc,
     Filters,
     avro_pfb,
+)
+from azul.service.avro_pfb import (
+    PFBRelation,
 )
 from azul.service.elasticsearch_service import (
     ElasticsearchService,
@@ -1741,7 +1746,8 @@ class PFBManifestGenerator(FileBasedManifestGenerator):
         for doc in self._all_docs_sorted():
             converter.add_doc(doc)
 
-        entity = avro_pfb.pfb_metadata_entity(field_types)
+        links = avro_pfb.pfb_links_from_field_types(field_types)
+        entity = avro_pfb.pfb_metadata_entity(links)
         entities = itertools.chain([entity], converter.entities())
 
         fd, path = mkstemp(suffix='.avro')
@@ -2056,6 +2062,9 @@ class VerbatimManifestGenerator(FileBasedManifestGenerator, metaclass=ABCMeta):
                 document_id
                 for entity_type in self.hot_entity_types
                 for inner_entity in getitem(hit['contents'], entity_type, ())
+                # `document_id` is a scalar (string) when the inner and outer
+                # entity types match, and an array otherwise. `None` should not
+                # occur.
                 for document_id in always_iterable(inner_entity['document_id'])
             ]
             yield self.ReplicaKeys(hub_id=hit['entity_id'],
@@ -2143,15 +2152,58 @@ class PFBVerbatimManifestGenerator(VerbatimManifestGenerator):
         replica_schemas = plugin.verbatim_pfb_schema(replicas)
         # Ensure field order is consistent for unit tests
         replica_schemas.sort(key=itemgetter('name'))
-        replica_types = [s['name'] for s in replica_schemas]
+        links = {
+            replica_type: plugin.verbatim_pfb_links(replica_type)
+            for replica_type in ([s['name'] for s in replica_schemas])
+        }
+        pfb_metadata_entity = avro_pfb.pfb_metadata_entity(links)
         pfb_schema = avro_pfb.avro_pfb_schema(replica_schemas)
-        pfb_metadata_entity = avro_pfb.pfb_metadata_entity(replica_types, links=False)
 
         def pfb_entities():
             yield pfb_metadata_entity
             for replica in replicas:
                 id = plugin.verbatim_pfb_entity_id(replica)
-                yield avro_pfb.PFBEntity.for_replica(id, dict(replica)).to_json(())
+                entity = avro_pfb.PFBEntity.for_replica(id, dict(replica))
+                # Terra will reject the handover if the manifest includes
+                # dangling relations, i.e., if any entity references another
+                # entity that isn't included in the manifest. There are three
+                # known cases where dangling relations can occur (note that
+                # currently only the AnVIL plugins support adding relations
+                # to the manifest):
+                #
+                # 1. If an entity occurs in both a replica bundle and a primary
+                #    bundle, but only the replica bundle is indexed, its
+                #    referenced entities may be missing from the index (and
+                #    consequently from the manifest). This can only occur when
+                #    the deployment is configured to index snapshots using a
+                #    common prefix. See
+                #    https://github.com/DataBiosphere/azul/issues/6843
+                #
+                # 2. When using a filter that matches some but not all of the
+                #    files derived from a particular activity, the activity will
+                #    be left with dangling relations to the derived files that
+                #    didn't match the filter.
+                #
+                # 3. The `anvil_assayactivity` table includes a foreign key into
+                #    the `anvil_antibody` table. We only index replicas from the
+                #    latter as orphans, so replicas from the former can include
+                #    dangling relations when orphans are not included.
+                #    See https://github.com/DataBiosphere/azul/issues/4440
+                #
+                # (1) can only occur when orphans are included, and (2) and (3)
+                # can only occur when orphans are *not* included. Because (1)
+                # can only occur on lower deployments, we make the inclusion of
+                # relations conditional on avoiding (2) and (3).
+                #
+                if config.enable_verbatim_relations and self.include_orphans:
+                    relations = plugin.verbatim_pfb_relations(replica)
+                    entity_relations = [
+                        PFBRelation(dst_name=replica_type, dst_id=entity_id)
+                        for replica_type, entity_id in relations
+                    ]
+                else:
+                    entity_relations = []
+                yield entity.to_json(entity_relations)
 
         fd, path = mkstemp(suffix=f'.{self.file_name_extension()}')
         os.close(fd)

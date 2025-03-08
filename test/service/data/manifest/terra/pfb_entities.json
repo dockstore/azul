@@ -296,7 +296,7 @@
                 "b5894cf5-ecdc-4ea6-a0b9-5335ab678c7a"
             ],
             "has_input_biomaterial": [
-               null
+                null
             ],
             "organ": [
                 "brain"
@@ -305,10 +305,10 @@
                 "temporal lobe"
             ],
             "preservation_method": [
-               null
+                null
             ],
             "storage_method": [
-               null
+                null
             ]
         },
         "relations": []
@@ -330,10 +330,10 @@
                 "specimens"
             ],
             "model_organ": [
-               null
+                null
             ],
             "model_organ_part": [
-               null
+                null
             ],
             "organ": [
                 "brain"
@@ -380,7 +380,7 @@
                 "b5894cf5-ecdc-4ea6-a0b9-5335ab678c7a"
             ],
             "has_input_biomaterial": [
-               null
+                null
             ],
             "organ": [
                 "brain"
@@ -389,7 +389,7 @@
                 "temporal lobe"
             ],
             "preservation_method": [
-               null
+                null
             ],
             "storage_method": [
                 null
@@ -416,8 +416,8 @@
             "selected_cell_type": [
                 null
             ],
-            "total_estimated_cells_redundant": 0,
-            "total_estimated_cells": null
+            "total_estimated_cells": null,
+            "total_estimated_cells_redundant": 0
         },
         "relations": []
     },
@@ -501,6 +501,9 @@
                 "project"
             ],
             "accessions": [],
+            "bionetwork_name": [
+                "Immune"
+            ],
             "contact_names": [
                 null
             ],
@@ -511,9 +514,15 @@
             "document_id": [
                 "6615efae-fca8-4dd2-a223-9cfcf30fe94d"
             ],
+            "duos_id": [
+                null
+            ],
             "estimated_cell_count": null,
             "institutions": [
                 "Fake Institution"
+            ],
+            "is_tissue_atlas_project": [
+                false
             ],
             "laboratory": [
                 null
@@ -531,16 +540,14 @@
                 null
             ],
             "publications": [],
-            "is_tissue_atlas_project": [false],
-            "bionetwork_name": ["Immune"],
+            "supplementary_links": [
+                null
+            ],
             "tissue_atlas": [
                 {
                     "atlas": "Blood",
                     "version": "v1.0"
                 }
-            ],
-            "supplementary_links": [
-                null
             ]
         },
         "relations": []
@@ -754,8 +761,8 @@
             "selected_cell_type": [
                 null
             ],
-            "total_estimated_cells_redundant": 0,
-            "total_estimated_cells": 1
+            "total_estimated_cells": 1,
+            "total_estimated_cells_redundant": 0
         },
         "relations": []
     },
@@ -847,6 +854,9 @@
                 "project"
             ],
             "accessions": [],
+            "bionetwork_name": [
+                null
+            ],
             "contact_names": [
                 null
             ],
@@ -857,10 +867,16 @@
             "document_id": [
                 "e8642221-4c2c-4fd7-b926-a68bce363c88"
             ],
+            "duos_id": [
+                null
+            ],
             "estimated_cell_count": null,
             "institutions": [
                 "Farmers Trucks",
                 "University"
+            ],
+            "is_tissue_atlas_project": [
+                false
             ],
             "laboratory": [
                 "John Dear"
@@ -878,12 +894,10 @@
                 "Single-Cell Analysis of Human Pancreas Reveals Transcriptional Signatures of Aging and Somatic Mutation Patterns."
             ],
             "publications": [],
-            "is_tissue_atlas_project": [false],
-            "bionetwork_name": [null],
-            "tissue_atlas": [],
             "supplementary_links": [
                 "https://www.ebi.ac.uk/gxa/sc/experiments/E-GEOD-81547/Results"
-            ]
+            ],
+            "tissue_atlas": []
         },
         "relations": []
     },
@@ -3157,8 +3171,8 @@
             "selected_cell_type": [
                 "peripheral blood mononuclear cell"
             ],
-            "total_estimated_cells_redundant": 0,
-            "total_estimated_cells": 20000
+            "total_estimated_cells": 20000,
+            "total_estimated_cells_redundant": 0
         },
         "relations": []
     },
@@ -3181,8 +3195,8 @@
             "selected_cell_type": [
                 "peripheral blood mononuclear cell"
             ],
-            "total_estimated_cells_redundant": 0,
-            "total_estimated_cells": 20000
+            "total_estimated_cells": 20000,
+            "total_estimated_cells_redundant": 0
         },
         "relations": []
     },
@@ -3284,6 +3298,9 @@
                     "namespace": "dbgap"
                 }
             ],
+            "bionetwork_name": [
+                null
+            ],
             "contact_names": [
                 null
             ],
@@ -3294,9 +3311,15 @@
             "document_id": [
                 "90bf705c-d891-5ce2-aa54-094488b445c6"
             ],
+            "duos_id": [
+                null
+            ],
             "estimated_cell_count": 10000,
             "institutions": [
                 "Newcastle University"
+            ],
+            "is_tissue_atlas_project": [
+                false
             ],
             "laboratory": [
                 null
@@ -3314,12 +3337,10 @@
                 "The cellular immune response to COVID-19 deciphered by single cell multi-omics across three UK centres"
             ],
             "publications": [],
-            "is_tissue_atlas_project": [false],
-            "bionetwork_name": [null],
-            "tissue_atlas": [],
             "supplementary_links": [
                 null
-            ]
+            ],
+            "tissue_atlas": []
         },
         "relations": []
     },
