@@ -1434,7 +1434,6 @@ def env() -> Mapping[str, Optional[str]]:
                                                     repository=dict(name='tdr_hca')),
                                        sources=mklist(sources))
             for atlas, catalog, sources in [
-                ('hca', 'dcp45', dcp45_sources),
                 ('hca', 'dcp46', dcp46_sources),
                 ('lungmap', 'lm8', lm8_sources)
             ] for suffix, internal in [
