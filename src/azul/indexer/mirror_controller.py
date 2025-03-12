@@ -39,10 +39,14 @@ class MirrorController(ActionController[MirrorAction]):
                 if action is MirrorAction.mirror_source:
                     self.client.mirror_source(message['catalog'], message['source'])
                 elif action is MirrorAction.mirror_partition:
+                    # FIXME: Implement mirror_partition
+                    #        https://github.com/DataBiosphere/azul/issues/6861
                     log.info('Would mirror files in partition %r of source %r',
                              message['prefix'], message['source'])
                     time.sleep(10)
                 else:
+                    # FIXME: Implement mirror_file, mirror_part & finalize_file
+                    #        https://github.com/DataBiosphere/azul/issues/6862
                     assert False, action
             except BaseException:
                 log.warning(f'Worker failed to handle message {message}.', exc_info=True)
