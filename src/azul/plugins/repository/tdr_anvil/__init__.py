@@ -42,6 +42,9 @@ from azul.indexer.document import (
     EntityReference,
     EntityType,
 )
+from azul.plugins.metadata.anvil import (
+    AnvilFile,
+)
 from azul.plugins.metadata.anvil.bundle import (
     AnvilBundle,
     EntityLink,
@@ -241,6 +244,16 @@ class Plugin(TDRPlugin[TDRAnvilBundle, TDRAnvilBundleFQID]):
                               self.batch_uuid_version,
                               self.bundle_uuid_version)
 
+    def count_files(self, source: TDRSourceSpec) -> int:
+        prefix = '' if source.prefix is None else source.prefix.common
+        assert prefix == prefix.lower(), source
+        query = f'''
+        SELECT COUNT(*) AS count
+        FROM {backtick(self._full_table_name(source, 'anvil_file'))}
+        WHERE STARTS_WITH(LOWER(file_md5sum), {prefix!r})
+        '''
+        return one(self._run_sql(query))['count']
+
     def count_bundles(self, source: TDRSourceSpec) -> int:
         prefix = '' if source.prefix is None else source.prefix.common
         assert prefix == prefix.lower(), source
@@ -315,6 +328,23 @@ class Plugin(TDRPlugin[TDRAnvilBundle, TDRAnvilBundleFQID]):
                                                   table_name=table_name,
                                                   batch_prefix=batch_prefix))
         return bundles
+
+    def list_files(self, source: TDRSourceRef, prefix: str) -> list[AnvilFile]:
+        self._assert_source(source)
+        self._assert_partition(source, prefix)
+        batch = self._get_batch(source.spec,
+                                'anvil_file',
+                                prefix,
+                                key_column='file_md5sum')
+        return [
+            AnvilFile(uuid=ref.entity_id,
+                      name=row['file_name'],
+                      version=self._version,
+                      size=row['file_size'],
+                      md5=row['file_md5sum'],
+                      drs_uri=row['file_ref'])
+            for ref, row in batch
+        ]
 
     def _emulate_bundle(self, bundle_fqid: TDRAnvilBundleFQID) -> TDRAnvilBundle:
         if bundle_fqid.table_name == BundleType.primary.value:
@@ -533,14 +563,14 @@ class Plugin(TDRPlugin[TDRAnvilBundle, TDRAnvilBundleFQID]):
                    table_name: str,
                    batch_prefix: str,
                    *,
-                   id_column: str
+                   key_column: str
                    ) -> Iterable[tuple[EntityReference, BigQueryRow]]:
         columns = self._columns(table_name)
         assert not any(map(str.isupper, batch_prefix)), source
         for row in self._run_sql(f'''
             SELECT {', '.join(sorted(columns))}
             FROM {backtick(self._full_table_name(source, table_name))}
-            WHERE STARTS_WITH(LOWER({id_column}), {batch_prefix!r})
+            WHERE STARTS_WITH(LOWER({key_column}), {batch_prefix!r})
         '''):
             ref = EntityReference(entity_type=table_name, entity_id=row['datarepo_row_id'])
             yield ref, row
@@ -551,7 +581,7 @@ class Plugin(TDRPlugin[TDRAnvilBundle, TDRAnvilBundleFQID]):
         return self._get_batch(bundle_fqid.source.spec,
                                bundle_fqid.table_name,
                                bundle_fqid.batch_prefix,
-                               id_column='datarepo_row_id')
+                               key_column='datarepo_row_id')
 
     def _bundle_entity(self, bundle_fqid: TDRAnvilBundleFQID) -> KeyReference:
         source = bundle_fqid.source

@@ -672,6 +672,15 @@ class RepositoryPlugin[BUNDLE: Bundle,
         """
         raise NotImplementedError
 
+    @abstractmethod
+    def count_files(self, source: SOURCE_SPEC) -> int:
+        """
+        The total number of files in the given source. The source's prefix
+        may be None, indicating that the source hasn't been partitioned yet and
+        that this method should count all files in the source.
+        """
+        raise NotImplementedError
+
     def partition_source_for_indexing(self,
                                       catalog: CatalogName,
                                       source: SOURCE_REF
@@ -682,6 +691,17 @@ class RepositoryPlugin[BUNDLE: Bundle,
         should be appropriate for indexing in the given catalog.
         """
         return self._partition_source(catalog, source, self.count_bundles)
+
+    def partition_source_for_mirroring(self,
+                                       catalog: CatalogName,
+                                       source: SOURCE_REF
+                                       ) -> SOURCE_REF:
+        """
+        If the source already has a prefix, return the source. Otherwise, return
+        an updated copy of the source with a heuristically computed prefix that
+        should be appropriate for mirroring in the given catalog.
+        """
+        return self._partition_source(catalog, source, self.count_files)
 
     def _partition_source(self,
                           catalog: CatalogName,
@@ -728,6 +748,20 @@ class RepositoryPlugin[BUNDLE: Bundle,
         :param bundle_fqid: The fully qualified ID of the bundle to fetch,
                             including its source.
         """
+        raise NotImplementedError
+
+    @abstractmethod
+    def list_files(self, source: SOURCE_REF, prefix: str) -> list['File']:
+        """
+        List the files in the given source whose digest value starts with the
+        given prefix.
+
+        :param source: A reference to the repository source that contains the
+                       files to list
+
+        :param prefix: A string of lower-case hexadecimal characters
+        """
+
         raise NotImplementedError
 
     @abstractmethod

@@ -242,6 +242,22 @@ class Plugin(TDRPlugin[TDRHCABundle, TDRBundleFQID]):
         rows = self._run_sql(query)
         return one(rows)['count']
 
+    def count_files(self, source: TDRSourceSpec) -> int:
+        prefix = '' if source.prefix is None else source.prefix.common
+        assert prefix == prefix.lower(), source
+        query = ' UNION ALL '.join(
+            f'''
+            SELECT COUNT(*) AS count
+            FROM {backtick(self._full_table_name(source, entity_type))}
+            WHERE STARTS_WITH(LOWER(JSON_EXTRACT_SCALAR(descriptor, "$.sha256")),
+                              {prefix!r})
+            '''
+            for entity_type, entity_cls in api.entity_types.items()
+            if entity_type.endswith('_file')
+        )
+        rows = self._run_sql(query)
+        return sum(row['count'] for row in rows)
+
     def list_bundles(self,
                      source: TDRSourceRef,
                      prefix: str
@@ -260,6 +276,22 @@ class Plugin(TDRPlugin[TDRHCABundle, TDRBundleFQID]):
                           version=self.format_version(row['version']))
             for row in current_bundles
         ]
+
+    def list_files(self, source: TDRSourceRef, prefix: str) -> list[HCAFile]:
+        self._assert_source(source)
+        self._assert_partition(source, prefix)
+        assert prefix == prefix.lower(), prefix
+        rows = self._run_sql(' UNION ALL '.join(
+            f'''
+            SELECT {', '.join(TDRHCABundle.data_columns)}
+            FROM {backtick(self._full_table_name(source.spec, entity_type))}
+            WHERE STARTS_WITH(LOWER(JSON_EXTRACT_SCALAR(descriptor, "$.sha256")),
+                              {prefix!r})
+            '''
+            for entity_type, entity_cls in api.entity_types.items()
+            if entity_type.endswith('_file')
+        ))
+        return list(map(TDRHCABundle.file_from_row, rows))
 
     def _query_unique_sorted(self,
                              query: str,
