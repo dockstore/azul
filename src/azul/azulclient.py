@@ -68,6 +68,9 @@ from azul.indexer import (
 from azul.indexer.index_service import (
     IndexService,
 )
+from azul.json import (
+    Serializable,
+)
 from azul.plugins import (
     RepositoryPlugin,
 )
@@ -75,6 +78,7 @@ from azul.queues import (
     Queues,
 )
 from azul.types import (
+    AnyJSON,
     JSON,
 )
 from azul.uuids import (
@@ -84,13 +88,14 @@ from azul.uuids import (
 log = logging.getLogger(__name__)
 
 
-class Action(Enum):
+class Action(Serializable, Enum):
     reindex = auto()
     add = auto()
     delete = auto()
 
     @classmethod
-    def from_json(cls, action: str) -> Self:
+    def from_json(cls, action: AnyJSON) -> Self:
+        assert isinstance(action, str), R('Action is not a string', type(action))
         try:
             return cls[action]
         except KeyError:
