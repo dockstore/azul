@@ -121,6 +121,10 @@ class IndexService(DocumentService):
     def settings(self, index_name: IndexName) -> JSON:
         index_name.validate()
         aggregate = index_name.doc_type is DocumentType.aggregate
+        # There is a terminology collision between ElasticSearch's concept of an
+        # index replica, and our Azul-specific concept of an entity/document
+        # replica.
+        replica = index_name.doc_type is DocumentType.replica
         catalog = index_name.catalog
         assert catalog is not None, catalog
         if (
@@ -162,7 +166,7 @@ class IndexService(DocumentService):
             # customers are affected.
             #
             num_shards = 1 if aggregate else max(num_nodes, num_workers // 8)
-            num_replicas = (num_nodes - 1) if aggregate else 0
+            num_replicas = (num_nodes - 1) if aggregate or replica else 0
         return {
             'index': {
                 'number_of_shards': num_shards,
