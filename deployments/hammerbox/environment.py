@@ -705,7 +705,7 @@ anvil7_sources = mkdict(anvil6_sources, 256, mkdelta([
     # @formatter:on
 ]))
 
-anvil8_sources = mkdict(anvil7_sources, 255, mkdelta([
+anvil8_sources = mkdict(anvil7_sources, 254, mkdelta([
     # @formatter:off
     mksrc('bigquery', 'datarepo-6fd2f543', 'ANVIL_1000G_PRIMED_data_model_20240410_ANV5_202409251724'),
     mksrc('bigquery', 'datarepo-13858a9f', 'ANVIL_1000G_high_coverage_2019_20230517_ANV5_202409231755'),
@@ -804,6 +804,7 @@ anvil8_sources = mkdict(anvil7_sources, 255, mkdelta([
     mksrc('bigquery', 'datarepo-8302ff1f', 'ANVIL_CCDG_NYGC_NP_Autism_SAGE_WGS_20230605_ANV5_202409302144'),
     mksrc('bigquery', 'datarepo-443d8d20', 'ANVIL_CCDG_NYGC_NP_Autism_SSC_WGS_20230605_ANV5_202409302154'),
     mksrc('bigquery', 'datarepo-660280f8', 'ANVIL_CCDG_WashU_CVD_EOCAD_WashU_CAD_DS_WGS_20230525_ANV5_202409302255'),
+    mksrc('bigquery', 'datarepo-4a0769c7', 'ANVIL_CCDG_WashU_CVD_EOCAD_WashU_CAD_GRU_IRB_WGS_20230525_ANV5_202403040126', pop), # noqa E501
     mksrc('bigquery', 'datarepo-c2a2b724', 'ANVIL_CMG_YALE_DS_MC_20221026_ANV5_202409302315'),
     mksrc('bigquery', 'datarepo-f961f617', 'ANVIL_CMG_YALE_DS_RARED_20221020_ANV5_202409251714'),
     mksrc('bigquery', 'datarepo-5d222190', 'ANVIL_CMG_Yale_DS_BPEAKD_20240113_ANV5_202410011754'),
@@ -934,7 +935,7 @@ anvil8_sources = mkdict(anvil7_sources, 255, mkdelta([
     # @formatter:on
 ]))
 
-anvil9_sources = mkdict(anvil8_sources, 286, mkdelta([
+anvil9_sources = mkdict(anvil8_sources, 285, mkdelta([
     # @formatter:off
     mksrc('bigquery', 'datarepo-b555b2f5', 'ANVIL_1000G_PRIMED_data_model_20240410_ANV5_202502211647'),
     mksrc('bigquery', 'datarepo-265cde27', 'ANVIL_ALSCompute_Collection_GRU_20231016_ANV5_202410310107'),
