@@ -2143,6 +2143,40 @@ class PFBVerbatimManifestGenerator(VerbatimManifestGenerator):
     def format(cls) -> ManifestFormat:
         return ManifestFormat.verbatim_pfb
 
+    def _include_relations(self) -> bool:
+        # Terra will reject the handover if the manifest includes
+        # dangling relations, i.e., if any entity references another
+        # entity that isn't included in the manifest. There are three
+        # known cases where dangling relations can occur (note that
+        # currently only the AnVIL plugins support adding relations
+        # to the manifest):
+        #
+        # 1. If an entity occurs in both a replica bundle and a primary
+        #    bundle, but only the replica bundle is indexed, its
+        #    referenced entities may be missing from the index (and
+        #    consequently from the manifest). This can only occur when
+        #    the deployment is configured to index snapshots using a
+        #    common prefix. See
+        #    https://github.com/DataBiosphere/azul/issues/6843
+        #
+        # 2. When using a filter that matches some but not all of the
+        #    files derived from a particular activity, the activity will
+        #    be left with dangling relations to the derived files that
+        #    didn't match the filter.
+        #
+        # 3. The `anvil_assayactivity` table includes a foreign key into
+        #    the `anvil_antibody` table. We only index replicas from the
+        #    latter as orphans, so replicas from the former can include
+        #    dangling relations when orphans are not included.
+        #    See https://github.com/DataBiosphere/azul/issues/4440
+        #
+        # (1) can only occur when orphans are included, and (2) and (3)
+        # can only occur when orphans are *not* included. Because (1)
+        # can only occur on lower deployments, we make the inclusion of
+        # relations conditional on avoiding (2) and (3).
+        #
+        return config.enable_verbatim_relations and self.include_orphans
+
     def create_file(self) -> tuple[str, str | None]:
         replicas = list(self._all_replicas())
         plugin = self.metadata_plugin
@@ -2161,38 +2195,7 @@ class PFBVerbatimManifestGenerator(VerbatimManifestGenerator):
             for replica in replicas:
                 id = plugin.verbatim_pfb_entity_id(replica)
                 entity = avro_pfb.PFBEntity.for_replica(id, dict(replica))
-                # Terra will reject the handover if the manifest includes
-                # dangling relations, i.e., if any entity references another
-                # entity that isn't included in the manifest. There are three
-                # known cases where dangling relations can occur (note that
-                # currently only the AnVIL plugins support adding relations
-                # to the manifest):
-                #
-                # 1. If an entity occurs in both a replica bundle and a primary
-                #    bundle, but only the replica bundle is indexed, its
-                #    referenced entities may be missing from the index (and
-                #    consequently from the manifest). This can only occur when
-                #    the deployment is configured to index snapshots using a
-                #    common prefix. See
-                #    https://github.com/DataBiosphere/azul/issues/6843
-                #
-                # 2. When using a filter that matches some but not all of the
-                #    files derived from a particular activity, the activity will
-                #    be left with dangling relations to the derived files that
-                #    didn't match the filter.
-                #
-                # 3. The `anvil_assayactivity` table includes a foreign key into
-                #    the `anvil_antibody` table. We only index replicas from the
-                #    latter as orphans, so replicas from the former can include
-                #    dangling relations when orphans are not included.
-                #    See https://github.com/DataBiosphere/azul/issues/4440
-                #
-                # (1) can only occur when orphans are included, and (2) and (3)
-                # can only occur when orphans are *not* included. Because (1)
-                # can only occur on lower deployments, we make the inclusion of
-                # relations conditional on avoiding (2) and (3).
-                #
-                if config.enable_verbatim_relations and self.include_orphans:
+                if self._include_relations():
                     relations = plugin.verbatim_pfb_relations(replica)
                     entity_relations = [
                         PFBRelation(dst_name=replica_type, dst_id=entity_id)
