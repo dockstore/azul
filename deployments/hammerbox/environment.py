@@ -935,7 +935,7 @@ anvil8_sources = mkdict(anvil7_sources, 254, mkdelta([
     # @formatter:on
 ]))
 
-anvil9_sources = mkdict(anvil8_sources, 285, mkdelta([
+anvil9_sources = mkdict(anvil8_sources, 284, mkdelta([
     # @formatter:off
     mksrc('bigquery', 'datarepo-b555b2f5', 'ANVIL_1000G_PRIMED_data_model_20240410_ANV5_202502211647'),
     mksrc('bigquery', 'datarepo-265cde27', 'ANVIL_ALSCompute_Collection_GRU_20231016_ANV5_202410310107'),
@@ -970,7 +970,6 @@ anvil9_sources = mkdict(anvil8_sources, 285, mkdelta([
     mksrc('bigquery', 'datarepo-0e0af0a8', 'ANVIL_CMG_UWash_DS_EP_20250219_ANV5_202502201854'),
     mksrc('bigquery', 'datarepo-766c47dd', 'ANVIL_CMG_UWash_GRU_20250224_ANV5_202502241706'),
     mksrc('bigquery', 'datarepo-aa22e87e', 'ANVIL_CMG_UWash_GRU_IRB_20250224_ANV5_202502241723'),
-    mksrc('bigquery', 'datarepo-3f73ca7a', 'ANVIL_CMG_Yale_GRU_20221020_ANV5_202502070356'),
     mksrc('bigquery', 'datarepo-7c44dbc8', 'ANVIL_CMH_GAFK_ES_20240301_ANV5_202502201925'),
     mksrc('bigquery', 'datarepo-97f2fa00', 'ANVIL_CMH_GAFK_GS_long_read_20240301_ANV5_202502201932'),
     mksrc('bigquery', 'datarepo-456a8996', 'ANVIL_CMH_GAFK_IlluminaGSA_20240311_ANV5_202502201937'),
