@@ -10,7 +10,9 @@ SHELL ["/bin/bash", "-c"]
 # are updated.
 #
 ARG azul_image_version=1
-RUN apt-get update \
+ARG azul_proc_sys_crypto
+RUN --mount=type=bind,source=fips_enabled,target=${azul_proc_sys_crypto}/fips_enabled \
+    apt-get update \
     && apt-get upgrade -y \
     && apt-get -y install build-essential curl unzip
 
@@ -48,7 +50,6 @@ COPY --chmod=0644 bin/keys/docker-apt-keyring.pgp /etc/apt/keyrings/docker.gpg
 ARG azul_docker_version
 # FIXME: Remove mounting of fips_enabled
 #        https://github.com/DataBiosphere/azul/issues/6675
-ARG azul_proc_sys_crypto
 RUN --mount=type=bind,source=fips_enabled,target=${azul_proc_sys_crypto}/fips_enabled \
     set -o pipefail \
     && ( \
