@@ -510,8 +510,11 @@ emit_tf({
             }
         },
         *(
+            chalice.tf_config(app.name)['resource']
+            for app in apps
+        ),
+        *(
             {
-                **chalice.tf_config(app.name)['resource'],
                 'aws_api_gateway_stage': {
                     app.name: {
                         'rest_api_id': '${aws_api_gateway_rest_api.%s.id}' % app.name,
