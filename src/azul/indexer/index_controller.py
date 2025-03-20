@@ -15,6 +15,9 @@ from itertools import (
 import json
 import logging
 import time
+from typing import (
+    TYPE_CHECKING,
+)
 import uuid
 
 import chalice
@@ -62,6 +65,12 @@ from azul.types import (
     json_dict,
 )
 
+if TYPE_CHECKING:
+    from mypy_boto3_sqs.service_resource import (
+        Queue,
+        SQSServiceResource,
+    )
+
 log = logging.getLogger(__name__)
 
 
@@ -73,7 +82,7 @@ class IndexController(ActionController[IndexAction]):
     document_batch_size = 10
 
     @cached_property
-    def index_service(self):
+    def index_service(self) -> IndexService:
         return IndexService()
 
     @cached_property
@@ -294,16 +303,16 @@ class IndexController(ActionController[IndexAction]):
             raise
 
     @property
-    def _sqs(self):
+    def _sqs(self) -> 'SQSServiceResource':
         return aws.resource('sqs')
 
-    def _queue(self, queue_name):
+    def _queue(self, queue_name) -> 'Queue':
         return self._sqs.get_queue_by_name(QueueName=queue_name)
 
-    def _notifications_queue(self, retry=False):
+    def _notifications_queue(self, retry: bool = False) -> 'Queue':
         return self._queue(config.notifications_queue.derive(retry=retry).name)
 
-    def _tallies_queue(self, retry=False):
+    def _tallies_queue(self, retry: bool = False) -> 'Queue':
         return self._queue(config.tallies_queue.derive(retry=retry).name)
 
 

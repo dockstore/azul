@@ -25,6 +25,7 @@ from pprint import (
 )
 from typing import (
     Self,
+    TYPE_CHECKING,
     cast,
 )
 import uuid
@@ -84,6 +85,12 @@ from azul.types import (
 from azul.uuids import (
     validate_uuid_prefix,
 )
+
+if TYPE_CHECKING:
+    from mypy_boto3_sqs.service_resource import (
+        Queue,
+        SQSServiceResource,
+    )
 
 log = logging.getLogger(__name__)
 
@@ -263,11 +270,11 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
         return bundle_fqids
 
     @property
-    def sqs(self):
+    def sqs(self) -> 'SQSServiceResource':
         return aws.resource('sqs')
 
     @cached_property
-    def notifications_queue(self):
+    def notifications_queue(self) -> 'Queue':
         return self.sqs.get_queue_by_name(QueueName=config.notifications_queue.name)
 
     def remote_reindex(self,
@@ -420,7 +427,7 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
         return bundle_fqids
 
     @cached_property
-    def index_service(self):
+    def index_service(self) -> IndexService:
         return IndexService()
 
     def delete_all_indices(self, catalog: CatalogName):
@@ -480,7 +487,7 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
             raise RuntimeError('Failures during deletion', response['failures'])
 
     @cached_property
-    def queues(self):
+    def queues(self) -> Queues:
         return Queues()
 
     def reset_indexer(self,

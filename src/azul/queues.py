@@ -7,6 +7,7 @@ from collections.abc import (
     Mapping,
 )
 from concurrent.futures import (
+    Future,
     ThreadPoolExecutor,
     as_completed,
 )
@@ -26,6 +27,7 @@ import os
 import time
 from typing import (
     TYPE_CHECKING,
+    cast,
 )
 
 import more_itertools
@@ -49,19 +51,29 @@ from azul.lambdas import (
 from azul.modules import (
     load_app_module,
 )
+from azul.types import (
+    JSON,
+    json_mapping,
+    json_str,
+)
 
 log = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
+    from mypy_boto3_sqs.type_defs import (
+        ChangeMessageVisibilityBatchRequestEntryTypeDef,
+        SendMessageBatchRequestEntryTypeDef,
+    )
     from mypy_boto3_sqs.service_resource import (
         Message,
         Queue,
+        SQSServiceResource,
     )
 
 
 class Queues:
 
-    def __init__(self, delete=False, json_body=True):
+    def __init__(self, delete: bool = False, json_body: bool = True):
         self._delete = delete
         self._json_body = json_body
 
@@ -78,19 +90,19 @@ class Queues:
                   f'{queue.attributes["ApproximateNumberOfMessagesNotVisible"]:^20s}'
                   f'{queue.attributes["ApproximateNumberOfMessagesDelayed"]:^18s}')
 
-    def dump(self, queue_name, path):
+    def dump(self, queue_name: str, path: str):
         queue = self.sqs.get_queue_by_name(QueueName=queue_name)
         self._dump(queue, path)
 
     @property
-    def sqs(self):
+    def sqs(self) -> 'SQSServiceResource':
         return aws.resource('sqs')
 
     def dump_all(self):
         for queue_name, queue in self.all_queues().items():
             self._dump(queue, queue_name + '.json')
 
-    def _dump(self, queue, path):
+    def _dump(self, queue: 'Queue', path: str):
         log.info('Writing messages from queue %r to file %r', queue.url, path)
         messages = self._get_messages(queue)
         self._dump_messages(messages, queue.url, path)
@@ -108,12 +120,12 @@ class Queues:
             else:
                 messages.extend(message_batch)
 
-    def read_messages(self, queue):
+    def read_messages(self, queue: 'Queue') -> builtins.list['Message']:
         messages = self._get_messages(queue)
         self._cleanup_messages(queue, messages)
         return messages
 
-    def _cleanup_messages(self, queue, messages):
+    def _cleanup_messages(self, queue: 'Queue', messages: Iterable['Message']):
         message_batches = list(more_itertools.chunked(messages, 10))
         if self._delete:
             log.info('Removing messages from queue %r', queue.url)
@@ -122,7 +134,10 @@ class Queues:
             log.info('Returning messages to queue %r', queue.url)
             self._return_messages(message_batches, queue)
 
-    def _dump_messages(self, messages, queue_url, path):
+    def _dump_messages(self,
+                       messages: Iterable['Message'],
+                       queue_url: str,
+                       path: str):
         messages = [self._condense(message) for message in messages]
         with write_file_atomically(path) as file:
             content = {
@@ -132,16 +147,23 @@ class Queues:
             json.dump(content, file, indent=4)
         log.info('Wrote %i messages', len(messages))
 
-    def _return_messages(self, message_batches, queue):
+    def _return_messages(self,
+                         message_batches: Iterable[Iterable['Message']],
+                         queue: 'Queue'):
         for message_batch in message_batches:
-            batch = [dict(Id=message.message_id,
-                          ReceiptHandle=message.receipt_handle,
-                          VisibilityTimeout=0) for message in message_batch]
+            batch: list['ChangeMessageVisibilityBatchRequestEntryTypeDef'] = [
+                dict(Id=message.message_id,
+                     ReceiptHandle=message.receipt_handle,
+                     VisibilityTimeout=0)
+                for message in message_batch
+            ]
             response = queue.change_message_visibility_batch(Entries=batch)
             if len(response['Successful']) != len(batch):
                 raise RuntimeError(f'Failed to return message: {response!r}')
 
-    def _delete_messages(self, message_batches, queue):
+    def _delete_messages(self,
+                         message_batches: Iterable[builtins.list['Message']],
+                         queue: 'Queue'):
         for message_batch in message_batches:
             response = queue.delete_messages(
                 Entries=[dict(Id=message.message_id,
@@ -149,23 +171,25 @@ class Queues:
             if len(response['Successful']) != len(message_batch):
                 raise RuntimeError(f'Failed to delete messages: {response!r}')
 
-    def _condense(self, message):
+    def _condense(self, message: 'Message') -> JSON:
         """
         Prepare a message for writing to a local file.
         """
+        # The cast is needed because the type stub for `Message` misuses `typing.Literal`
+        attributes = cast(dict[str, str], message.attributes)
         return {
             'MessageId': message.message_id,
             'ReceiptHandle': message.receipt_handle,
             'MD5OfBody': message.md5_of_body,
             'Body': json.loads(message.body) if self._json_body else message.body,
-            'Attributes': message.attributes,
+            'Attributes': json_mapping(attributes),
             '_Attributes': {
-                k: datetime.fromtimestamp(int(message.attributes[k]) / 1000).astimezone().isoformat()
+                k: datetime.fromtimestamp(int(json_str(attributes[k])) / 1000).astimezone().isoformat()
                 for k in ('SentTimestamp', 'ApproximateFirstReceiveTimestamp')
             }
         }
 
-    def _reconstitute(self, message):
+    def _reconstitute(self, message: JSON) -> 'SendMessageBatchRequestEntryTypeDef':
         """
         Prepare a message from a local file for submission to a queue.
 
@@ -174,22 +198,22 @@ class Queues:
         body = message['Body']
         if not isinstance(body, str):
             body = json.dumps(body)
-        attributes = message['Attributes']
-        result = {
-            'Id': message['MessageId'],
+        attributes = json_mapping(message['Attributes'])
+        result: 'SendMessageBatchRequestEntryTypeDef' = {
+            'Id': json_str(message['MessageId']),
             'MessageBody': body,
         }
         for key in ('MessageGroupId', 'MessageDeduplicationId'):
             try:
-                result[key] = attributes[key]
+                result[key] = json_str(attributes[key])
             except KeyError:
                 pass
         return result
 
-    def all_queues(self):
+    def all_queues(self) -> dict[str, 'Queue']:
         return self.get_queues(config.all_queue_names)
 
-    def get_queues(self, queue_names: Iterable[str]) -> Mapping[str, 'Queue']:
+    def get_queues(self, queue_names: Iterable[str]) -> dict[str, 'Queue']:
         return {
             queue_name: self.sqs.get_queue_by_name(QueueName=queue_name)
             for queue_name in queue_names
@@ -197,7 +221,7 @@ class Queues:
 
     def _get_queue_lengths(self,
                            queues: Mapping[str, 'Queue']
-                           ) -> tuple[int, Mapping[str, int]]:
+                           ) -> tuple[int, dict[str, int]]:
         """
         Count the number of messages in the given queues.
 
@@ -276,7 +300,7 @@ class Queues:
             raise Exception('The queues have stalled', final_length)
         return final_length
 
-    def feed(self, path, queue_name, force=False):
+    def feed(self, path: str, queue_name: str, force: bool = False):
         with open(path) as file:
             content = json.load(file)
             orig_queue = content['queue']
@@ -319,7 +343,7 @@ class Queues:
                 log.info('All messages were submitted, removing local file %r', path)
                 os.unlink(path)
 
-    def purge(self, queue_name):
+    def purge(self, queue_name: str):
         queue = self.sqs.get_queue_by_name(QueueName=queue_name)
         self.purge_queues_safely({queue_name: queue})
 
@@ -363,7 +387,7 @@ class Queues:
             time.sleep(3)
             queue.reload()
 
-    def _manage_sqs_push(self, function_name, queue, enable: bool):
+    def _manage_sqs_push(self, function_name: str, queue: 'Queue', enable: bool):
         lambda_ = aws.lambda_
         response = lambda_.list_event_source_mappings(FunctionName=function_name,
                                                       EventSourceArn=queue.attributes['QueueArn'])
@@ -395,7 +419,7 @@ class Queues:
             time.sleep(3)
             state = lambda_.get_event_source_mapping(UUID=mapping_uuid)['State']
 
-    def functions_by_queue(self) -> Mapping[str, str]:
+    def functions_by_queue(self) -> dict[str, str]:
         """
         Returns a dictionary that maps queues to the Lambda function triggered
         by the queue. The keys and values are fully qualified resource names.
@@ -441,14 +465,14 @@ class Queues:
             futures = [tpe.submit(self._wait_for_queue_idle, queue) for queue in queues.values()]
             self._handle_futures(futures)
 
-    def _manage_lambda(self, function_name, enable: bool):
+    def _manage_lambda(self, function_name: str, enable: bool):
         self._lambdas.manage_lambda(function_name, enable)
 
     @cached_property
-    def _lambdas(self):
+    def _lambdas(self) -> Lambdas:
         return Lambdas()
 
-    def _handle_futures(self, futures):
+    def _handle_futures(self, futures: Iterable[Future]):
         errors = []
         for future in as_completed(futures):
             e = future.exception()
