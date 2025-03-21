@@ -71,7 +71,6 @@ if TYPE_CHECKING:
     from mypy_boto3_sqs.service_resource import (
         Message,
         Queue,
-        SQSServiceResource,
     )
 
 
@@ -127,12 +126,8 @@ class Queues:
                   f'{queue.attributes["ApproximateNumberOfMessagesDelayed"]:^18s}')
 
     def dump(self, queue_name: str, path: str):
-        queue = self.sqs.get_queue_by_name(QueueName=queue_name)
+        queue = aws.sqs_queue(queue_name)
         self._dump(queue, path)
-
-    @property
-    def sqs(self) -> 'SQSServiceResource':
-        return aws.resource('sqs')
 
     def dump_all(self):
         for queue_name, queue in self.all_queues().items():
@@ -259,7 +254,7 @@ class Queues:
 
     def get_queues(self, queue_names: Iterable[str]) -> dict[str, 'Queue']:
         return {
-            queue_name: self.sqs.get_queue_by_name(QueueName=queue_name)
+            queue_name: aws.sqs_queue(queue_name)
             for queue_name in queue_names
         }
 
@@ -349,7 +344,7 @@ class Queues:
             content = json.load(file)
             orig_queue = content['queue']
             messages = content['messages']
-        queue = self.sqs.get_queue_by_name(QueueName=queue_name)
+        queue = aws.sqs_queue(queue_name)
         log.info('Writing messages from file %r to queue %r', path, queue.url)
         if orig_queue != queue.url:
             if force:

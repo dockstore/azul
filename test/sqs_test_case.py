@@ -17,7 +17,7 @@ class SqsTestCase(AzulUnitTestCase):
         else:
             queue_names = config.all_queue_names
 
-        sqs = aws.resource('sqs')
+        sqs = aws.sqs_resource
         for queue_name in queue_names:
             sqs.create_queue(QueueName=queue_name,
                              Attributes=dict(FifoQueue='true') if queue_name.endswith('.fifo') else {})

@@ -86,7 +86,6 @@ from azul.uuids import (
 if TYPE_CHECKING:
     from mypy_boto3_sqs.service_resource import (
         Queue,
-        SQSServiceResource,
     )
 
 log = logging.getLogger(__name__)
@@ -273,17 +272,13 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
                  len(bundle_fqids), prefix, source)
         return bundle_fqids
 
-    @property
-    def sqs(self) -> 'SQSServiceResource':
-        return aws.resource('sqs')
-
     def notifications_queue(self, *, retry: bool = False) -> 'Queue':
         name = config.notifications_queue.derive(retry=retry).name
-        return self.sqs.get_queue_by_name(QueueName=name)
+        return aws.sqs_queue(name)
 
     def tallies_queue(self, *, retry: bool = False) -> 'Queue':
         name = config.tallies_queue.derive(retry=retry).name
-        return self.sqs.get_queue_by_name(QueueName=name)
+        return aws.sqs_queue(name)
 
     def remote_reindex(self,
                        catalog: CatalogName,
