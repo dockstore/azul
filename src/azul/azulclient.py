@@ -45,6 +45,9 @@ from azul import (
     config,
     json_mapping,
 )
+from azul.deployment import (
+    aws,
+)
 from azul.es import (
     ESClientFactory,
 )
@@ -233,9 +236,6 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
 
     @property
     def sqs(self):
-        from azul.deployment import (
-            aws,
-        )
         return aws.resource('sqs')
 
     @cached_property
