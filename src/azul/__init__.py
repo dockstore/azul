@@ -1329,8 +1329,7 @@ class Config:
     def aggregation_lambda_timeout(self, *, retry: bool) -> int:
         return (10 if retry else 1) * 60
 
-    def mirror_lambda_timeout(self) -> int:
-        return 15
+    mirror_lambda_timeout = 3 * 60
 
     service_lambda_timeout = 15 * 60
 
@@ -1452,6 +1451,10 @@ class Config:
         return self._concurrency(self.environ['AZUL_AGGREGATION_CONCURRENCY'], retry)
 
     @property
+    def mirroring_concurrency(self) -> int:
+        return int(self.environ['AZUL_MIRRORING_CONCURRENCY'])
+
+    @property
     def bigquery_reserved_slots(self) -> int:
         """
         The number of BigQuery slots to reserve when reindexing a catalog from a
@@ -1507,11 +1510,7 @@ class Config:
 
     @property
     def all_queue_names(self) -> list[str]:
-        return [
-            *self.indexer_queue_names,
-            *self.fail_queue_names,
-            *([self.mirror_queue.name] if self.enable_mirroring else []),
-        ]
+        return self.work_queue_names + self.fail_queue_names
 
     @property
     def fail_queue_names(self) -> list[str]:
@@ -1771,7 +1770,7 @@ class Config:
 
     @property
     def enable_mirroring(self) -> bool:
-        return self._boolean(self.environ['AZUL_MIRRORING_ENABLED'])
+        return self._boolean(self.environ['AZUL_ENABLE_MIRRORING'])
 
 
 config: Config = Config()  # yes, the type hint does help PyCharm

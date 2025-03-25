@@ -7,7 +7,6 @@ from collections import (
 from functools import (
     partial,
 )
-import json
 from unittest.mock import (
     MagicMock,
     PropertyMock,
@@ -17,7 +16,7 @@ from unittest.mock import (
 
 import attrs
 from chalice.app import (
-    SQSRecord,
+    BadRequestError,
 )
 from elasticsearch import (
     TransportError,
@@ -29,12 +28,6 @@ from moto import (
     mock_aws,
 )
 
-from azul import (
-    queues,
-)
-from azul.azulclient import (
-    AzulClient,
-)
 from azul.indexer import (
     BundlePartition,
 )
@@ -62,9 +55,6 @@ from azul.plugins.repository.tdr_hca import (
 from azul.terra import (
     TDRSourceRef,
 )
-from azul.types import (
-    JSONs,
-)
 from azul_test_case import (
     DCP2TestCase,
 )
@@ -72,7 +62,7 @@ from indexer.test_indexer import (
     DCP2IndexerTestCase,
 )
 from sqs_test_case import (
-    SqsTestCase,
+    WorkQueueTestCase,
 )
 
 log = get_test_logger(__name__)
@@ -84,7 +74,7 @@ def setUpModule():
 
 
 @mock_aws
-class TestIndexController(DCP2IndexerTestCase, SqsTestCase):
+class TestIndexController(DCP2IndexerTestCase, WorkQueueTestCase):
     source = DCP2TestCase.source.with_prefix(
         attrs.evolve(DCP2TestCase.source.spec.prefix,
                      partition=0)
@@ -93,49 +83,14 @@ class TestIndexController(DCP2IndexerTestCase, SqsTestCase):
     def setUp(self) -> None:
         super().setUp()
         self.index_service.create_indices(self.catalog)
-        self.client = AzulClient()
         app = MagicMock()
         self.controller = IndexController(app=app)
         app.catalog = self.catalog
         IndexController.index_service.fset(self.controller, self.index_service)
-        self.queue_manager = queues.Queues(delete=True)
 
     def tearDown(self):
         self.index_service.delete_indices(self.catalog)
         super().tearDown()
-
-    def _mock_sqs_record(self, body, *, attempts: int = 1):
-        event_dict = {
-            'body': json.dumps(body),
-            'receiptHandle': 'ThisWasARandomString',
-            'attributes': {'ApproximateReceiveCount': attempts}
-        }
-        return SQSRecord(event_dict=event_dict, context={})
-
-    @property
-    def _notifications_queue(self):
-        return self.controller._notifications_queue()
-
-    @property
-    def _notifications_retry_queue(self):
-        return self.controller._notifications_queue(retry=True)
-
-    @property
-    def _tallies_queue(self):
-        return self.controller._tallies_queue()
-
-    @property
-    def _tallies_retry_queue(self):
-        return self.controller._tallies_queue(retry=True)
-
-    def _read_queue(self, queue) -> JSONs:
-        messages = self.queue_manager.read_messages(queue)
-        # For unknown reasons, Moto 4.0.6 requires reading the queues a second
-        # time whereas 2.0.6 didn't. It *is* more realistic but I am not sure
-        # how reliable this is.
-        messages += self.queue_manager.read_messages(queue)
-        tallies = [json.loads(m.body) for m in messages]
-        return tallies
 
     def _fqid_from_notification(self, notification):
         fqid = notification['notification']['bundle_fqid']
@@ -150,7 +105,7 @@ class TestIndexController(DCP2IndexerTestCase, SqsTestCase):
                                        notification='bar',
                                        catalog=self.catalog))
         ]
-        self.assertRaises(KeyError, self.controller.contribute, event)
+        self.assertRaises(BadRequestError, self.controller.contribute, event)
 
     @patch.object(TDRPlugin, 'resolve_source')
     def test_remote_reindex(self, resolve_source):
@@ -159,7 +114,7 @@ class TestIndexController(DCP2IndexerTestCase, SqsTestCase):
         self.index_service.repository_plugin(self.catalog)._assert_source(source)
         self._create_mock_queues()
         self.client.remote_reindex(self.catalog, {str(source.spec)})
-        notification = one(self._read_queue(self._notifications_queue))
+        notification = one(self._read_queue(self.client.notifications_queue()))
         expected_notification = dict(action='reindex',
                                      catalog=self.catalog,
                                      source=source.to_json(),
@@ -176,7 +131,7 @@ class TestIndexController(DCP2IndexerTestCase, SqsTestCase):
         with patch.object(Plugin, 'list_bundles', return_value=bundle_fqids):
             self.controller.contribute(event)
 
-        notification = one(self._read_queue(self._notifications_queue))
+        notification = one(self._read_queue(self.client.notifications_queue()))
         expected_source = dict(id=source.id, spec=str(source.spec))
         source = notification['notification']['bundle_fqid']['source']
         self.assertEqual(expected_source, source)
@@ -210,9 +165,7 @@ class TestIndexController(DCP2IndexerTestCase, SqsTestCase):
 
         # Synthesize initial notifications
         notifications = [
-            dict(action='add',
-                 catalog=self.catalog,
-                 notification=self.client.notification(fqid))
+            self.client.bundle_message(self.catalog, fqid).body
             for fqid in fqids
         ]
 
@@ -253,7 +206,7 @@ class TestIndexController(DCP2IndexerTestCase, SqsTestCase):
             self.assertEqual(expected_calls, mock_plugin.fetch_bundle.mock_calls)
 
             # Assert partitioned notifications, straight from the retry queue
-            notifications = self._read_queue(self._notifications_retry_queue)
+            notifications = self._read_queue(self.client.notifications_queue(retry=True))
             # Fingerprint the partitions from the resulting notifications
             partitions = defaultdict(set)
             for n in notifications:
@@ -274,7 +227,7 @@ class TestIndexController(DCP2IndexerTestCase, SqsTestCase):
                 self.assertEqual({}, partitions)
 
         # We got a tally of one for each
-        tallies = self._read_queue(self._tallies_queue)
+        tallies = self._read_queue(self.client.tallies_queue())
         digest = self._digest_tallies(tallies)
         self.assertEqual(expected_digest, digest)
 
@@ -288,7 +241,7 @@ class TestIndexController(DCP2IndexerTestCase, SqsTestCase):
             else:
                 self.fail()
 
-        self.assertEqual([], self._read_queue(self._tallies_queue))
+        self.assertEqual([], self._read_queue(self.client.tallies_queue()))
 
         # Poison the two project and the two bundle tallies, by simulating
         # a number of failed attempts at processing them
@@ -304,7 +257,7 @@ class TestIndexController(DCP2IndexerTestCase, SqsTestCase):
         ]
         self.controller.aggregate(notifications, retry=True)
 
-        tallies = self._read_queue(self._tallies_retry_queue)
+        tallies = self._read_queue(self.client.tallies_queue(retry=True))
         digest = self._digest_tallies(tallies)
         # The two project tallies were consolidated (despite being poisoned) and
         # the resulting tally was deferred
@@ -319,8 +272,8 @@ class TestIndexController(DCP2IndexerTestCase, SqsTestCase):
         self.controller.aggregate(notifications, retry=True)
 
         # All tallies were referred
-        self.assertEqual([], self._read_queue(self._tallies_retry_queue))
-        self.assertEqual([], self._read_queue(self._tallies_queue))
+        self.assertEqual([], self._read_queue(self.client.tallies_queue()))
+        self.assertEqual([], self._read_queue(self.client.tallies_queue(retry=True)))
 
     def _digest_tallies(self, tallies):
         entities = defaultdict(list)

@@ -611,6 +611,12 @@ def env() -> Mapping[str, Optional[str]]:
         'AZUL_CONTRIBUTION_CONCURRENCY': '64',
         'AZUL_AGGREGATION_CONCURRENCY': '64',
 
+        # The number of concurrently running lambda executions for file
+        # mirroring. See the previous paragraph for technical details. There is
+        # no retry concurrency. No effect if ``AZUL_ENABLE_MIRRORING`` is zero.
+        #
+        'AZUL_MIRRORING_CONCURRENCY': '8',
+
         # Collect and monitor important health metrics of the deployment (1 yes, 0 no).
         # Typically only enabled on main deployments.
         #
@@ -641,7 +647,7 @@ def env() -> Mapping[str, Optional[str]]:
         # Mirror data files from the indexed repository in a dedicated S3 bucket
         # (1 yes, 0 no).
         #
-        'AZUL_MIRRORING_ENABLED': '0',
+        'AZUL_ENABLE_MIRRORING': '0',
 
         # A short string (no punctuation allowed) that identifies a Terraform
         # component i.e., a distinct set of Terraform resources to be deployed
