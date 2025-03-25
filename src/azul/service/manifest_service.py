@@ -80,7 +80,7 @@ import msgpack
 
 from azul import (
     CatalogName,
-    RequirementError,
+    R,
     cached_property,
     config,
     mutable_furl,
@@ -1547,19 +1547,19 @@ class CurlManifestGenerator(PagedManifestGenerator):
         >>> f('foo/bar/\\x1F/file') # doctest: +NORMALIZE_WHITESPACE
         Traceback (most recent call last):
         ...
-        azul.RequirementError: ('Invalid file path', 'foo/bar/\\x1f/file',
-                                'Control character or backslash at position', 8)
+        AssertionError: R('Invalid file path', 'foo/bar/\\x1f/file',
+                          'Control character or backslash at position', 8)
 
         >>> f('foo/bar/COM6/file') # doctest: +NORMALIZE_WHITESPACE
         Traceback (most recent call last):
         ...
-        azul.RequirementError: ('Invalid file path', 'foo/bar/COM6/file',
-                                'Use of reserved path component for Windows', {'COM6'})
+        AssertionError: R('Invalid file path', 'foo/bar/COM6/file',
+                          'Use of reserved path component for Windows', {'COM6'})
 
         >>> f('foo/bar/ / baz/file') # doctest: +NORMALIZE_WHITESPACE
         Traceback (most recent call last):
         ...
-        azul.RequirementError: ('Invalid file path', 'foo/bar/ / baz/file')
+        AssertionError: R('Invalid file path', 'foo/bar/ / baz/file')
 
         Substitutions:
 
@@ -1590,19 +1590,16 @@ class CurlManifestGenerator(PagedManifestGenerator):
         True
         """
         match = cls._malicious_chars.search(path)
-        if match is not None:
-            raise RequirementError('Invalid file path', path,
-                                   'Control character or backslash at position', match.start())
+        assert match is None, R('Invalid file path', path,
+                                'Control character or backslash at position', match.start())
 
         path = cls._problematic_chars.sub('_', path)
 
-        if cls._valid_path.fullmatch(path) is None:
-            raise RequirementError('Invalid file path', path)
+        assert cls._valid_path.fullmatch(path) is not None, R('Invalid file path', path)
 
         components = set(path.split('/')) & cls.special_dos_files
-        if components:
-            raise RequirementError('Invalid file path', path,
-                                   'Use of reserved path component for Windows', components)
+        assert not components, R('Invalid file path', path,
+                                 'Use of reserved path component for Windows', components)
 
         return path
 

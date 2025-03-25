@@ -29,7 +29,6 @@ import attrs
 from azul import (
     R,
     config,
-    reject,
 )
 from azul.attrs import (
     SerializableAttrs,
@@ -185,8 +184,8 @@ class Prefix:
         # partition_prefix is a valid UUID prefix, we restrict the number of
         # characters from the concatenation to be within the first
         # dash-seperated group.
-        reject(len(self.common) + self.partition > 8,
-               'Invalid common prefix and partition length', self)
+        assert len(self.common) + self.partition <= 8, R(
+            'Invalid common prefix and partition length', self)
 
     @classmethod
     def parse(cls, prefix: str) -> Self:
@@ -202,13 +201,13 @@ class Prefix:
         >>> Prefix.parse('aa/')
         Traceback (most recent call last):
         ...
-        azul.RequirementError: ('Prefix source cannot end in a delimiter', 'aa/', '/')
+        AssertionError: R('Prefix source cannot end in a delimiter', 'aa/', '/')
 
         >>> Prefix.parse('8f538f53/1').partition_prefixes() # doctest: +NORMALIZE_WHITESPACE
         Traceback (most recent call last):
         ...
-        azul.RequirementError: ('Invalid common prefix and partition length',
-                                Prefix(common='8f538f53', partition=1))
+        AssertionError: R('Invalid common prefix and partition length',
+                          Prefix(common='8f538f53', partition=1))
 
         >>> list(Prefix.parse('8f538f53/0').partition_prefixes())
         ['8f538f53']
@@ -221,12 +220,12 @@ class Prefix:
         >>> Prefix.parse('')
         Traceback (most recent call last):
         ...
-        azul.RequirementError: Cannot parse an empty prefix source
+        AssertionError: R('Cannot parse an empty prefix source')
         """
         source_delimiter = '/'
-        reject(prefix == '', 'Cannot parse an empty prefix source')
-        reject(prefix.endswith(source_delimiter),
-               'Prefix source cannot end in a delimiter', prefix, source_delimiter)
+        assert prefix != '', R('Cannot parse an empty prefix source')
+        assert not prefix.endswith(source_delimiter), R(
+            'Prefix source cannot end in a delimiter', prefix, source_delimiter)
         partition: str | int
         try:
             entry, partition = prefix.split(source_delimiter)
@@ -378,7 +377,7 @@ class SourceSpec(Parseable, metaclass=ABCMeta):
     @classmethod
     def _parse(cls, spec: str) -> tuple[str, Prefix | None]:
         rest, sep, prefix = spec.rpartition(':')
-        reject(sep == '', 'Invalid source specification', spec)
+        assert sep != '', R('Invalid source specification', spec)
         prefix = Prefix.parse(prefix) if prefix else None
         return rest, prefix
 
@@ -421,7 +420,7 @@ class SimpleSourceSpec(SourceSpec):
         >>> SimpleSourceSpec.parse('foo')
         Traceback (most recent call last):
         ...
-        azul.RequirementError: ('Invalid source specification', 'foo')
+        AssertionError: R('Invalid source specification', 'foo')
 
         >>> SimpleSourceSpec.parse('foo:8F53/0')
         Traceback (most recent call last):
@@ -641,4 +640,4 @@ class BundlePartition(UUIDPartition):
         # Most bits in a v4 or v5 UUID are pseudo-random, including the leading
         # 32 bits but those are followed by a couple of deterministic ones.
         # For simplicity, we'll limit ourselves to 2 ** 32 leaf partitions.
-        reject(self.prefix_length > 32)
+        assert self.prefix_length <= 32, R('Too many partitions', self.prefix_length)

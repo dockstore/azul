@@ -61,7 +61,7 @@ from requests import (
 )
 
 from azul import (
-    RequirementError,
+    R,
     cache,
     config,
 )
@@ -2230,5 +2230,6 @@ class TestPFB(CannedManifestTestCase):
     def test_pfb_entity_id(self):
         # Terra limits ID's 254 chars
         avro_pfb.PFBEntity(id='a' * 254, name='foo', object={})
-        with self.assertRaises(RequirementError):
+        with self.assertRaises(AssertionError) as e:
             avro_pfb.PFBEntity(id='a' * 255, name='foo', object={})
+        self.assertTrue(R.caused(e.exception))
