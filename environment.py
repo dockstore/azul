@@ -613,7 +613,7 @@ def env() -> Mapping[str, Optional[str]]:
 
         # The number of concurrently running lambda executions for file
         # mirroring. See the previous paragraph for technical details. There is
-        # no retry concurrency. No effect if ``AZUL_MIRRORING_ENABLED`` is zero.
+        # no retry concurrency. No effect if ``AZUL_ENABLE_MIRRORING`` is zero.
         #
         'AZUL_MIRRORING_CONCURRENCY': '8',
 
