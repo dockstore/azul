@@ -1771,7 +1771,7 @@ class Config:
 
     @property
     def enable_mirroring(self) -> bool:
-        return self._boolean(self.environ['AZUL_MIRRORING_ENABLED'])
+        return self._boolean(self.environ['AZUL_ENABLE_MIRRORING'])
 
 
 config: Config = Config()  # yes, the type hint does help PyCharm
