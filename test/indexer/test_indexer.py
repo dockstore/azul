@@ -2174,6 +2174,7 @@ class TestDCP1IndexerWithIndexesSetUp(DCP1IndexerTestCase):
                           replica_type='file',
                           contents=contents,
                           hub_ids=[],
+                          source=self.source,
                           coordinates=coordinates)
 
         for case, hub_ids, expected_hub_ids in [

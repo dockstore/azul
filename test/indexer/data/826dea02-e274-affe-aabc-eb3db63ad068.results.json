@@ -440,6 +440,10 @@
                 "15b76f9c-6b46-433f-851d-34e89f1b9ba6",
                 "2370f948-2783-4eb6-afea-e022897f4dcf"
             ],
+            "source": {
+                "id": "6c87f0e1-509d-46a4-b845-7584df39263b",
+                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/2"
+            },
             "contents": {
                 "activity_type": "Sequencing",
                 "assay_type": [],
@@ -875,6 +879,10 @@
                 "15b76f9c-6b46-433f-851d-34e89f1b9ba6",
                 "2370f948-2783-4eb6-afea-e022897f4dcf"
             ],
+            "source": {
+                "id": "6c87f0e1-509d-46a4-b845-7584df39263b",
+                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/2"
+            },
             "contents": {
                 "data_modality": [],
                 "datarepo_row_id": "15b76f9c-6b46-433f-851d-34e89f1b9ba6",
@@ -909,6 +917,10 @@
                 "2370f948-2783-4eb6-afea-e022897f4dcf",
                 "3b17377b-16b1-431c-9967-e5d01fc5923f"
             ],
+            "source": {
+                "id": "6c87f0e1-509d-46a4-b845-7584df39263b",
+                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/2"
+            },
             "contents": {
                 "datarepo_row_id": "15d85d30-ad4a-4f50-87a8-a27f59dd1b5f",
                 "diagnosis_age_lower_bound": null,
@@ -1483,6 +1495,10 @@
             "hub_ids": [
                 "2370f948-2783-4eb6-afea-e022897f4dcf"
             ],
+            "source": {
+                "id": "6c87f0e1-509d-46a4-b845-7584df39263b",
+                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/2"
+            },
             "contents": {
                 "consent_group": [
                     "DS-BDIS"
@@ -1752,6 +1768,10 @@
                 "crc32": ""
             },
             "replica_type": "anvil_file",
+            "source": {
+                "id": "6c87f0e1-509d-46a4-b845-7584df39263b",
+                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/2"
+            },
             "hub_ids": [
                 "2370f948-2783-4eb6-afea-e022897f4dcf",
                 "3b17377b-16b1-431c-9967-e5d01fc5923f"
@@ -2199,6 +2219,10 @@
                 "2370f948-2783-4eb6-afea-e022897f4dcf",
                 "3b17377b-16b1-431c-9967-e5d01fc5923f"
             ],
+            "source": {
+                "id": "6c87f0e1-509d-46a4-b845-7584df39263b",
+                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/2"
+            },
             "contents": {
                 "activity_type": "Sequencing",
                 "assay_type": [],
@@ -2949,6 +2973,10 @@
                 "2370f948-2783-4eb6-afea-e022897f4dcf",
                 "3b17377b-16b1-431c-9967-e5d01fc5923f"
             ],
+            "source": {
+                "id": "6c87f0e1-509d-46a4-b845-7584df39263b",
+                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/2"
+            },
             "contents": {
                 "anatomical_site": null,
                 "apriori_cell_type": [],
@@ -3530,6 +3558,10 @@
                 "2370f948-2783-4eb6-afea-e022897f4dcf",
                 "3b17377b-16b1-431c-9967-e5d01fc5923f"
             ],
+            "source": {
+                "id": "6c87f0e1-509d-46a4-b845-7584df39263b",
+                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/2"
+            },
             "contents": {
                 "datarepo_row_id": "939a4bd3-86ed-4a8a-81f4-fbe0ee673461",
                 "diagnosis_age_lower_bound": null,
@@ -4114,6 +4146,10 @@
                 "version": "2022-06-01T00:00:00.000000Z"
             },
             "replica_type": "anvil_donor",
+            "source": {
+                "id": "6c87f0e1-509d-46a4-b845-7584df39263b",
+                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/2"
+            },
             "hub_ids": [
                 "15b76f9c-6b46-433f-851d-34e89f1b9ba6",
                 "2370f948-2783-4eb6-afea-e022897f4dcf",

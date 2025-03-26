@@ -1109,6 +1109,8 @@ class Replica[E: EntityReference](Document[ReplicaCoordinates[E]]):
 
     contents: JSON
 
+    source: DocumentSource
+
     hub_ids: list[EntityID]
 
     needs_translation: ClassVar[bool] = False
@@ -1128,6 +1130,7 @@ class Replica[E: EntityReference](Document[ReplicaCoordinates[E]]):
 
     def to_json(self) -> JSON:
         return dict(super().to_json(),
+                    source=self.source.to_json(),
                     replica_type=self.replica_type,
                     # Ensure that index contents is deterministic for unit tests
                     hub_ids=sorted(set(self.hub_ids)))
