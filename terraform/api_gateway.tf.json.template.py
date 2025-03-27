@@ -510,8 +510,11 @@ emit_tf({
             }
         },
         *(
+            chalice.tf_config(app.name)['resource']
+            for app in apps
+        ),
+        *(
             {
-                **chalice.tf_config(app.name)['resource'],
                 'aws_api_gateway_stage': {
                     app.name: {
                         'rest_api_id': '${aws_api_gateway_rest_api.%s.id}' % app.name,
@@ -648,6 +651,12 @@ emit_tf({
                 'aws_cloudwatch_log_group': {
                     app.name: {
                         'name': '/aws/apigateway/' + config.qualified_resource_name(app.name),
+                        'retention_in_days': config.audit_log_retention_days,
+                    },
+                    f'{app.name}_api_execution': {
+                        'name': 'API-Gateway-Execution-Logs_' +
+                                '${aws_api_gateway_rest_api.%s.id}' % app.name +
+                                '/%s' % config.deployment_stage,
                         'retention_in_days': config.audit_log_retention_days,
                     }
                 },

@@ -105,6 +105,10 @@ if TYPE_CHECKING:
     from mypy_boto3_sns import (
         SNSClient,
     )
+    from mypy_boto3_sqs.service_resource import (
+        Queue,
+        SQSServiceResource,
+    )
     from mypy_boto3_stepfunctions import (
         SFNClient,
     )
@@ -727,6 +731,14 @@ class AWS:
     def monitoring_topic_name(self):
         return config.qualified_resource_name('monitoring',
                                               stage=config.main_deployment_stage)
+
+    @property
+    def sqs_resource(self) -> 'SQSServiceResource':
+        return self.resource('sqs')
+
+    @_cache
+    def sqs_queue(self, queue_name: str) -> 'Queue':
+        return self.sqs_resource.get_queue_by_name(QueueName=queue_name)
 
 
 aws = AWS()
