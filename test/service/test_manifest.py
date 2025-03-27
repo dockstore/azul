@@ -1728,9 +1728,6 @@ class AnvilManifestTestCase(ManifestTestCase, AnvilCannedBundleTestCase):
     def _drs_domain(self) -> str:
         return self.mock_tdr_service_url.netloc
 
-
-class TestAnvilManifests(AnvilManifestTestCase):
-
     @classmethod
     def bundles(cls) -> list[SourcedBundleFQID]:
         return [
@@ -1739,6 +1736,9 @@ class TestAnvilManifests(AnvilManifestTestCase):
             cls.bundle_fqid(uuid='826dea02-e274-affe-aabc-eb3db63ad068'),
             cls.bundle_fqid(uuid='9a135c9a-069b-a90e-b588-eaf8d1aeeac9')
         ]
+
+
+class TestAnvilManifests(AnvilManifestTestCase):
 
     def test_compact_manifest(self):
         response = self._get_manifest(ManifestFormat.compact, filters={})
@@ -2129,19 +2129,21 @@ class TestAnvilManifests(AnvilManifestTestCase):
         'files.is_supplementary': {'is': [True, False]}
     }
 
+    # Whether orphans ought to be present in verbatim manifests generated with
+    # the given filters.
+    expect_orphans_by_filters = [
+        ({}, True),
+        (dataset_title_filters, True),
+        (dataset_id_filters, True),
+        (neutral_file_filters, False),
+        ({**neutral_file_filters, **dataset_title_filters}, False),
+    ]
+
     def test_verbatim_jsonl_manifest(self):
         base_path = ['verbatim', 'jsonl', 'anvil']
         linked_rows = self._load_canned_manifest(*base_path, 'linked.json')
         all_rows = linked_rows + self._load_canned_manifest(*base_path, 'orphans.json')
-
-        cases = [
-            ({}, True),
-            (self.dataset_title_filters, True),
-            (self.dataset_id_filters, True),
-            (self.neutral_file_filters, False),
-            ({**self.neutral_file_filters, **self.dataset_title_filters}, False),
-        ]
-        for filters, expect_orphans in cases:
+        for filters, expect_orphans in self.expect_orphans_by_filters:
             with self.subTest(filters=filters):
                 response = self._get_manifest(ManifestFormat.verbatim_jsonl, filters=filters)
                 self.assertEqual(200, response.status_code)
@@ -2159,15 +2161,10 @@ class TestAnvilManifests(AnvilManifestTestCase):
         with patch.object(type(config),
                           'enable_verbatim_relations',
                           new=PropertyMock(return_value=enable_relations)):
-            for orphans, filters in [
-                (True, {}),
-                (True, self.dataset_id_filters),
-                (True, self.dataset_title_filters),
-                (False, self.neutral_file_filters),
-                (False, {**self.neutral_file_filters, **self.dataset_title_filters})
-            ]:
-                with self.subTest(orphans=orphans, relations=enable_relations, filters=filters):
-                    expected_manifest = self._expected_pfb_manifest(orphans, enable_relations)
+            for filters, expect_orphans in self.expect_orphans_by_filters:
+                with self.subTest(filters=filters):
+                    expect_relations = enable_relations and expect_orphans
+                    expected_manifest = self._expected_pfb_manifest(expect_orphans, expect_relations)
                     expected_schema, expected_entities = expected_manifest
                     response = self._get_manifest(ManifestFormat.verbatim_pfb, filters)
                     self.assertEqual(200, response.status_code)
@@ -2176,16 +2173,17 @@ class TestAnvilManifests(AnvilManifestTestCase):
     @cache
     def _expected_pfb_manifest(self,
                                include_orphans: bool,
-                               enable_relations: bool
+                               include_relations: bool
                                ) -> tuple[JSON, JSONs]:
         canned_pfb = self._load_canned_pfb('verbatim', 'pfb', 'anvil')
         pfb_schema, pfb_entities = canned_pfb
-        # To avoid dangling references, relations are only populated when
-        # including orphans
-        if not enable_relations or not include_orphans:
+        if not include_relations:
             for entity in pfb_entities:
                 entity['relations'].clear()
         if not include_orphans:
+            # To avoid dangling references, relations are only populated when
+            # including orphans
+            assert not include_relations
             self.assertEqual('Entity', pfb_schema['name'])
             object_field_schema = one(
                 field
