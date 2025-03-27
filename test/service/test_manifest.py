@@ -71,6 +71,7 @@ from azul.collections import (
     none_safe_tuple_key,
 )
 from azul.indexer import (
+    Prefix,
     SourcedBundleFQID,
 )
 from azul.indexer.document import (
@@ -1765,7 +1766,11 @@ class AnvilManifestTestCase(ManifestTestCase, AnvilCannedBundleTestCase):
                           new=PropertyMock(return_value=enable_relations)):
             for filters, expect_orphans in self.expect_orphans_by_filters:
                 with self.subTest(filters=filters):
-                    expect_relations = enable_relations and expect_orphans
+                    expect_relations = (
+                        enable_relations
+                        and expect_orphans
+                        and not self.source.spec.prefix.common
+                    )
                     expected_manifest = self._expected_pfb_manifest(expect_orphans, expect_relations)
                     expected_schema, expected_entities = expected_manifest
                     response = self._get_manifest(ManifestFormat.verbatim_pfb, filters)
@@ -2252,6 +2257,13 @@ class TestAnvilManifests(AnvilManifestTestCase):
                 assert len(filtered) < len(part), 'Expected to filter orphan references'
                 part[:] = filtered
         return pfb_schema, pfb_entities
+
+
+class TestAnvilManifestsWithCommonPrefix(AnvilManifestTestCase):
+    source = AnvilManifestTestCase.source.with_prefix(Prefix.parse('abc/0'))
+
+    def test(self):
+        self._test_verbatim_pfb_manifest(enable_relations=True)
 
 
 class TestPFB(CannedManifestTestCase):
