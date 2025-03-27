@@ -1737,6 +1737,76 @@ class AnvilManifestTestCase(ManifestTestCase, AnvilCannedBundleTestCase):
             cls.bundle_fqid(uuid='9a135c9a-069b-a90e-b588-eaf8d1aeeac9')
         ]
 
+    dataset_id_filters: FiltersJSON = {
+        'datasets.dataset_id': {'is': ['52ee7665-7033-63f2-a8d9-ce8e32666739']}
+    }
+
+    dataset_title_filters: FiltersJSON = {
+        'datasets.title': {'is': ['ANVIL_CMG_UWASH_DS_BDIS']}
+    }
+
+    neutral_file_filters: FiltersJSON = {
+        'files.is_supplementary': {'is': [True, False]}
+    }
+
+    # Whether orphans ought to be present in verbatim manifests generated with
+    # the given filters.
+    expect_orphans_by_filters = [
+        ({}, True),
+        (dataset_title_filters, True),
+        (dataset_id_filters, True),
+        (neutral_file_filters, False),
+        ({**neutral_file_filters, **dataset_title_filters}, False),
+    ]
+
+    def _test_verbatim_pfb_manifest(self, *, enable_relations: bool):
+        with patch.object(type(config),
+                          'enable_verbatim_relations',
+                          new=PropertyMock(return_value=enable_relations)):
+            for filters, expect_orphans in self.expect_orphans_by_filters:
+                with self.subTest(filters=filters):
+                    expect_relations = enable_relations and expect_orphans
+                    expected_manifest = self._expected_pfb_manifest(expect_orphans, expect_relations)
+                    expected_schema, expected_entities = expected_manifest
+                    response = self._get_manifest(ManifestFormat.verbatim_pfb, filters)
+                    self.assertEqual(200, response.status_code)
+                    self._assert_pfb(expected_schema, expected_entities, response)
+
+    @cache
+    def _expected_pfb_manifest(self,
+                               include_orphans: bool,
+                               include_relations: bool
+                               ) -> tuple[JSON, JSONs]:
+        canned_pfb = self._load_canned_pfb('verbatim', 'pfb', 'anvil')
+        pfb_schema, pfb_entities = canned_pfb
+        if not include_relations:
+            for entity in pfb_entities:
+                entity['relations'].clear()
+        if not include_orphans:
+            # To avoid dangling references, relations are only populated when
+            # including orphans
+            assert not include_relations
+            self.assertEqual('Entity', pfb_schema['name'])
+            object_field_schema = one(
+                field
+                for field in pfb_schema['fields']
+                if field['name'] == 'object'
+            )
+            # The `object` field is of a union type, so the schema's `type`
+            # property is an array
+            schemas = object_field_schema['type']
+            # The first AVRO record is the *metadata entity* in PFB terms,
+            # declaring higher level constraints that can't be expressed in
+            # the AVRO schema
+            metadata_entity = pfb_entities[0]
+            self.assertEqual('Metadata', metadata_entity['name'])
+            higher_schemas = metadata_entity['object']['nodes']
+            for part in [schemas, higher_schemas, pfb_entities]:
+                filtered = [e for e in part if e['name'] != 'non_schema_orphan_table']
+                assert len(filtered) < len(part), 'Expected to filter orphan references'
+                part[:] = filtered
+        return pfb_schema, pfb_entities
+
 
 class TestAnvilManifests(AnvilManifestTestCase):
 
@@ -2116,28 +2186,6 @@ class TestAnvilManifests(AnvilManifestTestCase):
             )
         ]
         self._assert_tsv(expected, response)
-
-    dataset_id_filters: FiltersJSON = {
-        'datasets.dataset_id': {'is': ['52ee7665-7033-63f2-a8d9-ce8e32666739']}
-    }
-
-    dataset_title_filters: FiltersJSON = {
-        'datasets.title': {'is': ['ANVIL_CMG_UWASH_DS_BDIS']}
-    }
-
-    neutral_file_filters: FiltersJSON = {
-        'files.is_supplementary': {'is': [True, False]}
-    }
-
-    # Whether orphans ought to be present in verbatim manifests generated with
-    # the given filters.
-    expect_orphans_by_filters = [
-        ({}, True),
-        (dataset_title_filters, True),
-        (dataset_id_filters, True),
-        (neutral_file_filters, False),
-        ({**neutral_file_filters, **dataset_title_filters}, False),
-    ]
 
     def test_verbatim_jsonl_manifest(self):
         base_path = ['verbatim', 'jsonl', 'anvil']
