@@ -370,6 +370,27 @@ class SourceSpec(Parseable, metaclass=ABCMeta):
     prefix: Prefix | None
 
     @classmethod
+    def parse_prefix_only(cls, spec: str) -> Prefix | None:
+        """
+        Parse only the prefix component of a string representation of a
+        `SourceSpec.` To parse the entire spec, use :meth:`parse`. A return
+        value of `None` indicates that no prefix is configured for the spec.
+
+        >>> SourceSpec.parse_prefix_only('foo:/0')
+        Prefix(common='', partition=0)
+
+        >>> SourceSpec.parse_prefix_only('foo:') is None
+        True
+
+        >>> SourceSpec.parse_prefix_only('foo')
+        Traceback (most recent call last):
+        ...
+        AssertionError: R('Invalid source specification', 'foo')
+        """
+        _, prefix = cls._parse(spec)
+        return prefix
+
+    @classmethod
     @abstractmethod
     def parse(cls, spec: str) -> Self:
         raise NotImplementedError

@@ -102,6 +102,9 @@ from azul.collections import (
 from azul.deployment import (
     aws,
 )
+from azul.indexer import (
+    SourceSpec,
+)
 from azul.indexer.document import (
     DocumentType,
     FieldPath,
@@ -2143,7 +2146,7 @@ class PFBVerbatimManifestGenerator(VerbatimManifestGenerator):
     def format(cls) -> ManifestFormat:
         return ManifestFormat.verbatim_pfb
 
-    def _include_relations(self) -> bool:
+    def _include_relations(self, replica: JSON) -> bool:
         # Terra will reject the handover if the manifest includes
         # dangling relations, i.e., if any entity references another
         # entity that isn't included in the manifest. There are three
@@ -2171,11 +2174,14 @@ class PFBVerbatimManifestGenerator(VerbatimManifestGenerator):
         #    See https://github.com/DataBiosphere/azul/issues/4440
         #
         # (1) can only occur when orphans are included, and (2) and (3)
-        # can only occur when orphans are *not* included. Because (1)
-        # can only occur on lower deployments, we make the inclusion of
-        # relations conditional on avoiding (2) and (3).
+        # can only occur when orphans are *not* included.
         #
-        return config.enable_verbatim_relations and self.include_orphans
+        prefix = SourceSpec.parse_prefix_only(replica['source']['spec'])
+        return (
+            config.enable_verbatim_relations
+            and self.include_orphans
+            and not prefix.common
+        )
 
     def create_file(self) -> tuple[str, str | None]:
         replicas = list(self._all_replicas())
@@ -2195,7 +2201,13 @@ class PFBVerbatimManifestGenerator(VerbatimManifestGenerator):
             for replica in replicas:
                 id = plugin.verbatim_pfb_entity_id(replica)
                 entity = avro_pfb.PFBEntity.for_replica(id, dict(replica))
-                if self._include_relations():
+                # The inclusion of relations is determined on a case-by-case
+                # basis for each replica, which may result in inconsistent
+                # expression of relations across rows in the same manifest.
+                # We chose this approach because scanning all replicas in
+                # advance would present another obstacle to our goal of
+                # parallelizing the manifest generation.
+                if self._include_relations(replica):
                     relations = plugin.verbatim_pfb_relations(replica)
                     entity_relations = [
                         PFBRelation(dst_name=replica_type, dst_id=entity_id)
