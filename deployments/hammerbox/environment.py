@@ -705,7 +705,7 @@ anvil7_sources = mkdict(anvil6_sources, 256, mkdelta([
     # @formatter:on
 ]))
 
-anvil8_sources = mkdict(anvil7_sources, 255, mkdelta([
+anvil8_sources = mkdict(anvil7_sources, 254, mkdelta([
     # @formatter:off
     mksrc('bigquery', 'datarepo-6fd2f543', 'ANVIL_1000G_PRIMED_data_model_20240410_ANV5_202409251724'),
     mksrc('bigquery', 'datarepo-13858a9f', 'ANVIL_1000G_high_coverage_2019_20230517_ANV5_202409231755'),
@@ -804,6 +804,7 @@ anvil8_sources = mkdict(anvil7_sources, 255, mkdelta([
     mksrc('bigquery', 'datarepo-8302ff1f', 'ANVIL_CCDG_NYGC_NP_Autism_SAGE_WGS_20230605_ANV5_202409302144'),
     mksrc('bigquery', 'datarepo-443d8d20', 'ANVIL_CCDG_NYGC_NP_Autism_SSC_WGS_20230605_ANV5_202409302154'),
     mksrc('bigquery', 'datarepo-660280f8', 'ANVIL_CCDG_WashU_CVD_EOCAD_WashU_CAD_DS_WGS_20230525_ANV5_202409302255'),
+    mksrc('bigquery', 'datarepo-4a0769c7', 'ANVIL_CCDG_WashU_CVD_EOCAD_WashU_CAD_GRU_IRB_WGS_20230525_ANV5_202403040126', pop), # noqa E501
     mksrc('bigquery', 'datarepo-c2a2b724', 'ANVIL_CMG_YALE_DS_MC_20221026_ANV5_202409302315'),
     mksrc('bigquery', 'datarepo-f961f617', 'ANVIL_CMG_YALE_DS_RARED_20221020_ANV5_202409251714'),
     mksrc('bigquery', 'datarepo-5d222190', 'ANVIL_CMG_Yale_DS_BPEAKD_20240113_ANV5_202410011754'),
@@ -934,7 +935,7 @@ anvil8_sources = mkdict(anvil7_sources, 255, mkdelta([
     # @formatter:on
 ]))
 
-anvil9_sources = mkdict(anvil8_sources, 286, mkdelta([
+anvil9_sources = mkdict(anvil8_sources, 284, mkdelta([
     # @formatter:off
     mksrc('bigquery', 'datarepo-b555b2f5', 'ANVIL_1000G_PRIMED_data_model_20240410_ANV5_202502211647'),
     mksrc('bigquery', 'datarepo-265cde27', 'ANVIL_ALSCompute_Collection_GRU_20231016_ANV5_202410310107'),
@@ -969,7 +970,6 @@ anvil9_sources = mkdict(anvil8_sources, 286, mkdelta([
     mksrc('bigquery', 'datarepo-0e0af0a8', 'ANVIL_CMG_UWash_DS_EP_20250219_ANV5_202502201854'),
     mksrc('bigquery', 'datarepo-766c47dd', 'ANVIL_CMG_UWash_GRU_20250224_ANV5_202502241706'),
     mksrc('bigquery', 'datarepo-aa22e87e', 'ANVIL_CMG_UWash_GRU_IRB_20250224_ANV5_202502241723'),
-    mksrc('bigquery', 'datarepo-3f73ca7a', 'ANVIL_CMG_Yale_GRU_20221020_ANV5_202502070356'),
     mksrc('bigquery', 'datarepo-7c44dbc8', 'ANVIL_CMH_GAFK_ES_20240301_ANV5_202502201925'),
     mksrc('bigquery', 'datarepo-97f2fa00', 'ANVIL_CMH_GAFK_GS_long_read_20240301_ANV5_202502201932'),
     mksrc('bigquery', 'datarepo-456a8996', 'ANVIL_CMH_GAFK_IlluminaGSA_20240311_ANV5_202502201937'),
