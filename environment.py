@@ -296,32 +296,32 @@ def env() -> Mapping[str, Optional[str]]:
                 'url': 'https://hub.docker.com/_/python',
             },
             'pycharm': {
-                'ref': 'docker.io/ucscgi/azul-pycharm:2024.3.3-45',
+                'ref': 'docker.io/ucscgi/azul-pycharm:2024.3.4-47',
                 'url': 'https://hub.docker.com/repository/docker/ucscgi/azul-pycharm',
                 'is_custom': True
             },
             'elasticsearch': {
-                'ref': 'docker.io/ucscgi/azul-elasticsearch:7.17.27-38',
+                'ref': 'docker.io/ucscgi/azul-elasticsearch:7.17.28-40',
                 'url': 'https://hub.docker.com/repository/docker/ucscgi/azul-elasticsearch',
                 'is_custom': True
             },
             'bigquery_emulator': {
-                'ref': 'docker.io/ucscgi/azul-bigquery-emulator:0.4.4-24',
+                'ref': 'docker.io/ucscgi/azul-bigquery-emulator:0.4.4-26',
                 'url': 'https://hub.docker.com/repository/docker/ucscgi/azul-bigquery-emulator',
                 'is_custom': True
             },
             # Updating any of the four images below additionally requires
             # redeploying the `gitlab` TF component.
             'clamav': {
-                'ref': 'docker.io/clamav/clamav:1.4.2-27',
+                'ref': 'docker.io/clamav/clamav:1.4.2-30',
                 'url': 'https://hub.docker.com/r/clamav/clamav'
             },
             'gitlab': {
-                'ref': 'docker.io/gitlab/gitlab-ce:17.8.2-ce.0',
+                'ref': 'docker.io/gitlab/gitlab-ce:17.9.2-ce.0',
                 'url': 'https://hub.docker.com/r/gitlab/gitlab-ce'
             },
             'gitlab_runner': {
-                'ref': 'docker.io/gitlab/gitlab-runner:ubuntu-v17.8.3',
+                'ref': 'docker.io/gitlab/gitlab-runner:ubuntu-v17.9.1',
                 'url': 'https://hub.docker.com/r/gitlab/gitlab-runner'
             },
             'dind': {
@@ -611,6 +611,12 @@ def env() -> Mapping[str, Optional[str]]:
         'AZUL_CONTRIBUTION_CONCURRENCY': '64',
         'AZUL_AGGREGATION_CONCURRENCY': '64',
 
+        # The number of concurrently running lambda executions for file
+        # mirroring. See the previous paragraph for technical details. There is
+        # no retry concurrency. No effect if ``AZUL_ENABLE_MIRRORING`` is zero.
+        #
+        'AZUL_MIRRORING_CONCURRENCY': '8',
+
         # Collect and monitor important health metrics of the deployment (1 yes, 0 no).
         # Typically only enabled on main deployments.
         #
@@ -641,7 +647,7 @@ def env() -> Mapping[str, Optional[str]]:
         # Mirror data files from the indexed repository in a dedicated S3 bucket
         # (1 yes, 0 no).
         #
-        'AZUL_MIRRORING_ENABLED': '0',
+        'AZUL_ENABLE_MIRRORING': '0',
 
         # A short string (no punctuation allowed) that identifies a Terraform
         # component i.e., a distinct set of Terraform resources to be deployed

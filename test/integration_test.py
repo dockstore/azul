@@ -157,6 +157,9 @@ from azul.plugins.repository.tdr_anvil import (
     BundleType,
     TDRAnvilBundleFQID,
 )
+from azul.queues import (
+    SQSMessage,
+)
 from azul.service.async_manifest_service import (
     Token,
 )
@@ -400,7 +403,7 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
         class Catalog:
             name: CatalogName
             bundles: set[SourcedBundleFQID]
-            notifications: list[JSON]
+            notifications: list[SQSMessage]
             public_source: SourceRef
             ma_source: SourceRef | None
 
@@ -467,6 +470,9 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
             log.warning('Will skip deletions due to overriding IT flag')
 
         self._test_other_endpoints()
+
+        if config.enable_mirroring:
+            self._test_mirroring()
 
     def _reset_indexer(self):
         # While it's OK to erase the integration test catalog, the queues are
@@ -1246,7 +1252,7 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
     def _prepare_notifications(self,
                                catalog: CatalogName,
                                sources: Iterable[SourceRef]
-                               ) -> tuple[JSONs, set[SourcedBundleFQID]]:
+                               ) -> tuple[list[SQSMessage], set[SourcedBundleFQID]]:
         plugin = self.repository_plugin(catalog)
         bundle_fqids = set()
         notifications = []
@@ -1361,6 +1367,9 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
                               entity_type=entity_type):
                 hits = self._get_entities(catalog, entity_type)
                 self.assertEqual([], [hit['entryId'] for hit in hits])
+
+    def _assert_queue_empty(self, queue_name: str):
+        self.assertTrue(self.azul_client.is_queue_empty(queue_name))
 
     def _get_entities(self,
                       catalog: CatalogName,
@@ -1695,6 +1704,16 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
             command_lines = list(filter(None, response.data.split(b'\n')))[1::2]
             for command_line in command_lines:
                 self.assertIn(expected_auth_header, command_line)
+
+    def _test_mirroring(self):
+        with self.subTest('mirror_files'):
+            self._assert_queue_empty(config.mirror_queue.name)
+            self._assert_queue_empty(config.mirror_queue.to_fail.name)
+            for catalog in config.integration_test_catalogs:
+                source = self._select_source(catalog, public=True)
+                self.azul_client.remote_mirror(catalog, [source])
+            self.azul_client.wait_for_mirroring()
+            self._assert_queue_empty(config.mirror_queue.to_fail.name)
 
 
 class AzulClientIntegrationTest(IntegrationTestCase):

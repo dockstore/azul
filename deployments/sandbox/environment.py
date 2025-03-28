@@ -279,5 +279,5 @@ def env() -> Mapping[str, Optional[str]]:
 
         'AZUL_GOOGLE_OAUTH2_CLIENT_ID': '713613812354-3bj4m7vnsbco82bke96idvg8cpdv6r9r.apps.googleusercontent.com',
 
-        'AZUL_MIRRORING_ENABLED': '1',
+        'AZUL_ENABLE_MIRRORING': '1',
     }

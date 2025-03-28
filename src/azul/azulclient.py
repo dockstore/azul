@@ -3,11 +3,14 @@ from collections import (
 )
 from collections.abc import (
     Iterable,
-    Set,
 )
 from concurrent.futures import (
     Future,
     ThreadPoolExecutor,
+)
+from enum import (
+    Enum,
+    auto,
 )
 from functools import (
     partial,
@@ -15,21 +18,18 @@ from functools import (
 from itertools import (
     groupby,
 )
-import json
 import logging
 from pprint import (
     PrettyPrinter,
 )
 from typing import (
-    Union,
+    Self,
+    TYPE_CHECKING,
     cast,
 )
 import uuid
 
 import attrs
-from more_itertools import (
-    chunked,
-)
 import requests
 from urllib3 import (
     HTTPResponse,
@@ -40,10 +40,14 @@ from urllib3.exceptions import (
 
 from azul import (
     CatalogName,
+    R,
     cache,
     cached_property,
     config,
     json_mapping,
+)
+from azul.deployment import (
+    aws,
 )
 from azul.es import (
     ESClientFactory,
@@ -61,20 +65,56 @@ from azul.indexer import (
 from azul.indexer.index_service import (
     IndexService,
 )
+from azul.json import (
+    Serializable,
+)
 from azul.plugins import (
     RepositoryPlugin,
 )
 from azul.queues import (
     Queues,
+    SQSFifoMessage,
+    SQSMessage,
 )
 from azul.types import (
+    AnyJSON,
     JSON,
 )
 from azul.uuids import (
     validate_uuid_prefix,
 )
 
+if TYPE_CHECKING:
+    from mypy_boto3_sqs.service_resource import (
+        Queue,
+    )
+
 log = logging.getLogger(__name__)
+
+
+class Action(Serializable, Enum):
+
+    @classmethod
+    def from_json(cls, action: AnyJSON) -> Self:
+        assert isinstance(action, str), R('Action is not a string', type(action))
+        try:
+            return cls[action]
+        except KeyError:
+            assert False, R('Invalid action', action)
+
+    def to_json(self) -> str:
+        return self.name
+
+
+class IndexAction(Action):
+    reindex = auto()
+    add = auto()
+    delete = auto()
+
+
+class MirrorAction(Action):
+    mirror_source = auto()
+    mirror_partition = auto()
 
 
 @attrs.frozen(kw_only=True)
@@ -97,27 +137,56 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
             'bundle_fqid': bundle_fqid.to_json()
         }
 
+    def notification_message(self,
+                             catalog: CatalogName,
+                             notification: JSON,
+                             action: IndexAction = IndexAction.add,
+                             ) -> SQSMessage:
+        return SQSMessage({
+            'action': action.to_json(),
+            'notification': notification,
+            'catalog': catalog
+        })
+
     def bundle_message(self,
                        catalog: CatalogName,
                        bundle_fqid: SourcedBundleFQID
-                       ) -> JSON:
-        return {
-            'action': 'add',
-            'notification': self.notification(bundle_fqid),
-            'catalog': catalog
-        }
+                       ) -> SQSMessage:
+        return self.notification_message(catalog, self.notification(bundle_fqid))
 
     def reindex_message(self,
                         catalog: CatalogName,
                         source: SourceRef,
                         prefix: str
-                        ) -> JSON:
-        return {
-            'action': 'reindex',
+                        ) -> SQSMessage:
+        return SQSMessage({
+            'action': IndexAction.reindex.to_json(),
             'catalog': catalog,
             'source': cast(JSON, source.to_json()),
             'prefix': prefix
-        }
+        })
+
+    def mirror_source_message(self,
+                              catalog: CatalogName,
+                              source: SourceRef
+                              ) -> SQSFifoMessage:
+        return SQSFifoMessage({
+            'action': MirrorAction.mirror_source.to_json(),
+            'catalog': catalog,
+            'source': cast(JSON, source.to_json()),
+        })
+
+    def mirror_partition_message(self,
+                                 catalog: CatalogName,
+                                 source: SourceRef,
+                                 prefix: str
+                                 ) -> SQSFifoMessage:
+        return SQSFifoMessage({
+            'action': MirrorAction.mirror_partition.to_json(),
+            'catalog': catalog,
+            'source': cast(JSON, source.to_json()),
+            'prefix': prefix
+        })
 
     def local_reindex(self, catalog: CatalogName, prefix: str) -> int:
         notifications = [
@@ -211,12 +280,12 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
         if errors or missing:
             raise AzulClientNotificationError
 
-    def catalog_sources(self, catalog: CatalogName) -> Set[str]:
+    def catalog_sources(self, catalog: CatalogName) -> set[str]:
         return set(map(str, self.repository_plugin(catalog).sources))
 
     def list_bundles(self,
                      catalog: CatalogName,
-                     source: Union[str, SourceRef],
+                     source: str | SourceRef,
                      prefix: str
                      ) -> list[SourcedBundleFQID]:
         validate_uuid_prefix(prefix)
@@ -231,38 +300,34 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
                  len(bundle_fqids), prefix, source)
         return bundle_fqids
 
-    @property
-    def sqs(self):
-        from azul.deployment import (
-            aws,
-        )
-        return aws.resource('sqs')
+    def notifications_queue(self, *, retry: bool = False) -> 'Queue':
+        name = config.notifications_queue.derive(retry=retry).name
+        return aws.sqs_queue(name)
 
-    @cached_property
-    def notifications_queue(self):
-        return self.sqs.get_queue_by_name(QueueName=config.notifications_queue.name)
+    def tallies_queue(self, *, retry: bool = False) -> 'Queue':
+        name = config.tallies_queue.derive(retry=retry).name
+        return aws.sqs_queue(name)
+
+    def mirror_queue(self):
+        name = config.mirror_queue.name
+        return aws.sqs_queue(name)
 
     def remote_reindex(self,
                        catalog: CatalogName,
-                       sources: Set[str]):
+                       sources: set[str]):
 
         plugin = self.repository_plugin(catalog)
         for source_spec in sources:
             source_ref = plugin.resolve_source(source_spec)
             source_ref = plugin.partition_source(catalog, source_ref)
 
-            def message(partition_prefix: str) -> JSON:
+            def message(partition_prefix: str) -> SQSMessage:
                 log.info('Remotely reindexing prefix %r of source_ref %r into catalog %r',
                          partition_prefix, str(source_ref.spec), catalog)
                 return self.reindex_message(catalog, source_ref, partition_prefix)
 
             messages = map(message, source_ref.spec.prefix.partition_prefixes())
-            for batch in chunked(messages, 10):
-                entries = [
-                    dict(Id=str(i), MessageBody=json.dumps(message))
-                    for i, message in enumerate(batch)
-                ]
-                self.notifications_queue.send_messages(Entries=entries)
+            self.queue_notifications(messages)
 
     def remote_reindex_partition(self, message: JSON) -> None:
         catalog, prefix = message['catalog'], message['prefix']
@@ -285,16 +350,24 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
         log.info('Successfully queued %i notification(s) for prefix %s of '
                  'source %r', num_messages, prefix, source)
 
-    def queue_notifications(self, messages: Iterable[JSON]) -> int:
-        num_messages = 0
-        for batch in chunked(messages, 10):
-            entries = [
-                dict(Id=str(i), MessageBody=json.dumps(message))
-                for i, message in enumerate(batch)
-            ]
-            self.notifications_queue.send_messages(Entries=entries)
-            num_messages += len(batch)
-        return num_messages
+    def queue_notifications(self,
+                            messages: Iterable[SQSMessage],
+                            *,
+                            retry: bool = False
+                            ) -> int:
+        queue = self.notifications_queue(retry=retry)
+        return self.queues.send_messages(queue, messages)
+
+    def queue_tallies(self,
+                      messages: Iterable[SQSMessage],
+                      *,
+                      retry: bool = False
+                      ) -> int:
+        queue = self.tallies_queue(retry=retry)
+        return self.queues.send_messages(queue, messages)
+
+    def queue_mirror_messages(self, messages: Iterable[SQSMessage]) -> int:
+        return self.queues.send_messages(self.mirror_queue(), messages)
 
     @classmethod
     def filter_obsolete_bundle_versions(cls,
@@ -392,7 +465,7 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
         return bundle_fqids
 
     @cached_property
-    def index_service(self):
+    def index_service(self) -> IndexService:
         return IndexService()
 
     def delete_all_indices(self, catalog: CatalogName):
@@ -452,7 +525,7 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
             raise RuntimeError('Failures during deletion', response['failures'])
 
     @cached_property
-    def queues(self):
+    def queues(self) -> Queues:
         return Queues()
 
     def reset_indexer(self,
@@ -498,7 +571,47 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
         Wait for indexer to begin processing notifications, then wait for work
         to finish.
         """
-        self.queues.wait_to_stabilize()
+        # Indexing can still succeed after a transient stall. A stall's
+        # transience cannot be proven until all lambdas and their respective
+        # retries repeatedly time out, but this would result in an unreasonably
+        # long wait time. Waiting for just one retry is sufficient to
+        # accommodate the most probable scenarios for transient stalls.
+        timeout = max(config.contribution_lambda_timeout(retry=True),
+                      config.aggregation_lambda_timeout(retry=True))
+        self.queues.wait_to_stabilize(config.indexer_queue_names, timeout)
+
+    def wait_for_mirroring(self):
+        self.queues.wait_to_stabilize([config.mirror_queue.name],
+                                      config.mirror_lambda_timeout)
+
+    def is_queue_empty(self, queue_name: str) -> bool:
+        queues = self.queues.get_queues([queue_name])
+        length, _ = self.queues.get_queue_lengths(queues)
+        return length == 0
+
+    def remote_mirror(self, catalog: CatalogName, sources: Iterable[SourceRef]):
+        plugin = self.repository_plugin(catalog)
+
+        def message(source: SourceRef):
+            source = plugin.partition_source(catalog, source)
+            log.info('Mirroring files in source %r from catalog %r',
+                     str(source.spec), catalog)
+            return self.mirror_source_message(catalog, source)
+
+        messages = map(message, sources)
+        self.queue_mirror_messages(messages)
+
+    def mirror_source(self, catalog: CatalogName, source_json: JSON):
+        plugin = self.repository_plugin(catalog)
+        source = plugin.source_ref_cls.from_json(source_json)
+
+        def message(prefix: str) -> SQSMessage:
+            log.info('Mirroring files in partition %r of source %r from catalog %r',
+                     prefix, str(source.spec), catalog)
+            return self.mirror_partition_message(catalog, source, prefix)
+
+        messages = map(message, source.spec.prefix.partition_prefixes())
+        self.queue_mirror_messages(messages)
 
 
 class AzulClientError(RuntimeError):
