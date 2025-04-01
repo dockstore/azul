@@ -160,10 +160,10 @@ class Plugin(RepositoryPlugin[CannedBundle, SimpleSourceSpec, CannedSourceRef, C
 
     def count_bundles(self, source: CannedSourceRef) -> int:
         staging_area = self.staging_area(source.spec.name)
-        if source.prefix is None:
+        if source.spec.prefix is None:
             return len(staging_area.links)
         else:
-            prefix = source.prefix.common
+            prefix = source.spec.prefix.common
             return sum(1 for links_id in staging_area.links if links_id.startswith(prefix))
 
     def list_bundles(self,
