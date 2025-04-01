@@ -313,6 +313,8 @@ class BaseTransformer(Transformer, metaclass=ABCMeta):
             'is_supplementary': null_bool,
             # Not in schema
             'version': null_str,
+            # FIXME: Redundant file fields for AnVIL are no longer needed
+            #        https://github.com/DataBiosphere/azul/issues/7005
             'uuid': null_str,
             'size': null_int,
             'name': null_str,
