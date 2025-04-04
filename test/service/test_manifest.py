@@ -1296,6 +1296,8 @@ class TestManifests(DCP1ManifestTestCase):
         self.assertEqual(200, response.status_code)
         lines = response.content.decode().splitlines()
         expected_header = [
+            '--http1.1',
+            '',
             '--create-dirs',
             '',
             '--compressed',
