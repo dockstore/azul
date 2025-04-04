@@ -590,10 +590,8 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
         return length == 0
 
     def remote_mirror(self, catalog: CatalogName, sources: Iterable[SourceRef]):
-        plugin = self.repository_plugin(catalog)
 
         def message(source: SourceRef):
-            source = plugin.partition_source(catalog, source)
             log.info('Mirroring files in source %r from catalog %r',
                      str(source.spec), catalog)
             return self.mirror_source_message(catalog, source)
@@ -604,6 +602,7 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
     def mirror_source(self, catalog: CatalogName, source_json: JSON):
         plugin = self.repository_plugin(catalog)
         source = plugin.source_ref_cls.from_json(source_json)
+        source = plugin.partition_source(catalog, source)
 
         def message(prefix: str) -> SQSMessage:
             log.info('Mirroring files in partition %r of source %r from catalog %r',
