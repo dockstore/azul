@@ -8,19 +8,10 @@ from dataclasses import (
     dataclass,
     replace,
 )
-from enum import (
-    Enum,
-)
 import http
-from itertools import (
-    batched,
-)
 import json
 import logging
 import time
-from typing import (
-    Self,
-)
 import uuid
 
 import chalice
@@ -29,7 +20,6 @@ from chalice.app import (
     UnauthorizedError,
 )
 from more_itertools import (
-    chunked,
     first,
 )
 
@@ -40,21 +30,16 @@ from azul import (
 )
 from azul.azulclient import (
     AzulClient,
-)
-from azul.chalice import (
-    AppController,
-)
-from azul.deployment import (
-    aws,
-)
-from azul.enums import (
-    auto,
+    IndexAction,
 )
 from azul.hmac import (
     HMACAuthentication,
 )
 from azul.indexer import (
     BundlePartition,
+)
+from azul.indexer.action_controller import (
+    ActionController,
 )
 from azul.indexer.document import (
     Contribution,
@@ -65,6 +50,9 @@ from azul.indexer.index_service import (
     CataloguedEntityReference,
     IndexService,
 )
+from azul.queues import (
+    SQSFifoMessage,
+)
 from azul.types import (
     JSON,
     json_dict,
@@ -73,39 +61,22 @@ from azul.types import (
 log = logging.getLogger(__name__)
 
 
-class Action(Enum):
-    reindex = auto()
-    add = auto()
-    delete = auto()
-
-    @classmethod
-    def from_json(cls, action: str) -> Self:
-        try:
-            return Action[action]
-        except KeyError:
-            raise chalice.BadRequestError
-
-    def to_json(self) -> str:
-        return self.name
-
-
-class IndexController(AppController):
-    # The number of documents to be queued in a single SQS `send_messages`.
-    # Theoretically, larger batches are better but SQS currently limits the
-    # batch size to 10.
-    #
-    document_batch_size = 10
+class IndexController(ActionController[IndexAction]):
 
     @cached_property
-    def index_service(self):
+    def index_service(self) -> IndexService:
         return IndexService()
+
+    @cached_property
+    def client(self) -> AzulClient:
+        return AzulClient()
 
     def handle_notification(self, catalog: CatalogName, action: str):
         request = self.current_request
         if isinstance(request.authentication, HMACAuthentication):
             assert request.authentication.identity() is not None
             config.Catalog.validate_name(catalog, exception=chalice.BadRequestError)
-            action = Action.from_json(action)
+            action = self._load_action(action)
             notification = request.json_body
             log.info('Received notification %r for catalog %r', notification, catalog)
             self._validate_notification(notification)
@@ -115,17 +86,14 @@ class IndexController(AppController):
             raise UnauthorizedError()
 
     def _queue_notification(self,
-                            action: Action,
+                            action: IndexAction,
                             notification: JSON,
-                            catalog: CatalogName, *,
+                            catalog: CatalogName,
+                            *,
                             retry: bool = False):
-        message = {
-            'catalog': catalog,
-            'action': action.to_json(),
-            'notification': notification
-        }
-        queue = self._notifications_queue(retry=retry)
-        queue.send_message(MessageBody=json.dumps(message))
+        message = self.client.notification_message(catalog, notification, action)
+        queue = self.client.notifications_queue(retry=retry)
+        queue.send_message(**message.to_entry())
         log.info('Queued notification message %r', message)
 
     def _validate_notification(self, notification):
@@ -164,14 +132,14 @@ class IndexController(AppController):
                      message, attempts)
             start = time.time()
             try:
-                action = Action[message['action']]
-                if action is Action.reindex:
-                    AzulClient().remote_reindex_partition(message)
+                action = self._load_action(message['action'])
+                if action is IndexAction.reindex:
+                    self.client.remote_reindex_partition(message)
                 else:
                     notification = message['notification']
                     catalog = message['catalog']
                     assert catalog is not None
-                    delete = action is Action.delete
+                    delete = action is IndexAction.delete
                     contributions, replicas = self.transform(catalog, notification, delete)
 
                     log.info('Writing %i contributions to index.', len(contributions))
@@ -193,9 +161,8 @@ class IndexController(AppController):
 
                     log.info('Queueing %i entities for aggregating a total of %i contributions.',
                              len(tallies), sum(tally.num_contributions for tally in tallies))
-                    for batch in chunked(tallies, self.document_batch_size):
-                        entries = [dict(tally.to_message(), Id=str(i)) for i, tally in enumerate(batch)]
-                        self._tallies_queue().send_messages(Entries=entries)
+                    messages = (tally.to_message() for tally in tallies)
+                    self.client.queue_tallies(messages)
             except BaseException:
                 log.warning(f'Worker failed to handle message {message}.', exc_info=True)
                 raise
@@ -228,7 +195,7 @@ class IndexController(AppController):
         if isinstance(result, BundlePartition):
             for partition in results:
                 notification = dict(notification, partition=partition.to_json())
-                action = Action.delete if delete else Action.add
+                action = IndexAction.delete if delete else IndexAction.add
                 # There's a good chance that the partition will also fail in
                 # the non-retry Lambda function so we'll go straight to retry.
                 self._queue_notification(action, notification, catalog, retry=True)
@@ -299,31 +266,17 @@ class IndexController(AppController):
                 for tally in deferrals:
                     log.info('Deferring aggregation of %i contribution(s) to entity %s',
                              tally.num_contributions, tally.entity)
-                entries = [dict(tally.to_message(), Id=str(i)) for i, tally in enumerate(deferrals)]
+                messages = (tally.to_message() for tally in deferrals)
                 # Hopefully this is more or less atomic. If we crash below here,
                 # tallies will be inflated because some or all deferrals have
                 # been sent and the original tallies will be returned.
-                for batch in batched(entries, 10):
-                    self._tallies_queue(retry=retry).send_messages(Entries=batch)
+                self.client.queue_tallies(messages, retry=retry)
 
         except BaseException:
             # Note that another problematic outcome is for the Lambda invocation
             # to time out, in which case this log message will not be written.
             log.warning('Failed to aggregate tallies: %r', tallies_by_entity.values(), exc_info=True)
             raise
-
-    @property
-    def _sqs(self):
-        return aws.resource('sqs')
-
-    def _queue(self, queue_name):
-        return self._sqs.get_queue_by_name(QueueName=queue_name)
-
-    def _notifications_queue(self, retry=False):
-        return self._queue(config.notifications_queue.derive(retry=retry).name)
-
-    def _tallies_queue(self, retry=False):
-        return self._queue(config.tallies_queue.derive(retry=retry).name)
 
 
 @dataclass(frozen=True)
@@ -366,10 +319,9 @@ class DocumentTally:
             'num_contributions': self.num_contributions
         }
 
-    def to_message(self) -> JSON:
-        return dict(MessageBody=json.dumps(self.to_json()),
-                    MessageGroupId=str(self.entity),
-                    MessageDeduplicationId=str(uuid.uuid4()))
+    def to_message(self) -> SQSFifoMessage:
+        return SQSFifoMessage(self.to_json(),
+                              group_id=str(self.entity))
 
     def consolidate(self, others: list['DocumentTally']) -> 'DocumentTally':
         assert all(
