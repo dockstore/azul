@@ -10,6 +10,9 @@ from azul import (
     cached_property,
     config,
 )
+from azul.azulclient import (
+    IndexAction,
+)
 from azul.chalice import (
     LambdaMetric,
 )
@@ -24,11 +27,13 @@ from azul.hmac import (
     SignatureHelper,
 )
 from azul.indexer.index_controller import (
-    Action,
     IndexController,
 )
 from azul.indexer.log_forwarding_controller import (
     LogForwardingController,
+)
+from azul.indexer.mirror_controller import (
+    MirrorController,
 )
 from azul.logging import (
     configure_app_logging,
@@ -40,6 +45,9 @@ from azul.openapi import (
 )
 from azul.openapi.responses import (
     json_content,
+)
+from azul.queues import (
+    Queues,
 )
 
 log = logging.getLogger(__name__)
@@ -66,6 +74,10 @@ class IndexerApp(HealthApp, SignatureHelper):
     @cached_property
     def index_controller(self) -> IndexController:
         return self._controller(IndexController)
+
+    @cached_property
+    def mirror_controller(self) -> MirrorController:
+        return self._controller(MirrorController)
 
     @cached_property
     def log_controller(self) -> LogForwardingController:
@@ -153,7 +165,7 @@ globals().update(app.default_routes())
                         schema.enum(*config.catalogs),
                         description='The name of the catalog to notify.'),
             params.path('action',
-                        schema.enum(Action.add.name, Action.delete.name),
+                        schema.enum(IndexAction.add.name, IndexAction.delete.name),
                         description='Which action to perform.'),
             params.header('signature',
                           str,
@@ -201,7 +213,7 @@ def contribute(event: chalice.app.SQSEvent):
                   period=5 * 60)
 @app.on_sqs_message(
     queue=config.tallies_queue.name,
-    batch_size=IndexController.document_batch_size
+    batch_size=Queues.batch_size
 )
 def aggregate(event: chalice.app.SQSEvent):
     app.index_controller.aggregate(event)
@@ -218,7 +230,7 @@ def aggregate(event: chalice.app.SQSEvent):
                   period=5 * 60)
 @app.on_sqs_message(
     queue=config.tallies_queue.to_retry.name,
-    batch_size=IndexController.document_batch_size
+    batch_size=Queues.batch_size
 )
 def aggregate_retry(event: chalice.app.SQSEvent):
     app.index_controller.aggregate(event, retry=True)
@@ -239,6 +251,21 @@ def aggregate_retry(event: chalice.app.SQSEvent):
 )
 def contribute_retry(event: chalice.app.SQSEvent):
     app.index_controller.contribute(event, retry=True)
+
+
+if config.enable_mirroring:
+    @app.metric_alarm(metric=LambdaMetric.errors,
+                      threshold=int(config.mirroring_concurrency * 2 / 3),
+                      period=5 * 60)
+    @app.metric_alarm(metric=LambdaMetric.throttles,
+                      threshold=int(96000 / config.mirroring_concurrency),
+                      period=5 * 60)
+    @app.on_sqs_message(
+        queue=config.mirror_queue.name,
+        batch_size=1
+    )
+    def mirror(event: chalice.app.SQSEvent):
+        app.mirror_controller.mirror(event)
 
 
 @app.log_forwarder(

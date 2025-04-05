@@ -344,7 +344,7 @@ tf_config = {
                         }
                     }
                 }
-                for bucket in ['logs', 'trail']
+                for bucket in ['aws_config', 'logs', 'trail']
             }
         },
         'aws_s3_bucket_versioning': {
@@ -474,7 +474,17 @@ tf_config = {
             vpc.default_vpc_name: {
                 'name': '/aws/vpc/' + config.qualified_resource_name(vpc.default_vpc_name),
                 'retention_in_days': config.audit_log_retention_days
-            }
+            },
+            **(
+                {
+                    'chatbot': {
+                        'name': '/aws/chatbot/' + config.qualified_resource_name('chatbot'),
+                        'retention_in_days': config.audit_log_retention_days
+                    }
+                }
+                if config.slack_integration else
+                {}
+            ),
         },
         'aws_cloudwatch_log_metric_filter': {
             **{
