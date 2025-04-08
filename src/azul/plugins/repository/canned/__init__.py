@@ -171,6 +171,7 @@ class Plugin(RepositoryPlugin[CannedBundle, SimpleSourceSpec, CannedSourceRef, C
                      prefix: str
                      ) -> list[CannedBundleFQID]:
         self._assert_source(source)
+        self._assert_partition(source, prefix)
         staging_area = self.staging_area(source.spec.name)
         return [
             CannedBundleFQID(source=source,

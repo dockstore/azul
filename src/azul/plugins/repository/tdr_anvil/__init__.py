@@ -262,6 +262,7 @@ class Plugin(TDRPlugin[TDRAnvilBundle, TDRAnvilBundleFQID]):
                      prefix: str
                      ) -> list[TDRAnvilBundleFQID]:
         self._assert_source(source)
+        self._assert_partition(source, prefix)
         bundles = []
         spec = source.spec
 

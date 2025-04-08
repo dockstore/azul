@@ -64,6 +64,9 @@ from azul.types import (
     derived_type_params,
     json_str,
 )
+from azul.uuids import (
+    validate_uuid_prefix,
+)
 
 if TYPE_CHECKING:
     from azul.service.elasticsearch_service import (
@@ -576,6 +579,14 @@ class RepositoryPlugin[BUNDLE: Bundle,
                 continue
         else:
             assert False, (self.sources, source)
+
+    def _assert_partition(self, source: SOURCE_REF, prefix: str):
+        """
+        Assert that the given partition is a valid derivation of the given
+        source's configured prefix.
+        """
+        validate_uuid_prefix(prefix)
+        assert prefix in source.spec.prefix, (source.spec, prefix)
 
     @abstractmethod
     def list_sources(self,

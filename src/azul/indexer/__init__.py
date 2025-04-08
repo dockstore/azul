@@ -352,6 +352,34 @@ class Prefix:
         """
         return len(self.common) + self.partition
 
+    def __contains__(self, partition_prefix: str) -> bool:
+        """
+        Same as `partition_prefix in prefix.partition_prefixes()` but more
+        efficient. See also :meth:`partition_prefixes`.
+
+        >>> p0, p1, p2 = Prefix.parse('/0'), Prefix.parse('/1'), Prefix.parse('/2')
+        >>> 'a' in p0, 'a' in p1, 'a' in p2
+        (False, True, False)
+
+        >>> p1, p2, p3 = Prefix.parse('a/0'), Prefix.parse('a/1'), Prefix.parse('a/2')
+        >>> 'ab' in p1, 'ab' in p2, 'ab' in p3
+        (False, True, False)
+
+        >>> 'ab' in Prefix.parse('b/1')
+        False
+
+        >>> 'ag' in Prefix.parse('a/1')
+        False
+
+        >>> 'aB' in Prefix.parse('a/1')
+        False
+        """
+        return (
+            partition_prefix.startswith(self.common)
+            and len(partition_prefix) == len(self)
+            and all(c in self.digits for c in partition_prefix[len(self.common):])
+        )
+
 
 Prefix.of_everything = Prefix.parse('/0')
 

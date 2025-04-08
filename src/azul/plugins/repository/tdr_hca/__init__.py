@@ -301,6 +301,7 @@ class Plugin(TDRPlugin[TDRHCABundle, TDRBundleFQID]):
                      prefix: str
                      ) -> list[TDRBundleFQID]:
         self._assert_source(source)
+        self._assert_partition(source, prefix)
         current_bundles = self._query_unique_sorted(f'''
             SELECT links_id, version
             FROM {backtick(self._full_table_name(source.spec, 'links'))}
