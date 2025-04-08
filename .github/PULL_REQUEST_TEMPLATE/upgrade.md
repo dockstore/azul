@@ -81,6 +81,7 @@ Connected issue: #0000
 - [ ] Build passes in `anvilbox` deployment
 - [ ] Reviewed build logs for anomalies in `sandbox` deployment
 - [ ] Reviewed build logs for anomalies in `anvilbox` deployment
+- [ ] Confirmed all checks in PR are OK and the PR is mergeable
 - [ ] The title of the merge commit starts with the title of this PR
 - [ ] Added PR # reference to merge commit title
 - [ ] Collected commit title tags in merge commit title <sub>but excluded any `p` tags</sub>
