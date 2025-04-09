@@ -29,6 +29,9 @@ from azul.auth import (
 from azul.chalice import (
     ServiceUnavailableError,
 )
+from azul.collections import (
+    adict,
+)
 from azul.http import (
     LimitedTimeoutException,
     TooManyRequestsException,
@@ -249,17 +252,6 @@ class RepositoryController(SourceController):
             raise TooManyRequestsError(*e.args)
         if download.retry_after is not None:
             retry_after = min(download.retry_after, int(1.3 ** request_index))
-            query_params = {
-                'version': download.file_version,
-                'fileName': download.file_name,
-                'requestIndex': request_index + 1
-            }
-            if download.drs_uri is not None:
-                query_params['drsUri'] = download.drs_uri
-            if download.token is not None:
-                query_params['token'] = download.token
-            if download.replica is not None:
-                query_params['replica'] = download.replica
             if wait is not None:
                 if wait == '0':
                     pass
@@ -274,7 +266,15 @@ class RepositoryController(SourceController):
                     retry_after = round(retry_after - server_side_sleep)
                 else:
                     assert False, wait
-                query_params['wait'] = wait
+            query_params = adict(
+                version=download.file_version,
+                fileName=download.file_name,
+                drsUri=download.drs_uri,
+                token=download.token,
+                replica=download.replica,
+                requestIndex=request_index + 1,
+                wait=wait
+            )
             return {
                 'Status': 301,
                 **({'Retry-After': retry_after} if retry_after else {}),
