@@ -114,7 +114,7 @@ class AnvilIndexerTestCase(AnvilCannedBundleTestCase, IndexerTestCase):
 
     @classmethod
     def supplementary_bundle(cls) -> TDRAnvilBundleFQID:
-        return cls.bundle_fqid(uuid='c67e7adb-1a9c-a3b9-bc91-eb10a428374a',
+        return cls.bundle_fqid(uuid='c2711e94-9966-a0ef-88be-88caf3e8a29b',
                                table_name=BundleType.supplementary.value)
 
     @classmethod
@@ -124,7 +124,7 @@ class AnvilIndexerTestCase(AnvilCannedBundleTestCase, IndexerTestCase):
 
     @classmethod
     def replica_bundle(cls) -> TDRAnvilBundleFQID:
-        return cls.bundle_fqid(uuid='9a135c9a-069b-a90e-b588-eaf8d1aeeac9',
+        return cls.bundle_fqid(uuid='6b35f59c-d33d-abf7-9ba0-c7b3a0ca82f3',
                                table_name='non_schema_orphan_table')
 
 
@@ -175,19 +175,19 @@ class TestAnvilIndexer(AnvilIndexerTestCase,
         ]
         expected_bundle_fqids = sorted(canned_bundle_fqids + [
             # Replica bundles for the AnVIL schema tables, which we don't can
-            self.bundle_fqid(uuid='cd512d30-7d5f-af35-88f0-efaadabfc17a',
+            self.bundle_fqid(uuid='9461293c-447c-a75f-a9ee-a544b106cba3',
                              table_name='anvil_activity'),
-            self.bundle_fqid(uuid='2fd53d37-b8a3-a797-8477-4056bf2473bb',
+            self.bundle_fqid(uuid='115cedcf-2b4b-a8ab-ae6f-178e2362dc60',
                              table_name='anvil_alignmentactivity'),
-            self.bundle_fqid(uuid='a52d7f0a-25c3-a4cf-af95-0fd8ecec8127',
+            self.bundle_fqid(uuid='9998900d-4481-aeb5-8a0f-4e485d26412d',
                              table_name='anvil_assayactivity'),
-            self.bundle_fqid(uuid='45e532bb-5af7-a977-8939-24933c154380',
+            self.bundle_fqid(uuid='50eaf222-be04-af62-aac4-a21dad96a734',
                              table_name='anvil_diagnosis'),
-            self.bundle_fqid(uuid='8cc4686a-76cd-a411-a11c-ec3a9fa1d417',
+            self.bundle_fqid(uuid='a3ef24e4-5739-a2ee-ba59-4a2dc24c0bfe',
                              table_name='anvil_donor'),
-            self.bundle_fqid(uuid='88092968-d1ec-ad7e-9112-4b38bd0df4c2',
+            self.bundle_fqid(uuid='eeaae015-86da-a018-bc4c-2aec42aa88a2',
                              table_name='anvil_sequencingactivity'),
-            self.bundle_fqid(uuid='976fc781-4a33-a062-a67d-2c068e4d5e72',
+            self.bundle_fqid(uuid='6aec5e41-3a08-a86e-9f29-07092145ebdb',
                              table_name='anvil_variantcallingactivity')
         ])
         plugin = self.plugin_for_source_spec(source_ref.spec)
