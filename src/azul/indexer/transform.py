@@ -149,6 +149,7 @@ class Transformer(metaclass=ABCMeta):
                        version=None,
                        replica_type=replica_type,
                        contents=contents,
+                       source=self.bundle.fqid.source,
                        # The other hubs will be added when the indexer
                        # consolidates duplicate replicas.
                        hub_ids=alist(file_hub, root_hub))
