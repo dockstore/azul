@@ -1,14 +1,14 @@
 atomicwrites==1.4.1
-awscli==1.38.15
-boto3-stubs-lite[apigateway,cloudwatch,dynamodb,ec2,ecr,es,iam,kms,lambda,s3,secretsmanager,securityhub,sns,sqs,ssm,stepfunctions,sts]==1.37.15  # match this with the version of the `boto3` runtime dendency
-coverage==7.7.0
+awscli==1.38.24
+boto3-stubs-lite[apigateway,cloudwatch,dynamodb,ec2,ecr,es,iam,kms,lambda,s3,secretsmanager,securityhub,sns,sqs,ssm,stepfunctions,sts]==1.37.24  # match this with the version of the `boto3` runtime dendency
+coverage==7.8.0
 docker==7.1.0
-flake8==7.1.2
+flake8==7.2.0
 gevent==24.11.1
 git+https://github.com/DataBiosphere/azul-chalice@1.31.3+16#egg=chalice
 git+https://github.com/hannes-ucsc/requirements-parser@v0.2.0+1#egg=requirements-parser
 gitpython==3.1.44
-google-api-python-client==2.164.0
+google-api-python-client==2.166.0
 google-cloud-bigquery-reservation==1.17.0
 google-cloud-storage==3.1.0
 jq==1.8.0
