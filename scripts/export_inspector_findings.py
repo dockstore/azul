@@ -43,6 +43,10 @@ class ParseInspectorFindings:
         'CRITICAL',
         'HIGH'
     ]
+    weights = {
+        'CRITICAL': 10,
+        'HIGH': 1
+    }
 
     @classmethod
     def _parse_args(cls, argv):
@@ -169,11 +173,10 @@ class ParseInspectorFindings:
 
     def findings_sort(self, item: tuple[str, list[SummaryType]]) -> tuple[int, str]:
         score = 0
-        weights = {'HIGH': 1, 'CRITICAL': 10}
         vulnerability, summaries = item
         for summary in summaries:
             count = len(summary['resources'])
-            score += count * weights.get(summary['severity'], 0)
+            score += count * self.weights.get(summary['severity'], 0)
         if vulnerability.startswith('CVE-'):
             # Best effort on sorting CVEs by descending year and sequence
             # number. Other types of findings are sorted strictly
@@ -209,7 +212,8 @@ class ParseInspectorFindings:
             }
             row_num = len(rows) + 1
             col_range = f'C{row_num}:{last_col}{row_num}'
-            severity_formula = f'=(COUNTIF({col_range},"C")*10)+(COUNTIF({col_range},"H"))'
+            severity_formula = (f'=(COUNTIF({col_range},"C")*{self.weights['CRITICAL']})'
+                                f'+(COUNTIF({col_range},"H")*{self.weights['HIGH']})')
             urls = sorted([summary['source_url'] for summary in summaries], reverse=True)
             hyperlink = f'=HYPERLINK("{urls.pop(0)}","{vulnerability}")'
             row = [hyperlink, severity_formula]
