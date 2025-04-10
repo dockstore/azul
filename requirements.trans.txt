@@ -9,7 +9,7 @@ google-cloud-core==2.4.3
 google-crc32c==1.7.1
 google-resumable-media==2.7.2
 googleapis-common-protos==1.69.2
-grpcio==1.71.0
+grpcio==1.72.0rc1
 grpcio-status==1.63.0rc1
 http_sfv==0.9.9
 idna==3.10
@@ -19,7 +19,7 @@ packaging==24.2
 proto-plus==1.26.1
 protobuf==4.25.6
 pyasn1==0.6.1
-pyasn1_modules==0.4.1
+pyasn1_modules==0.4.2
 pycparser==2.22
 pyopenssl==25.0.0
 python-dateutil==2.9.0.post0
@@ -27,6 +27,6 @@ pytz==2025.2
 s3transfer==0.11.4
 setuptools-scm==5.0.2
 six==1.17.0
-typing_extensions==4.13.0
+typing_extensions==4.13.2
 tzlocal==5.3.1
 wrapt==1.17.2

@@ -513,7 +513,7 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                 #
                 @reset
                 def get_stale_token_when_done():
-                    nonlocal url, state, key_url, token_url
+                    nonlocal url, state, token_url
                     get_manifest.return_value = manifest
                     state = self.app_module.generate_manifest(state, None)
                     get_cached_manifest_with_key.side_effect = not_found
