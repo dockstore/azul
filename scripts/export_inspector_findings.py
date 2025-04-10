@@ -140,12 +140,17 @@ class ParseInspectorFindings:
         # specifically wih the "SNYK-" prefixed vulnerabilityIds, so instead of
         # using the vulnerabilityId we just use the first part of the title.
         vulnerability, _, _ = finding['title'].partition(' ')
+        packages = {
+            p['name'].rpartition(':')[2]
+            for p in finding['packageVulnerabilityDetails']['vulnerablePackages']
+        }
         assert len(finding['resources']) == 1, finding
         resource = finding['resources'][0]
         resource_type = resource['type']
         summary = {
             'severity': severity,
             'source_url': finding['packageVulnerabilityDetails']['sourceUrl'],
+            'packages': packages,
             'resource_type': resource_type,
             'resources': set(),
         }
@@ -177,6 +182,11 @@ class ParseInspectorFindings:
         for summary in summaries:
             count = len(summary['resources'])
             score += count * self.weights.get(summary['severity'], 0)
+        packages = ', '.join(sorted(set(
+            package
+            for summary in summaries
+            for package in summary['packages']
+        )))
         if vulnerability.startswith('CVE-'):
             # Best effort on sorting CVEs by descending year and sequence
             # number. Other types of findings are sorted strictly
@@ -187,10 +197,11 @@ class ParseInspectorFindings:
             # sequence number 11 precedes one with number 2.
             # See https://cve.mitre.org/cve/identifiers/syntaxchange.html#new.
             vulnerability = vulnerability.removesuffix(sequence) + f'{sequence:0>7}'
-        return score, vulnerability
+        return score, packages, vulnerability
 
     def write_to_csv(self, findings: dict[str, list[SummaryType]]) -> None:
         titles = [
+            'Packages',
             'Vulnerability',
             'Since',
             'Severity'
@@ -212,13 +223,18 @@ class ParseInspectorFindings:
                 for summary in summaries
                 for key in summary['resources']
             }
+            packages = ', '.join(sorted(set(
+                package
+                for summary in summaries
+                for package in summary['packages']
+            )))
             row_num = len(rows) + 1
             col_range = f'{img_first_col}{row_num}:{img_last_col}{row_num}'
             severity_formula = (f'=(COUNTIF({col_range},"C")*{self.weights['CRITICAL']})'
                                 f'+(COUNTIF({col_range},"H")*{self.weights['HIGH']})')
             urls = sorted([summary['source_url'] for summary in summaries], reverse=True)
             hyperlink = f'=HYPERLINK("{urls.pop(0)}","{vulnerability}")'
-            row = [hyperlink, '', severity_formula]
+            row = [packages, hyperlink, '', severity_formula]
             for column_index in range(len(row), len(titles) + 1):
                 row.append(column_values.get(column_index, ''))
             rows.append(row)
