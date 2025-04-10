@@ -192,11 +192,13 @@ class ParseInspectorFindings:
     def write_to_csv(self, findings: dict[str, list[SummaryType]]) -> None:
         titles = [
             'Vulnerability',
-            'Severity',
-            *sorted(self.images),
-            *sorted(self.instances)
+            'Since',
+            'Severity'
         ]
-        last_col = self.column_alpha(len(titles))
+        img_first_col = self.column_alpha(len(titles) + 1)
+        titles.extend(sorted(self.images))
+        titles.extend(sorted(self.instances))
+        img_last_col = self.column_alpha(len(titles))
         # A mapping of column titles to column index (0-based)
         lookup = dict(zip(titles, range(len(titles))))
 
@@ -211,12 +213,12 @@ class ParseInspectorFindings:
                 for key in summary['resources']
             }
             row_num = len(rows) + 1
-            col_range = f'C{row_num}:{last_col}{row_num}'
+            col_range = f'{img_first_col}{row_num}:{img_last_col}{row_num}'
             severity_formula = (f'=(COUNTIF({col_range},"C")*{self.weights['CRITICAL']})'
                                 f'+(COUNTIF({col_range},"H")*{self.weights['HIGH']})')
             urls = sorted([summary['source_url'] for summary in summaries], reverse=True)
             hyperlink = f'=HYPERLINK("{urls.pop(0)}","{vulnerability}")'
-            row = [hyperlink, severity_formula]
+            row = [hyperlink, '', severity_formula]
             for column_index in range(len(row), len(titles) + 1):
                 row.append(column_values.get(column_index, ''))
             rows.append(row)
