@@ -187,7 +187,6 @@ class TDRPluginTestCase(TDRTestCase,
         super().setUpClass()
         image = resolve_docker_image_for_launch('bigquery_emulator')
         cls.netloc = cls._create_container(image=image,
-                                           platform='linux/amd64',
                                            container_port=9050,
                                            command=[
                                                '--log-level=debug',
