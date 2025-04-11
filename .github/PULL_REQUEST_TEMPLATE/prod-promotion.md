@@ -60,6 +60,7 @@ Connected issue: #0000
 ### Operator (before pushing merge the commit)
 
 - [ ] Ran `_select prod.gitlab && make -C terraform/gitlab/runner` <sub>or this PR is not labeled `deploy:runner`</sub>
+- [ ] Confirmed all checks in PR are OK and the PR is mergeable
 - [ ] The title of the merge commit starts with the title of this PR
 - [ ] Added PR # reference to merge commit title
 - [ ] Collected commit title tags in merge commit title <sub>but excluded any `p` tags</sub>

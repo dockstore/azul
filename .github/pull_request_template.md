@@ -82,6 +82,7 @@ title is `Fix: ` followed by the issue title
 
 ### Peer reviewer (after approval)
 
+- [ ] PR is marked as approved
 - [ ] PR is not a draft
 - [ ] Ticket is in *Review requested* column
 - [ ] PR is awaiting requested review from system administrator
@@ -140,6 +141,7 @@ title is `Fix: ` followed by the issue title
 - [ ] Started reindex in `anvilbox` <sub>or this PR is not labeled `reindex:anvildev`</sub>
 - [ ] Checked for failures in `sandbox` <sub>or this PR is not labeled `reindex:dev`</sub>
 - [ ] Checked for failures in `anvilbox` <sub>or this PR is not labeled `reindex:anvildev`</sub>
+- [ ] Confirmed all checks in PR are OK and the PR is mergeable
 - [ ] The title of the merge commit starts with the title of this PR
 - [ ] Added PR # reference to merge commit title
 - [ ] Collected commit title tags in merge commit title <sub>but only included `p` if the PR is also labeled `partial`</sub>
