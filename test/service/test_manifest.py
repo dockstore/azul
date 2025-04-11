@@ -1296,6 +1296,8 @@ class TestManifests(DCP1ManifestTestCase):
         self.assertEqual(200, response.status_code)
         lines = response.content.decode().splitlines()
         expected_header = [
+            '--http1.1',
+            '',
             '--create-dirs',
             '',
             '--compressed',
@@ -1305,6 +1307,10 @@ class TestManifests(DCP1ManifestTestCase):
             '--globoff',
             '',
             '--fail',
+            '',
+            '--fail-early',
+            '',
+            '--continue-at -',
             '',
             '--write-out "Downloading to: %{filename_effective}\\n\\n"',
             '',
@@ -1652,7 +1658,7 @@ class TestManifestResponse(DCP1ManifestTestCase):
                 expected_url_for_bash = sq(str(expected_url))
             if format is ManifestFormat.curl:
                 manifest_options = '--location --fail'
-                file_options = '--fail-early --continue-at - --retry 15 --retry-delay 10'
+                file_options = '--retry 15 --retry-delay 10'
                 expected = {
                     'cmd.exe': f'curl.exe {manifest_options} "{expected_url}"'
                                f' | curl.exe {file_options} --config -',

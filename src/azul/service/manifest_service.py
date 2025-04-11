@@ -1398,9 +1398,9 @@ class CurlManifestGenerator(PagedManifestGenerator):
             '--location',
             '--fail',
         ]
+        # Some options are added to the command-line instead of the curl
+        # manifest so that the user can more easily customize them.
         file_options = [
-            '--fail-early',  # Exit curl with error on the first failure encountered
-            '--continue-at -',  # Resume partially downloaded files
             # We want curl to make enough retries so that it waits a total of
             # one and a half times the evaluation period of the WAF rate rule,
             # long enough for the tripped rule to clear.
@@ -1490,11 +1490,16 @@ class CurlManifestGenerator(PagedManifestGenerator):
 
         if partition.page_index == 0:
             curl_options = [
+                # FIXME: Remove `--http1.1` option
+                #        https://github.com/DataBiosphere/azul/issues/7032
+                '--http1.1',  # Avoid a bug in curl 8.7.1 where 429s aren't retried with HTTP/2
                 '--create-dirs',  # Allow curl to create folders
                 '--compressed',  # Request a compressed response
                 '--location',  # Follow redirects
                 '--globoff',  # Prevent '#' in file names from being interpreted as output variables
                 '--fail',  # Upon server error don't save the error message to the file
+                '--fail-early',  # Exit curl with error on the first failure encountered
+                '--continue-at -',  # Resume partially downloaded files
                 '--write-out "Downloading to: %{filename_effective}\\n\\n"'
             ]
             output.write('\n\n'.join(curl_options))
