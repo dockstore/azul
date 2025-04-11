@@ -1072,7 +1072,7 @@ class Config:
     class Deployment:
         name: str
 
-        test_name = 'dummy'
+        test_name: ClassVar[str] = 'dummy'
 
         @property
         def is_shared(self) -> bool:
@@ -1087,7 +1087,7 @@ class Config:
         #: stable ones. The set member ``None`` represents a feature branch or
         #: detached HEAD.
         #:
-        unstable_branches = {'develop', None}
+        unstable_branches: ClassVar[frozenset[str | None]] = frozenset({'develop', None})
 
         @property
         def is_stable(self) -> bool:
