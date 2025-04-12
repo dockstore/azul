@@ -15,7 +15,6 @@ import logging
 from typing import (
     Any,
     Generic,
-    Optional,
     Self,
     TypeVar,
     TypedDict,
@@ -432,7 +431,7 @@ class SlicingStage(_ElasticsearchStage[Response, Response]):
     response. If the given document slice is None, the default one from the
     plugin is used. If that is None, too, each hit will contain all properties.
     """
-    document_slice: Optional[DocumentSlice]
+    document_slice: DocumentSlice | None
 
     def prepare_request(self, request: Search) -> Search:
         document_slice = self._prepared_slice()
@@ -443,7 +442,7 @@ class SlicingStage(_ElasticsearchStage[Response, Response]):
     def process_response(self, response: Response) -> Response:
         return response
 
-    def _prepared_slice(self) -> Optional[DocumentSlice]:
+    def _prepared_slice(self) -> DocumentSlice | None:
         if self.document_slice is None:
             return self.plugin.document_slice(self.entity_type)
         else:
@@ -471,8 +470,8 @@ class Pagination:
     order: str
     size: int
     sort: str
-    search_before: Optional[SortKey] = None
-    search_after: Optional[SortKey] = None
+    search_before: SortKey | None = None
+    search_after: SortKey | None = None
 
     def __attrs_post_init__(self):
         self._check_sort_key(self.search_before)
@@ -486,14 +485,14 @@ class Pagination:
 
     def advance(self,
                 *,
-                search_before: Optional[SortKey],
-                search_after: Optional[SortKey]
+                search_before: SortKey | None,
+                search_after: SortKey | None
                 ) -> Self:
         return attr.evolve(self,
                            search_before=search_before,
                            search_after=search_after)
 
-    def link(self, *, previous: bool, **params: str) -> Optional[str]:
+    def link(self, *, previous: bool, **params: str) -> str | None:
         """
         Return the URL of the next or previous page in this pagination or None
         if there is no such page.
@@ -511,8 +510,8 @@ class ResponsePagination(TypedDict):
     total: int
     size: int
     pages: int
-    next: Optional[str]
-    previous: Optional[str]
+    next: str | None
+    previous: str | None
     sort: str
     order: str
 
@@ -677,7 +676,7 @@ class ElasticsearchService(DocumentService):
                      entity_type: str,
                      filters: Filters,
                      post_filter: bool,
-                     document_slice: Optional[DocumentSlice]
+                     document_slice: DocumentSlice | None
                      ) -> ElasticsearchChain[Response, Response]:
         """
         Create a chain for a basic Elasticsearch `search` request for documents

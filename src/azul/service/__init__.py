@@ -5,7 +5,6 @@ from collections.abc import (
 import json
 import logging
 from typing import (
-    Optional,
     Protocol,
     Self,
     TypedDict,
@@ -182,7 +181,7 @@ class FileUrlFunc(Protocol):
 class ServiceAppController(AppController):
     file_url_func: FileUrlFunc
 
-    def _parse_filters(self, filters: Optional[str]) -> FiltersJSON:
+    def _parse_filters(self, filters: str | None) -> FiltersJSON:
         """
         Parses a string with Azul filters in JSON syntax. Handles default cases
         where filters are None or '{}'.
