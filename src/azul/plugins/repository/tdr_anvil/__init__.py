@@ -472,10 +472,15 @@ class Plugin(TDRPlugin[TDRAnvilBundle, TDRAnvilBundleFQID]):
                 linked_file_refs.add(file_ref)
         dataset_ref, dataset_row = self._get_dataset(source)
         result.add_entity(dataset_ref, self._version, dict(dataset_row))
-        result.add_links([
-            EntityLink(inputs=singleton(dataset_ref),
-                       outputs=frozenset(linked_file_refs))
-        ])
+        # Avoid inserting "degenerate" links with an empty list of outputs, i.e.
+        # in case of an empty batch (as is common on `anvilbox`). Such links
+        # would be harmless in production, but would complicate the bundle
+        # canning integration test.
+        if linked_file_refs:
+            result.add_links([
+                EntityLink(inputs=singleton(dataset_ref),
+                           outputs=frozenset(linked_file_refs))
+            ])
         return result
 
     def _duos_bundle(self, bundle_fqid: TDRAnvilBundleFQID) -> TDRAnvilBundle:
