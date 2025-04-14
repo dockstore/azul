@@ -34,6 +34,8 @@ from azul.types import (
     PrimitiveJSON,
 )
 
+log = logging.getLogger(__name__)
+
 # We can't express that these are actually pairs. We could, using tuples, but
 # those are not JSON, generally speaking, even though the `json` module supports
 # serializing them by default.
@@ -155,9 +157,6 @@ class Filters:
             assert set(filters[special_fields.source_id]['is']) <= self.source_ids
 
         return filters
-
-
-log = logging.getLogger(__name__)
 
 
 class BadArgumentException(Exception):
