@@ -13,7 +13,6 @@ from operator import (
     itemgetter,
 )
 from typing import (
-    Any,
     ClassVar,
     Iterable,
     Self,
@@ -67,7 +66,6 @@ from azul.types import (
     JSONs,
     MutableJSON,
     MutableJSONs,
-    is_optional,
 )
 from humancellatlas.data.metadata.api import (
     Entity,
@@ -140,44 +138,6 @@ class Links:
         }
 
 
-@attr.s(auto_attribs=True, kw_only=True, frozen=True)
-class Checksums:
-    crc32c: str
-    sha1: str | None = None
-    sha256: str
-    s3_etag: str | None = None
-
-    def to_json(self) -> dict[str, str]:
-        """
-        >>> Checksums(crc32c='a', sha1='b', sha256='c', s3_etag=None).to_json()
-        {'crc32c': 'a', 'sha1': 'b', 'sha256': 'c'}
-        """
-        return {k: v for k, v in attr.asdict(self).items() if v is not None}
-
-    @classmethod
-    def from_json(cls, json: JSON) -> Self:
-        """
-        >>> Checksums.from_json({'crc32c': 'a', 'sha256': 'c'})
-        Checksums(crc32c='a', sha1=None, sha256='c', s3_etag=None)
-
-        >>> Checksums.from_json({'crc32c': 'a', 'sha1':'b', 'sha256': 'c', 's3_etag': 'd'})
-        Checksums(crc32c='a', sha1='b', sha256='c', s3_etag='d')
-
-        >>> Checksums.from_json({'crc32c': 'a'})
-        Traceback (most recent call last):
-            ...
-        ValueError: ('JSON property cannot be absent or null', 'sha256')
-        """
-
-        def extract_field(field: attr.Attribute) -> tuple[str, Any]:
-            value = json.get(field.name)
-            if value is None and not is_optional(field.type):
-                raise ValueError('JSON property cannot be absent or null', field.name)
-            return field.name, value
-
-        return cls(**dict(map(extract_field, attr.fields(cls))))
-
-
 class TDRHCABundle(HCABundle[TDRBundleFQID], TDRBundle):
 
     @classmethod
@@ -232,7 +192,10 @@ class TDRHCABundle(HCABundle[TDRBundleFQID], TDRBundle):
             'size': descriptor['size'],
             'indexed': False,
             'drs_uri': self._parse_drs_uri(row['file_id'], descriptor),
-            **Checksums.from_json(descriptor).to_json()
+            'sha256': descriptor['sha256'],
+            'sha1': descriptor.get('sha1'),
+            'crc32c': descriptor['crc32c'],
+            's3_etag': descriptor.get('s3_etag'),
         }
 
     def _parse_drs_uri(self,
