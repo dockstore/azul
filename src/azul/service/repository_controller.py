@@ -47,6 +47,10 @@ from azul.plugins import (
 from azul.service import (
     BadArgumentException,
 )
+from azul.service.app_controller import (
+    validate_catalog,
+    validate_params,
+)
 from azul.service.elasticsearch_service import (
     IndexNotFoundError,
     Pagination,
@@ -188,6 +192,25 @@ class RepositoryController(SourceController):
                       headers: Mapping[str, str],
                       authentication: Authentication | None
                       ):
+
+        def validate_version(version: str):
+            # This function exists so the repository plugin can be lazily loaded
+            # instead of being loaded before `validate_params()` can run. This is
+            # desired since `validate_params()` validates the params in the order
+            # given, and we want the catalog to be validated before the repository
+            # plugin is loaded, which is an action that requires a valid catalog.
+            self.repository_plugin(catalog).validate_version(version)
+
+        validate_params(query_params,
+                        catalog=validate_catalog,
+                        version=validate_version,
+                        fileName=str,
+                        wait=self._validate_wait,
+                        requestIndex=int,
+                        replica=self._validate_replica,
+                        drsUri=str,
+                        token=str)
+
         file_version = query_params.get('version')
         replica = query_params.get('replica')
         file_name = query_params.get('fileName')
@@ -324,3 +347,11 @@ class RepositoryController(SourceController):
         assert accessible not in result, result
         result[accessible] = pass_thru_bool
         return result
+
+    def _validate_wait(self, wait: str | None):
+        if wait not in ('0', '1', None):
+            raise ValueError
+
+    def _validate_replica(self, replica: str):
+        if replica not in ('aws', 'gcp'):
+            raise ValueError

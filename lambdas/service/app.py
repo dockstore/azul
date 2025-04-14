@@ -1611,38 +1611,6 @@ def _repository_files(file_uuid: str, fetch: bool) -> MutableJSON:
     query_params = request.query_params or {}
     headers = request.headers
 
-    def validate_replica(replica: str) -> None:
-        if replica not in ('aws', 'gcp'):
-            raise ValueError
-
-    def validate_wait(wait: str | None) -> int | None:
-        if wait is None:
-            return None
-        elif wait == '0':
-            return False
-        elif wait == '1':
-            return True
-        else:
-            raise ValueError
-
-    def validate_version(version: str) -> None:
-        # This function exists so the repository plugin can be lazily loaded
-        # instead of being loaded before `validate_params()` can run. This is
-        # desired since `validate_params()` validates the params in the order
-        # given, and we want the catalog to be validated before the repository
-        # plugin is loaded, which is an action that requires a valid catalog.
-        app.repository_plugin.validate_version(version)
-
-    validate_params(query_params,
-                    catalog=validate_catalog,
-                    version=validate_version,
-                    fileName=str,
-                    wait=validate_wait,
-                    requestIndex=int,
-                    replica=validate_replica,
-                    drsUri=str,
-                    token=str)
-
     # FIXME: Prevent duplicate filenames from files in different subgraphs by
     #        prepending the subgraph UUID to each filename when downloaded
     #        https://github.com/DataBiosphere/azul/issues/2682
