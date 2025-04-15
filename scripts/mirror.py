@@ -48,8 +48,15 @@ def mirror_catalog(catalog: CatalogName, wait: bool):
 def main(args):
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=AzulArgumentHelpFormatter)
-    parser.add_argument('-c', '--catalog', default=config.default_catalog)
-    parser.add_argument('--no-wait', action='store_false', dest='wait')
+    parser.add_argument('--catalog',
+                        metavar='NAME',
+                        choices=config.catalogs,
+                        default=config.default_catalog,
+                        help='The name of the catalog to mirror.')
+    parser.add_argument('--no-wait',
+                        action='store_false',
+                        dest='wait',
+                        help='Do not wait for queues to empty before exiting script.')
     args = parser.parse_args(args)
     assert config.enable_mirroring, R('Mirroring is not enabled')
     mirror_catalog(args.catalog, args.wait)
