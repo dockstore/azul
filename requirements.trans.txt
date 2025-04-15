@@ -8,7 +8,7 @@ cryptography==44.0.2
 google-cloud-core==2.4.3
 google-crc32c==1.7.1
 google-resumable-media==2.7.2
-googleapis-common-protos==1.69.2
+googleapis-common-protos==1.70.0
 grpcio==1.72.0rc1
 grpcio-status==1.63.0rc1
 http_sfv==0.9.9

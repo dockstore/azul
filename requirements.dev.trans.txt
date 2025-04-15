@@ -5,7 +5,7 @@ brotli==1.1.0
 click==8.1.8
 colorama==0.4.6
 configargparse==1.7
-docutils==0.16
+docutils==0.19
 editor==1.6.6
 et_xmlfile==2.0.0
 flask==3.1.0
@@ -14,7 +14,7 @@ flask-login==0.6.3
 geventhttpclient==2.3.3
 gitdb==4.0.12
 google-auth-httplib2==0.2.0
-greenlet==3.1.1
+greenlet==3.2.0
 httplib2==0.22.0
 inquirer==3.4.0
 itsdangerous==2.2.0
@@ -26,7 +26,7 @@ lazy-object-proxy==1.10.0
 mccabe==0.7.0
 mypy-boto3-apigateway==1.37.23
 mypy-boto3-cloudwatch==1.37.0
-mypy-boto3-dynamodb==1.37.31
+mypy-boto3-dynamodb==1.37.33
 mypy-boto3-ec2==1.37.28
 mypy-boto3-ecr==1.37.26
 mypy-boto3-es==1.37.0
