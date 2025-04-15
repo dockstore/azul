@@ -32,11 +32,10 @@ def mirror_catalog(catalog: CatalogName, wait: bool):
         'A mirroring operation is already in progress. The current operation '
         'must finish before another can begin.')
     fail_queue = config.mirror_queue.to_fail.name
-    if not azul.is_queue_empty(fail_queue):
-        log.warning('Failed messages from a previous operation are still '
-                    'present in %r. If they are not purged, this operation'
-                    'may exit with an error status, even if no new errors '
-                    'occur.', fail_queue)
+    assert azul.is_queue_empty(fail_queue), R(
+        'Cannot begin mirroring because a previous operation failed: '
+        'there are still messages in the fail queue.',
+        fail_queue)
     public_sources = plugin.list_sources(authentication=None)
     azul.remote_mirror(catalog, public_sources)
     if wait:
