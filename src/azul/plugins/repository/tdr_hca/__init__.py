@@ -236,7 +236,7 @@ class TDRHCABundle(HCABundle[TDRBundleFQID], TDRBundle):
                             size: int,
                             content_type: str,
                             dcp_type: str,
-                            checksums: Checksums | None = None,
+                            checksums: Checksums,
                             drs_uri: str | None = None) -> None:
         self.manifest[str(entity)] = {
             'name': name,
@@ -244,17 +244,9 @@ class TDRHCABundle(HCABundle[TDRBundleFQID], TDRBundle):
             'version': version,
             'content-type': f'{content_type}; dcp-type={dcp_type}',
             'size': size,
-            **(
-                {
-                    'indexed': True,
-                    'crc32c': '',
-                    'sha256': ''
-                } if checksums is None else {
-                    'indexed': False,
-                    'drs_uri': drs_uri,
-                    **checksums.to_json()
-                }
-            )
+            'indexed': False,
+            'drs_uri': drs_uri,
+            **checksums.to_json()
         }
 
     def _parse_drs_uri(self,
