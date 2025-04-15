@@ -57,6 +57,7 @@ from azul.openapi import (
 )
 from azul.types import (
     JSON,
+    MutableJSON,
     json_bool,
     json_mapping,
     json_sequence,
@@ -1074,7 +1075,7 @@ class Config:
 
         test_name: ClassVar[str] = 'dummy'
 
-        @property
+        @cached_property
         def is_shared(self) -> bool:
             """
             ``True`` if this deployment is a shared deployment, or ``False`` if
@@ -1089,7 +1090,7 @@ class Config:
         #:
         unstable_branches: ClassVar[frozenset[str | None]] = frozenset({'develop', None})
 
-        @property
+        @cached_property
         def is_stable(self) -> bool:
             """
             ``True`` if this deployment must be kept functional for public use
@@ -1147,7 +1148,7 @@ class Config:
             """
             return self.is_main and not self.is_stable
 
-        @property
+        @cached_property
         def is_lower_sandbox(self) -> bool:
             """
             ``True`` if this deployment is a sandbox for a lower deployment.
@@ -1165,9 +1166,61 @@ class Config:
         def is_unit_test(self):
             return self.name == self.test_name
 
+        def render(self) -> JSON:
+            """
+            >>> original = config.deployment
+            >>> rendered = original.render()
+            >>> reconstituted = config.Deployment.reconstitute(name=original.name,
+            ...                                                rendered=rendered)
+
+            >>> rendered.keys()
+            dict_keys(['is_lower_sandbox', 'is_shared', 'is_stable'])
+
+            >>> reconstituted.is_shared == original.is_shared
+            True
+            >>> reconstituted.is_stable == original.is_stable
+            True
+            >>> reconstituted.is_lower_sandbox == original.is_lower_sandbox
+            True
+            """
+            cls = type(self)
+            rendered: MutableJSON = {}
+            # Invoke each cached property getter and capture its value
+            for attribute in dir(cls):
+                descriptor = getattr(cls, attribute)
+                if isinstance(descriptor, cached_property):
+                    rendered[attribute] = descriptor.fget(self)
+            return rendered
+
+        @classmethod
+        def reconstitute(cls, *, name: str, rendered: JSON) -> Self:
+            self = cls(name)
+            # Prime all cached properties so that the getter won't be invoked
+            for attribute in dir(cls):
+                descriptor = getattr(cls, attribute)
+                if isinstance(descriptor, cached_property):
+                    descriptor.fset(self, rendered[attribute])
+            return self
+
+    @property
+    def _deployment_env(self) -> dict[str, str]:
+        # FIXME: Eliminate local import
+        #        https://github.com/DataBiosphere/azul/issues/3133
+        import json
+        return {'azul_deployment': json.dumps(self.deployment.render())}
+
     @property
     def deployment(self) -> Deployment:
-        return self.Deployment(self.deployment_stage)
+        try:
+            deployment = self.environ['azul_deployment']
+        except KeyError:
+            return self.Deployment(self.deployment_stage)
+        else:
+            # FIXME: Eliminate local import
+            #        https://github.com/DataBiosphere/azul/issues/3133
+            import json
+            return self.Deployment.reconstitute(name=self.deployment_stage,
+                                                rendered=json.loads(deployment))
 
     @property
     def _shared_deployments(self) -> Mapping[str | None, Sequence[Deployment]]:
@@ -1277,6 +1330,7 @@ class Config:
             self._lambda_env(outsource=False)
             | self._git_status_env
             | self._aws_account_name
+            | self._deployment_env
         )
 
     @property
