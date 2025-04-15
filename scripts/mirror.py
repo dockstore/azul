@@ -42,7 +42,7 @@ def mirror_catalog(catalog: CatalogName, wait: bool):
     if wait:
         azul.wait_for_mirroring()
         assert azul.is_queue_empty(fail_queue), R(
-            'Failures occurred: there are messages in %r', fail_queue)
+            'There are messages in the fail queue', fail_queue)
 
 
 def main(args):
