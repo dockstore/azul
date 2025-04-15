@@ -176,7 +176,8 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
                 'action': MirrorAction.mirror_source.to_json(),
                 'catalog': catalog,
                 'source': cast(JSON, source.to_json()),
-            }
+            },
+            group_id=source.id
         )
 
     def mirror_partition_message(self,
@@ -190,7 +191,8 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
                 'catalog': catalog,
                 'source': cast(JSON, source.to_json()),
                 'prefix': prefix
-            }
+            },
+            group_id=f'{source.id}:{prefix}'
         )
 
     def local_reindex(self, catalog: CatalogName, prefix: str) -> int:

@@ -87,7 +87,7 @@ class SQSMessage:
 
 @attrs.frozen(kw_only=True)
 class SQSFifoMessage(SQSMessage):
-    group_id: str = attrs.field(factory=lambda: str(uuid.uuid4()))
+    group_id: str
     dedup_id: str = attrs.field(factory=lambda: str(uuid.uuid4()))
 
     def to_entry(self) -> 'SendMessageRequestQueueSendMessageTypeDef':
