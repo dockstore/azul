@@ -181,10 +181,10 @@ class Config:
     def aws_support_roles(self) -> list[str]:
         variable = 'azul_aws_support_roles'
         roles = _json.loads(self.environ[variable])
-        require(isinstance(roles, list),
-                f'{variable} must be a list', roles)
-        require(all(isinstance(role, str) for role in roles),
-                f'{variable} must contain only strings', roles)
+        assert isinstance(roles, list), R(
+            f'{variable} must be a list', roles)
+        assert all(isinstance(role, str) for role in roles), R(
+            f'{variable} must contain only strings', roles)
         return roles
 
     def _boolean(self, value: str) -> bool:
@@ -207,7 +207,7 @@ class Config:
         self.environ['AZUL_DEBUG'] = str(debug)
 
     def _validate_debug(self, debug):
-        require(debug in (0, 1, 2), 'AZUL_DEBUG must be either 0, 1 or 2')
+        assert debug in (0, 1, 2), R('AZUL_DEBUG must be either 0, 1 or 2')
 
     _es_endpoint_env_name = 'AZUL_ES_ENDPOINT'
 
@@ -388,8 +388,8 @@ class Config:
     def tdr_source_location(self) -> str:
         location = self.environ['AZUL_TDR_SOURCE_LOCATION']
         allowed_locations = self.tdr_allowed_source_locations
-        require(location in allowed_locations,
-                f'{location!r} is not one of {allowed_locations!r}')
+        assert location in allowed_locations, R(
+            f'{location!r} is not one of {allowed_locations!r}')
         return location
 
     @property
@@ -427,8 +427,10 @@ class Config:
         )
         user, _, domain = urlparse(dss_endpoint).netloc.rpartition('@')
         domain = domain.split('.')
-        require(domain[-3:] == ['data', 'humancellatlas', 'org'])
-        require(domain[0] == 'dss')
+        assert domain[-3:] == ['data', 'humancellatlas', 'org'], R(
+            'Unexpected parent domain', domain)
+        assert domain[0] == 'dss', R(
+            'Unexpected domain', domain)
         stage = domain[1:-3]
         assert len(stage) < 2
         return 'prod' if stage == [] else stage[0]
@@ -448,16 +450,16 @@ class Config:
             return None
         else:
             arn, partition, service, region, account_id, resource = role_arn.split(':')
-            require(arn == 'arn')
-            require(partition == 'aws')
-            require(service == 'iam')
-            require(region == '')
-            reject(account_id == '')
+            assert arn == 'arn', R('Invalid ARN', arn)
+            assert partition == 'aws', R('Invalid partition in ARN', partition)
+            assert service == 'iam', R('Invalid service in ARN', service)
+            assert region == '', R('Invalid region in ARN', service)
+            assert account_id != '', R('Invalid account ID in ARN', account_id)
             resource_type, resource_id = resource.split('/')
-            require(resource_type == 'role')
+            assert resource_type == 'role', R('Invalid resource type in ARN', resource_type)
             try:
                 lambda_name_template, default_stage = self.unqualified_resource_name(resource_id)
-                require(lambda_name_template == '*')
+                assert lambda_name_template == '*', R('Invalid template', lambda_name_template)
                 if stage is None:
                     stage = default_stage
                 role_name = self.qualified_resource_name(lambda_name, stage=stage)
@@ -504,48 +506,48 @@ class Config:
         >>> config._parse_principals('')
         Traceback (most recent call last):
         ...
-        azul.RequirementError: ('An account ID and at least one role must be specified', '')
+        AssertionError: R('An account ID and at least one role must be specified', '')
 
         >>> config._parse_principals(' ')
         Traceback (most recent call last):
         ...
-        azul.RequirementError: ('An account ID and at least one role must be specified', ' ')
+        AssertionError: R('An account ID and at least one role must be specified', ' ')
 
         >>> config._parse_principals(':')
         Traceback (most recent call last):
         ...
-        azul.RequirementError: ('An account ID and at least one role must be specified', '')
+        AssertionError: R('An account ID and at least one role must be specified', '')
 
         >>> config._parse_principals(',')
         Traceback (most recent call last):
         ...
-        azul.RequirementError: ('An account ID and at least one role must be specified', ',')
+        AssertionError: R('An account ID and at least one role must be specified', ',')
 
         >>> config._parse_principals(',:')
         Traceback (most recent call last):
         ...
-        azul.RequirementError: ('An account ID and at least one role must be specified', ',')
+        AssertionError: R('An account ID and at least one role must be specified', ',')
 
         >>> config._parse_principals('123')
         Traceback (most recent call last):
         ...
-        azul.RequirementError: ('An account ID and at least one role must be specified', '123')
+        AssertionError: R('An account ID and at least one role must be specified', '123')
 
         >>> config._parse_principals('123:')
         Traceback (most recent call last):
         ...
-        azul.RequirementError: ('An account ID and at least one role must be specified', '123')
+        AssertionError: R('An account ID and at least one role must be specified', '123')
 
         >>> config._parse_principals('123 ,:')
         Traceback (most recent call last):
         ...
-        azul.RequirementError: ('An account ID and at least one role must be specified', '123 ,')
+        AssertionError: R('An account ID and at least one role must be specified', '123 ,')
         """
         result = {}
         for account in accounts.split(':'):
             account_id, *roles = map(str.strip, account.split(','))
-            require(bool(account_id) and bool(roles) and all(roles),
-                    'An account ID and at least one role must be specified', account)
+            assert bool(account_id) and bool(roles) and all(roles), R(
+                'An account ID and at least one role must be specified', account)
             result[account_id] = roles
         return result
 
@@ -581,13 +583,13 @@ class Config:
         >>> f('foo-bar-dev')
         Traceback (most recent call last):
             ...
-        azul.RequirementError: ("Expected prefix 'azul'", 'foo', 'foo-bar-dev')
+        AssertionError: R("Expected prefix 'azul'", 'foo', 'foo-bar-dev')
 
         >>> f('azul-foo')  # doctest: +NORMALIZE_WHITESPACE
         Traceback (most recent call last):
             ...
-        azul.RequirementError: \
-            ('Expected 3 name components', \
+        AssertionError: \
+            R('Expected 3 name components', \
             ['azul', 'foo'], \
             'azul-foo')
 
@@ -597,16 +599,16 @@ class Config:
         >>> f('azul-object-versions-dev')  # doctest: +NORMALIZE_WHITESPACE
         Traceback (most recent call last):
             ...
-        azul.RequirementError:
-            ('Expected 3 name components', \
+        AssertionError:
+            R('Expected 3 name components', \
             ['azul', 'object', 'versions', 'dev'], \
             'azul-object-versions-dev')
 
         >>> f('azul-tallies_retry-dev0.fifo')  # doctest: +NORMALIZE_WHITESPACE
         Traceback (most recent call last):
             ...
-        azul.RequirementError: \
-            ('Invalid deployment name', \
+        AssertionError: \
+            R('Invalid deployment name', \
             'dev0.fifo', \
             'azul-tallies_retry-dev0.fifo')
 
@@ -616,26 +618,26 @@ class Config:
         >>> f('azul-tallies_retry-dev0', suffix='.fifo')
         Traceback (most recent call last):
             ...
-        azul.RequirementError: ("Expected suffix '.fifo'", 'azul-tallies_retry-dev0')
+        AssertionError: R("Expected suffix '.fifo'", 'azul-tallies_retry-dev0')
         """
         # We could implement this using unqualified_resource_name_and_suffix
         # and that would be equivalent semantically but the error messages would
         # be less obvious.
-        require(qualified_name.endswith(suffix),
-                f'Expected suffix {suffix!r}', qualified_name)
+        assert qualified_name.endswith(suffix), R(
+            f'Expected suffix {suffix!r}', qualified_name)
         if suffix:
             qualified_name = qualified_name[:-len(suffix)]
         components = qualified_name.split(self.resource_name_separator)
         num_components = 3
-        require(len(components) == num_components,
-                f'Expected {num_components!r} name components', components, qualified_name)
+        assert len(components) == num_components, R(
+            f'Expected {num_components!r} name components', components, qualified_name)
         prefix, resource_name, deployment_stage = components
-        require(prefix == self.resource_prefix,
-                f'Expected prefix {self.resource_prefix!r}', prefix, qualified_name)
-        require(self._is_valid_qualifier(deployment_stage),
-                'Invalid deployment name', deployment_stage, qualified_name)
-        require(self._is_valid_term(resource_name),
-                'Invalid resource name', resource_name, qualified_name)
+        assert prefix == self.resource_prefix, R(
+            f'Expected prefix {self.resource_prefix!r}', prefix, qualified_name)
+        assert self._is_valid_qualifier(deployment_stage), R(
+            'Invalid deployment name', deployment_stage, qualified_name)
+        assert self._is_valid_term(resource_name), R(
+            'Invalid resource name', resource_name, qualified_name)
         return resource_name, deployment_stage
 
     def unqualified_resource_name_and_suffix(self,
@@ -769,15 +771,15 @@ class Config:
 
     @classmethod
     def validate_prefix(cls, prefix):
-        require(cls._is_valid_qualifier(prefix),
-                f'Prefix {prefix!r} is too short, '
-                f'too long or contains invalid characters.')
+        assert cls._is_valid_qualifier(prefix), R(
+            f'Prefix {prefix!r} is too short, '
+            f'too long or contains invalid characters.')
 
     @classmethod
     def validate_deployment_name(cls, deployment_name):
-        require(cls._is_valid_qualifier(deployment_name),
-                f'Deployment name {deployment_name!r} is too short, '
-                f'too long or contains invalid characters.')
+        assert cls._is_valid_qualifier(deployment_name), R(
+            f'Deployment name {deployment_name!r} is too short, '
+            f'too long or contains invalid characters.')
 
     @classmethod
     def _is_valid_qualifier(cls, deployment_name: str) -> bool:
@@ -898,8 +900,8 @@ class Config:
         ... # doctest: +NORMALIZE_WHITESPACE
         Traceback (most recent call last):
         ...
-        azul.RequirementError: ('Catalog name is invalid',
-                                'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-it')
+        AssertionError: R('Catalog name is invalid',
+                          'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-it')
         """
 
         @attr.s(frozen=True, kw_only=True, auto_attribs=True)
@@ -937,9 +939,9 @@ class Config:
             )
             all_types = set(p.type_name() for p in Plugin[Bundle].types())
             configured_types = self.plugins.keys()
-            require(all_types == configured_types,
-                    'Catalog is missing or has extra plugin types',
-                    self.name, all_types.symmetric_difference(configured_types))
+            assert all_types == configured_types, R(
+                'Catalog is missing or has extra plugin types',
+                self.name, all_types.symmetric_difference(configured_types))
             if self.internal:
                 assert self.is_integration_test_catalog is True, self
 
@@ -949,16 +951,16 @@ class Config:
                 plugin_type.bundle_cls(self.plugins[plugin_type.type_name()].name)
                 for plugin_type in [RepositoryPlugin, MetadataPlugin]
             )
-            require(issubclass(repository_bundle_cls, metadata_bundle_cls),
-                    'Catalog combines incompatible metadata and repository plugins',
-                    self.name, repository_bundle_cls, metadata_bundle_cls)
+            assert issubclass(repository_bundle_cls, metadata_bundle_cls), R(
+                'Catalog combines incompatible metadata and repository plugins',
+                self.name, repository_bundle_cls, metadata_bundle_cls)
 
         @cached_property
         def is_integration_test_catalog(self) -> bool:
             if self._it_catalog_re.match(self.name) is None:
                 return False
             else:
-                require(self.internal, 'IT catalogs must be internal', self)
+                assert self.internal, R('IT catalogs must be internal', self)
                 return True
 
         @cached_property
@@ -983,9 +985,9 @@ class Config:
                        sources=set(map(json_str, json_sequence(spec['sources']))))
 
         @classmethod
-        def validate_name(cls, catalog, **kwargs):
-            reject(cls._catalog_re.fullmatch(catalog) is None,
-                   'Catalog name is invalid', catalog, **kwargs)
+        def validate_name(cls, catalog):
+            assert cls._catalog_re.fullmatch(catalog) is not None, R(
+                'Catalog name is invalid', catalog)
 
     @cached_property
     def catalogs(self) -> Mapping[CatalogName, Catalog]:
@@ -999,7 +1001,7 @@ class Config:
             import base64
             catalogs = bz2.decompress(base64.b64decode(catalogs)).decode()
         catalogs = _json.loads(catalogs)
-        require(bool(catalogs), 'No catalogs configured')
+        assert bool(catalogs), R('No catalogs configured')
         return {
             name: self.Catalog.from_json(name, catalog)
             for name, catalog in catalogs.items()
@@ -1148,11 +1150,13 @@ class Config:
             Note: This method currently only works for the current deployment,
                   i.e., the one created obtained from ``config.deployment``
             """
-            require(self.name == config.deployment_stage, exception=NotImplementedError)
-            return (
-                self.is_sandbox
-                and config.Deployment(config.main_deployment_stage).is_lower
-            )
+            if self.name != config.deployment_stage:
+                raise NotImplementedError
+            else:
+                return (
+                    self.is_sandbox
+                    and config.Deployment(config.main_deployment_stage).is_lower
+                )
 
         @property
         def is_unit_test(self):
@@ -1216,8 +1220,8 @@ class Config:
         not mapped explicitly, or a detached head.
         """
         deployments = _json.loads(self.environ['azul_shared_deployments'])
-        require(all(isinstance(v, list) and v for v in deployments.values()),
-                'Invalid value for azul_shared_deployments')
+        assert all(isinstance(v, list) and v for v in deployments.values()), R(
+            'Invalid value for azul_shared_deployments')
         return frozendict(
             (k if k else None, tuple(self.Deployment(n) for n in v))
             for k, v in deployments.items()
@@ -1409,8 +1413,8 @@ class Config:
 
     @classmethod
     def _validate_term(cls, term: str, name: str = 'Term') -> None:
-        require(cls._is_valid_term(term),
-                f"{name} is either too short, too long or contains invalid characters: '{term}'")
+        assert cls._is_valid_term(term), R(
+            f"{name} is either too short, too long or contains invalid characters: '{term}'")
 
     @classmethod
     def _is_valid_term(cls, term):
@@ -1631,7 +1635,7 @@ class Config:
     def current_sources(self) -> list[str]:
         sources = self.environ.get('azul_current_sources', '*')
         sources = shlex.split(sources)
-        require(bool(sources), 'Sources cannot be empty', sources)
+        assert bool(sources), R('Sources cannot be empty', sources)
         return sources
 
     terms_aggregation_size = 99999
@@ -1700,7 +1704,7 @@ class Config:
         name = 'azul_docker_registry'
         value = self.environ[name]
         if len(value) > 0:
-            require(value[-1] == '/', 'Variable %r must be empty or end in /', name)
+            assert value[-1] == '/', R('Variable %r must be empty or end in /', name)
             value = value[:-1]
         return value
 
@@ -2007,13 +2011,13 @@ def open_resource(*path: str,
 
     :param binary: True to load a binary resource
     """
-    require(len(path) > 0, 'Must pass at least the file name of the resource')
+    assert len(path) > 0, R('Must pass at least the file name of the resource')
     if package_root is None:
         module_dir = os.path.dirname(os.path.abspath(__file__))
         assert module_dir.endswith('/azul'), module_dir
         package_root = os.path.dirname(module_dir)
-    reject(package_root.endswith('/src'), package_root,
-           exception=NotInLambdaContextException)
+    if package_root.endswith('/src'):
+        raise NotInLambdaContextException(package_root)
     vendor_dir = os.path.join(package_root, 'vendor')
     # The `chalice package` command dissolves the content of the `vendor`
     # directory into the package root so in a deployed Lambda function, the
@@ -2024,10 +2028,10 @@ def open_resource(*path: str,
     return open(resource_file, mode='rb' if binary else 'r')
 
 
-class NotInLambdaContextException(RequirementError):
+class NotInLambdaContextException(RuntimeError):
 
     def __init__(self, package_root) -> None:
-        super().__init__('The package root suggests that no lambda context is active',
+        super().__init__('The package root suggests that no Lambda context is active',
                          package_root)
 
 
