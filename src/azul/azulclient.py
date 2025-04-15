@@ -41,7 +41,6 @@ from urllib3.exceptions import (
 from azul import (
     CatalogName,
     R,
-    cache,
     cached_property,
     config,
 )
@@ -120,9 +119,8 @@ class MirrorAction(Action):
 class AzulClient(SignatureHelper, HasCachedHttpClient):
     num_workers: int = 16
 
-    @cache
     def repository_plugin(self, catalog: CatalogName) -> RepositoryPlugin:
-        return RepositoryPlugin.load(catalog).create(catalog)
+        return self.index_service.repository_plugin(catalog)
 
     def notification(self, bundle_fqid: SourcedBundleFQID) -> JSON:
         """
