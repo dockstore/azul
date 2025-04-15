@@ -34,7 +34,6 @@ from azul import (
     cache,
     cached_property,
     config,
-    json_bool,
     lru_cache,
     require,
 )
@@ -65,6 +64,7 @@ from azul.service.storage_service import (
 from azul.types import (
     JSON,
     MutableJSON,
+    json_bool,
 )
 
 log = logging.getLogger(__name__)

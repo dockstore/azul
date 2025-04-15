@@ -44,7 +44,6 @@ from azul import (
     cache,
     cached_property,
     config,
-    json_mapping,
 )
 from azul.deployment import (
     aws,
@@ -79,6 +78,7 @@ from azul.queues import (
 from azul.types import (
     AnyJSON,
     JSON,
+    json_mapping,
 )
 from azul.uuids import (
     validate_uuid_prefix,

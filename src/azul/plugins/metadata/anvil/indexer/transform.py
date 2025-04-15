@@ -34,7 +34,6 @@ from more_itertools import (
 )
 
 from azul import (
-    JSON,
     cache,
     config,
 )
@@ -83,6 +82,7 @@ from azul.strings import (
     pluralize,
 )
 from azul.types import (
+    JSON,
     MutableJSON,
     MutableJSONs,
 )

@@ -21,7 +21,6 @@ from azul import (
     CatalogName,
     R,
     config,
-    json_sequence,
 )
 from azul.enums import (
     auto,
@@ -51,6 +50,7 @@ from azul.types import (
     MutableJSON,
     json_int,
     json_mapping,
+    json_sequence,
     json_str,
     optional,
 )

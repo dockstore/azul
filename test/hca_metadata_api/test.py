@@ -35,11 +35,11 @@ from more_itertools import (
     one,
 )
 
-from azul import (
-    JSON,
-)
 from azul.indexer.document import (
     EntityReference,
+)
+from azul.types import (
+    JSON,
 )
 from azul_test_case import (
     AzulUnitTestCase,
