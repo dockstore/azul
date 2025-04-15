@@ -419,7 +419,7 @@ class ServiceApp(HealthApp):
                                    self_url=self.self_url)
         except AssertionError as e:
             if R.caused(e):
-                raise ChaliceViewError(repr(e.args))
+                raise R.propagate(e, ChaliceViewError)
             else:
                 raise
 
@@ -541,7 +541,7 @@ def validate_catalog(catalog):
         config.Catalog.validate_name(catalog)
     except AssertionError as e:
         if R.caused(e):
-            raise BRE(e)
+            raise R.propagate(e, BRE)
         else:
             raise
     else:
@@ -629,7 +629,7 @@ def validate_organism_age_filter(values):
             value_and_unit.to_index(value)
         except AssertionError as e:
             if R.caused(e):
-                raise BRE(e)
+                raise R.propagate(e, BRE)
             else:
                 raise
 

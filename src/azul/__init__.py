@@ -1858,6 +1858,39 @@ class R:
         """
         return bool(e.args) and isinstance(e.args[0], cls)
 
+    @classmethod
+    def propagate[E:BaseException](cls,
+                                   cause: AssertionError,
+                                   effect_cls: type[E]
+                                   ) -> E:
+        """
+        Propagate the arguments of an R instance that caused the given exception
+        to a new exception of the given type.
+
+        >>> try:
+        ...     foo = 1
+        ...     assert foo > 42, R('Invalid foo', foo)
+        ... except AssertionError as e:
+        ...     if R.caused(e):
+        ...         raise R.propagate(e, ValueError)
+        Traceback (most recent call last):
+        ...
+        ValueError: ('Invalid foo', 1)
+
+        :param cause: an exception for which :meth:`caused` returns True
+
+        :param effect_cls: the type of exception to propagate to
+
+        :return: an instance of the given type, instantiated with the arguments
+                 of the R instance that's the sole argument of the given
+                 exception
+        """
+        args = one(cause.args).args
+        if isinstance(cause, RequirementError):
+            placeholder, *args = args
+            assert placeholder == cause.placeholder
+        return effect_cls(*args)
+
     def __init__(self, message: str, *args):
         super().__init__()
         self.args = message, *args
@@ -1873,13 +1906,14 @@ class R:
 
 @deprecated("Use 'assert False, R(…)' instead", category=None)
 class RequirementError(AssertionError):
+    placeholder = 'placeholder'
 
     def __init__(self, *args):
         # Unlike the R() constructor, the deprecated reject() and require()
         # methods don't enforce that a message is being passed. To work around
         # this while also maintaining backwards compatibility, we insert a
         # placeholder and remove it in ``__str__()`` below.
-        super().__init__(R('placeholder', *args))
+        super().__init__(R(self.placeholder, *args))
 
     def __str__(self) -> str:
         # Unpack the Requirement instance, remove the placeholder and emulate
