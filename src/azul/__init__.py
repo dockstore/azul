@@ -13,7 +13,8 @@ import functools
 from itertools import (
     chain,
 )
-import logging
+import json as _json  # collides with azul.json
+import logging as _logging  # collides with azul.logging
 import os
 from pathlib import (
     Path,
@@ -35,7 +36,7 @@ from typing import (
 )
 
 import attr
-import attrs
+import attrs as _attrs  # collides with azul.attrs
 from furl import (
     furl,
 )
@@ -67,7 +68,7 @@ from azul.vendored.frozendict import (
     frozendict,
 )
 
-log = logging.getLogger(__name__)
+log = _logging.getLogger(__name__)
 
 Netloc = tuple[str, int]
 
@@ -178,11 +179,8 @@ class Config:
 
     @property
     def aws_support_roles(self) -> list[str]:
-        # FIXME: Eliminate local import
-        #        https://github.com/DataBiosphere/azul/issues/3133
-        import json
         variable = 'azul_aws_support_roles'
-        roles = json.loads(self.environ[variable])
+        roles = _json.loads(self.environ[variable])
         require(isinstance(roles, list),
                 f'{variable} must be a list', roles)
         require(all(isinstance(role, str) for role in roles),
@@ -384,10 +382,7 @@ class Config:
 
     @property
     def tdr_allowed_source_locations(self) -> Set[str]:
-        # FIXME: Eliminate local import
-        #        https://github.com/DataBiosphere/azul/issues/3133
-        import json
-        return frozenset(json.loads(self.environ['AZUL_TDR_ALLOWED_SOURCE_LOCATIONS']))
+        return frozenset(_json.loads(self.environ['AZUL_TDR_ALLOWED_SOURCE_LOCATIONS']))
 
     @property
     def tdr_source_location(self) -> str:
@@ -998,15 +993,12 @@ class Config:
         A mapping from catalog name to a mapping from plugin type to plugin
         package name.
         """
-        # FIXME: Eliminate local import
-        #        https://github.com/DataBiosphere/azul/issues/3133
-        import json
         catalogs = self.environ['AZUL_CATALOGS']
         if catalogs.startswith('Qlpo'):  # bzip2 header, `BZh`, base64-encoded
             import bz2
             import base64
             catalogs = bz2.decompress(base64.b64decode(catalogs)).decode()
-        catalogs = json.loads(catalogs)
+        catalogs = _json.loads(catalogs)
         require(bool(catalogs), 'No catalogs configured')
         return {
             name: self.Catalog.from_json(name, catalog)
@@ -1204,10 +1196,7 @@ class Config:
 
     @property
     def _deployment_env(self) -> dict[str, str]:
-        # FIXME: Eliminate local import
-        #        https://github.com/DataBiosphere/azul/issues/3133
-        import json
-        return {'azul_deployment': json.dumps(self.deployment.render())}
+        return {'azul_deployment': _json.dumps(self.deployment.render())}
 
     @property
     def deployment(self) -> Deployment:
@@ -1216,11 +1205,8 @@ class Config:
         except KeyError:
             return self.Deployment(self.deployment_stage)
         else:
-            # FIXME: Eliminate local import
-            #        https://github.com/DataBiosphere/azul/issues/3133
-            import json
             return self.Deployment.reconstitute(name=self.deployment_stage,
-                                                rendered=json.loads(deployment))
+                                                rendered=_json.loads(deployment))
 
     @property
     def _shared_deployments(self) -> Mapping[str | None, Sequence[Deployment]]:
@@ -1229,10 +1215,7 @@ class Config:
         branch can be deployed to. The key of None signifies any other branch
         not mapped explicitly, or a detached head.
         """
-        # FIXME: Eliminate local import
-        #        https://github.com/DataBiosphere/azul/issues/3133
-        import json
-        deployments = json.loads(self.environ['azul_shared_deployments'])
+        deployments = _json.loads(self.environ['azul_shared_deployments'])
         require(all(isinstance(v, list) and v for v in deployments.values()),
                 'Invalid value for azul_shared_deployments')
         return frozendict(
@@ -1268,8 +1251,7 @@ class Config:
 
     @property
     def browser_sites(self) -> Mapping[str, BrowserSite]:
-        import json
-        return json.loads(self.environ['azul_browser_sites'])
+        return _json.loads(self.environ['azul_browser_sites'])
 
     class GitStatus(TypedDict):
         commit: str
@@ -1365,12 +1347,9 @@ class Config:
 
     @cached_property
     def _outsourced_environ(self) -> dict[str, str]:
-        # FIXME: Eliminate local import
-        #        https://github.com/DataBiosphere/azul/issues/3133
-        import json
         try:
             with open_resource('environ.json') as f:
-                return json.load(f)
+                return _json.load(f)
         except NotInLambdaContextException:
             # An outsourced environment is only defined in a Lambda context,
             # outside of one the real environment still contains all variables
@@ -1685,10 +1664,7 @@ class Config:
         if value is None:
             return None
         else:
-            # FIXME: Eliminate local import
-            #        https://github.com/DataBiosphere/azul/issues/3133
-            import json
-            return json.loads(value)
+            return _json.loads(value)
 
     @property
     def contact_us(self) -> str:
@@ -1711,14 +1687,11 @@ class Config:
     @property
     def slack_integration(self) -> SlackIntegration | None:
 
-        # FIXME: Eliminate local import
-        #        https://github.com/DataBiosphere/azul/issues/3133
-        import json
         slack_integration = self.environ.get('azul_slack_integration')
         if slack_integration is None:
             return None
         else:
-            return self.SlackIntegration(**json.loads(slack_integration))
+            return self.SlackIntegration(**_json.loads(slack_integration))
 
     manifest_column_joiner = '||'
 
@@ -1750,8 +1723,7 @@ class Config:
 
     @property
     def docker_images(self) -> dict[str, ImageSpec]:
-        import json
-        return json.loads(self.environ['azul_docker_images'])
+        return _json.loads(self.environ['azul_docker_images'])
 
     docker_platforms = [
         'linux/arm64',
@@ -1776,7 +1748,7 @@ class Config:
 
     waf_rate_rule_limit = 1000
 
-    @attrs.frozen(auto_attribs=True, kw_only=True)
+    @_attrs.frozen(auto_attribs=True, kw_only=True)
     class FileDownloadLimit:
         rate_limit: int
         evaluation_window: int
@@ -2090,3 +2062,28 @@ def iif[T, E](condition: bool, then: T, otherwise: E | Sentinel = absent) -> T |
 
 def either[T, E](value: T | None, alternative: E) -> T | E:
     return alternative if value is None else value
+
+
+def _check_submodule_conflicts():
+    file_path = Path(__file__)
+    assert file_path.name == '__init__.py', file_path
+    dir_path = file_path.parent
+    modules = {p.stem for p in dir_path.glob('*.py')}
+    for k, v in globals().items():
+        if k in modules:
+            expected_path = dir_path.joinpath(k + '.py')
+            try:
+                actual_path = v.__file__
+            except AttributeError:
+                raise AssertionError('Module entry collides with submodule',
+                                     k, expected_path)
+            else:
+                actual_path = Path(actual_path)
+                if not actual_path.samefile(expected_path):
+                    raise AssertionError('Module import collides with submodule',
+                                         k, expected_path, actual_path)
+
+
+_check_submodule_conflicts()
+
+del _check_submodule_conflicts
