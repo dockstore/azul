@@ -197,15 +197,7 @@ class TDRHCABundle(HCABundle[TDRBundleFQID], TDRBundle):
             # FIXME: Move validation of descriptor to the metadata API
             #        https://github.com/DataBiosphere/azul/issues/6299
             Entity.validate_described_by(descriptor)
-            self._add_manifest_entry(entity,
-                                     name=row['file_name'],
-                                     uuid=descriptor['file_id'],
-                                     version=descriptor['file_version'],
-                                     size=descriptor['size'],
-                                     content_type=descriptor['content_type'],
-                                     dcp_type='data',
-                                     checksums=Checksums.from_json(descriptor),
-                                     drs_uri=self._parse_drs_uri(row['file_id'], descriptor))
+            self._add_manifest_entry(entity, row, descriptor)
         content = row['content']
         self.metadata[str(entity)] = (json.loads(content)
                                       if isinstance(content, str)
@@ -229,24 +221,18 @@ class TDRHCABundle(HCABundle[TDRBundleFQID], TDRBundle):
 
     def _add_manifest_entry(self,
                             entity: EntityReference,
-                            *,
-                            name: str,
-                            uuid: str,
-                            version: str,
-                            size: int,
-                            content_type: str,
-                            dcp_type: str,
-                            checksums: Checksums,
-                            drs_uri: str | None = None) -> None:
+                            row: BigQueryRow,
+                            descriptor: JSON
+                            ) -> None:
         self.manifest[str(entity)] = {
-            'name': name,
-            'uuid': uuid,
-            'version': version,
-            'content-type': f'{content_type}; dcp-type={dcp_type}',
-            'size': size,
+            'name': row['file_name'],
+            'uuid': descriptor['file_id'],
+            'version': descriptor['file_version'],
+            'content-type': f'{descriptor["content_type"]}; dcp-type=data',
+            'size': descriptor['size'],
             'indexed': False,
-            'drs_uri': drs_uri,
-            **checksums.to_json()
+            'drs_uri': self._parse_drs_uri(row['file_id'], descriptor),
+            **Checksums.from_json(descriptor).to_json()
         }
 
     def _parse_drs_uri(self,
