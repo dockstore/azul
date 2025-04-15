@@ -1,5 +1,9 @@
-from azul import config
-from azul.template import emit
+from azul import (
+    config,
+)
+from azul.template import (
+    emit,
+)
 
 emit({
     "version": "2.0",
