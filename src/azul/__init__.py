@@ -35,8 +35,11 @@ from typing import (
     overload,
 )
 
-import attr
-import attrs as _attrs  # collides with azul.attrs
+from attrs import (
+    evolve,
+    field,
+    frozen,
+)
 from furl import (
     furl,
 )
@@ -868,7 +871,7 @@ class Config:
     # and that the mocked property would be inconsistent with the environment
     # variable. We feel that the performance gain is worth these concessions.
 
-    @attr.s(frozen=True, kw_only=True, auto_attribs=True)
+    @frozen(kw_only=True, slots=False)
     class Catalog:
         """
         >>> plugins = dict(metadata=dict(name='hca'), repository=dict(name='tdr_hca'))
@@ -904,7 +907,7 @@ class Config:
                           'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-it')
         """
 
-        @attr.s(frozen=True, kw_only=True, auto_attribs=True)
+        @frozen(kw_only=True)
         class Plugin:
             name: str
 
@@ -1063,7 +1066,7 @@ class Config:
     def private_api(self) -> bool:
         return self._boolean(self.environ['AZUL_PRIVATE_API'])
 
-    @attr.s(frozen=True, kw_only=False, auto_attribs=True)
+    @frozen(kw_only=False, slots=False)
     class Deployment:
         name: str
 
@@ -1506,12 +1509,12 @@ class Config:
     def bigquery_batch_mode(self) -> bool:
         return self._boolean(self.environ['AZUL_BIGQUERY_BATCH_MODE'])
 
-    @attr.s(frozen=True, kw_only=False, auto_attribs=True)
+    @frozen(kw_only=False)
     class Queue:
         basename: str
-        retry: bool = attr.ib(default=False, kw_only=True)
-        fail: bool = attr.ib(default=False, kw_only=True)
-        fifo: bool = attr.ib(default=False, kw_only=True)
+        retry: bool = field(default=False, kw_only=True)
+        fail: bool = field(default=False, kw_only=True)
+        fifo: bool = field(default=False, kw_only=True)
 
         def __attrs_post_init__(self):
             assert not (self.retry and self.fail), self
@@ -1539,7 +1542,7 @@ class Config:
             return self.derive(fail=True)
 
         def derive(self, *, retry: bool = False, fail: bool = False) -> Self:
-            return attr.evolve(self, retry=retry, fail=fail)
+            return evolve(self, retry=retry, fail=fail)
 
     notifications_queue = Queue('notifications')
     tallies_queue = Queue('tallies', fifo=True)
@@ -1683,7 +1686,7 @@ class Config:
             `{email}`.
         ''')
 
-    @attr.s(frozen=True, kw_only=True, auto_attribs=True)
+    @frozen(kw_only=True)
     class SlackIntegration:
         workspace_id: str
         channel_id: str
@@ -1752,7 +1755,7 @@ class Config:
 
     waf_rate_rule_limit = 1000
 
-    @_attrs.frozen(auto_attribs=True, kw_only=True)
+    @frozen(kw_only=True)
     class FileDownloadLimit:
         rate_limit: int
         evaluation_window: int
