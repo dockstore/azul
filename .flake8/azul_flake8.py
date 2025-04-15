@@ -140,7 +140,7 @@ class ModuleOrderInfo:
     def from_stmt(cls, src: str) -> 'ModuleOrderInfo':
         s = one(ast.parse(src).body)
         assert isinstance(s, (ast.Import, ast.ImportFrom))
-        return ModuleOrderInfo.from_ast(s)
+        return cls.from_ast(s)
 
     @classmethod
     def from_ast(cls, node: EitherImport) -> 'ModuleOrderInfo':
