@@ -80,7 +80,7 @@ import msgpack
 
 from azul import (
     CatalogName,
-    RequirementError,
+    R,
     cached_property,
     config,
     mutable_furl,
@@ -101,6 +101,9 @@ from azul.collections import (
 )
 from azul.deployment import (
     aws,
+)
+from azul.indexer import (
+    SourceSpec,
 )
 from azul.indexer.document import (
     DocumentType,
@@ -1395,9 +1398,9 @@ class CurlManifestGenerator(PagedManifestGenerator):
             '--location',
             '--fail',
         ]
+        # Some options are added to the command-line instead of the curl
+        # manifest so that the user can more easily customize them.
         file_options = [
-            '--fail-early',  # Exit curl with error on the first failure encountered
-            '--continue-at -',  # Resume partially downloaded files
             # We want curl to make enough retries so that it waits a total of
             # one and a half times the evaluation period of the WAF rate rule,
             # long enough for the tripped rule to clear.
@@ -1487,11 +1490,16 @@ class CurlManifestGenerator(PagedManifestGenerator):
 
         if partition.page_index == 0:
             curl_options = [
+                # FIXME: Remove `--http1.1` option
+                #        https://github.com/DataBiosphere/azul/issues/7032
+                '--http1.1',  # Avoid a bug in curl 8.7.1 where 429s aren't retried with HTTP/2
                 '--create-dirs',  # Allow curl to create folders
                 '--compressed',  # Request a compressed response
                 '--location',  # Follow redirects
                 '--globoff',  # Prevent '#' in file names from being interpreted as output variables
                 '--fail',  # Upon server error don't save the error message to the file
+                '--fail-early',  # Exit curl with error on the first failure encountered
+                '--continue-at -',  # Resume partially downloaded files
                 '--write-out "Downloading to: %{filename_effective}\\n\\n"'
             ]
             output.write('\n\n'.join(curl_options))
@@ -1547,19 +1555,19 @@ class CurlManifestGenerator(PagedManifestGenerator):
         >>> f('foo/bar/\\x1F/file') # doctest: +NORMALIZE_WHITESPACE
         Traceback (most recent call last):
         ...
-        azul.RequirementError: ('Invalid file path', 'foo/bar/\\x1f/file',
-                                'Control character or backslash at position', 8)
+        AssertionError: R('Invalid file path', 'foo/bar/\\x1f/file',
+                          'Control character or backslash at position', 8)
 
         >>> f('foo/bar/COM6/file') # doctest: +NORMALIZE_WHITESPACE
         Traceback (most recent call last):
         ...
-        azul.RequirementError: ('Invalid file path', 'foo/bar/COM6/file',
-                                'Use of reserved path component for Windows', {'COM6'})
+        AssertionError: R('Invalid file path', 'foo/bar/COM6/file',
+                          'Use of reserved path component for Windows', {'COM6'})
 
         >>> f('foo/bar/ / baz/file') # doctest: +NORMALIZE_WHITESPACE
         Traceback (most recent call last):
         ...
-        azul.RequirementError: ('Invalid file path', 'foo/bar/ / baz/file')
+        AssertionError: R('Invalid file path', 'foo/bar/ / baz/file')
 
         Substitutions:
 
@@ -1590,19 +1598,16 @@ class CurlManifestGenerator(PagedManifestGenerator):
         True
         """
         match = cls._malicious_chars.search(path)
-        if match is not None:
-            raise RequirementError('Invalid file path', path,
-                                   'Control character or backslash at position', match.start())
+        assert match is None, R('Invalid file path', path,
+                                'Control character or backslash at position', match.start())
 
         path = cls._problematic_chars.sub('_', path)
 
-        if cls._valid_path.fullmatch(path) is None:
-            raise RequirementError('Invalid file path', path)
+        assert cls._valid_path.fullmatch(path) is not None, R('Invalid file path', path)
 
         components = set(path.split('/')) & cls.special_dos_files
-        if components:
-            raise RequirementError('Invalid file path', path,
-                                   'Use of reserved path component for Windows', components)
+        assert not components, R('Invalid file path', path,
+                                 'Use of reserved path component for Windows', components)
 
         return path
 
@@ -2146,6 +2151,43 @@ class PFBVerbatimManifestGenerator(VerbatimManifestGenerator):
     def format(cls) -> ManifestFormat:
         return ManifestFormat.verbatim_pfb
 
+    def _include_relations(self, replica: JSON) -> bool:
+        # Terra will reject the handover if the manifest includes
+        # dangling relations, i.e., if any entity references another
+        # entity that isn't included in the manifest. There are three
+        # known cases where dangling relations can occur (note that
+        # currently only the AnVIL plugins support adding relations
+        # to the manifest):
+        #
+        # 1. If an entity occurs in both a replica bundle and a primary
+        #    bundle, but only the replica bundle is indexed, its
+        #    referenced entities may be missing from the index (and
+        #    consequently from the manifest). This can only occur when
+        #    the deployment is configured to index snapshots using a
+        #    common prefix. See
+        #    https://github.com/DataBiosphere/azul/issues/6843
+        #
+        # 2. When using a filter that matches some but not all of the
+        #    files derived from a particular activity, the activity will
+        #    be left with dangling relations to the derived files that
+        #    didn't match the filter.
+        #
+        # 3. The `anvil_assayactivity` table includes a foreign key into
+        #    the `anvil_antibody` table. We only index replicas from the
+        #    latter as orphans, so replicas from the former can include
+        #    dangling relations when orphans are not included.
+        #    See https://github.com/DataBiosphere/azul/issues/4440
+        #
+        # (1) can only occur when orphans are included, and (2) and (3)
+        # can only occur when orphans are *not* included.
+        #
+        prefix = SourceSpec.parse_prefix_only(replica['source']['spec'])
+        return (
+            config.enable_verbatim_relations
+            and self.include_orphans
+            and not prefix.common
+        )
+
     def create_file(self) -> tuple[str, str | None]:
         replicas = list(self._all_replicas())
         plugin = self.metadata_plugin
@@ -2164,38 +2206,13 @@ class PFBVerbatimManifestGenerator(VerbatimManifestGenerator):
             for replica in replicas:
                 id = plugin.verbatim_pfb_entity_id(replica)
                 entity = avro_pfb.PFBEntity.for_replica(id, dict(replica))
-                # Terra will reject the handover if the manifest includes
-                # dangling relations, i.e., if any entity references another
-                # entity that isn't included in the manifest. There are three
-                # known cases where dangling relations can occur (note that
-                # currently only the AnVIL plugins support adding relations
-                # to the manifest):
-                #
-                # 1. If an entity occurs in both a replica bundle and a primary
-                #    bundle, but only the replica bundle is indexed, its
-                #    referenced entities may be missing from the index (and
-                #    consequently from the manifest). This can only occur when
-                #    the deployment is configured to index snapshots using a
-                #    common prefix. See
-                #    https://github.com/DataBiosphere/azul/issues/6843
-                #
-                # 2. When using a filter that matches some but not all of the
-                #    files derived from a particular activity, the activity will
-                #    be left with dangling relations to the derived files that
-                #    didn't match the filter.
-                #
-                # 3. The `anvil_assayactivity` table includes a foreign key into
-                #    the `anvil_antibody` table. We only index replicas from the
-                #    latter as orphans, so replicas from the former can include
-                #    dangling relations when orphans are not included.
-                #    See https://github.com/DataBiosphere/azul/issues/4440
-                #
-                # (1) can only occur when orphans are included, and (2) and (3)
-                # can only occur when orphans are *not* included. Because (1)
-                # can only occur on lower deployments, we make the inclusion of
-                # relations conditional on avoiding (2) and (3).
-                #
-                if config.enable_verbatim_relations and self.include_orphans:
+                # The inclusion of relations is determined on a case-by-case
+                # basis for each replica, which may result in inconsistent
+                # expression of relations across rows in the same manifest.
+                # We chose this approach because scanning all replicas in
+                # advance would present another obstacle to our goal of
+                # parallelizing the manifest generation.
+                if self._include_relations(replica):
                     relations = plugin.verbatim_pfb_relations(replica)
                     entity_relations = [
                         PFBRelation(dst_name=replica_type, dst_id=entity_id)

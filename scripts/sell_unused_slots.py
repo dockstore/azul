@@ -7,6 +7,7 @@ from datetime import (
     datetime,
     timedelta,
 )
+import logging
 import sys
 import time
 
@@ -15,7 +16,6 @@ import attr
 from azul import (
     cache,
     config,
-    logging,
 )
 from azul.args import (
     AzulArgumentHelpFormatter,

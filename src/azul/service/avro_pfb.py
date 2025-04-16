@@ -34,8 +34,8 @@ from more_itertools import (
 )
 
 from azul import (
+    R,
     config,
-    reject,
 )
 from azul.indexer.field import (
     ClosedRange,
@@ -157,7 +157,7 @@ class PFBConverter:
 
 def _reversible_join(joiner: str, parts: Iterable[str]) -> str:
     parts = list(parts)
-    reject(any(joiner in part for part in parts), parts)
+    assert all(joiner not in part for part in parts), R('Found joiner in', parts)
     return joiner.join(parts)
 
 
@@ -173,7 +173,7 @@ class PFBEntity:
     namespace_uuid: ClassVar[UUID] = UUID('bc93372b-9218-4f0e-b64e-6f3b339687d6')
 
     def __attrs_post_init__(self):
-        reject(len(self.id) > 254, 'Terra requires IDs be no longer than 254 chars', )
+        assert len(self.id) <= 254, R('Terra requires IDs be no longer than 254 chars')
 
     @classmethod
     def for_aggregate(cls,

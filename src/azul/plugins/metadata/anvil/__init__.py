@@ -17,7 +17,6 @@ from more_itertools.more import (
 )
 
 from azul import (
-    JSON,
     config,
     iif,
 )
@@ -65,6 +64,7 @@ from azul.service.manifest_service import (
 )
 from azul.types import (
     AnyMutableJSON,
+    JSON,
     MutableJSON,
     MutableJSONs,
 )

@@ -1,8 +1,8 @@
+import logging
 import os
 
 from azul import (
     config,
-    logging,
 )
 from azul.docker import (
     resolve_docker_image_for_pull,

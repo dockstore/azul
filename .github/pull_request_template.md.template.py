@@ -607,6 +607,10 @@ def emit(t: T, target_branch: str):
                 },
                 {
                     'type': 'cli',
+                    'content': 'PR is marked as approved'
+                },
+                {
+                    'type': 'cli',
                     'content': 'PR is not a draft'
                 },
                 {
@@ -822,6 +826,10 @@ def emit(t: T, target_branch: str):
                 for i, (d, s) in enumerate(t.target_deployments(target_branch).items())
                 if s is not None
             ))),
+            {
+                'type': 'cli',
+                'content': 'Confirmed all checks in PR are OK and the PR is mergeable'
+            },
             {
                 'type': 'cli',
                 'content': 'The title of the merge commit starts with the title of this PR'
