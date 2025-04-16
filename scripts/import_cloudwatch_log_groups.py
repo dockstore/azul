@@ -1,4 +1,5 @@
 import json
+import logging
 
 import boto3
 from more_itertools import (
@@ -7,7 +8,6 @@ from more_itertools import (
 
 from azul import (
     config,
-    logging,
 )
 from azul.logging import (
     configure_script_logging,

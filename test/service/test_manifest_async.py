@@ -36,9 +36,6 @@ import requests
 from app_test_case import (
     LocalAppTestCase,
 )
-from azul import (
-    JSON,
-)
 from azul.collections import (
     deep_dict_merge,
 )
@@ -69,6 +66,9 @@ from azul.service.manifest_service import (
     ManifestPartition,
     ManifestService,
     SignedManifestKey,
+)
+from azul.types import (
+    JSON,
 )
 from azul_test_case import (
     AzulUnitTestCase,

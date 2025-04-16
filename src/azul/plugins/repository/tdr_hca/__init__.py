@@ -28,7 +28,6 @@ from more_itertools import (
 )
 
 from azul import (
-    JSON,
     RequirementError,
     config,
     require,
@@ -64,6 +63,7 @@ from azul.terra import (
     TDRSourceSpec,
 )
 from azul.types import (
+    JSON,
     JSONs,
     is_optional,
 )

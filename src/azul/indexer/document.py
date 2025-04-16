@@ -21,7 +21,6 @@ from azul import (
     CatalogName,
     R,
     config,
-    json_sequence,
 )
 from azul.enums import (
     auto,
@@ -51,6 +50,7 @@ from azul.types import (
     MutableJSON,
     json_int,
     json_mapping,
+    json_sequence,
     json_str,
     optional,
 )
@@ -170,8 +170,8 @@ class IndexName:
         ... # doctest: +NORMALIZE_WHITESPACE
         Traceback (most recent call last):
         ...
-        azul.RequirementError: Deployment name '_' is too short, too long
-        or contains invalid characters.
+        AssertionError: R("Deployment name '_' is too short, too long
+        or contains invalid characters.")
 
         >>> IndexName(version=2,
         ...           deployment='dev',
@@ -180,7 +180,7 @@ class IndexName:
         ...           doc_type=DocumentType.contribution)
         Traceback (most recent call last):
         ...
-        azul.RequirementError: ('Catalog name is invalid', '_')
+        AssertionError: R('Catalog name is invalid', '_')
 
         >>> IndexName(version=2,
         ...           deployment='dev',
@@ -190,8 +190,8 @@ class IndexName:
         ... # doctest: +NORMALIZE_WHITESPACE
         Traceback (most recent call last):
         ...
-        azul.RequirementError: qualifier is either too short, too long
-        or contains invalid characters: '_'
+        AssertionError: R("qualifier is either too short, too long
+        or contains invalid characters: '_'")
 
         >>> str(IndexName(version=2,
         ...               deployment='dev',
@@ -307,7 +307,7 @@ class IndexName:
         ... # doctest: +ELLIPSIS
         Traceback (most recent call last):
             ...
-        azul.RequirementError: qualifier ... 'foo_bar_'
+        AssertionError: R("qualifier ... 'foo_bar_'")
 
         >>> IndexName.parse('azul_v3_bla')
         Traceback (most recent call last):

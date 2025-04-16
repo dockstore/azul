@@ -12,11 +12,11 @@ jobs:
     timeout-minutes: 45
     steps:
 
-      - uses: 'actions/checkout@v3'
+      - uses: 'actions/checkout@v4'
 
       - run: 'cat environment.boot >> "$GITHUB_ENV"'
 
-      - uses: 'actions/setup-python@v4.3.0'
+      - uses: 'actions/setup-python@v5'
         with:
           python-version: '${{ env.azul_python_version }}'
           cache: 'pip'
@@ -84,21 +84,15 @@ jobs:
     runs-on: 'ubuntu-22.04'
     steps:
 
-      - uses: 'actions/checkout@v3'
+      - uses: 'actions/checkout@v4'
 
       - run: 'cat environment.boot >> "$GITHUB_ENV"'
-
-      - uses: 'actions/setup-python@v4.3.0'
-        with:
-          python-version: '${{ env.azul_python_version }}'
-          cache: 'pip'
-          cache-dependency-path: 'requirements.dev.txt'
 
       - uses: 'actions/download-artifact@v4'
         with:
           name: 'coverage-file'
 
-      - uses: 'codecov/codecov-action@v3'
+      - uses: 'codecov/codecov-action@v5'
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: 'coverage.xml'
@@ -108,15 +102,9 @@ jobs:
     needs: 'test'
     runs-on: 'ubuntu-22.04'
     steps:
-      - uses: 'actions/checkout@v3'
+      - uses: 'actions/checkout@v4'
 
       - run: 'cat environment.boot >> "$GITHUB_ENV"'
-
-      - uses: 'actions/setup-python@v4.3.0'
-        with:
-          python-version: '${{ env.azul_python_version }}'
-          cache: 'pip'
-          cache-dependency-path: 'requirements.dev.txt'
 
       - uses: 'actions/download-artifact@v4'
         with:
@@ -138,15 +126,9 @@ jobs:
         language: [ 'python', 'javascript' ]
     steps:
 
-      - uses: 'actions/checkout@v3'
+      - uses: 'actions/checkout@v4'
 
       - run: 'cat environment.boot >> "$GITHUB_ENV"'
-
-      - uses: 'actions/setup-python@v4.3.0'
-        with:
-          python-version: '${{ env.azul_python_version }}'
-          cache: 'pip'
-          cache-dependency-path: 'requirements.dev.txt'
 
       - uses: 'github/codeql-action/init@v3'
         with:

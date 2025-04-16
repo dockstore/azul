@@ -5,6 +5,7 @@ from typing import (
     NoReturn,
 )
 import urllib
+import urllib.parse
 from uuid import (
     UUID,
     uuid5,

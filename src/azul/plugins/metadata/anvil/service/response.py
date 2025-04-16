@@ -11,7 +11,6 @@ from more_itertools import (
 )
 
 from azul import (
-    JSON,
     cached_property,
 )
 from azul.json import (
@@ -28,6 +27,7 @@ from azul.service.repository_service import (
     SummaryResponseStage,
 )
 from azul.types import (
+    JSON,
     MutableJSON,
 )
 

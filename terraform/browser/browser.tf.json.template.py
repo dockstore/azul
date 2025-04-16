@@ -19,7 +19,6 @@ from more_itertools import (
 )
 
 from azul import (
-    JSON,
     cached_property,
     config,
     iif,
@@ -41,6 +40,9 @@ from azul.terraform import (
     emit_tf,
     enable_s3_bucket_inventory,
     set_empty_s3_bucket_lifecycle_config,
+)
+from azul.types import (
+    JSON,
 )
 
 sites = config.browser_sites
