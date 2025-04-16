@@ -11,7 +11,6 @@ from dataclasses import (
 import http
 import json
 import logging
-import time
 from typing import (
     Self,
 )
@@ -133,50 +132,40 @@ class IndexController(ActionController[IndexAction]):
             raise chalice.BadRequestError('Invalid syntax: bundle_version can not be empty')
 
     def contribute(self, event: Iterable[SQSRecord], *, retry=False):
-        for record in event:
-            message = json.loads(record.body)
-            attempts = record.to_dict()['attributes']['ApproximateReceiveCount']
-            log.info('Worker handling message %r, attempt #%r (approx).',
-                     message, attempts)
-            start = time.time()
-            try:
-                action = self._load_action(message['action'])
-                if action is IndexAction.reindex:
-                    self.client.remote_reindex_partition(message)
+        self._handle_events(event, self._contribute)
+
+    def _contribute(self, message: JSON):
+        action = self._load_action(message['action'])
+        if action is IndexAction.reindex:
+            self.client.remote_reindex_partition(message)
+        else:
+            notification = message['notification']
+            catalog = message['catalog']
+            assert catalog is not None
+            delete = action is IndexAction.delete
+            contributions, replicas = self.transform(catalog, notification, delete)
+
+            log.info('Writing %i contributions to index.', len(contributions))
+            tallies = self.index_service.contribute(catalog, contributions)
+            tallies = [DocumentTally.for_entity(catalog, entity, num_contributions)
+                       for entity, num_contributions in tallies.items()]
+
+            if replicas:
+                if delete:
+                    # FIXME: Replica index does not support deletions
+                    #        https://github.com/DataBiosphere/azul/issues/5846
+                    log.warning('Deletion of replicas is not supported')
                 else:
-                    notification = message['notification']
-                    catalog = message['catalog']
-                    assert catalog is not None
-                    delete = action is IndexAction.delete
-                    contributions, replicas = self.transform(catalog, notification, delete)
-
-                    log.info('Writing %i contributions to index.', len(contributions))
-                    tallies = self.index_service.contribute(catalog, contributions)
-                    tallies = [DocumentTally.for_entity(catalog, entity, num_contributions)
-                               for entity, num_contributions in tallies.items()]
-
-                    if replicas:
-                        if delete:
-                            # FIXME: Replica index does not support deletions
-                            #        https://github.com/DataBiosphere/azul/issues/5846
-                            log.warning('Deletion of replicas is not supported')
-                        else:
-                            log.info('Writing %i replicas to index.', len(replicas))
-                            num_written = self.index_service.replicate(catalog, replicas)
-                            log.info('Successfully wrote %i replicas', num_written)
-                    else:
-                        log.info('No replicas to write.')
-
-                    log.info('Queueing %i entities for aggregating a total of %i contributions.',
-                             len(tallies), sum(tally.num_contributions for tally in tallies))
-                    messages = (tally.to_message() for tally in tallies)
-                    self.client.queue_tallies(messages)
-            except BaseException:
-                log.warning('Worker failed to handle message %r', message, exc_info=True)
-                raise
+                    log.info('Writing %i replicas to index.', len(replicas))
+                    num_written = self.index_service.replicate(catalog, replicas)
+                    log.info('Successfully wrote %i replicas', num_written)
             else:
-                duration = time.time() - start
-                log.info('Worker successfully handled message %r in %.3fs.', message, duration)
+                log.info('No replicas to write.')
+
+            log.info('Queueing %i entities for aggregating a total of %i contributions.',
+                     len(tallies), sum(tally.num_contributions for tally in tallies))
+            messages = (tally.to_message() for tally in tallies)
+            self.client.queue_tallies(messages)
 
     def transform(self,
                   catalog: CatalogName,
