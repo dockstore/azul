@@ -12,6 +12,9 @@ import http
 import json
 import logging
 import time
+from typing import (
+    Self,
+)
 import uuid
 
 import chalice
@@ -296,7 +299,7 @@ class DocumentTally:
     attempts: int
 
     @classmethod
-    def from_sqs_record(cls, record: SQSRecord) -> 'DocumentTally':
+    def from_sqs_record(cls, record: SQSRecord) -> Self:
         body = json.loads(record.body)
         attributes = record.to_dict()['attributes']
         return cls(entity=CataloguedEntityReference(catalog=body['catalog'],
@@ -309,7 +312,7 @@ class DocumentTally:
     def for_entity(cls,
                    catalog: CatalogName,
                    entity: EntityReference,
-                   num_contributions: int) -> 'DocumentTally':
+                   num_contributions: int) -> Self:
         return cls(entity=CataloguedEntityReference(catalog=catalog,
                                                     entity_type=entity.entity_type,
                                                     entity_id=entity.entity_id),
@@ -328,7 +331,7 @@ class DocumentTally:
         return SQSFifoMessage(self.to_json(),
                               group_id=str(self.entity))
 
-    def consolidate(self, others: list['DocumentTally']) -> 'DocumentTally':
+    def consolidate(self, others: list['DocumentTally']) -> Self:
         assert all(
             self.entity == other.entity
             for other in others

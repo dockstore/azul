@@ -276,7 +276,7 @@ class TestRepositoryFilesWithDSS(DCP1TestCase,
         file_doc = {
             'name': organic_file_name,
             'version': file_version,
-            'drs_uri': None,
+            'drs_uri': f'drs://{self._drs_domain_name}/{file_uuid}?version={file_version}',
             'size': 3,
         }
         with mock.patch.object(RepositoryService, 'get_data_file', return_value=file_doc):

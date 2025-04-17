@@ -12,7 +12,6 @@ from concurrent.futures import (
 import json
 import logging
 from typing import (
-    Optional,
     TYPE_CHECKING,
 )
 
@@ -100,7 +99,7 @@ class RepositoryService(ElasticsearchService):
                catalog: CatalogName,
                entity_type: str,
                file_url_func: FileUrlFunc,
-               item_id: Optional[str],
+               item_id: str | None,
                filters: Filters,
                pagination: Pagination
                ) -> MutableJSON:
@@ -314,9 +313,9 @@ class RepositoryService(ElasticsearchService):
     def get_data_file(self,
                       catalog: CatalogName,
                       file_uuid: str,
-                      file_version: Optional[str],
+                      file_version: str | None,
                       filters: Filters,
-                      ) -> Optional[MutableJSON]:
+                      ) -> MutableJSON | None:
         """
         Return the inner `files` entity describing the data file with the
         given UUID and version.

@@ -12,6 +12,7 @@ import json
 import os
 from typing import (
     Optional,
+    Self,
     cast,
 )
 from unittest import (
@@ -2582,7 +2583,7 @@ class CellCounts:
     total_cells: dict[str, Optional[int]]
 
     @classmethod
-    def from_response(cls, hit: JSON) -> 'CellCounts':
+    def from_response(cls, hit: JSON) -> Self:
         projects: JSONs = hit['projects']
         cell_suspensions: JSONs = hit['cellSuspensions']
         return cls(estimated_cell_count=one(projects)['estimatedCellCount'],
