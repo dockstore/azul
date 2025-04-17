@@ -1,6 +1,6 @@
 blessed==1.20.0
 blinker==1.9.0
-botocore-stubs==1.37.29
+botocore-stubs==1.37.36
 brotli==1.1.0
 click==8.1.8
 colorama==0.4.6
