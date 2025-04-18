@@ -216,12 +216,6 @@ class RepositoryController(SourceController):
             assert file_version is not None
             assert file_name is not None
 
-        # Due to https://github.com/curl/curl/issues/6740 causing curl to error
-        # when trying to resume a previously completed file download, we check
-        # for a range request starting at the end of the file and instead of
-        # a returning a 416 (Range Not Satisfiable) as specified in RFC7233
-        # https://tools.ietf.org/html/rfc7233#section-4.4 we return a 206
-        # (Partial Content) with an empty body.
         try:
             range_specifier = headers['range']
         except KeyError:
@@ -229,9 +223,16 @@ class RepositoryController(SourceController):
         else:
             requested_range = self._parse_range_request_header(range_specifier)
             if requested_range == [(file_size, None)]:
+                # Due to https://github.com/curl/curl/issues/10521 which causes
+                # curl below 8.5.0 to fail when getting a 416 response for an
+                # attempt to resume a previously completed file download,
+                # instead, we return a 206 along with a `Content-Range` header,
+                # which has been confirmed to work for all curl versions tested
+                # (7.71.1 through 8.12.1).
                 return {
                     'Status': 206,
-                    'Content-Length': 0
+                    'Content-Length': 0,
+                    'Content-Range': f'bytes */{file_size}'
                 }
 
         download = download_cls(file_uuid=file_uuid,
