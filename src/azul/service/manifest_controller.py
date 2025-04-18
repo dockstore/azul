@@ -2,7 +2,6 @@ from collections.abc import (
     Mapping,
 )
 from typing import (
-    Optional,
     TypedDict,
     cast,
     get_type_hints,
@@ -70,8 +69,8 @@ manifest_state_key = 'manifest'
 class ManifestGenerationState(TypedDict, total=False):
     manifest_key: JSON
     filters: JSON
-    partition: Optional[JSON]
-    manifest: Optional[JSON]
+    partition: JSON | None
+    manifest: JSON | None
 
 
 assert manifest_state_key in get_type_hints(ManifestGenerationState)
@@ -160,7 +159,7 @@ class ManifestController(SourceController):
                            token_or_key: str,
                            query_params: Mapping[str, str],
                            fetch: bool,
-                           authentication: Optional[Authentication]):
+                           authentication: Authentication | None):
 
         token, manifest_key = self._unpack_token_or_key(token_or_key)
 

@@ -1739,9 +1739,9 @@ class AnvilManifestTestCase(ManifestTestCase, AnvilCannedBundleTestCase):
     def bundles(cls) -> list[SourcedBundleFQID]:
         return [
             cls.bundle_fqid(uuid='2370f948-2783-aeb6-afea-e022897f4dcf'),
-            cls.bundle_fqid(uuid='c67e7adb-1a9c-a3b9-bc91-eb10a428374a'),
+            cls.bundle_fqid(uuid='c2711e94-9966-a0ef-88be-88caf3e8a29b'),
             cls.bundle_fqid(uuid='826dea02-e274-affe-aabc-eb3db63ad068'),
-            cls.bundle_fqid(uuid='9a135c9a-069b-a90e-b588-eaf8d1aeeac9')
+            cls.bundle_fqid(uuid='6b35f59c-d33d-abf7-9ba0-c7b3a0ca82f3')
         ]
 
     dataset_id_filters: FiltersJSON = {
@@ -1831,7 +1831,7 @@ class TestAnvilManifests(AnvilManifestTestCase):
         expected = [
             (
                 'bundles.bundle_uuid',
-                'c67e7adb-1a9c-a3b9-bc91-eb10a428374a',
+                'c2711e94-9966-a0ef-88be-88caf3e8a29b',
                 '826dea02-e274-affe-aabc-eb3db63ad068',
                 '826dea02-e274-affe-aabc-eb3db63ad068'
             ),
@@ -1849,9 +1849,9 @@ class TestAnvilManifests(AnvilManifestTestCase):
             ),
             (
                 'sources.source_spec',
-                'tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/2',
-                'tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/2',
-                'tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/2'
+                'tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0',
+                'tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0',
+                'tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0'
             ),
             (
                 'datasets.document_id',

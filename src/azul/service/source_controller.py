@@ -1,7 +1,4 @@
 import logging
-from typing import (
-    Optional,
-)
 
 from chalice import (
     TooManyRequestsError,
@@ -45,7 +42,7 @@ class SourceController(ServiceAppController):
 
     def list_sources(self,
                      catalog: CatalogName,
-                     authentication: Optional[Authentication]
+                     authentication: Authentication | None
                      ) -> JSONs:
         try:
             sources = self._source_service.list_sources(catalog, authentication)
@@ -73,7 +70,7 @@ class SourceController(ServiceAppController):
 
     def _list_source_ids(self,
                          catalog: CatalogName,
-                         authentication: Optional[Authentication]
+                         authentication: Authentication | None
                          ) -> set[str]:
         try:
             source_ids = self._source_service.list_source_ids(catalog, authentication)
@@ -88,8 +85,8 @@ class SourceController(ServiceAppController):
 
     def get_filters(self,
                     catalog: CatalogName,
-                    authentication: Optional[Authentication],
-                    filters: Optional[str] = None
+                    authentication: Authentication | None,
+                    filters: str | None = None
                     ) -> Filters:
         return Filters(explicit=self._parse_filters(filters),
                        source_ids=self._list_source_ids(catalog, authentication))

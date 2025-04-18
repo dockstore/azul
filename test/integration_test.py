@@ -1861,14 +1861,13 @@ class CanBundleScriptIntegrationTest(IntegrationTestCase):
                 self.assertIsInstance(entities, dict)
                 self.assertIsInstance(links, list)
                 entities = set(map(EntityReference.parse, entities.keys()))
-                if len(entities) > 1:
-                    linked_entities = frozenset().union(*(
-                        EntityLink.from_json(link).all_entities
-                        for link in links
-                    ))
-                    self.assertEqual(entities, linked_entities)
-                else:
-                    self.assertEqual([], links)
+                for link in map(EntityLink.from_json, links):
+                    self.assertGreater(len(link.inputs), 0)
+                    self.assertGreater(len(link.outputs), 0)
+                    # Since we know the links' inputs and outputs are nonempty,
+                    # this also validates that bundles containing only orphans
+                    # contain no links.
+                    self.assertIsSubset(link.all_entities, entities)
             else:
                 assert False, metadata_plugin_name
 

@@ -19,6 +19,7 @@ from typing import (
     Iterable,
     Iterator,
     Optional,
+    Self,
     Sequence,
 )
 
@@ -66,7 +67,7 @@ class ResourceConfig:
     supplementary_config: JSON
 
     @classmethod
-    def from_response(cls, response: dict) -> 'ResourceConfig':
+    def from_response(cls, response: dict) -> Self:
         return cls(
             id=response['resourceId'],
             name=response.get('resourceName'),
