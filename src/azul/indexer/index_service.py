@@ -17,11 +17,7 @@ from operator import (
 )
 from typing import (
     Any,
-    MutableSet,
-    Optional,
     TYPE_CHECKING,
-    Type,
-    Union,
     cast,
 )
 
@@ -125,6 +121,10 @@ class IndexService(DocumentService):
     def settings(self, index_name: IndexName) -> JSON:
         index_name.validate()
         aggregate = index_name.doc_type is DocumentType.aggregate
+        # There is a terminology collision between ElasticSearch's concept of an
+        # index replica, and our Azul-specific concept of an entity/document
+        # replica.
+        replica = index_name.doc_type is DocumentType.replica
         catalog = index_name.catalog
         assert catalog is not None, catalog
         if (
@@ -166,7 +166,7 @@ class IndexService(DocumentService):
             # customers are affected.
             #
             num_shards = 1 if aggregate else max(num_nodes, num_workers // 8)
-            num_replicas = (num_nodes - 1) if aggregate else 0
+            num_replicas = (num_nodes - 1) if aggregate or replica else 0
         return {
             'index': {
                 'number_of_shards': num_shards,
@@ -267,7 +267,7 @@ class IndexService(DocumentService):
                   partition: BundlePartition = BundlePartition.root,
                   *,
                   delete: bool,
-                  ) -> Union[list[BundlePartition], tuple[list[Contribution], list[Replica]]]:
+                  ) -> list[BundlePartition] | tuple[list[Contribution], list[Replica]]:
         """
         Return a list of contributions and a list of replicas for the entities
         in the given partition of the specified bundle, or a set of divisions of
@@ -353,7 +353,7 @@ class IndexService(DocumentService):
             )
 
         def setify(value: CompositeJSON
-                   ) -> Union[set[tuple[str, AnyJSON]], set[AnyJSON]]:
+                   ) -> set[tuple[str, AnyJSON]] | set[AnyJSON]:
             value = freeze(value)
             return set(
                 value.items()
@@ -578,7 +578,7 @@ class IndexService(DocumentService):
                             ) -> list[CataloguedContribution]:
         es_client = ESClientFactory.get()
 
-        entity_ids_by_index: dict[str, MutableSet[str]] = defaultdict(set)
+        entity_ids_by_index: dict[str, set[str]] = defaultdict(set)
         for entity in tallies.keys():
             index = str(IndexName.create(catalog=entity.catalog,
                                          qualifier=entity.entity_type,
@@ -696,7 +696,7 @@ class IndexService(DocumentService):
             )
 
         # Create lookup for transformer by entity type
-        transformers: dict[tuple[CatalogName, str], Type[Transformer]] = {
+        transformers: dict[tuple[CatalogName, str], type[Transformer]] = {
             (catalog, transformer_cls.entity_type()): transformer_cls
             for catalog in config.catalogs
             for transformer_cls in self.transformer_types(catalog)
@@ -734,7 +734,7 @@ class IndexService(DocumentService):
         return aggregates
 
     def _aggregate_entity(self,
-                          transformer: Type[Transformer],
+                          transformer: type[Transformer],
                           contributions: list[Contribution]
                           ) -> JSON:
         contents = self._reconcile(transformer, contributions)
@@ -756,7 +756,7 @@ class IndexService(DocumentService):
         return aggregate_contents
 
     def _reconcile(self,
-                   transformer: Type[Transformer],
+                   transformer: type[Transformer],
                    contributions: Sequence[Contribution],
                    ) -> Mapping[EntityType, Entities]:
         """
@@ -791,7 +791,7 @@ class IndexService(DocumentService):
 
     def _create_writer(self,
                        doc_type: DocumentType,
-                       catalog: Optional[CatalogName]
+                       catalog: CatalogName | None
                        ) -> 'IndexWriter':
         # We allow one conflict retry in the case of duplicate notifications and
         # switch from 'add' to 'update'. After that, there should be no
@@ -814,9 +814,9 @@ class IndexService(DocumentService):
 class IndexWriter:
 
     def __init__(self,
-                 catalog: Optional[CatalogName],
+                 catalog: CatalogName | None,
                  field_types: CataloguedFieldTypes,
-                 refresh: Union[bool, str],
+                 refresh: bool | str,
                  conflict_retry_limit: int,
                  error_retry_limit: int) -> None:
         """
@@ -843,7 +843,7 @@ class IndexWriter:
         self.es_client = ESClientFactory.get()
         self.errors: dict[DocumentCoordinates, int] = defaultdict(int)
         self.conflicts: dict[DocumentCoordinates, int] = defaultdict(int)
-        self.retries: Optional[MutableSet[DocumentCoordinates]] = None
+        self.retries: set[DocumentCoordinates] | None = None
 
     bulk_threshold = 32
 
@@ -945,7 +945,7 @@ class IndexWriter:
         else:
             log.debug('Successfully wrote %s.', coordinates)
 
-    def _on_error(self, doc: Document, e: Union[Exception, JSON]):
+    def _on_error(self, doc: Document, e: Exception | JSON):
         self.errors[doc.coordinates] += 1
         if self.error_retry_limit is None or self.errors[doc.coordinates] <= self.error_retry_limit:
             action = 'retrying'
@@ -956,7 +956,7 @@ class IndexWriter:
                     doc.coordinates, e, self.errors[doc.coordinates], action,
                     exc_info=isinstance(e, Exception))
 
-    def _on_conflict(self, doc: Document, e: Union[Exception, JSON]):
+    def _on_conflict(self, doc: Document, e: Exception | JSON):
         self.conflicts[doc.coordinates] += 1
         self.errors.pop(doc.coordinates, None)  # a conflict resets the error count
         if self.conflict_retry_limit is None or self.conflicts[doc.coordinates] <= self.conflict_retry_limit:

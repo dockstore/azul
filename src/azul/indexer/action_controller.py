@@ -23,7 +23,7 @@ class ActionController[A: Action](AppController):
             action = action_cls.from_json(action)
         except AssertionError as e:
             if R.caused(e):
-                raise chalice.BadRequestError(repr(e.args))
+                raise R.propagate(e, chalice.BadRequestError)
             else:
                 raise
         else:

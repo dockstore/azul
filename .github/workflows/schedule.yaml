@@ -28,7 +28,7 @@ jobs:
       #
       GITHUB_TOKEN: '${{ secrets.AZUL_GITHUB_ACCESS_TOKEN_SCHEDULE_ACTION }}'
     steps:
-      - uses: 'actions/checkout@v3'
+      - uses: 'actions/checkout@v4'
         with:
           sparse-checkout: '.github'
       - run: 'python3 .github/workflows/schedule.py'

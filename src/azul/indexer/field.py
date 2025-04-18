@@ -30,7 +30,6 @@ from typing_extensions import (
 
 from azul import (
     CatalogName,
-    JSON,
     cached_property,
 )
 from azul.openapi import (
@@ -42,6 +41,7 @@ from azul.time import (
 )
 from azul.types import (
     AnyJSON,
+    JSON,
     PrimitiveJSON,
     reify,
 )

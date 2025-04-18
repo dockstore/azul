@@ -2,7 +2,6 @@ import attr
 
 from azul import (
     CatalogName,
-    JSON,
     cache,
     config,
 )
@@ -16,6 +15,9 @@ from azul.plugins import (
 )
 from azul.service import (
     ServiceAppController,
+)
+from azul.types import (
+    JSON,
 )
 
 

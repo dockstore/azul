@@ -31,7 +31,7 @@ def mirror_catalog(catalog: CatalogName, wait: bool):
     assert azul.is_queue_empty(config.mirror_queue.name), R(
         'A mirroring operation is already in progress. The current operation '
         'must finish before another can begin.')
-    fail_queue = config.mirror_queue.fail.name
+    fail_queue = config.mirror_queue.to_fail.name
     if not azul.is_queue_empty(fail_queue):
         log.warning('Failed messages from a previous operation are still '
                     'present in %r. If they are not purged, this operation'

@@ -36,9 +36,6 @@ import requests
 from app_test_case import (
     LocalAppTestCase,
 )
-from azul import (
-    JSON,
-)
 from azul.collections import (
     deep_dict_merge,
 )
@@ -69,6 +66,9 @@ from azul.service.manifest_service import (
     ManifestPartition,
     ManifestService,
     SignedManifestKey,
+)
+from azul.types import (
+    JSON,
 )
 from azul_test_case import (
     AzulUnitTestCase,
@@ -513,7 +513,7 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                 #
                 @reset
                 def get_stale_token_when_done():
-                    nonlocal url, state, key_url, token_url
+                    nonlocal url, state, token_url
                     get_manifest.return_value = manifest
                     state = self.app_module.generate_manifest(state, None)
                     get_cached_manifest_with_key.side_effect = not_found

@@ -42,7 +42,6 @@ from app_test_case import (
     LocalAppTestCase,
 )
 from azul import (
-    JSON,
     cached_property,
     config,
 )
@@ -71,6 +70,7 @@ from azul.service.storage_service import (
 )
 from azul.types import (
     AnyJSON,
+    JSON,
     JSONs,
 )
 from azul_test_case import (

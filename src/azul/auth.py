@@ -11,11 +11,11 @@ from typing import (
 
 import attr
 
-from azul import (
-    JSON,
-)
 from azul.json import (
     copy_json,
+)
+from azul.types import (
+    JSON,
 )
 
 
