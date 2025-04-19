@@ -25,6 +25,7 @@ from more_itertools import (
 
 from azul import (
     CatalogName,
+    R,
     cached_property,
     config,
 )
@@ -75,7 +76,11 @@ class IndexController(ActionController[IndexAction]):
         request = self.current_request
         if isinstance(request.authentication, HMACAuthentication):
             assert request.authentication.identity() is not None
-            config.Catalog.validate_name(catalog, exception=chalice.BadRequestError)
+            try:
+                config.Catalog.validate_name(catalog)
+            except AssertionError as e:
+                if R.caused(e):
+                    raise R.propagate(e, chalice.BadRequestError)
             action = self._load_action(action)
             notification = request.json_body
             log.info('Received notification %r for catalog %r', notification, catalog)

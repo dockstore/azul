@@ -1,3 +1,5 @@
+import logging
+
 from more_itertools import (
     one,
 )
@@ -5,7 +7,6 @@ from more_itertools import (
 from azul import (
     cached_property,
     config,
-    logging,
 )
 from azul.deployment import (
     aws,

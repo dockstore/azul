@@ -1,5 +1,5 @@
 from azul import (
-    RequirementError,
+    R,
 )
 from azul.deployment import (
     aws,
@@ -16,5 +16,6 @@ class TestDeploymentAWS(AzulUnitTestCase):
                          aws.qualified_bucket_name('foo'))
         for invalid in ['', 'x', '1foo']:
             with self.subTest(invalid=invalid):
-                with self.assertRaises(RequirementError):
+                with self.assertRaises(AssertionError) as cm:
                     aws.qualified_bucket_name(invalid)
+                self.assertTrue(R.caused(cm.exception))

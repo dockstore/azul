@@ -13,11 +13,11 @@ from uuid import (
 import attr
 
 from azul import (
-    JSON,
     reject,
     require,
 )
 from azul.types import (
+    JSON,
     MutableJSON,
     json_int,
 )
