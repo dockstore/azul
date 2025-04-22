@@ -172,11 +172,11 @@ class IndexController(ActionController[IndexAction]):
                     messages = (tally.to_message() for tally in tallies)
                     self.client.queue_tallies(messages)
             except BaseException:
-                log.warning(f'Worker failed to handle message {message}.', exc_info=True)
+                log.warning('Worker failed to handle message %r', message, exc_info=True)
                 raise
             else:
                 duration = time.time() - start
-                log.info(f'Worker successfully handled message {message} in {duration:.3f}s.')
+                log.info('Worker successfully handled message %r in %.3fs.', message, duration)
 
     def transform(self,
                   catalog: CatalogName,
