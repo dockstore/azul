@@ -328,7 +328,7 @@ class DocumentTally:
         }
 
     def to_message(self) -> SQSFifoMessage:
-        return SQSFifoMessage(self.to_json(),
+        return SQSFifoMessage(body=self.to_json(),
                               group_id=str(self.entity))
 
     def consolidate(self, others: list['DocumentTally']) -> Self:

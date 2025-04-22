@@ -74,9 +74,9 @@ if TYPE_CHECKING:
     )
 
 
-@attrs.frozen(auto_attribs=True)
+@attrs.frozen(kw_only=True)
 class SQSMessage:
-    body: JSON = attrs.field(kw_only=False)
+    body: JSON
 
     def to_entry(self) -> 'SendMessageRequestQueueSendMessageTypeDef':
         return {'MessageBody': json.dumps(self.body)}
@@ -85,10 +85,10 @@ class SQSMessage:
         return {**self.to_entry(), 'Id': str(id)}
 
 
-@attrs.frozen(auto_attribs=True)
+@attrs.frozen(kw_only=True)
 class SQSFifoMessage(SQSMessage):
-    group_id: str = attrs.field(kw_only=True, factory=lambda: str(uuid.uuid4()))
-    dedup_id: str = attrs.field(kw_only=True, factory=lambda: str(uuid.uuid4()))
+    group_id: str = attrs.field(factory=lambda: str(uuid.uuid4()))
+    dedup_id: str = attrs.field(factory=lambda: str(uuid.uuid4()))
 
     def to_entry(self) -> 'SendMessageRequestQueueSendMessageTypeDef':
         return {
