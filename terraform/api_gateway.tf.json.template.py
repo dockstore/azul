@@ -157,6 +157,17 @@ emit_tf({
                     config.blocked_v4_ips_term,
                     config.allowed_v4_ips_term
                 ]
+            },
+            'aws_wafv2_regex_pattern_set': {
+                name: {
+                    'name': config.qualified_resource_name(resource_name=name,
+                                                           stage=config.main_deployment_stage),
+                    'scope': 'REGIONAL',
+                }
+                for name in [
+                    config.blocked_user_agents_regex_term,
+                    config.blocked_user_agents_custom_regex_term
+                ]
             }
         },
         *(
@@ -258,6 +269,41 @@ emit_tf({
                                     ('AllowedIPs', 'allow', config.allowed_v4_ips_term)
                                 ]
                             ],
+                            {
+                                'name': 'BlockedUserAgents',
+                                'statement': {
+                                    'or_statement': {
+                                        'statement': [
+                                            {
+                                                'regex_pattern_set_reference_statement': {
+                                                    'arn': '${data.aws_wafv2_regex_pattern_set.%s.arn}' % regex_set,
+                                                    'field_to_match': {
+                                                        'single_header': {
+                                                            'name': 'user-agent'
+                                                        }
+                                                    },
+                                                    'text_transformation': {
+                                                        'priority': 0,
+                                                        'type': 'NONE'
+                                                    }
+                                                }
+                                            }
+                                            for regex_set in [
+                                                config.blocked_user_agents_regex_term,
+                                                config.blocked_user_agents_custom_regex_term
+                                            ]
+                                        ]
+                                    }
+                                },
+                                'action': {
+                                    'block': {}
+                                },
+                                'visibility_config': {
+                                    'metric_name': 'BlockedUserAgents',
+                                    'sampled_requests_enabled': True,
+                                    'cloudwatch_metrics_enabled': True
+                                }
+                            },
                             *[
                                 {
                                     'name': name,
