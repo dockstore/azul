@@ -20,6 +20,7 @@ from azul.indexer.action_controller import (
 )
 from azul.types import (
     JSON,
+    json_str,
 )
 
 log = logging.getLogger(__name__)
@@ -35,7 +36,7 @@ class MirrorController(ActionController[MirrorAction]):
         self._handle_events(event, self._mirror)
 
     def _mirror(self, message: JSON):
-        action = self._load_action(message['action'])
+        action = self._load_action(json_str(message['action']))
         if action is MirrorAction.mirror_source:
             self.client.mirror_source(message['catalog'], message['source'])
         elif action is MirrorAction.mirror_partition:
