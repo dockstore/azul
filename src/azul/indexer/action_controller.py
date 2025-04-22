@@ -14,6 +14,7 @@ from chalice.app import (
 
 from azul import (
     R,
+    cached_property,
 )
 from azul.azulclient import (
     Action,
@@ -31,11 +32,16 @@ log = logging.getLogger(__name__)
 
 class ActionController[A: Action](AppController):
 
-    def _load_action(self, action: str) -> A:
+    @cached_property
+    def _action_cls(self) -> type[A]:
         action_cls = derived_type_params(type(self), root=ActionController)[A]
-        assert issubclass(action_cls, Action), action_cls
+        assert isinstance(action_cls, type), action_cls
+        return action_cls
+
+    def _load_action(self, action_str: str) -> A:
+        action_cls = self._action_cls
         try:
-            action = action_cls.from_json(action)
+            action = action_cls.from_json(action_str)
         except AssertionError as e:
             if R.caused(e):
                 raise R.propagate(e, chalice.BadRequestError)
