@@ -139,11 +139,13 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
                              notification: JSON,
                              action: IndexAction = IndexAction.add,
                              ) -> SQSMessage:
-        return SQSMessage({
-            'action': action.to_json(),
-            'notification': notification,
-            'catalog': catalog
-        })
+        return SQSMessage(
+            body={
+                'action': action.to_json(),
+                'notification': notification,
+                'catalog': catalog
+            }
+        )
 
     def bundle_message(self,
                        catalog: CatalogName,
@@ -156,34 +158,42 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
                         source: SourceRef,
                         prefix: str
                         ) -> SQSMessage:
-        return SQSMessage({
-            'action': IndexAction.reindex.to_json(),
-            'catalog': catalog,
-            'source': cast(JSON, source.to_json()),
-            'prefix': prefix
-        })
+        return SQSMessage(
+            body={
+                'action': IndexAction.reindex.to_json(),
+                'catalog': catalog,
+                'source': cast(JSON, source.to_json()),
+                'prefix': prefix
+            }
+        )
 
     def mirror_source_message(self,
                               catalog: CatalogName,
                               source: SourceRef
                               ) -> SQSFifoMessage:
-        return SQSFifoMessage({
-            'action': MirrorAction.mirror_source.to_json(),
-            'catalog': catalog,
-            'source': cast(JSON, source.to_json()),
-        })
+        return SQSFifoMessage(
+            body={
+                'action': MirrorAction.mirror_source.to_json(),
+                'catalog': catalog,
+                'source': cast(JSON, source.to_json()),
+            },
+            group_id=source.id
+        )
 
     def mirror_partition_message(self,
                                  catalog: CatalogName,
                                  source: SourceRef,
                                  prefix: str
                                  ) -> SQSFifoMessage:
-        return SQSFifoMessage({
-            'action': MirrorAction.mirror_partition.to_json(),
-            'catalog': catalog,
-            'source': cast(JSON, source.to_json()),
-            'prefix': prefix
-        })
+        return SQSFifoMessage(
+            body={
+                'action': MirrorAction.mirror_partition.to_json(),
+                'catalog': catalog,
+                'source': cast(JSON, source.to_json()),
+                'prefix': prefix
+            },
+            group_id=f'{source.id}:{prefix}'
+        )
 
     def local_reindex(self, catalog: CatalogName, prefix: str) -> int:
         notifications = [

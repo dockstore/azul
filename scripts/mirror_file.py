@@ -118,7 +118,7 @@ def mirror_file(catalog: CatalogName, file_uuid: str, part_size: int) -> str:
 def main(argv):
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=AzulArgumentHelpFormatter)
-    parser.add_argument('-c', '--catalog')
+    parser.add_argument('-c', '--catalog', default=config.default_catalog)
     parser.add_argument('-f', '--file-uuid')
     parser.add_argument('-p', '--part-size', type=int, default=50 * 2 ** 20)
     args = parser.parse_args(argv)
