@@ -325,7 +325,7 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
         plugin = self.repository_plugin(catalog)
         for source_spec in sources:
             source_ref = plugin.resolve_source(source_spec)
-            source_ref = plugin.partition_source(catalog, source_ref)
+            source_ref = plugin.partition_source_for_indexing(catalog, source_ref)
 
             def message(partition_prefix: str) -> SQSMessage:
                 log.info('Remotely reindexing prefix %r of source_ref %r into catalog %r',
@@ -607,7 +607,7 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
     def mirror_source(self, catalog: CatalogName, source_json: JSON):
         plugin = self.repository_plugin(catalog)
         source = plugin.source_ref_cls.from_json(source_json)
-        source = plugin.partition_source(catalog, source)
+        source = plugin.partition_source_for_indexing(catalog, source)
 
         def message(prefix: str) -> SQSMessage:
             log.info('Mirroring files in partition %r of source %r from catalog %r',

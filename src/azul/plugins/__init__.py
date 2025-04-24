@@ -11,6 +11,7 @@ from inspect import (
 )
 from typing import (
     AbstractSet,
+    Callable,
     ClassVar,
     Iterable,
     Literal,
@@ -671,27 +672,35 @@ class RepositoryPlugin[BUNDLE: Bundle,
         """
         raise NotImplementedError
 
-    def partition_source(self,
-                         catalog: CatalogName,
-                         source: SOURCE_REF
-                         ) -> SOURCE_REF:
+    def partition_source_for_indexing(self,
+                                      catalog: CatalogName,
+                                      source: SOURCE_REF
+                                      ) -> SOURCE_REF:
         """
         If the source already has a prefix, return the source. Otherwise, return
         an updated copy of the source with a heuristically computed prefix that
         should be appropriate for indexing in the given catalog.
         """
+        return self._partition_source(catalog, source, self.count_bundles)
+
+    def _partition_source(self,
+                          catalog: CatalogName,
+                          source: SOURCE_REF,
+                          counter: Callable[[SOURCE_SPEC], int]
+                          ) -> SOURCE_REF:
         if source.spec.prefix is None:
-            count = self.count_bundles(source.spec)
+            count = counter(source.spec)
             is_main = config.deployment.is_main
             is_it = catalog in config.integration_test_catalogs
-            # We use the "lesser" heuristic during IT to avoid indexing an
-            # excessive number of bundles
+            # We use the "lesser" heuristic during IT to keep the cost and
+            # performance of the tests within reasonable limits
             if is_main and not is_it:
                 prefix = Prefix.for_main_deployment(count)
             else:
                 prefix = Prefix.for_lesser_deployment(count)
-            source = source.with_prefix(prefix)
-        return source
+            return source.with_prefix(prefix)
+        else:
+            return source
 
     @abstractmethod
     def list_bundles(self,
