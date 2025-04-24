@@ -285,6 +285,15 @@ emit_tf({
                                     'action': {
                                         action: {}
                                     },
+                                    **(
+                                        {
+                                            'rule_label': {
+                                                'name': config.blocked_v4_ips_term
+                                            }
+                                        }
+                                        if ip_set_term == config.blocked_v4_ips_term else
+                                        {}
+                                    ),
                                     'visibility_config': {
                                         'metric_name': name,
                                         'sampled_requests_enabled': True,
@@ -559,16 +568,36 @@ emit_tf({
                     ],
                     'resource_arn': '${aws_wafv2_web_acl.api_gateway.arn}',
                     'logging_filter': {
-                        'default_behavior': 'DROP',
-                        'filter': {
-                            'behavior': 'KEEP',
-                            'requirement': 'MEETS_ALL',
-                            'condition': {
-                                'action_condition': {
-                                    'action': 'BLOCK'
-                                }
+                        # We use the default behavior of 'KEEP' and selectively
+                        # 'DROP' logs that we don't need. This implementation
+                        # gives us filters that only 'DROP', working around
+                        # https://www.github.com/hashicorp/terraform-provider-aws/issues/32665
+                        # which causes TF to deploy the filters in random order,
+                        # potentially breaking the desired effect when some
+                        # filters 'DROP' and others 'KEEP'.
+                        #
+                        'default_behavior': 'KEEP',
+                        'filter': [
+                            {
+                                'behavior': 'DROP',
+                                'requirement': 'MEETS_ALL',
+                                'condition': condition
                             }
-                        }
+                            for condition in [
+                                {
+                                    'action_condition': {
+                                        'action': 'ALLOW'
+                                    }
+                                },
+                                {
+                                    'label_name_condition': {
+                                        'label_name': 'awswaf:%s:webacl:' % config.aws_account_id +
+                                                      '${aws_wafv2_web_acl.api_gateway.name}:' +
+                                                      config.blocked_v4_ips_term,
+                                    }
+                                }
+                            ]
+                        ]
                     }
                 }
             },
