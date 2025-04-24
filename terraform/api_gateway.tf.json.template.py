@@ -4,7 +4,12 @@ from dataclasses import (
 import importlib
 import json
 
+from more_itertools import (
+    one,
+)
+
 from azul import (
+    R,
     cached_property,
     config,
     iif,
@@ -25,6 +30,9 @@ from azul.terraform import (
     chalice,
     emit_tf,
     vpc,
+)
+from azul.types import (
+    JSONs,
 )
 
 
@@ -81,6 +89,25 @@ class Zone(metaclass=InternMeta):
         assert name
         return cls(slug=name.replace('.', '_').replace('-', '_'),
                    name=name)
+
+
+def check_waf_rules(rules: JSONs) -> JSONs:
+    """
+    Verify that all the WAF rule actions we use are from a known set of actions.
+    If an unexpected action is identified here, it is likely that the logging
+    filters in the WAF logging configuration will also need to be updated to
+    handle the identified action.
+    """
+    for rule in rules:
+        if 'action' in rule:
+            assert one(rule['action'].keys()) in ['block', 'allow'], R(
+                'WAF rule has an unexpected action', rule)
+        elif 'override_action' in rule:
+            assert one(rule['override_action'].keys()) == 'none', R(
+                'WAF rule has an unexpected override action', rule)
+        else:
+            assert False, rule
+    return rules
 
 
 zones_by_domain = {
@@ -204,7 +231,7 @@ emit_tf({
                     'default_action': {
                         'allow': {}
                     },
-                    'rule': [
+                    'rule': check_waf_rules([
                         {**rule, 'priority': i}
                         for i, rule in enumerate([
                             *([] if file_download_limit is None else [
@@ -508,7 +535,7 @@ emit_tf({
                                 }
                             ])
                         ])
-                    ],
+                    ]),
                     'scope': 'REGIONAL',
                     'visibility_config': {
                         'cloudwatch_metrics_enabled': True,
