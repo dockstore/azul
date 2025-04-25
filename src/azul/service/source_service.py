@@ -5,7 +5,6 @@ from time import (
 )
 from typing import (
     Iterable,
-    Optional,
 )
 
 from azul import (
@@ -56,7 +55,7 @@ class SourceService:
 
     def list_source_ids(self,
                         catalog: CatalogName,
-                        authentication: Optional[Authentication]
+                        authentication: Authentication | None
                         ) -> set[str]:
         plugin = self._repository_plugin(catalog)
 
@@ -76,7 +75,7 @@ class SourceService:
 
     def list_sources(self,
                      catalog: CatalogName,
-                     authentication: Optional[Authentication]
+                     authentication: Authentication | None
                      ) -> Iterable[SourceRef]:
         return self._repository_plugin(catalog).list_sources(authentication)
 

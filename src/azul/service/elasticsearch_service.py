@@ -15,7 +15,7 @@ import logging
 from typing import (
     Any,
     Generic,
-    Optional,
+    Self,
     TypeVar,
     TypedDict,
 )
@@ -45,10 +45,9 @@ from more_itertools import (
 
 from azul import (
     CatalogName,
+    R,
     cached_property,
     config,
-    reject,
-    require,
 )
 from azul.es import (
     ESClientFactory,
@@ -131,8 +130,8 @@ class ElasticsearchChain(ElasticsearchStage[R0, R2]):
     outer: ElasticsearchStage[R1, R2]
 
     def __attrs_post_init__(self):
-        reject(isinstance(self.outer, ElasticsearchChain),
-               'Outer stage must not be a chain', type(self.outer))
+        assert not isinstance(self.outer, ElasticsearchChain), R(
+            'Outer stage must not be a chain', type(self.outer))
 
     def prepare_request(self, request: Search) -> Search:
         request = self.inner.prepare_request(request)
@@ -431,7 +430,7 @@ class SlicingStage(_ElasticsearchStage[Response, Response]):
     response. If the given document slice is None, the default one from the
     plugin is used. If that is None, too, each hit will contain all properties.
     """
-    document_slice: Optional[DocumentSlice]
+    document_slice: DocumentSlice | None
 
     def prepare_request(self, request: Search) -> Search:
         document_slice = self._prepared_slice()
@@ -442,7 +441,7 @@ class SlicingStage(_ElasticsearchStage[Response, Response]):
     def process_response(self, response: Response) -> Response:
         return response
 
-    def _prepared_slice(self) -> Optional[DocumentSlice]:
+    def _prepared_slice(self) -> DocumentSlice | None:
         if self.document_slice is None:
             return self.plugin.document_slice(self.entity_type)
         else:
@@ -470,8 +469,8 @@ class Pagination:
     order: str
     size: int
     sort: str
-    search_before: Optional[SortKey] = None
-    search_after: Optional[SortKey] = None
+    search_before: SortKey | None = None
+    search_after: SortKey | None = None
 
     def __attrs_post_init__(self):
         self._check_sort_key(self.search_before)
@@ -479,20 +478,23 @@ class Pagination:
 
     def _check_sort_key(self, sort_key):
         if sort_key is not None:
-            require(isinstance(sort_key, tuple), 'Not a tuple', sort_key)
-            require(len(sort_key) == 2, 'Not a tuple with two elements', sort_key)
-            require(isinstance(sort_key[1], str), 'Second sort key element not a string', sort_key)
+            assert isinstance(sort_key, tuple), R(
+                'Not a tuple', sort_key)
+            assert len(sort_key) == 2, R(
+                'Not a tuple with two elements', sort_key)
+            assert isinstance(sort_key[1], str), R(
+                'Second sort key element not a string', sort_key)
 
     def advance(self,
                 *,
-                search_before: Optional[SortKey],
-                search_after: Optional[SortKey]
-                ) -> 'Pagination':
+                search_before: SortKey | None,
+                search_after: SortKey | None
+                ) -> Self:
         return attr.evolve(self,
                            search_before=search_before,
                            search_after=search_after)
 
-    def link(self, *, previous: bool, **params: str) -> Optional[str]:
+    def link(self, *, previous: bool, **params: str) -> str | None:
         """
         Return the URL of the next or previous page in this pagination or None
         if there is no such page.
@@ -510,8 +512,8 @@ class ResponsePagination(TypedDict):
     total: int
     size: int
     pages: int
-    next: Optional[str]
-    previous: Optional[str]
+    next: str | None
+    previous: str | None
     sort: str
     order: str
 
@@ -676,7 +678,7 @@ class ElasticsearchService(DocumentService):
                      entity_type: str,
                      filters: Filters,
                      post_filter: bool,
-                     document_slice: Optional[DocumentSlice]
+                     document_slice: DocumentSlice | None
                      ) -> ElasticsearchChain[Response, Response]:
         """
         Create a chain for a basic Elasticsearch `search` request for documents

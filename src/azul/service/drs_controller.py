@@ -13,9 +13,6 @@ from datetime import (
     datetime,
 )
 import time
-from typing import (
-    Optional,
-)
 import urllib.parse
 
 from chalice import (
@@ -35,11 +32,11 @@ import requests
 
 from azul import (
     CatalogName,
+    R,
     cached_property,
     config,
     dss,
     mutable_furl,
-    require,
 )
 from azul.collections import (
     adict,
@@ -180,7 +177,7 @@ class DRSController(SourceController):
                 dss_response = requests.get(url, params=params, allow_redirects=False)
                 if dss_response.status_code == 302:
                     url = furl(dss_response.next.url)
-                    require(url.scheme == 'gs', url)
+                    assert url.scheme == 'gs', R('Expected a gs:// URL', url)
                     return url
                 elif dss_response.status_code == 301:
                     url = dss_response.next.url
@@ -243,13 +240,13 @@ class DRSObject:
     Used to build up a https://ga4gh.github.io/data-repository-service-schemas/docs/#_drsobject
     """
     uuid: str
-    version: Optional[str] = None
+    version: str | None = None
     access_methods: list[MutableJSON] = field(default_factory=list)
 
     def add_access_method(self,
                           access_method: AccessMethod, *,
-                          url: Optional[str] = None,
-                          access_id: Optional[str] = None):
+                          url: str | None = None,
+                          access_id: str | None = None):
         """
         We only currently use `url_type`s of 'https' and 'gs'. Only one of `url`
         and `access_id` should be specified.
@@ -346,8 +343,8 @@ def decode_access_id(access_id: str) -> tuple[str, str]:
 
 def dss_drs_object_uri(*,
                        file_uuid: str,
-                       file_version: Optional[str] = None,
-                       base_url: Optional[furl] = None
+                       file_version: str | None = None,
+                       base_url: furl | None = None
                        ) -> mutable_furl:
     """
     The drs:// URL for a given DSS file UUID and version. The return value will
@@ -369,8 +366,8 @@ def dss_drs_object_uri(*,
 def dss_dos_object_url(*,
                        catalog: CatalogName,
                        file_uuid: str,
-                       file_version: Optional[str] = None,
-                       base_url: Optional[furl] = None
+                       file_version: str | None = None,
+                       base_url: furl | None = None
                        ) -> mutable_furl:
     """
     The http:// or https:// URL for a given DSS file UUID and version. The
@@ -394,9 +391,9 @@ def dss_dos_object_url(*,
 
 def dss_drs_object_url(*,
                        file_uuid: str,
-                       file_version: Optional[str] = None,
-                       base_url: Optional[furl] = None,
-                       access_id: Optional[str] = None
+                       file_version: str | None = None,
+                       base_url: furl | None = None,
+                       access_id: str | None = None
                        ) -> mutable_furl:
     """
     The http:// or https:// URL for a given DSS file UUID and version. The
@@ -419,9 +416,9 @@ def dss_drs_object_url(*,
                 args=_url_query(file_version))
 
 
-def _base_url(base_url: Optional[furl]) -> furl:
+def _base_url(base_url: furl | None) -> furl:
     return config.drs_endpoint if base_url is None else base_url
 
 
-def _url_query(file_version: Optional[str]) -> Mapping[str, str]:
+def _url_query(file_version: str | None) -> Mapping[str, str]:
     return {'version': file_version} if file_version else {}

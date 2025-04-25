@@ -17,6 +17,7 @@ from time import (
 from typing import (
     ClassVar,
     Optional,
+    Self,
 )
 
 import attrs
@@ -122,7 +123,7 @@ class TDRSourceSpec(SourceSpec):
     name: str
 
     @classmethod
-    def parse(cls, spec: str) -> 'TDRSourceSpec':
+    def parse(cls, spec: str) -> Self:
         """
         Construct an instance from its string representation, using the syntax
         'tdr:{type}:{domain}:{subdomain}:{name}:{prefix}', where prefix is
@@ -626,7 +627,7 @@ class TDRClient(SAMClient):
         return snapshots
 
     @classmethod
-    def for_indexer(cls) -> 'TDRClient':
+    def for_indexer(cls) -> Self:
         return cls(
             credentials_provider=IndexerServiceAccountCredentialsProvider(
                 service_account=config.ServiceAccount.indexer
@@ -634,7 +635,7 @@ class TDRClient(SAMClient):
         )
 
     @classmethod
-    def for_anonymous_user(cls) -> 'TDRClient':
+    def for_anonymous_user(cls) -> Self:
         return cls(
             credentials_provider=ServiceAccountCredentialsProvider(
                 service_account=config.ServiceAccount.public
@@ -642,7 +643,7 @@ class TDRClient(SAMClient):
         )
 
     @classmethod
-    def for_registered_user(cls, authentication: OAuth2) -> 'TDRClient':
+    def for_registered_user(cls, authentication: OAuth2) -> Self:
         self = cls(credentials_provider=UserCredentialsProvider(authentication))
         try:
             self.validate()

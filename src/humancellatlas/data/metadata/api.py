@@ -22,6 +22,7 @@ from typing import (
     Iterable,
     Mapping,
     MutableMapping,
+    Self,
     TypeVar,
 )
 from uuid import (
@@ -238,7 +239,7 @@ class ProjectPublication:
     doi: str | None
 
     @classmethod
-    def from_json(cls, json: JSON) -> 'ProjectPublication':
+    def from_json(cls, json: JSON) -> Self:
         title = lookup(json, 'title', 'publication_title')
         url = lookup(json, 'url', 'publication_url', default=None)
         return cls(title=title,
@@ -269,7 +270,7 @@ class ProjectContact:
     project_role: str | None
 
     @classmethod
-    def from_json(cls, json: JSON) -> 'ProjectContact':
+    def from_json(cls, json: JSON) -> Self:
         project_role = json.get('project_role')
         project_role = ontology_label(project_role) if isinstance(project_role, dict) else project_role
         return cls(name=lookup(json, 'name', 'contact_name'),
@@ -641,7 +642,7 @@ class ImagingProbe:
     assay_type: str
 
     @classmethod
-    def from_json(cls, json: JSON) -> 'ImagingProbe':
+    def from_json(cls, json: JSON) -> Self:
         assay_type = ontology_label(json['assay_type'])
         return cls(assay_type=assay_type)
 

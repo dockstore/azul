@@ -20,9 +20,9 @@ from more_itertools import (
 )
 
 from azul import (
+    R,
     cached_property,
     config,
-    require,
     uuids,
 )
 from azul.bigquery import (
@@ -262,6 +262,7 @@ class Plugin(TDRPlugin[TDRAnvilBundle, TDRAnvilBundleFQID]):
                      prefix: str
                      ) -> list[TDRAnvilBundleFQID]:
         self._assert_source(source)
+        self._assert_partition(source, prefix)
         bundles = []
         spec = source.spec
 
@@ -447,7 +448,8 @@ class Plugin(TDRPlugin[TDRAnvilBundle, TDRAnvilBundleFQID]):
                 dataset_id: Key = one(keys_by_type['anvil_dataset'])
                 for row in rows:
                     donor_dataset_id = row['part_of_dataset_id']
-                    require(donor_dataset_id == dataset_id, donor_dataset_id, dataset_id)
+                    assert donor_dataset_id == dataset_id, R(
+                        'Conflicting keys', donor_dataset_id, dataset_id)
             for row in sorted(rows, key=itemgetter(pk_column)):
                 key = KeyReference(key=row[pk_column], entity_type=entity_type)
                 entity = EntityReference(entity_id=row['datarepo_row_id'],
@@ -472,10 +474,15 @@ class Plugin(TDRPlugin[TDRAnvilBundle, TDRAnvilBundleFQID]):
                 linked_file_refs.add(file_ref)
         dataset_ref, dataset_row = self._get_dataset(source)
         result.add_entity(dataset_ref, self._version, dict(dataset_row))
-        result.add_links([
-            EntityLink(inputs=singleton(dataset_ref),
-                       outputs=frozenset(linked_file_refs))
-        ])
+        # Avoid inserting "degenerate" links with an empty list of outputs, i.e.
+        # in case of an empty batch (as is common on `anvilbox`). Such links
+        # would be harmless in production, but would complicate the bundle
+        # canning integration test.
+        if linked_file_refs:
+            result.add_links([
+                EntityLink(inputs=singleton(dataset_ref),
+                           outputs=frozenset(linked_file_refs))
+            ])
         return result
 
     def _duos_bundle(self, bundle_fqid: TDRAnvilBundleFQID) -> TDRAnvilBundle:
@@ -871,9 +878,9 @@ class Plugin(TDRPlugin[TDRAnvilBundle, TDRAnvilBundleFQID]):
             ]
             log.debug('Retrieved %i entities of type %r', len(rows), entity_type)
             missing = keys - {row[pk_column] for row in rows}
-            require(not missing,
-                    f'Found only {len(rows)} out of {len(keys)} expected rows in {table_name}. '
-                    f'Missing entities: {missing}')
+            assert not missing, R(
+                f'Found only {len(rows)} out of {len(keys)} expected rows in {table_name}. '
+                f'Missing entities: {missing}')
             return rows
         else:
             return []

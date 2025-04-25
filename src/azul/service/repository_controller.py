@@ -6,7 +6,6 @@ import json
 import logging
 import time
 from typing import (
-    Optional,
     TYPE_CHECKING,
     cast,
 )
@@ -19,10 +18,10 @@ from chalice import (
 
 from azul import (
     CatalogName,
+    R,
     cache,
     cached_property,
     config,
-    reject,
 )
 from azul.auth import (
     Authentication,
@@ -80,8 +79,8 @@ class RepositoryController(SourceController):
                *,
                catalog: CatalogName,
                entity_type: str,
-               item_id: Optional[str],
-               filters: Optional[str],
+               item_id: str | None,
+               filters: str | None,
                pagination: Pagination,
                authentication: Authentication
                ) -> JSON:
@@ -114,7 +113,7 @@ class RepositoryController(SourceController):
 
     def _parse_range_request_header(self,
                                     range_specifier: str
-                                    ) -> Sequence[tuple[Optional[int], Optional[int]]]:
+                                    ) -> Sequence[tuple[int | None, int | None]]:
         """
         >>> # noinspection PyTypeChecker
         >>> rc = RepositoryController(app=None, file_url_func=None)
@@ -161,7 +160,7 @@ class RepositoryController(SourceController):
         chalice.app.BadRequestError: Invalid range specifier 'bytes=--'
         """
 
-        def to_int_or_none(value: str) -> Optional[int]:
+        def to_int_or_none(value: str) -> int | None:
             return None if value == '' else int(value)
 
         parsed_ranges = []
@@ -170,10 +169,10 @@ class RepositoryController(SourceController):
             if unit == 'bytes':
                 for range_spec in ranges.split(','):
                     start, end = range_spec.split('-')
-                    reject(start == '' and end == '', 'Empty range')
+                    assert start != '' or end != '', R('Empty range')
                     parsed_ranges.append((to_int_or_none(start), to_int_or_none(end)))
             else:
-                reject(unit == '', 'Empty range unit')
+                assert unit != '', R('Empty range unit')
         except Exception as e:
             raise BadRequestError(f'Invalid range specifier {range_specifier!r}') from e
         return parsed_ranges
@@ -184,7 +183,7 @@ class RepositoryController(SourceController):
                       file_uuid: str,
                       query_params: Mapping[str, str],
                       headers: Mapping[str, str],
-                      authentication: Optional[Authentication]
+                      authentication: Authentication | None
                       ):
         file_version = query_params.get('version')
         replica = query_params.get('replica')
@@ -217,12 +216,6 @@ class RepositoryController(SourceController):
             assert file_version is not None
             assert file_name is not None
 
-        # Due to https://github.com/curl/curl/issues/6740 causing curl to error
-        # when trying to resume a previously completed file download, we check
-        # for a range request starting at the end of the file and instead of
-        # a returning a 416 (Range Not Satisfiable) as specified in RFC7233
-        # https://tools.ietf.org/html/rfc7233#section-4.4 we return a 206
-        # (Partial Content) with an empty body.
         try:
             range_specifier = headers['range']
         except KeyError:
@@ -230,9 +223,16 @@ class RepositoryController(SourceController):
         else:
             requested_range = self._parse_range_request_header(range_specifier)
             if requested_range == [(file_size, None)]:
+                # Due to https://github.com/curl/curl/issues/10521 which causes
+                # curl below 8.5.0 to fail when getting a 416 response for an
+                # attempt to resume a previously completed file download,
+                # instead, we return a 206 along with a `Content-Range` header,
+                # which has been confirmed to work for all curl versions tested
+                # (7.71.1 through 8.12.1).
                 return {
                     'Status': 206,
-                    'Content-Length': 0
+                    'Content-Length': 0,
+                    'Content-Range': f'bytes */{file_size}'
                 }
 
         download = download_cls(file_uuid=file_uuid,

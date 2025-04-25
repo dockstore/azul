@@ -18,6 +18,7 @@ from tokenize import (
 )
 from typing import (
     Optional,
+    Self,
     Union,
 )
 
@@ -57,7 +58,7 @@ class ModuleType(enum.IntEnum):
     internal = 3
 
     @classmethod
-    def from_module_name(cls, module_name: str) -> 'ModuleType':
+    def from_module_name(cls, module_name: str) -> Self:
         """
         Infer module origin by inspecting the spec from its resolved name.
 
@@ -137,13 +138,13 @@ class ModuleOrderInfo:
         return module_name, is_from_import
 
     @classmethod
-    def from_stmt(cls, src: str) -> 'ModuleOrderInfo':
+    def from_stmt(cls, src: str) -> Self:
         s = one(ast.parse(src).body)
         assert isinstance(s, (ast.Import, ast.ImportFrom))
-        return ModuleOrderInfo.from_ast(s)
+        return cls.from_ast(s)
 
     @classmethod
-    def from_ast(cls, node: EitherImport) -> 'ModuleOrderInfo':
+    def from_ast(cls, node: EitherImport) -> Self:
         """
         >>> from_stmt = ModuleOrderInfo.from_stmt
 
@@ -184,7 +185,7 @@ class OrderedImport:
     order_info: ModuleOrderInfo
 
     @classmethod
-    def from_ast(cls, node: EitherImport) -> 'OrderedImport':
+    def from_ast(cls, node: EitherImport) -> Self:
         return cls(node=node, order_info=ModuleOrderInfo.from_ast(node))
 
     def is_correct_order(self, other: 'OrderedImport') -> bool:
