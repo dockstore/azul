@@ -2,7 +2,6 @@ from collections.abc import (
     Mapping,
     Sequence,
 )
-import json
 import logging
 from typing import (
     Protocol,
@@ -18,9 +17,6 @@ from chalice import (
 from azul import (
     CatalogName,
     mutable_furl,
-)
-from azul.chalice import (
-    AppController,
 )
 from azul.json import (
     copy_json,
@@ -174,18 +170,3 @@ class FileUrlFunc(Protocol):
                  fetch: bool = True,
                  **params: str
                  ) -> mutable_furl: ...
-
-
-@attr.s(auto_attribs=True, frozen=True, kw_only=True)
-class ServiceAppController(AppController):
-    file_url_func: FileUrlFunc
-
-    def _parse_filters(self, filters: str | None) -> FiltersJSON:
-        """
-        Parses a string with Azul filters in JSON syntax. Handles default cases
-        where filters are None or '{}'.
-        """
-        if filters is None:
-            return {}
-        else:
-            return json.loads(filters)
