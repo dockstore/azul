@@ -701,20 +701,30 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
                     ):
         file = self.load_file(catalog, file_json)
         assert file.size is not None, R('File size unknown', file)
-        part_size = FilePart.default_size
-        if file.size <= part_size:
-            log.info('Mirroring file %r via standard upload', file.uuid)
-            self.mirror_service.mirror_file(catalog, file)
-            log.info('Successfully mirrored file %r via standard upload', file.uuid)
+
+        file_is_large = file.size > 10 * 1024 ** 2
+        deployment_is_stable = (config.deployment.is_stable
+                                and not config.deployment.is_unit_test
+                                and catalog not in config.integration_test_catalogs)
+        if file_is_large and not deployment_is_stable:
+            log.info('Not mirroring file %r (%d bytes) to save cost',
+                     file.uuid, file.size)
         else:
-            log.info('Mirroring file %r via multi-part upload', file.uuid)
-            upload_id = self.mirror_service.begin_mirroring_file(file)
-            first_part = FilePart.first(file, part_size)
-            etag = self.mirror_service.mirror_file_part(catalog, file, first_part, upload_id)
-            next_part = first_part.next(file)
-            assert next_part is not None
-            messages = [self.mirror_part_message(catalog, file, next_part, upload_id, [etag])]
-            self.queue_mirror_messages(messages)
+            # Ensure we test with multiple parts on lower deployments
+            part_size = FilePart.default_size if deployment_is_stable else FilePart.min_size
+            if file.size <= part_size:
+                log.info('Mirroring file %r via standard upload', file.uuid)
+                self.mirror_service.mirror_file(catalog, file)
+                log.info('Successfully mirrored file %r via standard upload', file.uuid)
+            else:
+                log.info('Mirroring file %r via multi-part upload', file.uuid)
+                upload_id = self.mirror_service.begin_mirroring_file(file)
+                first_part = FilePart.first(file, part_size)
+                etag = self.mirror_service.mirror_file_part(catalog, file, first_part, upload_id)
+                next_part = first_part.next(file)
+                assert next_part is not None
+                messages = [self.mirror_part_message(catalog, file, next_part, upload_id, [etag])]
+                self.queue_mirror_messages(messages)
 
     def mirror_file_part(self,
                          catalog: CatalogName,
