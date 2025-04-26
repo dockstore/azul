@@ -3,6 +3,7 @@ import logging
 import time
 from typing import (
     Optional,
+    Self,
     TYPE_CHECKING,
 )
 
@@ -78,7 +79,7 @@ class Lambda:
         ))
 
     @classmethod
-    def from_response(cls, response: 'FunctionConfigurationTypeDef') -> 'Lambda':
+    def from_response(cls, response: 'FunctionConfigurationTypeDef') -> Self:
         name = response['FunctionName']
         role = response['Role']
         try:

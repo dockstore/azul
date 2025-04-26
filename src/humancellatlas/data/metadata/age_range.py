@@ -1,6 +1,9 @@
 from dataclasses import (
     dataclass,
 )
+from typing import (
+    Self,
+)
 
 
 @dataclass(frozen=True)
@@ -68,7 +71,7 @@ class AgeRange:
                    second=1.0)
 
     @classmethod
-    def parse(cls, age: str, unit: str) -> 'AgeRange':
+    def parse(cls, age: str, unit: str) -> Self:
         def fail():
             return ValueError(f"Cannot convert age '{age}' with unit '{unit}' to an AgeRange object")
 

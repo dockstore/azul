@@ -80,9 +80,6 @@ from azul.types import (
     JSON,
     json_mapping,
 )
-from azul.uuids import (
-    validate_uuid_prefix,
-)
 
 if TYPE_CHECKING:
     from mypy_boto3_sqs.service_resource import (
@@ -288,7 +285,6 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
                      source: str | SourceRef,
                      prefix: str
                      ) -> list[SourcedBundleFQID]:
-        validate_uuid_prefix(prefix)
         plugin = self.repository_plugin(catalog)
         if isinstance(source, str):
             source = plugin.resolve_source(source)
@@ -333,7 +329,6 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
         catalog, prefix = message['catalog'], message['prefix']
         assert isinstance(catalog, str) and isinstance(prefix, str)
         source = json_mapping(message['source'])
-        validate_uuid_prefix(prefix)
         source = self.repository_plugin(catalog).source_ref_cls.from_json(source)
         bundle_fqids = self.list_bundles(catalog, source, prefix)
         # All AnVIL bundles and entities use the same version

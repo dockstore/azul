@@ -28,9 +28,9 @@ from furl import (
 
 from azul import (
     CatalogName,
+    R,
     config,
     lru_cache,
-    require,
 )
 from azul.auth import (
     Authentication,
@@ -133,10 +133,10 @@ class Plugin(RepositoryPlugin[CannedBundle, SimpleSourceSpec, CannedSourceRef, C
         >>> plugin.parse_github_url(furl('https://github.com/OWNER/NAME/tree/REF/tests'))
         (furl('https://github.com/OWNER/NAME.git'), PosixPath('tests'), 'REF')
         """
-        require(url.scheme == 'https', url)
-        require(url.host == 'github.com', url)
+        assert url.scheme == 'https', R('Unexpected scheme', url)
+        assert url.host == 'github.com', R('Unexpected host', url)
         owner, name, slug, ref, *path = url.path.segments
-        require(slug == 'tree', url)
+        assert slug == 'tree', R('Unexpected slug', url)
         remote_url = furl(url.origin)
         remote_url.path.add((owner, f'{name}.git'))
         return remote_url, Path(*path), ref
@@ -160,10 +160,10 @@ class Plugin(RepositoryPlugin[CannedBundle, SimpleSourceSpec, CannedSourceRef, C
 
     def count_bundles(self, source: CannedSourceRef) -> int:
         staging_area = self.staging_area(source.spec.name)
-        if source.prefix is None:
+        if source.spec.prefix is None:
             return len(staging_area.links)
         else:
-            prefix = source.prefix.common
+            prefix = source.spec.prefix.common
             return sum(1 for links_id in staging_area.links if links_id.startswith(prefix))
 
     def list_bundles(self,
@@ -171,6 +171,7 @@ class Plugin(RepositoryPlugin[CannedBundle, SimpleSourceSpec, CannedSourceRef, C
                      prefix: str
                      ) -> list[CannedBundleFQID]:
         self._assert_source(source)
+        self._assert_partition(source, prefix)
         staging_area = self.staging_area(source.spec.name)
         return [
             CannedBundleFQID(source=source,
@@ -209,14 +210,17 @@ class Plugin(RepositoryPlugin[CannedBundle, SimpleSourceSpec, CannedSourceRef, C
         >>> plugin._construct_file_url(url, '')
         Traceback (most recent call last):
         ...
-        azul.RequirementError: file_name cannot be empty
+        AssertionError: R('file_name cannot be empty')
         """
-        require(url.path.segments[2] == 'tree', str(url))
+        assert url.path.segments[2] == 'tree', R(
+            'Unexpected path', str(url))
         file_url = furl(url)
         file_url.path.segments[2] = 'raw'
         file_url.path.segments.append('data')
-        require(len(file_name) > 0, 'file_name cannot be empty')
-        require(not file_name.endswith('/'), file_name)
+        assert len(file_name) > 0, R(
+            'file_name cannot be empty')
+        assert not file_name.endswith('/'), R(
+            "File name cannot end with '/'", file_name)
         for segment in file_name.split('/'):
             file_url.path.segments.append(segment)
         return file_url

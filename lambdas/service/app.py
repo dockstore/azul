@@ -15,9 +15,6 @@ import logging.config
 from typing import (
     Any,
     Callable,
-    Optional,
-    Type,
-    Union,
 )
 import urllib.parse
 
@@ -334,7 +331,7 @@ class ServiceApp(HealthApp):
         return self._service_controller(ManifestController,
                                         manifest_url_func=manifest_url_func)
 
-    def _service_controller(self, controller_cls: Type[C], **kwargs) -> C:
+    def _service_controller(self, controller_cls: type[C], **kwargs) -> C:
         file_url_func: FileUrlFunc = self.file_url
         return self._controller(controller_cls,
                                 file_url_func=file_url_func,
@@ -383,7 +380,7 @@ class ServiceApp(HealthApp):
     class Pagination(Pagination):
         self_url: furl
 
-        def link(self, *, previous: bool, **params: str) -> Optional[furl]:
+        def link(self, *, previous: bool, **params: str) -> furl | None:
             search_key = self.search_before if previous else self.search_after
             if search_key is None:
                 return None
@@ -436,7 +433,7 @@ class ServiceApp(HealthApp):
         url = self.base_url.add(path=path.format(file_uuid=file_uuid))
         return url.set(args=dict(catalog=catalog, **params))
 
-    def _authenticate(self) -> Optional[OAuth2]:
+    def _authenticate(self) -> OAuth2 | None:
         try:
             header = self.current_request.headers['Authorization']
         except KeyError:
@@ -455,7 +452,7 @@ class ServiceApp(HealthApp):
     def manifest_url(self,
                      *,
                      fetch: bool,
-                     token_or_key: Optional[str] = None,
+                     token_or_key: str | None = None,
                      **params: str
                      ) -> mutable_furl:
         if token_or_key is None:
@@ -594,7 +591,7 @@ def validate_filters(filters):
                 raise BRE(f'The relation in the `filters` parameter entry '
                           f'for `{field}` must be one of {valid_relations}')
             if relation == 'is':
-                value_types = reify(Union[JSON, PrimitiveJSON])
+                value_types = reify(JSON | PrimitiveJSON)
                 if not all(isinstance(value, value_types) for value in values):
                     raise BRE(f'The value of the `is` relation in the `filters` '
                               f'parameter entry for `{field}` is invalid')
@@ -1113,7 +1110,7 @@ repository_summary_spec = {
     spec=repository_id_spec(),
     cors=True
 )
-def repository_search(entity_type: str, entity_id: Optional[str] = None) -> JSON:
+def repository_search(entity_type: str, entity_id: str | None = None) -> JSON:
     request = app.current_request
     query_params = request.query_params or {}
     _hoist_parameters(query_params, request)
@@ -1497,7 +1494,7 @@ def fetch_file_manifest_with_token(token: str):
     return _file_manifest(fetch=True, token_or_key=token)
 
 
-def _file_manifest(fetch: bool, token_or_key: Optional[str] = None):
+def _file_manifest(fetch: bool, token_or_key: str | None = None):
     request = app.current_request
     query_params = request.query_params or {}
     _hoist_parameters(query_params, request)
@@ -1717,7 +1714,7 @@ def _repository_files(file_uuid: str, fetch: bool) -> MutableJSON:
         if replica not in ('aws', 'gcp'):
             raise ValueError
 
-    def validate_wait(wait: Optional[str]) -> Optional[int]:
+    def validate_wait(wait: str | None) -> int | None:
         if wait is None:
             return None
         elif wait == '0':

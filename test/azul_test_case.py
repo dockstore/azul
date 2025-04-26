@@ -554,7 +554,7 @@ class DCP2TestCase(TDRTestCase):
 
 class AnvilTestCase(TDRTestCase):
     source = TDRSourceRef(id='6c87f0e1-509d-46a4-b845-7584df39263b',
-                          spec=TDRSourceSpec.parse('tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/2'))
+                          spec=TDRSourceSpec.parse('tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0'))
 
     @classmethod
     def catalog_config(cls) -> dict[CatalogName, config.Catalog]:

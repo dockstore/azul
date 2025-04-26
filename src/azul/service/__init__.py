@@ -5,8 +5,8 @@ from collections.abc import (
 import json
 import logging
 from typing import (
-    Optional,
     Protocol,
+    Self,
     TypedDict,
 )
 
@@ -65,7 +65,7 @@ class Filters:
     source_ids: set[str]
 
     @classmethod
-    def from_json(cls, json: JSON) -> 'Filters':
+    def from_json(cls, json: JSON) -> Self:
         """
         Deserialize an instance of this class without reifying it.
         """
@@ -81,7 +81,7 @@ class Filters:
             'source_ids': sorted(self.source_ids)
         }
 
-    def update(self, filters: FiltersJSON) -> 'Filters':
+    def update(self, filters: FiltersJSON) -> Self:
         return attr.evolve(self, explicit={**self.explicit, **filters})
 
     def reify(self,
@@ -181,7 +181,7 @@ class FileUrlFunc(Protocol):
 class ServiceAppController(AppController):
     file_url_func: FileUrlFunc
 
-    def _parse_filters(self, filters: Optional[str]) -> FiltersJSON:
+    def _parse_filters(self, filters: str | None) -> FiltersJSON:
         """
         Parses a string with Azul filters in JSON syntax. Handles default cases
         where filters are None or '{}'.
