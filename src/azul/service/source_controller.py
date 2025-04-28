@@ -22,6 +22,8 @@ from azul.http import (
 )
 from azul.service import (
     Filters,
+)
+from azul.service.app_controller import (
     ServiceAppController,
 )
 from azul.service.source_service import (

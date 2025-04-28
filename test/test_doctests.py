@@ -27,7 +27,6 @@ from azul.logging import (
     configure_test_logging,
 )
 from azul.modules import (
-    load_app_module,
     load_module,
     load_script,
 )
@@ -40,6 +39,7 @@ import azul.plugins.metadata.hca.indexer.transform
 import azul.plugins.metadata.hca.service.contributor_matrices
 import azul.plugins.repository.canned
 import azul.plugins.repository.tdr_hca
+import azul.service.app_controller
 import azul.service.drs_controller
 import azul.service.manifest_service
 import azul.service.repository_controller
@@ -97,6 +97,7 @@ def load_tests(_loader,
         azul.plugins.repository.canned,
         azul.plugins.repository.tdr_hca,
         azul.plugins.metadata.hca.indexer.transform,
+        azul.service.app_controller,
         azul.service.drs_controller,
         azul.service.manifest_service,
         azul.service.repository_controller,
@@ -108,7 +109,6 @@ def load_tests(_loader,
         azul.types,
         azul.uuids,
         azul.vendored.frozendict,
-        load_app_module('service', unit_test=True),
         load_script('can_bundle'),
         load_script('envhook'),
         load_script('export_environment'),
