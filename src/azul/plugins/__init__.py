@@ -666,7 +666,8 @@ class RepositoryPlugin[BUNDLE: Bundle,
     def count_bundles(self, source: SOURCE_SPEC) -> int:
         """
         The total number of subgraphs in the given source. The source's prefix
-        may be None.
+        may be None, indicating that the source hasn't been partitioned yet and
+        that this method should count all bundles in the source.
         """
         raise NotImplementedError
 
