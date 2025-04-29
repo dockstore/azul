@@ -1504,10 +1504,9 @@ lm8_sources = mkdict(lm7_sources, 12, mkdelta([
     mksrc('bigquery', 'datarepo-c11ef363', 'lungmap_prod_fdadee7e209745d5bf81cc280bd8348e__20240206_20241002_lm8')
 ]))
 
-lm9_sources = mkdict(lm8_sources, 19, mkdelta([
+lm9_sources = mkdict(lm8_sources, 18, mkdelta([
     mksrc('bigquery', 'datarepo-b1089110', 'lungmap_prod_0229ea32ef02489eb11eff15819e22c1__20250415_20250418_lm9'),
     mksrc('bigquery', 'datarepo-03c407d8', 'lungmap_prod_1977dc4784144263a8706b0f207d8ab3__20240206_20250416_lm9'),
-    mksrc('bigquery', 'datarepo-6f06cae8', 'lungmap_prod_1f00915122064294929a9c720f19a13f__20250415_20250418_lm9'),
     mksrc('bigquery', 'datarepo-0877e6bb', 'lungmap_prod_20037472ea1d4ddb9cd356a11a6f0f76__20220307_20250416_lm9'),
     mksrc('bigquery', 'datarepo-54bec519', 'lungmap_prod_4ae8c5c91520437198276935661f6c84__20231004_20250416_lm9'),
     mksrc('bigquery', 'datarepo-d07bc420', 'lungmap_prod_4fb3669262404146a7e654543543230c__20250415_20250416_lm9'),
