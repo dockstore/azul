@@ -1504,15 +1504,12 @@ lm8_sources = mkdict(lm7_sources, 12, mkdelta([
     mksrc('bigquery', 'datarepo-c11ef363', 'lungmap_prod_fdadee7e209745d5bf81cc280bd8348e__20240206_20241002_lm8')
 ]))
 
-lm9_sources = mkdict(lm8_sources, 18, mkdelta([
+lm9_sources = mkdict(lm8_sources, 15, mkdelta([
     mksrc('bigquery', 'datarepo-b1089110', 'lungmap_prod_0229ea32ef02489eb11eff15819e22c1__20250415_20250418_lm9'),
     mksrc('bigquery', 'datarepo-03c407d8', 'lungmap_prod_1977dc4784144263a8706b0f207d8ab3__20240206_20250416_lm9'),
     mksrc('bigquery', 'datarepo-0877e6bb', 'lungmap_prod_20037472ea1d4ddb9cd356a11a6f0f76__20220307_20250416_lm9'),
     mksrc('bigquery', 'datarepo-54bec519', 'lungmap_prod_4ae8c5c91520437198276935661f6c84__20231004_20250416_lm9'),
-    mksrc('bigquery', 'datarepo-d07bc420', 'lungmap_prod_4fb3669262404146a7e654543543230c__20250415_20250416_lm9'),
-    mksrc('bigquery', 'datarepo-a5274422', 'lungmap_prod_5134c97dbbdb4d9db483cdebeaf667b3__20250415_20250416_lm9'),
     mksrc('bigquery', 'datarepo-1bb532f8', 'lungmap_prod_ccea5717a8484c068d2dd1b694e89441__20250415_20250416_lm9'),
-    mksrc('bigquery', 'datarepo-9f52208b', 'lungmap_prod_e651ac3e03aa46fa9ed370c6fda4e440__20250415_20250416_lm9'),
     mksrc('bigquery', 'datarepo-712ca26e', 'lungmap_prod_e68d2111316f4dedbf490ab332488665__20250415_20250416_lm9'),
     mksrc('bigquery', 'datarepo-43defe56', 'lungmap_prod_f899709cae2c4bb988f0131142e6c7ec__20220310_20250416_lm9'),
     mksrc('bigquery', 'datarepo-22d19916', 'lungmap_prod_fdadee7e209745d5bf81cc280bd8348e__20240206_20250416_lm9'),
