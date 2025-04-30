@@ -250,7 +250,7 @@ class Plugin(TDRPlugin[TDRHCABundle, TDRBundleFQID]):
         current_bundles = self._query_unique_sorted(f'''
             SELECT links_id, version
             FROM {backtick(self._full_table_name(source.spec, 'links'))}
-            WHERE STARTS_WITH(links_id, '{prefix}')
+            WHERE STARTS_WITH(links_id, {prefix!r})
         ''', group_by='links_id')
         return [
             TDRBundleFQID(source=source,
