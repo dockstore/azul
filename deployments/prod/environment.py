@@ -1504,7 +1504,7 @@ lm8_sources = mkdict(lm7_sources, 12, mkdelta([
     mksrc('bigquery', 'datarepo-c11ef363', 'lungmap_prod_fdadee7e209745d5bf81cc280bd8348e__20240206_20241002_lm8')
 ]))
 
-lm9_sources = mkdict(lm8_sources, 15, mkdelta([
+lm9_sources = mkdict(lm8_sources, 14, mkdelta([
     mksrc('bigquery', 'datarepo-1bb532f8', 'lungmap_prod_ccea5717a8484c068d2dd1b694e89441__20250415_20250416_lm9'),
     mksrc('bigquery', 'datarepo-712ca26e', 'lungmap_prod_e68d2111316f4dedbf490ab332488665__20250415_20250416_lm9'),
     mksrc('bigquery', 'datarepo-22d19916', 'lungmap_prod_fdadee7e209745d5bf81cc280bd8348e__20240206_20250416_lm9'),
