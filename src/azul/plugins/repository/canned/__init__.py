@@ -164,7 +164,12 @@ class Plugin(RepositoryPlugin[CannedBundle, SimpleSourceSpec, CannedSourceRef, C
             return len(staging_area.links)
         else:
             prefix = source.spec.prefix.common
-            return sum(1 for links_id in staging_area.links if links_id.startswith(prefix))
+            assert prefix == prefix.lower(), source
+            return sum(
+                1
+                for links_id in staging_area.links
+                if links_id.lower().startswith(prefix)
+            )
 
     def list_bundles(self,
                      source: CannedSourceRef,
@@ -172,13 +177,14 @@ class Plugin(RepositoryPlugin[CannedBundle, SimpleSourceSpec, CannedSourceRef, C
                      ) -> list[CannedBundleFQID]:
         self._assert_source(source)
         self._assert_partition(source, prefix)
+        assert prefix == prefix.lower(), prefix
         staging_area = self.staging_area(source.spec.name)
         return [
             CannedBundleFQID(source=source,
                              uuid=link.uuid,
                              version=link.version)
             for link in staging_area.links.values()
-            if link.uuid.startswith(prefix)
+            if link.uuid.lower().startswith(prefix)
         ]
 
     def fetch_bundle(self, bundle_fqid: CannedBundleFQID) -> CannedBundle:

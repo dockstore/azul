@@ -233,10 +233,11 @@ class Plugin(TDRPlugin[TDRHCABundle, TDRBundleFQID]):
 
     def count_bundles(self, source: TDRSourceSpec) -> int:
         prefix = '' if source.prefix is None else source.prefix.common
+        assert prefix == prefix.lower(), source
         query = f'''
         SELECT COUNT(*) AS count
         FROM {backtick(self._full_table_name(source, 'links'))}
-        WHERE STARTS_WITH(datarepo_row_id, {prefix!r})
+        WHERE STARTS_WITH(LOWER(datarepo_row_id), {prefix!r})
         '''
         rows = self._run_sql(query)
         return one(rows)['count']
@@ -247,10 +248,11 @@ class Plugin(TDRPlugin[TDRHCABundle, TDRBundleFQID]):
                      ) -> list[TDRBundleFQID]:
         self._assert_source(source)
         self._assert_partition(source, prefix)
+        assert prefix == prefix.lower(), source
         current_bundles = self._query_unique_sorted(f'''
             SELECT links_id, version
             FROM {backtick(self._full_table_name(source.spec, 'links'))}
-            WHERE STARTS_WITH(links_id, {prefix!r})
+            WHERE STARTS_WITH(LOWER(links_id), {prefix!r})
         ''', group_by='links_id')
         return [
             TDRBundleFQID(source=source,

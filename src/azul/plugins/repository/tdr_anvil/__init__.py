@@ -243,15 +243,16 @@ class Plugin(TDRPlugin[TDRAnvilBundle, TDRAnvilBundleFQID]):
 
     def count_bundles(self, source: TDRSourceSpec) -> int:
         prefix = '' if source.prefix is None else source.prefix.common
+        assert prefix == prefix.lower(), source
         primary_count = one(self._run_sql(f'''
             SELECT COUNT(*) AS count
             FROM {backtick(self._full_table_name(source, BundleType.primary.value))}
-            WHERE STARTS_WITH(datarepo_row_id, {prefix!r})
+            WHERE STARTS_WITH(LOWER(datarepo_row_id), {prefix!r})
         '''))['count']
         duos_count = 0 if config.duos_service_url is None else one(self._run_sql(f'''
             SELECT COUNT(*) AS count
             FROM {backtick(self._full_table_name(source, BundleType.duos.value))}
-            WHERE STARTS_WITH(datarepo_row_id, {prefix!r})
+            WHERE STARTS_WITH(LOWER(datarepo_row_id), {prefix!r})
         '''))['count']
         sizes_by_table = self._batch_tables(source, prefix)
         batched_count = sum(batch_size for (_, batch_size) in sizes_by_table.values())
@@ -263,6 +264,7 @@ class Plugin(TDRPlugin[TDRAnvilBundle, TDRAnvilBundleFQID]):
                      ) -> list[TDRAnvilBundleFQID]:
         self._assert_source(source)
         self._assert_partition(source, prefix)
+        assert prefix == prefix.lower(), prefix
         bundles = []
         spec = source.spec
 
@@ -290,7 +292,7 @@ class Plugin(TDRPlugin[TDRAnvilBundle, TDRAnvilBundleFQID]):
         for row in self._run_sql(f'''
             SELECT datarepo_row_id
             FROM {backtick(self._full_table_name(spec, BundleType.primary.value))}
-            WHERE STARTS_WITH(datarepo_row_id, {prefix!r})
+            WHERE STARTS_WITH(LOWER(datarepo_row_id), {prefix!r})
         '''):
             bundle_uuid = change_version(row['datarepo_row_id'],
                                          self.datarepo_row_uuid_version,
@@ -355,6 +357,7 @@ class Plugin(TDRPlugin[TDRAnvilBundle, TDRAnvilBundleFQID]):
         this affects this method's return value is very small, but nonzero.
         https://cloud.google.com/bigquery/docs/reference/standard-sql/aggregate_functions#avg
         """
+        assert prefix == prefix.lower(), prefix
         max_length = 4
 
         def repeat(fmt):
@@ -383,10 +386,10 @@ class Plugin(TDRPlugin[TDRAnvilBundle, TDRAnvilBundleFQID]):
                     COUNT(*) AS num_batches
                 FROM (
                     SELECT
-                        {repeat(f'SUBSTR(datarepo_row_id, {prefix_len} + {{i}}, 1) AS p{{i}}')},
+                        {repeat(f'LOWER(SUBSTR(datarepo_row_id, {prefix_len} + {{i}}, 1)) AS p{{i}}')},
                         COUNT(*) AS num_rows
                     FROM {backtick(self._full_table_name(source, table_name))}
-                    WHERE STARTS_WITH(datarepo_row_id, {prefix!r})
+                    WHERE STARTS_WITH(LOWER(datarepo_row_id), {prefix!r})
                     GROUP BY ROLLUP ({repeat('p{i}')})
                 )
                 GROUP BY batch_prefix_length
@@ -532,10 +535,11 @@ class Plugin(TDRPlugin[TDRAnvilBundle, TDRAnvilBundleFQID]):
         batch_prefix = bundle_fqid.batch_prefix
         table_name = bundle_fqid.table_name
         columns = self._columns(table_name)
+        assert not any(map(str.isupper, batch_prefix)), source
         for row in self._run_sql(f'''
             SELECT {', '.join(sorted(columns))}
             FROM {backtick(self._full_table_name(source, table_name))}
-            WHERE STARTS_WITH(datarepo_row_id, {batch_prefix!r})
+            WHERE STARTS_WITH(LOWER(datarepo_row_id), {batch_prefix!r})
         '''):
             ref = EntityReference(entity_type=table_name, entity_id=row['datarepo_row_id'])
             yield ref, row
