@@ -539,9 +539,7 @@ class AWS:
                        event_name,
                        request.method,
                        request.url)
-        message = http_body_log_message('request',
-                                        request.body,
-                                        verbatim=self._log_body_verbatim)
+        message = http_body_log_message('request', request.body)
         boto3_log.info('%s:\t%s', event_name, message)
         return None
 
@@ -557,9 +555,7 @@ class AWS:
                 boto3_log.info('%s:\tGot no response', event_name)
             else:
                 boto3_log.info('%s:\tGot %s response', event_name, response['status_code'])
-                message = http_body_log_message('response',
-                                                response['body'],
-                                                verbatim=self._log_body_verbatim)
+                message = http_body_log_message('response', response['body'])
                 boto3_log.info('%s:\t%s', event_name, message)
         else:
             if response is None:
@@ -567,10 +563,6 @@ class AWS:
             else:
                 assert False, (exception, type(response))
         return None
-
-    @property
-    def _log_body_verbatim(self):
-        return boto3_log.isEnabledFor(logging.DEBUG)
 
     def _shorten_event_name(self, event_name: str, rm_prefix: str) -> str:
         prefix, _, suffix = event_name.partition('.')

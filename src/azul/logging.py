@@ -174,18 +174,35 @@ http_body_log_prefix_len = 1024
 
 def http_body_log_message(body_type: BodyType,
                           body: bytes | bytearray | str | IO[bytes] | IO[str] | None,
-                          *,
-                          verbatim: bool = False,
                           ) -> str:
+    """
+    Returns a formatted log message for request/response bodies. The level set
+    in AZUL_DEBUG determines whether the body content is logged in full,
+    truncated, or omitted entirely. Absent or non-printable bodies (such as
+    streams) are handled with a descriptive message.
+
+    :param body_type: The type of body to specify in the message.
+
+    :param body: The body content to use in the message.
+
+    """
     if body is None:
         return f'… without {body_type} body'
-    elif isinstance(body, (bytes, bytearray, str)):
-        if verbatim:
-            if isinstance(body, (bytes, bytearray)):
-                body = body.decode(errors='ignore')
+    elif azul.config.debug > 0:
+        if isinstance(body, (bytes, bytearray, str)):
+            body_msg = _http_body_log_message(body)
         else:
-            # https://github.com/python/typing/discussions/1911
-            body = trunc_ellipses(body, max_len=http_body_log_prefix_len)  # type: ignore[type-var]
-        return f'… with {body_type} body {body!r}'
+            return f'… with nonprintable body ({type(body)!r})'
     else:
-        return f'… with nonprintable body ({type(body)!r})'
+        body_msg = 'not empty'
+    return f'… with {body_type} body {body_msg}'
+
+
+def _http_body_log_message(body: bytes | bytearray | str) -> str:
+    if azul.config.debug > 1:
+        if isinstance(body, (bytes, bytearray)):
+            body = body.decode(errors='ignore')
+    else:
+        # https://github.com/python/typing/discussions/1911
+        body = trunc_ellipses(body, max_len=http_body_log_prefix_len)  # type: ignore[type-var]
+    return f'{body!r}'
