@@ -13,7 +13,6 @@ from inspect import (
 import json
 import logging.config
 from typing import (
-    Any,
     Callable,
 )
 import urllib.parse
@@ -22,7 +21,6 @@ import attr
 from chalice import (
     BadRequestError as BRE,
     ChaliceViewError,
-    NotFoundError,
     Response,
     UnauthorizedError,
 )
@@ -37,7 +35,6 @@ from more_itertools import (
 from azul import (
     CatalogName,
     R,
-    RequirementError,
     cache,
     cached_property,
     config,
@@ -93,6 +90,10 @@ from azul.plugins.metadata.hca.indexer.transform import (
 from azul.service import (
     FileUrlFunc,
 )
+from azul.service.app_controller import (
+    validate_catalog,
+    validate_params,
+)
 from azul.service.catalog_controller import (
     CatalogController,
 )
@@ -111,9 +112,6 @@ from azul.service.manifest_service import (
 )
 from azul.service.repository_controller import (
     RepositoryController,
-)
-from azul.strings import (
-    pluralize,
 )
 from azul.types import (
     AnyJSON,
@@ -533,20 +531,6 @@ def validate_entity_type(entity_type: str):
 min_page_size = 1
 
 
-def validate_catalog(catalog):
-    try:
-        config.Catalog.validate_name(catalog)
-    except AssertionError as e:
-        if R.caused(e):
-            raise R.propagate(e, BRE)
-        else:
-            raise
-    else:
-        if catalog not in config.catalogs:
-            raise NotFoundError(f'Catalog name {catalog!r} does not exist. '
-                                f'Must be one of {set(config.catalogs)}.')
-
-
 def validate_size(entity_type: EntityType, size: str):
     sorting = app.metadata_plugin.exposed_indices[entity_type]
     try:
@@ -674,89 +658,6 @@ class Mandatory:
 
     def __call__(self, param):
         return self._validator(param)
-
-
-def validate_params(query_params: Mapping[str, str],
-                    allow_extra_params: bool = False,
-                    **validators: Callable[[Any], Any]) -> None:
-    """
-    Validates request query parameters for web-service API.
-
-    :param query_params: the parameters to be validated
-
-    :param allow_extra_params:
-
-        When False, only parameters specified via '**validators' are accepted,
-        and validation fails if additional parameters are present. When True,
-        additional parameters are allowed but their value is not validated.
-
-    :param validators:
-
-        A dictionary mapping the name of a parameter to a function that will be
-        used to validate the parameter if it is provided. The callable will be
-        called with a single argument, the parameter value to be validated, and
-        is expected to raise ValueError, TypeError or azul.RequirementError if
-        the value is invalid. Only these exceptions will yield a 4xx status
-        response, all other exceptions will yield a 500 status response. If the
-        validator is an instance of `Mandatory`, then validation will fail if
-        its corresponding parameter is not provided.
-
-    >>> validate_params({'order': 'asc'}, order=str)
-
-    >>> validate_params({'size': 'foo'}, size=int)
-    Traceback (most recent call last):
-        ...
-    chalice.app.BadRequestError: Invalid value for `size`
-
-    >>> validate_params({'order': 'asc', 'foo': 'bar'}, order=str)
-    Traceback (most recent call last):
-        ...
-    chalice.app.BadRequestError: Unknown query parameter `foo`
-
-    >>> validate_params({'order': 'asc', 'foo': 'bar'}, order=str, allow_extra_params=True)
-
-    >>> validate_params({}, foo=str)
-
-    >>> validate_params({}, foo=Mandatory(str))
-    Traceback (most recent call last):
-        ...
-    chalice.app.BadRequestError: Missing required query parameter `foo`
-
-    """
-
-    def fmt_error(err_description, params):
-        # Sorting is to produce a deterministic error message
-        joined = ', '.join(f'`{p}`' for p in sorted(params))
-        return f'{err_description} {pluralize("query parameter", len(params))} {joined}'
-
-    provided_params = query_params.keys()
-    validation_params = validators.keys()
-    mandatory_params = {
-        param_name
-        for param_name, validator in validators.items()
-        if isinstance(validator, Mandatory)
-    }
-
-    if not allow_extra_params:
-        extra_params = provided_params - validation_params
-        if extra_params:
-            raise BRE(fmt_error('Unknown', extra_params))
-
-    if mandatory_params:
-        missing_params = mandatory_params - provided_params
-        if missing_params:
-            raise BRE(fmt_error('Missing required', missing_params))
-
-    for param_name, validator in validators.items():
-        try:
-            param_value = query_params[param_name]
-        except KeyError:
-            pass
-        else:
-            try:
-                validator(param_value)
-            except (TypeError, ValueError, RequirementError):
-                raise BRE(f'Invalid value for `{param_name}`')
 
 
 deprecated_spec = {
@@ -1709,38 +1610,6 @@ def _repository_files(file_uuid: str, fetch: bool) -> MutableJSON:
     request = app.current_request
     query_params = request.query_params or {}
     headers = request.headers
-
-    def validate_replica(replica: str) -> None:
-        if replica not in ('aws', 'gcp'):
-            raise ValueError
-
-    def validate_wait(wait: str | None) -> int | None:
-        if wait is None:
-            return None
-        elif wait == '0':
-            return False
-        elif wait == '1':
-            return True
-        else:
-            raise ValueError
-
-    def validate_version(version: str) -> None:
-        # This function exists so the repository plugin can be lazily loaded
-        # instead of being loaded before `validate_params()` can run. This is
-        # desired since `validate_params()` validates the params in the order
-        # given, and we want the catalog to be validated before the repository
-        # plugin is loaded, which is an action that requires a valid catalog.
-        app.repository_plugin.validate_version(version)
-
-    validate_params(query_params,
-                    catalog=validate_catalog,
-                    version=validate_version,
-                    fileName=str,
-                    wait=validate_wait,
-                    requestIndex=int,
-                    replica=validate_replica,
-                    drsUri=str,
-                    token=str)
 
     # FIXME: Prevent duplicate filenames from files in different subgraphs by
     #        prepending the subgraph UUID to each filename when downloaded

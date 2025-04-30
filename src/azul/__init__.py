@@ -1745,6 +1745,10 @@ class Config:
 
     allowed_v4_ips_term = 'allowed_v4_ips'
 
+    blocked_user_agents_regex_term = 'blocked_user_agents'
+
+    blocked_user_agents_custom_regex_term = 'blocked_user_agents_custom'
+
     waf_rate_rule_name = 'RateRule'
 
     waf_rate_alarm_rule_name = 'RateAlarmRule'
