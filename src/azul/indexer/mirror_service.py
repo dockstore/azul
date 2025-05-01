@@ -123,6 +123,16 @@ class MirrorService(HasCachedHttpClient):
     def repository_plugin(self, catalog: CatalogName) -> RepositoryPlugin:
         return RepositoryPlugin.load(catalog).create(catalog)
 
+    def mirror_file(self, catalog: CatalogName, file: File):
+        """
+        Upload the file in a single request. For larger files, use
+        :meth:`begin_mirroring_file` instead.
+        """
+        file_content = self._download(catalog, file)
+        self._storage.put(object_key=self.mirror_object_key(file),
+                          data=file_content,
+                          content_type=file.content_type)
+
     def begin_mirroring_file(self, file: File) -> str:
         """
         Initiate a multipart upload of the file's content and return the upload
@@ -136,10 +146,11 @@ class MirrorService(HasCachedHttpClient):
                          catalog: CatalogName,
                          file: File,
                          part: FilePart,
-                         upload_id: str):
+                         upload_id: str
+                         ) -> str:
         """
         Upload a part of a file to a multipart upload begun with
-        :meth:`begin_mirroring_file`
+        :meth:`begin_mirroring_file` and return the uploaded part's ETag.
         """
         upload = self._get_upload(file, upload_id)
         file_content = self._download(catalog, file, part)

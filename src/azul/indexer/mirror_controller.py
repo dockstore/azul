@@ -1,5 +1,4 @@
 import logging
-import time
 from typing import (
     Iterable,
 )
@@ -18,9 +17,11 @@ from azul.azulclient import (
 from azul.indexer.action_controller import (
     ActionController,
 )
+from azul.indexer.mirror_service import (
+    MirrorService,
+)
 from azul.types import (
     JSON,
-    json_mapping,
     json_str,
 )
 
@@ -32,6 +33,10 @@ class MirrorController(ActionController[MirrorAction]):
     @cached_property
     def client(self) -> AzulClient:
         return AzulClient()
+
+    @property
+    def service(self) -> MirrorService:
+        return self.client.mirror_service
 
     def mirror(self, event: Iterable[SQSRecord]):
         self._handle_events(event, self._mirror)
@@ -45,11 +50,18 @@ class MirrorController(ActionController[MirrorAction]):
                                          message['source'],
                                          message['prefix'])
         elif action is MirrorAction.mirror_file:
-            # FIXME: Implement mirror_file, mirror_part & finalize_file
-            #        https://github.com/DataBiosphere/azul/issues/6862
-            log.info('Would mirror parts of file %r', json_mapping(message['file'])['uuid'])
-            time.sleep(1)
+            self.client.mirror_file(message['catalog'],
+                                    message['file'])
+        elif action is MirrorAction.mirror_part:
+            self.client.mirror_file_part(message['catalog'],
+                                         message['file'],
+                                         message['part'],
+                                         message['upload_id'],
+                                         message['etags'])
+        elif action is MirrorAction.finalize_file:
+            self.client.finalize_file(message['catalog'],
+                                      message['file'],
+                                      message['upload_id'],
+                                      message['etags'])
         else:
-            # FIXME: Implement mirror_file, mirror_part & finalize_file
-            #        https://github.com/DataBiosphere/azul/issues/6862
             assert False, action

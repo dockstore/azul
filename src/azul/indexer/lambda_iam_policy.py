@@ -113,6 +113,20 @@ policy = {
                 },
             ] if config.enable_log_forwarding else []
         ),
+        *(
+            [
+                {
+                    'Effect': 'Allow',
+                    'Action': [
+                        's3:PutObject',
+                        's3:GetObject',
+                    ],
+                    'Resource': [
+                        f'arn:aws:s3:::{aws.mirror_bucket}/*'
+                    ]
+                }
+            ] if config.enable_mirroring else []
+        ),
         {
             'Effect': 'Allow',
             'Action': [

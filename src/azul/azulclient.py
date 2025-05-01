@@ -24,6 +24,7 @@ from pprint import (
 )
 from typing import (
     Self,
+    Sequence,
     TYPE_CHECKING,
     cast,
 )
@@ -63,11 +64,16 @@ from azul.indexer import (
 from azul.indexer.index_service import (
     IndexService,
 )
+from azul.indexer.mirror_service import (
+    FilePart,
+    MirrorService,
+)
 from azul.json import (
     Serializable,
 )
 from azul.plugins import (
     File,
+    MetadataPlugin,
     RepositoryPlugin,
 )
 from azul.queues import (
@@ -113,6 +119,8 @@ class MirrorAction(Action):
     mirror_source = auto()
     mirror_partition = auto()
     mirror_file = auto()
+    mirror_part = auto()
+    finalize_file = auto()
 
 
 @attrs.frozen(kw_only=True)
@@ -121,6 +129,9 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
 
     def repository_plugin(self, catalog: CatalogName) -> RepositoryPlugin:
         return self.index_service.repository_plugin(catalog)
+
+    def metadata_plugin(self, catalog: CatalogName) -> MetadataPlugin:
+        return self.index_service.metadata_plugin(catalog)
 
     def notification(self, bundle_fqid: SourcedBundleFQID) -> JSON:
         """
@@ -208,6 +219,42 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
                 'file': file.to_json()
             },
             group_id=f'{source.id}:{file.uuid}'
+        )
+
+    def mirror_part_message(self,
+                            catalog: CatalogName,
+                            file: File,
+                            part: FilePart,
+                            upload_id: str,
+                            etags: Sequence[str]
+                            ) -> SQSFifoMessage:
+        return SQSFifoMessage(
+            body={
+                'catalog': catalog,
+                'file': file.to_json(),
+                'upload_id': upload_id,
+                'action': MirrorAction.mirror_part.to_json(),
+                'part': part.to_json(),
+                'etags': etags
+            },
+            group_id=self.mirror_service.mirror_object_key(file)
+        )
+
+    def finalize_file_message(self,
+                              catalog: CatalogName,
+                              file: File,
+                              upload_id: str,
+                              etags: Sequence[str]
+                              ) -> SQSFifoMessage:
+        return SQSFifoMessage(
+            body={
+                'catalog': catalog,
+                'file': file.to_json(),
+                'upload_id': upload_id,
+                'action': MirrorAction.finalize_file.to_json(),
+                'etags': etags
+            },
+            group_id=self.mirror_service.mirror_object_key(file)
         )
 
     def local_reindex(self, catalog: CatalogName, prefix: str) -> int:
@@ -488,6 +535,10 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
     def index_service(self) -> IndexService:
         return IndexService()
 
+    @cached_property
+    def mirror_service(self) -> MirrorService:
+        return MirrorService()
+
     def delete_all_indices(self, catalog: CatalogName):
         self.index_service.delete_indices(catalog)
 
@@ -643,6 +694,67 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
 
         messages = map(message, plugin.list_files(source, prefix))
         self.queue_mirror_messages(messages)
+
+    def mirror_file(self,
+                    catalog: CatalogName,
+                    file_json: JSON
+                    ):
+        file = self.load_file(catalog, file_json)
+        assert file.size is not None, R('File size unknown', file)
+        part_size = FilePart.default_size
+        if file.size <= part_size:
+            log.info('Mirroring file %r via standard upload', file.uuid)
+            self.mirror_service.mirror_file(catalog, file)
+            log.info('Successfully mirrored file %r via standard upload', file.uuid)
+        else:
+            log.info('Mirroring file %r via multi-part upload', file.uuid)
+            upload_id = self.mirror_service.begin_mirroring_file(file)
+            first_part = FilePart.first(file, part_size)
+            etag = self.mirror_service.mirror_file_part(catalog, file, first_part, upload_id)
+            next_part = first_part.next(file)
+            assert next_part is not None
+            messages = [self.mirror_part_message(catalog, file, next_part, upload_id, [etag])]
+            self.queue_mirror_messages(messages)
+
+    def mirror_file_part(self,
+                         catalog: CatalogName,
+                         file_json: JSON,
+                         part_json: JSON,
+                         upload_id: str,
+                         etags: Sequence[str]
+                         ):
+        file = self.load_file(catalog, file_json)
+        part = FilePart.from_json(part_json)
+        etag = self.mirror_service.mirror_file_part(catalog, file, part, upload_id)
+        etags = [*etags, etag]
+        next_part = part.next(file)
+        if next_part is None:
+            log.info('File %r fully uploaded in %d parts', file.uuid, len(etags))
+            message = self.finalize_file_message(catalog,
+                                                 file,
+                                                 upload_id,
+                                                 etags)
+        else:
+            message = self.mirror_part_message(catalog,
+                                               file,
+                                               next_part,
+                                               upload_id,
+                                               etags)
+        self.queue_mirror_messages([message])
+
+    def finalize_file(self,
+                      catalog: CatalogName,
+                      file_json: JSON,
+                      upload_id: str,
+                      etags: Sequence[str]
+                      ):
+        file = self.load_file(catalog, file_json)
+        assert len(etags) > 0
+        self.mirror_service.finish_mirroring_file(file, upload_id, etags)
+        log.info('Successfully mirrored file %r via multi-part upload', file.uuid)
+
+    def load_file(self, catalog: CatalogName, file: JSON) -> File:
+        return self.metadata_plugin(catalog).file_class.from_json(file)
 
 
 class AzulClientError(RuntimeError):

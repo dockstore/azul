@@ -1,3 +1,4 @@
+import hashlib
 from unittest.mock import (
     MagicMock,
     PropertyMock,
@@ -14,8 +15,14 @@ from moto import (
 from azul import (
     config,
 )
+from azul.deployment import (
+    aws,
+)
 from azul.indexer.mirror_controller import (
     MirrorController,
+)
+from azul.indexer.mirror_service import (
+    MirrorService,
 )
 from azul.json import (
     copy_json,
@@ -30,6 +37,9 @@ from azul.plugins.metadata.hca import (
 from azul_test_case import (
     DCP2TestCase,
 )
+from service import (
+    S3TestCase,
+)
 from sqs_test_case import (
     WorkQueueTestCase,
 )
@@ -43,7 +53,7 @@ def setUpModule():
 
 
 @mock_aws
-class TestMirrorController(DCP2TestCase, WorkQueueTestCase):
+class TestMirrorController(DCP2TestCase, WorkQueueTestCase, S3TestCase):
 
     @classmethod
     def _patch_enable_mirroring(cls):
@@ -60,6 +70,11 @@ class TestMirrorController(DCP2TestCase, WorkQueueTestCase):
         super().setUp()
         self._create_mock_queues(config.mirror_queue.name,
                                  config.mirror_queue.to_fail.name)
+        self._create_test_bucket(self.bucket)
+
+    @property
+    def bucket(self) -> str:
+        return aws.mirror_bucket
 
     def test_mirroring(self):
         with self.subTest('remote_mirror'):
@@ -85,15 +100,17 @@ class TestMirrorController(DCP2TestCase, WorkQueueTestCase):
                                  message)
             self.assertEqual(list(self.source.spec.prefix.partition_prefixes()), partitions)
 
+        file_contents = b'lorem ipsum dolor sit\n'
+
         with self.subTest('mirror_partition'):
             event = [self._mock_sqs_record(partition_message)]
             file = HCAFile(uuid='405852c9-a0cc-4cd8-b9ff-7c6296223661',
                            name='foo.txt',
                            version=None,
-                           drs_uri=None,
-                           size=0,
+                           drs_uri='drs://fake-domain.lan/foo',
+                           size=len(file_contents),
                            content_type='text/plain',
-                           sha256='123')
+                           sha256=hashlib.sha256(file_contents).hexdigest())
             plugin_cls = type(self.client.repository_plugin(self.catalog))
             with patch.object(plugin_cls, 'list_files', return_value=[file]):
                 controller.mirror(event)
@@ -103,3 +120,12 @@ class TestMirrorController(DCP2TestCase, WorkQueueTestCase):
                                     source=self.source.to_json(),
                                     file=file.to_json())
             self.assertEqual(expected_message, file_message)
+
+        with self.subTest('mirror_file'):
+            event = [self._mock_sqs_record(file_message)]
+            with patch.object(MirrorService, '_download', return_value=file_contents):
+                controller.mirror(event)
+            response = self._s3.get_object(Bucket=self.bucket,
+                                           Key=controller.service.mirror_object_key(file))
+            mirrored_file_contents = response['Body'].read()
+            self.assertEqual(mirrored_file_contents, file_contents)
