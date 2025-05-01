@@ -74,8 +74,8 @@ from azul.types import (
     MutableJSON,
     MutableJSONs,
 )
-from humancellatlas.data.metadata.api import (
-    Entity,
+from humancellatlas.data.metadata import (
+    api,
 )
 
 log = logging.getLogger(__name__)
@@ -187,7 +187,7 @@ class TDRHCABundle(HCABundle[TDRBundleFQID], TDRBundle):
         descriptor = json.loads(row['descriptor'])
         # FIXME: Move validation of descriptor to the metadata API
         #        https://github.com/DataBiosphere/azul/issues/6299
-        Entity.validate_described_by(descriptor)
+        api.Entity.validate_described_by(descriptor)
         return HCAFile.from_descriptor(descriptor,
                                        uuid=descriptor['file_id'],
                                        name=row['file_name'],
@@ -233,13 +233,30 @@ class Plugin(TDRPlugin[TDRHCABundle, TDRBundleFQID]):
 
     def count_bundles(self, source: TDRSourceSpec) -> int:
         prefix = '' if source.prefix is None else source.prefix.common
+        assert prefix == prefix.lower(), source
         query = f'''
         SELECT COUNT(*) AS count
         FROM {backtick(self._full_table_name(source, 'links'))}
-        WHERE STARTS_WITH(datarepo_row_id, {prefix!r})
+        WHERE STARTS_WITH(LOWER(datarepo_row_id), {prefix!r})
         '''
         rows = self._run_sql(query)
         return one(rows)['count']
+
+    def count_files(self, source: TDRSourceSpec) -> int:
+        prefix = '' if source.prefix is None else source.prefix.common
+        assert prefix == prefix.lower(), source
+        query = ' UNION ALL '.join(
+            f'''
+            SELECT COUNT(*) AS count
+            FROM {backtick(self._full_table_name(source, entity_type))}
+            WHERE STARTS_WITH(LOWER(JSON_EXTRACT_SCALAR(descriptor, "$.sha256")),
+                              {prefix!r})
+            '''
+            for entity_type, entity_cls in api.entity_types.items()
+            if entity_type.endswith('_file')
+        )
+        rows = self._run_sql(query)
+        return sum(row['count'] for row in rows)
 
     def list_bundles(self,
                      source: TDRSourceRef,
@@ -247,10 +264,11 @@ class Plugin(TDRPlugin[TDRHCABundle, TDRBundleFQID]):
                      ) -> list[TDRBundleFQID]:
         self._assert_source(source)
         self._assert_partition(source, prefix)
+        assert prefix == prefix.lower(), source
         current_bundles = self._query_unique_sorted(f'''
             SELECT links_id, version
             FROM {backtick(self._full_table_name(source.spec, 'links'))}
-            WHERE STARTS_WITH(links_id, '{prefix}')
+            WHERE STARTS_WITH(LOWER(links_id), {prefix!r})
         ''', group_by='links_id')
         return [
             TDRBundleFQID(source=source,
@@ -258,6 +276,22 @@ class Plugin(TDRPlugin[TDRHCABundle, TDRBundleFQID]):
                           version=self.format_version(row['version']))
             for row in current_bundles
         ]
+
+    def list_files(self, source: TDRSourceRef, prefix: str) -> list[HCAFile]:
+        self._assert_source(source)
+        self._assert_partition(source, prefix)
+        assert prefix == prefix.lower(), prefix
+        rows = self._run_sql(' UNION ALL '.join(
+            f'''
+            SELECT {', '.join(TDRHCABundle.data_columns)}
+            FROM {backtick(self._full_table_name(source.spec, entity_type))}
+            WHERE STARTS_WITH(LOWER(JSON_EXTRACT_SCALAR(descriptor, "$.sha256")),
+                              {prefix!r})
+            '''
+            for entity_type, entity_cls in api.entity_types.items()
+            if entity_type.endswith('_file')
+        ))
+        return list(map(TDRHCABundle.file_from_row, rows))
 
     def _query_unique_sorted(self,
                              query: str,

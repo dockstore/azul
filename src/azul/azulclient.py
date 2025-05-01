@@ -68,6 +68,7 @@ from azul.json import (
     Serializable,
 )
 from azul.plugins import (
+    File,
     RepositoryPlugin,
 )
 from azul.queues import (
@@ -112,6 +113,7 @@ class IndexAction(Action):
 class MirrorAction(Action):
     mirror_source = auto()
     mirror_partition = auto()
+    mirror_file = auto()
 
 
 @attrs.frozen(kw_only=True)
@@ -193,6 +195,21 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
                 'prefix': prefix
             },
             group_id=f'{source.id}:{prefix}'
+        )
+
+    def mirror_file_message(self,
+                            catalog: CatalogName,
+                            source: SourceRef,
+                            file: File,
+                            ) -> SQSFifoMessage:
+        return SQSFifoMessage(
+            body={
+                'action': MirrorAction.mirror_file.to_json(),
+                'catalog': catalog,
+                'source': cast(JSON, source.to_json()),
+                'file': file.to_json()
+            },
+            group_id=f'{source.id}:{file.uuid}'
         )
 
     def local_reindex(self, catalog: CatalogName, prefix: str) -> int:
@@ -325,7 +342,7 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
         plugin = self.repository_plugin(catalog)
         for source_spec in sources:
             source_ref = plugin.resolve_source(source_spec)
-            source_ref = plugin.partition_source(catalog, source_ref)
+            source_ref = plugin.partition_source_for_indexing(catalog, source_ref)
 
             def message(partition_prefix: str) -> SQSMessage:
                 log.info('Remotely reindexing prefix %r of source_ref %r into catalog %r',
@@ -607,7 +624,7 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
     def mirror_source(self, catalog: CatalogName, source_json: JSON):
         plugin = self.repository_plugin(catalog)
         source = plugin.source_ref_cls.from_json(source_json)
-        source = plugin.partition_source(catalog, source)
+        source = plugin.partition_source_for_mirroring(catalog, source)
 
         def message(prefix: str) -> SQSMessage:
             log.info('Mirroring files in partition %r of source %r from catalog %r',
@@ -615,6 +632,18 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
             return self.mirror_partition_message(catalog, source, prefix)
 
         messages = map(message, source.spec.prefix.partition_prefixes())
+        self.queue_mirror_messages(messages)
+
+    def mirror_partition(self, catalog: CatalogName, source_json: JSON, prefix: str):
+        plugin = self.repository_plugin(catalog)
+        source = plugin.source_ref_cls.from_json(source_json)
+
+        def message(file: File) -> SQSMessage:
+            log.info('Mirroring file %r in source %r from catalog %r',
+                     file.uuid, str(source.spec), catalog)
+            return self.mirror_file_message(catalog, source, file)
+
+        messages = map(message, plugin.list_files(source, prefix))
         self.queue_mirror_messages(messages)
 
 

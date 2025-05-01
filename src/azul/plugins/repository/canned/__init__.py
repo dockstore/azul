@@ -50,6 +50,9 @@ from azul.plugins import (
     RepositoryFileDownload,
     RepositoryPlugin,
 )
+from azul.plugins.metadata.hca import (
+    HCAFile,
+)
 from azul.plugins.metadata.hca.bundle import (
     HCABundle,
 )
@@ -164,7 +167,25 @@ class Plugin(RepositoryPlugin[CannedBundle, SimpleSourceSpec, CannedSourceRef, C
             return len(staging_area.links)
         else:
             prefix = source.spec.prefix.common
-            return sum(1 for links_id in staging_area.links if links_id.startswith(prefix))
+            assert prefix == prefix.lower(), source
+            return sum(
+                1
+                for links_id in staging_area.links
+                if links_id.lower().startswith(prefix)
+            )
+
+    def count_files(self, source: SimpleSourceSpec) -> int:
+        staging_area = self.staging_area(source.name)
+        if source.prefix is None:
+            return len(staging_area.descriptors)
+        else:
+            prefix = source.prefix.common
+            assert prefix == prefix.lower(), source
+            return sum(
+                1
+                for descriptor in staging_area.descriptors.values()
+                if descriptor.content['sha256'].lower().startswith(prefix)
+            )
 
     def list_bundles(self,
                      source: CannedSourceRef,
@@ -172,13 +193,14 @@ class Plugin(RepositoryPlugin[CannedBundle, SimpleSourceSpec, CannedSourceRef, C
                      ) -> list[CannedBundleFQID]:
         self._assert_source(source)
         self._assert_partition(source, prefix)
+        assert prefix == prefix.lower(), prefix
         staging_area = self.staging_area(source.spec.name)
         return [
             CannedBundleFQID(source=source,
                              uuid=link.uuid,
                              version=link.version)
             for link in staging_area.links.values()
-            if link.uuid.startswith(prefix)
+            if link.uuid.lower().startswith(prefix)
         ]
 
     def fetch_bundle(self, bundle_fqid: CannedBundleFQID) -> CannedBundle:
@@ -198,6 +220,20 @@ class Plugin(RepositoryPlugin[CannedBundle, SimpleSourceSpec, CannedSourceRef, C
         log.info('It took %.003fs to download bundle %s.%s',
                  time.time() - now, bundle.uuid, bundle.version)
         return bundle
+
+    def list_files(self, source: CannedSourceRef, prefix: str) -> list[HCAFile]:
+        self._assert_source(source)
+        self._assert_partition(source, prefix)
+        assert prefix == prefix.lower(), prefix
+        staging_area = self.staging_area(source.spec.name)
+        return [
+            HCAFile.from_descriptor(descriptor.content,
+                                    uuid=file_uuid,
+                                    name=descriptor.content['file_name'],
+                                    drs_uri=None)
+            for file_uuid, descriptor in staging_area.descriptors.items()
+            if descriptor.content['sha256'].lower().startswith(prefix)
+        ]
 
     def _construct_file_url(self, url: furl, file_name: str) -> furl:
         """

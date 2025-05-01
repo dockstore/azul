@@ -11,6 +11,7 @@ from inspect import (
 )
 from typing import (
     AbstractSet,
+    Callable,
     ClassVar,
     Iterable,
     Literal,
@@ -666,31 +667,60 @@ class RepositoryPlugin[BUNDLE: Bundle,
     def count_bundles(self, source: SOURCE_SPEC) -> int:
         """
         The total number of subgraphs in the given source. The source's prefix
-        may be None.
+        may be None, indicating that the source hasn't been partitioned yet and
+        that this method should count all bundles in the source.
         """
         raise NotImplementedError
 
-    def partition_source(self,
-                         catalog: CatalogName,
-                         source: SOURCE_REF
-                         ) -> SOURCE_REF:
+    @abstractmethod
+    def count_files(self, source: SOURCE_SPEC) -> int:
+        """
+        The total number of files in the given source. The source's prefix
+        may be None, indicating that the source hasn't been partitioned yet and
+        that this method should count all files in the source.
+        """
+        raise NotImplementedError
+
+    def partition_source_for_indexing(self,
+                                      catalog: CatalogName,
+                                      source: SOURCE_REF
+                                      ) -> SOURCE_REF:
         """
         If the source already has a prefix, return the source. Otherwise, return
         an updated copy of the source with a heuristically computed prefix that
         should be appropriate for indexing in the given catalog.
         """
+        return self._partition_source(catalog, source, self.count_bundles)
+
+    def partition_source_for_mirroring(self,
+                                       catalog: CatalogName,
+                                       source: SOURCE_REF
+                                       ) -> SOURCE_REF:
+        """
+        If the source already has a prefix, return the source. Otherwise, return
+        an updated copy of the source with a heuristically computed prefix that
+        should be appropriate for mirroring in the given catalog.
+        """
+        return self._partition_source(catalog, source, self.count_files)
+
+    def _partition_source(self,
+                          catalog: CatalogName,
+                          source: SOURCE_REF,
+                          counter: Callable[[SOURCE_SPEC], int]
+                          ) -> SOURCE_REF:
         if source.spec.prefix is None:
-            count = self.count_bundles(source.spec)
+            count = counter(source.spec)
             is_main = config.deployment.is_main
             is_it = catalog in config.integration_test_catalogs
-            # We use the "lesser" heuristic during IT to avoid indexing an
-            # excessive number of bundles
+            # We use the "lesser" heuristic during IT to keep the cost and
+            # performance of the tests within reasonable limits
             if is_main and not is_it:
                 prefix = Prefix.for_main_deployment(count)
             else:
                 prefix = Prefix.for_lesser_deployment(count)
-            source = source.with_prefix(prefix)
-        return source
+            return source.with_prefix(prefix)
+        else:
+            return source
 
     @abstractmethod
     def list_bundles(self,
@@ -718,6 +748,20 @@ class RepositoryPlugin[BUNDLE: Bundle,
         :param bundle_fqid: The fully qualified ID of the bundle to fetch,
                             including its source.
         """
+        raise NotImplementedError
+
+    @abstractmethod
+    def list_files(self, source: SOURCE_REF, prefix: str) -> list['File']:
+        """
+        List the files in the given source whose digest value starts with the
+        given prefix.
+
+        :param source: A reference to the repository source that contains the
+                       files to list
+
+        :param prefix: A string of lower-case hexadecimal characters
+        """
+
         raise NotImplementedError
 
     @abstractmethod
