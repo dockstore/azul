@@ -10,9 +10,6 @@ from unittest.mock import (
 
 import requests
 
-from app_test_case import (
-    LocalAppTestCase,
-)
 from azul import (
     Config,
 )
@@ -20,20 +17,32 @@ from azul.chalice import (
     AzulChaliceApp,
     log,
 )
-from azul.logging import (
-    configure_test_logging,
-)
+import azul.logging
+
 from indexer import (
     DCP1CannedBundleTestCase,
+)
+from service import (
+    WebServiceTestCase,
 )
 
 
 # noinspection PyPep8Naming
 def setUpModule():
-    configure_test_logging()
+    azul.logging.configure_test_logging()
 
 
-class TestServiceAppLogging(DCP1CannedBundleTestCase, LocalAppTestCase):
+class TestServiceAppLogging(DCP1CannedBundleTestCase, WebServiceTestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls._setup_indices()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls._teardown_indices()
+        super().tearDownClass()
 
     @classmethod
     def lambda_name(cls) -> str:
@@ -44,13 +53,15 @@ class TestServiceAppLogging(DCP1CannedBundleTestCase, LocalAppTestCase):
             level = [INFO, DEBUG, DEBUG][azul_debug]
             for authenticated in False, True:
                 with self.subTest(azul_debug=azul_debug, authenticated=authenticated):
-                    url = self.base_url.set(path='/health/basic')
+                    url = self.base_url.set(path='/index/projects')
                     request_headers = {'authorization': 'Bearer foo_token'} if authenticated else {}
                     with self.assertLogs(logger=log, level=level) as logs:
                         debug = PropertyMock(return_value=azul_debug)
                         with patch.object(Config, 'debug', new=debug):
-                            requests.get(str(url), headers=request_headers)
+                            with patch.object(azul.logging, 'http_body_log_prefix_len', 128):
+                                requests.get(str(url), headers=request_headers)
                     logs = [(r.levelno, r.getMessage()) for r in logs.records]
+                    last_log_level, last_log = logs.pop()  # … to validate separately
                     request_headers = {
                         'host': url.netloc,
                         'user-agent': 'python-requests/2.32.4',
@@ -69,11 +80,25 @@ class TestServiceAppLogging(DCP1CannedBundleTestCase, LocalAppTestCase):
                         **AzulChaliceApp.security_headers(),
                         'Cache-Control': 'no-store'
                     }
+                    expected_body = json.dumps(
+                        {
+                            'pagination': {
+                                'count': 1,
+                                'total': 1,
+                                'size': 10,
+                                'next': None,
+                                'previous': None,
+                                'pages': 1,
+                                'sort': 'projectTitle',
+                                'order': 'asc'
+                            }
+                        }
+                    )
                     self.assertEqual(
                         [
                             (
                                 INFO,
-                                "Received GET request for '/health/basic', "
+                                "Received GET request for '/index/projects', "
                                 f'with {json.dumps(dict(query=None, headers=request_headers))}.'),
                             (
                                 INFO,
@@ -85,12 +110,14 @@ class TestServiceAppLogging(DCP1CannedBundleTestCase, LocalAppTestCase):
                                 INFO,
                                 'Returning 200 response with headers ' +
                                 json.dumps(response_headers) + '.'
-                            ),
-                            (
-                                INFO,
-                                '… with response body not empty' if azul_debug == 0 else
-                                '… with response body \'{"up": true}\''
                             )
                         ],
                         logs
                     )
+                    if azul_debug == 0:
+                        self.assertEqual('… with response body not empty', last_log)
+                    elif azul_debug == 1:
+                        self.assertEqual(f'… with response body {expected_body[:128]!r}', last_log)
+                    elif azul_debug > 1:
+                        self.assertTrue(last_log.startswith(f'… with response body \'{expected_body[:135]}'))
+                    self.assertEqual(INFO, last_log_level)
