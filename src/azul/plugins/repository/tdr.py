@@ -243,12 +243,12 @@ class TDRFileDownload(RepositoryFileDownload):
                authentication: Authentication | None
                ) -> None:
         require(self.replica is None or self.replica == 'gcp')
-        if self.drs_uri is None:
+        if self.file.drs_uri is None:
             assert self.location is None, self
             assert self.retry_after is None, self
         else:
             drs_client = plugin.drs_client(authentication)
-            access = drs_client.get_object(self.drs_uri,
+            access = drs_client.get_object(self.file.drs_uri,
                                            access_method=AccessMethod.gs)
             require(access.method is AccessMethod.https, access.method)
             require(access.headers is None, access.headers)

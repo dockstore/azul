@@ -1014,6 +1014,30 @@ tf_config = {
                 ]
             }
         },
+        'aws_wafv2_regex_pattern_set': {
+            config.blocked_user_agents_regex_term: {
+                'name': config.qualified_resource_name(config.blocked_user_agents_regex_term),
+                'scope': 'REGIONAL',
+                'regular_expression': [
+                    {
+                        # This is for a specific Google Apps Script project ID
+                        'regex_string': r'id: ?UAEmdDd991fowvU7Kc-RVc3LUfU7cmcjwBg[);]$'
+                    },
+                    {
+                        'regex_string': r'^aria2/'
+                    }
+                ]
+            },
+            config.blocked_user_agents_custom_regex_term: {
+                'name': config.qualified_resource_name(config.blocked_user_agents_custom_regex_term),
+                'scope': 'REGIONAL',
+                'lifecycle': {
+                    'ignore_changes': [
+                        'regular_expression'
+                    ]
+                }
+            }
+        },
         'aws_ecr_repository': {
             tf_repository: {
                 'name': name,

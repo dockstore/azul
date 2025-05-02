@@ -6,9 +6,14 @@ from operator import (
 )
 from typing import (
     Iterable,
+    Literal,
+    Self,
     Sequence,
 )
 
+from attrs import (
+    frozen,
+)
 from more_itertools import (
     one,
 )
@@ -28,6 +33,7 @@ from azul.indexer.document import (
 )
 from azul.plugins import (
     DocumentSlice,
+    File,
     ManifestConfig,
     MetadataPlugin,
     Sorting,
@@ -504,3 +510,25 @@ class Plugin(MetadataPlugin[AnvilBundle]):
     @property
     def filter_stage(self) -> 'type[AnvilFilterStage]':
         return AnvilFilterStage
+
+    @property
+    def file_class(self) -> type[File]:
+        return AnvilFile
+
+
+@frozen(kw_only=True)
+class AnvilFile(File):
+    #: MD5 hash of the file's contents
+    md5: str
+
+    @classmethod
+    def from_hit(cls, hit: JSON) -> Self:
+        return cls(uuid=hit['document_id'],
+                   version=hit['version'],
+                   name=hit['file_name'],
+                   size=hit['file_size'],
+                   drs_uri=hit['drs_uri'],
+                   md5=hit['file_md5sum'])
+
+    def digest(self) -> tuple[str, Literal['md5']]:
+        return self.md5, 'md5'

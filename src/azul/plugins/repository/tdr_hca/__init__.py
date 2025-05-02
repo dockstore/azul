@@ -13,7 +13,6 @@ from operator import (
     itemgetter,
 )
 from typing import (
-    Any,
     ClassVar,
     Iterable,
     Self,
@@ -31,10 +30,14 @@ from more_itertools import (
 from azul import (
     R,
     config,
+    iif,
 )
 from azul.bigquery import (
     BigQueryRow,
     backtick,
+)
+from azul.collections import (
+    singleton,
 )
 from azul.drs import (
     RegularDRSURI,
@@ -46,6 +49,9 @@ from azul.indexer.document import (
     EntityID,
     EntityReference,
     EntityType,
+)
+from azul.plugins.metadata.hca import (
+    HCAFile,
 )
 from azul.plugins.metadata.hca.bundle import (
     HCABundle,
@@ -67,7 +73,6 @@ from azul.types import (
     JSONs,
     MutableJSON,
     MutableJSONs,
-    is_optional,
 )
 from humancellatlas.data.metadata.api import (
     Entity,
@@ -140,44 +145,6 @@ class Links:
         }
 
 
-@attr.s(auto_attribs=True, kw_only=True, frozen=True)
-class Checksums:
-    crc32c: str
-    sha1: str | None = None
-    sha256: str
-    s3_etag: str | None = None
-
-    def to_json(self) -> dict[str, str]:
-        """
-        >>> Checksums(crc32c='a', sha1='b', sha256='c', s3_etag=None).to_json()
-        {'crc32c': 'a', 'sha1': 'b', 'sha256': 'c'}
-        """
-        return {k: v for k, v in attr.asdict(self).items() if v is not None}
-
-    @classmethod
-    def from_json(cls, json: JSON) -> Self:
-        """
-        >>> Checksums.from_json({'crc32c': 'a', 'sha256': 'c'})
-        Checksums(crc32c='a', sha1=None, sha256='c', s3_etag=None)
-
-        >>> Checksums.from_json({'crc32c': 'a', 'sha1':'b', 'sha256': 'c', 's3_etag': 'd'})
-        Checksums(crc32c='a', sha1='b', sha256='c', s3_etag='d')
-
-        >>> Checksums.from_json({'crc32c': 'a'})
-        Traceback (most recent call last):
-            ...
-        ValueError: ('JSON property cannot be absent or null', 'sha256')
-        """
-
-        def extract_field(field: attr.Attribute) -> tuple[str, Any]:
-            value = json.get(field.name)
-            if value is None and not is_optional(field.type):
-                raise ValueError('JSON property cannot be absent or null', field.name)
-            return field.name, value
-
-        return cls(**dict(map(extract_field, attr.fields(cls))))
-
-
 class TDRHCABundle(HCABundle[TDRBundleFQID], TDRBundle):
 
     @classmethod
@@ -193,71 +160,49 @@ class TDRHCABundle(HCABundle[TDRBundleFQID], TDRBundle):
         if is_stitched:
             self.stitched.add(entity.entity_id)
         if entity.entity_type.endswith('_file'):
-            descriptor = json.loads(row['descriptor'])
-            # FIXME: Move validation of descriptor to the metadata API
-            #        https://github.com/DataBiosphere/azul/issues/6299
-            Entity.validate_described_by(descriptor)
-            self._add_manifest_entry(entity,
-                                     name=row['file_name'],
-                                     uuid=descriptor['file_id'],
-                                     version=descriptor['file_version'],
-                                     size=descriptor['size'],
-                                     content_type=descriptor['content_type'],
-                                     dcp_type='data',
-                                     checksums=Checksums.from_json(descriptor),
-                                     drs_uri=self._parse_drs_uri(row['file_id'], descriptor))
+            self._add_manifest_entry(entity, self.file_from_row(row))
         content = row['content']
         self.metadata[str(entity)] = (json.loads(content)
                                       if isinstance(content, str)
                                       else content)
 
-    metadata_columns: ClassVar[set[str]] = {
+    metadata_columns: ClassVar[frozenset[str]] = singleton(
         'content'
-    }
+    )
 
-    data_columns: ClassVar[set[str]] = metadata_columns | {
+    data_columns: ClassVar[frozenset[str]] = frozenset({
         'descriptor',
         'JSON_EXTRACT_SCALAR(content, "$.file_core.file_name") AS file_name',
         'file_id'
-    }
+    })
 
     # `links_id` is omitted for consistency since the other sets do not include
     # the primary key
-    links_columns: ClassVar[set[str]] = metadata_columns | {
+    links_columns: ClassVar[frozenset[str]] = singleton(
         'project_id'
-    }
+    )
+
+    @classmethod
+    def file_from_row(cls, row: BigQueryRow) -> HCAFile:
+        descriptor = json.loads(row['descriptor'])
+        # FIXME: Move validation of descriptor to the metadata API
+        #        https://github.com/DataBiosphere/azul/issues/6299
+        Entity.validate_described_by(descriptor)
+        return HCAFile.from_descriptor(descriptor,
+                                       uuid=descriptor['file_id'],
+                                       name=row['file_name'],
+                                       drs_uri=cls._parse_drs_uri(row['file_id'], descriptor))
 
     def _add_manifest_entry(self,
                             entity: EntityReference,
-                            *,
-                            name: str,
-                            uuid: str,
-                            version: str,
-                            size: int,
-                            content_type: str,
-                            dcp_type: str,
-                            checksums: Checksums | None = None,
-                            drs_uri: str | None = None) -> None:
-        self.manifest[str(entity)] = {
-            'name': name,
-            'uuid': uuid,
-            'version': version,
-            'content-type': f'{content_type}; dcp-type={dcp_type}',
-            'size': size,
-            **(
-                {
-                    'indexed': True,
-                    'crc32c': '',
-                    'sha256': ''
-                } if checksums is None else {
-                    'indexed': False,
-                    'drs_uri': drs_uri,
-                    **checksums.to_json()
-                }
-            )
-        }
+                            file: HCAFile) -> None:
+        file_json = file.to_json()
+        file_json['content-type'] = f'{file_json.pop("content_type")}; dcp-type=data'
+        file_json['indexed'] = False
+        self.manifest[str(entity)] = file_json
 
-    def _parse_drs_uri(self,
+    @classmethod
+    def _parse_drs_uri(cls,
                        file_id: str | None,
                        descriptor: JSON
                        ) -> str | None:
@@ -448,11 +393,12 @@ class Plugin(TDRPlugin[TDRHCABundle, TDRBundleFQID]):
         """
         pk_column = entity_type + '_id'
         version_column = 'version'
-        non_pk_columns = (
-            TDRHCABundle.links_columns if entity_type == 'links'
-            else TDRHCABundle.data_columns if entity_type.endswith('_file')
-            else TDRHCABundle.metadata_columns
-        )
+        columns = {
+            pk_column,
+            *TDRHCABundle.metadata_columns,
+            *iif(entity_type == 'links', TDRHCABundle.links_columns),
+            *iif(entity_type.endswith('_file'), TDRHCABundle.data_columns)
+        }
         table_name = backtick(self._full_table_name(source, entity_type))
         entity_id_type = one(set(map(type, entity_ids)))
 
@@ -471,7 +417,7 @@ class Plugin(TDRPlugin[TDRHCABundle, TDRBundleFQID]):
             where_values = ((sq(str(entity_id)),) for entity_id in entity_ids)
             expected = entity_ids
         query = f'''
-            SELECT {', '.join({pk_column, *non_pk_columns})}
+            SELECT {', '.join(columns)}
             FROM {table_name}
             WHERE {self._in(where_columns, where_values)}
         '''
