@@ -75,7 +75,7 @@ class TestAppLogging(AzulUnitTestCase):
                     self.assertEqual(500, response.status_code)
 
                     # The request is always logged
-                    self.assertEqual(4, len(azul_log.output))
+                    self.assertEqual(5, len(azul_log.output))
                     headers = {
                         'host': f'{host}:{port}',
                         'user-agent': 'python-requests/2.32.4',
@@ -86,8 +86,9 @@ class TestAppLogging(AzulUnitTestCase):
                     self.assertEqual(f'INFO:azul.chalice:Received GET request for {path!r}, '
                                      f"with {json.dumps({'query': None, 'headers': headers})}.",
                                      azul_log.output[0])
+                    self.assertEqual('INFO:azul.chalice:… without request body', azul_log.output[1])
                     self.assertEqual('INFO:azul.chalice:Did not authenticate request.',
-                                     azul_log.output[1])
+                                     azul_log.output[2])
 
                     # The exception is always logged
                     self.assertEqual(1, len(app_log.output))
@@ -126,14 +127,15 @@ class TestAppLogging(AzulUnitTestCase):
                     }
                     expected = 'INFO:azul.chalice:… with response body '
                     if debug:
-                        expected += f'{body!r}'
+                        size = f'size of {len(body)} bytes ' if debug > 1 else ''
+                        expected += f'{size}{body!r}'
                     else:
                         expected += 'not empty'
                     self.maxDiff = None
                     self.assertEqual('INFO:azul.chalice:Returning 500 response '
                                      'with headers ' + json.dumps(headers) + '.',
-                                     azul_log.output[2])
-                    self.assertEqual(expected, azul_log.output[3])
+                                     azul_log.output[3])
+                    self.assertEqual(expected, azul_log.output[4])
 
 
 class TestPermittedWarnings(AzulUnitTestCase):

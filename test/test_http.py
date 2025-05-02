@@ -147,7 +147,7 @@ class TestHttp(AzulUnitTestCase):
                             [
                                 rf'^{prefix}Got 503 response after \d.\d\d\ds from GET to {url}$',
                                 rf'^{prefix}… with response headers HTTPHeaderDict\({http_header_pattern}\)$',
-                                f"^{prefix}… with response body b''$",
+                                f"^{prefix}… with response body size of 0 bytes b''$",
                             ]
                         )
                         if i < calls - 1:

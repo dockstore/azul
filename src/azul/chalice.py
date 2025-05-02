@@ -67,6 +67,7 @@ from azul.json import (
     copy_json,
 )
 from azul.logging import (
+    BodyType,
     http_body_log_message,
 )
 from azul.openapi import (
@@ -471,11 +472,15 @@ class AzulChaliceApp(Chalice):
                  context['httpMethod'],
                  context['path'],
                  json.dumps(request_info, cls=self._LogJSONEncoder))
+        self._log_body('request', self.current_request.json_body)
 
     def _log_response(self, response):
         log.info('Returning %i response with headers %s.',
                  response.status_code, json.dumps(response.headers, cls=self._LogJSONEncoder))
-        log.info(http_body_log_message('response', response.body))
+        self._log_body('response', response.body)
+
+    def _log_body(self, body_type: BodyType, body: str | JSON | None):
+        log.info(http_body_log_message(body_type, body))
 
     absent = object()
 
