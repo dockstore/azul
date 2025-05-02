@@ -301,48 +301,6 @@ emit_tf({
                                     'cloudwatch_metrics_enabled': True
                                 }
                             },
-                            *[
-                                {
-                                    'name': rate_limit.name,
-                                    'statement': {
-                                        'rate_based_statement': {
-                                            'limit': rate_limit.value,
-                                            'evaluation_window_sec': rate_limit.period,
-                                            'aggregate_key_type': 'IP'
-                                        }
-                                    },
-                                    'action': {
-                                        'block': {
-                                            'custom_response': {
-                                                'response_code': 429,
-                                                'response_header': [
-                                                    {
-                                                        'name': 'Retry-After',
-                                                        'value': str(rate_limit.retry_after)
-                                                    }
-                                                ]
-                                            }
-                                        }
-                                    },
-                                    'visibility_config': {
-                                        'metric_name': rate_limit.name,
-                                        'sampled_requests_enabled': True,
-                                        'cloudwatch_metrics_enabled': True
-                                    }
-                                }
-                                # We use two rate rules, one with a lower
-                                # threshold that will block requests, and one
-                                # with a higher threshold that will block
-                                # requests and trigger an alarm. Note, the rules
-                                # need to be defined in order of descending
-                                # threshold size since once a rate rule is
-                                # tripped, it will prevent evaluation of any
-                                # following rules.
-                                for rate_limit in [
-                                    config.waf_rate_limit_alarm,
-                                    config.waf_rate_limit,
-                                ]
-                            ],
                             {
                                 'name': 'aws_common_rule_set',
                                 'statement': {
@@ -504,7 +462,49 @@ emit_tf({
                                         'cloudwatch_metrics_enabled': True
                                     }
                                 }
-                            ])
+                            ]),
+                            *[
+                                {
+                                    'name': rate_limit.name,
+                                    'statement': {
+                                        'rate_based_statement': {
+                                            'limit': rate_limit.value,
+                                            'evaluation_window_sec': rate_limit.period,
+                                            'aggregate_key_type': 'IP'
+                                        }
+                                    },
+                                    'action': {
+                                        'block': {
+                                            'custom_response': {
+                                                'response_code': 429,
+                                                'response_header': [
+                                                    {
+                                                        'name': 'Retry-After',
+                                                        'value': str(rate_limit.retry_after)
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    'visibility_config': {
+                                        'metric_name': rate_limit.name,
+                                        'sampled_requests_enabled': True,
+                                        'cloudwatch_metrics_enabled': True
+                                    }
+                                }
+                                # We use two rate rules, one with a lower
+                                # threshold that will block requests, and one
+                                # with a higher threshold that will block
+                                # requests and trigger an alarm. Note, the rules
+                                # need to be defined in order of descending
+                                # threshold size since once a rate rule is
+                                # tripped, it will prevent evaluation of any
+                                # following rules.
+                                for rate_limit in [
+                                    config.waf_rate_limit_alarm,
+                                    config.waf_rate_limit,
+                                ]
+                            ]
                         ])
                     ]),
                     'scope': 'REGIONAL',
