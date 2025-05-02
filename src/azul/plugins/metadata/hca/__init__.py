@@ -1,10 +1,17 @@
 from typing import (
     Iterable,
+    Literal,
+    Self,
     Sequence,
     TYPE_CHECKING,
 )
 
+from attrs import (
+    frozen,
+)
+
 from azul import (
+    JSON,
     config,
     iif,
 )
@@ -16,6 +23,7 @@ from azul.indexer.document import (
 )
 from azul.plugins import (
     DocumentSlice,
+    File,
     ManifestConfig,
     MetadataPlugin,
     Sorting,
@@ -449,3 +457,51 @@ class Plugin(MetadataPlugin[HCABundle]):
     @property
     def filter_stage(self) -> type[HCAFilterStage]:
         return HCAFilterStage
+
+    @property
+    def file_class(self) -> type[File]:
+        return HCAFile
+
+
+@frozen(kw_only=True)
+class HCAFile(File):
+    #: Various checksums of the file's content
+    sha256: str
+    # crc32c is required by the HCA API, but we allow it to be None for mirroring
+    crc32c: str | None = None
+    sha1: str | None = None
+    s3_etag: str | None = None
+
+    @classmethod
+    def from_hit(cls, hit: JSON) -> Self:
+        return cls(uuid=hit['uuid'],
+                   version=hit['version'],
+                   name=hit['name'],
+                   size=hit['size'],
+                   drs_uri=hit['drs_uri'],
+                   content_type=hit['content-type'],
+                   sha256=hit['sha256'],
+                   crc32c=hit['crc32c'],
+                   sha1=hit.get('sha1'),
+                   s3_etag=hit.get('s3_etag'))
+
+    @classmethod
+    def from_descriptor(cls,
+                        descriptor: JSON,
+                        *,
+                        uuid: str,
+                        name: str,
+                        drs_uri: str | None) -> Self:
+        return cls(uuid=uuid,
+                   name=name,
+                   version=descriptor['file_version'],
+                   size=descriptor['size'],
+                   content_type=descriptor['content_type'],
+                   sha256=descriptor['sha256'],
+                   crc32c=descriptor['crc32c'],
+                   sha1=descriptor.get('sha1'),
+                   s3_etag=descriptor.get('s3_etag'),
+                   drs_uri=drs_uri)
+
+    def digest(self) -> tuple[str, Literal['sha256']]:
+        return self.sha256, 'sha256'

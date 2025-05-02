@@ -33,6 +33,7 @@ from azul import (
     config,
 )
 from azul.plugins import (
+    File,
     RepositoryPlugin,
     dotted,
 )
@@ -315,7 +316,7 @@ class RepositoryService(ElasticsearchService):
                       file_uuid: str,
                       file_version: str | None,
                       filters: Filters,
-                      ) -> MutableJSON | None:
+                      ) -> File | None:
         """
         Return the inner `files` entity describing the data file with the
         given UUID and version.
@@ -353,8 +354,8 @@ class RepositoryService(ElasticsearchService):
         request = self.create_request(catalog, entity_type)
         request = chain.prepare_request(request)
 
+        plugin = self.metadata_plugin(catalog)
         if file_version is None:
-            plugin = self.metadata_plugin(catalog)
             field_path = dotted(plugin.field_mapping['fileVersion'])
             request.sort({field_path: dict(order='desc')})
 
@@ -370,8 +371,9 @@ class RepositoryService(ElasticsearchService):
             assert file_version is None, len(hits)
 
         file = one(first(hits)['contents']['files'])
+        file = plugin.file_class.from_hit(file)
         if file_version is not None:
-            assert file_version == file['version']
+            assert file_version == file.version
         return file
 
     @property

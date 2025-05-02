@@ -2,7 +2,6 @@ from collections.abc import (
     Mapping,
     Sequence,
 )
-import json
 import logging
 from typing import (
     Protocol,
@@ -19,9 +18,6 @@ from azul import (
     CatalogName,
     mutable_furl,
 )
-from azul.chalice import (
-    AppController,
-)
 from azul.json import (
     copy_json,
 )
@@ -33,6 +29,8 @@ from azul.types import (
     JSON,
     PrimitiveJSON,
 )
+
+log = logging.getLogger(__name__)
 
 # We can't express that these are actually pairs. We could, using tuples, but
 # those are not JSON, generally speaking, even though the `json` module supports
@@ -157,9 +155,6 @@ class Filters:
         return filters
 
 
-log = logging.getLogger(__name__)
-
-
 class BadArgumentException(Exception):
 
     def __init__(self, message):
@@ -175,18 +170,3 @@ class FileUrlFunc(Protocol):
                  fetch: bool = True,
                  **params: str
                  ) -> mutable_furl: ...
-
-
-@attr.s(auto_attribs=True, frozen=True, kw_only=True)
-class ServiceAppController(AppController):
-    file_url_func: FileUrlFunc
-
-    def _parse_filters(self, filters: str | None) -> FiltersJSON:
-        """
-        Parses a string with Azul filters in JSON syntax. Handles default cases
-        where filters are None or '{}'.
-        """
-        if filters is None:
-            return {}
-        else:
-            return json.loads(filters)

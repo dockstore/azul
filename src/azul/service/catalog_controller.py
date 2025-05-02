@@ -13,7 +13,7 @@ from azul.plugins import (
     Plugin,
     RepositoryPlugin,
 )
-from azul.service import (
+from azul.service.app_controller import (
     ServiceAppController,
 )
 from azul.types import (

@@ -6,6 +6,7 @@ supported, so the file must be publicly accessible.
 import argparse
 import logging
 import math
+import string
 import sys
 
 from azul import (
@@ -31,6 +32,12 @@ from azul.http import (
 from azul.logging import (
     configure_script_logging,
 )
+from azul.plugins import (
+    File,
+)
+from azul.plugins.metadata.hca import (
+    HCAFile,
+)
 from azul.service import (
     Filters,
 )
@@ -43,17 +50,13 @@ from azul.service.source_service import (
 from azul.service.storage_service import (
     StorageService,
 )
-from azul.types import (
-    JSON,
-    MutableJSON,
-)
 
 log = logging.getLogger(__name__)
 
 http = http_client(log)
 
 
-def get_file(catalog: CatalogName, file_uuid: str) -> MutableJSON:
+def get_file(catalog: CatalogName, file_uuid: str) -> HCAFile:
     source_ids = SourceService().list_source_ids(catalog, authentication=None)
     filters = Filters(explicit={},
                       source_ids=source_ids)
@@ -63,20 +66,23 @@ def get_file(catalog: CatalogName, file_uuid: str) -> MutableJSON:
                                              filters=filters)
     if file is None:
         raise RuntimeError(f'File {file_uuid!r} not found in catalog {catalog!r}')
+    assert isinstance(file, HCAFile)
     return file
 
 
-def get_download_url(catalog: CatalogName, file: JSON) -> str:
-    drs_uri = file['drs_uri']
+def get_download_url(catalog: CatalogName, file: File) -> str:
+    drs_uri = file.drs_uri
     drs = AzulClient().repository_plugin(catalog).drs_client()
     access = drs.get_object(drs_uri, AccessMethod.gs)
     assert access.method is AccessMethod.https, access
     return access.url
 
 
-def object_key(file: JSON) -> str:
-    # For non-HCA catalogs, a different hash may be more appropriate
-    return f'file/{file["sha256"]}.sha256'
+def object_key(file: File) -> str:
+    digest, digest_type = file.digest()
+    assert all(c in string.hexdigits for c in digest), R(
+        'Expected a hexadecimal digest', digest)
+    return f'file/{digest.lower()}.{digest_type}'
 
 
 def mirror_file(catalog: CatalogName, file_uuid: str, part_size: int) -> str:
@@ -90,9 +96,9 @@ def mirror_file(catalog: CatalogName, file_uuid: str, part_size: int) -> str:
     download_url = get_download_url(catalog, file)
     key = object_key(file)
     storage = StorageService(bucket_name=aws.mirror_bucket)
-    upload = storage.create_multipart_upload(key, content_type=file['content-type'])
+    upload = storage.create_multipart_upload(key, content_type=file.content_type)
 
-    total_size = file['size']
+    total_size = file.size
     part_count = math.ceil(total_size / part_size)
     assert part_count <= 10000, R('Part size is too small for this file',
                                   total_size, part_size, part_count)
@@ -112,13 +118,13 @@ def mirror_file(catalog: CatalogName, file_uuid: str, part_size: int) -> str:
 
     etags = list(map(file_part, range(part_count)))
     storage.complete_multipart_upload(upload, etags)
-    return storage.get_presigned_url(key, file['name'])
+    return storage.get_presigned_url(key, file.name)
 
 
 def main(argv):
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=AzulArgumentHelpFormatter)
-    parser.add_argument('-c', '--catalog')
+    parser.add_argument('-c', '--catalog', default=config.default_catalog)
     parser.add_argument('-f', '--file-uuid')
     parser.add_argument('-p', '--part-size', type=int, default=50 * 2 ** 20)
     args = parser.parse_args(argv)
