@@ -202,20 +202,27 @@ def http_body_log_message(body_type: BodyType,
         else:
             return f'… with nonprintable body ({type(body)!r})'
     else:
-        body_msg = 'not empty'
+        if isinstance(body, (bytes, bytearray, str)):
+            body_msg = f'size of {len(body)} bytes'
+        else:
+            body_msg = 'not empty'
     return f'… with {body_type} body {body_msg}'
 
 
 def _http_body_log_message(body: bytes | bytearray | str | JSON) -> str:
+    body_len = None
     if azul.config.debug > 1:
         if isinstance(body, (bytes, bytearray)):
             body = body.decode(errors='ignore')
         elif isinstance(body, reify(JSON)):
             body = json.dumps(body)
+        body_len = len(body)
     else:
         if isinstance(body, reify(JSON)):
             body = json_head(http_body_log_prefix_len, body)
         else:
+            body_len = len(body)
             # https://github.com/python/typing/discussions/1911
             body = trunc_ellipses(body, max_len=http_body_log_prefix_len)  # type: ignore[type-var]
-    return f'{body!r}'
+    size_msg = f'size of {body_len} bytes ' if body_len is not None else ''
+    return f'{size_msg}{body!r}'

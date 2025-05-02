@@ -52,72 +52,103 @@ class TestServiceAppLogging(DCP1CannedBundleTestCase, WebServiceTestCase):
         for azul_debug in (0, 1, 2):
             level = [INFO, DEBUG, DEBUG][azul_debug]
             for authenticated in False, True:
-                with self.subTest(azul_debug=azul_debug, authenticated=authenticated):
-                    url = self.base_url.set(path='/index/projects')
-                    request_headers = {'authorization': 'Bearer foo_token'} if authenticated else {}
-                    with self.assertLogs(logger=log, level=level) as logs:
-                        debug = PropertyMock(return_value=azul_debug)
-                        with patch.object(Config, 'debug', new=debug):
-                            with patch.object(azul.logging, 'http_body_log_prefix_len', 128):
-                                requests.get(str(url), headers=request_headers)
-                    logs = [(r.levelno, r.getMessage()) for r in logs.records]
-                    last_log_level, last_log = logs.pop()  # … to validate separately
-                    request_headers = {
-                        'host': url.netloc,
-                        'user-agent': 'python-requests/2.32.4',
-                        'accept-encoding': 'gzip, deflate',
-                        'accept': '*/*',
-                        'connection': 'keep-alive',
-                        **request_headers,
-                    }
-                    response_headers = {
-                        'Access-Control-Allow-Origin': '*',
-                        'Access-Control-Allow-Headers': 'Authorization,'
-                                                        'Content-Type,'
-                                                        'X-Amz-Date,'
-                                                        'X-Amz-Security-Token,'
-                                                        'X-Api-Key',
-                        **AzulChaliceApp.security_headers(),
-                        'Cache-Control': 'no-store'
-                    }
-                    expected_body = json.dumps(
-                        {
-                            'pagination': {
-                                'count': 1,
-                                'total': 1,
-                                'size': 10,
-                                'next': None,
-                                'previous': None,
-                                'pages': 1,
-                                'sort': 'projectTitle',
-                                'order': 'asc'
-                            }
+                for request_body in False, True:
+                    if request_body:
+                        request_body = json.dumps({'filters': json.dumps({'organ': {'is': ['foo']}})})
+                    with self.subTest(azul_debug=azul_debug,
+                                      authenticated=authenticated,
+                                      request_body=request_body):
+                        url = self.base_url.set(path='/index/projects')
+                        request_headers = {'authorization': 'Bearer foo_token'} if authenticated else {}
+                        with self.assertLogs(logger=log, level=level) as logs:
+                            debug = PropertyMock(return_value=azul_debug)
+                            with patch.object(Config, 'debug', new=debug):
+                                with patch.object(azul.logging, 'http_body_log_prefix_len', 128):
+                                    if request_body:
+                                        json_body = json.loads(request_body)
+                                        request_headers = {
+                                            'content-length': str(len(request_body)),
+                                            'content-type': 'application/json',
+                                            **request_headers
+                                        }
+                                    else:
+                                        json_body = None
+                                    response = requests.get(str(url), headers=request_headers, json=json_body)
+                        logs = [(r.levelno, r.getMessage()) for r in logs.records]
+                        last_log_level, last_log = logs.pop()  # … to validate separately
+                        request_headers = {
+                            'host': url.netloc,
+                            'user-agent': 'python-requests/2.32.4',
+                            'accept-encoding': 'gzip, deflate',
+                            'accept': '*/*',
+                            'connection': 'keep-alive',
+                            **request_headers,
                         }
-                    )
-                    self.assertEqual(
-                        [
-                            (
-                                INFO,
-                                "Received GET request for '/index/projects', "
-                                f'with {json.dumps(dict(query=None, headers=request_headers))}.'),
-                            (
-                                INFO,
-                                "Authenticated request as OAuth2(access_token='foo_token')"
-                                if authenticated else
-                                'Did not authenticate request.'
-                            ),
-                            (
-                                INFO,
-                                'Returning 200 response with headers ' +
-                                json.dumps(response_headers) + '.'
-                            )
-                        ],
-                        logs
-                    )
-                    if azul_debug == 0:
-                        self.assertEqual('… with response body not empty', last_log)
-                    elif azul_debug == 1:
-                        self.assertEqual(f'… with response body {expected_body[:128]!r}', last_log)
-                    elif azul_debug > 1:
-                        self.assertTrue(last_log.startswith(f'… with response body \'{expected_body[:135]}'))
-                    self.assertEqual(INFO, last_log_level)
+                        response_headers = {
+                            'Access-Control-Allow-Origin': '*',
+                            'Access-Control-Allow-Headers': 'Authorization,'
+                                                            'Content-Type,'
+                                                            'X-Amz-Date,'
+                                                            'X-Amz-Security-Token,'
+                                                            'X-Api-Key',
+                            **AzulChaliceApp.security_headers(),
+                            'Cache-Control': 'no-store'
+                        }
+                        expected_body = json.dumps(
+                            {
+                                'pagination': {
+                                    'count': 1,
+                                    'total': 1,
+                                    'size': 10,
+                                    'next': None,
+                                    'previous': None,
+                                    'pages': 1,
+                                    'sort': 'projectTitle',
+                                    'order': 'asc'
+                                }
+                            }
+                        )
+                        self.assertEqual(
+                            [
+                                (
+                                    INFO,
+                                    "Received GET request for '/index/projects', "
+                                    f'with {json.dumps(dict(query=None, headers=request_headers))}.'),
+                                (
+                                    INFO,
+                                    '… without request body'
+                                ) if not request_body else
+                                (
+                                    INFO,
+                                    '… with request body not empty'
+                                ) if azul_debug == 0 else
+                                (
+                                    INFO,
+                                    f'… with request body '
+                                    f'{"size of 47 bytes " if azul_debug > 1 else ""}{request_body!r}'
+                                ),
+                                (
+                                    INFO,
+                                    "Authenticated request as OAuth2(access_token='foo_token')"
+                                    if authenticated else
+                                    'Did not authenticate request.'
+                                ),
+                                (
+                                    INFO,
+                                    'Returning 200 response with headers ' +
+                                    json.dumps(response_headers) + '.'
+                                )
+                            ],
+                            logs
+                        )
+                        if azul_debug == 0:
+                            self.assertEqual('… with response body not empty', last_log)
+                        elif azul_debug == 1:
+                            self.assertEqual(f'… with response body {expected_body[:128]!r}', last_log)
+                        elif azul_debug > 1:
+                            self.assertTrue(last_log.startswith(
+                                f'… with response body size of 9118 bytes \'{expected_body[:135]}'))
+                        else:
+                            assert False
+                        self.assertEqual(INFO, last_log_level)
+                        self.assertEqual(200, response.status_code)
