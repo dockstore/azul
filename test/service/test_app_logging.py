@@ -3,11 +3,18 @@ from logging import (
     DEBUG,
     INFO,
 )
+from unittest.mock import (
+    PropertyMock,
+    patch,
+)
 
 import requests
 
 from app_test_case import (
     LocalAppTestCase,
+)
+from azul import (
+    Config,
 )
 from azul.chalice import (
     AzulChaliceApp,
@@ -33,13 +40,16 @@ class TestServiceAppLogging(DCP1CannedBundleTestCase, LocalAppTestCase):
         return 'service'
 
     def test_request_logs(self):
-        for level in INFO, DEBUG:
+        for azul_debug in (0, 1, 2):
+            level = [INFO, DEBUG, DEBUG][azul_debug]
             for authenticated in False, True:
-                with self.subTest(level=level, authenticated=authenticated):
+                with self.subTest(azul_debug=azul_debug, authenticated=authenticated):
                     url = self.base_url.set(path='/health/basic')
                     request_headers = {'authorization': 'Bearer foo_token'} if authenticated else {}
                     with self.assertLogs(logger=log, level=level) as logs:
-                        requests.get(str(url), headers=request_headers)
+                        debug = PropertyMock(return_value=azul_debug)
+                        with patch.object(Config, 'debug', new=debug):
+                            requests.get(str(url), headers=request_headers)
                     logs = [(r.levelno, r.getMessage()) for r in logs.records]
                     request_headers = {
                         'host': url.netloc,
@@ -72,13 +82,14 @@ class TestServiceAppLogging(DCP1CannedBundleTestCase, LocalAppTestCase):
                                 'Did not authenticate request.'
                             ),
                             (
-                                level,
-                                'Returning 200 response. To log headers and body, set AZUL_DEBUG to 1.'
-                                if level == INFO else
+                                INFO,
                                 'Returning 200 response with headers ' +
-                                json.dumps(response_headers) + '. ' +
-                                'See next line for the first 1024 characters of the body.\n' +
-                                '{"up": true}'
+                                json.dumps(response_headers) + '.'
+                            ),
+                            (
+                                INFO,
+                                '… with response body not empty' if azul_debug == 0 else
+                                '… with response body \'{"up": true}\''
                             )
                         ],
                         logs
