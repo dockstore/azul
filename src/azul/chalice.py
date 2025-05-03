@@ -65,7 +65,9 @@ from azul.enums import (
 )
 from azul.json import (
     copy_json,
-    json_head,
+)
+from azul.logging import (
+    http_body_log_message,
 )
 from azul.openapi import (
     format_description,
@@ -459,34 +461,21 @@ class AzulChaliceApp(Chalice):
             log.info('Authenticated request as %r', auth)
 
     def _log_request(self):
-        if log.isEnabledFor(logging.INFO):
-            assert self.current_request is not None
-            context = self.current_request.context
-            request_info = {
-                'query': self.current_request.query_params,
-                'headers': self.current_request.headers
-            }
-            log.info('Received %s request for %r, with %s.',
-                     context['httpMethod'],
-                     context['path'],
-                     json.dumps(request_info, cls=self._LogJSONEncoder))
+        assert self.current_request is not None
+        context = self.current_request.context
+        request_info = {
+            'query': self.current_request.query_params,
+            'headers': self.current_request.headers
+        }
+        log.info('Received %s request for %r, with %s.',
+                 context['httpMethod'],
+                 context['path'],
+                 json.dumps(request_info, cls=self._LogJSONEncoder))
 
     def _log_response(self, response):
-        if log.isEnabledFor(logging.DEBUG):
-            n = 1024
-            if isinstance(response.body, str):
-                body = response.body[:n]
-            else:
-                body = json_head(n, response.body)
-            log.debug('Returning %i response with headers %s. '
-                      'See next line for the first %i characters of the body.\n%s',
-                      response.status_code,
-                      json.dumps(response.headers, cls=self._LogJSONEncoder),
-                      n, body)
-        else:
-            log.info('Returning %i response. '
-                     'To log headers and body, set AZUL_DEBUG to 1.',
-                     response.status_code)
+        log.info('Returning %i response with headers %s.',
+                 response.status_code, json.dumps(response.headers, cls=self._LogJSONEncoder))
+        log.info(http_body_log_message('response', response.body))
 
     absent = object()
 

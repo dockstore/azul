@@ -1,6 +1,7 @@
 from contextlib import (
     contextmanager,
 )
+import json
 import logging
 from typing import (
     IO,
@@ -15,8 +16,15 @@ from more_itertools import (
 )
 
 import azul
+from azul.json import (
+    json_head,
+)
 from azul.strings import (
     trunc_ellipses,
+)
+from azul.types import (
+    JSON,
+    reify,
 )
 
 if TYPE_CHECKING:
@@ -173,7 +181,7 @@ http_body_log_prefix_len = 1024
 
 
 def http_body_log_message(body_type: BodyType,
-                          body: bytes | bytearray | str | IO[bytes] | IO[str] | None,
+                          body: bytes | bytearray | str | IO[bytes] | IO[str] | JSON | None
                           ) -> str:
     """
     Returns a formatted log message for request/response bodies. The level set
@@ -189,7 +197,7 @@ def http_body_log_message(body_type: BodyType,
     if body is None:
         return f'… without {body_type} body'
     elif azul.config.debug > 0:
-        if isinstance(body, (bytes, bytearray, str)):
+        if isinstance(body, (bytes, bytearray, str, reify(JSON))):
             body_msg = _http_body_log_message(body)
         else:
             return f'… with nonprintable body ({type(body)!r})'
@@ -198,11 +206,16 @@ def http_body_log_message(body_type: BodyType,
     return f'… with {body_type} body {body_msg}'
 
 
-def _http_body_log_message(body: bytes | bytearray | str) -> str:
+def _http_body_log_message(body: bytes | bytearray | str | JSON) -> str:
     if azul.config.debug > 1:
         if isinstance(body, (bytes, bytearray)):
             body = body.decode(errors='ignore')
+        elif isinstance(body, reify(JSON)):
+            body = json.dumps(body)
     else:
-        # https://github.com/python/typing/discussions/1911
-        body = trunc_ellipses(body, max_len=http_body_log_prefix_len)  # type: ignore[type-var]
+        if isinstance(body, reify(JSON)):
+            body = json_head(http_body_log_prefix_len, body)
+        else:
+            # https://github.com/python/typing/discussions/1911
+            body = trunc_ellipses(body, max_len=http_body_log_prefix_len)  # type: ignore[type-var]
     return f'{body!r}'

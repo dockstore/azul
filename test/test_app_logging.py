@@ -75,7 +75,7 @@ class TestAppLogging(AzulUnitTestCase):
                     self.assertEqual(500, response.status_code)
 
                     # The request is always logged
-                    self.assertEqual(3, len(azul_log.output))
+                    self.assertEqual(4, len(azul_log.output))
                     headers = {
                         'host': f'{host}:{port}',
                         'user-agent': 'python-requests/2.32.4',
@@ -124,17 +124,16 @@ class TestAppLogging(AzulUnitTestCase):
                         **app.security_headers(),
                         'Cache-Control': 'no-store',
                     }
-                    expected = (
-                        'DEBUG:azul.chalice:Returning 500 response with headers ' +
-                        json.dumps(headers) + '. ' +
-                        'See next line for the first 1024 characters of the body.\n' +
-                        body
-                    ) if debug else (
-                        'INFO:azul.chalice:Returning 500 response. ' +
-                        'To log headers and body, set AZUL_DEBUG to 1.'
-                    )
+                    expected = 'INFO:azul.chalice:… with response body '
+                    if debug:
+                        expected += f'{body!r}'
+                    else:
+                        expected += 'not empty'
                     self.maxDiff = None
-                    self.assertEqual(expected, azul_log.output[2])
+                    self.assertEqual('INFO:azul.chalice:Returning 500 response '
+                                     'with headers ' + json.dumps(headers) + '.',
+                                     azul_log.output[2])
+                    self.assertEqual(expected, azul_log.output[3])
 
 
 class TestPermittedWarnings(AzulUnitTestCase):
