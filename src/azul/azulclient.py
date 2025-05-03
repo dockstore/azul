@@ -692,14 +692,19 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
     def mirror_partition(self, catalog: CatalogName, source_json: JSON, prefix: str):
         plugin = self.repository_plugin(catalog)
         source = plugin.source_ref_cls.from_json(source_json)
+        already_mirrored = self.mirror_service.list_info_objects(prefix)
 
-        def message(file: File) -> SQSMessage:
-            log.info('Mirroring file %r in source %r from catalog %r',
-                     file.uuid, str(source.spec), catalog)
-            return self.mirror_file_message(catalog, source, file)
+        def messages() -> Iterable[SQSMessage]:
+            for file in plugin.list_files(source, prefix):
+                info_key = self.mirror_service.info_object_key(file)
+                if info_key in already_mirrored:
+                    log.info('Not mirroring file %r because info object already exists at %r',
+                             file.uuid, info_key)
+                else:
+                    log.info('Mirroring file %r', file.uuid)
+                    yield self.mirror_file_message(catalog, source, file)
 
-        messages = map(message, plugin.list_files(source, prefix))
-        self.queue_mirror_messages(messages)
+        self.queue_mirror_messages(messages())
 
     def mirror_file(self,
                     catalog: CatalogName,
