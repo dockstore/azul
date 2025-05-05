@@ -29,6 +29,10 @@ from azul.collections import (
 from azul.deployment import (
     aws,
 )
+from azul.digests import (
+    Hasher,
+    get_resumable_hasher,
+)
 from azul.drs import (
     AccessMethod,
 )
@@ -140,6 +144,10 @@ class MirrorService(HasCachedHttpClient):
             self._storage.put(object_key=self.mirror_object_key(file),
                               data=file_content,
                               content_type=file.content_type)
+            _, digest_type = file.digest()
+            hasher = get_resumable_hasher(digest_type)
+            hasher.update(file_content)
+            self._verify_digest(file, hasher)
             self.put_info(file)
 
     def begin_mirroring_file(self, file: File) -> str:
@@ -155,14 +163,17 @@ class MirrorService(HasCachedHttpClient):
                          catalog: CatalogName,
                          file: File,
                          part: FilePart,
-                         upload_id: str
+                         upload_id: str,
+                         hasher: Hasher
                          ) -> str:
         """
         Upload a part of a file to a multipart upload begun with
         :meth:`begin_mirroring_file` and return the uploaded part's ETag.
+        The provided hasher is mutated to incorporated the part's content.
         """
         upload = self._get_upload(file, upload_id)
         file_content = self._download(catalog, file, part)
+        hasher.update(file_content)
         return self._storage.upload_multipart_part(file_content,
                                                    part.index + 1,
                                                    upload)
@@ -171,13 +182,14 @@ class MirrorService(HasCachedHttpClient):
                               file: File,
                               upload_id: str,
                               etags: Sequence[str],
-                              hasher
+                              hasher: Hasher
                               ):
         """
         Complete a multipart upload begun with :meth:`begin_mirroring_file`.
         """
         upload = self._get_upload(file, upload_id)
         self._storage.complete_multipart_upload(upload, etags)
+        self._verify_digest(file, hasher)
         self._check_info(file)
         self.put_info(file)
 
@@ -258,3 +270,10 @@ class MirrorService(HasCachedHttpClient):
     def _get_upload(self, file: File, upload_id: str) -> 'MultipartUpload':
         return self._storage.load_multipart_upload(object_key=self.mirror_object_key(file),
                                                    upload_id=upload_id)
+
+    def _verify_digest(self, file: File, hasher: Hasher):
+        expected_digest_value, digest_type = file.digest()
+        actual_digest_value = hasher.hexdigest()
+        assert expected_digest_value == actual_digest_value, R(
+            'File digest value does not match its contents',
+            file.uuid, digest_type, expected_digest_value, actual_digest_value)

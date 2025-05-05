@@ -1,7 +1,7 @@
 bidict==0.23.1
 blessed==1.21.0
 blinker==1.9.0
-botocore-stubs==1.38.7
+botocore-stubs==1.38.10
 brotli==1.1.0
 click==8.1.8
 colorama==0.4.6
@@ -25,12 +25,12 @@ jsonschema==4.23.0
 jsonschema-path==0.3.4
 jsonschema-specifications==2025.4.1
 lazy-object-proxy==1.11.0
-locust-cloud==1.20.7
+locust-cloud==1.21.2
 mccabe==0.7.0
 mypy-boto3-apigateway==1.38.0
 mypy-boto3-cloudwatch==1.38.0
 mypy-boto3-dynamodb==1.38.4
-mypy-boto3-ec2==1.38.6
+mypy-boto3-ec2==1.38.10
 mypy-boto3-ecr==1.38.6
 mypy-boto3-es==1.38.0
 mypy-boto3-iam==1.38.0

@@ -57,11 +57,13 @@ class MirrorController(ActionController[MirrorAction]):
                                          message['file'],
                                          message['part'],
                                          message['upload_id'],
-                                         message['etags'])
+                                         message['etags'],
+                                         message['hasher'])
         elif action is MirrorAction.finalize_file:
             self.client.finalize_file(message['catalog'],
                                       message['file'],
                                       message['upload_id'],
-                                      message['etags'])
+                                      message['etags'],
+                                      message['hasher'])
         else:
             assert False, action

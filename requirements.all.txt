@@ -11,7 +11,7 @@ blinker==1.9.0
 boto3==1.38.5
 boto3-stubs-lite==1.38.5
 botocore==1.38.5
-botocore-stubs==1.38.7
+botocore-stubs==1.38.10
 brotli==1.1.0
 cachetools==5.5.2
 certifi==2025.4.26
@@ -70,7 +70,7 @@ jsonschema-path==0.3.4
 jsonschema-specifications==2025.4.1
 lazy-object-proxy==1.11.0
 locust==2.36.2
-locust-cloud==1.20.7
+locust-cloud==1.21.2
 markupsafe==3.0.2
 mccabe==0.7.0
 more-itertools==10.7.0
@@ -80,7 +80,7 @@ mypy==1.15.0
 mypy-boto3-apigateway==1.38.0
 mypy-boto3-cloudwatch==1.38.0
 mypy-boto3-dynamodb==1.38.4
-mypy-boto3-ec2==1.38.6
+mypy-boto3-ec2==1.38.10
 mypy-boto3-ecr==1.38.6
 mypy-boto3-es==1.38.0
 mypy-boto3-iam==1.38.0
@@ -132,6 +132,7 @@ requests==2.32.3
 requests-toolbelt==1.0.0
 requirements-parser==0.2.0+1
 responses==0.25.7
+resumablesha256==1.0
 rfc3339-validator==0.1.4
 rpds-py==0.24.0
 rsa==4.7.2

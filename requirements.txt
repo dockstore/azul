@@ -17,6 +17,7 @@ jmespath==1.0.1
 more-itertools==10.7.0
 msgpack==1.1.0
 requests==2.32.3
+resumablesha256==1.0
 rsa==4.7.2  # < 4.8, see https://github.com/DataBiosphere/azul/issues/6774. Resolve build-time dependency ambguity
 setuptools==80.0.0  # Match requirements.pip.txt. Python 3.12 removed distutils, which we depended on transitively. Luckily, setuptools includes a vendored copy.
 urllib3==1.26.20 # < 2, see https://github.com/DataBiosphere/azul/issues/6777, match with types-urllib in requirements.dev.txt
