@@ -1,5 +1,4 @@
 .. contents::
-.. contents::
 
 Getting started as operator
 ---------------------------
