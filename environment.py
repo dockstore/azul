@@ -710,11 +710,6 @@ def env() -> Mapping[str, Optional[str]]:
         #
         'PIP_DISABLE_PIP_VERSION_CHECK': '1',
 
-        # FIXME: Remove once we upgrade to botocore 1.28.x
-        #        https://github.com/DataBiosphere/azul/issues/4560
-        #
-        'BOTO_DISABLE_COMMONNAME': 'true',
-
         # The path of the directory where the public key infrastructure files
         # are managed on developer, operator and administrator machines. The
         # directory contains secrets so it Must reside outside of the project
