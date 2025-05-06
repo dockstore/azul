@@ -29,6 +29,9 @@ from urllib.parse import (
     urlencode,
 )
 
+from botocore.response import (
+    StreamingBody,
+)
 from werkzeug.http import (
     parse_dict_header,
 )
@@ -128,9 +131,10 @@ class StorageService:
         return s3.MultipartUpload(self.bucket_name, object_key, upload_id)
 
     def upload_multipart_part(self,
-                              buffer: IO[bytes],
+                              buffer: str | bytes | IO | StreamingBody,
                               part_number: int,
-                              upload: MultipartUpload) -> str:
+                              upload: MultipartUpload
+                              ) -> str:
         return upload.Part(part_number).upload(Body=buffer)['ETag']
 
     def complete_multipart_upload(self,

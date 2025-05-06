@@ -1,7 +1,6 @@
 """
 Copy all files from the public sources in a catalog to the current deployment's
-mirroring bucket. The actual file-copying is not yet implemented, so all this
-currently does is send messages to the indexer app that don't do anything.
+mirroring bucket.
 """
 import argparse
 import logging
