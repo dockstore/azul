@@ -3,17 +3,16 @@ Command line utility to trigger indexing of bundles from DSS into Azul
 """
 
 import argparse
-import fnmatch
 import logging
 import sys
 
 from azul import (
     config,
     reject,
-    require,
 )
 from azul.args import (
     AzulArgumentHelpFormatter,
+    matching_sources,
 )
 from azul.azulclient import (
     AzulClient,
@@ -131,32 +130,15 @@ def main(argv: list[str]):
 
     azul = AzulClient(num_workers=args.num_workers)
 
-    sources_by_catalog = {
-        catalog: azul.catalog_sources(catalog)
-        for catalog in args.catalogs
-    }
     source_globs = set(args.sources)
-    globs_matched = set()
     every_source = '*' in source_globs
+    sources_by_catalog = azul.sources_by_catalog(args.catalogs)
+
     if not every_source:
         if args.local:
             parser.error('Cannot specify sources when performing a local reindex')
             assert False
-        for catalog, sources in sources_by_catalog.items():
-            catalog_matches = set()
-            for source_glob in source_globs:
-                matches = fnmatch.filter(sources, source_glob)
-                if matches:
-                    globs_matched.add(source_glob)
-                log.debug('Source glob %r matched sources %r in catalog %r',
-                          source_glob, matches, catalog)
-                catalog_matches.update(matches)
-            sources_by_catalog[catalog] = catalog_matches
-        unmatched = source_globs - globs_matched
-        if unmatched:
-            log.warning('Source(s) not found in any catalog: %r', unmatched)
-        require(any(sources_by_catalog.values()),
-                'No valid sources specified for any catalog')
+        sources_by_catalog = matching_sources(sources_by_catalog, source_globs)
 
     reject(args.deindex and (args.delete or args.create),
            '--deindex is incompatible with --create and --delete.')
