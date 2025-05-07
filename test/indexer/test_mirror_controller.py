@@ -13,6 +13,7 @@ from moto import (
 )
 
 from azul import (
+    R,
     config,
 )
 from azul.deployment import (
@@ -129,3 +130,11 @@ class TestMirrorController(DCP2TestCase, WorkQueueTestCase, S3TestCase):
                                            Key=controller.service.mirror_object_key(file))
             mirrored_file_contents = response['Body'].read()
             self.assertEqual(mirrored_file_contents, file_contents)
+
+            corrupted_contents = file_contents[:-1] + b'Q'
+            with patch.object(MirrorService, '_download', return_value=corrupted_contents):
+                # Force reupload attempt in spite of info object being present
+                with patch.object(MirrorService, '_check_info', return_value=False):
+                    with self.assertRaises(AssertionError) as e:
+                        controller.mirror(event)
+                self.assertTrue(R.caused(e.exception))
