@@ -11,7 +11,7 @@ blinker==1.9.0
 boto3==1.38.5
 boto3-stubs-lite==1.38.5
 botocore==1.38.5
-botocore-stubs==1.38.10
+botocore-stubs==1.38.11
 brotli==1.1.0
 cachetools==5.5.2
 certifi==2025.4.26
@@ -80,7 +80,7 @@ mypy==1.15.0
 mypy-boto3-apigateway==1.38.0
 mypy-boto3-cloudwatch==1.38.0
 mypy-boto3-dynamodb==1.38.4
-mypy-boto3-ec2==1.38.10
+mypy-boto3-ec2==1.38.11
 mypy-boto3-ecr==1.38.6
 mypy-boto3-es==1.38.0
 mypy-boto3-iam==1.38.0
@@ -102,7 +102,7 @@ orderedmultidict==1.0.1
 packaging==25.0
 pathable==0.4.4
 pip==25.1
-platformdirs==4.3.7
+platformdirs==4.3.8
 posix_ipc==1.2.0
 proto-plus==1.26.1
 protobuf==4.25.7

@@ -1,7 +1,7 @@
 bidict==0.23.1
 blessed==1.21.0
 blinker==1.9.0
-botocore-stubs==1.38.10
+botocore-stubs==1.38.11
 brotli==1.1.0
 click==8.1.8
 colorama==0.4.6
@@ -30,7 +30,7 @@ mccabe==0.7.0
 mypy-boto3-apigateway==1.38.0
 mypy-boto3-cloudwatch==1.38.0
 mypy-boto3-dynamodb==1.38.4
-mypy-boto3-ec2==1.38.10
+mypy-boto3-ec2==1.38.11
 mypy-boto3-ecr==1.38.6
 mypy-boto3-es==1.38.0
 mypy-boto3-iam==1.38.0
@@ -47,7 +47,7 @@ mypy-boto3-sts==1.38.0
 mypy_extensions==1.1.0
 openapi-schema-validator==0.6.3
 pathable==0.4.4
-platformdirs==4.3.7
+platformdirs==4.3.8
 psutil==7.0.0
 py-partiql-parser==0.6.1
 pycodestyle==2.13.0
