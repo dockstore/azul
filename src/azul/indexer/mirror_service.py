@@ -202,7 +202,7 @@ class MirrorService(HasCachedHttpClient):
             size = file.size
             expected_status = 200
         else:
-            headers = {'Range': f'bytes={part.offset}-{part.offset + part.size + 1}'}
+            headers = {'Range': f'bytes={part.offset}-{part.offset + part.size - 1}'}
             size = part.size
             expected_status = 206
         # Ideally we would stream the response, but boto only supports uploading
