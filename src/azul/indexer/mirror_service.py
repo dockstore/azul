@@ -15,6 +15,7 @@ import attrs
 
 from azul import (
     CatalogName,
+    JSON,
     R,
     cache,
     cached_property,
@@ -148,7 +149,7 @@ class MirrorService(HasCachedHttpClient):
             hasher = get_resumable_hasher(digest_type)
             hasher.update(file_content)
             self._verify_digest(file, hasher)
-            self.put_info(file)
+            self._put_info(file)
 
     def begin_mirroring_file(self, file: File) -> str:
         """
@@ -191,7 +192,7 @@ class MirrorService(HasCachedHttpClient):
         self._storage.complete_multipart_upload(upload, etags)
         self._verify_digest(file, hasher)
         self._check_info(file)
-        self.put_info(file)
+        self._put_info(file)
 
     def list_info_objects(self, prefix: str) -> OrderedSet[str]:
         return self._storage.list('info/' + prefix)
@@ -212,11 +213,14 @@ class MirrorService(HasCachedHttpClient):
                 'Conflicting content type', file.uuid, key, content_type, file.content_type)
             return True
 
-    def put_info(self, file: File):
-        key = self.info_object_key(file)
-        content = {
-            'content_type': file.content_type
+    def info_object(self, file: File) -> JSON:
+        return {
+            'content_type': file.content_type,
         }
+
+    def _put_info(self, file: File):
+        key = self.info_object_key(file)
+        content = self.info_object(file)
         self._storage.put(object_key=key,
                           data=json.dumps(content).encode(),
                           content_type='application/json')
