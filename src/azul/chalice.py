@@ -526,7 +526,13 @@ class AzulChaliceApp(Chalice):
                         assert old_value == new_value
 
     def load_static_resource(self, *path: str) -> str:
-        return self.load_resource('static', *path)
+        for part in path:
+            if os.sep in part:
+                raise BadRequestError(part)
+        try:
+            return self.load_resource('static', *path)
+        except FileNotFoundError:
+            raise NotFoundError(path)
 
     def load_resource(self, *path: str) -> str:
         package_root = os.path.dirname(self.app_module_path)
@@ -553,19 +559,12 @@ class AzulChaliceApp(Chalice):
         return controller_cls(app=self, **kwargs)
 
     def swagger_resource(self, file_name: str) -> Response:
-        if os.sep in file_name:
-            raise BadRequestError(file_name)
-        else:
-            try:
-                body = self.load_static_resource('swagger', file_name)
-            except FileNotFoundError:
-                raise NotFoundError(file_name)
-            else:
-                path = pathlib.Path(file_name)
-                content_type = mimetypes.types_map[path.suffix]
-                return Response(status_code=200,
-                                headers={'Content-Type': content_type},
-                                body=body)
+        body = self.load_static_resource('swagger', file_name)
+        path = pathlib.Path(file_name)
+        content_type = mimetypes.types_map[path.suffix]
+        return Response(status_code=200,
+                        headers={'Content-Type': content_type},
+                        body=body)
 
     @attrs.frozen(kw_only=True)
     class HandlerDecorator(metaclass=ABCMeta):
