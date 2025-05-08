@@ -13,3 +13,4 @@ _period: 7 days
 - [ ] For `anvilprod`
   - [ ] System administrator and operator determined the commit to be promoted
   - [ ] Operator created the promotion PR
+- [ ] This issue is part of the sprint that includes the date from the issue title
