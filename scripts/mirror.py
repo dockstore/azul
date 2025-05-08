@@ -13,6 +13,7 @@ from azul import (
 )
 from azul.args import (
     AzulArgumentHelpFormatter,
+    matching_sources,
 )
 from azul.azulclient import (
     AzulClient,
@@ -24,7 +25,7 @@ from azul.logging import (
 log = logging.getLogger(__name__)
 
 
-def mirror_catalog(catalog: CatalogName, wait: bool):
+def mirror_catalog(catalog: CatalogName, source_globs: set[str], wait: bool):
     azul = AzulClient()
     plugin = azul.repository_plugin(catalog)
     assert azul.is_queue_empty(config.mirror_queue.name), R(
@@ -35,8 +36,24 @@ def mirror_catalog(catalog: CatalogName, wait: bool):
         'Cannot begin mirroring because a previous operation failed: '
         'there are still messages in the fail queue.',
         fail_queue)
-    public_sources = plugin.list_sources(authentication=None)
-    azul.remote_mirror(catalog, public_sources)
+    public_sources_by_spec = {
+        str(source.spec): source
+        for source in plugin.list_sources(authentication=None)
+    }
+    if '*' in source_globs:
+        sources = public_sources_by_spec.values()
+    else:
+        sources = matching_sources(azul.sources_by_catalog([catalog]),
+                                   source_globs)[catalog]
+        try:
+            sources = {
+                public_sources_by_spec[source]
+                for source in sources
+            }
+        except KeyError as e:
+            assert False, R(
+                'Cannot mirror managed-access source', e.args[0])
+    azul.remote_mirror(catalog, sources)
     if wait:
         azul.wait_for_mirroring()
         assert azul.is_queue_empty(fail_queue), R(
@@ -51,13 +68,19 @@ def main(args):
                         choices=config.catalogs,
                         default=config.default_catalog,
                         help='The name of the catalog to mirror.')
+    parser.add_argument('--sources',
+                        default=config.current_sources,
+                        nargs='+',
+                        help='Limit mirroring to a subset of the configured sources. '
+                             'Supports shell-style wildcards to match multiple sources per argument. '
+                             'All sources must be public.')
     parser.add_argument('--no-wait',
                         action='store_false',
                         dest='wait',
                         help='Do not wait for queues to empty before exiting script.')
     args = parser.parse_args(args)
     assert config.enable_mirroring, R('Mirroring is not enabled')
-    mirror_catalog(args.catalog, args.wait)
+    mirror_catalog(args.catalog, set(args.sources), args.wait)
 
 
 if __name__ == '__main__':

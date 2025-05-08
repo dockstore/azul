@@ -36,6 +36,12 @@ from werkzeug.http import (
     parse_dict_header,
 )
 
+from azul import (
+    R,
+)
+from azul.collections import (
+    OrderedSet,
+)
 from azul.deployment import (
     aws,
 )
@@ -110,6 +116,16 @@ class StorageService:
                             Body=data,
                             **self._object_creation_kwargs(content_type=content_type, tagging=tagging),
                             **kwargs)
+
+    def list(self, prefix: str) -> OrderedSet[str]:
+        keys, num_keys = OrderedSet(), 0
+        paginator = self._s3.get_paginator('list_objects_v2')
+        for page in paginator.paginate(Bucket=self.bucket_name, Prefix=prefix):
+            contents = page.get('Contents', ())
+            num_keys += len(contents)
+            keys.update(object['Key'] for object in contents)
+            assert len(keys) == num_keys, R('Got duplicate keys from S3')
+        return keys
 
     def create_multipart_upload(self,
                                 object_key: str,

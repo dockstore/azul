@@ -48,6 +48,12 @@ from azul import (
 from azul.deployment import (
     aws,
 )
+from azul.digests import (
+    Hasher,
+    get_resumable_hasher,
+    hasher_from_str,
+    hasher_to_str,
+)
 from azul.es import (
     ESClientFactory,
 )
@@ -226,7 +232,8 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
                             file: File,
                             part: FilePart,
                             upload_id: str,
-                            etags: Sequence[str]
+                            etags: Sequence[str],
+                            hasher: Hasher
                             ) -> SQSFifoMessage:
         return SQSFifoMessage(
             body={
@@ -235,7 +242,8 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
                 'upload_id': upload_id,
                 'action': MirrorAction.mirror_part.to_json(),
                 'part': part.to_json(),
-                'etags': etags
+                'etags': etags,
+                'hasher': hasher_to_str(hasher)
             },
             group_id=self.mirror_service.mirror_object_key(file)
         )
@@ -244,7 +252,8 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
                               catalog: CatalogName,
                               file: File,
                               upload_id: str,
-                              etags: Sequence[str]
+                              etags: Sequence[str],
+                              hasher: Hasher
                               ) -> SQSFifoMessage:
         return SQSFifoMessage(
             body={
@@ -252,7 +261,8 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
                 'file': file.to_json(),
                 'upload_id': upload_id,
                 'action': MirrorAction.finalize_file.to_json(),
-                'etags': etags
+                'etags': etags,
+                'hasher': hasher_to_str(hasher)
             },
             group_id=self.mirror_service.mirror_object_key(file)
         )
@@ -351,6 +361,12 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
 
     def catalog_sources(self, catalog: CatalogName) -> set[str]:
         return set(map(str, self.repository_plugin(catalog).sources))
+
+    def sources_by_catalog(self, catalogs: Iterable[str]) -> dict[str, set[str]]:
+        return {
+            catalog: self.catalog_sources(catalog)
+            for catalog in catalogs
+        }
 
     def list_bundles(self,
                      catalog: CatalogName,
@@ -686,14 +702,19 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
     def mirror_partition(self, catalog: CatalogName, source_json: JSON, prefix: str):
         plugin = self.repository_plugin(catalog)
         source = plugin.source_ref_cls.from_json(source_json)
+        already_mirrored = self.mirror_service.list_info_objects(prefix)
 
-        def message(file: File) -> SQSMessage:
-            log.info('Mirroring file %r in source %r from catalog %r',
-                     file.uuid, str(source.spec), catalog)
-            return self.mirror_file_message(catalog, source, file)
+        def messages() -> Iterable[SQSMessage]:
+            for file in plugin.list_files(source, prefix):
+                info_key = self.mirror_service.info_object_key(file)
+                if info_key in already_mirrored:
+                    log.info('Not mirroring file %r because info object already exists at %r',
+                             file.uuid, info_key)
+                else:
+                    log.info('Mirroring file %r', file.uuid)
+                    yield self.mirror_file_message(catalog, source, file)
 
-        messages = map(message, plugin.list_files(source, prefix))
-        self.queue_mirror_messages(messages)
+        self.queue_mirror_messages(messages())
 
     def mirror_file(self,
                     catalog: CatalogName,
@@ -718,12 +739,14 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
                 log.info('Successfully mirrored file %r via standard upload', file.uuid)
             else:
                 log.info('Mirroring file %r via multi-part upload', file.uuid)
+                _, digest_type = file.digest()
+                hasher = get_resumable_hasher(digest_type)
                 upload_id = self.mirror_service.begin_mirroring_file(file)
                 first_part = FilePart.first(file, part_size)
-                etag = self.mirror_service.mirror_file_part(catalog, file, first_part, upload_id)
+                etag = self.mirror_service.mirror_file_part(catalog, file, first_part, upload_id, hasher)
                 next_part = first_part.next(file)
                 assert next_part is not None
-                messages = [self.mirror_part_message(catalog, file, next_part, upload_id, [etag])]
+                messages = [self.mirror_part_message(catalog, file, next_part, upload_id, [etag], hasher)]
                 self.queue_mirror_messages(messages)
 
     def mirror_file_part(self,
@@ -731,11 +754,13 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
                          file_json: JSON,
                          part_json: JSON,
                          upload_id: str,
-                         etags: Sequence[str]
+                         etags: Sequence[str],
+                         hasher_data: str
                          ):
         file = self.load_file(catalog, file_json)
         part = FilePart.from_json(part_json)
-        etag = self.mirror_service.mirror_file_part(catalog, file, part, upload_id)
+        hasher = hasher_from_str(hasher_data)
+        etag = self.mirror_service.mirror_file_part(catalog, file, part, upload_id, hasher)
         etags = [*etags, etag]
         next_part = part.next(file)
         if next_part is None:
@@ -743,24 +768,28 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
             message = self.finalize_file_message(catalog,
                                                  file,
                                                  upload_id,
-                                                 etags)
+                                                 etags,
+                                                 hasher)
         else:
             message = self.mirror_part_message(catalog,
                                                file,
                                                next_part,
                                                upload_id,
-                                               etags)
+                                               etags,
+                                               hasher)
         self.queue_mirror_messages([message])
 
     def finalize_file(self,
                       catalog: CatalogName,
                       file_json: JSON,
                       upload_id: str,
-                      etags: Sequence[str]
+                      etags: Sequence[str],
+                      hasher_data: str
                       ):
         file = self.load_file(catalog, file_json)
         assert len(etags) > 0
-        self.mirror_service.finish_mirroring_file(file, upload_id, etags)
+        hasher = hasher_from_str(hasher_data)
+        self.mirror_service.finish_mirroring_file(file, upload_id, etags, hasher)
         log.info('Successfully mirrored file %r via multi-part upload', file.uuid)
 
     def load_file(self, catalog: CatalogName, file: JSON) -> File:

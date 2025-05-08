@@ -124,6 +124,15 @@ policy = {
                     'Resource': [
                         f'arn:aws:s3:::{aws.mirror_bucket}/*'
                     ]
+                },
+                {
+                    'Effect': 'Allow',
+                    'Action': [
+                        's3:ListBucket'
+                    ],
+                    'Resource': [
+                        f'arn:aws:s3:::{aws.mirror_bucket}'
+                    ]
                 }
             ] if config.enable_mirroring else []
         ),

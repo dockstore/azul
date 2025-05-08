@@ -1,3 +1,4 @@
+import json
 import logging
 import math
 import string
@@ -22,8 +23,15 @@ from azul import (
 from azul.attrs import (
     SerializableAttrs,
 )
+from azul.collections import (
+    OrderedSet,
+)
 from azul.deployment import (
     aws,
+)
+from azul.digests import (
+    Hasher,
+    get_resumable_hasher,
 )
 from azul.drs import (
     AccessMethod,
@@ -36,6 +44,7 @@ from azul.plugins import (
     RepositoryPlugin,
 )
 from azul.service.storage_service import (
+    StorageObjectNotFound,
     StorageService,
 )
 
@@ -128,10 +137,18 @@ class MirrorService(HasCachedHttpClient):
         Upload the file in a single request. For larger files, use
         :meth:`begin_mirroring_file` instead.
         """
-        file_content = self._download(catalog, file)
-        self._storage.put(object_key=self.mirror_object_key(file),
-                          data=file_content,
-                          content_type=file.content_type)
+        if self._check_info(file):
+            log.info('File %r is already mirrored, skipping upload', file.uuid)
+        else:
+            file_content = self._download(catalog, file)
+            self._storage.put(object_key=self.mirror_object_key(file),
+                              data=file_content,
+                              content_type=file.content_type)
+            _, digest_type = file.digest()
+            hasher = get_resumable_hasher(digest_type)
+            hasher.update(file_content)
+            self._verify_digest(file, hasher)
+            self.put_info(file)
 
     def begin_mirroring_file(self, file: File) -> str:
         """
@@ -146,14 +163,17 @@ class MirrorService(HasCachedHttpClient):
                          catalog: CatalogName,
                          file: File,
                          part: FilePart,
-                         upload_id: str
+                         upload_id: str,
+                         hasher: Hasher
                          ) -> str:
         """
         Upload a part of a file to a multipart upload begun with
         :meth:`begin_mirroring_file` and return the uploaded part's ETag.
+        The provided hasher is mutated to incorporated the part's content.
         """
         upload = self._get_upload(file, upload_id)
         file_content = self._download(catalog, file, part)
+        hasher.update(file_content)
         return self._storage.upload_multipart_part(file_content,
                                                    part.index + 1,
                                                    upload)
@@ -161,25 +181,57 @@ class MirrorService(HasCachedHttpClient):
     def finish_mirroring_file(self,
                               file: File,
                               upload_id: str,
-                              etags: Sequence[str]):
+                              etags: Sequence[str],
+                              hasher: Hasher
+                              ):
         """
         Complete a multipart upload begun with :meth:`begin_mirroring_file`.
         """
         upload = self._get_upload(file, upload_id)
         self._storage.complete_multipart_upload(upload, etags)
+        self._verify_digest(file, hasher)
+        self._check_info(file)
+        self.put_info(file)
+
+    def list_info_objects(self, prefix: str) -> OrderedSet[str]:
+        return self._storage.list('info/' + prefix)
 
     def get_mirror_url(self, file: File) -> str:
         return self._storage.get_presigned_url(key=self.mirror_object_key(file),
                                                file_name=file.name)
 
+    def _check_info(self, file: File) -> bool:
+        key = self.info_object_key(file)
+        try:
+            content = self._storage.get(key)
+        except StorageObjectNotFound:
+            return False
+        else:
+            content_type = json.loads(content)['content_type']
+            assert content_type == file.content_type, R(
+                'Conflicting content type', file.uuid, key, content_type, file.content_type)
+            return True
+
+    def put_info(self, file: File):
+        key = self.info_object_key(file)
+        content = {
+            'content_type': file.content_type
+        }
+        self._storage.put(object_key=key,
+                          data=json.dumps(content).encode(),
+                          content_type='application/json')
+
     def mirror_object_key(self, file: File) -> str:
         return self._file_key('file', file)
 
-    def _file_key(self, prefix: str, file: File) -> str:
+    def info_object_key(self, file: File) -> str:
+        return self._file_key('info', file, extension='.json')
+
+    def _file_key(self, prefix: str, file: File, *, extension: str = '') -> str:
         digest, digest_type = file.digest()
         assert all(c in string.hexdigits for c in digest), R(
             'Expected a hexadecimal digest', digest)
-        return f'{prefix}/{digest.lower()}.{digest_type}'
+        return f'{prefix}/{digest.lower()}.{digest_type}{extension}'
 
     @cache
     def _get_repository_url(self, catalog: CatalogName, file: File):
@@ -202,7 +254,7 @@ class MirrorService(HasCachedHttpClient):
             size = file.size
             expected_status = 200
         else:
-            headers = {'Range': f'bytes={part.offset}-{part.offset + part.size + 1}'}
+            headers = {'Range': f'bytes={part.offset}-{part.offset + part.size - 1}'}
             size = part.size
             expected_status = 206
         # Ideally we would stream the response, but boto only supports uploading
@@ -218,3 +270,10 @@ class MirrorService(HasCachedHttpClient):
     def _get_upload(self, file: File, upload_id: str) -> 'MultipartUpload':
         return self._storage.load_multipart_upload(object_key=self.mirror_object_key(file),
                                                    upload_id=upload_id)
+
+    def _verify_digest(self, file: File, hasher: Hasher):
+        expected_digest_value, digest_type = file.digest()
+        actual_digest_value = hasher.hexdigest()
+        assert expected_digest_value == actual_digest_value, R(
+            'File digest value does not match its contents',
+            file.uuid, digest_type, expected_digest_value, actual_digest_value)

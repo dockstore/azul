@@ -15,6 +15,9 @@ from azul import (
 from azul.args import (
     AzulArgumentHelpFormatter,
 )
+from azul.digests import (
+    get_resumable_hasher,
+)
 from azul.http import (
     http_client,
 )
@@ -63,15 +66,17 @@ def mirror_file(catalog: CatalogName, file_uuid: str, part_size: int) -> str:
     file = get_file(catalog, file_uuid)
     service = MirrorService()
     upload_id = service.begin_mirroring_file(file)
+    digest_value, digest_type = file.digest()
+    hasher = get_resumable_hasher(digest_type)
 
     def mirror_parts():
         part = FilePart.first(file, part_size)
         while part is not None:
-            yield service.mirror_file_part(catalog, file, part, upload_id)
+            yield service.mirror_file_part(catalog, file, part, upload_id, hasher)
             part = part.next(file)
 
     etags = list(mirror_parts())
-    service.finish_mirroring_file(file, upload_id, etags=etags)
+    service.finish_mirroring_file(file, upload_id, etags=etags, hasher=hasher)
     return service.get_mirror_url(file)
 
 
