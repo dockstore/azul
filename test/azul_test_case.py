@@ -436,6 +436,7 @@ class CatalogTestCase(AzulUnitTestCase, metaclass=ABCMeta):
     def _patch_replicas_enabled(cls):
         cls.addClassPatch(patch.object(type(config),
                                        'enable_replicas',
+                                       new_callable=PropertyMock,
                                        return_value=True))
 
     @classmethod
