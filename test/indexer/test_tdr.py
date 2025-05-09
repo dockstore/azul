@@ -125,6 +125,11 @@ class MockTDRClient(TDRClient):
                                credentials=AnonymousCredentials(),
                                client_options=options)
 
+    def _job_has_result(self, job_info: JSON) -> bool:
+        # Some queries (such as the one in Plugin._downstream_from_files()) can
+        # produce job stats that are empty in the test environment.
+        return True
+
 
 @attr.s(frozen=True, auto_attribs=True)
 class MockCredentials(ServiceAccountCredentials):

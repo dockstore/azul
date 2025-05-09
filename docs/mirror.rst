@@ -27,7 +27,7 @@ A file object holds a file's content, a sequence of bytes. There is one file
 object per unique sequence of bytes. If two files have the same content, there
 is only one file object in the mirror, representing both. The key of a file
 object is ``file/${digest_value}.${digest_type}`` where ``digest_value`` is the
-hexadecimal form of the hash of the file object's content and ``digest_type`` is
+hexadecimal form of a hash of the file object's content and ``digest_type`` is
 one of ``sha1``, ``md5`` or ``sha256``, denoting the type of algorithm used to
 derive that hash. Henceforth we'll be referring to the pair of ``digest_type``
 and ``digest_value`` as *digest*.
@@ -55,8 +55,8 @@ content conforms to. The first path component of the schema URL is ``v1``.
 +++++++++++++++++
 
 Info objects contain JSON further describing a file. The key of an info object
-is ``info/${digest_value}.${digest_type}`` where ``digest_value`` is the
-hexadecimal form of the hash of the corresponding file object's content and
+is ``info/${digest_value}.${digest_type}.json`` where ``digest_value`` is the
+hexadecimal form of a hash of the corresponding file object's content and
 ``digest_type`` is one of ``sha1``, ``md5`` or ``sha256``, denoting the type of
 algorithm used to derive that hash. The content of an ``info`` object is JSON of
 the form ``{"schema":"…", "content-type":…}``. The ``schema`` property
@@ -88,23 +88,41 @@ checking for the info object first.
 3. File retrieval procedure
 ===========================
 
-A file can be retrieved from the mirror using the S3 REST API, given just a
-content hash of the file. It is not necessary to know whether the given hash is
-the file's digest or an alias. Either can be looked up in the Azul REST API,
-using the file's name or some other metadata property associated with the file.
+A file can be retrieved from the mirror using the S3 REST API, given a certain
+digest, i.e., content hash of the file. There is only a limited set of digest
+types through which a file is accessible in the mirror: at most it will be
+``sha256``, ``sha1`` and ``md5``, but at least one of those. One of these digest
+types, the *primary* one, is used in the key of the file object, and there may
+or may not be alias objects for the other two.
+
+Digests of a file can be looked up in the Azul REST API, using the file's name
+or a combination of other metadata properties associated with the file. The Azul
+response indicates a file's primary type of digest. If the mirror doesn't
+contain a file object for the primary digest returned by Azul, it won't contain
+aliases for other digests returned by Azul either, but if Azul returns a primary
+digest for a file, the mirror will eventually include aliases for every other
+digest returned by Azul for that file.
 
 There are two retrieval procedures, depending on whether the content type of the
-file is desired or not.
+file is desired or not, and if the digest is guaranteed to be correct.
 
 
 3.1. Retrieval of just the file content
 +++++++++++++++++++++++++++++++++++++++
 
+This method is slightly simpler than the one described in the next section but
+it should only be used if the file's content type is not needed, and if it is
+acceptable that, in rare circumstances, the file's actual content doesn't match
+the digest used in the file object's key or in the key of one of its aliases.
+
 Step 1: Try the file object
 ---------------------------
 
 Using the digest, compose the key of the file object. Attempt to retrieve the
-file object. If the file object does not exist, continue with step 2.
+file object. If the digest originated from Azul and Azul denoted it as primary,
+the file object will exist. If the file object does not exist, continue with
+step 2. This can happen if the digest originated from another source or if it is
+unknown whether the digest is the primary one.
 
 Step 2: Try an alias
 --------------------
@@ -124,6 +142,11 @@ of the file object. Retrieve the file object (it will exist).
 
 3.2. Retrieval of file content and content type
 +++++++++++++++++++++++++++++++++++++++++++++++
+
+This method is slightly more involved than the one described in the previous
+section but it yields a file's content type in addition to the content itself,
+and it guarantees that the digests used in the file and alias objects' keys
+match that content. It is the recommended retrieval procedure.
 
 Step 1: Try the info object
 ---------------------------

@@ -1021,7 +1021,7 @@ tf_config = {
                 'regular_expression': [
                     {
                         # This is for a specific Google Apps Script project ID
-                        'regex_string': r'id: ?UAEmdDd991fowvU7Kc-RVc3LUfU7cmcjwBg[);]$'
+                        'regex_string': r'id: ?UAEmdDd991fowvU7Kc-RVc3LUfU7cmcjwBg[);]'
                     },
                     {
                         'regex_string': r'^aria2/'
