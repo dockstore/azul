@@ -430,6 +430,7 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
         flags = config.it_flags
         index, delete = ['no_' + flag not in flags for flag in ['index', 'delete']]
 
+        self.azul_client.require_no_failures_before()
         if index:
             self._reset_indexer()
         else:
@@ -462,6 +463,7 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
             for catalog in catalogs:
                 self.azul_client.queue_notifications(catalog.notifications)
             self.azul_client.wait_for_indexer()
+            self.azul_client.require_no_failures_after()
             for catalog in catalogs:
                 self._assert_catalog_complete(catalog=catalog.name,
                                               bundle_fqids=catalog.bundles)

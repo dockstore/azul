@@ -143,6 +143,7 @@ def main(argv: list[str]):
     reject(args.deindex and (args.delete or args.create),
            '--deindex is incompatible with --create and --delete.')
 
+    azul.require_no_failures_before()
     deindex = args.deindex or (args.delete and not every_source)
     delete = args.delete and every_source
 
@@ -184,6 +185,7 @@ def main(argv: list[str]):
                             args.prefix, args.catalogs)
             else:
                 azul.wait_for_indexer()
+                azul.require_no_failures_after()
 
 
 if __name__ == '__main__':
