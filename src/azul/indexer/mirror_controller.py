@@ -5,6 +5,7 @@ from typing import (
     cast,
 )
 
+import attrs
 from chalice.app import (
     SQSRecord,
 )
@@ -18,6 +19,9 @@ from azul import (
 from azul.azulclient import (
     AzulClient,
     MirrorAction,
+)
+from azul.chalice import (
+    SchemaUrlFunc,
 )
 from azul.digests import (
     Hasher,
@@ -53,7 +57,9 @@ from azul.types import (
 log = logging.getLogger(__name__)
 
 
+@attrs.frozen(auto_attribs=True, kw_only=True)
 class MirrorController(ActionController[MirrorAction]):
+    schema_url_func: SchemaUrlFunc
 
     @cached_property
     def client(self) -> AzulClient:
@@ -61,7 +67,7 @@ class MirrorController(ActionController[MirrorAction]):
 
     @cached_property
     def service(self) -> MirrorService:
-        return MirrorService()
+        return MirrorService(schema_url_func=self.schema_url_func)
 
     def repository_plugin(self, catalog: CatalogName) -> RepositoryPlugin:
         return self.client.repository_plugin(catalog)

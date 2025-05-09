@@ -24,6 +24,9 @@ from azul import (
 from azul.attrs import (
     SerializableAttrs,
 )
+from azul.chalice import (
+    SchemaUrlFunc,
+)
 from azul.collections import (
     OrderedSet,
 )
@@ -123,7 +126,9 @@ class FilePart(SerializableAttrs):
             assert False, R('Part range exceeds file size', self, file)
 
 
+@attrs.frozen(auto_attribs=True, kw_only=True)
 class MirrorService(HasCachedHttpClient):
+    schema_url_func: SchemaUrlFunc
 
     @cached_property
     def _storage(self) -> StorageService:
@@ -216,6 +221,8 @@ class MirrorService(HasCachedHttpClient):
     def info_object(self, file: File) -> JSON:
         return {
             'content_type': file.content_type,
+            'schema': str(self.schema_url_func(schema_name='info',
+                                               version=1))
         }
 
     def _put_info(self, file: File):

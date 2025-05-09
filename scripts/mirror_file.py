@@ -64,7 +64,7 @@ def mirror_file(catalog: CatalogName, file_uuid: str, part_size: int) -> str:
     assert config.enable_mirroring, R('Mirroring must be enabled')
     assert config.is_tdr_enabled(catalog), R('Only TDR catalogs are supported')
     file = get_file(catalog, file_uuid)
-    service = MirrorService()
+    service = MirrorService(schema_url_func=...)
     upload_id = service.begin_mirroring_file(file)
     digest_value, digest_type = file.digest()
     hasher = get_resumable_hasher(digest_type)

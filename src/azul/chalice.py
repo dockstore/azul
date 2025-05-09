@@ -17,6 +17,7 @@ from typing import (
     Callable,
     Iterator,
     Literal,
+    Protocol,
     Self,
     Sequence,
     TypeVar,
@@ -900,3 +901,12 @@ class AppController:
     def current_request(self) -> AzulRequest:
         assert self.app.current_request is not None
         return self.app.current_request
+
+
+class SchemaUrlFunc(Protocol):
+
+    def __call__(self,
+                 *,
+                 schema_name: str,
+                 version: int
+                 ) -> mutable_furl: ...
