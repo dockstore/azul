@@ -119,6 +119,9 @@ class Plugin(RepositoryPlugin[DSSBundle, SimpleSourceSpec, DSSSourceRef, DSSBund
     def count_bundles(self, source: SimpleSourceSpec) -> NoReturn:
         assert False, 'DSS is EOL'
 
+    def count_files(self, source: SimpleSourceSpec) -> NoReturn:
+        assert False, 'DSS is EOL'
+
     def list_sources(self,
                      authentication: Authentication | None
                      ) -> list[DSSSourceRef]:
@@ -134,6 +137,9 @@ class Plugin(RepositoryPlugin[DSSBundle, SimpleSourceSpec, DSSSourceRef, DSSBund
         assert False, 'DSS is EOL'
 
     def fetch_bundle(self, bundle_fqid: DSSBundleFQID) -> NoReturn:
+        assert False, 'DSS is EOL'
+
+    def list_files(self, source: DSSSourceRef, prefix: str) -> NoReturn:
         assert False, 'DSS is EOL'
 
     def dss_subscription_query(self, prefix: str) -> JSON:

@@ -20,6 +20,7 @@ from azul.indexer.action_controller import (
 )
 from azul.types import (
     JSON,
+    json_mapping,
     json_str,
 )
 
@@ -40,11 +41,14 @@ class MirrorController(ActionController[MirrorAction]):
         if action is MirrorAction.mirror_source:
             self.client.mirror_source(message['catalog'], message['source'])
         elif action is MirrorAction.mirror_partition:
-            # FIXME: Implement mirror_partition
-            #        https://github.com/DataBiosphere/azul/issues/6861
-            log.info('Would mirror files in partition %r of source %r',
-                     message['prefix'], message['source'])
-            time.sleep(10)
+            self.client.mirror_partition(message['catalog'],
+                                         message['source'],
+                                         message['prefix'])
+        elif action is MirrorAction.mirror_file:
+            # FIXME: Implement mirror_file, mirror_part & finalize_file
+            #        https://github.com/DataBiosphere/azul/issues/6862
+            log.info('Would mirror parts of file %r', json_mapping(message['file'])['uuid'])
+            time.sleep(1)
         else:
             # FIXME: Implement mirror_file, mirror_part & finalize_file
             #        https://github.com/DataBiosphere/azul/issues/6862

@@ -101,6 +101,7 @@ from azul.types import (
     json_dict,
     json_int,
     json_list,
+    json_mapping,
     json_str,
 )
 
@@ -482,6 +483,9 @@ class TDRClient(SAMClient):
         # noinspection PyTypeChecker
         return bigquery.Client(project=project, credentials=self.credentials)
 
+    class _EmptySQLResult(Exception):
+        pass
+
     def run_sql(self, query: str) -> BigQueryRows:
         bigquery = self._bigquery(self.service_account_credentials.project_id)
         if log.isEnabledFor(logging.DEBUG):
@@ -492,6 +496,7 @@ class TDRClient(SAMClient):
             job_config = QueryJobConfig(priority=QueryPriority.BATCH)
             job = bigquery.query(query, job_config=job_config)
             result = job.result()
+            job_info = self._job_info(job, result)
         else:
             delays = (10, 20, 40, 80)
             assert sum(delays) < config.contribution_lambda_timeout(retry=False)
@@ -499,7 +504,16 @@ class TDRClient(SAMClient):
                 job = bigquery.query(query)
                 try:
                     result = job.result()
-                except (BadRequest, Forbidden, InternalServerError, ServiceUnavailable) as e:
+                    job_info = self._job_info(job, result)
+                    if not self._job_has_result(job_info):
+                        raise self._EmptySQLResult
+                except (
+                    BadRequest,
+                    Forbidden,
+                    InternalServerError,
+                    ServiceUnavailable,
+                    self._EmptySQLResult
+                ) as e:
                     if delay is None:
                         raise e
                     elif isinstance(e, Forbidden) and 'Exceeded rate limits' not in e.message:
@@ -516,7 +530,7 @@ class TDRClient(SAMClient):
             else:
                 assert False
         if log.isEnabledFor(logging.DEBUG):
-            log.debug('Job info: %s', json.dumps(self._job_info(job, result)))
+            log.debug('Job info: %s', json.dumps(job_info))
         return result
 
     def list_tables(self, source: TDRSourceSpec) -> set[str]:
@@ -542,6 +556,12 @@ class TDRClient(SAMClient):
             'stats': stats,
             'query': self._trunc_query(job.query)
         }
+
+    def _job_has_result(self, job_info: JSON) -> bool:
+        # In order to detect when a BigQuery job silently fails (i.e. returns
+        # no rows when there should be some), we check for an expected field in
+        # the jobs stats that we have observed missing in prior silent failures.
+        return 'totalBytesProcessed' in json_mapping(job_info['stats'])
 
     def _repository_endpoint(self, *path: str) -> mutable_furl:
         return config.tdr_service_url.set(path=('api', 'repository', 'v1', *path))

@@ -1277,7 +1277,7 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
         bundle_fqids = set()
         notifications = []
         for source in sources:
-            source = plugin.partition_source(catalog, source)
+            source = plugin.partition_source_for_indexing(catalog, source)
             # Some partitions may be empty, but we include them anyway to
             # ensure test coverage for handling multiple partitions per source
             for partition_prefix in source.spec.prefix.partition_prefixes():
