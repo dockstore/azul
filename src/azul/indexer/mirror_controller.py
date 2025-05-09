@@ -45,6 +45,8 @@ from azul.queues import (
 )
 from azul.types import (
     JSON,
+    json_element_strings,
+    json_mapping,
     json_str,
 )
 
@@ -70,27 +72,28 @@ class MirrorController(ActionController[MirrorAction]):
     def _mirror(self, message: JSON):
         action = self._load_action(json_str(message['action']))
         if action is MirrorAction.mirror_source:
-            self.mirror_source(message['catalog'], message['source'])
+            self.mirror_source(json_str(message['catalog']),
+                               json_mapping(message['source']))
         elif action is MirrorAction.mirror_partition:
-            self.mirror_partition(message['catalog'],
-                                  message['source'],
-                                  message['prefix'])
+            self.mirror_partition(json_str(message['catalog']),
+                                  json_mapping(message['source']),
+                                  json_str(message['prefix']))
         elif action is MirrorAction.mirror_file:
-            self.mirror_file(message['catalog'],
-                             message['file'])
+            self.mirror_file(json_str(message['catalog']),
+                             json_mapping(message['file']))
         elif action is MirrorAction.mirror_part:
-            self.mirror_file_part(message['catalog'],
-                                  message['file'],
-                                  message['part'],
-                                  message['upload_id'],
-                                  message['etags'],
-                                  message['hasher'])
+            self.mirror_file_part(json_str(message['catalog']),
+                                  json_mapping(message['file']),
+                                  json_mapping(message['part']),
+                                  json_str(message['upload_id']),
+                                  list(json_element_strings(message['etags'])),
+                                  json_str(message['hasher']))
         elif action is MirrorAction.finalize_file:
-            self.finalize_file(message['catalog'],
-                               message['file'],
-                               message['upload_id'],
-                               message['etags'],
-                               message['hasher'])
+            self.finalize_file(json_str(message['catalog']),
+                               json_mapping(message['file']),
+                               json_str(message['upload_id']),
+                               list(json_element_strings(message['etags'])),
+                               json_str(message['hasher']))
         else:
             assert False, action
 
@@ -162,7 +165,7 @@ class MirrorController(ActionController[MirrorAction]):
                          file_json: JSON,
                          part_json: JSON,
                          upload_id: str,
-                         etags: Sequence[str],
+                         etags: Iterable[str],
                          hasher_data: str
                          ):
         file = self.load_file(catalog, file_json)
