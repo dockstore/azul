@@ -142,7 +142,7 @@ class FieldType[N, X: IndexForm](metaclass=ABCMeta):
         native representation.
         """
         assert isinstance(value, self.native_types), (value, self)
-        return value
+        return cast(N, value)
 
     @property
     def supported_filter_relations(self) -> tuple[str, ...]:
