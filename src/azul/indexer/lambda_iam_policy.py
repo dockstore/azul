@@ -118,20 +118,14 @@ policy = {
                 {
                     'Effect': 'Allow',
                     'Action': [
-                        's3:PutObject',
+                        's3:ListBucket',
                         's3:GetObject',
+                        's3:PutObject',
                     ],
                     'Resource': [
-                        f'arn:aws:s3:::{aws.mirror_bucket}/*'
-                    ]
-                },
-                {
-                    'Effect': 'Allow',
-                    'Action': [
-                        's3:ListBucket'
-                    ],
-                    'Resource': [
-                        f'arn:aws:s3:::{aws.mirror_bucket}'
+                        f'arn:aws:s3:::{resource}'
+                        for bucket in [aws.mirror_bucket]
+                        for resource in [bucket, f'{bucket}/*']
                     ]
                 }
             ] if config.enable_mirroring else []
