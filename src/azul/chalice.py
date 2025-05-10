@@ -531,7 +531,8 @@ class AzulChaliceApp(Chalice):
                 raise BadRequestError(part)
         try:
             return self.load_resource('static', *path)
-        except FileNotFoundError:
+        except FileNotFoundError as e:
+            log.warning('Resource not found', exc_info=e)
             raise NotFoundError(path)
 
     def load_resource(self, *path: str) -> str:
