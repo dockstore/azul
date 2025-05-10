@@ -67,7 +67,7 @@ def mirror_file(catalog: CatalogName, file_uuid: str, part_size: int) -> str:
     # FIXME: mirror_file script is broken+
     #        https://github.com/DataBiosphere/azul/issues/7105
     service = MirrorService(schema_url_func=...)
-    upload_id = service.begin_mirroring_file(file)
+    upload_id = service.begin_mirroring_file(catalog, file)
     digest_value, digest_type = file.digest()
     hasher = get_resumable_hasher(digest_type)
 
@@ -78,8 +78,8 @@ def mirror_file(catalog: CatalogName, file_uuid: str, part_size: int) -> str:
             part = part.next(file)
 
     etags = list(mirror_parts())
-    service.finish_mirroring_file(file, upload_id, etags=etags, hasher=hasher)
-    return service.get_mirror_url(file)
+    service.finish_mirroring_file(catalog, file, upload_id, etags=etags, hasher=hasher)
+    return service.get_mirror_url(catalog, file)
 
 
 def main(argv):

@@ -119,7 +119,7 @@ class MirrorController(ActionController[MirrorAction]):
     def mirror_partition(self, catalog: CatalogName, source_json: JSON, prefix: str):
         plugin = self.repository_plugin(catalog)
         source = plugin.source_ref_cls.from_json(source_json)
-        already_mirrored = self.service.list_info_objects(prefix)
+        already_mirrored = self.service.list_info_objects(catalog, prefix)
 
         def messages() -> Iterable[SQSMessage]:
             for file in plugin.list_files(source, prefix):
@@ -158,7 +158,7 @@ class MirrorController(ActionController[MirrorAction]):
                 log.info('Mirroring file %r via multi-part upload', file.uuid)
                 _, digest_type = file.digest()
                 hasher = get_resumable_hasher(digest_type)
-                upload_id = self.service.begin_mirroring_file(file)
+                upload_id = self.service.begin_mirroring_file(catalog, file)
                 first_part = FilePart.first(file, part_size)
                 etag = self.service.mirror_file_part(catalog, file, first_part, upload_id, hasher)
                 next_part = first_part.next(file)
@@ -206,7 +206,7 @@ class MirrorController(ActionController[MirrorAction]):
         file = self.load_file(catalog, file_json)
         assert len(etags) > 0
         hasher = hasher_from_str(hasher_data)
-        self.service.finish_mirroring_file(file, upload_id, etags, hasher)
+        self.service.finish_mirroring_file(catalog, file, upload_id, etags, hasher)
         log.info('Successfully mirrored file %r via multi-part upload', file.uuid)
 
     def load_file(self, catalog: CatalogName, file: JSON) -> File:
