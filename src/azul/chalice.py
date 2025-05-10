@@ -382,7 +382,7 @@ class AzulChaliceApp(Chalice):
             # Invocation from outside the context of handling of a request, for
             # example, when `chalice local` loads the app module or during an
             # invocation via AWS StepFunctions
-            self_url = config.service_endpoint
+            self_url = config.lambda_endpoint(self.unqualified_app_name)
         elif isinstance(self.current_request, Request):
             try:
                 scheme = self.current_request.headers['x-forwarded-proto']
