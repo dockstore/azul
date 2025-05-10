@@ -130,7 +130,11 @@ class MirrorService(HasCachedHttpClient):
     schema_url_func: SchemaUrlFunc
 
     def _bucket_name(self, catalog: CatalogName) -> str:
-        return aws.mirror_bucket
+        external_bucket = config.external_mirror_bucket
+        if external_bucket is None or catalog in config.integration_test_catalogs:
+            return aws.mirror_bucket
+        else:
+            return external_bucket
 
     @cache
     def _storage(self, catalog: CatalogName) -> StorageService:

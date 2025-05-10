@@ -1,6 +1,9 @@
 from azul import (
     config,
 )
+from azul.collections import (
+    alist,
+)
 from azul.deployment import (
     aws,
 )
@@ -124,7 +127,7 @@ policy = {
                     ],
                     'Resource': [
                         f'arn:aws:s3:::{resource}'
-                        for bucket in [aws.mirror_bucket]
+                        for bucket in alist(aws.mirror_bucket, config.external_mirror_bucket)
                         for resource in [bucket, f'{bucket}/*']
                     ]
                 }
