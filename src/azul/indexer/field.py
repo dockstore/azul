@@ -98,7 +98,7 @@ class FieldType[N, X: IndexForm](metaclass=ABCMeta):
     def native_types(self) -> tuple[type, ...]:
         """
         The possible runtime (reified) types of the value of document fields
-        of this type. This method returns a typle to account for the fact that
+        of this type.
         """
         return reify(self.native_form)
 
