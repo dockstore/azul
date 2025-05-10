@@ -41,6 +41,7 @@ from azul import (
     require,
 )
 from azul.json import (
+    PolymorphicSerializable,
     Serializable,
 )
 from azul.types import (
@@ -483,6 +484,10 @@ class SerializableAttrs(Serializable, attrs.AttrsInstance):
             except KeyError:
                 return default
 
+        @cached_property
+        def discriminator(self) -> str | None:
+            return self._metadata('discriminator', None)
+
         def handle(self, x: str) -> T:
             if self.custom is None:
                 return self._handle(x, self._reify(self.field.type))
@@ -536,7 +541,12 @@ class SerializableAttrs(Serializable, attrs.AttrsInstance):
                 elif issubclass(field_type, Serializable):
                     inner_cls_name = field_type.__name__
                     self.globals[inner_cls_name] = field_type
-                    return self._serializable(x, inner_cls_name)
+                    is_polymorphic = issubclass(field_type, PolymorphicSerializable)
+                    has_discriminator = self.discriminator is not None
+                    if is_polymorphic and has_discriminator:
+                        return self._polymorphic(x, inner_cls_name)
+                    else:
+                        return self._serializable(x, inner_cls_name)
             else:
                 origin = get_origin(field_type)
                 if origin in (Union, UnionType):
@@ -576,6 +586,10 @@ class SerializableAttrs(Serializable, attrs.AttrsInstance):
             raise NotImplementedError
 
         @abstractmethod
+        def _polymorphic(self, x: str, inner_cls_name: str) -> T:
+            raise NotImplementedError
+
+        @abstractmethod
         def _list(self, x: str, item_type: type) -> T:
             raise NotImplementedError
 
@@ -601,6 +615,15 @@ class SerializableAttrs(Serializable, attrs.AttrsInstance):
         def _serializable(self, x: str, inner_cls_name: str) -> Source:
             return [
                 f'{x} = {inner_cls_name}.from_json({x})'
+            ]
+
+        def _polymorphic(self, x: str, inner_cls_name: str) -> Source:
+            depth = next(self.depth)
+            cls = f'cls{depth}'
+            return [
+                f'{cls} = {x}["{self.discriminator}"]',
+                f'{cls} = {inner_cls_name}.cls_from_json({cls})',
+                f'{x} = {cls}.from_json({x})'
             ]
 
         def _primitive(self, x: str, field_type: type) -> Source:
@@ -669,6 +692,9 @@ class SerializableAttrs(Serializable, attrs.AttrsInstance):
 
         def _serializable(self, x: str, inner_cls_name: str) -> str:
             return f'{x}.to_json()'
+
+        def _polymorphic(self, x: str, inner_cls_name: str) -> str:
+            return f'dict({x}.to_json(), {self.discriminator}={x}.cls_to_json())'
 
         def _list(self, x: str, item_type: type) -> str:
             depth = next(self.depth)
@@ -740,3 +766,95 @@ def _set_field_metadata[T: attrs.Attribute](field: T | None, key, value):
     metadata = field.metadata.setdefault('azul', {})
     metadata[key] = value
     return field
+
+
+def polymorphic[T: attrs.Attribute](field: T | None = None,
+                                    *,
+                                    discriminator: str
+                                    ) -> T:
+    """
+    Mark an attrs field to use the given name for the discriminator property in
+    serialized instances of PolymorphicSerializable that occur in the value of
+    that field. The given discriminator property of a serialized instance
+    represents the type to use when deserializing that instance again.
+
+    >>> from azul.json import RegisteredPolymorphicSerializable
+
+    >>> class Inner(SerializableAttrs, RegisteredPolymorphicSerializable):
+    ...     pass
+
+    >>> @attrs.frozen
+    ... class InnerWithInt(Inner):
+    ...     x: int
+
+    >>> @attrs.frozen
+    ... class InnerWithStr(Inner):
+    ...     y: str
+
+    >>> @attrs.frozen(kw_only=True)
+    ... class Outer(SerializableAttrs):
+    ...     inner: Inner = polymorphic(discriminator='type')
+    ...     inners: list[Inner] = polymorphic(discriminator='_cls')
+
+    >>> from azul.doctests import assert_json
+
+    >>> outer = Outer(inner=InnerWithInt(42),
+    ...               inners=[InnerWithStr('foo'), InnerWithInt(7)])
+    >>> assert_json(outer.to_json())
+    {
+        "inner": {
+            "x": 42,
+            "type": "InnerWithInt"
+        },
+        "inners": [
+            {
+                "y": "foo",
+                "_cls": "InnerWithStr"
+            },
+            {
+                "x": 7,
+                "_cls": "InnerWithInt"
+            }
+        ]
+    }
+    >>> Outer.from_json(outer.to_json()) == outer
+    True
+
+    In order to enable polymorphic serialization of the value of a given field,
+    the discriminator property needs to be specified explicitly, otherwise the
+    serialization framework will resort to the static type of the field.
+
+    >>> @attrs.frozen
+    ... class GenericOuter[T: Inner](SerializableAttrs):
+    ...     inner: T
+
+    >>> class StaticOuter(GenericOuter[InnerWithInt]):
+    ...     pass
+
+    >>> outer = StaticOuter(InnerWithInt(42))
+    >>> outer.to_json()
+    {'inner': {'x': 42}}
+
+    Despite the fact that ``{'x': 42}`` does not encode any type information,
+    ``from_json`` can tell from the static type of the field that {'x': 42}
+    should be deserialized as an ``InnerWithInt``.
+
+    >>> StaticOuter.from_json(outer.to_json()).inner
+    InnerWithInt(x=42)
+
+    >>> StaticOuter.from_json(outer.to_json()) == outer
+    True
+
+    However, when the static type of the field is not concrete, deserialization
+    may fail or, like in this case, lose information by creating an instance of
+    the parent class instead of the class that was serialized.
+
+    >>> @attrs.frozen
+    ... class AbstractOuter(SerializableAttrs):
+    ...     inner: Inner
+
+    >>> outer = AbstractOuter(InnerWithInt(42))
+    >>> AbstractOuter.from_json(outer.to_json()).inner  # doctest: +ELLIPSIS
+    <azul.attrs.Inner object at ...>
+    """
+    return _set_field_metadata(field, 'discriminator', discriminator)
