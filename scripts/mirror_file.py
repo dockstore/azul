@@ -64,6 +64,8 @@ def mirror_file(catalog: CatalogName, file_uuid: str, part_size: int) -> str:
     assert config.enable_mirroring, R('Mirroring must be enabled')
     assert config.is_tdr_enabled(catalog), R('Only TDR catalogs are supported')
     file = get_file(catalog, file_uuid)
+    # FIXME: mirror_file script is broken+
+    #        https://github.com/DataBiosphere/azul/issues/7105
     service = MirrorService(schema_url_func=...)
     upload_id = service.begin_mirroring_file(file)
     digest_value, digest_type = file.digest()
