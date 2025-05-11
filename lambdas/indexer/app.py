@@ -77,7 +77,7 @@ class IndexerApp(HealthApp, SignatureHelper):
 
     @cached_property
     def index_controller(self) -> IndexController:
-        return self._controller(IndexController)
+        return IndexController(app=self)
 
     @cached_property
     def mirror_controller(self) -> MirrorController:
@@ -88,11 +88,11 @@ class IndexerApp(HealthApp, SignatureHelper):
                                                version_and_extension=f'v{version}.json')
             return self.base_url.set(path=path)
 
-        return self._controller(MirrorController, schema_url_func=schema_url)
+        return MirrorController(app=self, schema_url_func=schema_url)
 
     @cached_property
     def log_controller(self) -> LogForwardingController:
-        return self._controller(LogForwardingController)
+        return LogForwardingController(app=self)
 
     def __init__(self):
         super().__init__(app_name=config.indexer_name,

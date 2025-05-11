@@ -20,7 +20,6 @@ from typing import (
     Protocol,
     Self,
     Sequence,
-    TypeVar,
 )
 from urllib.parse import (
     unquote,
@@ -123,9 +122,6 @@ class LambdaMetric(Enum):
     @property
     def aws_name(self) -> str:
         return self.name.capitalize()
-
-
-C = TypeVar('C', bound='AppController')
 
 
 class AzulChaliceApp(Chalice):
@@ -556,9 +552,6 @@ class AzulChaliceApp(Chalice):
                 except KeyError:
                     pass
         return config.default_catalog
-
-    def _controller(self, controller_cls: type[C], **kwargs) -> C:
-        return controller_cls(app=self, **kwargs)
 
     def swagger_resource(self, file_name: str) -> Response:
         body = self.load_static_resource('swagger', file_name)
