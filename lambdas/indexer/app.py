@@ -53,10 +53,13 @@ from azul.openapi.responses import (
 from azul.queues import (
     Queues,
 )
+from azul.types import (
+    not_none,
+)
 
 log = logging.getLogger(__name__)
 
-spec = {
+spec: JSON = {
     'openapi': '3.0.1',
     'info': {
         'title': config.indexer_name,
@@ -129,7 +132,7 @@ class IndexerApp(HealthApp, SignatureHelper):
         return schema
 
     def _authenticate(self) -> Optional[HMACAuthentication]:
-        return self.auth_from_request(self.current_request)
+        return self.auth_from_request(not_none(self.current_request))
 
 
 app = IndexerApp()
