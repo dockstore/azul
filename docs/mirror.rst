@@ -1,3 +1,6 @@
+.. sectnum::
+    :suffix: .
+
 Data mirroring
 ##############
 
@@ -11,8 +14,8 @@ at this time and is subject to change as the implementation progresses.
 .. [2] https://aws.amazon.com/opendata/open-data-sponsorship-program/
 
 
-1. Mirror bucket layout
-=======================
+Mirror bucket layout
+====================
 
 A mirror bucket is an AWS S3 bucket. The bucket layout employs content-based
 addressing in order to allow for efficient mirroring and to avoid redundantly
@@ -20,8 +23,8 @@ storing duplicate files. The bucket contains three types of objects: file
 objects, alias objects and info objects.
 
 
-1.1. File objects
-+++++++++++++++++
+File objects
+++++++++++++
 
 A file object holds a file's content, a sequence of bytes. There is one file
 object per unique sequence of bytes. If two files have the same content, there
@@ -33,8 +36,8 @@ derive that hash. Henceforth we'll be referring to the pair of ``digest_type``
 and ``digest_value`` as *digest*.
 
 
-1.2. Alias objects
-++++++++++++++++++
+Alias objects
++++++++++++++
 
 Alias objects are used to make a file object accessible under hash algorithms
 other than the algorithm specified in the file object's key. The key of an alias
@@ -42,34 +45,61 @@ object is ``alias/${digest_value}.${digest_type}.json`` where ``digest_value``
 is the hexadecimal form of a hash of a file object's content and ``digest_type``
 is one of ``sha1``, ``md5`` or ``sha256``, denoting the type of algorithm used
 to derive that hash. The content of an alias object is JSON of the form
-``{"schema":"…", "digest_value":…, "digest_type":…}`` where ``digest_value``
-and ``digest_type`` represent the digest to be used when composing the aliased
-file object's key. The ``schema`` property facilitates future changes to the
-format of aliases. It is the URL of a JSON schema [3]_ that the alias object's
-content conforms to. The first path component of the schema URL is ``v1``.
+``{"schema":"…", "digest_value":…, "digest_type":…}`` where ``digest_value`` and
+``digest_type`` represent the digest to be used when composing the aliased file
+object's key.
 
-.. [3] https://json-schema.org/
+The ``schema`` property facilitates future changes to the format of aliase
+objects. For details see the `Schemas`_ section below.
 
 
-1.3. Info objects
-+++++++++++++++++
+Info objects
+++++++++++++
 
 Info objects contain JSON further describing a file. The key of an info object
 is ``info/${digest_value}.${digest_type}.json`` where ``digest_value`` is the
 hexadecimal form of a hash of the corresponding file object's content and
 ``digest_type`` is one of ``sha1``, ``md5`` or ``sha256``, denoting the type of
 algorithm used to derive that hash. The content of an ``info`` object is JSON of
-the form ``{"schema":"…", "content-type":…}``. The ``schema`` property
-facilitates future changes to the format of info objects. It is the URL of a
-JSON schema that the info object's content conforms to. The first path component
-of the schema URL is ``v1``. The ``content-type`` property contains the content
-type of the file, as defined for the HTTP response header of the same name [4]_.
+the form ``{"schema":"…", "content-type":…}``.
+
+The ``content-type`` property contains the content type of the file, as defined
+for the HTTP response header of the same name [4]_.
 
 .. [4] https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Type
 
+The ``schema`` property facilitates future changes to the format of info
+objects. For details see the `Schemas`_ section below.
 
-2. Constraints and invariants
-=============================
+
+Schemas
+=======
+
+The ``schema`` property of alias and info objects contains, and always will
+contain, the URL of a JSON schema [3]_ that the alias and info objects' JSON
+content conforms to. The last path component of the schema URL is, and will
+always be, ``v${schema_version}.json`` where ``schema_version`` is a
+monotonically increasing integer.
+
+The contents of a schema at a given URL may change without a change to the URL,
+but only in backwards compatible ways, i.e. by adding a new property. Backwards
+incompatible schema changes will lead to an increment in the version.
+Programmatic consumers of alias and info objects should check the version number
+encoded in the schema URL stored in the object prior to consuming the rest of
+the object and should not attempt to consume the remainder of an object with an
+unexpected schema version.
+
+Other parts of a schema URL may change without notice. Consumers of alias and
+info objects should not make any assumptions about those parts. Consumers may
+only assume that a request to the URL yields a valid JSON schema, that the last
+path component encodes the schema version and that different schema versions are
+incompatible to each other.
+
+.. [3] https://json-schema.org/
+
+
+Constraints and invariants
+==========================
 
 The digest stored in an alias object is always different to the digest encoded
 in its key. In other words, there are no redundant aliases.
@@ -85,8 +115,8 @@ exist or not exist. Alternatively, clients can avoid this situation by always
 checking for the info object first.
 
 
-3. File retrieval procedure
-===========================
+File retrieval procedure
+========================
 
 A file can be retrieved from the mirror using the S3 REST API, given a certain
 digest, i.e., content hash of the file. There is only a limited set of digest
@@ -107,8 +137,8 @@ There are two retrieval procedures, depending on whether the content type of the
 file is desired or not, and if the digest is guaranteed to be correct.
 
 
-3.1. Retrieval of just the file content
-+++++++++++++++++++++++++++++++++++++++
+Retrieval of just the file content
+++++++++++++++++++++++++++++++++++
 
 This method is slightly simpler than the one described in the next section but
 it should only be used if the file's content type is not needed, and if it is
@@ -140,8 +170,8 @@ Using the digest extracted from the alias object's JSON content, compose the key
 of the file object. Retrieve the file object (it will exist).
 
 
-3.2. Retrieval of file content and content type
-+++++++++++++++++++++++++++++++++++++++++++++++
+Retrieval of file content and content type
+++++++++++++++++++++++++++++++++++++++++++
 
 This method is slightly more involved than the one described in the previous
 section but it yields a file's content type in addition to the content itself,
@@ -179,8 +209,8 @@ Using the current digest, i.e. the one used in step 1 or step 3, compose the key
 of the file object. Retrieve the file object (it will exist).
 
 
-4. Rationale
-============
+Rationale
+=========
 
 How does the specified layout represent the orginal names of the files stored in
 the bucket? It doesn't. Because the mirror bucket is content-addressed, the same
