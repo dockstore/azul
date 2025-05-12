@@ -17,9 +17,9 @@ from typing import (
     Callable,
     Iterator,
     Literal,
+    Protocol,
     Self,
     Sequence,
-    TypeVar,
 )
 from urllib.parse import (
     unquote,
@@ -122,9 +122,6 @@ class LambdaMetric(Enum):
     @property
     def aws_name(self) -> str:
         return self.name.capitalize()
-
-
-C = TypeVar('C', bound='AppController')
 
 
 class AzulChaliceApp(Chalice):
@@ -382,7 +379,7 @@ class AzulChaliceApp(Chalice):
             # Invocation from outside the context of handling of a request, for
             # example, when `chalice local` loads the app module or during an
             # invocation via AWS StepFunctions
-            self_url = config.service_endpoint
+            self_url = config.lambda_endpoint(self.unqualified_app_name)
         elif isinstance(self.current_request, Request):
             try:
                 scheme = self.current_request.headers['x-forwarded-proto']
@@ -526,7 +523,14 @@ class AzulChaliceApp(Chalice):
                         assert old_value == new_value
 
     def load_static_resource(self, *path: str) -> str:
-        return self.load_resource('static', *path)
+        for part in path:
+            if os.sep in part:
+                raise BadRequestError(part)
+        try:
+            return self.load_resource('static', *path)
+        except FileNotFoundError as e:
+            log.warning('Resource not found', exc_info=e)
+            raise NotFoundError(path)
 
     def load_resource(self, *path: str) -> str:
         package_root = os.path.dirname(self.app_module_path)
@@ -549,23 +553,13 @@ class AzulChaliceApp(Chalice):
                     pass
         return config.default_catalog
 
-    def _controller(self, controller_cls: type[C], **kwargs) -> C:
-        return controller_cls(app=self, **kwargs)
-
     def swagger_resource(self, file_name: str) -> Response:
-        if os.sep in file_name:
-            raise BadRequestError(file_name)
-        else:
-            try:
-                body = self.load_static_resource('swagger', file_name)
-            except FileNotFoundError:
-                raise NotFoundError(file_name)
-            else:
-                path = pathlib.Path(file_name)
-                content_type = mimetypes.types_map[path.suffix]
-                return Response(status_code=200,
-                                headers={'Content-Type': content_type},
-                                body=body)
+        body = self.load_static_resource('swagger', file_name)
+        path = pathlib.Path(file_name)
+        content_type = mimetypes.types_map[path.suffix]
+        return Response(status_code=200,
+                        headers={'Content-Type': content_type},
+                        body=body)
 
     @attrs.frozen(kw_only=True)
     class HandlerDecorator(metaclass=ABCMeta):
@@ -900,3 +894,12 @@ class AppController:
     def current_request(self) -> AzulRequest:
         assert self.app.current_request is not None
         return self.app.current_request
+
+
+class SchemaUrlFunc(Protocol):
+
+    def __call__(self,
+                 *,
+                 schema_name: str,
+                 version: int
+                 ) -> mutable_furl: ...

@@ -1,3 +1,4 @@
+import json
 import logging
 from typing import (
     Optional,
@@ -7,8 +8,10 @@ import chalice
 
 from azul import (
     CatalogName,
+    JSON,
     cached_property,
     config,
+    mutable_furl,
 )
 from azul.azulclient import (
     IndexAction,
@@ -41,6 +44,7 @@ from azul.logging import (
 from azul.openapi import (
     format_description as fd,
     params,
+    responses,
     schema,
 )
 from azul.openapi.responses import (
@@ -49,10 +53,13 @@ from azul.openapi.responses import (
 from azul.queues import (
     Queues,
 )
+from azul.types import (
+    not_none,
+)
 
 log = logging.getLogger(__name__)
 
-spec = {
+spec: JSON = {
     'openapi': '3.0.1',
     'info': {
         'title': config.indexer_name,
@@ -61,7 +68,7 @@ spec = {
         # changes and reset the minor version to zero. Otherwise, increment only
         # the minor version for backwards compatible changes. A backwards
         # compatible change is one that does not require updates to clients.
-        'version': '3.2',
+        'version': '3.3',
         'description': fd('''
             This is the internal API for Azul's indexer component.
         ''')
@@ -73,15 +80,22 @@ class IndexerApp(HealthApp, SignatureHelper):
 
     @cached_property
     def index_controller(self) -> IndexController:
-        return self._controller(IndexController)
+        return IndexController(app=self)
 
     @cached_property
     def mirror_controller(self) -> MirrorController:
-        return self._controller(MirrorController)
+
+        def schema_url(*, schema_name: str, version: int) -> mutable_furl:
+            path = self.schema_url_path.format(facility='mirror',
+                                               schema_name=schema_name,
+                                               version_and_extension=f'v{version}.json')
+            return self.base_url.set(path=path)
+
+        return MirrorController(app=self, schema_url_func=schema_url)
 
     @cached_property
     def log_controller(self) -> LogForwardingController:
-        return self._controller(LogForwardingController)
+        return LogForwardingController(app=self)
 
     def __init__(self):
         super().__init__(app_name=config.indexer_name,
@@ -110,8 +124,15 @@ class IndexerApp(HealthApp, SignatureHelper):
         else:
             return lambda func: func
 
+    schema_url_path = '/schemas/{facility}/{schema_name}/{version_and_extension}'
+
+    def schema_resource(self, *path: str) -> JSON:
+        schema = json.loads(app.load_static_resource('schemas', *path))
+        schema['$id'] = str(self.self_url)
+        return schema
+
     def _authenticate(self) -> Optional[HMACAuthentication]:
-        return self.auth_from_request(self.current_request)
+        return self.auth_from_request(not_none(self.current_request))
 
 
 app = IndexerApp()
@@ -280,3 +301,42 @@ def forward_alb_logs(event: chalice.app.S3Event):
 )
 def forward_s3_logs(event: chalice.app.S3Event):
     app.log_controller.forward_s3_access_logs(event)
+
+
+json_schema_docs = 'https://json-schema.org/docs'
+
+
+@app.route(
+    app.schema_url_path,
+    methods=['GET'],
+    cors=True,
+    spec={
+        'summary': 'Retrieve JSON schemas',
+        'tags': ['Auxiliary'],
+        'parameters': [
+            params.path('facility', str),
+            params.path('schema_name', str),
+            params.path('version_and_extension', schema.pattern(r'v\d+\.json')),
+        ],
+        'description': fd(
+            f'''
+            [JSON Schemas]({json_schema_docs}) for various Azul facilities.
+            '''
+        ),
+        'responses': {
+            '200': {
+                'description': 'Contents of the schema',
+                **responses.json_content(
+                    schema.object(
+                        schema=str,
+                        id=str,
+                        type=str,
+                        additionalProperties=True
+                    )
+                )
+            }
+        }
+    }
+)
+def get_schema(facility, schema_name, version_and_extension):
+    return app.schema_resource(facility, schema_name, version_and_extension)

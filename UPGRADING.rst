@@ -19,6 +19,21 @@ branch that does not have the listed changes, the steps would need to be
 reverted. This is all fairly informal and loosely defined. Hopefully we won't
 have too many entries in this file.
 
+
+#7076 Populate schema property in info objects
+==============================================
+
+Operator
+--------
+Empty out the mirror bucket of any shared deployment prior to running the build
+for a commit that introduces these changes to that deployment.
+
+Everyone else
+-------------
+
+Empty out your personal deployments' mirror buckets.
+
+
 #6516 HCA schemas for descriptor lacks drs_uri property
 =======================================================
 

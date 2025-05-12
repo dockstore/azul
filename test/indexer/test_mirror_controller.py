@@ -1,10 +1,12 @@
 import hashlib
+import json
 from unittest.mock import (
     MagicMock,
     PropertyMock,
     patch,
 )
 
+import jsonschema
 from more_itertools import (
     one,
 )
@@ -12,12 +14,18 @@ from moto import (
     mock_aws,
 )
 
+from app_test_case import (
+    LocalAppTestCase,
+)
 from azul import (
     R,
     config,
 )
 from azul.deployment import (
     aws,
+)
+from azul.http import (
+    http_client,
 )
 from azul.indexer.mirror_controller import (
     MirrorController,
@@ -54,7 +62,11 @@ def setUpModule():
 
 
 @mock_aws
-class TestMirrorController(DCP2TestCase, WorkQueueTestCase, S3TestCase):
+class TestMirrorController(DCP2TestCase, LocalAppTestCase, WorkQueueTestCase, S3TestCase):
+
+    @classmethod
+    def lambda_name(cls) -> str:
+        return 'indexer'
 
     @classmethod
     def _patch_enable_mirroring(cls):
@@ -67,17 +79,15 @@ class TestMirrorController(DCP2TestCase, WorkQueueTestCase, S3TestCase):
         super().setUpClass()
         cls._patch_enable_mirroring()
 
-    def setUp(self):
-        super().setUp()
-        self._create_mock_queues(config.mirror_queue.name,
-                                 config.mirror_queue.to_fail.name)
-        self._create_test_bucket(self.bucket)
-
     @property
     def bucket(self) -> str:
         return aws.mirror_bucket
 
     def test_mirroring(self):
+        self._create_mock_queues(config.mirror_queue.name,
+                                 config.mirror_queue.to_fail.name)
+        self._create_test_bucket(self.bucket)
+
         with self.subTest('remote_mirror'):
             self.client.remote_mirror(self.catalog, [self.source])
             source_message = one(self._read_queue(self.client.mirror_queue()))
@@ -86,9 +96,10 @@ class TestMirrorController(DCP2TestCase, WorkQueueTestCase, S3TestCase):
                                     source=self.source.to_json())
             self.assertEqual(expected_message, source_message)
 
+        controller = self.mirror_controller
+
         with self.subTest('mirror_source'):
             event = [self._mock_sqs_record(source_message)]
-            controller = MirrorController(app=MagicMock())
             controller.mirror(event)
             partition_messages = self._read_queue(self.client.mirror_queue())
             partition_message = copy_json(partition_messages[0])
@@ -138,3 +149,16 @@ class TestMirrorController(DCP2TestCase, WorkQueueTestCase, S3TestCase):
                     with self.assertRaises(AssertionError) as e:
                         controller.mirror(event)
                 self.assertTrue(R.caused(e.exception))
+
+    @property
+    def mirror_controller(self) -> MirrorController:
+        return self.app_module.app.mirror_controller
+
+    def test_info_schema(self):
+        client = http_client(log)
+        file = MagicMock(content_type='text/plain')
+        info = self.mirror_controller.service.info_object(file)
+        response = client.request('GET', info['$schema'])
+        self.assertEqual(200, response.status, response.data)
+        schema = json.loads(response.data)
+        jsonschema.validate(info, schema)
