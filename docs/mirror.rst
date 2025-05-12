@@ -45,11 +45,11 @@ object is ``alias/${digest_value}.${digest_type}.json`` where ``digest_value``
 is the hexadecimal form of a hash of a file object's content and ``digest_type``
 is one of ``sha1``, ``md5`` or ``sha256``, denoting the type of algorithm used
 to derive that hash. The content of an alias object is JSON of the form
-``{"schema":"…", "digest_value":…, "digest_type":…}`` where ``digest_value`` and
-``digest_type`` represent the digest to be used when composing the aliased file
-object's key.
+``{"$schema":"…", "digest_value":…, "digest_type":…}`` where ``digest_value``
+and ``digest_type`` represent the digest to be used when composing the aliased
+file object's key.
 
-The ``schema`` property facilitates future changes to the format of aliase
+The ``$schema`` property facilitates future changes to the format of aliase
 objects. For details see the `Schemas`_ section below.
 
 
@@ -61,25 +61,25 @@ is ``info/${digest_value}.${digest_type}.json`` where ``digest_value`` is the
 hexadecimal form of a hash of the corresponding file object's content and
 ``digest_type`` is one of ``sha1``, ``md5`` or ``sha256``, denoting the type of
 algorithm used to derive that hash. The content of an ``info`` object is JSON of
-the form ``{"schema":"…", "content-type":…}``.
+the form ``{"$schema":"…", "content-type":…}``.
 
 The ``content-type`` property contains the content type of the file, as defined
 for the HTTP response header of the same name [4]_.
 
 .. [4] https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Type
 
-The ``schema`` property facilitates future changes to the format of info
+The ``$schema`` property facilitates future changes to the format of info
 objects. For details see the `Schemas`_ section below.
 
 
 Schemas
 =======
 
-The ``schema`` property of alias and info objects contains, and always will
-contain, the URL of a JSON schema [3]_ that the alias and info objects' JSON
-content conforms to. The last path component of the schema URL is, and will
-always be, ``v${schema_version}.json`` where ``schema_version`` is a
-monotonically increasing integer.
+The ``$schema`` property of alias and info objects contains, and always will
+contain, the ``http://`` or ``https://`` URL of a JSON schema [3]_ that the
+alias and info objects' JSON content conforms to. The last path component of the
+schema URL is, and will always be, of the form ``v${schema_version}.json`` where
+``schema_version`` is a monotonically increasing integer.
 
 The contents of a schema at a given URL may change without a change to the URL,
 but only in backwards compatible ways, i.e. by adding a new property. Backwards

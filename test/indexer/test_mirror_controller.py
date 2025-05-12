@@ -158,7 +158,7 @@ class TestMirrorController(DCP2TestCase, LocalAppTestCase, WorkQueueTestCase, S3
         client = http_client(log)
         file = MagicMock(content_type='text/plain')
         info = self.mirror_controller.service.info_object(file)
-        response = client.request('GET', info['schema'])
+        response = client.request('GET', info['$schema'])
         self.assertEqual(200, response.status, response.data)
         schema = json.loads(response.data)
         jsonschema.validate(info, schema)
