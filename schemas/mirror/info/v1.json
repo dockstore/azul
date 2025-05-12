@@ -1,20 +1,22 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "title": "info",
-    "description": "Info describing a file mirrored by Azul",
+    "description": "Information describing a file mirrored by Azul",
     "type": "object",
     "properties": {
-        "content_type": {
+        "content-type": {
             "type": "string",
             "description": "Content type of the mirrored file, as defined for the HTTP response header of the same name"
         },
         "schema": {
             "type": "string",
-            "description": "URL of a JSON schema (like this one) describing the info object"
+            "format": "uri",
+            "pattern": "^https?://.*/info/v\\d+\\.json$",
+            "description": "URL of a JSON schema the JSON containing this property is valid against"
         }
     },
     "required": [
-        "content_type",
+        "content-type",
         "schema"
     ]
 }

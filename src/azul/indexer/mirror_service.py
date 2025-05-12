@@ -220,9 +220,8 @@ class MirrorService(HasCachedHttpClient):
 
     def info_object(self, file: File) -> JSON:
         return {
-            'content_type': file.content_type,
-            'schema': str(self.schema_url_func(schema_name='info',
-                                               version=1))
+            'content-type': file.content_type,
+            'schema': str(self.schema_url_func(schema_name='info', version=1))
         }
 
     def _put_info(self, file: File):
