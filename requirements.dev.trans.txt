@@ -3,7 +3,7 @@ blessed==1.21.0
 blinker==1.9.0
 botocore-stubs==1.38.13
 brotli==1.1.0
-click==8.1.8
+click==8.2.0
 colorama==0.4.6
 configargparse==1.7
 docutils==0.19
@@ -54,7 +54,7 @@ pyflakes==3.3.2
 pyjwt==2.10.1
 pynacl==1.5.0
 pyparsing==3.2.3
-python-engineio==4.12.0
+python-engineio==4.12.1
 python-socketio==5.13.0
 pyzmq==26.4.0
 readchar==4.2.1
@@ -66,7 +66,7 @@ runs==1.2.2
 simple-websocket==1.1.0
 smmap==5.0.2
 tqdm==4.67.1
-types-awscrt==0.26.1
+types-awscrt==0.27.1
 types-s3transfer==0.12.0
 uritemplate==4.1.1
 wcwidth==0.2.13
