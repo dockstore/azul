@@ -334,6 +334,9 @@ emit_tf({
                                 'action': {
                                     'block': {}
                                 },
+                                'rule_label': {
+                                    'name': config.blocked_user_agents_regex_term
+                                },
                                 'visibility_config': {
                                     'metric_name': 'BlockedUserAgents',
                                     'sampled_requests_enabled': True,
@@ -589,13 +592,20 @@ emit_tf({
                                         'action': 'ALLOW'
                                     }
                                 },
-                                {
-                                    'label_name_condition': {
-                                        'label_name': 'awswaf:%s:webacl:' % config.aws_account_id +
-                                                      '${aws_wafv2_web_acl.api_gateway.name}:' +
-                                                      config.blocked_v4_ips_term,
-                                    }
-                                }
+                                *[
+                                    {
+                                        'label_name_condition': {
+                                            'label_name': 'awswaf:%s:webacl:'
+                                                          '${aws_wafv2_web_acl.api_gateway.name}:%s' % (
+                                                              config.aws_account_id,
+                                                              term
+                                                          )
+                                        }
+                                    } for term in [
+                                        config.blocked_v4_ips_term,
+                                        config.blocked_user_agents_regex_term,
+                                    ]
+                                ]
                             ]
                         ]
                     }
