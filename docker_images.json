@@ -90,23 +90,23 @@
             }
         }
     },
-    "docker.io/gitlab/gitlab-ce:17.11.1-ce.0": {
-        "digest": "sha256:16b97bfd05a98aff1d1f49804a325540bdba39600120f6f963ac5417347ecf55",
-        "id": "sha256:3f416ff94400eb95db8849c4e1d592d0228d910fed976a0832fb8caa83c8857d",
+    "docker.io/gitlab/gitlab-ce:17.11.2-ce.0": {
+        "digest": "sha256:92bfef66d5dc84e01bbfeb0291fd9efdb3a6fabd113cdecf236401526efde76f",
+        "id": "sha256:10a019b419fc4bed02c4470f4dd5af82c5d7a6a0da143b7383a4ee31d84d03b1",
         "platform": "linux/amd64"
     },
-    "docker.io/gitlab/gitlab-runner:ubuntu-v17.11.0": {
-        "digest": "sha256:1114649f86b818a030549f94624aa1b38a2275045bd47d37027a87f21c48feec",
-        "mirror_digest": "sha256:0fe2932579a4e05319a8b4481bd02ae59d72165db03adf4957ff170e934ce9cd",
+    "docker.io/gitlab/gitlab-runner:ubuntu-v17.11.1": {
+        "digest": "sha256:ab043f8ab6663bdd24293e7056064a66baaefa81162e76e223f58d8456b768ff",
+        "mirror_digest": "sha256:ca87cdac2988e353ea72989c2b1f958627b5423a57fedba77d54a13f77a0aa95",
         "parts": {
             "linux/amd64": {
-                "digest": "sha256:2dd6547f1c57cecdeb76b867ae995ad7ce0745136972f0c57f1cd9844f81b509",
-                "id": "sha256:ffd10b336f3cb8450de1c1270975a135d9f154de3dcf9bd54292db8f7a47170f",
+                "digest": "sha256:c3e8cd7fb6b76476eec1951c82e02a531596e31c33f69227bc27880486a83ab2",
+                "id": "sha256:3a14dbc4618d64a9a7fa6e90b531b525865f012b3d31fac13fe0ab0745b45c9e",
                 "platform": "linux/amd64"
             },
             "linux/arm64": {
-                "digest": "sha256:4d2f5cb57a78f93f983e2daaa5ce7b382904b2a88ff169c2623c63ddf8c18db0",
-                "id": "sha256:b717673dd24a18fcc29ea4ca8eee0f3fdfe1563b0393ecd16d11755c5542f01b",
+                "digest": "sha256:79f9936a31fe456bae7b7a2da1a8f068b503c1fac3a0613dee0dc21a8c532b75",
+                "id": "sha256:4acea3b2ead93c28df996514e2b70ab2d51aab05da08678f5d92d827e1bcf110",
                 "platform": "linux/arm64"
             }
         }
