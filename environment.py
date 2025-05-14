@@ -313,7 +313,7 @@ def env() -> Mapping[str, Optional[str]]:
             # Updating any of the four images below additionally requires
             # redeploying the `gitlab` TF component.
             'clamav': {
-                'ref': 'docker.io/clamav/clamav:1.4.2-36',
+                'ref': 'docker.io/clamav/clamav:1.4.2-38',
                 'url': 'https://hub.docker.com/r/clamav/clamav'
             },
             'gitlab': {
