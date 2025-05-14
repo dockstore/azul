@@ -69,15 +69,11 @@ class TestMirrorController(DCP2TestCase, LocalAppTestCase, WorkQueueTestCase, S3
         return 'indexer'
 
     @classmethod
-    def _patch_enable_mirroring(cls):
+    def setUpClass(cls):
+        super().setUpClass()
         cls.addClassPatch(patch.object(type(config),
                                        'enable_mirroring',
                                        new=PropertyMock(return_value=True)))
-
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls._patch_enable_mirroring()
 
     @property
     def bucket(self) -> str:
