@@ -16,6 +16,7 @@ from azul import (
     config,
 )
 from azul.collections import (
+    alist,
     dict_merge,
 )
 from azul.deployment import (
@@ -345,10 +346,11 @@ emit_tf({} if config.terraform_component != 'gitlab' else {
                             [
                                 f'arn:aws:s3:::{bucket_name}',
                                 f'arn:aws:s3:::{bucket_name}/*'
-                            ] for bucket_name in [
+                            ] for bucket_name in alist(
                                 aws.qualified_bucket_name('*'),
+                                config.external_mirror_bucket,
                                 *aws_managed_buckets_for_ssm_agent
-                            ]
+                            )
                         )
                     },
                     {

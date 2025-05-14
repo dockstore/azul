@@ -1719,4 +1719,6 @@ def env() -> Mapping[str, Optional[str]]:
         # 'azul_waf_download_rate_limit': '59/600@2.9'
 
         'AZUL_ENABLE_VERBATIM_RELATIONS': '0',
+
+        'AZUL_MIRROR_BUCKET': 'humancellatlas'
     }

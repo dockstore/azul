@@ -18,7 +18,6 @@ from azul import (
     JSON,
     R,
     cache,
-    cached_property,
     config,
 )
 from azul.attrs import (
@@ -130,9 +129,16 @@ class FilePart(SerializableAttrs):
 class MirrorService(HasCachedHttpClient):
     schema_url_func: SchemaUrlFunc
 
-    @cached_property
-    def _storage(self) -> StorageService:
-        return StorageService(bucket_name=aws.mirror_bucket)
+    def _bucket_name(self, catalog: CatalogName) -> str:
+        external_bucket = config.external_mirror_bucket
+        if external_bucket is None or catalog in config.integration_test_catalogs:
+            return aws.mirror_bucket
+        else:
+            return external_bucket
+
+    @cache
+    def _storage(self, catalog: CatalogName) -> StorageService:
+        return StorageService(bucket_name=self._bucket_name(catalog))
 
     @cache
     def repository_plugin(self, catalog: CatalogName) -> RepositoryPlugin:
@@ -143,26 +149,27 @@ class MirrorService(HasCachedHttpClient):
         Upload the file in a single request. For larger files, use
         :meth:`begin_mirroring_file` instead.
         """
-        if self._check_info(file):
+        if self._check_info(catalog, file):
             log.info('File %r is already mirrored, skipping upload', file.uuid)
         else:
             file_content = self._download(catalog, file)
-            self._storage.put(object_key=self.mirror_object_key(file),
-                              data=file_content,
-                              content_type=file.content_type)
+            self._storage(catalog).put(object_key=self.mirror_object_key(file),
+                                       data=file_content,
+                                       content_type=file.content_type)
             _, digest_type = file.digest()
             hasher = get_resumable_hasher(digest_type)
             hasher.update(file_content)
             self._verify_digest(file, hasher)
-            self._put_info(file)
+            self._put_info(catalog, file)
 
-    def begin_mirroring_file(self, file: File) -> str:
+    def begin_mirroring_file(self, catalog: CatalogName, file: File) -> str:
         """
         Initiate a multipart upload of the file's content and return the upload
         ID.
         """
-        upload = self._storage.create_multipart_upload(object_key=self.mirror_object_key(file),
-                                                       content_type=file.content_type)
+        storage = self._storage(catalog)
+        upload = storage.create_multipart_upload(object_key=self.mirror_object_key(file),
+                                                 content_type=file.content_type)
         return upload.id
 
     def mirror_file_part(self,
@@ -177,14 +184,16 @@ class MirrorService(HasCachedHttpClient):
         :meth:`begin_mirroring_file` and return the uploaded part's ETag.
         The provided hasher is mutated to incorporated the part's content.
         """
-        upload = self._get_upload(file, upload_id)
+        upload = self._get_upload(catalog, file, upload_id)
         file_content = self._download(catalog, file, part)
         hasher.update(file_content)
-        return self._storage.upload_multipart_part(file_content,
-                                                   part.index + 1,
-                                                   upload)
+        return self._storage(catalog).upload_multipart_part(file_content,
+                                                            part.index + 1,
+                                                            upload)
 
     def finish_mirroring_file(self,
+                              *,
+                              catalog: CatalogName,
                               file: File,
                               upload_id: str,
                               etags: Sequence[str],
@@ -193,23 +202,23 @@ class MirrorService(HasCachedHttpClient):
         """
         Complete a multipart upload begun with :meth:`begin_mirroring_file`.
         """
-        upload = self._get_upload(file, upload_id)
-        self._storage.complete_multipart_upload(upload, etags)
+        upload = self._get_upload(catalog, file, upload_id)
+        self._storage(catalog).complete_multipart_upload(upload, etags)
         self._verify_digest(file, hasher)
-        self._check_info(file)
-        self._put_info(file)
+        self._check_info(catalog, file)
+        self._put_info(catalog, file)
 
-    def list_info_objects(self, prefix: str) -> OrderedSet[str]:
-        return self._storage.list('info/' + prefix)
+    def list_info_objects(self, catalog: CatalogName, prefix: str) -> OrderedSet[str]:
+        return self._storage(catalog).list('info/' + prefix)
 
-    def get_mirror_url(self, file: File) -> str:
-        return self._storage.get_presigned_url(key=self.mirror_object_key(file),
-                                               file_name=file.name)
+    def get_mirror_url(self, catalog: CatalogName, file: File) -> str:
+        return self._storage(catalog).get_presigned_url(key=self.mirror_object_key(file),
+                                                        file_name=file.name)
 
-    def _check_info(self, file: File) -> bool:
+    def _check_info(self, catalog: CatalogName, file: File) -> bool:
         key = self.info_object_key(file)
         try:
-            content = self._storage.get(key)
+            content = self._storage(catalog).get(key)
         except StorageObjectNotFound:
             return False
         else:
@@ -224,12 +233,12 @@ class MirrorService(HasCachedHttpClient):
             '$schema': str(self.schema_url_func(schema_name='info', version=1))
         }
 
-    def _put_info(self, file: File):
+    def _put_info(self, catalog: CatalogName, file: File):
         key = self.info_object_key(file)
         content = self.info_object(file)
-        self._storage.put(object_key=key,
-                          data=json.dumps(content).encode(),
-                          content_type='application/json')
+        self._storage(catalog).put(object_key=key,
+                                   data=json.dumps(content).encode(),
+                                   content_type='application/json')
 
     def mirror_object_key(self, file: File) -> str:
         return self._file_key('file', file)
@@ -277,9 +286,14 @@ class MirrorService(HasCachedHttpClient):
         else:
             raise RuntimeError('Unexpected response from repository', response.status)
 
-    def _get_upload(self, file: File, upload_id: str) -> 'MultipartUpload':
-        return self._storage.load_multipart_upload(object_key=self.mirror_object_key(file),
-                                                   upload_id=upload_id)
+    def _get_upload(self,
+                    catalog: CatalogName,
+                    file: File,
+                    upload_id: str
+                    ) -> 'MultipartUpload':
+        storage = self._storage(catalog)
+        return storage.load_multipart_upload(object_key=self.mirror_object_key(file),
+                                             upload_id=upload_id)
 
     def _verify_digest(self, file: File, hasher: Hasher):
         expected_digest_value, digest_type = file.digest()

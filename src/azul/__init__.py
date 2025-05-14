@@ -1806,6 +1806,10 @@ class Config:
     def enable_mirroring(self) -> bool:
         return self._boolean(self.environ['AZUL_ENABLE_MIRRORING'])
 
+    @property
+    def external_mirror_bucket(self) -> str | None:
+        return self.environ.get('AZUL_MIRROR_BUCKET')
+
 
 config: Config = Config()  # yes, the type hint does help PyCharm
 
