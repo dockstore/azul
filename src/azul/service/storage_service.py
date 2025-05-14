@@ -29,10 +29,19 @@ from urllib.parse import (
     urlencode,
 )
 
+from botocore.response import (
+    StreamingBody,
+)
 from werkzeug.http import (
     parse_dict_header,
 )
 
+from azul import (
+    R,
+)
+from azul.collections import (
+    OrderedSet,
+)
 from azul.deployment import (
     aws,
 )
@@ -108,6 +117,16 @@ class StorageService:
                             **self._object_creation_kwargs(content_type=content_type, tagging=tagging),
                             **kwargs)
 
+    def list(self, prefix: str) -> OrderedSet[str]:
+        keys, num_keys = OrderedSet(), 0
+        paginator = self._s3.get_paginator('list_objects_v2')
+        for page in paginator.paginate(Bucket=self.bucket_name, Prefix=prefix):
+            contents = page.get('Contents', ())
+            num_keys += len(contents)
+            keys.update(object['Key'] for object in contents)
+            assert len(keys) == num_keys, R('Got duplicate keys from S3')
+        return keys
+
     def create_multipart_upload(self,
                                 object_key: str,
                                 content_type: str | None = None,
@@ -128,9 +147,10 @@ class StorageService:
         return s3.MultipartUpload(self.bucket_name, object_key, upload_id)
 
     def upload_multipart_part(self,
-                              buffer: IO[bytes],
+                              buffer: str | bytes | IO | StreamingBody,
                               part_number: int,
-                              upload: MultipartUpload) -> str:
+                              upload: MultipartUpload
+                              ) -> str:
         return upload.Part(part_number).upload(Body=buffer)['ETag']
 
     def complete_multipart_upload(self,

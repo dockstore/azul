@@ -46,9 +46,6 @@ from azul import (
 from azul.auth import (
     OAuth2,
 )
-from azul.chalice import (
-    C,
-)
 from azul.collections import (
     OrderedSet,
 )
@@ -87,9 +84,6 @@ from azul.plugins import (
 from azul.plugins.metadata.hca.indexer.transform import (
     value_and_unit,
 )
-from azul.service import (
-    FileUrlFunc,
-)
 from azul.service.app_controller import (
     validate_catalog,
     validate_params,
@@ -108,7 +102,6 @@ from azul.service.manifest_controller import (
 )
 from azul.service.manifest_service import (
     CurlManifestGenerator,
-    ManifestUrlFunc,
 )
 from azul.service.repository_controller import (
     RepositoryController,
@@ -308,32 +301,25 @@ class ServiceApp(HealthApp):
 
     @property
     def drs_controller(self) -> DRSController:
-        return self._service_controller(DRSController)
+        return DRSController(app=self, file_url_func=self.file_url)
 
     @cached_property
     def health_controller(self) -> HealthController:
-        return self._controller(HealthController,
-                                lambda_name=self.unqualified_app_name)
+        return HealthController(app=self, lambda_name=self.unqualified_app_name)
 
     @cached_property
     def catalog_controller(self) -> CatalogController:
-        return self._service_controller(CatalogController)
+        return CatalogController(app=self, file_url_func=self.file_url)
 
     @cached_property
     def repository_controller(self) -> RepositoryController:
-        return self._service_controller(RepositoryController)
+        return RepositoryController(app=self, file_url_func=self.file_url)
 
     @cached_property
     def manifest_controller(self) -> ManifestController:
-        manifest_url_func: ManifestUrlFunc = self.manifest_url
-        return self._service_controller(ManifestController,
-                                        manifest_url_func=manifest_url_func)
-
-    def _service_controller(self, controller_cls: type[C], **kwargs) -> C:
-        file_url_func: FileUrlFunc = self.file_url
-        return self._controller(controller_cls,
-                                file_url_func=file_url_func,
-                                **kwargs)
+        return ManifestController(app=self,
+                                  file_url_func=self.file_url,
+                                  manifest_url_func=self.manifest_url)
 
     @property
     def metadata_plugin(self) -> MetadataPlugin:

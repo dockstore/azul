@@ -77,6 +77,10 @@ def json_element_mappings(vs: AnyJSON) -> Iterable[JSON]:
     return map(json_mapping, json_sequence(vs))
 
 
+def json_element_strings(vs: AnyJSON) -> Iterable[str]:
+    return map(json_str, json_sequence(vs))
+
+
 def json_dict(v: AnyMutableJSON) -> MutableJSON:
     assert isinstance(v, dict), type(v)
     return v

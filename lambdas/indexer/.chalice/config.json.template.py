@@ -57,7 +57,7 @@ emit({
                     {
                         indexer.mirror.name: {
                             'reserved_concurrency': config.mirroring_concurrency,
-                            'lambda_memory_size': 256,
+                            'lambda_memory_size': 512,
                             'lambda_timeout': config.mirror_lambda_timeout
                         },
                     }
