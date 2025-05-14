@@ -150,7 +150,7 @@ class MirrorService(HasCachedHttpClient):
         :meth:`begin_mirroring_file` instead.
         """
         if self._check_info(catalog, file):
-            log.info('File %r is already mirrored, skipping upload', file.uuid)
+            log.info('File is already mirrored, skipping upload: %r', file)
         else:
             file_content = self._download(catalog, file)
             self._storage(catalog).put(object_key=self.mirror_object_key(file),
@@ -224,7 +224,7 @@ class MirrorService(HasCachedHttpClient):
         else:
             content_type = json.loads(content)['content_type']
             assert content_type == file.content_type, R(
-                'Conflicting content type', file.uuid, key, content_type, file.content_type)
+                'Conflicting content type', content_type, file)
             return True
 
     def info_object(self, file: File) -> JSON:
@@ -255,7 +255,7 @@ class MirrorService(HasCachedHttpClient):
     @cache
     def _get_repository_url(self, catalog: CatalogName, file: File):
         assert config.is_tdr_enabled(catalog), R('Only TDR catalogs are supported', catalog)
-        assert file.drs_uri is not None, R('File cannot be downloaded', file.uuid)
+        assert file.drs_uri is not None, R('File cannot be downloaded', file)
         drs = self.repository_plugin(catalog).drs_client(authentication=None)
         access = drs.get_object(file.drs_uri, AccessMethod.gs)
         assert access.method is AccessMethod.https, access
@@ -280,8 +280,8 @@ class MirrorService(HasCachedHttpClient):
         # from streams that are seekable.
         response = self._http_client.request('GET', download_url, headers=headers)
         if response.status == expected_status:
-            log.info('Downloaded %d bytes of file %r in %.3fs',
-                     size, file.uuid, time.time() - start)
+            log.info('Downloaded %d bytes in %.3fs from file %r',
+                     size, time.time() - start, file)
             return response.data
         else:
             raise RuntimeError('Unexpected response from repository', response.status)
@@ -300,4 +300,4 @@ class MirrorService(HasCachedHttpClient):
         actual_digest_value = hasher.hexdigest()
         assert expected_digest_value == actual_digest_value, R(
             'File digest value does not match its contents',
-            file.uuid, digest_type, expected_digest_value, actual_digest_value)
+            digest_type, expected_digest_value, file)
