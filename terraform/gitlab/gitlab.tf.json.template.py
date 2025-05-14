@@ -348,7 +348,7 @@ emit_tf({} if config.terraform_component != 'gitlab' else {
                                 f'arn:aws:s3:::{bucket_name}/*'
                             ] for bucket_name in alist(
                                 aws.qualified_bucket_name('*'),
-                                config.external_mirror_bucket,
+                                config.mirror_bucket,
                                 *aws_managed_buckets_for_ssm_agent
                             )
                         )
