@@ -74,6 +74,9 @@ class TestMirrorController(DCP2TestCase, LocalAppTestCase, WorkQueueTestCase, S3
         cls.addClassPatch(patch.object(type(config),
                                        'enable_mirroring',
                                        new=PropertyMock(return_value=True)))
+        cls.addClassPatch(patch.object(type(config),
+                                       'mirror_bucket',
+                                       new=PropertyMock(return_value=None)))
 
     @property
     def bucket(self) -> str:
