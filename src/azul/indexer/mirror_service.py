@@ -192,6 +192,7 @@ class MirrorService(HasCachedHttpClient):
                                                             upload)
 
     def finish_mirroring_file(self,
+                              *,
                               catalog: CatalogName,
                               file: File,
                               upload_id: str,

@@ -206,7 +206,11 @@ class MirrorController(ActionController[MirrorAction]):
         file = self.load_file(catalog, file_json)
         assert len(etags) > 0
         hasher = hasher_from_str(hasher_data)
-        self.service.finish_mirroring_file(catalog, file, upload_id, etags, hasher)
+        self.service.finish_mirroring_file(catalog=catalog,
+                                           file=file,
+                                           upload_id=upload_id,
+                                           etags=etags,
+                                           hasher=hasher)
         log.info('Successfully mirrored file %r via multi-part upload', file.uuid)
 
     def load_file(self, catalog: CatalogName, file: JSON) -> File:

@@ -78,7 +78,11 @@ def mirror_file(catalog: CatalogName, file_uuid: str, part_size: int) -> str:
             part = part.next(file)
 
     etags = list(mirror_parts())
-    service.finish_mirroring_file(catalog, file, upload_id, etags=etags, hasher=hasher)
+    service.finish_mirroring_file(catalog=catalog,
+                                  file=file,
+                                  upload_id=upload_id,
+                                  etags=etags,
+                                  hasher=hasher)
     return service.get_mirror_url(catalog, file)
 
 
