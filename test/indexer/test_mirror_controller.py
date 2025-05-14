@@ -96,11 +96,9 @@ class TestMirrorController(DCP2TestCase, LocalAppTestCase, WorkQueueTestCase, S3
                                     source=self.source.to_json())
             self.assertEqual(expected_message, source_message)
 
-        controller = self.mirror_controller
-
         with self.subTest('mirror_source'):
             event = [self._mock_sqs_record(source_message)]
-            controller.mirror(event)
+            self.mirror_controller.mirror(event)
             partition_messages = self._read_queue(self.client.mirror_queue())
             partition_message = copy_json(partition_messages[0])
             partitions = []
@@ -125,7 +123,7 @@ class TestMirrorController(DCP2TestCase, LocalAppTestCase, WorkQueueTestCase, S3
                            sha256=hashlib.sha256(file_contents).hexdigest())
             plugin_cls = type(self.client.repository_plugin(self.catalog))
             with patch.object(plugin_cls, 'list_files', return_value=[file]):
-                controller.mirror(event)
+                self.mirror_controller.mirror(event)
             file_message = one(self._read_queue(self.client.mirror_queue()))
             expected_message = dict(action='mirror_file',
                                     catalog=self.catalog,
@@ -136,9 +134,9 @@ class TestMirrorController(DCP2TestCase, LocalAppTestCase, WorkQueueTestCase, S3
         with self.subTest('mirror_file'):
             event = [self._mock_sqs_record(file_message)]
             with patch.object(MirrorService, '_download', return_value=file_contents):
-                controller.mirror(event)
+                self.mirror_controller.mirror(event)
             response = self._s3.get_object(Bucket=self.bucket,
-                                           Key=controller.service.mirror_object_key(file))
+                                           Key=self.mirror_controller.service.mirror_object_key(file))
             mirrored_file_contents = response['Body'].read()
             self.assertEqual(mirrored_file_contents, file_contents)
 
@@ -147,7 +145,7 @@ class TestMirrorController(DCP2TestCase, LocalAppTestCase, WorkQueueTestCase, S3
                 # Force reupload attempt in spite of info object being present
                 with patch.object(MirrorService, '_check_info', return_value=False):
                     with self.assertRaises(AssertionError) as e:
-                        controller.mirror(event)
+                        self.mirror_controller.mirror(event)
                 self.assertTrue(R.caused(e.exception))
 
     @property
