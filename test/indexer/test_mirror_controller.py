@@ -91,14 +91,14 @@ class TestMirrorController(DCP2TestCase, LocalAppTestCase, WorkQueueTestCase, S3
         with self.subTest('remote_mirror'):
             source_message = self._test_remote_mirror()
 
-        with self.subTest('mirror_source'):
-            partition_message = self._test_mirror_source(source_message)
+            with self.subTest('mirror_source'):
+                partition_message = self._test_mirror_source(source_message)
 
-        with self.subTest('mirror_partition'):
-            file, file_message = self._test_mirror_partition(partition_message)
+                with self.subTest('mirror_partition'):
+                    file, file_message = self._test_mirror_partition(partition_message)
 
-        with self.subTest('mirror_file'):
-            self._test_mirror_file(file, file_message)
+                    with self.subTest('mirror_file'):
+                        self._test_mirror_file(file, file_message)
 
     _file_contents = b'lorem ipsum dolor sit\n'
 
