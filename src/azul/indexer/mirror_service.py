@@ -146,23 +146,27 @@ class BaseMirrorService:
         return self._storage(catalog).get_presigned_url(key=key,
                                                         file_name=file.name)
 
-    def _check_info(self, catalog: CatalogName, file: File) -> bool:
+    def _get_info(self, catalog: CatalogName, file: File) -> JSON | None:
         key = self.info_object_key(file)
         try:
             content = self._storage(catalog).get(key)
         except StorageObjectNotFound:
-            return False
+            return None
         else:
-            content_type = json.loads(content)['content-type']
+            json_content = json.loads(content)
+            content_type = json_content['content-type']
             assert content_type == file.content_type, R(
                 'Conflicting content type', content_type, file)
-            return True
+            return json_content
 
     def mirror_object_key(self, file: File) -> str:
         return self._file_key('file', file)
 
     def info_object_key(self, file: File) -> str:
         return self._file_key('info', file, extension='.json')
+
+    def is_mirrored(self, catalog: CatalogName, file: File) -> bool:
+        return self._get_info(catalog, file) is not None
 
     def _file_key(self, prefix: str, file: File, *, extension: str = '') -> str:
         digest, digest_type = file.digest()
@@ -184,7 +188,7 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
         Upload the file in a single request. For larger files, use
         :meth:`begin_mirroring_file` instead.
         """
-        if self._check_info(catalog, file):
+        if self.is_mirrored(catalog, file):
             log.info('File is already mirrored, skipping upload: %r', file)
         else:
             file_content = self._download(catalog, file)
@@ -241,7 +245,7 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
         upload = self._get_upload(catalog, file, upload_id)
         self._storage(catalog).complete_multipart_upload(upload, etags)
         self._verify_digest(file, hasher)
-        self._check_info(catalog, file)
+        self._get_info(catalog, file)
         self._put_info(catalog, file)
 
     def list_info_objects(self,

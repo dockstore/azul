@@ -160,7 +160,7 @@ class TestMirrorController(DCP2TestCase, LocalAppTestCase, WorkQueueTestCase, S3
         corrupted_contents = self._file_contents[:-1] + b'Q'
         with patch.object(MirrorService, '_download', return_value=corrupted_contents):
             # Force reupload attempt in spite of info object being present
-            with patch.object(MirrorService, '_check_info', return_value=False):
+            with patch.object(MirrorService, 'is_mirrored', return_value=False):
                 with self.assertRaises(AssertionError) as e:
                     self.mirror_controller.mirror(event)
             self.assertTrue(R.caused(e.exception))
