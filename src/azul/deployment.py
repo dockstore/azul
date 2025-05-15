@@ -92,6 +92,7 @@ if TYPE_CHECKING:
     )
     from mypy_boto3_s3 import (
         S3Client,
+        S3ServiceResource,
     )
     from mypy_boto3_secretsmanager import (
         SecretsManagerClient,
@@ -199,6 +200,10 @@ class AWS:
     @property
     def s3(self) -> 'S3Client':
         return self.client('s3', azul_logging=True)
+
+    @property
+    def s3_resource(self) -> 'S3ServiceResource':
+        return self.resource('s3', azul_logging=True)
 
     @property
     def securityhub(self) -> 'SecurityHubClient':
@@ -734,7 +739,7 @@ class AWS:
 
     @property
     def sqs_resource(self) -> 'SQSServiceResource':
-        return self.resource('sqs')
+        return self.resource('sqs', azul_logging=True)
 
     @_cache
     def sqs_queue(self, queue_name: str) -> 'Queue':
