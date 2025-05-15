@@ -255,7 +255,6 @@ class MirrorService(HasCachedHttpClient):
             'Expected a hexadecimal digest', digest)
         return f'{prefix}/{digest.lower()}.{digest_type}{extension}'
 
-    @cache
     def _get_repository_url(self, catalog: CatalogName, file: File) -> furl:
         assert config.is_tdr_enabled(catalog), R(
             'Only TDR catalogs are supported', catalog)
