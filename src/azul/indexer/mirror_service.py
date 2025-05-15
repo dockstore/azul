@@ -128,9 +128,7 @@ class FilePart(SerializableAttrs):
             assert False, R('Part range exceeds file size', self, file)
 
 
-@attrs.frozen(auto_attribs=True, kw_only=True)
-class MirrorService(HasCachedHttpClient):
-    schema_url_func: SchemaUrlFunc
+class BaseMirrorService:
 
     def _bucket_name(self, catalog: CatalogName) -> str:
         bucket = config.mirror_bucket
@@ -142,6 +140,39 @@ class MirrorService(HasCachedHttpClient):
     @cache
     def _storage(self, catalog: CatalogName) -> StorageService:
         return StorageService(bucket_name=self._bucket_name(catalog))
+
+    def get_mirror_url(self, catalog: CatalogName, file: File) -> str:
+        return self._storage(catalog).get_presigned_url(key=self.mirror_object_key(file),
+                                                        file_name=file.name)
+
+    def _check_info(self, catalog: CatalogName, file: File) -> bool:
+        key = self.info_object_key(file)
+        try:
+            content = self._storage(catalog).get(key)
+        except StorageObjectNotFound:
+            return False
+        else:
+            content_type = json.loads(content)['content-type']
+            assert content_type == file.content_type, R(
+                'Conflicting content type', content_type, file)
+            return True
+
+    def mirror_object_key(self, file: File) -> str:
+        return self._file_key('file', file)
+
+    def info_object_key(self, file: File) -> str:
+        return self._file_key('info', file, extension='.json')
+
+    def _file_key(self, prefix: str, file: File, *, extension: str = '') -> str:
+        digest, digest_type = file.digest()
+        assert all(c in string.hexdigits for c in digest), R(
+            'Expected a hexadecimal digest', digest)
+        return f'{prefix}/{digest.lower()}.{digest_type}{extension}'
+
+
+@attrs.frozen(auto_attribs=True, kw_only=True)
+class MirrorService(BaseMirrorService, HasCachedHttpClient):
+    schema_url_func: SchemaUrlFunc
 
     @cache
     def repository_plugin(self, catalog: CatalogName) -> RepositoryPlugin:
@@ -214,22 +245,6 @@ class MirrorService(HasCachedHttpClient):
     def list_info_objects(self, catalog: CatalogName, prefix: str) -> OrderedSet[str]:
         return self._storage(catalog).list('info/' + prefix)
 
-    def get_mirror_url(self, catalog: CatalogName, file: File) -> str:
-        return self._storage(catalog).get_presigned_url(key=self.mirror_object_key(file),
-                                                        file_name=file.name)
-
-    def _check_info(self, catalog: CatalogName, file: File) -> bool:
-        key = self.info_object_key(file)
-        try:
-            content = self._storage(catalog).get(key)
-        except StorageObjectNotFound:
-            return False
-        else:
-            content_type = json.loads(content)['content-type']
-            assert content_type == file.content_type, R(
-                'Conflicting content type', content_type, file)
-            return True
-
     def info_object(self, file: File) -> JSON:
         return {
             'content-type': file.content_type,
@@ -242,18 +257,6 @@ class MirrorService(HasCachedHttpClient):
         self._storage(catalog).put(object_key=key,
                                    data=json.dumps(content).encode(),
                                    content_type='application/json')
-
-    def mirror_object_key(self, file: File) -> str:
-        return self._file_key('file', file)
-
-    def info_object_key(self, file: File) -> str:
-        return self._file_key('info', file, extension='.json')
-
-    def _file_key(self, prefix: str, file: File, *, extension: str = '') -> str:
-        digest, digest_type = file.digest()
-        assert all(c in string.hexdigits for c in digest), R(
-            'Expected a hexadecimal digest', digest)
-        return f'{prefix}/{digest.lower()}.{digest_type}{extension}'
 
     def _get_repository_url(self, catalog: CatalogName, file: File) -> furl:
         assert config.is_tdr_enabled(catalog), R(
