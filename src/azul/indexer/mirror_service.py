@@ -257,8 +257,10 @@ class MirrorService(HasCachedHttpClient):
 
     @cache
     def _get_repository_url(self, catalog: CatalogName, file: File) -> furl:
-        assert config.is_tdr_enabled(catalog), R('Only TDR catalogs are supported', catalog)
-        assert file.drs_uri is not None, R('File cannot be downloaded', file)
+        assert config.is_tdr_enabled(catalog), R(
+            'Only TDR catalogs are supported', catalog)
+        assert file.drs_uri is not None, R(
+            'File cannot be downloaded', file)
         drs = self.repository_plugin(catalog).drs_client(authentication=None)
         access = drs.get_object(file.drs_uri, AccessMethod.gs)
         assert access.method is AccessMethod.https, access
