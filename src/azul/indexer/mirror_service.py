@@ -225,7 +225,7 @@ class MirrorService(HasCachedHttpClient):
         except StorageObjectNotFound:
             return False
         else:
-            content_type = json.loads(content)['content_type']
+            content_type = json.loads(content)['content-type']
             assert content_type == file.content_type, R(
                 'Conflicting content type', content_type, file)
             return True
