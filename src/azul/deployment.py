@@ -739,7 +739,7 @@ class AWS:
 
     @property
     def sqs_resource(self) -> 'SQSServiceResource':
-        return self.resource('sqs', azul_logging=True)
+        return self.resource('sqs', azul_logging=config.is_in_lambda)
 
     @_cache
     def sqs_queue(self, queue_name: str) -> 'Queue':
