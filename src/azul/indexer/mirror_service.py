@@ -26,6 +26,9 @@ from azul import (
 from azul.attrs import (
     SerializableAttrs,
 )
+from azul.auth import (
+    Authentication,
+)
 from azul.chalice import (
     SchemaUrlFunc,
 )
@@ -47,6 +50,7 @@ from azul.http import (
 )
 from azul.plugins import (
     File,
+    RepositoryFileDownload,
     RepositoryPlugin,
 )
 from azul.service.storage_service import (
@@ -126,6 +130,25 @@ class FilePart(SerializableAttrs):
             return attr.evolve(self, index=next_index, offset=next_offset, size=next_size)
         else:
             assert False, R('Part range exceeds file size', self, file)
+
+
+@attrs.frozen(auto_attribs=True, kw_only=True)
+class MirrorFileDownload(RepositoryFileDownload):
+    _location: str
+
+    @property
+    def retry_after(self) -> int | None:
+        return None
+
+    @property
+    def location(self) -> str | None:
+        return self._location
+
+    def update(self,
+               plugin: RepositoryPlugin,
+               authentication: Authentication | None
+               ) -> None:
+        pass
 
 
 class BaseMirrorService:

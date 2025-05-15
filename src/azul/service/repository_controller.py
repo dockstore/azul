@@ -44,6 +44,10 @@ from azul.indexer.field import (
     FieldType,
     pass_thru_bool,
 )
+from azul.indexer.mirror_service import (
+    BaseMirrorService,
+    MirrorFileDownload,
+)
 from azul.plugins import (
     File,
     RepositoryFileDownload,
@@ -84,6 +88,10 @@ class RepositoryController(SourceController):
     @cached_property
     def service(self) -> RepositoryService:
         return RepositoryService()
+
+    @cached_property
+    def mirror_service(self) -> BaseMirrorService:
+        return BaseMirrorService()
 
     @cache
     def repository_plugin(self, catalog: CatalogName) -> RepositoryPlugin:
@@ -226,11 +234,6 @@ class RepositoryController(SourceController):
         wait = query_params.get('wait')
         token = query_params.get('token')
 
-        plugin = self.repository_plugin(catalog)
-        download_cls = plugin.file_download_class()
-        if TYPE_CHECKING:  # work around https://youtrack.jetbrains.com/issue/PY-44728
-            download_cls = RepositoryFileDownload
-
         if request_index == 0:
             file = self.service.get_data_file(catalog=catalog,
                                               file_uuid=file_uuid,
@@ -262,7 +265,22 @@ class RepositoryController(SourceController):
                     'Content-Range': f'bytes */{file.size}'
                 }
 
-        download = download_cls(file=file, replica=replica, token=token)
+        plugin = self.repository_plugin(catalog)
+
+        is_mirrored = self.mirror_service.is_mirrored(catalog, file)
+        if is_mirrored:
+            download = MirrorFileDownload(
+                file=file,
+                location=self.mirror_service.get_mirror_url(catalog, file),
+                replica=replica,
+                token=token
+            )
+        else:
+            download_cls = plugin.file_download_class()
+            if TYPE_CHECKING:  # work around https://youtrack.jetbrains.com/issue/PY-44728
+                download_cls = RepositoryFileDownload
+            download = download_cls(file=file, replica=replica, token=token)
+
         try:
             download.update(plugin, authentication)
         except LimitedTimeoutException as e:
@@ -309,7 +327,9 @@ class RepositoryController(SourceController):
                     for k in ('range', 'host', 'user-agent', 'x-forwarded-for')
                 }
             }
-            log.info('Download of file %s', json.dumps(log_data))
+            log.info('Download of %s file %s',
+                     'mirrored' if is_mirrored else 'repository',
+                     json.dumps(log_data))
             return {
                 'Status': 302,
                 'Location': download.location

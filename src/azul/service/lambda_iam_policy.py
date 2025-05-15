@@ -1,6 +1,9 @@
 from azul import (
     config,
 )
+from azul.collections import (
+    alist,
+)
 from azul.deployment import (
     aws,
 )
@@ -97,6 +100,18 @@ policy = {
             'Resource': [
                 '${aws_s3_bucket.%s.arn}' % config.storage_term,
                 f'arn:aws:s3:::{aws.shared_bucket}'
+            ]
+        },
+        {
+            'Effect': 'Allow',
+            'Action': [
+                's3:GetObject',
+                's3:ListBucket'
+            ],
+            'Resource': [
+                f'arn:aws:s3:::{resource}'
+                for bucket in alist(aws.mirror_bucket, config.mirror_bucket)
+                for resource in [bucket, f'{bucket}/*']
             ]
         },
         *(
