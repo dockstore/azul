@@ -12,6 +12,9 @@ from typing import (
 
 import attr
 import attrs
+from furl import (
+    furl,
+)
 
 from azul import (
     CatalogName,
@@ -253,13 +256,13 @@ class MirrorService(HasCachedHttpClient):
         return f'{prefix}/{digest.lower()}.{digest_type}{extension}'
 
     @cache
-    def _get_repository_url(self, catalog: CatalogName, file: File):
+    def _get_repository_url(self, catalog: CatalogName, file: File) -> furl:
         assert config.is_tdr_enabled(catalog), R('Only TDR catalogs are supported', catalog)
         assert file.drs_uri is not None, R('File cannot be downloaded', file)
         drs = self.repository_plugin(catalog).drs_client(authentication=None)
         access = drs.get_object(file.drs_uri, AccessMethod.gs)
         assert access.method is AccessMethod.https, access
-        return access.url
+        return furl(access.url)
 
     def _download(self,
                   catalog: CatalogName,
@@ -278,7 +281,9 @@ class MirrorService(HasCachedHttpClient):
             expected_status = 206
         # Ideally we would stream the response, but boto only supports uploading
         # from streams that are seekable.
-        response = self._http_client.request('GET', download_url, headers=headers)
+        response = self._http_client.request('GET',
+                                             str(download_url),
+                                             headers=headers)
         if response.status == expected_status:
             log.info('Downloaded %d bytes in %.3fs from file %r',
                      size, time.time() - start, file)
