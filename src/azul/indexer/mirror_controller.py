@@ -57,7 +57,7 @@ from azul.types import (
 log = logging.getLogger(__name__)
 
 
-@attrs.frozen(auto_attribs=True, kw_only=True)
+@attrs.frozen(kw_only=True)
 class MirrorController(ActionController[MirrorAction]):
     schema_url_func: SchemaUrlFunc
 

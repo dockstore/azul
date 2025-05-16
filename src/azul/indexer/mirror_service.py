@@ -66,7 +66,7 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 
-@attrs.frozen(auto_attribs=True, kw_only=True)
+@attrs.frozen(kw_only=True)
 class FilePart(SerializableAttrs):
     """
     A part of a mirrored file
@@ -132,7 +132,7 @@ class FilePart(SerializableAttrs):
             assert False, R('Part range exceeds file size', self, file)
 
 
-@attrs.frozen(auto_attribs=True, kw_only=True)
+@attrs.frozen(kw_only=True)
 class MirrorFileDownload(RepositoryFileDownload):
     _location: str
 
@@ -198,7 +198,7 @@ class BaseMirrorService:
         return f'{prefix}/{digest.lower()}.{digest_type}{extension}'
 
 
-@attrs.frozen(auto_attribs=True, kw_only=True)
+@attrs.frozen(kw_only=True)
 class MirrorService(BaseMirrorService, HasCachedHttpClient):
     schema_url_func: SchemaUrlFunc
 
