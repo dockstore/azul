@@ -1722,5 +1722,7 @@ def env() -> Mapping[str, Optional[str]]:
 
         'AZUL_ENABLE_MIRRORING': '1',
 
-        'AZUL_MIRROR_BUCKET': 'humancellatlas'
+        'AZUL_MIRROR_BUCKET': 'humancellatlas',
+
+        'AZUL_MIRRORING_CONCURRENCY': '64'
     }
