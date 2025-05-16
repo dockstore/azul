@@ -8,7 +8,6 @@ import time
 from typing import (
     Any,
     Callable,
-    TYPE_CHECKING,
     cast,
 )
 
@@ -50,7 +49,6 @@ from azul.indexer.mirror_service import (
 )
 from azul.plugins import (
     File,
-    RepositoryFileDownload,
     RepositoryPlugin,
 )
 from azul.service import (
@@ -277,8 +275,6 @@ class RepositoryController(SourceController):
             )
         else:
             download_cls = plugin.file_download_class()
-            if TYPE_CHECKING:  # work around https://youtrack.jetbrains.com/issue/PY-44728
-                download_cls = RepositoryFileDownload
             download = download_cls(file=file, replica=replica, token=token)
 
         try:
