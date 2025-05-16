@@ -118,7 +118,11 @@ class MirrorController(ActionController[MirrorAction]):
         messages = map(message, prefix.partition_prefixes())
         self.client.queue_mirror_messages(messages)
 
-    def mirror_partition(self, catalog: CatalogName, source_json: JSON, prefix: str):
+    def mirror_partition(self,
+                         catalog: CatalogName,
+                         source_json: JSON,
+                         prefix: str
+                         ):
         plugin = self.repository_plugin(catalog)
         source = plugin.source_ref_cls.from_json(source_json)
         already_mirrored = self.service.list_info_objects(catalog, prefix)
@@ -164,11 +168,20 @@ class MirrorController(ActionController[MirrorAction]):
                 upload_id = self.service.begin_mirroring_file(catalog, file)
                 first_part = FilePart.first(file, part_size)
                 log.info('Uploading part #%d of file %r', first_part.index, file)
-                etag = self.service.mirror_file_part(catalog, file, first_part, upload_id, hasher)
+                etag = self.service.mirror_file_part(catalog,
+                                                     file,
+                                                     first_part,
+                                                     upload_id,
+                                                     hasher)
                 next_part = first_part.next(file)
                 assert next_part is not None
                 log.info('Queueing part #%d of file %r', next_part.index, file)
-                message = self.mirror_part_message(catalog, file, next_part, upload_id, [etag], hasher)
+                message = self.mirror_part_message(catalog,
+                                                   file,
+                                                   next_part,
+                                                   upload_id,
+                                                   [etag],
+                                                   hasher)
                 self.client.queue_mirror_messages([message])
 
     def mirror_file_part(self,

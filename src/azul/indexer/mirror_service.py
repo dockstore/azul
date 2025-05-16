@@ -142,7 +142,8 @@ class BaseMirrorService:
         return StorageService(bucket_name=self._bucket_name(catalog))
 
     def get_mirror_url(self, catalog: CatalogName, file: File) -> str:
-        return self._storage(catalog).get_presigned_url(key=self.mirror_object_key(file),
+        key = self.mirror_object_key(file)
+        return self._storage(catalog).get_presigned_url(key=key,
                                                         file_name=file.name)
 
     def _check_info(self, catalog: CatalogName, file: File) -> bool:
@@ -202,7 +203,8 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
         ID.
         """
         storage = self._storage(catalog)
-        upload = storage.create_multipart_upload(object_key=self.mirror_object_key(file),
+        key = self.mirror_object_key(file)
+        upload = storage.create_multipart_upload(object_key=key,
                                                  content_type=file.content_type)
         return upload.id
 
@@ -242,7 +244,10 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
         self._check_info(catalog, file)
         self._put_info(catalog, file)
 
-    def list_info_objects(self, catalog: CatalogName, prefix: str) -> OrderedSet[str]:
+    def list_info_objects(self,
+                          catalog: CatalogName,
+                          prefix: str
+                          ) -> OrderedSet[str]:
         return self._storage(catalog).list('info/' + prefix)
 
     def info_object(self, file: File) -> JSON:
