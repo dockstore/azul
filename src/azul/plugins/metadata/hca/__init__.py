@@ -479,7 +479,9 @@ class HCAFile(File):
                    name=hit['name'],
                    size=hit['size'],
                    drs_uri=hit['drs_uri'],
-                   content_type=hit['content-type'],
+                   # FIXME: Remove dcp-type MIME parameter
+                   #        https://github.com/DataBiosphere/azul/issues/7130
+                   content_type=hit['content-type'].split(';')[0],
                    sha256=hit['sha256'],
                    crc32c=hit['crc32c'],
                    sha1=hit.get('sha1'),
