@@ -565,10 +565,10 @@ The following resources must be created manually before deploying the `gitlab`
 component:
 
 - An EBS volume needs to be created. See [gitlab.tf.json.template.py] and the
-  [section on CI/CD](#95-storage) for details.
+  [section on CI/CD](#85-storage) for details.
 
 - A certificate authority must be set up for VPN access. For details refer to
-  [section on GitLab CA](#912-setting-up-the-certificate-authority).
+  [section on GitLab CA](#812-setting-up-the-certificate-authority).
 
 
 ## 3.2 One-time manual configuration of deployments
@@ -717,8 +717,8 @@ http://service.${AZUL_DEPLOYMENT_STAGE}.dev.singlecell.gi.ucsc.edu/
 ## 3.6 Private API
 
 Follow these steps to put a deployment's API Gateway in the GitLab VPC so that a
-VPN connection is required to access the deployment. See [9.1 VPN access to
-GitLab](#91-vpn-access-to-gitlab) for details. Read this entire section before
+VPN connection is required to access the deployment. See [8.1 VPN access to
+GitLab](#81-vpn-access-to-gitlab) for details. Read this entire section before
 following these steps.
 
 1. Destroy the current deployment (`make -C terraform destroy`).
@@ -1676,41 +1676,8 @@ Here is a complete example for copying bundles from `prod` to `integration`.
    The `--map-version` option adds a specific duration to the version of each
    copied file and bundle. Run `python scripts/copy_bundles --help` for details.
 
-# 8. Scale testing
 
-[Locust]: https://locust.io/
-
-Scale testing can be done with [Locust]. Locust is a development requirement so
-running it is straight-forward with your development environment set up.
-
-1. Make sure Locust is installed by running
-
-   ```
-   locust --version
-   ```
-
-   If it is not installed, do step 1.3 in this README.
-
-2. To scale test the Azul web service on integration run
-
-   ```
-   locust -f scripts/locust/service.py
-   ```
-
-   If you want to test against a different stage use the `--host` option:
-
-   ```
-   locust -f scripts/locust/service.py --host https://service.dev.singlecell.gi.ucsc.edu
-   ```
-
-3. Navigate to `http://localhost:8090` in your browser to start a test run.
-
-[Locust documentation]: https://docs.locust.io/en/stable/
-
-For more advanced usage refer to the official [Locust documentation].
-
-
-# 9. Continuous deployment and integration
+# 8. Continuous deployment and integration
 
 For the purposes of continually testing and deploying the Azul application, we 
 run the community edition of GitLab on a project-specific EC2 instance. There is 
@@ -1744,7 +1711,7 @@ feature branches is `sandbox`, the protected branches (`develop` and `prod` use
 their respective deployments.
 
 
-## 9.1 VPN access to GitLab
+## 8.1 VPN access to GitLab
 
 The GitLab EC2 instance resides in a VPC that can only be accessed through a
 VPN. The VPN uses AWS Client VPN. It is Amazon's flavor of OpenVPN. The AWS
@@ -1776,7 +1743,7 @@ authenticate itself to clients and check validity of the certificates that
 clients present to the server. Both client and server keys must be signed by
 the same CA.
 
-### 9.1.1 Setting up a VPN client
+### 8.1.1 Setting up a VPN client
 
 Install an OpenVPN client. On Ubuntu, the respective package is called
 `network-manager-openvpn-gnome`. Popular clients for macOS are [Tunnelblick]
@@ -1817,7 +1784,7 @@ instructions on how to do so on Ubuntu. For other VPN clients the process is
 pretty much self-explanatory. Delete the file after importing it. It contains
 the private key and can always be regenerated again later using `make config`. 
 
-### 9.1.2 Ensuring split tunnel on client
+### 8.1.2 Ensuring split tunnel on client
 
 Except on stable deployments, you should configure the client to only route VPC
 traffic through the VPN. The VPN server will not forward any other traffic, in
@@ -1856,7 +1823,7 @@ For Tunnelblick, the steps are as follows:
 4) On the *Settings* tab of the right-hand side of the window, make sure that
    the *Route all IPv4 traffic through the VPN* option is unchecked
 
-### 9.1.2 Setting up the certificate authority
+### 8.1.3 Setting up the certificate authority
 
 This must be done by a system administrator before a GitLab instance is first 
 deployed:
@@ -1872,7 +1839,7 @@ cd ..
 make apply  # (re)deploy GitLab
 ```
 
-### 9.1.3 Issuing a certificate
+### 8.1.4 Issuing a certificate
 
 To issue a client certificate for a developer so that they can access the VPN,
 ask the developer to send you a certificate request as described in the previous 
@@ -1893,7 +1860,7 @@ The communication channel through which requests and certificates are messaged
 does not need to be private but it needs to ensure the integrity of the
 messages.
 
-### 9.1.4 Revoking a certificate
+### 8.1.5 Revoking a certificate
 
 ```
 _select dev.gitlab  # or prod.gitlab
@@ -1919,7 +1886,7 @@ make publish_revocations
 mv $EASYRSA_PKI/issued/joe@foo.org.crt.orig $EASYRSA_PKI/issued/joe@foo.org.crt
 ```
 
-### 9.1.5 Issuing a certificate on a person's behalf
+### 8.1.6 Issuing a certificate on a person's behalf
 
 A private key and OpenVPN configuration can be generated by a system
 administrator on behalf of any person that doesn't have a configured working
@@ -1929,12 +1896,12 @@ eavesdrops on the channel through which the OpenVPN configuration
 (which includes the private key) is communicated to the person.
 
 To generate the key and OpenVPN configuration file on another person's behalf, 
-invoke the `make` steps as outlined in [9.1.1](#911-setting-up-a-vpn-client) and 
-[9.1.3](#913-issuing-a-certificate) but use `make client_cn=joe@foo.org` instead 
+invoke the `make` steps as outlined in [8.1.1](#811-setting-up-a-vpn-client) and 
+[8.1.3](#813-issuing-a-certificate) but use `make client_cn=joe@foo.org` instead 
 of `make`.
 
 
-## 9.2 The Sandbox Deployment
+## 8.2 The Sandbox Deployment
 
 There is only one such deployment and it should be used to validate feature
 branches (one at a time) or to run experiments. This implies that access to the
@@ -1942,7 +1909,7 @@ sandbox must be coordinated externally e.g., via Slack. The project lead owns
 the sandbox deployment and coordinates access to it.
 
 
-## 9.3 Security
+## 8.3 Security
 
 Gitlab has AWS write permissions for the AWS services used by Azul and the
 principle of least privilege is applied as much as IAM allows it. Some AWS
@@ -1967,10 +1934,10 @@ Code running on the Gitlab instance has access to credentials of a Google Cloud
 service account that has write privileges to Google Cloud. This service account 
 for Gitlab is created automatically by TF but its private key is not. They need 
 to created manually and copied to `/mnt/gitlab/runner/config/etc` on the 
-instance. See [section 9.9](#910-the-gitlab-build-environment) for details.
+instance. See [section 8.10](#810-the-gitlab-build-environment) for details.
 
 
-## 9.4 Networking
+## 8.4 Networking
 
 The networking details are documented in [gitlab.tf.json.template.py]. The
 Gitlab EC2 instance uses a VPC and is fronted by an Application Load Balancer
@@ -1979,7 +1946,7 @@ Gitlab web UI, the NLB provides SSH shell access and `git+ssh` access for
 pushing to the project forks on the instance.
 
 
-## 9.5 Storage
+## 8.5 Storage
 
 The Gitlab EC2 instance is attached to an EBS volume that contains all of
 Gitlab's data and configuration. That volume is not controlled by Terraform and
@@ -2004,7 +1971,7 @@ one. Just keep in mind that the new instance might have a newer version of
 Gitlab which may have added new settings. You may see commented-out default
 settings in the new gitlab.rb file that may be missing in the old one.
 
-## 9.5.1 Freeing up storage space
+## 8.5.1 Freeing up storage space
 
 There are three docker daemons running on the instance: the RancherOS system 
 daemon, the RancherOS user daemon and the Docker-in-Docker (DIND) daemon. For 
@@ -2025,7 +1992,7 @@ sudo docker exec -it gitlab-dind docker image prune -a --filter "until=720h"
 
 on the instance.
 
-## 9.6 The Gitlab web application
+## 8.6 The Gitlab web application
 
 The instance runs Gitlab CE running inside a rather elaborate concoction of
 Docker containers. See [gitlab.tf.json.template.py] for details. Administrative
@@ -2034,7 +2001,7 @@ Gitlab, for example, one would run `docker exec -it gitlab gitlab-ctl
 reconfigure`.
 
 
-## 9.7 Registering the Gitlab runner
+## 8.7 Registering the Gitlab runner
 
 The runner is the container that performs the builds. The instance is configured
 to automatically start that container. The primary configuration for the runner
@@ -2117,7 +2084,7 @@ simply reboot the instance. Either way, the Gitlab UI should now show the newly
 registered runners.
 
 
-## 9.8 The Gitlab runner image for Azul
+## 8.8 The Gitlab runner image for Azul
 
 Because the first stage of the Azul pipeline on Gitlab creates a dedicated image
 containing the dependencies of the subsequent stages, that first stage only
@@ -2129,7 +2096,7 @@ is modified. See `terraform/gitlab/runner/Dockerfile` for details on how to
 build the image and register it with the runner.
 
 
-## 9.9 Updating Gitlab
+## 8.9 Updating Gitlab
 
 Modify the Docker image tags in [gitlab.tf.json.template.py] and run `make
 apply` in `terraform/gitlab`. The instance will be terminated (the EBS volume
@@ -2137,7 +2104,7 @@ will survive) and a new instance will be launched, with fresh containers from
 updated images. This should be done regularly.
 
 
-## 9.10 The Gitlab Build Environment
+## 8.10 The Gitlab Build Environment
 
 The `/mnt/gitlab/runner/config/etc` directory on the Gitlab EC2 instance is
 mounted into the build container as `/etc/gitlab`. The Gitlab build for Azul
@@ -2152,7 +2119,7 @@ push access is tied to shell access which is what one would normally need to
 modify those files.
 
 
-## 9.11. Cleaning up hung test containers
+## 8.11. Cleaning up hung test containers
 
 When cancelling the `make test` job on Gitlab, test containers will be left
 running. To clean those up, ssh into the instance as described in
@@ -2161,7 +2128,7 @@ xargs docker exec gitlab-dind docker kill` and again but with `rm` instead
 of `kill`.
 
 
-# 10. Kibana and Cerebro
+# 9. Kibana and Cerebro
 
 Kibana is a web UI for interactively querying and managing an Elasticsearch
 instance. To use Kibana with Azul's AWS Elasticsearch instance, you have two
@@ -2202,7 +2169,7 @@ and open the specified URLs in your browser.
 
 [Cerebro]: https://github.com/lmenezes/cerebro
 
-## 10.1 Connecting Kibana to a local Elasticsearch instance
+## 9.1 Connecting Kibana to a local Elasticsearch instance
 
 Certain unit tests use a locally running Elasticsearch container. It's possible 
 to connect a Kibana instance to such a container, in order to aid debugging.
@@ -2236,7 +2203,7 @@ Kibana should now be available at `http://0.0.0.0:5601`.
 Some of these steps were taken or modified from the official [Elasticsearch 
 documentation](https://www.elastic.co/guide/en/kibana/7.10/docker.html#_run_kibana_on_docker_for_development).
 
-# 11. Managing dependencies
+# 10. Managing dependencies
 
 We pin all dependencies, direct and transitive ones alike. That's the only way
 to get a somewhat reproducible build. It's possible that the build still
@@ -2296,7 +2263,7 @@ We call that category  _pip requirements_ and don't distinguish between direct
 or transitive requirements in that category.
 
 
-# 12. Making wheels
+# 11. Making wheels
 
 _Note: Support for custom wheels is currently disabled. We don't currently have 
 any dependencies for which a binary wheel is unavailable. We'll leave this 
@@ -2368,10 +2335,10 @@ the corresponding vendor directory.
 Also see https://chalice.readthedocs.io/en/latest/topics/packaging.html
 
 
-# 13. Development tools
+# 12. Development tools
 
 
-## 13.1 OpenAPI development
+## 12.1 OpenAPI development
 
 [Azul Service OpenAPI page]: https://service.dev.singlecell.gi.ucsc.edu/
 
@@ -2387,7 +2354,7 @@ of the API documentation is visible. Change the docs in `azul/service/app.py`,
 save, refresh the page, and your changes will appear immediately.
 
 
-## 13.2 Tracking changes to the OpenAPI definition
+## 12.2 Tracking changes to the OpenAPI definition
 
 Changes to the OpenAPI definition are tracked in the source tree. When making 
 changes that affect the definition, run:
