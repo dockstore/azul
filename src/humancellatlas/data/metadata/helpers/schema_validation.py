@@ -37,7 +37,7 @@ class SchemaValidator:
             schema_url = file_json['describedBy']
             assert False, R(
                 'Failed to parse schema JSON', file_name, schema_url)
-        self.validator.evolve(schema=schema)
+        self.validator = self.validator.evolve(schema=schema)
         try:
             self.validator.validate(file_json)
         except ValidationError as e:
