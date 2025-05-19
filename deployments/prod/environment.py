@@ -1724,5 +1724,5 @@ def env() -> Mapping[str, Optional[str]]:
 
         'AZUL_MIRROR_BUCKET': 'humancellatlas',
 
-        'AZUL_MIRRORING_CONCURRENCY': '64'
+        'AZUL_MIRRORING_CONCURRENCY': '128'
     }
