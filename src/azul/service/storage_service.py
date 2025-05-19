@@ -29,6 +29,8 @@ from urllib.parse import (
     urlencode,
 )
 
+import botocore
+import botocore.exceptions
 from botocore.response import (
     StreamingBody,
 )
@@ -75,6 +77,10 @@ class StorageObjectNotFound(Exception):
     pass
 
 
+class StorageObjectExists(Exception):
+    pass
+
+
 class StorageService:
 
     def __init__(self, bucket_name: str | None = None):
@@ -110,12 +116,19 @@ class StorageService:
             data: bytes,
             content_type: str | None = None,
             tagging: Tagging | None = None,
+            *,
+            overwrite: bool = True,
             **kwargs):
-        self._s3.put_object(Bucket=self.bucket_name,
-                            Key=object_key,
-                            Body=data,
-                            **self._object_creation_kwargs(content_type=content_type, tagging=tagging),
-                            **kwargs)
+        try:
+            self._s3.put_object(Bucket=self.bucket_name,
+                                Key=object_key,
+                                Body=data,
+                                **self._object_creation_kwargs(content_type=content_type,
+                                                               tagging=tagging,
+                                                               overwrite=overwrite),
+                                **kwargs)
+        except botocore.exceptions.ClientError as e:
+            self._handle_overwrite(e, object_key)
 
     def list(self, prefix: str) -> OrderedSet[str]:
         keys, num_keys = OrderedSet(), 0
@@ -155,7 +168,10 @@ class StorageService:
 
     def complete_multipart_upload(self,
                                   upload: MultipartUpload,
-                                  etags: Sequence[str]) -> None:
+                                  etags: Sequence[str],
+                                  *,
+                                  overwrite: bool = True,
+                                  ) -> None:
         parts = [
             {
                 'PartNumber': index + 1,
@@ -163,7 +179,11 @@ class StorageService:
             }
             for index, etag in enumerate(etags)
         ]
-        upload.complete(MultipartUpload={'Parts': parts})
+        try:
+            upload.complete(MultipartUpload={'Parts': parts},
+                            **self._object_creation_kwargs(overwrite=overwrite))
+        except botocore.exceptions.ClientError as e:
+            self._handle_overwrite(e, upload.object_key)
 
     def upload(self,
                file_path: str,
@@ -182,13 +202,16 @@ class StorageService:
     def _object_creation_kwargs(self,
                                 *,
                                 content_type: str | None = None,
-                                tagging: Tagging | None = None
+                                tagging: Tagging | None = None,
+                                overwrite: bool = True
                                 ) -> Mapping[str, str]:
         kwargs = {}
         if content_type is not None:
             kwargs['ContentType'] = content_type
         if tagging is not None:
             kwargs['Tagging'] = urlencode(tagging)
+        if overwrite is False:
+            kwargs['IfNoneMatch'] = '*'
         return kwargs
 
     def get_presigned_url(self, key: str, file_name: str | None = None) -> str:
@@ -282,6 +305,17 @@ class StorageService:
             log.error('Actual object expiration (%s) does not match expected value (%s)',
                       expiration_header, expected_expiry)
         return time_left
+
+    def _handle_overwrite(self,
+                          exception: botocore.exceptions.ClientError,
+                          object_key: str
+                          ):
+        error = exception.response['Error']
+        code, condition = error['Code'], error['Condition']
+        if code == 'PreconditionFailed' and condition == 'If-None-Match':
+            raise StorageObjectExists(object_key)
+        else:
+            raise exception
 
 
 @dataclass
