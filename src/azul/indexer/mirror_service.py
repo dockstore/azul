@@ -177,9 +177,12 @@ class BaseMirrorService:
             return None
         else:
             json_content = json.loads(content)
-            content_type = json_content['content-type']
-            assert content_type == file.content_type, R(
-                'Conflicting content type', content_type, file)
+            # FIXME: Convert to a warning
+            #        https://github.com/DataBiosphere/azul/issues/7130
+            if False:
+                content_type = json_content['content-type']
+                assert content_type == file.content_type, R(
+                    'Conflicting content type', content_type, file)
             return json_content
 
     def mirror_object_key(self, file: File) -> str:
