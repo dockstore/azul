@@ -1807,7 +1807,7 @@ class Config:
         return self._boolean(self.environ['AZUL_ENABLE_MIRRORING'])
 
     @property
-    def external_mirror_bucket(self) -> str | None:
+    def mirror_bucket(self) -> str | None:
         return self.environ.get('AZUL_MIRROR_BUCKET')
 
 

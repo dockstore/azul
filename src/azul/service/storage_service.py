@@ -143,7 +143,7 @@ class StorageService:
         return self.load_multipart_upload(object_key, upload_id)
 
     def load_multipart_upload(self, object_key, upload_id) -> MultipartUpload:
-        s3 = aws.resource('s3')
+        s3 = aws.s3_resource
         return s3.MultipartUpload(self.bucket_name, object_key, upload_id)
 
     def upload_multipart_part(self,

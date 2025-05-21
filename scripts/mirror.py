@@ -28,9 +28,6 @@ log = logging.getLogger(__name__)
 def mirror_catalog(catalog: CatalogName, source_globs: set[str], wait: bool):
     azul = AzulClient()
     plugin = azul.repository_plugin(catalog)
-    assert azul.is_queue_empty(config.mirror_queue.name), R(
-        'A mirroring operation is already in progress. The current operation '
-        'must finish before another can begin.')
     fail_queue = config.mirror_queue.to_fail.name
     assert azul.is_queue_empty(fail_queue), R(
         'Cannot begin mirroring because a previous operation failed: '

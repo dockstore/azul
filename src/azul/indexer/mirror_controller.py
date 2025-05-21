@@ -57,7 +57,7 @@ from azul.types import (
 log = logging.getLogger(__name__)
 
 
-@attrs.frozen(auto_attribs=True, kw_only=True)
+@attrs.frozen(kw_only=True)
 class MirrorController(ActionController[MirrorAction]):
     schema_url_func: SchemaUrlFunc
 
@@ -107,31 +107,39 @@ class MirrorController(ActionController[MirrorAction]):
         plugin = self.repository_plugin(catalog)
         source = plugin.source_ref_cls.from_json(source_json)
         source = plugin.partition_source_for_mirroring(catalog, source)
+        prefix = source.spec.prefix
+        log.info('Queueing %d partitions of source %r in catalog %r',
+                 prefix.num_partitions, str(source.spec), catalog)
 
-        def message(prefix: str) -> SQSMessage:
-            log.info('Mirroring files in partition %r of source %r from catalog %r',
-                     prefix, str(source.spec), catalog)
-            return self.mirror_partition_message(catalog, source, prefix)
+        def message(partition: str) -> SQSMessage:
+            log.debug('Queueing partition %r', partition)
+            return self.mirror_partition_message(catalog, source, partition)
 
-        messages = map(message, source.spec.prefix.partition_prefixes())
+        messages = map(message, prefix.partition_prefixes())
         self.client.queue_mirror_messages(messages)
 
-    def mirror_partition(self, catalog: CatalogName, source_json: JSON, prefix: str):
+    def mirror_partition(self,
+                         catalog: CatalogName,
+                         source_json: JSON,
+                         prefix: str
+                         ):
         plugin = self.repository_plugin(catalog)
         source = plugin.source_ref_cls.from_json(source_json)
         already_mirrored = self.service.list_info_objects(catalog, prefix)
+        files = plugin.list_files(source, prefix)
 
         def messages() -> Iterable[SQSMessage]:
-            for file in plugin.list_files(source, prefix):
+            for file in files:
                 info_key = self.service.info_object_key(file)
                 if info_key in already_mirrored:
-                    log.info('Not mirroring file %r because info object already exists at %r',
-                             file.uuid, info_key)
+                    log.debug('Not queueing file %r because info object already exists', file)
                 else:
-                    log.info('Mirroring file %r', file.uuid)
+                    log.debug('Queueing file %r', file)
                     yield self.mirror_file_message(catalog, source, file)
 
-        self.client.queue_mirror_messages(messages())
+        message_count = self.client.queue_mirror_messages(messages())
+        log.info('Queued %d/%d files in partition %r of source %r in catalog %r',
+                 message_count, len(files), prefix, str(source), catalog)
 
     def mirror_file(self,
                     catalog: CatalogName,
@@ -145,26 +153,36 @@ class MirrorController(ActionController[MirrorAction]):
                                 and not config.deployment.is_unit_test
                                 and catalog not in config.integration_test_catalogs)
         if file_is_large and not deployment_is_stable:
-            log.info('Not mirroring file %r (%d bytes) to save cost',
-                     file.uuid, file.size)
+            log.info('Not mirroring file to save cost: %r', file)
         else:
             # Ensure we test with multiple parts on lower deployments
             part_size = FilePart.default_size if deployment_is_stable else FilePart.min_size
             if file.size <= part_size:
-                log.info('Mirroring file %r via standard upload', file.uuid)
+                log.info('Mirroring file via standard upload: %r', file)
                 self.service.mirror_file(catalog, file)
-                log.info('Successfully mirrored file %r via standard upload', file.uuid)
+                log.info('Successfully mirrored file via standard upload: %r', file)
             else:
-                log.info('Mirroring file %r via multi-part upload', file.uuid)
+                log.info('Mirroring file via multi-part upload: %r', file)
                 _, digest_type = file.digest()
                 hasher = get_resumable_hasher(digest_type)
                 upload_id = self.service.begin_mirroring_file(catalog, file)
                 first_part = FilePart.first(file, part_size)
-                etag = self.service.mirror_file_part(catalog, file, first_part, upload_id, hasher)
+                log.info('Uploading part #%d of file %r', first_part.index, file)
+                etag = self.service.mirror_file_part(catalog,
+                                                     file,
+                                                     first_part,
+                                                     upload_id,
+                                                     hasher)
                 next_part = first_part.next(file)
                 assert next_part is not None
-                messages = [self.mirror_part_message(catalog, file, next_part, upload_id, [etag], hasher)]
-                self.client.queue_mirror_messages(messages)
+                log.info('Queueing part #%d of file %r', next_part.index, file)
+                message = self.mirror_part_message(catalog,
+                                                   file,
+                                                   next_part,
+                                                   upload_id,
+                                                   [etag],
+                                                   hasher)
+                self.client.queue_mirror_messages([message])
 
     def mirror_file_part(self,
                          catalog: CatalogName,
@@ -177,17 +195,19 @@ class MirrorController(ActionController[MirrorAction]):
         file = self.load_file(catalog, file_json)
         part = FilePart.from_json(part_json)
         hasher = hasher_from_str(hasher_data)
+        log.info('Uploading part #%d of file %r', part.index, file)
         etag = self.service.mirror_file_part(catalog, file, part, upload_id, hasher)
         etags = [*etags, etag]
         next_part = part.next(file)
         if next_part is None:
-            log.info('File %r fully uploaded in %d parts', file.uuid, len(etags))
+            log.info('File fully uploaded in %d parts: %r', len(etags), file)
             message = self.finalize_file_message(catalog,
                                                  file,
                                                  upload_id,
                                                  etags,
                                                  hasher)
         else:
+            log.info('Queueing part #%d of file %r', next_part.index, file)
             message = self.mirror_part_message(catalog,
                                                file,
                                                next_part,
@@ -211,7 +231,7 @@ class MirrorController(ActionController[MirrorAction]):
                                            upload_id=upload_id,
                                            etags=etags,
                                            hasher=hasher)
-        log.info('Successfully mirrored file %r via multi-part upload', file.uuid)
+        log.info('Successfully mirrored file via multi-part upload: %r', file)
 
     def load_file(self, catalog: CatalogName, file: JSON) -> File:
         return self.client.metadata_plugin(catalog).file_class.from_json(file)

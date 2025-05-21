@@ -1,6 +1,7 @@
 from abc import (
     ABCMeta,
 )
+import hashlib
 import io
 import json
 import os
@@ -26,6 +27,9 @@ from furl import (
 from google.auth.transport.urllib3 import (
     AuthorizedHttp,
 )
+from moto import (
+    mock_aws,
+)
 import requests
 import responses
 import urllib3
@@ -46,6 +50,10 @@ from azul.drs import (
 )
 from azul.http import (
     http_client,
+)
+from azul.indexer.mirror_service import (
+    BaseMirrorService,
+    MirrorService,
 )
 from azul.logging import (
     configure_test_logging,
@@ -110,6 +118,9 @@ class RepositoryFilesTestCase(LocalAppTestCase, metaclass=ABCMeta):
 
 @mock.patch.object(SourceService, '_put', new=MagicMock())
 @mock.patch.object(SourceService, '_get')
+@mock.patch.object(BaseMirrorService,
+                   'is_mirrored',
+                   new=MagicMock(return_value=False))
 class TestRepositoryFilesWithTDR(DCP2TestCase, RepositoryFilesTestCase):
 
     @mock.patch.dict(os.environ,
@@ -240,6 +251,9 @@ class TestRepositoryFilesWithTDR(DCP2TestCase, RepositoryFilesTestCase):
             _test(authenticate=False, cache=False)
 
 
+@mock.patch.object(BaseMirrorService,
+                   'is_mirrored',
+                   new=MagicMock(return_value=False))
 class TestRepositoryFilesWithDSS(DCP1TestCase,
                                  RepositoryFilesTestCase,
                                  S3TestCase):
@@ -389,3 +403,53 @@ class TestRepositoryFilesWithDSS(DCP1TestCase,
                                                             path=key,
                                                             args=args)
                                 self.assertUrlEqual(re_pre_signed_s3_url, location)
+
+
+@mock_aws
+class TestRepositoryFilesWithMirroring(DCP2TestCase,
+                                       RepositoryFilesTestCase,
+                                       S3TestCase):
+    bucket_name = 'test-bucket'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.addClassPatch(mock.patch.object(BaseMirrorService,
+                                            '_bucket_name',
+                                            return_value=cls.bucket_name))
+
+    def test_repository_files(self):
+        file_content = b'Contents of foo'
+        file_uuid = '701c9a63-23da-4978-946b-7576b6ad088a'
+        file_version = '2018-09-12T12:11:54.054628Z'
+        organic_file_name = 'foo.txt'
+        file = HCAFile(uuid=file_uuid,
+                       name=organic_file_name,
+                       version=file_version,
+                       drs_uri=None,
+                       size=len(file_content),
+                       content_type='text/plain',
+                       sha256=hashlib.sha256(file_content).hexdigest(),
+                       crc32c=None)
+
+        mirror_service = MirrorService(schema_url_func=MagicMock())
+        self._create_test_bucket(self.bucket_name)
+        with mock.patch.object(MirrorService, '_download', return_value=file_content):
+            mirror_service.mirror_file(self.catalog, file)
+        self.assertTrue(mirror_service.is_mirrored(self.catalog, file))
+
+        client = http_client(log)
+        args = dict(catalog=self.catalog, version=file_version)
+        azul_url = self.base_url.set(path=['repository', 'files', file_uuid], args=args)
+        with mock.patch.object(RepositoryService, 'get_data_file', return_value=file):
+            response = client.request('GET', str(azul_url), redirect=False)
+        self.assertEqual(302, response.status)
+
+        signed_url = furl(response.headers['Location'])
+        self.assertEqual('https', signed_url.scheme)
+        self.assertEqual(f'{self.bucket_name}.s3.{self._aws_test_region}.amazonaws.com',
+                         signed_url.netloc)
+        self.assertEqual('/' + mirror_service.mirror_object_key(file),
+                         str(signed_url.path))
+        self.assertEqual(f'attachment;filename="{file.name}"',
+                         signed_url.args.get('response-content-disposition'))

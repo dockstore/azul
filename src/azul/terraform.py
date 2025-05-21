@@ -458,7 +458,7 @@ def set_empty_s3_bucket_lifecycle_config(tf_config: JSON) -> JSON:
 
 class Chalice:
 
-    def private_api_stage_config(self, lambda_name: str) -> JSON:
+    def private_api_stage_config(self, app_name: str) -> JSON:
         """
         Returns the stage-specific fragment of Chalice configuration JSON that
         configures the Lambda function to be invoked by a private API Gateway,
@@ -466,11 +466,11 @@ class Chalice:
         """
         return {
             'api_gateway_endpoint_type': 'PRIVATE',
-            'api_gateway_endpoint_vpce': ['${aws_vpc_endpoint.%s.id}' % lambda_name]
+            'api_gateway_endpoint_vpce': ['${aws_vpc_endpoint.%s.id}' % app_name]
         } if config.private_api else {
         }
 
-    def vpc_lambda_config(self, lambda_name: str) -> JSON:
+    def vpc_lambda_config(self, app_name: str) -> JSON:
         """
         Returns the Lambda-specific fragment of Chalice configuration JSON that
         configures the Lambda function to connect to the VPC.
@@ -480,7 +480,7 @@ class Chalice:
                 '${data.aws_subnet.gitlab_%s_%s.id}' % (vpc.subnet_name(public=False), zone)
                 for zone in range(vpc.num_zones)
             ],
-            'security_group_ids': ['${aws_security_group.%s.id}' % lambda_name],
+            'security_group_ids': ['${aws_security_group.%s.id}' % app_name],
         }
 
     def vpc_lambda_iam_policy(self, for_tf: bool = False) -> JSONs:
