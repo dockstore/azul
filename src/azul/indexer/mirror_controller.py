@@ -163,8 +163,7 @@ class MirrorController(ActionController[MirrorAction]):
                 log.info('Successfully mirrored file via standard upload: %r', file)
             else:
                 log.info('Mirroring file via multi-part upload: %r', file)
-                _, digest_type = file.digest()
-                hasher = get_resumable_hasher(digest_type)
+                hasher = get_resumable_hasher(file.digest.type)
                 upload_id = self.service.begin_mirroring_file(catalog, file)
                 first_part = FilePart.first(file, part_size)
                 log.info('Uploading part #%d of file %r', first_part.index, file)
