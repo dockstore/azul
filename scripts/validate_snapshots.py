@@ -65,7 +65,7 @@ def main(args):
                     result = tdr_plugin._run_sql(query)
                     for row in result:
                         match = {
-                            'catalog': args.catalog,
+                            'catalog': catalog,
                             'spec': spec,
                             'table': table,
                             'column': column,
