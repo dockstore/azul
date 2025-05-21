@@ -737,8 +737,8 @@ class Chalice:
         locals = tf_config['locals']
 
         # null_data_source has been deprecated and locals should be used instead.
-        # However the data sources defined underneath it aren't actually used
-        # anywhere so we can just the delete the entry.
+        # However, the data sources defined underneath it aren't actually used
+        # anywhere so we can just delete the entry.
         del data['null_data_source']
 
         if config.private_api:
