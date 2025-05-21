@@ -179,9 +179,11 @@ class StorageService:
         if tagging:
             self.put_object_tagging(object_key, tagging)
 
-    def _object_creation_kwargs(self, *,
+    def _object_creation_kwargs(self,
+                                *,
                                 content_type: str | None = None,
-                                tagging: Tagging | None = None):
+                                tagging: Tagging | None = None
+                                ) -> Mapping[str, str]:
         kwargs = {}
         if content_type is not None:
             kwargs['ContentType'] = content_type
