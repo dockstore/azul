@@ -4,7 +4,7 @@ cachetools==5.5.2
 certifi==2025.4.26
 cffi==1.17.1
 charset-normalizer==3.4.2
-cryptography==44.0.3
+cryptography==45.0.2
 google-cloud-core==2.4.3
 google-crc32c==1.7.1
 google-resumable-media==2.7.2
@@ -21,7 +21,7 @@ protobuf==4.25.7
 pyasn1==0.6.1
 pyasn1_modules==0.4.2
 pycparser==2.22
-pyopenssl==25.0.0
+pyopenssl==25.1.0
 python-dateutil==2.9.0.post0
 pytz==2025.2
 s3transfer==0.12.0
