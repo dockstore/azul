@@ -14,7 +14,6 @@ from unittest import (
 )
 from unittest.mock import (
     MagicMock,
-    PropertyMock,
 )
 
 import attr
@@ -27,9 +26,6 @@ from furl import (
 )
 from google.auth.transport.urllib3 import (
     AuthorizedHttp,
-)
-from moto import (
-    mock_aws,
 )
 import requests
 import responses
@@ -83,6 +79,7 @@ from azul_test_case import (
     DCP2TestCase,
 )
 from service import (
+    MirrorTestCase,
     S3TestCase,
 )
 
@@ -406,21 +403,9 @@ class TestRepositoryFilesWithDSS(DCP1TestCase,
                                 self.assertUrlEqual(re_pre_signed_s3_url, location)
 
 
-@mock_aws
 class TestRepositoryFilesWithMirroring(DCP2TestCase,
                                        RepositoryFilesTestCase,
-                                       S3TestCase):
-    bucket_name = 'test-bucket'
-
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.addClassPatch(mock.patch.object(BaseMirrorService,
-                                            '_bucket_name',
-                                            return_value=cls.bucket_name))
-        cls.addClassPatch(mock.patch.object(type(config),
-                                            'enable_mirroring',
-                                            new=PropertyMock(return_value=True)))
+                                       MirrorTestCase):
 
     def test_repository_files(self):
         file_content = b'Contents of foo'
@@ -437,7 +422,6 @@ class TestRepositoryFilesWithMirroring(DCP2TestCase,
                        crc32c=None)
 
         mirror_service = MirrorService(schema_url_func=MagicMock())
-        self._create_test_bucket(self.bucket_name)
         with mock.patch.object(MirrorService, '_download', return_value=file_content):
             mirror_service.mirror_file(self.catalog, file)
         self.assertTrue(mirror_service.is_mirrored(self.catalog, file))
@@ -451,7 +435,7 @@ class TestRepositoryFilesWithMirroring(DCP2TestCase,
 
         signed_url = furl(response.headers['Location'])
         self.assertEqual('https', signed_url.scheme)
-        self.assertEqual(f'{self.bucket_name}.s3.{self._aws_test_region}.amazonaws.com',
+        self.assertEqual(f'{self.mirror_bucket}.s3.{config.region}.amazonaws.com',
                          signed_url.netloc)
         self.assertEqual('/' + mirror_service.mirror_object_key(file),
                          str(signed_url.path))
