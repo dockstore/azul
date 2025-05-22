@@ -62,7 +62,10 @@ def setUpModule():
 
 
 @mock_aws
-class TestMirrorController(DCP2TestCase, LocalAppTestCase, WorkQueueTestCase, S3TestCase):
+class TestMirrorController(DCP2TestCase,
+                           LocalAppTestCase,
+                           WorkQueueTestCase,
+                           S3TestCase):
 
     @classmethod
     def lambda_name(cls) -> str:
@@ -151,7 +154,7 @@ class TestMirrorController(DCP2TestCase, LocalAppTestCase, WorkQueueTestCase, S3
 
     def _test_mirror_file(self, file, file_message):
         event = [self._mock_sqs_record(file_message)]
-        with patch.object(MirrorService, '_download', return_value=(self._file_contents)):
+        with patch.object(MirrorService, '_download', return_value=self._file_contents):
             self.mirror_controller.mirror(event)
         response = self._s3.get_object(Bucket=self.bucket,
                                        Key=self.mirror_controller.service.mirror_object_key(file))
