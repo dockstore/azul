@@ -14,6 +14,7 @@ from unittest import (
 )
 from unittest.mock import (
     MagicMock,
+    PropertyMock,
 )
 
 import attr
@@ -417,6 +418,9 @@ class TestRepositoryFilesWithMirroring(DCP2TestCase,
         cls.addClassPatch(mock.patch.object(BaseMirrorService,
                                             '_bucket_name',
                                             return_value=cls.bucket_name))
+        cls.addClassPatch(mock.patch.object(type(config),
+                                            'enable_mirroring',
+                                            new=PropertyMock(return_value=True)))
 
     def test_repository_files(self):
         file_content = b'Contents of foo'
