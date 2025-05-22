@@ -75,7 +75,7 @@ class TestMirrorController(DCP2TestCase,
                 with self.subTest('mirror_partition'):
                     file, file_message = self._test_mirror_partition(partition_message)
 
-                    with self.subTest('mirror_file', corrupted=False):
+                    with self.subTest('mirror_file', corrupted=False, exists=False):
                         self._test_mirror_file(file, file_message)
 
                     self._s3.delete_object(Bucket=self.mirror_bucket,
@@ -83,6 +83,9 @@ class TestMirrorController(DCP2TestCase,
 
                     with self.subTest('mirror_file', corrupted=True):
                         self._test_corrupted_download(file_message)
+
+                    with self.subTest('mirror_file', corrupted=False, exists=True):
+                        self._test_reuploaded_file(file_message)
 
     _file_contents = b'lorem ipsum dolor sit\n'
 
@@ -150,6 +153,14 @@ class TestMirrorController(DCP2TestCase,
             with self.assertRaises(AssertionError) as e:
                 self.mirror_controller.mirror(event)
             self.assertTrue(R.caused(e.exception))
+
+    def _test_reuploaded_file(self, file_message):
+        event = [self._mock_sqs_record(file_message)]
+        with patch.object(MirrorService, '_download', return_value=self._file_contents):
+            with self.assertRaises(AssertionError) as e:
+                self.mirror_controller.mirror(event)
+        self.assertTrue(R.caused(e.exception))
+        self.assertEqual(e.exception.args[0].args[0], 'File object is already present')
 
     def test_info_schema(self):
         client = http_client(log)

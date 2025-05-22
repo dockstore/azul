@@ -152,8 +152,13 @@ class MirrorController(ActionController[MirrorAction]):
         deployment_is_stable = (config.deployment.is_stable
                                 and not config.deployment.is_unit_test
                                 and catalog not in config.integration_test_catalogs)
+
         if file_is_large and not deployment_is_stable:
             log.info('Not mirroring file to save cost: %r', file)
+        elif self.service.info_exists(catalog, file):
+            log.info('File is already mirrored, skipping upload: %r', file)
+        elif self.service.file_exists(catalog, file):
+            assert False, R('File object is already present', file)
         else:
             # Ensure we test with multiple parts on lower deployments
             part_size = FilePart.default_size if deployment_is_stable else FilePart.min_size
