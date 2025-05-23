@@ -163,8 +163,7 @@ class MirrorController(ActionController[MirrorAction]):
                 log.info('Successfully mirrored file via standard upload: %r', file)
             else:
                 log.info('Mirroring file via multi-part upload: %r', file)
-                _, digest_type = file.digest()
-                hasher = get_resumable_hasher(digest_type)
+                hasher = get_resumable_hasher(file.digest.type)
                 upload_id = self.service.begin_mirroring_file(catalog, file)
                 first_part = FilePart.first(file, part_size)
                 log.info('Uploading part #%d of file %r', first_part.index, file)
@@ -263,7 +262,7 @@ class MirrorController(ActionController[MirrorAction]):
                 'source': cast(JSON, source.to_json()),
                 'file': file.to_json()
             },
-            group_id=f'{source.id}:{file.uuid}'
+            group_id=file.digest.value
         )
 
     def mirror_part_message(self,
@@ -284,7 +283,7 @@ class MirrorController(ActionController[MirrorAction]):
                 'etags': etags,
                 'hasher': hasher_to_str(hasher)
             },
-            group_id=self.service.mirror_object_key(file)
+            group_id=file.digest.value
         )
 
     def finalize_file_message(self,

@@ -195,10 +195,10 @@ class BaseMirrorService:
         return self._get_info(catalog, file) is not None
 
     def _file_key(self, prefix: str, file: File, *, extension: str = '') -> str:
-        digest, digest_type = file.digest()
-        assert all(c in string.hexdigits for c in digest), R(
+        digest = file.digest
+        assert all(c in string.hexdigits for c in digest.value), R(
             'Expected a hexadecimal digest', digest)
-        return f'{prefix}/{digest.lower()}.{digest_type}{extension}'
+        return f'{prefix}/{digest.value.lower()}.{digest.type}{extension}'
 
 
 @attrs.frozen(kw_only=True)
@@ -221,8 +221,7 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
             self._storage(catalog).put(object_key=self.mirror_object_key(file),
                                        data=file_content,
                                        content_type=file.content_type)
-            _, digest_type = file.digest()
-            hasher = get_resumable_hasher(digest_type)
+            hasher = get_resumable_hasher(file.digest.type)
             hasher.update(file_content)
             self._verify_digest(file, hasher)
             self._put_info(catalog, file)
@@ -340,8 +339,8 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
                                              upload_id=upload_id)
 
     def _verify_digest(self, file: File, hasher: Hasher):
-        expected_digest_value, digest_type = file.digest()
+        expected_digest = file.digest
         actual_digest_value = hasher.hexdigest()
-        assert expected_digest_value == actual_digest_value, R(
+        assert expected_digest.value == actual_digest_value, R(
             'File digest value does not match its contents',
-            digest_type, expected_digest_value, file)
+            expected_digest, file)
