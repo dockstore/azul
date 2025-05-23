@@ -2,16 +2,12 @@ import hashlib
 import json
 from unittest.mock import (
     MagicMock,
-    PropertyMock,
     patch,
 )
 
 import jsonschema
 from more_itertools import (
     one,
-)
-from moto import (
-    mock_aws,
 )
 
 from app_test_case import (
@@ -20,9 +16,6 @@ from app_test_case import (
 from azul import (
     R,
     config,
-)
-from azul.deployment import (
-    aws,
 )
 from azul.http import (
     http_client,
@@ -47,7 +40,7 @@ from azul_test_case import (
     DCP2TestCase,
 )
 from service import (
-    S3TestCase,
+    MirrorTestCase,
 )
 from sqs_test_case import (
     WorkQueueTestCase,
@@ -61,32 +54,18 @@ def setUpModule():
     configure_test_logging(log)
 
 
-@mock_aws
-class TestMirrorController(DCP2TestCase, LocalAppTestCase, WorkQueueTestCase, S3TestCase):
+class TestMirrorController(DCP2TestCase,
+                           LocalAppTestCase,
+                           WorkQueueTestCase,
+                           MirrorTestCase):
 
     @classmethod
     def lambda_name(cls) -> str:
         return 'indexer'
 
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.addClassPatch(patch.object(type(config),
-                                       'enable_mirroring',
-                                       new=PropertyMock(return_value=True)))
-        cls.addClassPatch(patch.object(type(config),
-                                       'mirror_bucket',
-                                       new=PropertyMock(return_value=None)))
-
-    @property
-    def bucket(self) -> str:
-        return aws.mirror_bucket
-
     def test_mirroring(self):
         self._create_mock_queues(config.mirror_queue.name,
                                  config.mirror_queue.to_fail.name)
-        self._create_test_bucket(self.bucket)
-
         with self.subTest('remote_mirror'):
             source_message = self._test_remote_mirror()
 
@@ -151,9 +130,9 @@ class TestMirrorController(DCP2TestCase, LocalAppTestCase, WorkQueueTestCase, S3
 
     def _test_mirror_file(self, file, file_message):
         event = [self._mock_sqs_record(file_message)]
-        with patch.object(MirrorService, '_download', return_value=(self._file_contents)):
+        with patch.object(MirrorService, '_download', return_value=self._file_contents):
             self.mirror_controller.mirror(event)
-        response = self._s3.get_object(Bucket=self.bucket,
+        response = self._s3.get_object(Bucket=self.mirror_bucket,
                                        Key=self.mirror_controller.service.mirror_object_key(file))
         mirrored_file_contents = response['Body'].read()
         self.assertEqual(mirrored_file_contents, self._file_contents)
