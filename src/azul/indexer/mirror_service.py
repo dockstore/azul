@@ -181,11 +181,14 @@ class BaseMirrorService:
                 log.warning('Conflicting content type %r for file %r', content_type, file)
             return json_content
 
+    info_prefix = 'info'
+    file_prefix = 'file'
+
     def mirror_object_key(self, file: File) -> str:
-        return self._file_key('file', file)
+        return self._file_key(self.file_prefix, file)
 
     def info_object_key(self, file: File) -> str:
-        return self._file_key('info', file, extension='.json')
+        return self._file_key(self.info_prefix, file, extension='.json')
 
     def info_exists(self, catalog: CatalogName, file: File) -> bool:
         return self._get_info(catalog, file) is not None
@@ -200,9 +203,10 @@ class BaseMirrorService:
 
     def _file_key(self, prefix: str, file: File, *, extension: str = '') -> str:
         digest = file.digest
-        assert all(c in string.hexdigits for c in digest.value), R(
+        digest_value = digest.value.lower()
+        assert all(c in string.hexdigits for c in digest_value), R(
             'Expected a hexadecimal digest', digest)
-        return f'{prefix}/{digest.value.lower()}.{digest.type}{extension}'
+        return f'{prefix}/{digest_value}.{digest.type}{extension}'
 
 
 @attrs.frozen(kw_only=True)
