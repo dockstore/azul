@@ -214,7 +214,7 @@ class Health:
         """
         Returns information about the SQS queues used by the indexer.
         """
-        sqs = aws.resource('sqs', azul_logging=True)
+        sqs = aws.sqs_resource
         response: MutableJSON = {'up': True}
         for queue in config.all_queue_names:
             try:
@@ -332,8 +332,7 @@ class HealthApp(AzulChaliceApp):
 
     @cached_property
     def health_controller(self) -> HealthController:
-        return self._controller(HealthController,
-                                lambda_name=self.unqualified_app_name)
+        return HealthController(app=self, lambda_name=self.unqualified_app_name)
 
     def default_routes(self):
         _routes = super().default_routes()

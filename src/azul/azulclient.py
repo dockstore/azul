@@ -41,7 +41,6 @@ from urllib3.exceptions import (
 from azul import (
     CatalogName,
     R,
-    cache,
     cached_property,
     config,
 )
@@ -68,7 +67,7 @@ from azul.json import (
     Serializable,
 )
 from azul.plugins import (
-    File,
+    MetadataPlugin,
     RepositoryPlugin,
 )
 from azul.queues import (
@@ -114,15 +113,19 @@ class MirrorAction(Action):
     mirror_source = auto()
     mirror_partition = auto()
     mirror_file = auto()
+    mirror_part = auto()
+    finalize_file = auto()
 
 
 @attrs.frozen(kw_only=True)
 class AzulClient(SignatureHelper, HasCachedHttpClient):
     num_workers: int = 16
 
-    @cache
     def repository_plugin(self, catalog: CatalogName) -> RepositoryPlugin:
-        return RepositoryPlugin.load(catalog).create(catalog)
+        return self.index_service.repository_plugin(catalog)
+
+    def metadata_plugin(self, catalog: CatalogName) -> MetadataPlugin:
+        return self.index_service.metadata_plugin(catalog)
 
     def notification(self, bundle_fqid: SourcedBundleFQID) -> JSON:
         """
@@ -180,36 +183,6 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
                 'source': cast(JSON, source.to_json()),
             },
             group_id=source.id
-        )
-
-    def mirror_partition_message(self,
-                                 catalog: CatalogName,
-                                 source: SourceRef,
-                                 prefix: str
-                                 ) -> SQSFifoMessage:
-        return SQSFifoMessage(
-            body={
-                'action': MirrorAction.mirror_partition.to_json(),
-                'catalog': catalog,
-                'source': cast(JSON, source.to_json()),
-                'prefix': prefix
-            },
-            group_id=f'{source.id}:{prefix}'
-        )
-
-    def mirror_file_message(self,
-                            catalog: CatalogName,
-                            source: SourceRef,
-                            file: File,
-                            ) -> SQSFifoMessage:
-        return SQSFifoMessage(
-            body={
-                'action': MirrorAction.mirror_file.to_json(),
-                'catalog': catalog,
-                'source': cast(JSON, source.to_json()),
-                'file': file.to_json()
-            },
-            group_id=f'{source.id}:{file.uuid}'
         )
 
     def local_reindex(self, catalog: CatalogName, prefix: str) -> int:
@@ -306,6 +279,12 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
 
     def catalog_sources(self, catalog: CatalogName) -> set[str]:
         return set(map(str, self.repository_plugin(catalog).sources))
+
+    def sources_by_catalog(self, catalogs: Iterable[str]) -> dict[str, set[str]]:
+        return {
+            catalog: self.catalog_sources(catalog)
+            for catalog in catalogs
+        }
 
     def list_bundles(self,
                      catalog: CatalogName,
@@ -619,31 +598,6 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
             return self.mirror_source_message(catalog, source)
 
         messages = map(message, sources)
-        self.queue_mirror_messages(messages)
-
-    def mirror_source(self, catalog: CatalogName, source_json: JSON):
-        plugin = self.repository_plugin(catalog)
-        source = plugin.source_ref_cls.from_json(source_json)
-        source = plugin.partition_source_for_mirroring(catalog, source)
-
-        def message(prefix: str) -> SQSMessage:
-            log.info('Mirroring files in partition %r of source %r from catalog %r',
-                     prefix, str(source.spec), catalog)
-            return self.mirror_partition_message(catalog, source, prefix)
-
-        messages = map(message, source.spec.prefix.partition_prefixes())
-        self.queue_mirror_messages(messages)
-
-    def mirror_partition(self, catalog: CatalogName, source_json: JSON, prefix: str):
-        plugin = self.repository_plugin(catalog)
-        source = plugin.source_ref_cls.from_json(source_json)
-
-        def message(file: File) -> SQSMessage:
-            log.info('Mirroring file %r in source %r from catalog %r',
-                     file.uuid, str(source.spec), catalog)
-            return self.mirror_file_message(catalog, source, file)
-
-        messages = map(message, plugin.list_files(source, prefix))
         self.queue_mirror_messages(messages)
 
 

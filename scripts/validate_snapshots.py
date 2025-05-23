@@ -38,10 +38,7 @@ def main(args):
     declined_snapshots = list()
 
     azul = AzulClient(num_workers=1)
-    sources_by_catalog = {
-        catalog: azul.catalog_sources(catalog)
-        for catalog in args.catalogs
-    }
+    sources_by_catalog = azul.sources_by_catalog(args.catalogs)
     for catalog, sources in sources_by_catalog.items():
         tdr_plugin = azul.repository_plugin(catalog)
         log.info('Checking for %r in catalog %s', joiner, catalog)

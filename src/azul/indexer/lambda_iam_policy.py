@@ -1,6 +1,9 @@
 from azul import (
     config,
 )
+from azul.collections import (
+    alist,
+)
 from azul.deployment import (
     aws,
 )
@@ -112,6 +115,23 @@ policy = {
                     ]
                 },
             ] if config.enable_log_forwarding else []
+        ),
+        *(
+            [
+                {
+                    'Effect': 'Allow',
+                    'Action': [
+                        's3:ListBucket',
+                        's3:GetObject',
+                        's3:PutObject',
+                    ],
+                    'Resource': [
+                        f'arn:aws:s3:::{resource}'
+                        for bucket in alist(aws.mirror_bucket, config.mirror_bucket)
+                        for resource in [bucket, f'{bucket}/*']
+                    ]
+                }
+            ] if config.enable_mirroring else []
         ),
         {
             'Effect': 'Allow',

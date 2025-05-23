@@ -644,10 +644,17 @@ def env() -> Mapping[str, Optional[str]]:
         #
         'AZUL_DSS_SOURCE': None,
 
-        # Mirror data files from the indexed repository in a dedicated S3 bucket
+        # Mirror data files from the indexed repository in an S3 bucket
         # (1 yes, 0 no).
         #
         'AZUL_ENABLE_MIRRORING': '0',
+
+        # The name of an external bucket to use for mirroring. This requires
+        # deploying the GitLab component to update the boundary policy.
+        #
+        # If None, a provisioned bucket will be used.
+        #
+        'AZUL_MIRROR_BUCKET': None,
 
         # A short string (no punctuation allowed) that identifies a Terraform
         # component i.e., a distinct set of Terraform resources to be deployed
@@ -709,11 +716,6 @@ def env() -> Mapping[str, Optional[str]]:
         # warrant the distraction.
         #
         'PIP_DISABLE_PIP_VERSION_CHECK': '1',
-
-        # FIXME: Remove once we upgrade to botocore 1.28.x
-        #        https://github.com/DataBiosphere/azul/issues/4560
-        #
-        'BOTO_DISABLE_COMMONNAME': 'true',
 
         # The path of the directory where the public key infrastructure files
         # are managed on developer, operator and administrator machines. The

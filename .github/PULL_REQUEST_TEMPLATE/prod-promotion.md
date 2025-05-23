@@ -17,6 +17,7 @@ Connected issue: #0000
 - [ ] Title of connected issue matches `Promotion yyyy-mm-dd`
 - [ ] PR title starts with title of connected issue followed by ` prod`
 - [ ] PR title references the connected issue
+- [ ] The promoted issues are part of the same sprint as the connected issue
 
 
 ### Author (reindex, API changes)

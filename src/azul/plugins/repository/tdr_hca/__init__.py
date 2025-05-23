@@ -197,6 +197,8 @@ class TDRHCABundle(HCABundle[TDRBundleFQID], TDRBundle):
                             entity: EntityReference,
                             file: HCAFile) -> None:
         file_json = file.to_json()
+        # FIXME: Remove dcp-type MIME parameter
+        #        https://github.com/DataBiosphere/azul/issues/7130
         file_json['content-type'] = f'{file_json.pop("content_type")}; dcp-type=data'
         file_json['indexed'] = False
         self.manifest[str(entity)] = file_json

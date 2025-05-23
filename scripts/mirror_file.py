@@ -5,8 +5,6 @@ supported, so the file must be publicly accessible.
 """
 import argparse
 import logging
-import math
-import string
 import sys
 
 from azul import (
@@ -17,23 +15,18 @@ from azul import (
 from azul.args import (
     AzulArgumentHelpFormatter,
 )
-from azul.azulclient import (
-    AzulClient,
-)
-from azul.deployment import (
-    aws,
-)
-from azul.drs import (
-    AccessMethod,
+from azul.digests import (
+    get_resumable_hasher,
 )
 from azul.http import (
     http_client,
 )
+from azul.indexer.mirror_service import (
+    FilePart,
+    MirrorService,
+)
 from azul.logging import (
     configure_script_logging,
-)
-from azul.plugins import (
-    File,
 )
 from azul.plugins.metadata.hca import (
     HCAFile,
@@ -46,9 +39,6 @@ from azul.service.repository_service import (
 )
 from azul.service.source_service import (
     SourceService,
-)
-from azul.service.storage_service import (
-    StorageService,
 )
 
 log = logging.getLogger(__name__)
@@ -70,55 +60,30 @@ def get_file(catalog: CatalogName, file_uuid: str) -> HCAFile:
     return file
 
 
-def get_download_url(catalog: CatalogName, file: File) -> str:
-    drs_uri = file.drs_uri
-    drs = AzulClient().repository_plugin(catalog).drs_client()
-    access = drs.get_object(drs_uri, AccessMethod.gs)
-    assert access.method is AccessMethod.https, access
-    return access.url
-
-
-def object_key(file: File) -> str:
-    digest, digest_type = file.digest()
-    assert all(c in string.hexdigits for c in digest), R(
-        'Expected a hexadecimal digest', digest)
-    return f'file/{digest.lower()}.{digest_type}'
-
-
 def mirror_file(catalog: CatalogName, file_uuid: str, part_size: int) -> str:
     assert config.enable_mirroring, R('Mirroring must be enabled')
     assert config.is_tdr_enabled(catalog), R('Only TDR catalogs are supported')
-    assert config.is_hca_enabled(catalog), R('Only HCA catalogs are supported')
-    # https://docs.aws.amazon.com/AmazonS3/latest/userguide/qfacts.html
-    assert 5 * 2 ** 20 <= part_size <= 5 * 2 ** 30, R(
-        'Invalid part size', part_size)
     file = get_file(catalog, file_uuid)
-    download_url = get_download_url(catalog, file)
-    key = object_key(file)
-    storage = StorageService(bucket_name=aws.mirror_bucket)
-    upload = storage.create_multipart_upload(key, content_type=file.content_type)
+    # FIXME: mirror_file script is broken+
+    #        https://github.com/DataBiosphere/azul/issues/7105
+    service = MirrorService(schema_url_func=...)
+    upload_id = service.begin_mirroring_file(catalog, file)
+    digest_value, digest_type = file.digest()
+    hasher = get_resumable_hasher(digest_type)
 
-    total_size = file.size
-    part_count = math.ceil(total_size / part_size)
-    assert part_count <= 10000, R('Part size is too small for this file',
-                                  total_size, part_size, part_count)
+    def mirror_parts():
+        part = FilePart.first(file, part_size)
+        while part is not None:
+            yield service.mirror_file_part(catalog, file, part, upload_id, hasher)
+            part = part.next(file)
 
-    def file_part(part_number: int) -> str:
-        start = part_number * part_size
-        end = min((part_number + 1) * part_size - 1, total_size)
-        response = http.request('GET',
-                                download_url,
-                                headers={'Range': f'bytes={start}-{end}'})
-        if response.status == 206:
-            return storage.upload_multipart_part(response.data,
-                                                 part_number + 1,
-                                                 upload)
-        else:
-            raise RuntimeError('Unexpected response from repository', response.status)
-
-    etags = list(map(file_part, range(part_count)))
-    storage.complete_multipart_upload(upload, etags)
-    return storage.get_presigned_url(key, file.name)
+    etags = list(mirror_parts())
+    service.finish_mirroring_file(catalog=catalog,
+                                  file=file,
+                                  upload_id=upload_id,
+                                  etags=etags,
+                                  hasher=hasher)
+    return service.get_mirror_url(catalog, file)
 
 
 def main(argv):
@@ -126,7 +91,7 @@ def main(argv):
                                      formatter_class=AzulArgumentHelpFormatter)
     parser.add_argument('-c', '--catalog', default=config.default_catalog)
     parser.add_argument('-f', '--file-uuid')
-    parser.add_argument('-p', '--part-size', type=int, default=50 * 2 ** 20)
+    parser.add_argument('-p', '--part-size', type=int, default=FilePart.default_size)
     args = parser.parse_args(argv)
     signed_url = mirror_file(args.catalog, args.file_uuid, args.part_size)
     print(signed_url)

@@ -1334,7 +1334,6 @@ class Config:
     #: function environment, in addition to those starting in `AZUL_`
 
     lambda_env_variables = frozenset([
-        'BOTO_DISABLE_COMMONNAME',
         'GOOGLE_PROJECT'
     ])
 
@@ -1345,8 +1344,6 @@ class Config:
             if (
                 (
                     k.startswith('AZUL_')
-                    # FIXME: Remove once we upgrade to botocore 1.28.x
-                    #        https://github.com/DataBiosphere/azul/issues/4560
                     or k in self.lambda_env_variables
                 )
                 and (len(v) > 128) == outsource)
@@ -1808,6 +1805,10 @@ class Config:
     @property
     def enable_mirroring(self) -> bool:
         return self._boolean(self.environ['AZUL_ENABLE_MIRRORING'])
+
+    @property
+    def mirror_bucket(self) -> str | None:
+        return self.environ.get('AZUL_MIRROR_BUCKET')
 
 
 config: Config = Config()  # yes, the type hint does help PyCharm
