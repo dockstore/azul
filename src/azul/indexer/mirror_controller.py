@@ -302,5 +302,5 @@ class MirrorController(ActionController[MirrorAction]):
                 'etags': etags,
                 'hasher': hasher_to_str(hasher)
             },
-            group_id=self.service.mirror_object_key(file)
+            group_id=self.service.mirror_object_key(catalog, file)
         )

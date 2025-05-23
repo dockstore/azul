@@ -162,12 +162,12 @@ class BaseMirrorService:
         return StorageService(bucket_name=self._bucket_name(catalog))
 
     def get_mirror_url(self, catalog: CatalogName, file: File) -> str:
-        key = self.mirror_object_key(file)
+        key = self.mirror_object_key(catalog, file)
         return self._storage(catalog).get_presigned_url(key=key,
                                                         file_name=file.name)
 
     def _get_info(self, catalog: CatalogName, file: File) -> JSON | None:
-        key = self.info_object_key(file)
+        key = self.info_object_key(catalog, file)
         try:
             content = self._storage(catalog).get(key)
         except StorageObjectNotFound:
@@ -184,29 +184,39 @@ class BaseMirrorService:
     info_prefix = 'info'
     file_prefix = 'file'
 
-    def mirror_object_key(self, file: File) -> str:
-        return self._file_key(self.file_prefix, file)
+    def mirror_object_key(self, catalog: CatalogName, file: File) -> str:
+        return self._file_key(catalog, self.file_prefix, file)
 
-    def info_object_key(self, file: File) -> str:
-        return self._file_key(self.info_prefix, file, extension='.json')
+    def info_object_key(self, catalog: CatalogName, file: File) -> str:
+        return self._file_key(catalog, self.info_prefix, file, extension='.json')
 
     def info_exists(self, catalog: CatalogName, file: File) -> bool:
         return self._get_info(catalog, file) is not None
 
     def file_exists(self, catalog: CatalogName, file: File) -> bool:
         try:
-            self._storage(catalog).head(self.mirror_object_key(file))
+            self._storage(catalog).head(self.mirror_object_key(catalog, file))
         except StorageObjectNotFound:
             return False
         else:
             return True
 
-    def _file_key(self, prefix: str, file: File, *, extension: str = '') -> str:
+    def _mirror_prefix(self, catalog: CatalogName) -> str:
+        return '_it/' if catalog in config.integration_test_catalogs else ''
+
+    def _file_key(self,
+                  catalog: CatalogName,
+                  prefix: str,
+                  file: File,
+                  *,
+                  extension: str = ''
+                  ) -> str:
         digest = file.digest
         digest_value = digest.value.lower()
         assert all(c in string.hexdigits for c in digest_value), R(
             'Expected a hexadecimal digest', digest)
-        return f'{prefix}/{digest_value}.{digest.type}{extension}'
+        mirror_prefix = self._mirror_prefix(catalog)
+        return f'{mirror_prefix}{prefix}/{digest_value}.{digest.type}{extension}'
 
 
 @attrs.frozen(kw_only=True)
@@ -223,7 +233,7 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
         :meth:`begin_mirroring_file` instead.
         """
         file_content = self._download(catalog, file)
-        self._storage(catalog).put(object_key=self.mirror_object_key(file),
+        self._storage(catalog).put(object_key=self.mirror_object_key(catalog, file),
                                    data=file_content,
                                    content_type=file.content_type,
                                    overwrite=False)
@@ -238,7 +248,7 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
         ID.
         """
         storage = self._storage(catalog)
-        key = self.mirror_object_key(file)
+        key = self.mirror_object_key(catalog, file)
         upload = storage.create_multipart_upload(object_key=key,
                                                  content_type=file.content_type)
         return upload.id
@@ -288,7 +298,7 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
         }
 
     def _put_info(self, catalog: CatalogName, file: File):
-        key = self.info_object_key(file)
+        key = self.info_object_key(catalog, file)
         content = self.info_object(file)
         self._storage(catalog).put(object_key=key,
                                    data=json.dumps(content).encode(),
@@ -337,7 +347,8 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
                     upload_id: str
                     ) -> 'MultipartUpload':
         storage = self._storage(catalog)
-        return storage.load_multipart_upload(object_key=self.mirror_object_key(file),
+        key = self.mirror_object_key(catalog, file)
+        return storage.load_multipart_upload(object_key=key,
                                              upload_id=upload_id)
 
     def _verify_digest(self, file: File, hasher: Hasher):

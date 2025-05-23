@@ -437,7 +437,7 @@ class TestRepositoryFilesWithMirroring(DCP2TestCase,
         self.assertEqual('https', signed_url.scheme)
         self.assertEqual(f'{self.mirror_bucket}.s3.{config.region}.amazonaws.com',
                          signed_url.netloc)
-        self.assertEqual('/' + mirror_service.mirror_object_key(file),
+        self.assertEqual('/' + mirror_service.mirror_object_key(self.catalog, file),
                          str(signed_url.path))
         self.assertEqual(f'attachment;filename="{file.name}"',
                          signed_url.args.get('response-content-disposition'))
