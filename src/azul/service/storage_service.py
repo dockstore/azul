@@ -92,7 +92,7 @@ class StorageService:
                                         Key=object_key)
         except self._s3.exceptions.ClientError as e:
             if int(e.response['Error']['Code']) == 404:
-                raise StorageObjectNotFound
+                raise StorageObjectNotFound(object_key)
             else:
                 raise e
 
@@ -101,7 +101,7 @@ class StorageService:
             response = self._s3.get_object(Bucket=self.bucket_name,
                                            Key=object_key)
         except self._s3.exceptions.NoSuchKey:
-            raise StorageObjectNotFound
+            raise StorageObjectNotFound(object_key)
         else:
             return response['Body'].read()
 
