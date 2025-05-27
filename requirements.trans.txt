@@ -4,7 +4,7 @@ cachetools==5.5.2
 certifi==2025.4.26
 cffi==1.17.1
 charset-normalizer==3.4.2
-cryptography==45.0.2
+cryptography==45.0.3
 google-cloud-core==2.4.3
 google-crc32c==1.7.1
 google-resumable-media==2.7.2
