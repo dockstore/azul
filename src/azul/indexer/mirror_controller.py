@@ -143,7 +143,7 @@ class MirrorController(ActionController[MirrorAction]):
         file = self.load_file(catalog, file_json)
         assert file.size is not None, R('File size unknown', file)
 
-        file_is_large = file.size > 10 * 1024 ** 2
+        file_is_large = file.size > 1.5 * 1024 ** 3
         deployment_is_stable = (config.deployment.is_stable
                                 and not config.deployment.is_unit_test
                                 and catalog not in config.integration_test_catalogs)
@@ -155,8 +155,7 @@ class MirrorController(ActionController[MirrorAction]):
         elif self.service.file_exists(catalog, file):
             assert False, R('File object is already present', file)
         else:
-            # Ensure we test with multiple parts on lower deployments
-            part_size = FilePart.default_size if deployment_is_stable else FilePart.min_size
+            part_size = FilePart.default_size
             if file.size <= part_size:
                 log.info('Mirroring file via standard upload: %r', file)
                 self.service.mirror_file(catalog, file)

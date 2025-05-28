@@ -201,6 +201,23 @@ class BaseMirrorService:
         else:
             return True
 
+    def delete_it_files(self, catalog: CatalogName):
+        """
+        Delete all objects (both file/ and info/) with the given catalog's
+        mirror prefix. Currently, the mirror prefix is only used to distinguish
+        IT catalogs from non-IT catalogs, so if an IT catalog is specified,
+        objects from *all* IT catalogs will be deleted, not just the specified
+        catalog.
+        """
+        assert catalog in config.integration_test_catalogs, R(
+            'Not an IT catalog', catalog)
+        storage = self._storage(catalog)
+        prefix = self._mirror_prefix(catalog)
+        assert len(prefix) > 1 and prefix.endswith('/'), prefix
+        keys = storage.list(prefix)
+        assert len(keys) <= 300, R('Too many objects', len(keys))
+        storage.delete(keys, batch_size=100)
+
     def _mirror_prefix(self, catalog: CatalogName) -> str:
         return '_it/' if catalog in config.integration_test_catalogs else ''
 

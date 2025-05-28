@@ -132,6 +132,9 @@ from azul.indexer.index_service import (
     IndexExistsAndDiffersException,
     IndexService,
 )
+from azul.indexer.mirror_service import (
+    BaseMirrorService,
+)
 from azul.json_freeze import (
     freeze,
 )
@@ -491,7 +494,7 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
         self._test_other_endpoints()
 
         if config.enable_mirroring:
-            self._test_mirroring()
+            self._test_mirroring(delete=delete)
 
     def _reset_indexer(self):
         # While it's OK to erase the integration test catalog, the queues are
@@ -1725,14 +1728,36 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
             for command_line in command_lines:
                 self.assertIn(expected_auth_header, command_line)
 
-    def _test_mirroring(self):
+    def _test_mirroring(self, *, delete: bool):
         with self.subTest('mirror_files'):
-            self._assert_queues_empty(config.mirror_queue_names)
-            for catalog in config.integration_test_catalogs:
-                source = self._select_source(catalog, public=True)
-                self.azul_client.remote_mirror(catalog, [source])
-            self.azul_client.wait_for_mirroring()
-            self._assert_queues_empty(config.mirror_fail_queue_names)
+            catalogs = [
+                c.name
+                for c in config.catalogs.values()
+                if c.is_integration_test_catalog and c.atlas == 'hca'
+            ]
+            service = BaseMirrorService()
+            sources_by_catalog = {
+                catalog: [self._select_source(catalog, public=True)]
+                for catalog in catalogs
+            }
+
+            def _delete():
+                if delete:
+                    # This potentially causes redundant ListObjects requests,
+                    # since each IT catalog currently uses the same mirror
+                    # prefix and bucket
+                    for catalog in catalogs:
+                        service.delete_it_files(catalog)
+
+            self._assert_queues_empty([config.mirror_queue.name,
+                                       config.mirror_queue.to_fail.name])
+            _delete()
+            for _ in range(2):
+                for catalog, sources in sources_by_catalog.items():
+                    self.azul_client.remote_mirror(catalog, sources)
+                self.azul_client.wait_for_mirroring()
+                self._assert_queues_empty([config.mirror_queue.to_fail.name])
+            _delete()
 
 
 class AzulClientIntegrationTest(IntegrationTestCase):
