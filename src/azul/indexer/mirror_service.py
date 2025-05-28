@@ -191,8 +191,16 @@ class BaseMirrorService:
     def info_object_key(self, file: File) -> str:
         return self._file_key('info', file, extension='.json')
 
-    def is_mirrored(self, catalog: CatalogName, file: File) -> bool:
+    def info_exists(self, catalog: CatalogName, file: File) -> bool:
         return self._get_info(catalog, file) is not None
+
+    def file_exists(self, catalog: CatalogName, file: File) -> bool:
+        try:
+            self._storage(catalog).head(self.mirror_object_key(file))
+        except StorageObjectNotFound:
+            return False
+        else:
+            return True
 
     def _file_key(self, prefix: str, file: File, *, extension: str = '') -> str:
         digest = file.digest
@@ -214,17 +222,15 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
         Upload the file in a single request. For larger files, use
         :meth:`begin_mirroring_file` instead.
         """
-        if self.is_mirrored(catalog, file):
-            log.info('File is already mirrored, skipping upload: %r', file)
-        else:
-            file_content = self._download(catalog, file)
-            self._storage(catalog).put(object_key=self.mirror_object_key(file),
-                                       data=file_content,
-                                       content_type=file.content_type)
-            hasher = get_resumable_hasher(file.digest.type)
-            hasher.update(file_content)
-            self._verify_digest(file, hasher)
-            self._put_info(catalog, file)
+        file_content = self._download(catalog, file)
+        self._storage(catalog).put(object_key=self.mirror_object_key(file),
+                                   data=file_content,
+                                   content_type=file.content_type,
+                                   overwrite=False)
+        hasher = get_resumable_hasher(file.digest.type)
+        hasher.update(file_content)
+        self._verify_digest(file, hasher)
+        self._put_info(catalog, file)
 
     def begin_mirroring_file(self, catalog: CatalogName, file: File) -> str:
         """
@@ -268,7 +274,9 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
         Complete a multipart upload begun with :meth:`begin_mirroring_file`.
         """
         upload = self._get_upload(catalog, file, upload_id)
-        self._storage(catalog).complete_multipart_upload(upload, etags)
+        self._storage(catalog).complete_multipart_upload(upload,
+                                                         etags,
+                                                         overwrite=False)
         self._verify_digest(file, hasher)
         self._get_info(catalog, file)
         self._put_info(catalog, file)
