@@ -264,7 +264,7 @@ def env() -> Mapping[str, Optional[str]]:
         # `make -C terraform update_schema`, and committing the resulting
         # changes.
         #
-        'azul_terraform_version': '1.10.5',
+        'azul_terraform_version': '1.11.4',
 
         # When building the Azul image on a FIPS mode enabled system (e.g.
         # GitLab), this variable should be set to `/proc/sys/crypto`, the path
@@ -296,32 +296,32 @@ def env() -> Mapping[str, Optional[str]]:
                 'url': 'https://hub.docker.com/_/python',
             },
             'pycharm': {
-                'ref': 'docker.io/ucscgi/azul-pycharm:2024.3.5-51',
+                'ref': 'docker.io/ucscgi/azul-pycharm:2024.3.5-52',
                 'url': 'https://hub.docker.com/repository/docker/ucscgi/azul-pycharm',
                 'is_custom': True
             },
             'elasticsearch': {
-                'ref': 'docker.io/ucscgi/azul-elasticsearch:7.17.28-43',
+                'ref': 'docker.io/ucscgi/azul-elasticsearch:7.17.28-44',
                 'url': 'https://hub.docker.com/repository/docker/ucscgi/azul-elasticsearch',
                 'is_custom': True
             },
             'bigquery_emulator': {
-                'ref': 'docker.io/ucscgi/azul-bigquery-emulator:0.4.4-33',
+                'ref': 'docker.io/ucscgi/azul-bigquery-emulator:0.4.4-34',
                 'url': 'https://hub.docker.com/repository/docker/ucscgi/azul-bigquery-emulator',
                 'is_custom': True
             },
             # Updating any of the four images below additionally requires
             # redeploying the `gitlab` TF component.
             'clamav': {
-                'ref': 'docker.io/clamav/clamav:1.4.2-36',
+                'ref': 'docker.io/clamav/clamav:1.4.2-38',
                 'url': 'https://hub.docker.com/r/clamav/clamav'
             },
             'gitlab': {
-                'ref': 'docker.io/gitlab/gitlab-ce:17.11.1-ce.0',
+                'ref': 'docker.io/gitlab/gitlab-ce:17.11.2-ce.0',
                 'url': 'https://hub.docker.com/r/gitlab/gitlab-ce'
             },
             'gitlab_runner': {
-                'ref': 'docker.io/gitlab/gitlab-runner:ubuntu-v17.11.0',
+                'ref': 'docker.io/gitlab/gitlab-runner:ubuntu-v17.11.1',
                 'url': 'https://hub.docker.com/r/gitlab/gitlab-runner'
             },
             'dind': {

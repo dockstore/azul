@@ -72,25 +72,25 @@ class TestAppLogging(AzulUnitTestCase):
                         if server_thread.is_alive():
                             self.fail('Thread is still alive after joining')
 
-                    self.assertEqual(response.status_code, 500)
+                    self.assertEqual(500, response.status_code)
 
                     # The request is always logged
-                    self.assertEqual(len(azul_log.output), 3)
+                    self.assertEqual(3, len(azul_log.output))
                     headers = {
                         'host': f'{host}:{port}',
                         'user-agent': 'python-requests/2.32.3',
-                        'accept-encoding': 'gzip, deflate, br',
+                        'accept-encoding': 'gzip, deflate',
                         'accept': '*/*',
                         'connection': 'keep-alive'
                     }
-                    self.assertEqual(azul_log.output[0],
-                                     f'INFO:azul.chalice:Received GET request for {path!r}, '
-                                     f"with {json.dumps({'query': None, 'headers': headers})}.")
-                    self.assertEqual(azul_log.output[1],
-                                     'INFO:azul.chalice:Did not authenticate request.')
+                    self.assertEqual(f'INFO:azul.chalice:Received GET request for {path!r}, '
+                                     f"with {json.dumps({'query': None, 'headers': headers})}.",
+                                     azul_log.output[0])
+                    self.assertEqual('INFO:azul.chalice:Did not authenticate request.',
+                                     azul_log.output[1])
 
                     # The exception is always logged
-                    self.assertEqual(len(app_log.output), 1)
+                    self.assertEqual(1, len(app_log.output))
                     err_log = f'ERROR:test_app_logging:Caught exception for path {path}'
                     self.assertTrue(app_log.output[0].startswith(err_log))
                     self.assertIn(magic_message, app_log.output[0])
@@ -102,11 +102,14 @@ class TestAppLogging(AzulUnitTestCase):
                         self.assertNotIn(traceback_header, body)
                         self.assertNotIn(magic_message, body)
                         body = json.loads(body)
-                        self.assertEqual(body, {
-                            'RequestId': body['RequestId'],  # different for every request
-                            'Code': 'InternalServerError',
-                            'Message': 'An internal server error occurred.',
-                        })
+                        self.assertEqual(
+                            {
+                                'RequestId': body['RequestId'],  # different for every request
+                                'Code': 'InternalServerError',
+                                'Message': 'An internal server error occurred.',
+                            },
+                            body
+                        )
                         body = json.dumps(body)  # the body is logged without indentation
                     else:
                         # … except at the highest debug setting.
@@ -131,7 +134,7 @@ class TestAppLogging(AzulUnitTestCase):
                         'To log headers and body, set AZUL_DEBUG to 1.'
                     )
                     self.maxDiff = None
-                    self.assertEqual(azul_log.output[2], expected)
+                    self.assertEqual(expected, azul_log.output[2])
 
 
 class TestPermittedWarnings(AzulUnitTestCase):
