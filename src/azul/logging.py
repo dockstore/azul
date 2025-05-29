@@ -169,6 +169,8 @@ def silenced_es_logger():
 
 type BodyType = Literal['request', 'response']
 
+http_body_log_prefix_len = 1024
+
 
 def http_body_log_message(body_type: BodyType,
                           body: bytes | bytearray | str | IO[bytes] | IO[str] | None,
@@ -183,7 +185,7 @@ def http_body_log_message(body_type: BodyType,
                 body = body.decode(errors='ignore')
         else:
             # https://github.com/python/typing/discussions/1911
-            body = trunc_ellipses(body, max_len=128)  # type: ignore[type-var]
+            body = trunc_ellipses(body, max_len=http_body_log_prefix_len)  # type: ignore[type-var]
         return f'… with {body_type} body {body!r}'
     else:
         return f'… with nonprintable body ({type(body)!r})'
