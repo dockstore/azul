@@ -9,6 +9,7 @@ from more_itertools import (
 from azul import (
     R,
     config,
+    iif,
 )
 from azul.deployment import (
     aws,
@@ -22,11 +23,11 @@ es_instance_count = (
 
 
 def dashboard_body(name: str):
-    valid_names = ['indexer']
+    valid_names = ['indexer', *iif(config.enable_mirroring, ['mirror'])]
     assert name in valid_names, R('Invalid dashboard name', name)
     return {
         'widgets': [
-            {
+            *iif(name == 'indexer', [{
                 'height': 6,
                 'width': 12,
                 'y': 6,
@@ -52,7 +53,7 @@ def dashboard_body(name: str):
                     'title': 'Aggregation outcomes in # of contributions',
                     'view': 'timeSeries'
                 }
-            },
+            }]),
             {
                 'height': 6,
                 'width': 12,
@@ -294,6 +295,86 @@ def dashboard_body(name: str):
                                 'visible': False
                             }
                         ]
+                    ]
+                    if name == 'indexer' else
+                    [
+                        [
+                            {
+                                'expression': 'mv+mi+md',
+                                'label': 'mirror',
+                                'id': 'm',
+                                'region': config.region
+                            }
+                        ],
+                        [
+                            'AWS/SQS',
+                            'ApproximateNumberOfMessagesVisible',
+                            'QueueName',
+                            config.mirror_queue.name,
+                            {
+                                'id': 'mv',
+                                'visible': False
+                            }
+                        ],
+                        [
+                            '.',
+                            'ApproximateNumberOfMessagesNotVisible',
+                            '.',
+                            '.',
+                            {
+                                'id': 'mi',
+                                'visible': False
+                            }
+                        ],
+                        [
+                            '.',
+                            'ApproximateNumberOfMessagesDelayed',
+                            '.',
+                            '.',
+                            {
+                                'id': 'md',
+                                'visible': False
+                            }
+                        ],
+                        [
+                            {
+                                'expression': 'mfv+mfi+mfd',
+                                'label': 'mirror_fail',
+                                'id': 'mf',
+                                'region': config.region,
+                                'color': '#9467bd'
+                            }
+                        ],
+                        [
+                            'AWS/SQS',
+                            'ApproximateNumberOfMessagesVisible',
+                            'QueueName',
+                            config.mirror_queue.to_fail.name,
+                            {
+                                'id': 'mfv',
+                                'visible': False
+                            }
+                        ],
+                        [
+                            '.',
+                            'ApproximateNumberOfMessagesNotVisible',
+                            '.',
+                            '.',
+                            {
+                                'id': 'mfi',
+                                'visible': False
+                            }
+                        ],
+                        [
+                            '.',
+                            'ApproximateNumberOfMessagesDelayed',
+                            '.',
+                            '.',
+                            {
+                                'id': 'mfd',
+                                'visible': False
+                            }
+                        ]
                     ],
                     'view': 'timeSeries',
                     'stacked': False,
@@ -310,9 +391,12 @@ def dashboard_body(name: str):
                 'x': 0,
                 'type': 'log',
                 'properties': {
-                    'query': dedent(f'''\
-                        SOURCE '/aws/lambda/{config.indexer_function_name('contribute')}'
-                        | SOURCE '/aws/lambda/{config.indexer_function_name('contribute_retry')}'
+                    'query': (
+                        f"SOURCE '/aws/lambda/{config.indexer_function_name('contribute')}'" +
+                        f"| SOURCE '/aws/lambda/{config.indexer_function_name('contribute_retry')}'"
+                        if name == 'indexer' else
+                        f"SOURCE '/aws/lambda/{config.indexer_function_name('mirror')}'"
+                    ) + dedent(f'''\
                         | fields strcontains(@message, 'Worker successfully handled') as success,
                                  strcontains(@message,'Worker failed to handle message') as failure,
                                  strcontains(@message,'Task timed out after') as timeout
@@ -323,11 +407,15 @@ def dashboard_body(name: str):
                     '''),
                     'region': config.region,
                     'stacked': True,
-                    'title': 'Contribution outcomes in # of notifications',
+                    'title': (
+                        'Contribution outcomes in # of notifications'
+                        if name == 'indexer' else
+                        'Mirror outcomes in # of messages'
+                    ),
                     'view': 'timeSeries'
                 }
             },
-            {
+            *iif(name == 'indexer', [{
                 'height': 6,
                 'width': 12,
                 'y': 24,
@@ -437,8 +525,8 @@ def dashboard_body(name: str):
                     'stat': 'Maximum',
                     'title': 'ES shards'
                 }
-            },
-            {
+            }]),
+            *iif(name == 'indexer', [{
                 'height': 6,
                 'width': 12,
                 'y': 12,
@@ -459,8 +547,8 @@ def dashboard_body(name: str):
                     'title': 'ES TransportErrors',
                     'view': 'timeSeries'
                 }
-            },
-            {
+            }]),
+            *iif(name == 'indexer', [{
                 'height': 6,
                 'width': 12,
                 'y': 30,
@@ -494,8 +582,8 @@ def dashboard_body(name: str):
                     'title': 'ES JVM memory pressure [%]',
                     'period': 300
                 }
-            },
-            {
+            }]),
+            *iif(name == 'indexer', [{
                 'height': 6,
                 'width': 12,
                 'y': 36,
@@ -597,8 +685,8 @@ def dashboard_body(name: str):
                         }
                     }
                 }
-            },
-            {
+            }]),
+            *iif(name == 'indexer', [{
                 'height': 6,
                 'width': 12,
                 'y': 30,
@@ -621,7 +709,7 @@ def dashboard_body(name: str):
                     'title': 'Subgraph download time, average [s]',
                     'view': 'timeSeries'
                 }
-            },
+            }]),
             {
                 'height': 6,
                 'width': 12,
@@ -658,6 +746,18 @@ def dashboard_body(name: str):
                             config.indexer_function_name('aggregate_retry'),
                             {
                                 'label': 'aggregate_retry'
+                            }
+                        ]
+                    ]
+                    if name == 'indexer' else
+                    [
+                        [
+                            'AWS/Lambda',
+                            'Throttles',
+                            'FunctionName',
+                            config.indexer_function_name('mirror'),
+                            {
+                                'label': 'mirror'
                             }
                         ]
                     ],
@@ -711,6 +811,19 @@ def dashboard_body(name: str):
                                 'region': config.region
                             }
                         ]
+                    ]
+                    if name == 'indexer' else
+                    [
+                        [
+                            'AWS/Lambda',
+                            'Errors',
+                            'FunctionName',
+                            config.indexer_function_name('mirror'),
+                            {
+                                'label': 'mirror',
+                                'region': config.region
+                            }
+                        ]
                     ],
                     'view': 'timeSeries',
                     'stacked': False,
@@ -758,6 +871,18 @@ def dashboard_body(name: str):
                                 'label': 'aggregate_retry'
                             }
                         ]
+                    ]
+                    if name == 'indexer' else
+                    [
+                        [
+                            'AWS/Lambda',
+                            'Invocations',
+                            'FunctionName',
+                            config.indexer_function_name('mirror'),
+                            {
+                                'label': 'mirror'
+                            }
+                        ]
                     ],
                     'view': 'timeSeries',
                     'stacked': False,
@@ -803,6 +928,18 @@ def dashboard_body(name: str):
                             config.indexer_function_name('aggregate_retry'),
                             {
                                 'label': 'aggregate_retry'
+                            }
+                        ]
+                    ]
+                    if name == 'indexer' else
+                    [
+                        [
+                            'AWS/Lambda',
+                            'ConcurrentExecutions',
+                            'FunctionName',
+                            config.indexer_function_name('mirror'),
+                            {
+                                'label': 'mirror'
                             }
                         ]
                     ],
@@ -892,6 +1029,28 @@ def dashboard_body(name: str):
                                 'visible': False
                             }
                         ]
+                    ]
+                    if name == 'indexer' else
+                    [
+                        [
+                            {
+                                'expression': 'm1 / 1000',
+                                'label': 'mirror',
+                                'id': 'e1',
+                                'stat': 'Average',
+                                'region': config.region
+                            }
+                        ],
+                        [
+                            'AWS/Lambda',
+                            'Duration',
+                            'FunctionName',
+                            config.indexer_function_name('mirror'),
+                            {
+                                'id': 'm1',
+                                'visible': False
+                            }
+                        ]
                     ],
                     'view': 'timeSeries',
                     'stacked': False,
@@ -906,7 +1065,7 @@ def dashboard_body(name: str):
                     }
                 }
             },
-            {
+            *iif(name == 'indexer', [{
                 'height': 6,
                 'width': 12,
                 'y': 36,
@@ -925,8 +1084,8 @@ def dashboard_body(name: str):
                     'title': 'BQ rate limit trips',
                     'view': 'timeSeries'
                 }
-            },
-            {
+            }]),
+            *iif(name == 'indexer', [{
                 'height': 6,
                 'width': 12,
                 'y': 24,
@@ -944,8 +1103,8 @@ def dashboard_body(name: str):
                     'title': 'BQ slot-hours (pro-rated)',
                     'view': 'timeSeries'
                 }
-            },
-            {
+            }]),
+            *iif(name == 'indexer', [{
                 'height': 6,
                 'width': 12,
                 'y': 42,
@@ -965,7 +1124,7 @@ def dashboard_body(name: str):
                     'title': 'BQ rate limit back-off, average [s]',
                     'view': 'timeSeries'
                 }
-            },
+            }]),
             {
                 'height': 6,
                 'width': 12,
@@ -1207,6 +1366,86 @@ def dashboard_body(name: str):
                                 'visible': False
                             }
                         ]
+                    ]
+                    if name == 'indexer' else
+                    [
+                        [
+                            {
+                                'expression': 'DIFF(mv+mi+md)',
+                                'label': 'mirror',
+                                'id': 'm',
+                                'region': config.region
+                            }
+                        ],
+                        [
+                            'AWS/SQS',
+                            'ApproximateNumberOfMessagesVisible',
+                            'QueueName',
+                            config.mirror_queue.name,
+                            {
+                                'id': 'mv',
+                                'visible': False
+                            }
+                        ],
+                        [
+                            '.',
+                            'ApproximateNumberOfMessagesNotVisible',
+                            '.',
+                            '.',
+                            {
+                                'id': 'mi',
+                                'visible': False
+                            }
+                        ],
+                        [
+                            '.',
+                            'ApproximateNumberOfMessagesDelayed',
+                            '.',
+                            '.',
+                            {
+                                'id': 'md',
+                                'visible': False
+                            }
+                        ],
+                        [
+                            {
+                                'expression': 'DIFF(mfv+mfi+mfd)',
+                                'label': 'mirror_fail',
+                                'id': 'mf',
+                                'region': config.region,
+                                'color': '#9467bd'
+                            }
+                        ],
+                        [
+                            'AWS/SQS',
+                            'ApproximateNumberOfMessagesVisible',
+                            'QueueName',
+                            config.mirror_queue.to_fail.name,
+                            {
+                                'id': 'mfv',
+                                'visible': False
+                            }
+                        ],
+                        [
+                            '.',
+                            'ApproximateNumberOfMessagesNotVisible',
+                            '.',
+                            '.',
+                            {
+                                'id': 'mfi',
+                                'visible': False
+                            }
+                        ],
+                        [
+                            '.',
+                            'ApproximateNumberOfMessagesDelayed',
+                            '.',
+                            '.',
+                            {
+                                'id': 'mfd',
+                                'visible': False
+                            }
+                        ]
                     ],
                     'view': 'timeSeries',
                     'stacked': False,
@@ -1308,6 +1547,28 @@ def dashboard_body(name: str):
                                 'region': config.region
                             }
                         ]
+                    ]
+                    if name == 'indexer' else
+                    [
+                        [
+                            {
+                                'expression': 'CEIL(m1 * 20 / PERIOD(m1))',
+                                'label': 'mirror',
+                                'id': 'e1',
+                                'region': config.region
+                            }
+                        ],
+                        [
+                            'AWS/SQS',
+                            'NumberOfEmptyReceives',
+                            'QueueName',
+                            config.mirror_queue.name,
+                            {
+                                'id': 'm1',
+                                'visible': False,
+                                'region': config.region
+                            }
+                        ]
                     ],
                     'view': 'timeSeries',
                     'stacked': False,
@@ -1317,7 +1578,7 @@ def dashboard_body(name: str):
                     'stat': 'Sum'
                 }
             },
-            {
+            *iif(name == 'indexer', [{
                 'height': 6,
                 'width': 12,
                 'y': 0,
@@ -1343,8 +1604,8 @@ def dashboard_body(name: str):
                     'title': 'Aggregation outcomes in # of tallies',
                     'view': 'timeSeries'
                 }
-            },
-            {
+            }]),
+            *iif(name == 'indexer', [{
                 'height': 6,
                 'width': 12,
                 'y': 48,
@@ -1366,7 +1627,7 @@ def dashboard_body(name: str):
                     'title': 'BQ cache utilization [%]',
                     'view': 'timeSeries'
                 }
-            },
+            }]),
             {
                 'height': 6,
                 'width': 12,
@@ -1512,6 +1773,47 @@ def dashboard_body(name: str):
                                 'visible': False
                             }
                         ]
+                    ]
+                    if name == 'indexer' else
+                    [
+                        [
+                            {
+                                'expression': 'IF(DIFF(mv+mi+md) < 0, ((mv+mi+md) / -DIFF(mv+mi+md)) * DIFF_TIME(mv+mi+md) / 3600)',
+                                'label': 'mirror',
+                                'id': 'm',
+                                'region': config.region
+                            }
+                        ],
+                        [
+                            'AWS/SQS',
+                            'ApproximateNumberOfMessagesVisible',
+                            'QueueName',
+                            config.mirror_queue.name,
+                            {
+                                'id': 'mv',
+                                'visible': False
+                            }
+                        ],
+                        [
+                            '.',
+                            'ApproximateNumberOfMessagesNotVisible',
+                            '.',
+                            '.',
+                            {
+                                'id': 'mi',
+                                'visible': False
+                            }
+                        ],
+                        [
+                            '.',
+                            'ApproximateNumberOfMessagesDelayed',
+                            '.',
+                            '.',
+                            {
+                                'id': 'md',
+                                'visible': False
+                            }
+                        ]
                     ],
                     'view': 'timeSeries',
                     'stacked': False,
@@ -1528,7 +1830,8 @@ def dashboard_body(name: str):
                 'x': 12,
                 'type': 'log',
                 'properties': {
-                    'query': dedent(f'''\
+                    'query': dedent(
+                        f'''\
                         SOURCE '/aws/lambda/{config.indexer_function_name('aggregate')}'
                         | SOURCE '/aws/lambda/{config.indexer_function_name('aggregate_retry')}'
                         | SOURCE '/aws/lambda/{config.indexer_function_name('contribute')}'
@@ -1543,7 +1846,16 @@ def dashboard_body(name: str):
                                 sum(a) as aggregate,
                                 sum(ar) as aggregate_retry
                                 by bin(5min)
-                    '''),
+                        '''
+                        if name == 'indexer' else
+                        f'''\
+                            SOURCE '/aws/lambda/{config.indexer_function_name('mirror')}'
+                            | filter @message like 'Task timed out'
+                            | fields strcontains(@log, 'mirror') == 1 as m
+                            | stats sum(m) as mirror
+                                    by bin(5min)
+                        '''
+                    ),
                     'region': config.region,
                     'stacked': False,
                     'title': 'Lambda timeouts',
@@ -1586,6 +1898,18 @@ def dashboard_body(name: str):
                             config.tallies_queue.to_retry.name,
                             {
                                 'label': 'tallies_retry'
+                            }
+                        ]
+                    ]
+                    if name == 'indexer' else
+                    [
+                        [
+                            'AWS/SQS',
+                            'ApproximateNumberOfMessagesNotVisible',
+                            'QueueName',
+                            config.mirror_queue.name,
+                            {
+                                'label': 'mirror'
                             }
                         ]
                     ],
@@ -1705,6 +2029,37 @@ def dashboard_body(name: str):
                                 'visible': False
                             }
                         ]
+                    ]
+                    if name == 'indexer' else
+                    [
+                        [
+                            {
+                                'expression': 'm1 * 100 / m2',
+                                'label': 'mirror',
+                                'id': 'e1'
+                            }
+                        ],
+                        [
+                            'AWS/Lambda',
+                            'Errors',
+                            'FunctionName',
+                            config.indexer_function_name('mirror'),
+                            {
+                                'label': 'mirror',
+                                'id': 'm1',
+                                'visible': False
+                            }
+                        ],
+                        [
+                            '.',
+                            'Invocations',
+                            '.',
+                            config.indexer_function_name('mirror'),
+                            {
+                                'id': 'm2',
+                                'visible': False
+                            }
+                        ]
                     ],
                     'view': 'timeSeries',
                     'stacked': False,
@@ -1721,7 +2076,8 @@ def dashboard_body(name: str):
                 'x': 0,
                 'type': 'log',
                 'properties': {
-                    'query': dedent(f'''\
+                    'query': dedent(
+                        f'''\
                         SOURCE '/aws/lambda/{config.indexer_function_name('aggregate')}'
                         | SOURCE '/aws/lambda/{config.indexer_function_name('aggregate_retry')}'
                         | SOURCE '/aws/lambda/{config.indexer_function_name('contribute')}'
@@ -1738,7 +2094,18 @@ def dashboard_body(name: str):
                                 sum(a*timeout) * 100 / sum(a*attempt) as aggregate,
                                 sum(ar*timeout) * 100 / sum(ar*attempt) as aggregate_retry
                                 by bin(5min)
-                    '''),
+                        '''
+                        if name == 'indexer' else
+                        f'''\
+                        SOURCE '/aws/lambda/{config.indexer_function_name('mirror')}'
+                        | filter @message like 'Task timed out' or @message like 'START'
+                        | fields strcontains(@message, 'Task timed out') == 1 as timeout
+                        | fields strcontains(@message, 'START') == 1 as attempt
+                        | fields strcontains(@log, 'mirror') == 1 as m
+                        | stats sum(m*timeout) * 100 / sum(m*attempt) as mirror
+                                by bin(5min)
+                        '''
+                    ),
                     'region': config.region,
                     'stacked': False,
                     'title': 'Lambda timeout rate [%]',

@@ -332,7 +332,17 @@ emit_tf({
                 'indexer': {
                     'dashboard_name': config.qualified_resource_name('indexer'),
                     'dashboard_body': dashboard_body('indexer')
-                }
+                },
+                **(
+                    {
+                        'mirror': {
+                            'dashboard_name': config.qualified_resource_name('mirror'),
+                            'dashboard_body': dashboard_body('mirror')
+                        }
+                    }
+                    if config.enable_mirroring else
+                    {}
+                )
             }
         }
     ]
