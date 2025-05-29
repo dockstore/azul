@@ -1,5 +1,5 @@
 blessed==1.21.0
-botocore-stubs==1.38.19
+botocore-stubs==1.38.27
 click==8.2.1
 colorama==0.4.6
 docutils==0.19
@@ -18,13 +18,13 @@ mccabe==0.7.0
 mypy-boto3-apigateway==1.38.0
 mypy-boto3-cloudwatch==1.38.21
 mypy-boto3-dynamodb==1.38.4
-mypy-boto3-ec2==1.38.24
+mypy-boto3-ec2==1.38.25
 mypy-boto3-ecr==1.38.6
 mypy-boto3-es==1.38.0
 mypy-boto3-iam==1.38.14
 mypy-boto3-kms==1.38.0
 mypy-boto3-lambda==1.38.0
-mypy-boto3-s3==1.38.0
+mypy-boto3-s3==1.38.26
 mypy-boto3-secretsmanager==1.38.0
 mypy-boto3-securityhub==1.38.0
 mypy-boto3-sns==1.38.0
@@ -50,7 +50,7 @@ runs==1.2.2
 smmap==5.0.2
 tqdm==4.67.1
 types-awscrt==0.27.2
-types-s3transfer==0.12.0
+types-s3transfer==0.13.0
 uritemplate==4.1.1
 wcwidth==0.2.13
 www-authenticate==0.9.2
