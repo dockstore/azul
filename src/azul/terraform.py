@@ -737,8 +737,8 @@ class Chalice:
         locals = tf_config['locals']
 
         # null_data_source has been deprecated and locals should be used instead.
-        # However the data sources defined underneath it aren't actually used
-        # anywhere so we can just the delete the entry.
+        # However, the data sources defined underneath it aren't actually used
+        # anywhere so we can just delete the entry.
         del data['null_data_source']
 
         if config.private_api:
@@ -897,6 +897,17 @@ class Chalice:
             }
         )
         locals[app_name] = json.dumps(openapi_spec)
+
+        # Replace the hard-coded ARN emitted by Chalice with a resource
+        # reference so that the event source (the queue) is created before the
+        # event source mapping depending on it.
+        #
+        if app_name == 'indexer':
+            for resource in resources['aws_lambda_event_source_mapping'].values():
+                _, _, resource_name = resource['event_source_arn'].rpartition(':')
+                suffix = '.fifo' if resource_name.endswith('.fifo') else ''
+                sqs_name, _ = config.unqualified_resource_name(resource_name, suffix)
+                resource['event_source_arn'] = f'${{aws_sqs_queue.{sqs_name}.arn}}'
 
         return {
             'resource': resources,

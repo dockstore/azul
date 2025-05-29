@@ -44,7 +44,7 @@ class TestServiceAppLogging(DCP1CannedBundleTestCase, LocalAppTestCase):
                     request_headers = {
                         'host': url.netloc,
                         'user-agent': 'python-requests/2.32.3',
-                        'accept-encoding': 'gzip, deflate, br',
+                        'accept-encoding': 'gzip, deflate',
                         'accept': '*/*',
                         'connection': 'keep-alive',
                         **request_headers,
@@ -59,24 +59,27 @@ class TestServiceAppLogging(DCP1CannedBundleTestCase, LocalAppTestCase):
                         **AzulChaliceApp.security_headers(),
                         'Cache-Control': 'no-store'
                     }
-                    self.assertEqual(logs, [
-                        (
-                            INFO,
-                            "Received GET request for '/health/basic', "
-                            f'with {json.dumps(dict(query=None, headers=request_headers))}.'),
-                        (
-                            INFO,
-                            "Authenticated request as OAuth2(access_token='foo_token')"
-                            if authenticated else
-                            'Did not authenticate request.'
-                        ),
-                        (
-                            level,
-                            'Returning 200 response. To log headers and body, set AZUL_DEBUG to 1.'
-                            if level == INFO else
-                            'Returning 200 response with headers ' +
-                            json.dumps(response_headers) + '. ' +
-                            'See next line for the first 1024 characters of the body.\n' +
-                            '{"up": true}'
-                        )
-                    ])
+                    self.assertEqual(
+                        [
+                            (
+                                INFO,
+                                "Received GET request for '/health/basic', "
+                                f'with {json.dumps(dict(query=None, headers=request_headers))}.'),
+                            (
+                                INFO,
+                                "Authenticated request as OAuth2(access_token='foo_token')"
+                                if authenticated else
+                                'Did not authenticate request.'
+                            ),
+                            (
+                                level,
+                                'Returning 200 response. To log headers and body, set AZUL_DEBUG to 1.'
+                                if level == INFO else
+                                'Returning 200 response with headers ' +
+                                json.dumps(response_headers) + '. ' +
+                                'See next line for the first 1024 characters of the body.\n' +
+                                '{"up": true}'
+                            )
+                        ],
+                        logs
+                    )
