@@ -125,12 +125,7 @@ class MirrorController(ActionController[MirrorAction]):
                          ):
         plugin = self.repository_plugin(catalog)
         source = plugin.source_ref_cls.from_json(source_json)
-        # FIXME: Remove or improve shortcut
-        #        https://github.com/DataBiosphere/azul/issues/7173
-        if False:
-            already_mirrored = self.service.list_info_objects(catalog, prefix)
-        else:
-            already_mirrored = ()
+        already_mirrored = self.service.list_info_objects(catalog, prefix)
         files = plugin.list_files(source, prefix)
 
         def messages() -> Iterable[SQSMessage]:
