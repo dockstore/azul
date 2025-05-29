@@ -329,8 +329,8 @@ emit_tf({
         ),
         {
             'aws_cloudwatch_dashboard': {
-                'dashboard': {
-                    'dashboard_name': config.qualified_resource_name('dashboard'),
+                'indexer': {
+                    'dashboard_name': config.qualified_resource_name('indexer'),
                     'dashboard_body': dashboard_body()
                 }
             }
