@@ -90,23 +90,23 @@
             }
         }
     },
-    "docker.io/gitlab/gitlab-ce:17.11.2-ce.0": {
-        "digest": "sha256:92bfef66d5dc84e01bbfeb0291fd9efdb3a6fabd113cdecf236401526efde76f",
-        "id": "sha256:10a019b419fc4bed02c4470f4dd5af82c5d7a6a0da143b7383a4ee31d84d03b1",
+    "docker.io/gitlab/gitlab-ce:18.0.1-ce.0": {
+        "digest": "sha256:a580b378c36636cac4d901e4ba31c9a8a136770efaaf20a6fbe89e39ea1a485b",
+        "id": "sha256:e71188eb2659096750586acb3c1d8f3cdfb81f88ce686d017c20841b357cf1ea",
         "platform": "linux/amd64"
     },
-    "docker.io/gitlab/gitlab-runner:ubuntu-v17.11.1": {
-        "digest": "sha256:ab043f8ab6663bdd24293e7056064a66baaefa81162e76e223f58d8456b768ff",
-        "mirror_digest": "sha256:ca87cdac2988e353ea72989c2b1f958627b5423a57fedba77d54a13f77a0aa95",
+    "docker.io/gitlab/gitlab-runner:ubuntu-v18.0.2": {
+        "digest": "sha256:02e995186d4e28a8fddc68e2ad8e92270535f89a50ca6b01e3861421e593e031",
+        "mirror_digest": "sha256:127bd7586a871f66492d1571d5681c721c1aa4f0a1574e9d78703018f0c1e256",
         "parts": {
             "linux/amd64": {
-                "digest": "sha256:c3e8cd7fb6b76476eec1951c82e02a531596e31c33f69227bc27880486a83ab2",
-                "id": "sha256:3a14dbc4618d64a9a7fa6e90b531b525865f012b3d31fac13fe0ab0745b45c9e",
+                "digest": "sha256:cd663bd86d1352caad7d33ac4d6ce000f8b9c12d8fd1352e7ea5c2e5363210cd",
+                "id": "sha256:8b5861183824d0dc6de6eb1d70cbc98878d7e12c3bc9458e5b6accbc69963d9f",
                 "platform": "linux/amd64"
             },
             "linux/arm64": {
-                "digest": "sha256:79f9936a31fe456bae7b7a2da1a8f068b503c1fac3a0613dee0dc21a8c532b75",
-                "id": "sha256:4acea3b2ead93c28df996514e2b70ab2d51aab05da08678f5d92d827e1bcf110",
+                "digest": "sha256:c7b7ce3e7a064a88a38074cfcb60dad6c0a2940071f80c5cf7870e8f1876b486",
+                "id": "sha256:a3471df3ce572f63ec1d92b119925d10e9a1e5818bd3d16d1b18b4e478e0f9e2",
                 "platform": "linux/arm64"
             }
         }
