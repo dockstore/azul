@@ -1552,8 +1552,7 @@ class Config:
     @property
     def fail_queue_names(self) -> list[str]:
         return [
-            self.tallies_queue.to_fail.name,
-            self.notifications_queue.to_fail.name,
+            *self.indexer_fail_queue_names,
             *([self.mirror_queue.to_fail.name] if self.enable_mirroring else []),
         ]
 
@@ -1563,6 +1562,13 @@ class Config:
             q.derive(retry=retry).name
             for q in [self.notifications_queue, self.tallies_queue]
             for retry in (False, True)
+        ]
+
+    @property
+    def indexer_fail_queue_names(self) -> list[str]:
+        return [
+            self.tallies_queue.to_fail.name,
+            self.notifications_queue.to_fail.name
         ]
 
     @property
