@@ -1649,6 +1649,15 @@ dcp49_sources = mkdict(dcp48_sources, 501, mkdelta([
     mksrc('bigquery', 'datarepo-7ae396a0', 'hca_prod_fde199d2a8414ed1aa65b9e0af8969b1__20220330_dcp2_20250514_dcp49'),
 ]))
 
+dcp50_sources = mkdict(dcp49_sources, 506, mkdelta([
+    mksrc('bigquery', 'datarepo-80eb7b4b', 'hca_prod_2e40df1ed3c248b48a17c46e34d7be59__20250528_dcp2_20250528_dcp50'),
+    mksrc('bigquery', 'datarepo-109974d4', 'hca_prod_5bb1f67e2ff04848bbcf17d133f0fd2d__20220117_dcp2_20250528_dcp50'),
+    mksrc('bigquery', 'datarepo-b66195b1', 'hca_prod_6601b3d4ed5a4e1fb54ae36adf45aa28__20250528_dcp2_20250528_dcp50'),
+    mksrc('bigquery', 'datarepo-8c4fb6f2', 'hca_prod_9ff75ecece81483abb1f85e727f3805b__20250528_dcp2_20250528_dcp50'),
+    mksrc('bigquery', 'datarepo-7be28950', 'hca_prod_bba2f908e0cb4ee7b007f9c650e08be0__20250528_dcp2_20250528_dcp50'),
+    mksrc('bigquery', 'datarepo-4c68d77c', 'hca_prod_e889ffc986f644f5b684dfce78e552a3__20250528_dcp2_20250528_dcp50'),
+]))
+
 lungmap_sources = mkdict({}, 3, mkdelta([
     mksrc('bigquery', 'datarepo-32f75497', 'lungmap_prod_00f056f273ff43ac97ff69ca10e38c89__20220308_20220308'),
     mksrc('bigquery', 'datarepo-7066459d', 'lungmap_prod_1bdcecde16be420888f478cd2133d11d__20220308_20220308'),
@@ -1751,6 +1760,7 @@ def env() -> Mapping[str, Optional[str]]:
                                        sources=mklist(sources))
             for atlas, catalog, sources in [
                 ('hca', 'dcp49', dcp49_sources),
+                ('hca', 'dcp50', dcp50_sources),
                 ('lungmap', 'lm8', lm8_sources),
                 ('lungmap', 'lm9', lm9_sources)
             ] for suffix, internal in [
