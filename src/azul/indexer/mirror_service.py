@@ -32,9 +32,6 @@ from azul.auth import (
 from azul.chalice import (
     SchemaUrlFunc,
 )
-from azul.collections import (
-    OrderedSet,
-)
 from azul.deployment import (
     aws,
 )
@@ -280,12 +277,6 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
         self._verify_digest(file, hasher)
         self._get_info(catalog, file)
         self._put_info(catalog, file)
-
-    def list_info_objects(self,
-                          catalog: CatalogName,
-                          prefix: str
-                          ) -> OrderedSet[str]:
-        return self._storage(catalog).list('info/' + prefix)
 
     def info_object(self, file: File) -> JSON:
         return {
