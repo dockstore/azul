@@ -125,21 +125,16 @@ class MirrorController(ActionController[MirrorAction]):
                          ):
         plugin = self.repository_plugin(catalog)
         source = plugin.source_ref_cls.from_json(source_json)
-        already_mirrored = self.service.list_info_objects(catalog, prefix)
         files = plugin.list_files(source, prefix)
 
         def messages() -> Iterable[SQSMessage]:
             for file in files:
-                info_key = self.service.info_object_key(file)
-                if info_key in already_mirrored:
-                    log.debug('Not queueing file %r because info object already exists', file)
-                else:
-                    log.debug('Queueing file %r', file)
-                    yield self.mirror_file_message(catalog, source, file)
+                log.debug('Queueing file %r', file)
+                yield self.mirror_file_message(catalog, source, file)
 
-        message_count = self.client.queue_mirror_messages(messages())
-        log.info('Queued %d/%d files in partition %r of source %r in catalog %r',
-                 message_count, len(files), prefix, str(source), catalog)
+        self.client.queue_mirror_messages(messages())
+        log.info('Queued %d files in partition %r of source %r in catalog %r',
+                 len(files), prefix, str(source), catalog)
 
     def mirror_file(self,
                     catalog: CatalogName,
