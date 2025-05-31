@@ -17,7 +17,7 @@ This is the PR template for backport PRs against `develop`.
 
 ### Author (before every review)
 
-- [ ] Merged `develop` into PR branch to integrate upstream changes
+- [ ] PR branch is up to date (if not, merge `develop` into PR branch to integrate upstream changes)
 - [ ] Ran `make requirements_update` <sub>or this PR does not modify `requirements*.txt`, `common.mk`, `Makefile` and `Dockerfile`</sub>
 - [ ] Added `R` tag to commit title <sub>or this PR does not modify `requirements*.txt`</sub>
 - [ ] This PR is labeled `reqs` <sub>or does not modify `requirements*.txt`</sub>
@@ -43,7 +43,7 @@ This is the PR template for backport PRs against `develop`.
 - [ ] Build passes in `anvilbox` deployment <sub>or PR is labeled `no sandbox`</sub>
 - [ ] Reviewed build logs for anomalies in `sandbox` deployment <sub>or PR is labeled `no sandbox`</sub>
 - [ ] Reviewed build logs for anomalies in `anvilbox` deployment <sub>or PR is labeled `no sandbox`</sub>
-- [ ] Confirmed all checks in PR are OK and the PR is mergeable
+- [ ] All status checks passed and the PR is mergeable
 - [ ] The title of the merge commit starts with the title of this PR
 - [ ] Added PR # reference (to this PR) to merge commit title
 - [ ] Collected commit title tags in merge commit title <sub>but excluded any `p` tags</sub>
