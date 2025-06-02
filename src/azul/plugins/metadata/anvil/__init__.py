@@ -6,7 +6,6 @@ from operator import (
 )
 from typing import (
     Iterable,
-    Literal,
     Self,
     Sequence,
 )
@@ -24,6 +23,9 @@ from more_itertools.more import (
 from azul import (
     config,
     iif,
+)
+from azul.digests import (
+    Digest,
 )
 from azul.indexer.document import (
     DocumentType,
@@ -530,5 +532,6 @@ class AnvilFile(File):
                    drs_uri=hit['drs_uri'],
                    md5=hit['file_md5sum'])
 
-    def digest(self) -> tuple[str, Literal['md5']]:
-        return self.md5, 'md5'
+    @property
+    def digest(self) -> Digest:
+        return Digest(value=self.md5, type='md5')

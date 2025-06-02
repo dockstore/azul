@@ -125,21 +125,16 @@ class MirrorController(ActionController[MirrorAction]):
                          ):
         plugin = self.repository_plugin(catalog)
         source = plugin.source_ref_cls.from_json(source_json)
-        already_mirrored = self.service.list_info_objects(catalog, prefix)
         files = plugin.list_files(source, prefix)
 
         def messages() -> Iterable[SQSMessage]:
             for file in files:
-                info_key = self.service.info_object_key(file)
-                if info_key in already_mirrored:
-                    log.debug('Not queueing file %r because info object already exists', file)
-                else:
-                    log.debug('Queueing file %r', file)
-                    yield self.mirror_file_message(catalog, source, file)
+                log.debug('Queueing file %r', file)
+                yield self.mirror_file_message(catalog, source, file)
 
-        message_count = self.client.queue_mirror_messages(messages())
-        log.info('Queued %d/%d files in partition %r of source %r in catalog %r',
-                 message_count, len(files), prefix, str(source), catalog)
+        self.client.queue_mirror_messages(messages())
+        log.info('Queued %d files in partition %r of source %r in catalog %r',
+                 len(files), prefix, str(source), catalog)
 
     def mirror_file(self,
                     catalog: CatalogName,
@@ -152,8 +147,13 @@ class MirrorController(ActionController[MirrorAction]):
         deployment_is_stable = (config.deployment.is_stable
                                 and not config.deployment.is_unit_test
                                 and catalog not in config.integration_test_catalogs)
+
         if file_is_large and not deployment_is_stable:
             log.info('Not mirroring file to save cost: %r', file)
+        elif self.service.info_exists(catalog, file):
+            log.info('File is already mirrored, skipping upload: %r', file)
+        elif self.service.file_exists(catalog, file):
+            assert False, R('File object is already present', file)
         else:
             # Ensure we test with multiple parts on lower deployments
             part_size = FilePart.default_size if deployment_is_stable else FilePart.min_size
@@ -163,8 +163,7 @@ class MirrorController(ActionController[MirrorAction]):
                 log.info('Successfully mirrored file via standard upload: %r', file)
             else:
                 log.info('Mirroring file via multi-part upload: %r', file)
-                _, digest_type = file.digest()
-                hasher = get_resumable_hasher(digest_type)
+                hasher = get_resumable_hasher(file.digest.type)
                 upload_id = self.service.begin_mirroring_file(catalog, file)
                 first_part = FilePart.first(file, part_size)
                 log.info('Uploading part #%d of file %r', first_part.index, file)
@@ -263,7 +262,7 @@ class MirrorController(ActionController[MirrorAction]):
                 'source': cast(JSON, source.to_json()),
                 'file': file.to_json()
             },
-            group_id=f'{source.id}:{file.uuid}'
+            group_id=file.digest.value
         )
 
     def mirror_part_message(self,
@@ -284,7 +283,7 @@ class MirrorController(ActionController[MirrorAction]):
                 'etags': etags,
                 'hasher': hasher_to_str(hasher)
             },
-            group_id=self.service.mirror_object_key(file)
+            group_id=file.digest.value
         )
 
     def finalize_file_message(self,
