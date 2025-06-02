@@ -176,6 +176,8 @@ class BaseMirrorService:
             json_content = json.loads(content)
             content_type = json_content['content-type']
             if content_type != file.content_type:
+                # FIXME: Content type in mirror info objects inconsistent with index
+                #        https://github.com/DataBiosphere/azul/issues/7193
                 log.warning('Conflicting content type %r for file %r', content_type, file)
             return json_content
 
