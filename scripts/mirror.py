@@ -71,13 +71,17 @@ def main(args):
                         help='Limit mirroring to a subset of the configured sources. '
                              'Supports shell-style wildcards to match multiple sources per argument. '
                              'All sources must be public.')
+    parser.add_argument('--mirror',
+                        action='store_true',
+                        help='Mirror files in the specified catalog and sources')
     parser.add_argument('--no-wait',
                         action='store_false',
                         dest='wait',
                         help='Do not wait for queues to empty before exiting script.')
     args = parser.parse_args(args)
     assert config.enable_mirroring, R('Mirroring is not enabled')
-    mirror_catalog(args.catalog, set(args.sources), args.wait)
+    if args.mirror:
+        mirror_catalog(args.catalog, set(args.sources), args.wait)
 
 
 if __name__ == '__main__':

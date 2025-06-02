@@ -117,7 +117,7 @@ class RepositoryFilesTestCase(LocalAppTestCase, metaclass=ABCMeta):
 @mock.patch.object(SourceService, '_put', new=MagicMock())
 @mock.patch.object(SourceService, '_get')
 @mock.patch.object(BaseMirrorService,
-                   'is_mirrored',
+                   'info_exists',
                    new=MagicMock(return_value=False))
 class TestRepositoryFilesWithTDR(DCP2TestCase, RepositoryFilesTestCase):
 
@@ -250,7 +250,7 @@ class TestRepositoryFilesWithTDR(DCP2TestCase, RepositoryFilesTestCase):
 
 
 @mock.patch.object(BaseMirrorService,
-                   'is_mirrored',
+                   'info_exists',
                    new=MagicMock(return_value=False))
 class TestRepositoryFilesWithDSS(DCP1TestCase,
                                  RepositoryFilesTestCase,
@@ -424,7 +424,7 @@ class TestRepositoryFilesWithMirroring(DCP2TestCase,
         mirror_service = MirrorService(schema_url_func=MagicMock())
         with mock.patch.object(MirrorService, '_download', return_value=file_content):
             mirror_service.mirror_file(self.catalog, file)
-        self.assertTrue(mirror_service.is_mirrored(self.catalog, file))
+        self.assertTrue(mirror_service.info_exists(self.catalog, file))
 
         client = http_client(log)
         args = dict(catalog=self.catalog, version=file_version)

@@ -14,7 +14,6 @@ from typing import (
     Callable,
     ClassVar,
     Iterable,
-    Literal,
     Mapping,
     Self,
     Sequence,
@@ -39,6 +38,9 @@ from azul.attrs import (
 )
 from azul.chalice import (
     Authentication,
+)
+from azul.digests import (
+    Digest,
 )
 from azul.drs import (
     DRSClient,
@@ -828,13 +830,9 @@ class File(SerializableAttrs, metaclass=ABCMeta):
         """
         raise NotImplementedError
 
+    @property
     @abstractmethod
-    def digest(self) -> tuple[str, Literal['sha256', 'sha1', 'md5']]:
-        """
-        A hexadecimal digest of the file's contents, and the type of digest used.
-        The set of supported digest types is limited to those we believe to
-        present an acceptable risk of hash collisions.
-        """
+    def digest(self) -> Digest:
         raise NotImplementedError
 
 

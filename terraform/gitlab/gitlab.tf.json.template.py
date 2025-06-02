@@ -1611,7 +1611,12 @@ emit_tf({} if config.terraform_component != 'gitlab' else {
                         'docker',
                         'amazon-cloudwatch-agent',
                         'amazon-ecr-credential-helper',
-                        'dracut-fips'
+                        'dracut-fips',
+                        (
+                            'https://s3.amazonaws.com'
+                            '/ec2-downloads-windows/SSMAgent/latest/linux_amd64'
+                            '/amazon-ssm-agent.rpm'
+                        )
                     ],
                     'ssh_authorized_keys': [] if config.deployment.is_stable else operator_keys,
                     'bootcmd': [

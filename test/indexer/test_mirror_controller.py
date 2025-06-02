@@ -75,8 +75,17 @@ class TestMirrorController(DCP2TestCase,
                 with self.subTest('mirror_partition'):
                     file, file_message = self._test_mirror_partition(partition_message)
 
-                    with self.subTest('mirror_file'):
+                    with self.subTest('mirror_file', corrupted=False, exists=False):
                         self._test_mirror_file(file, file_message)
+
+                    self._s3.delete_object(Bucket=self.mirror_bucket,
+                                           Key=self.mirror_controller.service.info_object_key(file))
+
+                    with self.subTest('mirror_file', corrupted=True):
+                        self._test_corrupted_download(file_message)
+
+                    with self.subTest('mirror_file', corrupted=False, exists=True):
+                        self._test_reuploaded_file(file_message)
 
     _file_contents = b'lorem ipsum dolor sit\n'
 
@@ -136,13 +145,22 @@ class TestMirrorController(DCP2TestCase,
                                        Key=self.mirror_controller.service.mirror_object_key(file))
         mirrored_file_contents = response['Body'].read()
         self.assertEqual(mirrored_file_contents, self._file_contents)
+
+    def _test_corrupted_download(self, file_message):
+        event = [self._mock_sqs_record(file_message)]
         corrupted_contents = self._file_contents[:-1] + b'Q'
         with patch.object(MirrorService, '_download', return_value=corrupted_contents):
-            # Force reupload attempt in spite of info object being present
-            with patch.object(MirrorService, 'is_mirrored', return_value=False):
-                with self.assertRaises(AssertionError) as e:
-                    self.mirror_controller.mirror(event)
+            with self.assertRaises(AssertionError) as e:
+                self.mirror_controller.mirror(event)
             self.assertTrue(R.caused(e.exception))
+
+    def _test_reuploaded_file(self, file_message):
+        event = [self._mock_sqs_record(file_message)]
+        with patch.object(MirrorService, '_download', return_value=self._file_contents):
+            with self.assertRaises(AssertionError) as e:
+                self.mirror_controller.mirror(event)
+        self.assertTrue(R.caused(e.exception))
+        self.assertEqual(e.exception.args[0].args[0], 'File object is already present')
 
     def test_info_schema(self):
         client = http_client(log)

@@ -1,6 +1,5 @@
 from typing import (
     Iterable,
-    Literal,
     Self,
     Sequence,
     TYPE_CHECKING,
@@ -14,6 +13,9 @@ from azul import (
     JSON,
     config,
     iif,
+)
+from azul.digests import (
+    Digest,
 )
 from azul.indexer.document import (
     Aggregate,
@@ -505,5 +507,6 @@ class HCAFile(File):
                    s3_etag=descriptor.get('s3_etag'),
                    drs_uri=drs_uri)
 
-    def digest(self) -> tuple[str, Literal['sha256']]:
-        return self.sha256, 'sha256'
+    @property
+    def digest(self) -> Digest:
+        return Digest(value=self.sha256, type='sha256')
