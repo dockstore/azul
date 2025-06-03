@@ -48,6 +48,12 @@ def main(argv):
     sp.add_argument('queue', metavar='QUEUE_NAME',
                     help='Name of the queue to purge.')
 
+    sps.add_parser('purge_indexer',
+                   help='Purge the queues related to indexing in the current deployment. Use with caution. '
+                        'The messages will be lost forever.')
+    sps.add_parser('purge_mirror',
+                   help='Purge the queues related to indexing in the current deployment. Use with caution. '
+                        'The messages will be lost forever.')
     sps.add_parser('purge_all',
                    help='Purge all messages in all queues in the current deployment. Use with caution. The '
                         'messages will be lost forever.')
@@ -64,7 +70,7 @@ def main(argv):
 
     args = p.parse_args(argv)
 
-    if args.command in ('list', 'purge', 'purge_all'):
+    if args.command in ('list', 'purge', 'purge_all', 'purge_indexer', 'purge_mirror'):
         queues = Queues()
         if args.command == 'list':
             queues.list()
@@ -72,6 +78,10 @@ def main(argv):
             queues.purge(args.queue)
         elif args.command == 'purge_all':
             queues.purge_all()
+        elif args.command == 'purge_indexer':
+            queues.purge_indexer()
+        elif args.command == 'purge_mirror':
+            queues.purge_mirror()
         else:
             assert False, args.command
     elif args.command in ('dump', 'dump_all'):
