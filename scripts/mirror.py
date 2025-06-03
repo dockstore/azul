@@ -76,6 +76,9 @@ def main(args):
     parser.add_argument('--mirror',
                         action='store_true',
                         help='Mirror files in the specified catalog and sources')
+    parser.add_argument('--purge',
+                        action='store_true',
+                        help='Purge the mirror queue before taking any other action.')
     parser.add_argument('--no-wait',
                         action='store_false',
                         dest='wait',
@@ -84,6 +87,8 @@ def main(args):
     assert config.enable_mirroring, R('Mirroring is not enabled')
 
     azul = AzulClient()
+    if args.purge:
+        azul.queues.purge_mirror()
     if args.mirror:
         mirror_catalog(azul, args.catalog, set(args.sources), args.wait)
 
