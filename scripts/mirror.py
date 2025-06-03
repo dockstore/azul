@@ -25,8 +25,10 @@ from azul.logging import (
 log = logging.getLogger(__name__)
 
 
-def mirror_catalog(catalog: CatalogName, source_globs: set[str], wait: bool):
-    azul = AzulClient()
+def mirror_catalog(azul: AzulClient,
+                   catalog: CatalogName,
+                   source_globs: set[str],
+                   wait: bool):
     plugin = azul.repository_plugin(catalog)
     fail_queue = config.mirror_queue.to_fail.name
     assert azul.is_queue_empty(fail_queue), R(
@@ -80,8 +82,10 @@ def main(args):
                         help='Do not wait for queues to empty before exiting script.')
     args = parser.parse_args(args)
     assert config.enable_mirroring, R('Mirroring is not enabled')
+
+    azul = AzulClient()
     if args.mirror:
-        mirror_catalog(args.catalog, set(args.sources), args.wait)
+        mirror_catalog(azul, args.catalog, set(args.sources), args.wait)
 
 
 if __name__ == '__main__':
