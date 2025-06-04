@@ -582,7 +582,7 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
         self.queues.wait_to_stabilize(config.indexer_queue_names, timeout)
 
     def wait_for_mirroring(self):
-        self.queues.wait_to_stabilize([config.mirror_queue.name],
+        self.queues.wait_to_stabilize(config.mirror_queue_names,
                                       config.mirror_lambda_timeout)
 
     def is_queue_empty(self, queue_name: str) -> bool:
