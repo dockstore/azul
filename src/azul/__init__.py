@@ -1566,10 +1566,16 @@ class Config:
         ]
 
     @property
+    def mirror_queue_names(self) -> list[str]:
+        return [
+            self.mirror_queue.name
+        ]
+
+    @property
     def work_queue_names(self) -> list[str]:
         return [
             *self.indexer_queue_names,
-            *([self.mirror_queue.name] if self.enable_mirroring else []),
+            *(self.mirror_queue_names if self.enable_mirroring else []),
         ]
 
     url_shortener_whitelist = [
