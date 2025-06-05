@@ -35,6 +35,9 @@ from more_itertools import (
     one,
 )
 
+from azul import (
+    R,
+)
 from azul.indexer.document import (
     EntityReference,
 )
@@ -67,6 +70,9 @@ from humancellatlas.data.metadata.api import (
 )
 from humancellatlas.data.metadata.helpers.json import (
     as_json,
+)
+from humancellatlas.data.metadata.helpers.schema_validation import (
+    SchemaValidator,
 )
 from humancellatlas.data.metadata.helpers.staging_area import (
     CannedStagingAreaFactory,
@@ -790,6 +796,21 @@ class TestSchema(AzulUnitTestCase):
             self.valid_schema_domains
         )
         self.assertEqual(expected, cm.exception.args[0].args)
+
+    def test_schema_validation(self):
+        validator = SchemaValidator()
+        test_data = {
+            'describedBy': 'https://schema.humancellatlas.org/type/file/9.6.0/sequence_file',
+            'schema_type': 'file',
+            'file_core': {'file_name': 'foo.fastq.gz', 'format': 'fastq.gz'},
+            'read_index': 'read1',
+        }
+        validator.validate_json(test_data, 'foo.json')
+
+        test_data['read_index'] = 'bad-value'
+        with self.assertRaises(AssertionError) as cm:
+            validator.validate_json(test_data, 'foo.json')
+        self.assertTrue(R.caused(cm.exception))
 
 
 def load_tests(_loader, tests, _ignore):

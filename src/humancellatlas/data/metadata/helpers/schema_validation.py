@@ -18,7 +18,7 @@ from referencing import (
 import requests
 
 from azul import (
-    RequirementError,
+    R,
     cached_property,
 )
 from azul.types import (
@@ -33,15 +33,15 @@ class SchemaValidator:
     def validate_json(self, file_json: JSON, file_name: str):
         try:
             schema = self._download_json_file(file_json['describedBy'])
-        except json.decoder.JSONDecodeError as e:
+        except json.decoder.JSONDecodeError:
             schema_url = file_json['describedBy']
-            raise RequirementError('Failed to parse schema JSON',
-                                   file_name, schema_url) from e
-        self.validator.evolve(schema=schema)
+            assert False, R(
+                'Failed to parse schema JSON', file_name, schema_url)
+        self.validator = self.validator.evolve(schema=schema)
         try:
             self.validator.validate(file_json)
         except ValidationError as e:
-            raise RequirementError(*e.args, file_name) from e
+            assert False, R(*e.args, file_name)
 
     @lru_cache(maxsize=None)
     def _download_json_file(self, file_url: str) -> JSON:
