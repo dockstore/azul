@@ -158,7 +158,7 @@ class TestHttp(AzulUnitTestCase):
                             ]
                         )
                         if i < calls - 1:
-                            expected_logs.append(f'^{prefix}Sleeping 1 to honor Retry-After header$')
+                            expected_logs.append(f'^{prefix}Sleeping 1s to honor Retry-After header$')
                 for expected_log, actual_log in zip(expected_logs, logs.output, strict=True):
                     self.assertRegex(actual_log, expected_log)
 
