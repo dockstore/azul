@@ -376,7 +376,7 @@ class StatusRetryHttpClient(HttpClientDecorator):
                         else:
                             retry_after = int(retry_after)
                             if logging_client is not None:
-                                logging_client.log('Sleeping %d to honor Retry-After header', retry_after)
+                                logging_client.log('Sleeping %ds to honor Retry-After header', retry_after)
                             time.sleep(retry_after)
                 else:
                     if retries.raise_on_status:
