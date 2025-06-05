@@ -67,7 +67,6 @@ from azul.json import (
     copy_json,
 )
 from azul.logging import (
-    BodyType,
     http_body_log_message,
 )
 from azul.openapi import (
@@ -86,6 +85,7 @@ from azul.types import (
     json_dict,
     json_list,
     json_str,
+    not_none,
 )
 
 log = logging.getLogger(__name__)
@@ -195,7 +195,7 @@ class AzulChaliceApp(Chalice):
                     patched_event_source_handler)
 
     def _logging_middleware(self, event, get_response):
-        self._log_request()
+        self._log_request(not_none(self.current_request))
         response = get_response(event)
         self._log_response(response)
         return response
@@ -461,26 +461,24 @@ class AzulChaliceApp(Chalice):
         else:
             log.info('Authenticated request as %r', auth)
 
-    def _log_request(self):
-        assert self.current_request is not None
-        context = self.current_request.context
-        request_info = {
-            'query': self.current_request.query_params,
-            'headers': self.current_request.headers
+    def _log_request(self, request: Request) -> None:
+        info = {
+            'query': request.query_params,
+            'headers': request.headers
         }
+        info = json.dumps(info, cls=self._LogJSONEncoder)
         log.info('Received %s request for %r, with %s.',
-                 context['httpMethod'],
-                 context['path'],
-                 json.dumps(request_info, cls=self._LogJSONEncoder))
-        self._log_body('request', self.current_request.json_body)
+                 request.context['httpMethod'], request.context['path'], info)
+        log.info(http_body_log_message('request', request.json_body))
 
-    def _log_response(self, response):
+    def _log_response(self, response: Response) -> None:
+        info = {
+            'headers': response.headers
+        }
+        info = json.dumps(info, cls=self._LogJSONEncoder)
         log.info('Returning %i response with headers %s.',
-                 response.status_code, json.dumps(response.headers, cls=self._LogJSONEncoder))
-        self._log_body('response', response.body)
-
-    def _log_body(self, body_type: BodyType, body: str | JSON | None):
-        log.info(http_body_log_message(body_type, body))
+                 response.status_code, info)
+        log.info(http_body_log_message('response', response.body))
 
     absent = object()
 

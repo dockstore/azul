@@ -147,11 +147,11 @@ class TestHttp(AzulUnitTestCase):
                             [
                                 rf'^{prefix}Got 503 response after \d.\d\d\ds from GET to {url}$',
                                 rf'^{prefix}… with response headers HTTPHeaderDict\({http_header_pattern}\)$',
-                                f"^{prefix}… with response body size of 0 bytes b''$",
+                                f"^{prefix}… with a 0 byte long response body starting in b''$",
                             ]
                         )
                         if i < calls - 1:
-                            expected_logs.append(f'{prefix}Sleeping 1 to honor Retry-After header')
+                            expected_logs.append(f'^{prefix}Sleeping 1 to honor Retry-After header$')
                 for expected_log, actual_log in zip(expected_logs, logs.output, strict=True):
                     self.assertRegex(actual_log, expected_log)
 

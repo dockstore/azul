@@ -175,54 +175,42 @@ def silenced_es_logger():
             assert es_log.level == original_log_level
 
 
-type BodyType = Literal['request', 'response']
-
-http_body_log_prefix_len = 1024
+json_body_types = reify(JSON)
 
 
-def http_body_log_message(body_type: BodyType,
+def http_body_log_message(kind: Literal['request', 'response'],
                           body: bytes | bytearray | str | IO[bytes] | IO[str] | JSON | None
                           ) -> str:
     """
-    Returns a formatted log message for request/response bodies. The level set
-    in AZUL_DEBUG determines whether the body content is logged in full,
+    Returns a log message suitable for logging the given request/response body.
+    The level set in AZUL_DEBUG determines whether the body is logged in full,
     truncated, or omitted entirely. Absent or non-printable bodies (such as
     streams) are handled with a descriptive message.
 
-    :param body_type: The type of body to specify in the message.
+    :param kind: wether the given body represents a request or a response
 
-    :param body: The body content to use in the message.
-
+    :param body: the request or response body to be logged
     """
     if body is None:
-        return f'… without {body_type} body'
-    elif azul.config.debug > 0:
-        if isinstance(body, (bytes, bytearray, str, reify(JSON))):
-            body_msg = _http_body_log_message(body)
-        else:
-            return f'… with nonprintable body ({type(body)!r})'
-    else:
+        return f'… without {kind} body'
+    elif azul.config.debug == 0:
         if isinstance(body, (bytes, bytearray, str)):
-            body_msg = f'size of {len(body)} bytes'
-        else:
-            body_msg = 'not empty'
-    return f'… with {body_type} body {body_msg}'
-
-
-def _http_body_log_message(body: bytes | bytearray | str | JSON) -> str:
-    body_len = None
-    if azul.config.debug > 1:
+            return f'… with a {len(body)} byte long {kind} body of type {type(body)}'
+    elif azul.config.debug == 1:
+        max_len = 1024
+        if isinstance(body, json_body_types):
+            body = json_head(max_len, body)
+            return f'… with a {kind} body starting in {body!r}'
+        elif isinstance(body, (bytes, bytearray, str)):
+            # https://github.com/python/typing/discussions/1911
+            body = trunc_ellipses(body, max_len)  # type: ignore[type-var]
+            return f'… with a {len(body)} byte long {kind} body starting in {body!r}'
+    elif azul.config.debug > 1:
         if isinstance(body, (bytes, bytearray)):
             body = body.decode(errors='ignore')
-        elif isinstance(body, reify(JSON)):
+        elif isinstance(body, json_body_types):
             body = json.dumps(body)
-        body_len = len(body)
+        return f'… with the {len(body)} byte long {kind} body {body!r}'
     else:
-        if isinstance(body, reify(JSON)):
-            body = json_head(http_body_log_prefix_len, body)
-        else:
-            body_len = len(body)
-            # https://github.com/python/typing/discussions/1911
-            body = trunc_ellipses(body, max_len=http_body_log_prefix_len)  # type: ignore[type-var]
-    size_msg = f'size of {body_len} bytes ' if body_len is not None else ''
-    return f'{size_msg}{body!r}'
+        assert False
+    return f'… with {kind} body of type ({type(body)!r})'
