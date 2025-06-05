@@ -683,9 +683,7 @@ dashboard_body = {
                         }
                     ],
                     [
-                        'AWS/Lambda',
-                        'Errors',
-                        'FunctionName',
+                        '...',
                         config.indexer_function_name('contribute_retry'),
                         {
                             'label': 'contribute_retry',
@@ -693,9 +691,7 @@ dashboard_body = {
                         }
                     ],
                     [
-                        'AWS/Lambda',
-                        'Errors',
-                        'FunctionName',
+                        '...',
                         config.indexer_function_name('aggregate'),
                         {
                             'label': 'aggregate',
@@ -703,9 +699,7 @@ dashboard_body = {
                         }
                     ],
                     [
-                        'AWS/Lambda',
-                        'Errors',
-                        'FunctionName',
+                        '...',
                         config.indexer_function_name('aggregate_retry'),
                         {
                             'label': 'aggregate_retry',
