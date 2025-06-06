@@ -64,7 +64,7 @@ class TestMirrorController(DCP2TestCase,
         return 'indexer'
 
     def test_mirroring(self):
-        self._create_mock_queues(*config.mirror_queue_names)
+        self._create_mock_queues(config.mirror_queue_names)
         with self.subTest('remote_mirror'):
             source_message = self._test_remote_mirror()
 

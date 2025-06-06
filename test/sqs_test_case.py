@@ -27,7 +27,7 @@ from azul_test_case import (
 
 class SqsTestCase(AzulUnitTestCase):
 
-    def _create_mock_queues(self, *queue_names: str) -> None:
+    def _create_mock_queues(self, queue_names: list[str]) -> None:
         if queue_names:
             self.assertIsSubset(set(queue_names), set(config.all_queue_names))
         else:
@@ -39,7 +39,7 @@ class SqsTestCase(AzulUnitTestCase):
                              Attributes=dict(FifoQueue='true') if queue_name.endswith('.fifo') else {})
 
     def _create_mock_notifications_queue(self):
-        self._create_mock_queues(config.notifications_queue.name)
+        self._create_mock_queues([config.notifications_queue.name])
 
 
 class WorkQueueTestCase(SqsTestCase):
