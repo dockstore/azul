@@ -573,17 +573,20 @@ def emit(t: T, target_branch: str):
                     ] if t is T.hotfix else [
                     ]),
             ]),
+            {
+                'type': 'h2',
+                'content': 'Author (before every review)'
+            },
+            {
+                'type': 'cli',
+                'content': iif(t in (T.backport, T.promotion),
+                               (
+                                   f'PR branch is up to date (if not, merge `{target_branch}` '
+                                   f'into PR branch to integrate upstream changes)'
+                               ),
+                               f'Rebased PR branch on `{target_branch}`, squashed fixups from prior reviews')
+            },
             *iif(t is not T.promotion, [
-                {
-                    'type': 'h2',
-                    'content': 'Author (before every review)'
-                },
-                {
-                    'type': 'cli',
-                    'content': iif(t is T.backport,
-                                   f'Merged `{target_branch}` into PR branch to integrate upstream changes',
-                                   f'Rebased PR branch on `{target_branch}`, squashed old fixups')
-                },
                 {
                     'type': 'cli',
                     'content': 'Ran `make requirements_update`',
@@ -612,7 +615,7 @@ def emit(t: T, target_branch: str):
                 },
                 {
                     'type': 'cli',
-                    'content': 'PR is marked as approved'
+                    'content': 'Actually approved the PR'
                 },
                 {
                     'type': 'cli',
@@ -833,7 +836,7 @@ def emit(t: T, target_branch: str):
             ))),
             {
                 'type': 'cli',
-                'content': 'Confirmed all checks in PR are OK and the PR is mergeable'
+                'content': 'All status checks passed and the PR is mergeable'
             },
             {
                 'type': 'cli',

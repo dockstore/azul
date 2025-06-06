@@ -31,7 +31,7 @@ Connected issue: #0000
 
 ### Author (before every review)
 
-- [ ] Rebased PR branch on `develop`, squashed old fixups
+- [ ] Rebased PR branch on `develop`, squashed fixups from prior reviews
 - [ ] Ran `make requirements_update` <sub>or this PR does not modify `requirements*.txt`, `common.mk`, `Makefile` and `Dockerfile`</sub>
 - [ ] Added `R` tag to commit title <sub>or this PR does not modify `requirements*.txt`</sub>
 - [ ] This PR is labeled `reqs` <sub>or does not modify `requirements*.txt`</sub>
@@ -81,7 +81,7 @@ Connected issue: #0000
 - [ ] Build passes in `anvilbox` deployment
 - [ ] Reviewed build logs for anomalies in `sandbox` deployment
 - [ ] Reviewed build logs for anomalies in `anvilbox` deployment
-- [ ] Confirmed all checks in PR are OK and the PR is mergeable
+- [ ] All status checks passed and the PR is mergeable
 - [ ] The title of the merge commit starts with the title of this PR
 - [ ] Added PR # reference to merge commit title
 - [ ] Collected commit title tags in merge commit title <sub>but excluded any `p` tags</sub>

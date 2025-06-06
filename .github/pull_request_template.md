@@ -73,7 +73,7 @@ title is `Fix: ` followed by the issue title
 
 ### Author (before every review)
 
-- [ ] Rebased PR branch on `develop`, squashed old fixups
+- [ ] Rebased PR branch on `develop`, squashed fixups from prior reviews
 - [ ] Ran `make requirements_update` <sub>or this PR does not modify `requirements*.txt`, `common.mk`, `Makefile` and `Dockerfile`</sub>
 - [ ] Added `R` tag to commit title <sub>or this PR does not modify `requirements*.txt`</sub>
 - [ ] This PR is labeled `reqs` <sub>or does not modify `requirements*.txt`</sub>
@@ -82,7 +82,7 @@ title is `Fix: ` followed by the issue title
 
 ### Peer reviewer (after approval)
 
-- [ ] PR is marked as approved
+- [ ] Actually approved the PR
 - [ ] PR is not a draft
 - [ ] Ticket is in *Review requested* column
 - [ ] PR is awaiting requested review from system administrator
@@ -141,7 +141,7 @@ title is `Fix: ` followed by the issue title
 - [ ] Started reindex in `anvilbox` <sub>or this PR is not labeled `reindex:anvildev`</sub>
 - [ ] Checked for failures in `sandbox` <sub>or this PR is not labeled `reindex:dev`</sub>
 - [ ] Checked for failures in `anvilbox` <sub>or this PR is not labeled `reindex:anvildev`</sub>
-- [ ] Confirmed all checks in PR are OK and the PR is mergeable
+- [ ] All status checks passed and the PR is mergeable
 - [ ] The title of the merge commit starts with the title of this PR
 - [ ] Added PR # reference to merge commit title
 - [ ] Collected commit title tags in merge commit title <sub>but only included `p` if the PR is also labeled `partial`</sub>
