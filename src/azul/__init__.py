@@ -1564,6 +1564,10 @@ class Config:
         ]
 
     @property
+    def indexer_queue_names(self) -> list[str]:
+        return self.indexer_work_queue_names + self.indexer_fail_queue_names
+
+    @property
     def indexer_work_queue_names(self) -> list[str]:
         return [
             q.derive(retry=retry).name
@@ -1577,6 +1581,10 @@ class Config:
             self.tallies_queue.to_fail.name,
             self.notifications_queue.to_fail.name
         ]
+
+    @property
+    def mirror_queue_names(self) -> list[str]:
+        return self.mirror_work_queue_names + self.mirror_fail_queue_names
 
     @property
     def mirror_work_queue_names(self) -> list[str]:
