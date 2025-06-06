@@ -34,6 +34,11 @@ Connected issue: #0000
 - [ ] This PR is labeled `deploy:runner` <sub>or does not require deploying the `runner` image</sub>
 
 
+### Author (before every review)
+
+- [ ] PR branch is up to date (if not, merge `prod` into PR branch to integrate upstream changes)
+
+
 ### System administrator (after approval)
 
 - [ ] Actually approved the PR
@@ -61,7 +66,7 @@ Connected issue: #0000
 ### Operator (before pushing merge the commit)
 
 - [ ] Ran `_select prod.gitlab && make -C terraform/gitlab/runner` <sub>or this PR is not labeled `deploy:runner`</sub>
-- [ ] Confirmed all checks in PR are OK and the PR is mergeable
+- [ ] All status checks passed and the PR is mergeable
 - [ ] The title of the merge commit starts with the title of this PR
 - [ ] Added PR # reference to merge commit title
 - [ ] Collected commit title tags in merge commit title <sub>but excluded any `p` tags</sub>

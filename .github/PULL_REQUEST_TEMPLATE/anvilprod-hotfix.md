@@ -28,7 +28,7 @@ Connected issue: #0000
 
 ### Author (before every review)
 
-- [ ] Rebased PR branch on `anvilprod`, squashed old fixups
+- [ ] Rebased PR branch on `anvilprod`, squashed fixups from prior reviews
 - [ ] Ran `make requirements_update` <sub>or this PR does not modify `requirements*.txt`, `common.mk`, `Makefile` and `Dockerfile`</sub>
 - [ ] Added `R` tag to commit title <sub>or this PR does not modify `requirements*.txt`</sub>
 - [ ] This PR is labeled `reqs` <sub>or does not modify `requirements*.txt`</sub>
@@ -53,7 +53,7 @@ Connected issue: #0000
 - [ ] Pushed PR branch to GitLab `anvilprod` <sub>or PR is labeled `no sandbox`</sub>
 - [ ] Build passes in `hammerbox` deployment <sub>or PR is labeled `no sandbox`</sub>
 - [ ] Reviewed build logs for anomalies in `hammerbox` deployment <sub>or PR is labeled `no sandbox`</sub>
-- [ ] Confirmed all checks in PR are OK and the PR is mergeable
+- [ ] All status checks passed and the PR is mergeable
 - [ ] The title of the merge commit starts with the title of this PR
 - [ ] Added PR # reference to merge commit title
 - [ ] Collected commit title tags in merge commit title <sub>but excluded any `p` tags</sub>

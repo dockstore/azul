@@ -34,6 +34,11 @@ Connected issue: #0000
 - [ ] This PR is labeled `deploy:runner` <sub>or does not require deploying the `runner` image</sub>
 
 
+### Author (before every review)
+
+- [ ] PR branch is up to date (if not, merge `anvilprod` into PR branch to integrate upstream changes)
+
+
 ### System administrator (after approval)
 
 - [ ] Actually approved the PR
@@ -65,7 +70,7 @@ Connected issue: #0000
 - [ ] Pushed PR branch to GitLab `anvilprod` <sub>or PR is labeled `no sandbox`</sub>
 - [ ] Build passes in `hammerbox` deployment <sub>or PR is labeled `no sandbox`</sub>
 - [ ] Reviewed build logs for anomalies in `hammerbox` deployment <sub>or PR is labeled `no sandbox`</sub>
-- [ ] Confirmed all checks in PR are OK and the PR is mergeable
+- [ ] All status checks passed and the PR is mergeable
 - [ ] The title of the merge commit starts with the title of this PR
 - [ ] Added PR # reference to merge commit title
 - [ ] Collected commit title tags in merge commit title <sub>but excluded any `p` tags</sub>
