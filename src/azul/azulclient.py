@@ -579,11 +579,14 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
         # accommodate the most probable scenarios for transient stalls.
         timeout = max(config.contribution_lambda_timeout(retry=True),
                       config.aggregation_lambda_timeout(retry=True))
-        self.queues.wait_to_stabilize(config.indexer_queue_names, timeout)
+        self.queues.wait_to_stabilize(config.indexer_queue_names,
+                                      timeout,
+                                      detect_stall=True)
 
     def wait_for_mirroring(self):
         self.queues.wait_to_stabilize(config.mirror_queue_names,
-                                      config.mirror_lambda_timeout)
+                                      config.mirror_lambda_timeout,
+                                      detect_stall=False)
 
     def is_queue_empty(self, queue_name: str) -> bool:
         queues = self.queues.get_queues([queue_name])
