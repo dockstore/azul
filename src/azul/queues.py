@@ -405,7 +405,7 @@ class Queues:
         self.purge_queues_safely(queues)
 
     def purge_mirror(self):
-        queues = self.get_queues(config.mirror_queue_names)
+        queues = self.get_queues(config.mirror_work_queue_names)
         self.purge_queues_safely(queues)
 
     def purge_queues_safely(self, queues: Mapping[str, 'Queue']):

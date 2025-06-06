@@ -1553,7 +1553,7 @@ class Config:
     def work_queue_names(self) -> list[str]:
         return [
             *self.indexer_work_queue_names,
-            *(self.mirror_queue_names if self.enable_mirroring else []),
+            *(self.mirror_work_queue_names if self.enable_mirroring else []),
         ]
 
     @property
@@ -1579,7 +1579,7 @@ class Config:
         ]
 
     @property
-    def mirror_queue_names(self) -> list[str]:
+    def mirror_work_queue_names(self) -> list[str]:
         return [
             self.mirror_queue.name
         ]
