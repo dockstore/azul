@@ -1552,7 +1552,7 @@ class Config:
     @property
     def work_queue_names(self) -> list[str]:
         return [
-            *self.indexer_queue_names,
+            *self.indexer_work_queue_names,
             *(self.mirror_queue_names if self.enable_mirroring else []),
         ]
 
@@ -1564,7 +1564,7 @@ class Config:
         ]
 
     @property
-    def indexer_queue_names(self) -> list[str]:
+    def indexer_work_queue_names(self) -> list[str]:
         return [
             q.derive(retry=retry).name
             for q in [self.notifications_queue, self.tallies_queue]

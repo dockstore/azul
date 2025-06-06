@@ -549,7 +549,7 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
 
         :param create_indices: whether to create the indexes at the end.
         """
-        indexer_queues = self.queues.get_queues(config.indexer_queue_names)
+        indexer_queues = self.queues.get_queues(config.indexer_work_queue_names)
         if purge_queues:
             log.info('Disabling lambdas ...')
             self.queues.manage_lambdas(indexer_queues, enable=False)
@@ -579,7 +579,7 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
         # accommodate the most probable scenarios for transient stalls.
         timeout = max(config.contribution_lambda_timeout(retry=True),
                       config.aggregation_lambda_timeout(retry=True))
-        self.queues.wait_to_stabilize(config.indexer_queue_names,
+        self.queues.wait_to_stabilize(config.indexer_work_queue_names,
                                       timeout,
                                       detect_stall=True)
 
