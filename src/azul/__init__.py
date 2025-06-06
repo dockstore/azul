@@ -1560,7 +1560,7 @@ class Config:
     def fail_queue_names(self) -> list[str]:
         return [
             *self.indexer_fail_queue_names,
-            *([self.mirror_queue.to_fail.name] if self.enable_mirroring else []),
+            *(self.mirror_fail_queue_names if self.enable_mirroring else []),
         ]
 
     @property
@@ -1582,6 +1582,12 @@ class Config:
     def mirror_work_queue_names(self) -> list[str]:
         return [
             self.mirror_queue.name
+        ]
+
+    @property
+    def mirror_fail_queue_names(self):
+        return [
+            self.mirror_queue.to_fail.name
         ]
 
     url_shortener_whitelist = [
