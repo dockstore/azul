@@ -604,33 +604,32 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
         self.queue_mirror_messages(messages)
 
     def _get_non_empty_fail_queues(self) -> set[str]:
-        non_empty_queues = set()
-        for queue in config.indexer_fail_queue_names:
-            if not self.is_queue_empty(queue):
-                non_empty_queues.add(queue)
-        return non_empty_queues
+        return {
+            queue
+            for queue in config.indexer_fail_queue_names
+            if not self.is_queue_empty(queue)
+        }
 
     _common_fail_queue_msg = (
-        'run `manage_queue.py dump --delete <queue_name>` to empty them. '
-        'Note that this may require reseting the indexer before dumping '
-        'the fail queues.'
+        "If needed, empty the work queues via 'manage_queues.py purge_indexer'. "
+        "Then run 'manage_queues.py dump --delete' for each fail queue listed: "
     )
-
-    def require_no_failures_after(self):
-        queues = self._get_non_empty_fail_queues()
-        assert 0 == len(queues), R(
-            'Indexing operation has failed: '
-            'messages were added to a fail queue during this last run; '
-            f'{self._common_fail_queue_msg}',
-            queues
-        )
 
     def require_no_failures_before(self):
         queues = self._get_non_empty_fail_queues()
         assert 0 == len(queues), R(
             'Cannot begin indexing because a previous operation failed: '
-            'there are still messages in a fail queue; '
-            f'{self._common_fail_queue_msg}',
+            'At least one fail queue is not empty. ' +
+            self._common_fail_queue_msg,
+            queues
+        )
+
+    def require_no_failures_after(self):
+        queues = self._get_non_empty_fail_queues()
+        assert 0 == len(queues), R(
+            'At least one fail queue is not empty, indicating that there were '
+            'persistent indexer failures. ' +
+            self._common_fail_queue_msg,
             queues
         )
 
