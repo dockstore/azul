@@ -27,8 +27,8 @@ from azul_test_case import (
 
 class SqsTestCase(AzulUnitTestCase):
 
-    def _create_mock_queues(self, queue_names: list[str]) -> None:
-        if queue_names:
+    def _create_mock_queues(self, queue_names: list[str] | None = None) -> None:
+        if queue_names is not None:
             self.assertIsSubset(set(queue_names), set(config.all_queue_names))
         else:
             queue_names = config.all_queue_names
