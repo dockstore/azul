@@ -1372,7 +1372,7 @@ dashboard_body = {
                 'metrics': [
                     [
                         {
-                            'expression': '(nv+ni+nd+nrv+nri+nrd) / IF(0<DIFF(nv+ni+nd+nrv+nri+nrd),0,-DIFF(nv+ni+nd+nrv+nri+nrd)) * DIFF_TIME(nv+ni+nd+nrv+nri+nrd) / 3600',
+                            'expression': 'IF(DIFF(nv+ni+nd+nrv+nri+nrd) < 0, ((nv+ni+nd+nrv+nri+nrd) / -DIFF(nv+ni+nd+nrv+nri+nrd)) * DIFF_TIME(nv+ni+nd+nrv+nri+nrd) / 3600)',
                             'label': 'notifications',
                             'id': 'n',
                             'region': config.region
@@ -1440,7 +1440,7 @@ dashboard_body = {
                     ],
                     [
                         {
-                            'expression': '(tv+ti+td+trv+tri+trd) / IF(0<DIFF(tv+ti+td+trv+tri+trd),0,-DIFF(tv+ti+td+trv+tri+trd)) * DIFF_TIME(tv+ti+td+trv+tri+trd) / 3600',
+                            'expression': 'IF(DIFF(tv+ti+td+trv+tri+trd) < 0, ((tv+ti+td+trv+tri+trd) / -DIFF(tv+ti+td+trv+tri+trd)) * DIFF_TIME(tv+ti+td+trv+tri+trd) / 3600)',
                             'label': 'tallies',
                             'id': 't',
                             'region': config.region,
