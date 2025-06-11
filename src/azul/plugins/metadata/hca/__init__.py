@@ -496,6 +496,8 @@ class HCAFile(File):
                         name: str,
                         drs_uri: str | None) -> Self:
         content_type = descriptor['content_type']
+        # FIXME: Obsolete MIME parameter in file content types
+        #        https://github.com/HumanCellAtlas/dcp2/issues/73
         parameter_suffix = '; dcp-type=data'
         if content_type.endswith(parameter_suffix):
             content_type = content_type.removesuffix(parameter_suffix)
