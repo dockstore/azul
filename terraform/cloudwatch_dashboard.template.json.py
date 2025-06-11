@@ -7,6 +7,7 @@ from more_itertools import (
 )
 
 from azul import (
+    JSON,
     R,
     config,
     iif,
@@ -25,14 +26,30 @@ es_instance_count = (
 def dashboard_body(name: str):
     valid_names = ['indexer', *iif(config.enable_mirroring, ['mirror'])]
     assert name in valid_names, R('Invalid dashboard name', name)
+
+    def coordinates(**kwargs: tuple[int, int]) -> JSON:
+        """
+        Return a dashboard widget's coordinates. Argument keys are dashboard
+        names, and values are (col, row) pairs, with (0, 0) representing the
+        first cell in the top-left corner of the dashboard.
+        """
+        try:
+            x, y = kwargs[name]
+        except KeyError:
+            # Since coordinates() is called as part of a call to non-lazy iif()
+            # we need to handle the case where coordinates aren't provided for a
+            # dashboard that won't include the widget.
+            return {}
+        else:
+            assert x >= 0 and y >= 0, (x, y)
+            return {'x': x * 12, 'y': y * 6, 'width': 12, 'height': 6}
+
+    is_indexer = name == 'indexer'
     return {
         'widgets': [
-            *iif(name == 'indexer', [
+            *iif(is_indexer, [
                 {
-                    'height': 6,
-                    'width': 12,
-                    'y': 6,
-                    'x': 12,
+                    **coordinates(indexer=(1, 1)),
                     'type': 'log',
                     'properties': {
                         'query': dedent(f'''\
@@ -57,10 +74,7 @@ def dashboard_body(name: str):
                 }
             ]),
             {
-                'height': 6,
-                'width': 12,
-                'y': 12,
-                'x': 0,
+                **coordinates(indexer=(0, 2), mirror=(0, 2)),
                 'type': 'metric',
                 'properties': {
                     'metrics': (
@@ -299,7 +313,7 @@ def dashboard_body(name: str):
                                 }
                             ]
                         ]
-                        if name == 'indexer' else
+                        if is_indexer else
                         [
                             [
                                 {
@@ -389,16 +403,13 @@ def dashboard_body(name: str):
                 }
             },
             {
-                'height': 6,
-                'width': 12,
-                'y': 0,
-                'x': 0,
+                **coordinates(indexer=(0, 0), mirror=(0, 0)),
                 'type': 'log',
                 'properties': {
                     'query': (
                         f"SOURCE '/aws/lambda/{config.indexer_function_name('contribute')}'" +
                         f"| SOURCE '/aws/lambda/{config.indexer_function_name('contribute_retry')}'"
-                        if name == 'indexer' else
+                        if is_indexer else
                         f"SOURCE '/aws/lambda/{config.indexer_function_name('mirror')}'"
                     ) + dedent(f'''\
                         | fields strcontains(@message, 'Worker successfully handled') as success,
@@ -413,18 +424,15 @@ def dashboard_body(name: str):
                     'stacked': True,
                     'title': (
                         'Contribution outcomes in # of notifications'
-                        if name == 'indexer' else
+                        if is_indexer else
                         'Mirror outcomes in # of messages'
                     ),
                     'view': 'timeSeries'
                 }
             },
-            *iif(name == 'indexer', [
+            *iif(is_indexer, [
                 {
-                    'height': 6,
-                    'width': 12,
-                    'y': 24,
-                    'x': 12,
+                    **coordinates(indexer=(1, 4)),
                     'type': 'metric',
                     'properties': {
                         'metrics': [
@@ -532,12 +540,9 @@ def dashboard_body(name: str):
                     }
                 }
             ]),
-            *iif(name == 'indexer', [
+            *iif(is_indexer, [
                 {
-                    'height': 6,
-                    'width': 12,
-                    'y': 12,
-                    'x': 12,
+                    **coordinates(indexer=(1, 2)),
                     'type': 'log',
                     'properties': {
                         'query': dedent(f'''\
@@ -556,12 +561,9 @@ def dashboard_body(name: str):
                     }
                 }
             ]),
-            *iif(name == 'indexer', [
+            *iif(is_indexer, [
                 {
-                    'height': 6,
-                    'width': 12,
-                    'y': 30,
-                    'x': 12,
+                    **coordinates(indexer=(1, 5)),
                     'type': 'metric',
                     'properties': {
                         'view': 'timeSeries',
@@ -593,12 +595,9 @@ def dashboard_body(name: str):
                     }
                 }
             ]),
-            *iif(name == 'indexer', [
+            *iif(is_indexer, [
                 {
-                    'height': 6,
-                    'width': 12,
-                    'y': 36,
-                    'x': 12,
+                    **coordinates(indexer=(1, 6)),
                     'type': 'metric',
                     'properties': {
                         'metrics': [
@@ -698,12 +697,9 @@ def dashboard_body(name: str):
                     }
                 }
             ]),
-            *iif(name == 'indexer', [
+            *iif(is_indexer, [
                 {
-                    'height': 6,
-                    'width': 12,
-                    'y': 30,
-                    'x': 0,
+                    **coordinates(indexer=(0, 5)),
                     'type': 'log',
                     'properties': {
                         'query': dedent(f'''\
@@ -725,10 +721,7 @@ def dashboard_body(name: str):
                 }
             ]),
             {
-                'height': 6,
-                'width': 12,
-                'y': 72,
-                'x': 12,
+                **coordinates(indexer=(1, 12), mirror=(1, 4)),
                 'type': 'metric',
                 'properties': {
                     'metrics': (
@@ -764,7 +757,7 @@ def dashboard_body(name: str):
                                 }
                             ]
                         ]
-                        if name == 'indexer' else
+                        if is_indexer else
                         [
                             [
                                 'AWS/Lambda',
@@ -786,10 +779,7 @@ def dashboard_body(name: str):
                 }
             },
             {
-                'height': 6,
-                'width': 12,
-                'y': 60,
-                'x': 12,
+                **coordinates(indexer=(1, 10), mirror=(1, 5)),
                 'type': 'metric',
                 'properties': {
                     'metrics': (
@@ -829,7 +819,7 @@ def dashboard_body(name: str):
                                 }
                             ]
                         ]
-                        if name == 'indexer' else
+                        if is_indexer else
                         [
                             [
                                 'AWS/Lambda',
@@ -852,10 +842,7 @@ def dashboard_body(name: str):
                 }
             },
             {
-                'height': 6,
-                'width': 12,
-                'y': 48,
-                'x': 12,
+                **coordinates(indexer=(1, 8), mirror=(1, 2)),
                 'type': 'metric',
                 'properties': {
                     'metrics': (
@@ -891,7 +878,7 @@ def dashboard_body(name: str):
                                 }
                             ]
                         ]
-                        if name == 'indexer' else
+                        if is_indexer else
                         [
                             [
                                 'AWS/Lambda',
@@ -913,10 +900,7 @@ def dashboard_body(name: str):
                 }
             },
             {
-                'height': 6,
-                'width': 12,
-                'y': 54,
-                'x': 12,
+                **coordinates(indexer=(1, 9), mirror=(1, 3)),
                 'type': 'metric',
                 'properties': {
                     'metrics': (
@@ -952,7 +936,7 @@ def dashboard_body(name: str):
                                 }
                             ]
                         ]
-                        if name == 'indexer' else
+                        if is_indexer else
                         [
                             [
                                 'AWS/Lambda',
@@ -974,10 +958,7 @@ def dashboard_body(name: str):
                 }
             },
             {
-                'height': 6,
-                'width': 12,
-                'y': 42,
-                'x': 12,
+                **coordinates(indexer=(1, 7), mirror=(1, 1)),
                 'type': 'metric',
                 'properties': {
                     'metrics': (
@@ -1053,7 +1034,7 @@ def dashboard_body(name: str):
                                 }
                             ]
                         ]
-                        if name == 'indexer' else
+                        if is_indexer else
                         [
                             [
                                 {
@@ -1089,12 +1070,9 @@ def dashboard_body(name: str):
                     }
                 }
             },
-            *iif(name == 'indexer', [
+            *iif(is_indexer, [
                 {
-                    'height': 6,
-                    'width': 12,
-                    'y': 36,
-                    'x': 0,
+                    **coordinates(indexer=(0, 6)),
                     'type': 'log',
                     'properties': {
                         'query': dedent(f'''\
@@ -1111,12 +1089,9 @@ def dashboard_body(name: str):
                     }
                 }
             ]),
-            *iif(name == 'indexer', [
+            *iif(is_indexer, [
                 {
-                    'height': 6,
-                    'width': 12,
-                    'y': 24,
-                    'x': 0,
+                    **coordinates(indexer=(0, 4)),
                     'type': 'log',
                     'properties': {
                         'query': dedent(f'''\
@@ -1132,12 +1107,9 @@ def dashboard_body(name: str):
                     }
                 }
             ]),
-            *iif(name == 'indexer', [
+            *iif(is_indexer, [
                 {
-                    'height': 6,
-                    'width': 12,
-                    'y': 42,
-                    'x': 0,
+                    **coordinates(indexer=(0, 7)),
                     'type': 'log',
                     'properties': {
                         'query': dedent(f'''\
@@ -1156,10 +1128,7 @@ def dashboard_body(name: str):
                 }
             ]),
             {
-                'height': 6,
-                'width': 12,
-                'y': 18,
-                'x': 0,
+                **coordinates(indexer=(0, 3), mirror=(0, 3)),
                 'type': 'metric',
                 'properties': {
                     'metrics': (
@@ -1398,7 +1367,7 @@ def dashboard_body(name: str):
                                 }
                             ]
                         ]
-                        if name == 'indexer' else
+                        if is_indexer else
                         [
                             [
                                 {
@@ -1496,10 +1465,7 @@ def dashboard_body(name: str):
                 }
             },
             {
-                'height': 6,
-                'width': 12,
-                'y': 54,
-                'x': 0,
+                **coordinates(indexer=(0, 9), mirror=(0, 4)),
                 'type': 'metric',
                 'properties': {
                     'metrics': (
@@ -1581,7 +1547,7 @@ def dashboard_body(name: str):
                                 }
                             ]
                         ]
-                        if name == 'indexer' else
+                        if is_indexer else
                         [
                             [
                                 {
@@ -1612,12 +1578,9 @@ def dashboard_body(name: str):
                     'stat': 'Sum'
                 }
             },
-            *iif(name == 'indexer', [
+            *iif(is_indexer, [
                 {
-                    'height': 6,
-                    'width': 12,
-                    'y': 0,
-                    'x': 12,
+                    **coordinates(indexer=(1, 0)),
                     'type': 'log',
                     'properties': {
                         'query': dedent(f'''\
@@ -1641,12 +1604,9 @@ def dashboard_body(name: str):
                     }
                 }
             ]),
-            *iif(name == 'indexer', [
+            *iif(is_indexer, [
                 {
-                    'height': 6,
-                    'width': 12,
-                    'y': 48,
-                    'x': 0,
+                    **coordinates(indexer=(0, 8)),
                     'type': 'log',
                     'properties': {
                         'query': dedent(f'''\
@@ -1667,10 +1627,7 @@ def dashboard_body(name: str):
                 }
             ]),
             {
-                'height': 6,
-                'width': 12,
-                'y': 6,
-                'x': 0,
+                **coordinates(indexer=(0, 1), mirror=(0, 1)),
                 'type': 'metric',
                 'properties': {
                     'metrics': (
@@ -1813,7 +1770,7 @@ def dashboard_body(name: str):
                                 }
                             ]
                         ]
-                        if name == 'indexer' else
+                        if is_indexer else
                         [
                             [
                                 {
@@ -1864,10 +1821,7 @@ def dashboard_body(name: str):
                 }
             },
             {
-                'height': 6,
-                'width': 12,
-                'y': 66,
-                'x': 12,
+                **coordinates(indexer=(1, 11), mirror=(1, 6)),
                 'type': 'log',
                 'properties': {
                     'query': (
@@ -1887,7 +1841,7 @@ def dashboard_body(name: str):
                                     sum(ar) as aggregate_retry
                                     by bin(5min)
                         ''')
-                        if name == 'indexer' else
+                        if is_indexer else
                         dedent(f'''\
                             SOURCE '/aws/lambda/{config.indexer_function_name('mirror')}'
                             | filter @message like 'Task timed out'
@@ -1903,10 +1857,7 @@ def dashboard_body(name: str):
                 }
             },
             {
-                'height': 6,
-                'width': 12,
-                'y': 18,
-                'x': 12,
+                **coordinates(indexer=(1, 3), mirror=(1, 0)),
                 'type': 'metric',
                 'properties': {
                     'metrics': (
@@ -1942,7 +1893,7 @@ def dashboard_body(name: str):
                                 }
                             ]
                         ]
-                        if name == 'indexer' else
+                        if is_indexer else
                         [
                             [
                                 'AWS/SQS',
@@ -1964,10 +1915,7 @@ def dashboard_body(name: str):
                 }
             },
             {
-                'height': 6,
-                'width': 12,
-                'y': 60,
-                'x': 0,
+                **coordinates(indexer=(0, 10), mirror=(0, 5)),
                 'type': 'metric',
                 'properties': {
                     'metrics': (
@@ -2073,7 +2021,7 @@ def dashboard_body(name: str):
                                 }
                             ]
                         ]
-                        if name == 'indexer' else
+                        if is_indexer else
                         [
                             [
                                 {
@@ -2114,10 +2062,7 @@ def dashboard_body(name: str):
                 }
             },
             {
-                'height': 6,
-                'width': 12,
-                'y': 66,
-                'x': 0,
+                **coordinates(indexer=(0, 11), mirror=(0, 6)),
                 'type': 'log',
                 'properties': {
                     'query': (
@@ -2139,7 +2084,7 @@ def dashboard_body(name: str):
                                     sum(ar*timeout) * 100 / sum(ar*attempt) as aggregate_retry
                                     by bin(5min)
                         ''')
-                        if name == 'indexer' else
+                        if is_indexer else
                         dedent(f'''\
                             SOURCE '/aws/lambda/{config.indexer_function_name('mirror')}'
                             | filter @message like 'Task timed out' or @message like 'START'
