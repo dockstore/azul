@@ -2237,7 +2237,7 @@ emit_tf({} if config.terraform_component != 'gitlab' else {
         'aws_cloudwatch_metric_alarm': {
             **{
                 'gitlab_' + resource: {
-                    'alarm_name': 'azul-gitlab_' + resource,
+                    'alarm_name': config.qualified_resource_name('gitlab_' + resource),
                     'comparison_operator': 'GreaterThanOrEqualToThreshold',
                     'datapoints_to_alarm': periods,
                     'evaluation_periods': periods,
