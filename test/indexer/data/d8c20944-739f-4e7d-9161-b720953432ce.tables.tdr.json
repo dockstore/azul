@@ -2075,7 +2075,7 @@
                         "file_name": "22561f93-d5e0-57eb-a54e-2d9d565cc234_file_name.fmt",
                         "file_version": "2019-09-24T09:35:06.958773Z",
                         "file_id": "046a88ef-d19f-51ed-9003-14847dffc820",
-                        "content_type": "whatever format these are in",
+                        "content_type": "text/plain",
                         "size": 1024
                     }
                 },
@@ -2103,7 +2103,7 @@
                         "file_name": "507d2814-1688-54e7-b73e-2f831aa34368_file_name.fmt",
                         "file_version": "2019-09-24T09:35:06.958773Z",
                         "file_id": "519ee493-0984-5b54-95ec-85452d506b00",
-                        "content_type": "whatever format these are in",
+                        "content_type": "text/plain",
                         "size": 1024
                     }
                 },
@@ -2131,7 +2131,7 @@
                         "file_name": "c343a47d-683f-571d-99c4-1331841b4e63_file_name.fmt",
                         "file_version": "2019-09-24T09:35:06.958773Z",
                         "file_id": "19617367-cda8-54e0-8296-84623ef58c3f",
-                        "content_type": "whatever format these are in",
+                        "content_type": "text/plain",
                         "size": 1024,
                         "drs_uri": null
                     }
