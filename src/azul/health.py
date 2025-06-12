@@ -212,7 +212,8 @@ class Health:
     @health_property
     def queues(self):
         """
-        Returns information about the SQS queues used by the indexer.
+        Returns information about the SQS queues used by the indexer and the
+        mirror.
         """
         sqs = aws.sqs_resource
         response: MutableJSON = {'up': True}

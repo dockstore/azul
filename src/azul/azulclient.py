@@ -549,7 +549,7 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
 
         :param create_indices: whether to create the indexes at the end.
         """
-        indexer_queues = self.queues.get_queues(config.indexer_queue_names)
+        indexer_queues = self.queues.get_queues(config.indexer_work_queue_names)
         if purge_queues:
             log.info('Disabling lambdas ...')
             self.queues.manage_lambdas(indexer_queues, enable=False)
@@ -579,12 +579,12 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
         # accommodate the most probable scenarios for transient stalls.
         timeout = max(config.contribution_lambda_timeout(retry=True),
                       config.aggregation_lambda_timeout(retry=True))
-        self.queues.wait_to_stabilize(config.indexer_queue_names,
+        self.queues.wait_to_stabilize(config.indexer_work_queue_names,
                                       timeout,
                                       detect_stall=True)
 
     def wait_for_mirroring(self):
-        self.queues.wait_to_stabilize(config.mirror_queue_names,
+        self.queues.wait_to_stabilize(config.mirror_work_queue_names,
                                       config.mirror_lambda_timeout,
                                       detect_stall=False)
 
@@ -602,6 +602,36 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
 
         messages = map(message, sources)
         self.queue_mirror_messages(messages)
+
+    def _get_non_empty_fail_queues(self) -> set[str]:
+        return {
+            queue
+            for queue in config.indexer_fail_queue_names
+            if not self.is_queue_empty(queue)
+        }
+
+    _common_fail_queue_msg = (
+        "If needed, empty the work queues via 'manage_queues.py purge_indexer'. "
+        "Then run 'manage_queues.py dump --delete' for each fail queue listed: "
+    )
+
+    def require_no_failures_before(self):
+        queues = self._get_non_empty_fail_queues()
+        assert 0 == len(queues), R(
+            'Cannot begin indexing because a previous operation failed: '
+            'At least one fail queue is not empty. ' +
+            self._common_fail_queue_msg,
+            queues
+        )
+
+    def require_no_failures_after(self):
+        queues = self._get_non_empty_fail_queues()
+        assert 0 == len(queues), R(
+            'At least one fail queue is not empty, indicating that there were '
+            'persistent indexer failures. ' +
+            self._common_fail_queue_msg,
+            queues
+        )
 
 
 class AzulClientError(RuntimeError):

@@ -427,12 +427,10 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
             public_source: SourceRef
             ma_source: SourceRef | None
 
-        def _wait_for_indexer():
-            self.azul_client.wait_for_indexer()
-
         flags = config.it_flags
         index, delete = ['no_' + flag not in flags for flag in ['index', 'delete']]
 
+        self._assert_queues_empty(config.indexer_fail_queue_names)
         if index:
             self._reset_indexer()
         else:
@@ -464,7 +462,8 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
         if index:
             for catalog in catalogs:
                 self.azul_client.queue_notifications(catalog.notifications)
-            _wait_for_indexer()
+            self.azul_client.wait_for_indexer()
+            self._assert_queues_empty(config.indexer_fail_queue_names)
             for catalog in catalogs:
                 self._assert_catalog_complete(catalog=catalog.name,
                                               bundle_fqids=catalog.bundles)
@@ -1388,8 +1387,9 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
                 hits = self._get_entities(catalog, entity_type)
                 self.assertEqual([], [hit['entryId'] for hit in hits])
 
-    def _assert_queue_empty(self, queue_name: str):
-        self.assertTrue(self.azul_client.is_queue_empty(queue_name))
+    def _assert_queues_empty(self, queue_names: list[str]) -> None:
+        for queue_name in queue_names:
+            self.assertTrue(self.azul_client.is_queue_empty(queue_name))
 
     def _get_entities(self,
                       catalog: CatalogName,
@@ -1727,13 +1727,12 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
 
     def _test_mirroring(self):
         with self.subTest('mirror_files'):
-            self._assert_queue_empty(config.mirror_queue.name)
-            self._assert_queue_empty(config.mirror_queue.to_fail.name)
+            self._assert_queues_empty(config.mirror_queue_names)
             for catalog in config.integration_test_catalogs:
                 source = self._select_source(catalog, public=True)
                 self.azul_client.remote_mirror(catalog, [source])
             self.azul_client.wait_for_mirroring()
-            self._assert_queue_empty(config.mirror_queue.to_fail.name)
+            self._assert_queues_empty(config.mirror_fail_queue_names)
 
 
 class AzulClientIntegrationTest(IntegrationTestCase):
