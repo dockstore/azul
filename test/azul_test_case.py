@@ -34,6 +34,9 @@ from botocore.credentials import (
     Credentials,
 )
 import botocore.session
+from elasticsearch.exceptions import (
+    ElasticsearchWarning,
+)
 from furl import (
     furl,
 )
@@ -136,6 +139,9 @@ class AzulTestCase(TestCase):
                 # FIXME: DeprecationWarning for datetime methods in Python 3.12
                 #        https://github.com/DataBiosphere/azul/issues/5953
                 'datetime.datetime.utcnow() is deprecated',
+            },
+            ElasticsearchWarning: {
+                RE('.*Loading the fielddata on the _id field is deprecated and will be removed in future versions.*'),
             }
         }
         for warning_class, message_patterns in permitted_warnings_.items():

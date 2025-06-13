@@ -38,6 +38,7 @@ from tempfile import (
 )
 import time
 from typing import (
+    Callable,
     ClassVar,
     IO,
     Protocol,
@@ -1759,7 +1760,9 @@ class PFBManifestGenerator(FileBasedManifestGenerator):
         return path, None
 
 
-class VerbatimManifestGenerator(FileBasedManifestGenerator, metaclass=ABCMeta):
+class VerbatimManifestGenerator(FileBasedManifestGenerator,
+                                ClientSidePagingManifestGenerator,
+                                metaclass=ABCMeta):
 
     @property
     def entity_type(self) -> str:
@@ -1825,9 +1828,36 @@ class VerbatimManifestGenerator(FileBasedManifestGenerator, metaclass=ABCMeta):
         hub_id: str
         replica_ids: list[str]
 
-    def _replica_keys(self) -> Iterable[ReplicaKeys]:
-        request = self._create_request()
-        for hit in request.scan():
+    def _paginate_hits(self,
+                       request_factory: Callable[[SortKey | None], Search]
+                       ) -> Iterable[Hit]:
+        """
+        Yield all hits in every page of Elasticsearch hits in responses to
+        requests that use client-side paging.
+
+        :param request_factory:  A callable that returns a prepared Elasticsearch
+                                 request for the given search-after key, with the
+                                 appropriate filters and sorting applied. The
+                                 returned request should yield one page worth of
+                                 hits, starting at the first page (if the argument
+                                 is None), or the hit right after the hit with
+                                 given search-after key
+        """
+        search_after = None
+        while True:
+            request = request_factory(search_after)
+            response = request.execute()
+            if response.hits:
+                hit = None
+                for hit in response.hits:
+                    yield hit
+                assert hit is not None
+                search_after = self._search_after(hit)
+            else:
+                break
+
+    def _list_replica_keys(self) -> Iterable[ReplicaKeys]:
+        for hit in self._paginate_hits(self._create_paged_request):
             document_ids = [
                 document_id
                 for entity_type in self.hot_entity_types
@@ -1840,10 +1870,10 @@ class VerbatimManifestGenerator(FileBasedManifestGenerator, metaclass=ABCMeta):
             yield self.ReplicaKeys(hub_id=hit['entity_id'],
                                    replica_ids=document_ids)
 
-    def _all_replicas(self) -> Iterable[JSON]:
+    def _list_replicas(self) -> Iterable[JSON]:
         emitted_replica_ids = set()
         page_size = 100
-        for page in chunked(self._replica_keys(), page_size):
+        for page in chunked(self._list_replica_keys(), page_size):
             num_replicas = 0
             num_new_replicas = 0
             for replica in self._join_replicas(page):
@@ -1860,18 +1890,33 @@ class VerbatimManifestGenerator(FileBasedManifestGenerator, metaclass=ABCMeta):
                      num_replicas, num_replicas - num_new_replicas, len(page))
 
     def _join_replicas(self, keys: Iterable[ReplicaKeys]) -> Iterable[Hit]:
-        request = self.service.create_request(catalog=self.catalog,
-                                              entity_type='replica',
-                                              doc_type=DocumentType.replica)
         hub_ids, replica_ids = set(), set()
         for key in keys:
             hub_ids.add(key.hub_id)
             replica_ids.update(key.replica_ids)
+
+        request = self.service.create_request(catalog=self.catalog,
+                                              entity_type='replica',
+                                              doc_type=DocumentType.replica)
         request = request.query(Q('bool', should=[
             {'terms': {'hub_ids.keyword': list(hub_ids)}},
             {'terms': {'entity_id.keyword': list(replica_ids)}}
         ]))
-        return request.scan()
+        request = request.extra(size=self.page_size)
+
+        # `_id` is currently the only index field that is unique to each replica
+        # document (and thus results in an unambiguous total ordering). However,
+        # sorting just by `_id` is unacceptably slow, an Elasticsearch quirk. To
+        # overcome the performance hit, we sort by a field that's *almost*
+        # unique to each replica, so that `_id` only needs to be loaded and
+        # compared in the infrequent event that it's needed as a tiebreaker.
+        #
+        request = request.sort('entity_id.keyword', '_id')
+
+        def request_factory(search_after: SortKey | None) -> Search:
+            return request.extra(search_after=search_after)
+
+        return self._paginate_hits(request_factory)
 
 
 class JSONLVerbatimManifestGenerator(VerbatimManifestGenerator):
@@ -1892,7 +1937,7 @@ class JSONLVerbatimManifestGenerator(VerbatimManifestGenerator):
         fd, path = mkstemp(suffix=f'.{self.file_name_extension()}')
         os.close(fd)
         with open(path, 'w') as f:
-            for replica in self._all_replicas():
+            for replica in self._list_replicas():
                 entry = {
                     'value': replica['contents'],
                     'type': replica['replica_type']
@@ -1954,7 +1999,7 @@ class PFBVerbatimManifestGenerator(VerbatimManifestGenerator):
         )
 
     def create_file(self) -> tuple[str, str | None]:
-        replicas = list(self._all_replicas())
+        replicas = list(self._list_replicas())
         plugin = self.metadata_plugin
         replica_schemas = plugin.verbatim_pfb_schema(replicas)
         # Ensure field order is consistent for unit tests
