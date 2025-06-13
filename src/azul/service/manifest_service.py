@@ -1288,11 +1288,11 @@ class PagedManifestGenerator(ManifestGenerator):
 
     page_size = 500
 
-    def _create_paged_request(self, partition: ManifestPartition) -> Search:
+    def _create_paged_request(self, search_after: SortKey | None) -> Search:
         pagination = Pagination(sort='entryId',
                                 order='asc',
                                 size=self.page_size,
-                                search_after=partition.search_after)
+                                search_after=search_after)
         pipeline = self._create_pipeline()
         # Only needs this to satisfy the type constraints
         pipeline = ToDictStage(service=self.service,
@@ -1497,7 +1497,7 @@ class CurlManifestGenerator(PagedManifestGenerator):
             output.write('\n\n'.join(curl_options))
             output.write('\n\n')
 
-        request = self._create_paged_request(partition)
+        request = self._create_paged_request(partition.search_after)
         response = request.execute()
         if response.hits:
             hit = None
@@ -1641,7 +1641,7 @@ class CompactManifestGenerator(PagedManifestGenerator):
         if partition.page_index == 0:
             writer.writeheader()
 
-        request = self._create_paged_request(partition)
+        request = self._create_paged_request(partition.search_after)
         response = request.execute()
         if response.hits:
             project_short_names = set()
