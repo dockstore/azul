@@ -132,6 +132,7 @@ from azul.service.elasticsearch_service import (
     ElasticsearchService,
     Pagination,
     PaginationStage,
+    SortKey,
     ToDictStage,
 )
 from azul.service.storage_service import (
@@ -503,7 +504,7 @@ class ManifestPartition:
 
     #: The `sort` value of the first hit of the current page in this partition,
     #: or None if there is no current page.
-    search_after: tuple[str, str] | None = None
+    search_after: SortKey | None = None
 
     @classmethod
     def from_json(cls, partition: JSON) -> Self:
@@ -540,7 +541,7 @@ class ManifestPartition:
 
     def next_page(self,
                   file_name: str | None,
-                  search_after: tuple[str, str]
+                  search_after: SortKey
                   ) -> Self:
         assert self.page_index is not None, self
         # If different pages yield different file names, use default file name
@@ -1309,7 +1310,7 @@ class PagedManifestGenerator(ManifestGenerator):
         request = pipeline.prepare_request(request)
         return request
 
-    def _search_after(self, hit: Hit) -> tuple[str, str]:
+    def _search_after(self, hit: Hit) -> SortKey:
         a, b = hit.meta.sort
         return a, b
 
