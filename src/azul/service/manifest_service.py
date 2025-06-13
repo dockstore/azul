@@ -1211,10 +1211,48 @@ class ManifestGenerator(metaclass=ABCMeta):
         return self.service.storage_service
 
 
-class PagedManifestGenerator(ManifestGenerator):
+class ClientSidePagingManifestGenerator(ManifestGenerator, metaclass=ABCMeta):
     """
-    A manifest generator whose output can be split over multiple concatenable
-    IO streams.
+    A mixin for manifest generators that use client-side paging to query
+    Elasticsearch.
+    """
+    page_size = 500
+
+    def _create_paged_request(self, search_after: SortKey | None) -> Search:
+        pagination = Pagination(sort='entryId',
+                                order='asc',
+                                size=self.page_size,
+                                search_after=search_after)
+        pipeline = self._create_pipeline()
+        # Only needs this to satisfy the type constraints
+        pipeline = ToDictStage(service=self.service,
+                               catalog=self.catalog,
+                               entity_type=self.entity_type).wrap(pipeline)
+        pipeline = PaginationStage(service=self.service,
+                                   catalog=self.catalog,
+                                   entity_type=self.entity_type,
+                                   pagination=pagination,
+                                   filters=self.filters,
+                                   peek_ahead=False).wrap(pipeline)
+        request = self.service.create_request(catalog=self.catalog,
+                                              entity_type=self.entity_type)
+        # The response is processed by the generator, not the pipeline
+        request = pipeline.prepare_request(request)
+        return request
+
+    def _search_after(self, hit: Hit) -> SortKey:
+        a, b = hit.meta.sort
+        return a, b
+
+
+class PagedManifestGenerator(ClientSidePagingManifestGenerator):
+    """
+    A manifest generator whose output is split over several concatenable
+    segments, also known as pages.
+
+    In some subclasses, e.g. CompactManifestGenerator and CurlManifestGenerator,
+    a manifest page corresponds to a page of hits from a paginated Elasticsearch
+    request.
     """
 
     @abstractmethod
@@ -1281,34 +1319,6 @@ class PagedManifestGenerator(ManifestGenerator):
                         self.storage.put_object_tagging(object_key, tagging)
                     partition = partition.last(file_name)
                 return partition
-
-    page_size = 500
-
-    def _create_paged_request(self, search_after: SortKey | None) -> Search:
-        pagination = Pagination(sort='entryId',
-                                order='asc',
-                                size=self.page_size,
-                                search_after=search_after)
-        pipeline = self._create_pipeline()
-        # Only needs this to satisfy the type constraints
-        pipeline = ToDictStage(service=self.service,
-                               catalog=self.catalog,
-                               entity_type=self.entity_type).wrap(pipeline)
-        pipeline = PaginationStage(service=self.service,
-                                   catalog=self.catalog,
-                                   entity_type=self.entity_type,
-                                   pagination=pagination,
-                                   filters=self.filters,
-                                   peek_ahead=False).wrap(pipeline)
-        request = self.service.create_request(catalog=self.catalog,
-                                              entity_type=self.entity_type)
-        # The response is processed by the generator, not the pipeline
-        request = pipeline.prepare_request(request)
-        return request
-
-    def _search_after(self, hit: Hit) -> SortKey:
-        a, b = hit.meta.sort
-        return a, b
 
 
 class FileBasedManifestGenerator(ManifestGenerator):
