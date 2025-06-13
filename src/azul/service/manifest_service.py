@@ -128,6 +128,7 @@ from azul.service.avro_pfb import (
     PFBRelation,
 )
 from azul.service.elasticsearch_service import (
+    ElasticsearchChain,
     ElasticsearchService,
     Pagination,
     PaginationStage,
@@ -520,10 +521,10 @@ class ManifestPartition:
                    is_last=False)
 
     @property
-    def is_first(self):
+    def is_first(self) -> bool:
         return not (self.index or self.page_index)
 
-    def with_config(self, config: AnyJSON):
+    def with_config(self, config: AnyJSON) -> Self:
         return attrs.evolve(self, config=config)
 
     def with_upload(self, multipart_upload_id) -> Self:
@@ -551,7 +552,7 @@ class ManifestPartition:
                             file_name=file_name,
                             search_after=search_after)
 
-    def last_page(self):
+    def last_page(self) -> Self:
         return attrs.evolve(self, is_last_page=True)
 
     def next(self, part_etag: str) -> Self:
@@ -1036,7 +1037,7 @@ class ManifestGenerator(metaclass=ABCMeta):
         # The response is processed by the generator, not the pipeline
         return request
 
-    def _create_pipeline(self):
+    def _create_pipeline(self) -> ElasticsearchChain:
         if self.included_fields is None:
             document_slice = DocumentSlice()
         else:
