@@ -168,7 +168,7 @@ class Config:
     See `environment` for documentation of these settings.
     """
 
-    @property
+    @cached_property
     def environ(self):
         return ChainMap(os.environ, self._outsourced_environ)
 
