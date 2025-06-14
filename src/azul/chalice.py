@@ -822,7 +822,7 @@ class AzulChaliceApp(Chalice):
         )
         def version():
             return {
-                'git': config.lambda_git_status
+                'git': config.git_status
             }
 
         @self.route(

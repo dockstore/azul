@@ -979,7 +979,7 @@ class ManifestGenerator(metaclass=ABCMeta):
         Different parameters should, with a very high probability, produce
         different return values.
         """
-        git_commit = config.lambda_git_status['commit']
+        git_commit = config.git_status['commit']
         # The explicit filters are already normalized so we don't to do anything
         # special to desensitize the hash to insignificat differences
         filter_string = json.dumps(self.filters.explicit)

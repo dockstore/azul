@@ -1264,22 +1264,25 @@ class Config:
 
     @property
     def _git_status_env(self) -> dict[str, str]:
-        return {'azul_git_' + k: str(v) for k, v in self.git_status.items()}
+        return {'azul_git_' + k: str(v) for k, v in self._git_status.items()}
 
     @property
     def git_status(self) -> GitStatus:
+        try:
+            return {
+                'commit': self.environ['azul_git_commit'],
+                'dirty': str_to_bool(self.environ['azul_git_dirty'])
+            }
+        except KeyError:
+            return self._git_status
+
+    @property
+    def _git_status(self) -> GitStatus:
         import git
         repo = git.Repo(self.project_root)
         return {
             'commit': repo.head.object.hexsha,
             'dirty': repo.is_dirty()
-        }
-
-    @property
-    def lambda_git_status(self) -> GitStatus:
-        return {
-            'commit': self.environ['azul_git_commit'],
-            'dirty': str_to_bool(self.environ['azul_git_dirty'])
         }
 
     @property
