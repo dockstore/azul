@@ -1286,24 +1286,24 @@ class Config:
         }
 
     @property
-    def _aws_account_name(self) -> dict[str, str]:
+    def _aws_account_name_env(self) -> dict[str, str]:
         return {
-            'azul_aws_account_name': self.aws_account_name
+            'azul_aws_account_name': self._aws_account_name
         }
 
     @property
     def aws_account_name(self) -> str:
-        """
-        When in invoked in a Lambda context, this method will retrieve the AWS
-        account name from the Lambda environment, avoiding a round trip to IAM.
-        """
-        if self.is_in_lambda:
+        try:
             return self.environ['azul_aws_account_name']
-        else:
-            from azul.deployment import (
-                aws,
-            )
-            return aws.account_name
+        except KeyError:
+            return self._aws_account_name
+
+    @property
+    def _aws_account_name(self):
+        from azul.deployment import (
+            aws,
+        )
+        return aws.account_name
 
     @property
     def is_in_lambda(self) -> bool:
@@ -1319,7 +1319,7 @@ class Config:
         return (
             self._lambda_env(outsource=False)
             | self._git_status_env
-            | self._aws_account_name
+            | self._aws_account_name_env
             | self._deployment_env
         )
 
