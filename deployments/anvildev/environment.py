@@ -113,11 +113,12 @@ def env() -> Mapping[str, str | None]:
         'AZUL_CATALOGS': json.dumps({
             f'{catalog}{suffix}': dict(atlas=atlas,
                                        internal=is_it,
+                                       mirror_limit=it_mirror_limit if is_it else mirror_limit,
                                        plugins=dict(metadata=dict(name='anvil'),
                                                     repository=dict(name='tdr_anvil')),
                                        sources=condense(sources))
-            for atlas, catalog, sources in [
-                ('anvil', 'anvil', anvil_sources),
+            for atlas, catalog, sources, mirror_limit, it_mirror_limit, in [
+                ('anvil', 'anvil', anvil_sources, int(1.5 * 1024 ** 3), int(1.5 * 1024 ** 3)),
             ]
             for suffix, is_it in [
                 ('', False),
@@ -152,6 +153,8 @@ def env() -> Mapping[str, str | None]:
         'AZUL_DEPLOYMENT_INCARNATION': '2',
 
         'AZUL_GOOGLE_OAUTH2_CLIENT_ID': '561542988117-3cv4g8ii9enl2000ra6m02r3ne7bgnth.apps.googleusercontent.com',
+
+        'AZUL_ENABLE_MIRRORING': '1',
 
         'azul_slack_integration': json.dumps({
             'workspace_id': 'T09P9H91S',  # ucsc-gi.slack.com
