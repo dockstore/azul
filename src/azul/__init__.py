@@ -1312,9 +1312,9 @@ class Config:
     @property
     def lambda_env(self) -> dict[str, str]:
         """
-        A dictionary with the environment variables to be used by a deployed AWS
-        Lambda function or `chalice local`. Only includes those variables that
-        don't need to be outsourced.
+        A dictionary containing the environment variables to be used by a
+        deployed AWS Lambda function, `chalice local` or tests inheriting from
+        LocalAppTestCase. Only includes variables that are not outsourced.
         """
         return (
             self._lambda_env(outsource=False)
