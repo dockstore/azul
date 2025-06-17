@@ -1772,6 +1772,14 @@ class Config:
 
     blocked_user_agents_custom_regex_term = 'blocked_user_agents_custom'
 
+    #: The WAF rules whose matching requests will neither be logged in the WAF
+    #: log group, nor trip the corresponding Cloudwatch alarm
+    #:
+    waf_rules_not_logged = [
+        blocked_v4_ips_term,
+        blocked_user_agents_regex_term
+    ]
+
     waf_rate_rule_name = 'rate_limit'
 
     waf_rate_alarm_rule_name = 'rate_limit_alarm'
