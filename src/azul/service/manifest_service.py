@@ -1872,8 +1872,7 @@ class VerbatimManifestGenerator(FileBasedManifestGenerator,
 
     def _list_replicas(self) -> Iterable[JSON]:
         emitted_replica_ids = set()
-        page_size = 100
-        for page in chunked(self._list_replica_keys(), page_size):
+        for page in chunked(self._list_replica_keys(), self.page_size):
             num_replicas = 0
             num_new_replicas = 0
             for replica in self._join_replicas(page):
