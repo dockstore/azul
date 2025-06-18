@@ -49,7 +49,7 @@ from azul.types import (
 # A type variable named ``N`` denotes the native type of a field in documents as
 # they are being created by a transformer or processed by an aggregator.
 #
-# A type named variable ``X`` denotes the type of a field in a document just
+# A type variable named ``X`` denotes the type of a field in a document just
 # before it's being written to the index. Think "index type".
 
 #: The static (build time) type of a document field value
