@@ -16,6 +16,7 @@ from typing import (
     Iterable,
     Mapping,
     Sequence,
+    TypeAliasType,
     TypedDict,
     cast,
 )
@@ -23,9 +24,6 @@ from typing import (
 from more_itertools import (
     first,
     one,
-)
-from typing_extensions import (
-    TypeAliasType,
 )
 
 from azul import (
