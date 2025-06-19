@@ -20,9 +20,6 @@ from azul.azulclient import (
     AzulClient,
     MirrorAction,
 )
-from azul.chalice import (
-    SchemaUrlFunc,
-)
 from azul.digests import (
     Hasher,
     get_resumable_hasher,
@@ -38,6 +35,7 @@ from azul.indexer.action_controller import (
 from azul.indexer.mirror_service import (
     FilePart,
     MirrorService,
+    SchemaUrlFunc,
 )
 from azul.plugins import (
     File,

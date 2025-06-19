@@ -5,6 +5,7 @@ import string
 import time
 from typing import (
     ClassVar,
+    Protocol,
     Self,
     Sequence,
     TYPE_CHECKING,
@@ -22,15 +23,13 @@ from azul import (
     R,
     cache,
     config,
+    mutable_furl,
 )
 from azul.attrs import (
     SerializableAttrs,
 )
 from azul.auth import (
     Authentication,
-)
-from azul.chalice import (
-    SchemaUrlFunc,
 )
 from azul.deployment import (
     aws,
@@ -234,6 +233,15 @@ class BaseMirrorService:
             'Expected a hexadecimal digest', digest)
         mirror_prefix = self._mirror_prefix(catalog)
         return f'{mirror_prefix}{prefix}/{digest_value}.{digest.type}{extension}'
+
+
+class SchemaUrlFunc(Protocol):
+
+    def __call__(self,
+                 *,
+                 schema_name: str,
+                 version: int
+                 ) -> mutable_furl: ...
 
 
 @attrs.frozen(kw_only=True)
