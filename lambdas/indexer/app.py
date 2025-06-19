@@ -1,4 +1,3 @@
-import json
 import logging
 from typing import (
     Optional,
@@ -11,7 +10,6 @@ from azul import (
     JSON,
     cached_property,
     config,
-    mutable_furl,
 )
 from azul.azulclient import (
     IndexAction,
@@ -44,7 +42,6 @@ from azul.logging import (
 from azul.openapi import (
     format_description as fd,
     params,
-    responses,
     schema,
 )
 from azul.openapi.responses import (
@@ -84,14 +81,7 @@ class IndexerApp(HealthApp, SignatureHelper):
 
     @cached_property
     def mirror_controller(self) -> MirrorController:
-
-        def schema_url(*, schema_name: str, version: int) -> mutable_furl:
-            path = self.schema_url_path.format(facility='mirror',
-                                               schema_name=schema_name,
-                                               version_and_extension=f'v{version}.json')
-            return self.base_url.set(path=path)
-
-        return MirrorController(app=self, schema_url_func=schema_url)
+        return MirrorController(app=self)
 
     @cached_property
     def log_controller(self) -> LogForwardingController:
@@ -123,13 +113,6 @@ class IndexerApp(HealthApp, SignatureHelper):
             return decorator
         else:
             return lambda func: func
-
-    schema_url_path = '/schemas/{facility}/{schema_name}/{version_and_extension}'
-
-    def schema_resource(self, *path: str) -> JSON:
-        schema = json.loads(app.load_static_resource('schemas', *path))
-        schema['$id'] = str(self.self_url)
-        return schema
 
     def _authenticate(self) -> Optional[HMACAuthentication]:
         return self.auth_from_request(not_none(self.current_request))
@@ -274,21 +257,6 @@ def contribute_retry(event: chalice.app.SQSEvent):
     app.index_controller.contribute(event, retry=True)
 
 
-if config.enable_mirroring:
-    @app.metric_alarm(metric=LambdaMetric.errors,
-                      threshold=int(config.mirroring_concurrency * 2 / 3),
-                      period=5 * 60)
-    @app.metric_alarm(metric=LambdaMetric.throttles,
-                      threshold=int(96000 / config.mirroring_concurrency),
-                      period=5 * 60)
-    @app.on_sqs_message(
-        queue=config.mirror_queue.name,
-        batch_size=1
-    )
-    def mirror(event: chalice.app.SQSEvent):
-        app.mirror_controller.mirror(event)
-
-
 @app.log_forwarder(
     config.alb_access_log_path_prefix(deployment=None)
 )
@@ -303,40 +271,4 @@ def forward_s3_logs(event: chalice.app.S3Event):
     app.log_controller.forward_s3_access_logs(event)
 
 
-json_schema_docs = 'https://json-schema.org/docs'
-
-
-@app.route(
-    app.schema_url_path,
-    methods=['GET'],
-    cors=True,
-    spec={
-        'summary': 'Retrieve JSON schemas',
-        'tags': ['Auxiliary'],
-        'parameters': [
-            params.path('facility', str),
-            params.path('schema_name', str),
-            params.path('version_and_extension', schema.pattern(r'v\d+\.json')),
-        ],
-        'description': fd(
-            f'''
-            [JSON Schemas]({json_schema_docs}) for various Azul facilities.
-            '''
-        ),
-        'responses': {
-            '200': {
-                'description': 'Contents of the schema',
-                **responses.json_content(
-                    schema.object(
-                        schema=str,
-                        id=str,
-                        type=str,
-                        additionalProperties=True
-                    )
-                )
-            }
-        }
-    }
-)
-def get_schema(facility, schema_name, version_and_extension):
-    return app.schema_resource(facility, schema_name, version_and_extension)
+globals().update(app.mirror_controller.handlers())
