@@ -1,4 +1,6 @@
-import json
+from functools import (
+    partial,
+)
 import logging
 from typing import (
     Any,
@@ -17,7 +19,6 @@ from azul import (
     R,
     cached_property,
     config,
-    mutable_furl,
 )
 from azul.azulclient import (
     AzulClient,
@@ -42,12 +43,6 @@ from azul.indexer.mirror_service import (
     FilePart,
     MirrorService,
 )
-from azul.openapi import (
-    format_description as fd,
-    params,
-    responses,
-    schema,
-)
 from azul.plugins import (
     File,
     RepositoryPlugin,
@@ -55,6 +50,9 @@ from azul.plugins import (
 from azul.queues import (
     SQSFifoMessage,
     SQSMessage,
+)
+from azul.schemas import (
+    SchemaController,
 )
 from azul.types import (
     JSON,
@@ -66,7 +64,7 @@ from azul.types import (
 log = logging.getLogger(__name__)
 
 
-class MirrorController(ActionController[MirrorAction]):
+class MirrorController(ActionController[MirrorAction], SchemaController):
 
     @cached_property
     def client(self) -> AzulClient:
@@ -74,58 +72,13 @@ class MirrorController(ActionController[MirrorAction]):
 
     @cached_property
     def service(self) -> MirrorService:
-        return MirrorService(schema_url_func=self.schema_url)
+        schema_url_func = partial(self.schema_url, facility='mirror')
+        return MirrorService(schema_url_func=schema_url_func)
 
     def repository_plugin(self, catalog: CatalogName) -> RepositoryPlugin:
         return self.client.repository_plugin(catalog)
 
-    schema_url_path = '/schemas/{facility}/{schema_name}/{version_and_extension}'
-
-    def schema_url(self, *, schema_name: str, version: int) -> mutable_furl:
-        path = self.schema_url_path.format(facility='mirror',
-                                           schema_name=schema_name,
-                                           version_and_extension=f'v{version}.json')
-        return self.app.base_url.set(path=path)
-
     def handlers(self) -> dict[str, Any]:
-        @self.app.route(
-            self.schema_url_path,
-            methods=['GET'],
-            cors=True,
-            spec={
-                'summary': 'Retrieve JSON schemas',
-                'tags': ['Auxiliary'],
-                'parameters': [
-                    params.path('facility', str),
-                    params.path('schema_name', str),
-                    params.path('version_and_extension', schema.pattern(r'v\d+\.json')),
-                ],
-                'description': fd(
-                    '''
-                    [JSON Schemas](https://json-schema.org/docs) for various Azul facilities.
-                    '''
-                ),
-                'responses': {
-                    '200': {
-                        'description': 'Contents of the schema',
-                        **responses.json_content(
-                            schema.object(
-                                schema=str,
-                                id=str,
-                                type=str,
-                                additionalProperties=True
-                            )
-                        )
-                    }
-                }
-            }
-        )
-        def get_schema(facility, schema_name, version_and_extension) -> JSON:
-            path = 'schemas', facility, schema_name, version_and_extension
-            schema = json.loads(self.app.load_static_resource(*path))
-            schema['$id'] = str(self.app.self_url)
-            return schema
-
         if config.enable_mirroring:
             @self.app.metric_alarm(metric=LambdaMetric.errors,
                                    threshold=int(config.mirroring_concurrency * 2 / 3),
@@ -138,7 +91,7 @@ class MirrorController(ActionController[MirrorAction]):
             def mirror(event: chalice.app.SQSEvent):
                 self.mirror(event)
 
-        return locals()
+        return super().handlers() | locals()
 
     def mirror(self, event: Iterable[SQSRecord]):
         self._handle_events(event, self._mirror)
