@@ -1735,7 +1735,6 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
                 for c in config.catalogs.values()
                 if c.is_integration_test_catalog and c.atlas == 'hca'
             ]
-            service = BaseMirrorService()
             sources_by_catalog = {
                 catalog: [self._select_source(catalog, public=True)]
                 for catalog in catalogs
@@ -1747,7 +1746,7 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
                     # since each IT catalog currently uses the same mirror
                     # prefix and bucket
                     for catalog in catalogs:
-                        service.delete_it_files(catalog)
+                        BaseMirrorService(catalog=catalog).delete_it_files()
 
             self._assert_queues_empty([config.mirror_queue.name,
                                        config.mirror_queue.to_fail.name])

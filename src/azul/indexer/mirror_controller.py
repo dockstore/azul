@@ -17,6 +17,7 @@ from chalice.app import (
 from azul import (
     CatalogName,
     R,
+    cache,
     cached_property,
     config,
 )
@@ -70,10 +71,10 @@ class MirrorController(ActionController[MirrorAction], SchemaController):
     def client(self) -> AzulClient:
         return AzulClient()
 
-    @cached_property
-    def service(self) -> MirrorService:
+    @cache
+    def service(self, catalog: CatalogName) -> MirrorService:
         schema_url_func = partial(self.schema_url, facility='mirror')
-        return MirrorService(schema_url_func=schema_url_func)
+        return MirrorService(catalog=catalog, schema_url_func=schema_url_func)
 
     def repository_plugin(self, catalog: CatalogName) -> RepositoryPlugin:
         return self.client.repository_plugin(catalog)
@@ -169,29 +170,29 @@ class MirrorController(ActionController[MirrorAction], SchemaController):
                                 and not config.deployment.is_unit_test
                                 and catalog not in config.integration_test_catalogs)
 
+        service = self.service(catalog)
         if file_is_large and not deployment_is_stable:
             log.info('Not mirroring file to save cost: %r', file)
-        elif self.service.info_exists(catalog, file):
+        elif service.info_exists(file):
             log.info('File is already mirrored, skipping upload: %r', file)
-        elif self.service.file_exists(catalog, file):
+        elif service.file_exists(file):
             assert False, R('File object is already present', file)
         else:
             part_size = FilePart.default_size
             if file.size <= part_size:
                 log.info('Mirroring file via standard upload: %r', file)
-                self.service.mirror_file(catalog, file)
+                service.mirror_file(file)
                 log.info('Successfully mirrored file via standard upload: %r', file)
             else:
                 log.info('Mirroring file via multi-part upload: %r', file)
                 hasher = get_resumable_hasher(file.digest.type)
-                upload_id = self.service.begin_mirroring_file(catalog, file)
+                upload_id = service.begin_mirroring_file(file)
                 first_part = FilePart.first(file, part_size)
                 log.info('Uploading part #%d of file %r', first_part.index, file)
-                etag = self.service.mirror_file_part(catalog,
-                                                     file,
-                                                     first_part,
-                                                     upload_id,
-                                                     hasher)
+                etag = service.mirror_file_part(file,
+                                                first_part,
+                                                upload_id,
+                                                hasher)
                 next_part = first_part.next(file)
                 assert next_part is not None
                 log.info('Queueing part #%d of file %r', next_part.index, file)
@@ -215,7 +216,8 @@ class MirrorController(ActionController[MirrorAction], SchemaController):
         part = FilePart.from_json(part_json)
         hasher = hasher_from_str(hasher_data)
         log.info('Uploading part #%d of file %r', part.index, file)
-        etag = self.service.mirror_file_part(catalog, file, part, upload_id, hasher)
+        service = self.service(catalog)
+        etag = service.mirror_file_part(file, part, upload_id, hasher)
         etags = [*etags, etag]
         next_part = part.next(file)
         if next_part is None:
@@ -245,11 +247,11 @@ class MirrorController(ActionController[MirrorAction], SchemaController):
         file = self.load_file(catalog, file_json)
         assert len(etags) > 0
         hasher = hasher_from_str(hasher_data)
-        self.service.finish_mirroring_file(catalog=catalog,
-                                           file=file,
-                                           upload_id=upload_id,
-                                           etags=etags,
-                                           hasher=hasher)
+        service = self.service(catalog)
+        service.finish_mirroring_file(file=file,
+                                      upload_id=upload_id,
+                                      etags=etags,
+                                      hasher=hasher)
         log.info('Successfully mirrored file via multi-part upload: %r', file)
 
     def load_file(self, catalog: CatalogName, file: JSON) -> File:
@@ -313,6 +315,7 @@ class MirrorController(ActionController[MirrorAction], SchemaController):
                               etags: Sequence[str],
                               hasher: Hasher
                               ) -> SQSFifoMessage:
+        service = self.service(catalog)
         return SQSFifoMessage(
             body={
                 'catalog': catalog,
@@ -322,5 +325,5 @@ class MirrorController(ActionController[MirrorAction], SchemaController):
                 'etags': etags,
                 'hasher': hasher_to_str(hasher)
             },
-            group_id=self.service.mirror_object_key(catalog, file)
+            group_id=service.mirror_object_key(file)
         )
