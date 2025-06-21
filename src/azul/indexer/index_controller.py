@@ -98,7 +98,7 @@ class IndexController(ActionController[IndexAction]):
                             catalog: CatalogName,
                             *,
                             retry: bool = False):
-        message = self.client.notification_message(catalog, notification, action)
+        message = self.client.index_bundle_message(catalog, notification, action)
         queue = self.client.notifications_queue(retry=retry)
         queue.send_message(**message.to_entry())
         log.info('Queued notification message %r', message)
