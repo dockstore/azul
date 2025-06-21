@@ -1284,9 +1284,9 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
             # ensure test coverage for handling multiple partitions per source
             for partition_prefix in source.spec.prefix.partition_prefixes():
                 bundle_fqids.update(self.azul_client.list_bundles(catalog, source, partition_prefix))
-                notifications.append(self.azul_client.reindex_message(catalog,
-                                                                      source,
-                                                                      partition_prefix))
+                notifications.append(self.azul_client.index_partition_message(catalog,
+                                                                              source,
+                                                                              partition_prefix))
         # Index some bundles again to test that we handle duplicate additions.
         # Note: random.choices() may pick the same element multiple times so
         # some notifications may end up being sent three or more times.

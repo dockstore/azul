@@ -158,11 +158,11 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
                        ) -> SQSMessage:
         return self.notification_message(catalog, self.notification(bundle_fqid))
 
-    def reindex_message(self,
-                        catalog: CatalogName,
-                        source: SourceRef,
-                        prefix: str
-                        ) -> SQSMessage:
+    def index_partition_message(self,
+                                catalog: CatalogName,
+                                source: SourceRef,
+                                prefix: str
+                                ) -> SQSMessage:
         return SQSMessage(
             body={
                 'action': IndexAction.reindex.to_json(),
@@ -326,7 +326,7 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
             def message(partition_prefix: str) -> SQSMessage:
                 log.info('Remotely reindexing prefix %r of source_ref %r into catalog %r',
                          partition_prefix, str(source_ref.spec), catalog)
-                return self.reindex_message(catalog, source_ref, partition_prefix)
+                return self.index_partition_message(catalog, source_ref, partition_prefix)
 
             messages = map(message, source_ref.spec.prefix.partition_prefixes())
             self.queue_notifications(messages)
