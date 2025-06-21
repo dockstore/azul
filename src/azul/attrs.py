@@ -539,14 +539,14 @@ class SerializableAttrs(Serializable, attrs.AttrsInstance):
                 if field_type in reify(PrimitiveJSON):
                     return self._primitive(x, field_type)
                 elif issubclass(field_type, Serializable):
-                    inner_cls_name = field_type.__name__
-                    self.globals[inner_cls_name] = field_type
+                    cls_name = field_type.__name__
+                    self.globals[cls_name] = field_type
                     is_polymorphic = issubclass(field_type, PolymorphicSerializable)
                     has_discriminator = self.discriminator is not None
                     if is_polymorphic and has_discriminator:
-                        return self._polymorphic(x, inner_cls_name)
+                        return self._polymorphic(x, cls_name)
                     else:
-                        return self._serializable(x, inner_cls_name)
+                        return self._serializable(x, cls_name)
             else:
                 origin = get_origin(field_type)
                 if origin in (Union, UnionType):
@@ -582,11 +582,11 @@ class SerializableAttrs(Serializable, attrs.AttrsInstance):
             raise NotImplementedError
 
         @abstractmethod
-        def _serializable(self, x: str, inner_cls_name: str) -> T:
+        def _serializable(self, x: str, cls: str) -> T:
             raise NotImplementedError
 
         @abstractmethod
-        def _polymorphic(self, x: str, inner_cls_name: str) -> T:
+        def _polymorphic(self, x: str, base_cls: str) -> T:
             raise NotImplementedError
 
         @abstractmethod
@@ -612,17 +612,17 @@ class SerializableAttrs(Serializable, attrs.AttrsInstance):
                 f'if {x} is not None:', self._handle(x, field_type)
             ]
 
-        def _serializable(self, x: str, inner_cls_name: str) -> Source:
+        def _serializable(self, x: str, cls: str) -> Source:
             return [
-                f'{x} = {inner_cls_name}.from_json({x})'
+                f'{x} = {cls}.from_json({x})'
             ]
 
-        def _polymorphic(self, x: str, inner_cls_name: str) -> Source:
+        def _polymorphic(self, x: str, base_cls: str) -> Source:
             depth = next(self.depth)
             cls = f'cls{depth}'
             return [
                 f'{cls} = {x}["{self.discriminator}"]',
-                f'{cls} = {inner_cls_name}.cls_from_json({cls})',
+                f'{cls} = {base_cls}.cls_from_json({cls})',
                 f'{x} = {cls}.from_json({x})'
             ]
 
@@ -690,10 +690,10 @@ class SerializableAttrs(Serializable, attrs.AttrsInstance):
         def _optional(self, x: str, field_type: type) -> str:
             return f'{x} if {x} is None else ({self._handle(x, field_type)})'
 
-        def _serializable(self, x: str, inner_cls_name: str) -> str:
+        def _serializable(self, x: str, cls: str) -> str:
             return f'{x}.to_json()'
 
-        def _polymorphic(self, x: str, inner_cls_name: str) -> str:
+        def _polymorphic(self, x: str, base_cls: str) -> str:
             return f'dict({x}.to_json(), {self.discriminator}={x}.cls_to_json())'
 
         def _list(self, x: str, item_type: type) -> str:
