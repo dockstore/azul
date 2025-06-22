@@ -21,15 +21,13 @@ from chalice.app import (
     SQSRecord,
     UnauthorizedError,
 )
-from more_itertools import (
-    first,
-)
 
 from azul import (
     CatalogName,
     R,
     cached_property,
     config,
+    json_mapping,
 )
 from azul.azulclient import (
     AzulClient,
@@ -58,7 +56,7 @@ from azul.queues import (
 )
 from azul.types import (
     JSON,
-    json_dict,
+    json_str,
 )
 
 log = logging.getLogger(__name__)
@@ -83,11 +81,10 @@ class IndexController(ActionController[IndexAction]):
             except AssertionError as e:
                 if R.caused(e):
                     raise R.propagate(e, chalice.BadRequestError)
-            action = self._load_action(action)
             notification = request.json_body
             log.info('Received notification %r for catalog %r', notification, catalog)
             self._validate_notification(notification)
-            self._queue_notification(action, catalog, notification)
+            self._queue_notification(self._load_action(action), catalog, notification)
             return chalice.app.Response(body='', status_code=http.HTTPStatus.ACCEPTED)
         else:
             raise UnauthorizedError()
@@ -135,12 +132,12 @@ class IndexController(ActionController[IndexAction]):
         self._handle_events(event, self._contribute)
 
     def _contribute(self, message: JSON):
-        action = self._load_action(message['action'])
+        action = self._load_action(json_str(message['action']))
         if action is IndexAction.reindex:
             self.client.remote_reindex_partition(message)
         else:
-            notification = message['notification']
-            catalog = message['catalog']
+            notification = json_mapping(message['notification'])
+            catalog = json_str(message['catalog'])
             assert catalog is not None
             delete = action is IndexAction.delete
             contributions, replicas = self.transform(catalog, notification, delete)
@@ -178,27 +175,30 @@ class IndexController(ActionController[IndexAction]):
         representing one metadata entity in the index. Replicas of the original,
         untransformed metadata are returned as well.
         """
-        bundle_fqid = json_dict(notification['bundle_fqid'])
+        bundle_fqid = json_mapping(notification['bundle_fqid'])
         try:
-            partition = notification['partition']
+            partition_ = json_mapping(notification['partition'])
         except KeyError:
             partition = BundlePartition.root
         else:
-            partition = BundlePartition.from_json(partition)
+            partition = BundlePartition.from_json(partition_)
         service = self.index_service
         bundle = service.fetch_bundle(catalog, bundle_fqid)
         results = service.transform(catalog, bundle, partition, delete=delete)
-        result = first(results)
-        if isinstance(result, BundlePartition):
-            for partition in results:
+        if isinstance(results, list):
+            for result in results:
+                assert isinstance(result, BundlePartition)
+                partition = result
                 notification = dict(notification, partition=partition.to_json())
                 action = IndexAction.delete if delete else IndexAction.add
                 # There's a good chance that the partition will also fail in
                 # the non-retry Lambda function so we'll go straight to retry.
                 self._queue_notification(action, catalog, notification, retry=True)
             return [], []
-        else:
+        elif isinstance(results, tuple):
             return results
+        else:
+            assert False, results
 
     #: The number of failed attempts before a tally is referred as a batch of 1.
     #: Note that the retry lambda does first attempts, too, namely on re-fed and
@@ -245,13 +245,13 @@ class IndexController(ActionController[IndexAction]):
                         break
 
                 log.info('Referring %i tallies', len(referrals))
-                tallies = {}
+                tallies_ = {}
                 for tally in referrals:
                     log.info('Aggregating %i contribution(s) to entity %s',
                              tally.num_contributions, tally.entity)
-                    tallies[tally.entity] = tally.num_contributions
+                    tallies_[tally.entity] = tally.num_contributions
 
-                self.index_service.aggregate(tallies)
+                self.index_service.aggregate(tallies_)
 
                 for tally in referrals:
                     log.info('Successfully aggregated %i contribution(s) to entity %s',
