@@ -147,8 +147,8 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
         return SQSMessage(
             body={
                 'action': action.to_json(),
-                'notification': notification,
-                'catalog': catalog
+                'catalog': catalog,
+                'notification': notification
             }
         )
 
