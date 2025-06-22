@@ -96,6 +96,7 @@ from azul.auth import (
 from azul.azulclient import (
     AzulClient,
     AzulClientNotificationError,
+    IndexAction,
 )
 from azul.chalice import (
     AzulChaliceApp,
@@ -1290,7 +1291,7 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
         # some notifications may end up being sent three or more times.
         num_duplicates = len(bundle_fqids) // 2
         duplicate_bundles = [
-            client.bundle_message(catalog, bundle)
+            client.index_bundle_message(IndexAction.add, catalog, bundle.to_json())
             for bundle in self.random.choices(sorted(bundle_fqids), k=num_duplicates)
         ]
         notifications.extend(duplicate_bundles)

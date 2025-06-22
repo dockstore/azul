@@ -57,6 +57,7 @@ from azul.http import (
     HasCachedHttpClient,
 )
 from azul.indexer import (
+    BundlePartition,
     SourceRef,
     SourcedBundleFQID,
 )
@@ -142,23 +143,17 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
     def index_bundle_message(self,
                              action: IndexAction,
                              catalog: CatalogName,
-                             notification: JSON
+                             bundle_fqid: JSON,
+                             bundle_partition: BundlePartition = BundlePartition.root,
                              ) -> SQSMessage:
         return SQSMessage(
             body={
                 'action': action.to_json(),
                 'catalog': catalog,
-                'notification': notification
+                'bundle_fqid': bundle_fqid,
+                'bundle_partition': bundle_partition.to_json(),
             }
         )
-
-    def bundle_message(self,
-                       catalog: CatalogName,
-                       bundle_fqid: SourcedBundleFQID
-                       ) -> SQSMessage:
-        return self.index_bundle_message(IndexAction.add,
-                                         catalog,
-                                         self.notification(bundle_fqid))
 
     def index_partition_message(self,
                                 catalog: CatalogName,
@@ -346,7 +341,7 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
                      '%i bundles remain in prefix %r of source %r in catalog %r',
                      len(bundle_fqids), prefix, str(source.spec), catalog)
         messages = (
-            self.bundle_message(catalog, bundle_fqid)
+            self.index_bundle_message(IndexAction.add, catalog, bundle_fqid.to_json())
             for bundle_fqid in bundle_fqids
         )
         num_messages = self.queue_notifications(messages)

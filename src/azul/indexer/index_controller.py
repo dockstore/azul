@@ -53,6 +53,7 @@ from azul.indexer.index_service import (
 )
 from azul.queues import (
     SQSFifoMessage,
+    SQSMessage,
 )
 from azul.types import (
     JSON,
@@ -84,18 +85,16 @@ class IndexController(ActionController[IndexAction]):
             notification = request.json_body
             log.info('Received notification %r for catalog %r', notification, catalog)
             self._validate_notification(notification)
-            self._queue_notification(self._load_action(action), catalog, notification)
+            message = self.client.index_bundle_message(self._load_action(action),
+                                                       catalog,
+                                                       notification['bundle_fqid'],
+                                                       BundlePartition.root)
+            self._queue_message(message, retry=False)
             return chalice.app.Response(body='', status_code=http.HTTPStatus.ACCEPTED)
         else:
             raise UnauthorizedError()
 
-    def _queue_notification(self,
-                            action: IndexAction,
-                            catalog: CatalogName,
-                            notification: JSON,
-                            *,
-                            retry: bool = False):
-        message = self.client.index_bundle_message(action, catalog, notification)
+    def _queue_message(self, message: SQSMessage, *, retry: bool):
         queue = self.client.notifications_queue(retry=retry)
         queue.send_message(**message.to_entry())
         log.info('Queued notification message %r', message)
@@ -136,12 +135,16 @@ class IndexController(ActionController[IndexAction]):
         if action is IndexAction.reindex:
             self.client.remote_reindex_partition(message)
         else:
-            notification = json_mapping(message['notification'])
             catalog = json_str(message['catalog'])
             assert catalog is not None
             delete = action is IndexAction.delete
-            contributions, replicas = self.transform(catalog, notification, delete)
-
+            bundle_fqid = json_mapping(message['bundle_fqid'])
+            bundle_partition = json_mapping(message['bundle_partition'])
+            bundle_partition = BundlePartition.from_json(bundle_partition)
+            contributions, replicas = self.transform(catalog,
+                                                     bundle_fqid,
+                                                     bundle_partition,
+                                                     delete=delete)
             log.info('Writing %i contributions to index.', len(contributions))
             tallies = self.index_service.contribute(catalog, contributions)
             tallies = [DocumentTally.for_entity(catalog, entity, num_contributions)
@@ -166,7 +169,9 @@ class IndexController(ActionController[IndexAction]):
 
     def transform(self,
                   catalog: CatalogName,
-                  notification: JSON,
+                  bundle_fqid: JSON,
+                  bundle_partition: BundlePartition,
+                  *,
                   delete: bool
                   ) -> tuple[list[Contribution], list[Replica]]:
         """
@@ -175,25 +180,20 @@ class IndexController(ActionController[IndexAction]):
         representing one metadata entity in the index. Replicas of the original,
         untransformed metadata are returned as well.
         """
-        bundle_fqid = json_mapping(notification['bundle_fqid'])
-        try:
-            partition_ = json_mapping(notification['partition'])
-        except KeyError:
-            partition = BundlePartition.root
-        else:
-            partition = BundlePartition.from_json(partition_)
         service = self.index_service
         bundle = service.fetch_bundle(catalog, bundle_fqid)
-        results = service.transform(catalog, bundle, partition, delete=delete)
+        results = service.transform(catalog, bundle, bundle_partition, delete=delete)
         if isinstance(results, list):
-            for result in results:
-                assert isinstance(result, BundlePartition)
-                partition = result
-                notification = dict(notification, partition=partition.to_json())
-                action = IndexAction.delete if delete else IndexAction.add
+            action = IndexAction.delete if delete else IndexAction.add
+            for bundle_partition in results:
+                assert isinstance(bundle_partition, BundlePartition)
                 # There's a good chance that the partition will also fail in
                 # the non-retry Lambda function so we'll go straight to retry.
-                self._queue_notification(action, catalog, notification, retry=True)
+                message = self.client.index_bundle_message(action,
+                                                           catalog,
+                                                           bundle_fqid,
+                                                           bundle_partition)
+                self._queue_message(message, retry=True)
             return [], []
         elif isinstance(results, tuple):
             return results
