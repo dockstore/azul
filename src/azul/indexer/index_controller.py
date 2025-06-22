@@ -87,15 +87,15 @@ class IndexController(ActionController[IndexAction]):
             notification = request.json_body
             log.info('Received notification %r for catalog %r', notification, catalog)
             self._validate_notification(notification)
-            self._queue_notification(action, notification, catalog)
+            self._queue_notification(action, catalog, notification)
             return chalice.app.Response(body='', status_code=http.HTTPStatus.ACCEPTED)
         else:
             raise UnauthorizedError()
 
     def _queue_notification(self,
                             action: IndexAction,
-                            notification: JSON,
                             catalog: CatalogName,
+                            notification: JSON,
                             *,
                             retry: bool = False):
         message = self.client.index_bundle_message(action, catalog, notification)
@@ -195,7 +195,7 @@ class IndexController(ActionController[IndexAction]):
                 action = IndexAction.delete if delete else IndexAction.add
                 # There's a good chance that the partition will also fail in
                 # the non-retry Lambda function so we'll go straight to retry.
-                self._queue_notification(action, notification, catalog, retry=True)
+                self._queue_notification(action, catalog, notification, retry=True)
             return [], []
         else:
             return results
