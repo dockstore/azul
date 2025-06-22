@@ -156,7 +156,9 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
                        catalog: CatalogName,
                        bundle_fqid: SourcedBundleFQID
                        ) -> SQSMessage:
-        return self.index_bundle_message(IndexAction.add, catalog, self.notification(bundle_fqid))
+        return self.index_bundle_message(IndexAction.add,
+                                         catalog,
+                                         self.notification(bundle_fqid))
 
     def index_partition_message(self,
                                 catalog: CatalogName,
