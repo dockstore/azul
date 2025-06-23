@@ -542,7 +542,7 @@ class ManifestPartition:
 
     def next_page(self,
                   file_name: str | None,
-                  search_after: SortKey
+                  search_after: SortKey | None
                   ) -> Self:
         assert self.page_index is not None, self
         # If different pages yield different file names, use default file name
@@ -1253,7 +1253,8 @@ class PagedManifestGenerator(ClientSidePagingManifestGenerator):
 
     In some subclasses, e.g. CompactManifestGenerator and CurlManifestGenerator,
     a manifest page corresponds to a page of hits from a paginated Elasticsearch
-    request.
+    request. In others, e.g. JSONLVerbatimManifestGenerator, the relationship
+    between manifest pages and Elasticsearch pages is more complicated.
     """
 
     @abstractmethod
@@ -1760,8 +1761,7 @@ class PFBManifestGenerator(FileBasedManifestGenerator):
         return path, None
 
 
-class VerbatimManifestGenerator(FileBasedManifestGenerator,
-                                ClientSidePagingManifestGenerator,
+class VerbatimManifestGenerator(ClientSidePagingManifestGenerator,
                                 metaclass=ABCMeta):
 
     @property
@@ -1807,6 +1807,11 @@ class VerbatimManifestGenerator(FileBasedManifestGenerator,
         # sources used for indexing, and filtering by a specific project
         # or dataset entity should produce the same results as filtering by
         # that entity's source.
+        #
+        # The verbatim JSONL generator temporarily inserts a source ID condition
+        # into its provided filters in order to partition the manifest. If the
+        # source ID field were not included below, that insertion would cause
+        # orphans to be absent from the manifest, which is incorrect.
         #
         source_fields = {
             plugin.special_fields.source_id,
@@ -1921,7 +1926,8 @@ class VerbatimManifestGenerator(FileBasedManifestGenerator,
         return self._paginate_hits(request_factory)
 
 
-class JSONLVerbatimManifestGenerator(VerbatimManifestGenerator):
+class JSONLVerbatimManifestGenerator(PagedManifestGenerator,
+                                     VerbatimManifestGenerator):
 
     @property
     def content_type(self) -> str:
@@ -1935,21 +1941,65 @@ class JSONLVerbatimManifestGenerator(VerbatimManifestGenerator):
     def format(cls) -> ManifestFormat:
         return ManifestFormat.verbatim_jsonl
 
-    def create_file(self) -> tuple[str, str | None]:
-        fd, path = mkstemp(suffix=f'.{self.file_name_extension()}')
-        os.close(fd)
-        with open(path, 'w') as f:
-            for replica in self._list_replicas():
+    @property
+    def source_id_field(self) -> str:
+        return self.metadata_plugin.special_fields.source_id
+
+    def source_ids(self) -> list[str]:
+        # Currently, we process each source that might be included in the
+        # manifest. This can be very inefficient since many partitions may be
+        # empty for small manifests. A potential optimization is to use a terms
+        # aggregation to query for the set of nonempty sources before
+        # processing any hits.
+
+        # It's possible that inaccessible sources are included in the explicit
+        # sources. If they are, an exception will be raised when the filters are
+        # reified, so it's safe to skip that check here.
+        try:
+            source_filter = self.filters.explicit[self.source_id_field]
+        except KeyError:
+            sources = self.filters.source_ids
+        else:
+            sources = source_filter['is']
+        return sorted(sources)
+
+    def write_page_to(self,
+                      partition: ManifestPartition,
+                      output: IO[str]
+                      ) -> ManifestPartition:
+        # All replicas from each source must be held in memory simultaneously to
+        # avoid emitting duplicates. Therefore, each "page" of this manifest
+        # must retrieve every replica from a given source, using multiple paged
+        # requests to ElasticSearch if necessary.
+        source_ids = self.source_ids()
+        source_id = source_ids[partition.page_index]
+        log.info('Listing replicas from source %r for manifest page %d',
+                 source_id, partition.page_index)
+        partition_filter = {self.source_id_field: {'is': [source_id]}}
+        original_filters = self.filters
+        try:
+            self.filters = original_filters.update(partition_filter)
+            replicas = self._list_replicas()
+            for replica in replicas:
                 entry = {
                     'value': replica['contents'],
                     'type': replica['replica_type']
                 }
-                json.dump(entry, f)
-                f.write('\n')
-        return path, None
+                json.dump(entry, output)
+                output.write('\n')
+        finally:
+            self.filters = original_filters
+        last_page = len(source_ids) - 1
+        if partition.page_index < last_page:
+            return partition.next_page(file_name=None, search_after=None)
+        elif partition.page_index == last_page:
+            return partition.last_page()
+        else:
+            assert False, (partition, source_ids)
 
 
-class PFBVerbatimManifestGenerator(VerbatimManifestGenerator):
+class PFBVerbatimManifestGenerator(FileBasedManifestGenerator,
+                                   VerbatimManifestGenerator):
 
     @property
     def content_type(self) -> str:

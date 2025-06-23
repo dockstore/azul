@@ -18,6 +18,10 @@ from datetime import (
 from io import (
     BytesIO,
 )
+from itertools import (
+    combinations,
+    starmap,
+)
 import json
 import os
 from pathlib import (
@@ -38,6 +42,9 @@ from uuid import (
 )
 
 import attrs
+from chalice import (
+    ForbiddenError,
+)
 import fastavro
 from furl import (
     furl,
@@ -63,10 +70,13 @@ from azul.collections import (
 )
 from azul.indexer import (
     Prefix,
+    SimpleSourceSpec,
     SourcedBundleFQID,
 )
 from azul.indexer.document import (
+    EntityID,
     EntityReference,
+    EntityType,
 )
 from azul.json import (
     copy_json,
@@ -84,6 +94,8 @@ from azul.plugins.metadata.hca import (
 )
 from azul.plugins.repository.dss import (
     DSSBundle,
+    DSSBundleFQID,
+    DSSSourceRef,
 )
 from azul.service import (
     Filters,
@@ -1808,6 +1820,123 @@ class TestAnvilManifestsWithCommonPrefix(AnvilManifestTestCase):
 
     def test(self):
         self._test_verbatim_pfb_manifest(enable_relations=True)
+
+
+class TestVerbatimJSONLManifestPartitioningBySource(DCP1ManifestTestCase):
+    """
+    This test covers two important cases not covered by
+    test_verbatim_jsonl_manifest: the interaction between implicit and explicit
+    source filters, and partitioning across multiple sources.
+    """
+
+    sources_by_bundle_uuid = {
+        '3ac62c33-93e1-56b4-b857-59497f5d942d':
+            DSSSourceRef(id='706cc417-9ed1-4c09-8341-0df38e374423',
+                         spec=SimpleSourceSpec.parse('eggs:/1')),
+        '97f0cc83-f0ac-417a-8a29-221c77debde8':
+            DSSSourceRef(id='d0024443-bddf-4d3e-b4c8-6a3a1b23e8cf',
+                         spec=SimpleSourceSpec.parse('bacon:/2')),
+        '4b03c1ce-9df1-5cd5-a8e4-48a2fe095081':
+            DSSSourceRef(id='22213a35-5c8e-4bad-bcb9-d4b7740c7165',
+                         spec=SimpleSourceSpec.parse('sausage:/3')),
+    }
+
+    @classmethod
+    def bundle_fqid(cls, *, uuid: str, version: str) -> DSSBundleFQID:
+        return DSSBundleFQID(uuid=uuid,
+                             version=version,
+                             source=cls.sources_by_bundle_uuid[uuid])
+
+    @classmethod
+    def bundles(cls) -> list[SourcedBundleFQID]:
+        return [
+            cls.bundle_fqid(uuid=uuid,
+                            version='2022-06-01T00:00:00.000000Z')
+            for uuid in cls.sources_by_bundle_uuid.keys()
+        ]
+
+    def _filters(self, filters: FiltersJSON) -> Filters:
+        return Filters(explicit=filters,
+                       source_ids={
+                           source.id
+                           for source in self.sources_by_bundle_uuid.values()
+                       })
+
+    def test_manifest_partitioning_by_source(self):
+
+        # We can't assert the presence of every entity from the indexed bundles
+        # because some HCA entities still lack replicas.
+        #
+        def replicas_exist_for(entity_type: EntityType) -> bool:
+            return entity_type in (
+                'project',
+                'links',
+                'donor_organism',
+                'specimen_from_organism'
+            ) or entity_type.endswith('_file')
+
+        bundles_by_fqid = {
+            fqid: self._load_canned_bundle(fqid)
+            for fqid in self.bundles()
+        }
+        entity_ids_by_source_id: dict[str, set[EntityID]] = {
+            bundle_fqid.source.id: {bundle_fqid.uuid} | {
+                ref.entity_id
+                for ref in map(EntityReference.parse, bundle.metadata)
+                if replicas_exist_for(ref.entity_type)
+            }
+            for bundle_fqid, bundle in bundles_by_fqid.items()
+        }
+
+        # The manifest partitioning depends on the invariant that sources are
+        # disjunctive. It's very easy to accidentally violate this invariant
+        # while setting up this test, for example by choosing canned bundles
+        # that came from the same source.
+        #
+        assert all(starmap(
+            set.isdisjoint,
+            combinations(entity_ids_by_source_id.values(), 2)
+        ))
+
+        for num_sources in range(1, len(entity_ids_by_source_id) + 1):
+            for source_ids in combinations(entity_ids_by_source_id, r=num_sources):
+                with self.subTest(sources=source_ids):
+                    filters = {'sourceId': {'is': list(source_ids)}}
+                    response = self._get_manifest(ManifestFormat.verbatim_jsonl, filters)
+                    manifest_rows = list(map(json.loads, response.content.decode().splitlines()))
+
+                    def entity_id(row: JSON) -> EntityID:
+                        if row['type'] == 'links':
+                            return one(
+                                bundle_fqid.uuid
+                                for bundle_fqid, bundle in bundles_by_fqid.items()
+                                if row['value']['links'] == bundle.links['links']
+                            )
+                        else:
+                            return row['value']['provenance']['document_id']
+
+                    actual_entity_ids = {
+                        entity_id(row)
+                        for row in manifest_rows
+                        if replicas_exist_for(row['type'])
+                    }
+                    expected_entity_ids = set.union(*(
+                        entity_ids_by_source_id[source_id]
+                        for source_id in source_ids
+                    ))
+                    self.assertEqual(expected_entity_ids, actual_entity_ids)
+
+    def test_inaccessible_source(self):
+        accessible_source = list(self.sources_by_bundle_uuid.values())[0].id
+        inaccessible_source = 'cafebabe-5b46-40e9-81c5-aaa7ebadf00d'
+        with self.assertRaises(ForbiddenError) as e:
+            filters = {'sourceId': {'is': [accessible_source, inaccessible_source]}}
+            self._get_manifest(ManifestFormat.verbatim_jsonl, filters)
+        expected_args = (
+            'Cannot filter by inaccessible sources',
+            {inaccessible_source}
+        )
+        self.assertEqual(expected_args, e.exception.args)
 
 
 class TestPFB(CannedManifestTestCase):
