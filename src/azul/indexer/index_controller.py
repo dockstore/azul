@@ -130,8 +130,7 @@ class IndexController(ActionController[IndexAction]):
     def contribute(self, event: Iterable[SQSRecord], *, retry=False):
         self._handle_events(event, self._contribute)
 
-    def _contribute(self, message: JSON):
-        action = self._load_action(json_str(message['action']))
+    def _contribute(self, action: IndexAction, message: JSON):
         if action is IndexAction.reindex:
             self.client.remote_reindex_partition(message)
         else:

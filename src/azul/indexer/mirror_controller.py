@@ -97,8 +97,7 @@ class MirrorController(ActionController[MirrorAction], SchemaController):
     def mirror(self, event: Iterable[SQSRecord]):
         self._handle_events(event, self._mirror)
 
-    def _mirror(self, message: JSON):
-        action = self._load_action(json_str(message['action']))
+    def _mirror(self, action: MirrorAction, message: JSON):
         if action is MirrorAction.mirror_source:
             self.mirror_source(json_str(message['catalog']),
                                json_mapping(message['source']))
