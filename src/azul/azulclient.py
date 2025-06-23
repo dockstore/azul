@@ -79,6 +79,7 @@ from azul.queues import (
 from azul.types import (
     AnyJSON,
     JSON,
+    JSONs,
     json_mapping,
 )
 
@@ -128,18 +129,6 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
     def metadata_plugin(self, catalog: CatalogName) -> MetadataPlugin:
         return self.index_service.metadata_plugin(catalog)
 
-    def notification(self, bundle_fqid: SourcedBundleFQID) -> JSON:
-        """
-        Generate an indexer notification for the given bundle.
-        """
-        # Organic notifications sent by DSS have a different structure,
-        # but since DSS is end-of-life these synthetic notifications are now the
-        # only variant that would ever occur in the wild.
-        return {
-            'transaction_id': str(uuid.uuid4()),
-            'bundle_fqid': bundle_fqid.to_json()
-        }
-
     def index_bundle_message(self,
                              action: IndexAction,
                              catalog: CatalogName,
@@ -183,8 +172,14 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
         )
 
     def local_reindex(self, catalog: CatalogName, prefix: str) -> int:
-        notifications = [
-            self.notification(bundle_fqid)
+        notifications: JSONs = [
+            # Notifications sent organically by DSS had a different structure,
+            # but since DSS is long gone these synthetic notifications are now
+            # the only variant that would ever occur in the wild.
+            {
+                'transaction_id': str(uuid.uuid4()),
+                'bundle_fqid': bundle_fqid.to_json()
+            }
             for source in self.catalog_sources(catalog)
             for bundle_fqid in self.list_bundles(catalog, source, prefix)
         ]
