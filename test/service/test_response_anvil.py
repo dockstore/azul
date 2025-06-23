@@ -2443,7 +2443,8 @@ class TestAnvilResponse(AnvilIndexerTestCase, WebServiceTestCase):
                     'count': 1,
                     'format': '.vcf.gz'
                 }
-            ]
+            ],
+            'totalFileSize': 3519867231.0
         }
         url = str(self.base_url.set(path='/index/summary'))
         self._assertResponse(url, expected_response)
