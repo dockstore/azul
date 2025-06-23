@@ -217,14 +217,17 @@ class IndexController(ActionController[IndexAction]):
         # contributions is a costly operation for any entity with many
         # contributions e.g., a large project.
         #
-        tallies_by_entity: dict[CataloguedEntityReference, list[DocumentTally]] = defaultdict(list)
+        tallies_ = []
         for record in event:
             tally = DocumentTally.from_sqs_record(record)
             log.info('Attempt %i of handling %i contribution(s) for entity %s',
                      tally.attempts, tally.num_contributions, tally.entity)
-            tallies_by_entity[tally.entity].append(tally)
-        deferrals, referrals = [], []
+            tallies_.append(tally)
         try:
+            tallies_by_entity: dict[CataloguedEntityReference, list[DocumentTally]] = defaultdict(list)
+            for tally in tallies_:
+                tallies_by_entity[tally.entity].append(tally)
+            deferrals, referrals = [], []
             for tallies in tallies_by_entity.values():
                 if len(tallies) == 1:
                     referrals.append(tallies[0])
@@ -271,7 +274,7 @@ class IndexController(ActionController[IndexAction]):
         except BaseException:
             # Note that another problematic outcome is for the Lambda invocation
             # to time out, in which case this log message will not be written.
-            log.warning('Failed to aggregate tallies: %r', tallies_by_entity.values(), exc_info=True)
+            log.warning('Failed to aggregate tallies: %r', tallies_, exc_info=True)
             raise
 
 
