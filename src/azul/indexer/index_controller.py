@@ -244,13 +244,13 @@ class IndexController(ActionController[IndexAction]):
                         break
 
                 log.info('Referring %i tallies', len(referrals))
-                tallies_ = {}
+                tally_by_entity = {}
                 for tally in referrals:
                     log.info('Aggregating %i contribution(s) to entity %s',
                              tally.num_contributions, tally.entity)
-                    tallies_[tally.entity] = tally.num_contributions
+                    tally_by_entity[tally.entity] = tally.num_contributions
 
-                self.index_service.aggregate(tallies_)
+                self.index_service.aggregate(tally_by_entity)
 
                 for tally in referrals:
                     log.info('Successfully aggregated %i contribution(s) to entity %s',
