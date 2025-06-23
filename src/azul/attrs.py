@@ -430,7 +430,7 @@ class SerializableAttrs(Serializable, attrs.AttrsInstance):
         """
         Compile a function definition from the given source & context
         """
-        if config.debug > 1:
+        if config.debug > 2:
             log.debug('Generating code for method in %r with globals %r. '
                       'See next line for body of method.\n%s', cls, globals, source)
         bytecode = compile(source, cls.__module__, 'exec')
