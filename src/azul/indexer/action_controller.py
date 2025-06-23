@@ -2,7 +2,6 @@ import json
 import logging
 import time
 from typing import (
-    Any,
     Callable,
     Iterable,
 )
@@ -52,7 +51,7 @@ class ActionController[A: Action](AppController):
 
     def _handle_events(self,
                        event: Iterable[SQSRecord],
-                       message_handler: Callable[[JSON], Any]):
+                       message_handler: Callable[[JSON], None]):
         for record in event:
             message = json.loads(record.body)
             attempts = record.to_dict()['attributes']['ApproximateReceiveCount']
