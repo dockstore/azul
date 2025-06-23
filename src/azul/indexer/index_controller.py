@@ -217,65 +217,65 @@ class IndexController(ActionController[IndexAction]):
         # contributions is a costly operation for any entity with many
         # contributions e.g., a large project.
         #
-        tallies_ = []
+        tallies = []
         for record in event:
             tally = DocumentTally.from_sqs_record(record)
             log.info('Attempt %i of handling %i contribution(s) for entity %s',
                      tally.attempts, tally.num_contributions, tally.entity)
-            tallies_.append(tally)
+            tallies.append(tally)
         try:
-            tallies_by_entity: dict[CataloguedEntityReference, list[DocumentTally]] = defaultdict(list)
-            for tally in tallies_:
-                tallies_by_entity[tally.entity].append(tally)
-            deferrals, referrals = [], []
-            for tallies in tallies_by_entity.values():
-                if len(tallies) == 1:
-                    referrals.append(tallies[0])
-                elif len(tallies) > 1:
-                    deferrals.append(tallies[0].consolidate(tallies[1:]))
-                else:
-                    assert False
-
-            if referrals:
-                for i, tally in enumerate(referrals):
-                    if tally.attempts > self.num_batched_aggregation_attempts:
-                        log.info('Only aggregating problematic entity %s, deferring all others',
-                                 tally.entity)
-                        referrals.pop(i)
-                        deferrals.extend(referrals)
-                        referrals = [tally]
-                        break
-
-                log.info('Referring %i tallies', len(referrals))
-                tally_by_entity = {}
-                for tally in referrals:
-                    log.info('Aggregating %i contribution(s) to entity %s',
-                             tally.num_contributions, tally.entity)
-                    tally_by_entity[tally.entity] = tally.num_contributions
-
-                self.index_service.aggregate(tally_by_entity)
-
-                for tally in referrals:
-                    log.info('Successfully aggregated %i contribution(s) to entity %s',
-                             tally.num_contributions, tally.entity)
-                log.info('Successfully referred %i tallies', len(referrals))
-
-            if deferrals:
-                log.info('Deferring %i tallies', len(deferrals))
-                for tally in deferrals:
-                    log.info('Deferring aggregation of %i contribution(s) to entity %s',
-                             tally.num_contributions, tally.entity)
-                messages = (tally.to_message() for tally in deferrals)
-                # Hopefully this is more or less atomic. If we crash below here,
-                # tallies will be inflated because some or all deferrals have
-                # been sent and the original tallies will be returned.
-                self.client.queue_tallies(messages, retry=retry)
-
+            self._aggregate(tallies, retry=retry)
         except BaseException:
             # Note that another problematic outcome is for the Lambda invocation
             # to time out, in which case this log message will not be written.
-            log.warning('Failed to aggregate tallies: %r', tallies_, exc_info=True)
+            log.warning('Failed to aggregate tallies: %r', tallies, exc_info=True)
             raise
+
+    def _aggregate(self, tallies: list['DocumentTally'], *, retry: bool):
+        tallies_by_entity: dict[CataloguedEntityReference, list[DocumentTally]] = defaultdict(list)
+        for tally in tallies:
+            tallies_by_entity[tally.entity].append(tally)
+        deferrals, referrals = [], []
+        for tallies in tallies_by_entity.values():
+            if len(tallies) == 1:
+                referrals.append(tallies[0])
+            elif len(tallies) > 1:
+                deferrals.append(tallies[0].consolidate(tallies[1:]))
+            else:
+                assert False
+        if referrals:
+            for i, tally in enumerate(referrals):
+                if tally.attempts > self.num_batched_aggregation_attempts:
+                    log.info('Only aggregating problematic entity %s, deferring all others',
+                             tally.entity)
+                    referrals.pop(i)
+                    deferrals.extend(referrals)
+                    referrals = [tally]
+                    break
+
+            log.info('Referring %i tallies', len(referrals))
+            tally_by_entity = {}
+            for tally in referrals:
+                log.info('Aggregating %i contribution(s) to entity %s',
+                         tally.num_contributions, tally.entity)
+                tally_by_entity[tally.entity] = tally.num_contributions
+
+            self.index_service.aggregate(tally_by_entity)
+
+            for tally in referrals:
+                log.info('Successfully aggregated %i contribution(s) to entity %s',
+                         tally.num_contributions, tally.entity)
+            log.info('Successfully referred %i tallies', len(referrals))
+        if deferrals:
+            log.info('Deferring %i tallies', len(deferrals))
+            for tally in deferrals:
+                log.info('Deferring aggregation of %i contribution(s) to entity %s',
+                         tally.num_contributions, tally.entity)
+            messages = (tally.to_message() for tally in deferrals)
+            # Hopefully this is more or less atomic. If we crash below here,
+            # tallies will be inflated because some or all deferrals have
+            # been sent and the original tallies will be returned.
+            self.client.queue_tallies(messages, retry=retry)
 
 
 @dataclass(frozen=True)
