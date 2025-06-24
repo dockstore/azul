@@ -4,6 +4,9 @@ from collections.abc import (
 import http
 import json
 import logging
+from typing import (
+    Any,
+)
 import uuid
 
 import chalice
@@ -22,6 +25,9 @@ from azul.azulclient import (
     AzulClient,
     IndexAction,
 )
+from azul.chalice import (
+    LambdaMetric,
+)
 from azul.hmac import (
     HMACAuthentication,
 )
@@ -34,6 +40,17 @@ from azul.indexer.action_controller import (
 from azul.indexer.index_queue_service import (
     DocumentTally,
     IndexQueueService,
+)
+from azul.openapi import (
+    format_description as fd,
+    params,
+    schema,
+)
+from azul.openapi.responses import (
+    json_content,
+)
+from azul.queues import (
+    Queues,
 )
 
 log = logging.getLogger(__name__)
@@ -48,6 +65,138 @@ class IndexController(ActionController[IndexAction]):
     @cached_property
     def client(self) -> AzulClient:
         return AzulClient()
+
+    def handlers(self) -> dict[str, Any]:
+        @self.app.route(
+            '/{catalog}/{action}',
+            methods=['POST'],
+            spec={
+                'tags': ['Indexing'],
+                'summary': 'Notify the indexer to perform an action on a bundle',
+                'description': fd('''
+                    Queue a bundle for addition to or deletion from the index.
+
+                    The request must be authenticated using HMAC via the ``signature``
+                    header. Each Azul deployment has its own unique HMAC key. The HMAC
+                    components are the request method, request path, and the SHA256
+                    digest of the request body.
+
+                    A valid HMAC header proves that the client is in possession of the
+                    secret HMAC key and that the request wasn't tampered with while
+                    travelling between client and service, even though the latter is not
+                    strictly necessary considering that TLS is used to encrypt the
+                    entire exchange. Internal clients can obtain the secret key from the
+                    environment they are running in, and that they share with the
+                    service. External clients must have been given the secret key. The
+                    now-defunct DSS was such an external client. The Azul indexer
+                    provided the HMAC secret to DSS when it registered with DSS to be
+                    notified about bundle additions/deletions. These days only internal
+                    clients use this endpoint.
+                '''),
+                'requestBody': {
+                    'description': 'Contents of the notification',
+                    'required': True,
+                    **json_content(schema.object(
+                        bundle_fqid=schema.object(
+                            uuid=str,
+                            version=str,
+                            source=schema.object(
+                                id=str,
+                                spec=str
+                            )
+                        )
+                    ))
+                },
+                'parameters': [
+                    params.path('catalog',
+                                schema.enum(*config.catalogs),
+                                description='The name of the catalog to notify.'),
+                    params.path('action',
+                                schema.enum(IndexAction.add.name, IndexAction.delete.name),
+                                description='Which action to perform.'),
+                    params.header('signature',
+                                  str,
+                                  description='HMAC authentication signature.')
+                ],
+                'responses': {
+                    '200': {
+                        'description': 'Notification was successfully queued for processing'
+                    },
+                    '400': {
+                        'description': 'Request was rejected due to malformed parameters'
+                    },
+                    '401': {
+                        'description': 'Request lacked a valid HMAC header'
+                    }
+                }
+            }
+        )
+        def post_notification(catalog: CatalogName, action: str):
+            """
+            Receive a notification event and queue it for indexing or deletion.
+            """
+            return self.handle_notification(catalog, action)
+
+        @self.app.metric_alarm(metric=LambdaMetric.errors,
+                               threshold=int(config.contribution_concurrency(retry=False) * 2 / 3),
+                               period=5 * 60)
+        @self.app.metric_alarm(metric=LambdaMetric.throttles,
+                               threshold=int(96000 / config.contribution_concurrency(retry=False)),
+                               period=5 * 60)
+        @self.app.on_sqs_message(
+            queue=config.notifications_queue.name,
+            batch_size=1
+        )
+        def contribute(event: chalice.app.SQSEvent):
+            self.contribute(event)
+
+        @self.app.metric_alarm(metric=LambdaMetric.errors,
+                               threshold=int(config.aggregation_concurrency(retry=False) * 3),
+                               period=5 * 60)
+        @self.app.metric_alarm(metric=LambdaMetric.throttles,
+                               threshold=int(37760 / config.aggregation_concurrency(retry=False)),
+                               period=5 * 60)
+        @self.app.on_sqs_message(
+            queue=config.tallies_queue.name,
+            batch_size=Queues.batch_size
+        )
+        def aggregate(event: chalice.app.SQSEvent):
+            self.aggregate(event)
+
+        # Any messages in the tallies queue that fail being processed will be
+        # retried with more RAM in the tallies_retry queue.
+
+        @self.app.metric_alarm(metric=LambdaMetric.errors,
+                               threshold=int(config.aggregation_concurrency(retry=True) * 1 / 16),
+                               period=5 * 60)
+        @self.app.metric_alarm(metric=LambdaMetric.throttles,
+                               threshold=0,
+                               period=5 * 60)
+        @self.app.on_sqs_message(
+            queue=config.tallies_queue.to_retry.name,
+            batch_size=Queues.batch_size
+        )
+        def aggregate_retry(event: chalice.app.SQSEvent):
+            self.aggregate(event, retry=True)
+
+        # Any messages in the notifications queue that fail being processed will
+        # be retried with more RAM and a longer timeout in the
+        # notifications_retry queue.
+
+        @self.app.metric_alarm(metric=LambdaMetric.errors,
+                               threshold=int(config.contribution_concurrency(retry=True) * 1 / 4),
+                               period=5 * 60)
+        @self.app.metric_alarm(metric=LambdaMetric.throttles,
+                               threshold=int(31760 / config.contribution_concurrency(retry=True)),
+                               period=5 * 60)
+        @self.app.on_sqs_message(
+            queue=config.notifications_queue.to_retry.name,
+            batch_size=1
+        )
+        def contribute_retry(event: chalice.app.SQSEvent):
+            self.contribute(event, retry=True)
+
+        return locals()
 
     def handle_notification(self, catalog: CatalogName, action: str):
         request = self.current_request
