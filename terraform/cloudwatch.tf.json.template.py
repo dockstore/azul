@@ -49,17 +49,6 @@ emit_tf({
                     }
                 },
                 {
-                    'aws_nat_gateway': {
-                        **{
-                            f'gitlab_{zone}': {
-                                'filter': {
-                                    'name': 'tag:Name',
-                                    'values': [f'azul-gitlab_{zone}']
-                                },
-                            }
-                            for zone in range(vpc.num_zones)
-                        }
-                    },
                     'aws_ec2_client_vpn_endpoint': {
                         'gitlab': {
                             'filter': {
@@ -189,6 +178,7 @@ emit_tf({
                                             'id': f'm{zone}',
                                             'metric': {
                                                 'dimensions': {
+                                                    # Data source defined in data_sources.tf.json
                                                     'NatGatewayId': f'${{data.aws_nat_gateway.gitlab_{zone}.id}}'
                                                 },
                                                 'namespace': 'AWS/NATGateway',
