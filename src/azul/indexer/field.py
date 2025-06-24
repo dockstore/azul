@@ -16,6 +16,7 @@ from typing import (
     Iterable,
     Mapping,
     Sequence,
+    TypeAliasType,
     TypedDict,
     cast,
 )
@@ -23,9 +24,6 @@ from typing import (
 from more_itertools import (
     first,
     one,
-)
-from typing_extensions import (
-    TypeAliasType,
 )
 
 from azul import (
@@ -49,7 +47,7 @@ from azul.types import (
 # A type variable named ``N`` denotes the native type of a field in documents as
 # they are being created by a transformer or processed by an aggregator.
 #
-# A type named variable ``X`` denotes the type of a field in a document just
+# A type variable named ``X`` denotes the type of a field in a document just
 # before it's being written to the index. Think "index type".
 
 #: The static (build time) type of a document field value
