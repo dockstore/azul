@@ -43,6 +43,9 @@ from azul.indexer.document import (
 from azul.indexer.index_controller import (
     IndexController,
 )
+from azul.indexer.index_queue_service import (
+    IndexQueueService,
+)
 from azul.indexer.index_service import (
     IndexService,
     IndexWriter,
@@ -95,7 +98,8 @@ class TestIndexController(DCP2IndexerTestCase, WorkQueueTestCase):
         app = MagicMock()
         self.controller = IndexController(app=app)
         app.catalog = self.catalog
-        IndexController.index_service.fset(self.controller, self.index_service)
+        index_queue_service = self.controller.index_queue_service
+        IndexQueueService.index_service.fset(index_queue_service, self.index_service)
 
     def tearDown(self):
         self.index_service.delete_indices(self.catalog)
@@ -257,7 +261,7 @@ class TestIndexController(DCP2IndexerTestCase, WorkQueueTestCase):
 
         # Poison the two project and the two bundle tallies, by simulating
         # a number of failed attempts at processing them
-        attempts = self.controller.num_batched_aggregation_attempts
+        attempts = self.controller.index_queue_service.num_batched_aggregation_attempts
         # While 0 is a valid value, the test logic below wouldn't work with it
         self.assertGreater(attempts, 0)
         messages = [
