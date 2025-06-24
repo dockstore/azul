@@ -57,6 +57,7 @@ from azul.queues import (
 )
 from azul.types import (
     JSON,
+    json_int,
     json_str,
 )
 
@@ -219,7 +220,10 @@ class IndexController(ActionController[IndexAction]):
         #
         tallies = []
         for record in event:
-            tally = DocumentTally.from_sqs_record(record)
+            body = json.loads(record.body)
+            attributes = record.to_dict()['attributes']
+            attempts = int(attributes['ApproximateReceiveCount'])
+            tally = DocumentTally.from_json(json=body, attempts=attempts)
             log.info('Attempt %i of handling %i contribution(s) for entity %s',
                      tally.attempts, tally.num_contributions, tally.entity)
             tallies.append(tally)
@@ -290,16 +294,6 @@ class DocumentTally:
     attempts: int
 
     @classmethod
-    def from_sqs_record(cls, record: SQSRecord) -> Self:
-        body = json.loads(record.body)
-        attributes = record.to_dict()['attributes']
-        return cls(entity=CataloguedEntityReference(catalog=body['catalog'],
-                                                    entity_type=body['entity_type'],
-                                                    entity_id=body['entity_id']),
-                   num_contributions=body['num_contributions'],
-                   attempts=int(attributes['ApproximateReceiveCount']))
-
-    @classmethod
     def for_entity(cls,
                    catalog: CatalogName,
                    entity: EntityReference,
@@ -309,6 +303,14 @@ class DocumentTally:
                                                     entity_id=entity.entity_id),
                    num_contributions=num_contributions,
                    attempts=0)
+
+    @classmethod
+    def from_json(cls, json: JSON, attempts: int) -> Self:
+        return cls(entity=CataloguedEntityReference(catalog=json_str(json['catalog']),
+                                                    entity_type=json_str(json['entity_type']),
+                                                    entity_id=json_str(json['entity_id'])),
+                   num_contributions=json_int(json['num_contributions']),
+                   attempts=attempts)
 
     def to_json(self) -> JSON:
         return {
