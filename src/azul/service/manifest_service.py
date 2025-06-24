@@ -1307,6 +1307,8 @@ class PagedManifestGenerator(ClientSidePagingManifestGenerator):
             with TextIOWrapper(buffer, encoding='utf-8', write_through=True) as text_buffer:
                 while True:
                     partition = self.write_page_to(partition, output=text_buffer)
+                    # Manifest lambda has 2 GB of memory
+                    assert buffer.tell() < 1.5 * 1024 ** 3
                     if partition.is_last_page or buffer.tell() > self.part_size:
                         break
                 if buffer.tell() > 0:
