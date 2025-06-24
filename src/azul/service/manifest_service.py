@@ -1791,7 +1791,17 @@ class VerbatimManifestGenerator(FileBasedManifestGenerator, metaclass=ABCMeta):
             for field_name, field_path in plugin.field_mapping.items()
             if field_path[0] == 'contents' and field_path[1] == plugin.root_entity_type
         }
-        return self.filters.explicit.keys() < root_entity_fields
+
+        # For both HCA and AnVIL, these root entities are bijective with the
+        # sources used for indexing, and filtering by a specific project
+        # or dataset entity should produce the same results as filtering by
+        # that entity's source.
+        #
+        source_fields = {
+            plugin.special_fields.source_id,
+            plugin.special_fields.source_spec
+        }
+        return self.filters.explicit.keys() < (root_entity_fields | source_fields)
 
     @attrs.frozen(kw_only=True)
     class ReplicaKeys:

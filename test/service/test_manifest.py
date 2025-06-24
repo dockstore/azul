@@ -1277,6 +1277,10 @@ class AnvilManifestTestCase(ManifestTestCase, AnvilCannedBundleTestCase):
             cls.bundle_fqid(uuid='6b35f59c-d33d-abf7-9ba0-c7b3a0ca82f3')
         ]
 
+    source_id_filters: FiltersJSON = {
+        'source_id': {'is': ['6c87f0e1-509d-46a4-b845-7584df39263b']}
+    }
+
     dataset_id_filters: FiltersJSON = {
         'datasets.dataset_id': {'is': ['52ee7665-7033-63f2-a8d9-ce8e32666739']}
     }
@@ -1293,6 +1297,7 @@ class AnvilManifestTestCase(ManifestTestCase, AnvilCannedBundleTestCase):
     # the given filters.
     expect_orphans_by_filters = [
         ({}, True),
+        (source_id_filters, True),
         (dataset_title_filters, True),
         (dataset_id_filters, True),
         (neutral_file_filters, False),
