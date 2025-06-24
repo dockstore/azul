@@ -102,6 +102,10 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
     num_workers: int = 16
 
     @cached_property
+    def queues(self) -> Queues:
+        return Queues()
+
+    @cached_property
     def index_service(self) -> IndexService:
         return IndexService()
 
@@ -494,10 +498,6 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
                           'indexing is occurring. The index may now be in an '
                           'inconsistent state.')
             raise RuntimeError('Failures during deletion', response['failures'])
-
-    @cached_property
-    def queues(self) -> Queues:
-        return Queues()
 
     def reset_indexer(self,
                       catalogs: Iterable[CatalogName],
