@@ -9,7 +9,6 @@ from concurrent.futures import (
     ThreadPoolExecutor,
 )
 from enum import (
-    Enum,
     auto,
 )
 from functools import (
@@ -23,7 +22,6 @@ from pprint import (
     PrettyPrinter,
 )
 from typing import (
-    Self,
     TYPE_CHECKING,
     cast,
 )
@@ -64,20 +62,17 @@ from azul.indexer import (
 from azul.indexer.index_service import (
     IndexService,
 )
-from azul.json import (
-    Serializable,
-)
 from azul.plugins import (
     MetadataPlugin,
     RepositoryPlugin,
 )
 from azul.queues import (
+    Action,
     Queues,
     SQSFifoMessage,
     SQSMessage,
 )
 from azul.types import (
-    AnyJSON,
     JSON,
     JSONs,
     json_mapping,
@@ -89,20 +84,6 @@ if TYPE_CHECKING:
     )
 
 log = logging.getLogger(__name__)
-
-
-class Action(Serializable, Enum):
-
-    @classmethod
-    def from_json(cls, action: AnyJSON) -> Self:
-        assert isinstance(action, str), R('Action is not a string', type(action))
-        try:
-            return cls[action]
-        except KeyError:
-            assert False, R('Invalid action', action)
-
-    def to_json(self) -> str:
-        return self.name
 
 
 class IndexAction(Action):

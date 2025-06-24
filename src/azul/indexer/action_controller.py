@@ -15,11 +15,11 @@ from azul import (
     R,
     cached_property,
 )
-from azul.azulclient import (
-    Action,
-)
 from azul.chalice import (
     AppController,
+)
+from azul.queues import (
+    Action,
 )
 from azul.types import (
     JSON,

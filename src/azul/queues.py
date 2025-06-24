@@ -14,6 +14,9 @@ from concurrent.futures import (
 from datetime import (
     datetime,
 )
+from enum import (
+    Enum,
+)
 from itertools import (
     chain,
     islice,
@@ -26,6 +29,7 @@ from math import (
 import os
 import time
 from typing import (
+    Self,
     TYPE_CHECKING,
     cast,
 )
@@ -39,6 +43,7 @@ from more_itertools import (
 )
 
 from azul import (
+    R,
     cached_property,
     config,
 )
@@ -48,6 +53,9 @@ from azul.deployment import (
 from azul.files import (
     write_file_atomically,
 )
+from azul.json import (
+    Serializable,
+)
 from azul.lambdas import (
     Lambdas,
 )
@@ -55,6 +63,7 @@ from azul.modules import (
     load_app_module,
 )
 from azul.types import (
+    AnyJSON,
     JSON,
     json_mapping,
     json_str,
@@ -534,3 +543,17 @@ class Queues:
                 log.error('Exception in worker thread', exc_info=e)
         if errors:
             raise RuntimeError(errors)
+
+
+class Action(Serializable, Enum):
+
+    @classmethod
+    def from_json(cls, action: AnyJSON) -> Self:
+        assert isinstance(action, str), R('Action is not a string', type(action))
+        try:
+            return cls[action]
+        except KeyError:
+            assert False, R('Invalid action', action)
+
+    def to_json(self) -> str:
+        return self.name
