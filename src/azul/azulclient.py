@@ -123,6 +123,10 @@ class MirrorAction(Action):
 class AzulClient(SignatureHelper, HasCachedHttpClient):
     num_workers: int = 16
 
+    @cached_property
+    def index_service(self) -> IndexService:
+        return IndexService()
+
     def repository_plugin(self, catalog: CatalogName) -> RepositoryPlugin:
         return self.index_service.repository_plugin(catalog)
 
@@ -456,10 +460,6 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
         # is the latest version
         bundle_fqids = [next(group) for _, group in groups]
         return bundle_fqids
-
-    @cached_property
-    def index_service(self) -> IndexService:
-        return IndexService()
 
     def delete_all_indices(self, catalog: CatalogName):
         self.index_service.delete_indices(catalog)
