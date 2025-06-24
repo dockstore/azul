@@ -31,9 +31,6 @@ from moto import (
 from azul import (
     config,
 )
-from azul.azulclient import (
-    IndexAction,
-)
 from azul.indexer import (
     BundlePartition,
 )
@@ -44,6 +41,7 @@ from azul.indexer.index_controller import (
     IndexController,
 )
 from azul.indexer.index_queue_service import (
+    IndexAction,
     IndexQueueService,
 )
 from azul.indexer.index_service import (

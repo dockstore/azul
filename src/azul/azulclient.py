@@ -59,6 +59,9 @@ from azul.indexer import (
     SourceRef,
     SourcedBundleFQID,
 )
+from azul.indexer.index_queue_service import (
+    IndexAction,
+)
 from azul.indexer.index_service import (
     IndexService,
 )
@@ -84,12 +87,6 @@ if TYPE_CHECKING:
     )
 
 log = logging.getLogger(__name__)
-
-
-class IndexAction(Action):
-    reindex = auto()
-    add = auto()
-    delete = auto()
 
 
 class MirrorAction(Action):

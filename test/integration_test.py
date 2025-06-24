@@ -96,7 +96,6 @@ from azul.auth import (
 from azul.azulclient import (
     AzulClient,
     AzulClientNotificationError,
-    IndexAction,
 )
 from azul.chalice import (
     AzulChaliceApp,
@@ -128,6 +127,9 @@ from azul.indexer import (
 from azul.indexer.document import (
     EntityReference,
     EntityType,
+)
+from azul.indexer.index_queue_service import (
+    IndexAction,
 )
 from azul.indexer.index_service import (
     IndexExistsAndDiffersException,

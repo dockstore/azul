@@ -5,6 +5,9 @@ from dataclasses import (
     dataclass,
     replace,
 )
+from enum import (
+    auto,
+)
 import logging
 from typing import (
     Self,
@@ -17,7 +20,6 @@ from azul import (
 )
 from azul.azulclient import (
     AzulClient,
-    IndexAction,
 )
 from azul.indexer import (
     BundlePartition,
@@ -32,6 +34,7 @@ from azul.indexer.index_service import (
     IndexService,
 )
 from azul.queues import (
+    Action,
     SQSFifoMessage,
     SQSMessage,
 )
@@ -42,6 +45,12 @@ from azul.types import (
 )
 
 log = logging.getLogger(__name__)
+
+
+class IndexAction(Action):
+    reindex = auto()
+    add = auto()
+    delete = auto()
 
 
 class IndexQueueService:

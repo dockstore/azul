@@ -23,7 +23,6 @@ from azul import (
 )
 from azul.azulclient import (
     AzulClient,
-    IndexAction,
 )
 from azul.chalice import (
     LambdaMetric,
@@ -39,6 +38,7 @@ from azul.indexer.action_controller import (
 )
 from azul.indexer.index_queue_service import (
     DocumentTally,
+    IndexAction,
     IndexQueueService,
 )
 from azul.openapi import (
