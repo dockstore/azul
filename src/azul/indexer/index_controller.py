@@ -210,11 +210,12 @@ class IndexController(ActionController[IndexAction]):
             notification = request.json_body
             log.info('Received notification %r for catalog %r', notification, catalog)
             self._validate_notification(notification)
-            message = self.client.index_bundle_message(self._load_action(action),
-                                                       catalog,
-                                                       notification['bundle_fqid'],
-                                                       BundlePartition.root)
-            self.index_queue_service.queue_message(message, retry=False)
+            service = self.index_queue_service
+            message = service.index_bundle_message(self._load_action(action),
+                                                   catalog,
+                                                   notification['bundle_fqid'],
+                                                   BundlePartition.root)
+            service.queue_message(message, retry=False)
             return chalice.app.Response(body='', status_code=http.HTTPStatus.ACCEPTED)
         else:
             raise UnauthorizedError()

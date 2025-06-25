@@ -10,19 +10,24 @@ from enum import (
 )
 import logging
 from typing import (
+    Iterable,
     Self,
+    TYPE_CHECKING,
+    cast,
 )
 
 from azul import (
     CatalogName,
     cached_property,
+    config,
     json_mapping,
 )
-from azul.azulclient import (
-    AzulClient,
+from azul.deployment import (
+    aws,
 )
 from azul.indexer import (
     BundlePartition,
+    SourceRef,
 )
 from azul.indexer.document import (
     Contribution,
@@ -35,6 +40,7 @@ from azul.indexer.index_service import (
 )
 from azul.queues import (
     Action,
+    Queues,
     SQSFifoMessage,
     SQSMessage,
 )
@@ -43,6 +49,11 @@ from azul.types import (
     json_int,
     json_str,
 )
+
+if TYPE_CHECKING:
+    from mypy_boto3_sqs.service_resource import (
+        Queue,
+    )
 
 log = logging.getLogger(__name__)
 
@@ -60,17 +71,113 @@ class IndexQueueService:
         return IndexService()
 
     @cached_property
-    def client(self) -> AzulClient:
-        return AzulClient()
+    def queues(self) -> Queues:
+        return Queues()
+
+    def notifications_queue(self, *, retry: bool = False) -> 'Queue':
+        name = config.notifications_queue.derive(retry=retry).name
+        return aws.sqs_queue(name)
+
+    def tallies_queue(self, *, retry: bool = False) -> 'Queue':
+        name = config.tallies_queue.derive(retry=retry).name
+        return aws.sqs_queue(name)
+
+    def queue_notifications(self,
+                            messages: Iterable[SQSMessage],
+                            *,
+                            retry: bool = False
+                            ) -> int:
+        queue = self.notifications_queue(retry=retry)
+        return self.queues.send_messages(queue, messages)
+
+    def queue_tallies(self,
+                      messages: Iterable[SQSMessage],
+                      *,
+                      retry: bool = False
+                      ) -> int:
+        queue = self.tallies_queue(retry=retry)
+        return self.queues.send_messages(queue, messages)
+
+    def index_bundle_message(self,
+                             action: IndexAction,
+                             catalog: CatalogName,
+                             bundle_fqid: JSON,
+                             bundle_partition: BundlePartition = BundlePartition.root,
+                             ) -> SQSMessage:
+        return SQSMessage(
+            body={
+                'action': action.to_json(),
+                'catalog': catalog,
+                'bundle_fqid': bundle_fqid,
+                'bundle_partition': bundle_partition.to_json(),
+            }
+        )
+
+    def index_partition_message(self,
+                                catalog: CatalogName,
+                                source: SourceRef,
+                                prefix: str
+                                ) -> SQSMessage:
+        return SQSMessage(
+            body={
+                'action': IndexAction.reindex.to_json(),
+                'catalog': catalog,
+                'source': cast(JSON, source.to_json()),
+                'prefix': prefix
+            }
+        )
 
     def queue_message(self, message: SQSMessage, *, retry: bool):
-        queue = self.client.notifications_queue(retry=retry)
+        queue = self.notifications_queue(retry=retry)
         queue.send_message(**message.to_entry())
         log.info('Queued notification message %r', message)
 
+    def remote_reindex(self, catalog: CatalogName, sources: set[str]):
+        from azul.azulclient import (
+            AzulClient,
+        )
+        client = AzulClient()
+        plugin = client.repository_plugin(catalog)
+        for source_spec in sources:
+            source_ref = plugin.resolve_source(source_spec)
+            source_ref = plugin.partition_source_for_indexing(catalog, source_ref)
+
+            def message(partition_prefix: str) -> SQSMessage:
+                log.info('Remotely reindexing prefix %r of source_ref %r into catalog %r',
+                         partition_prefix, str(source_ref.spec), catalog)
+                return self.index_partition_message(catalog, source_ref, partition_prefix)
+
+            messages = map(message, source_ref.spec.prefix.partition_prefixes())
+            self.queue_notifications(messages)
+
+    def remote_reindex_partition(self, message: JSON) -> None:
+        from azul.azulclient import (
+            AzulClient,
+        )
+        client = AzulClient()
+        catalog, prefix = message['catalog'], message['prefix']
+        assert isinstance(catalog, str) and isinstance(prefix, str)
+        source = json_mapping(message['source'])
+        plugin = client.repository_plugin(catalog)
+        source = plugin.source_ref_cls.from_json(source)
+        bundle_fqids = client.list_bundles(catalog, source, prefix)
+        # All AnVIL bundles and entities use the same version
+        if not config.is_anvil_enabled(catalog):
+            bundle_fqids = client.filter_obsolete_bundle_versions(bundle_fqids)
+            log.info('After filtering obsolete versions, '
+                     '%i bundles remain in prefix %r of source %r in catalog %r',
+                     len(bundle_fqids), prefix, str(source.spec), catalog)
+        messages = (
+            self.index_bundle_message(IndexAction.add, catalog, bundle_fqid.to_json())
+            for bundle_fqid in bundle_fqids
+        )
+        num_messages = self.queue_notifications(messages)
+        log.info('Successfully queued %i notification(s) for prefix %s of '
+                 'source %r', num_messages, prefix, source)
+
     def contribute(self, action: IndexAction, message: JSON):
         if action is IndexAction.reindex:
-            self.client.remote_reindex_partition(message)
+            self.remote_reindex_partition(message)
         else:
             catalog = json_str(message['catalog'])
             assert catalog is not None
@@ -102,7 +209,7 @@ class IndexQueueService:
             log.info('Queueing %i entities for aggregating a total of %i contributions.',
                      len(tallies), sum(tally.num_contributions for tally in tallies))
             messages = (tally.to_message() for tally in tallies)
-            self.client.queue_tallies(messages)
+            self.queue_tallies(messages)
 
     def transform(self,
                   catalog: CatalogName,
@@ -126,10 +233,10 @@ class IndexQueueService:
                 assert isinstance(bundle_partition, BundlePartition)
                 # There's a good chance that the partition will also fail in
                 # the non-retry Lambda function so we'll go straight to retry.
-                message = self.client.index_bundle_message(action,
-                                                           catalog,
-                                                           bundle_fqid,
-                                                           bundle_partition)
+                message = self.index_bundle_message(action,
+                                                    catalog,
+                                                    bundle_fqid,
+                                                    bundle_partition)
                 self.queue_message(message, retry=True)
             return [], []
         elif isinstance(results, tuple):
@@ -187,7 +294,7 @@ class IndexQueueService:
             # Hopefully this is more or less atomic. If we crash below here,
             # tallies will be inflated because some or all deferrals have
             # been sent and the original tallies will be returned.
-            self.client.queue_tallies(messages, retry=retry)
+            self.queue_tallies(messages, retry=retry)
 
 
 @dataclass(frozen=True)

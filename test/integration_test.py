@@ -466,8 +466,9 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
                                     ma_source=ma_source))
 
         if index:
+            service = self.azul_client.index_queue_service
             for catalog in catalogs:
-                self.azul_client.queue_notifications(catalog.notifications)
+                service.queue_notifications(catalog.notifications)
             self.azul_client.wait_for_indexer()
             self._assert_queues_empty(config.indexer_fail_queue_names)
             for catalog in catalogs:
@@ -1279,6 +1280,7 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
                                sources: Iterable[SourceRef]
                                ) -> tuple[list[SQSMessage], set[SourcedBundleFQID]]:
         client, plugin = self.azul_client, self.repository_plugin(catalog)
+        service = client.index_queue_service
         bundle_fqids, notifications = set(), []
         for source in sources:
             source = plugin.partition_source_for_indexing(catalog, source)
@@ -1286,14 +1288,14 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
             # ensure test coverage for handling multiple partitions per source
             for partition_prefix in source.spec.prefix.partition_prefixes():
                 bundle_fqids.update(client.list_bundles(catalog, source, partition_prefix))
-                message = client.index_partition_message(catalog, source, partition_prefix)
+                message = service.index_partition_message(catalog, source, partition_prefix)
                 notifications.append(message)
         # Index some bundles again to test that we handle duplicate additions.
         # Note: random.choices() may pick the same element multiple times so
         # some notifications may end up being sent three or more times.
         num_duplicates = len(bundle_fqids) // 2
         duplicate_bundles = [
-            client.index_bundle_message(IndexAction.add, catalog, bundle.to_json())
+            service.index_bundle_message(IndexAction.add, catalog, bundle.to_json())
             for bundle in self.random.choices(sorted(bundle_fqids), k=num_duplicates)
         ]
         notifications.extend(duplicate_bundles)

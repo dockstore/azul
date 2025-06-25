@@ -96,8 +96,11 @@ class TestIndexController(DCP2IndexerTestCase, WorkQueueTestCase):
         app = MagicMock()
         self.controller = IndexController(app=app)
         app.catalog = self.catalog
-        index_queue_service = self.controller.index_queue_service
-        IndexQueueService.index_service.fset(index_queue_service, self.index_service)
+        IndexQueueService.index_service.fset(self.queue_service, self.index_service)
+
+    @property
+    def queue_service(self):
+        return self.controller.index_queue_service
 
     def tearDown(self):
         self.index_service.delete_indices(self.catalog)
@@ -124,8 +127,8 @@ class TestIndexController(DCP2IndexerTestCase, WorkQueueTestCase):
         resolve_source.return_value = source
         self.index_service.repository_plugin(self.catalog)._assert_source(source)
         self._create_mock_queues(config.indexer_queue_names)
-        self.client.remote_reindex(self.catalog, {str(source.spec)})
-        messages = one(self._read_queue(self.client.notifications_queue()))
+        self.queue_service.remote_reindex(self.catalog, {str(source.spec)})
+        messages = one(self._read_queue(self.queue_service.notifications_queue()))
         expected_notification = dict(action='reindex',
                                      catalog=self.catalog,
                                      source=source.to_json(),
@@ -142,7 +145,7 @@ class TestIndexController(DCP2IndexerTestCase, WorkQueueTestCase):
         with patch.object(Plugin, 'list_bundles', return_value=bundle_fqids):
             self.controller.contribute(event)
 
-        messages = one(self._read_queue(self.client.notifications_queue()))
+        messages = one(self._read_queue(self.queue_service.notifications_queue()))
         expected_source = dict(id=source.id, spec=str(source.spec))
         source = messages['bundle_fqid']['source']
         self.assertEqual(expected_source, source)
@@ -176,10 +179,10 @@ class TestIndexController(DCP2IndexerTestCase, WorkQueueTestCase):
 
         # Synthesize initial notifications
         messages = [
-            self.client.index_bundle_message(IndexAction.add,
-                                             self.catalog,
-                                             fqid.to_json()
-                                             ).body
+            self.queue_service.index_bundle_message(IndexAction.add,
+                                                    self.catalog,
+                                                    fqid.to_json()
+                                                    ).body
             for fqid in fqids
         ]
 
@@ -220,7 +223,7 @@ class TestIndexController(DCP2IndexerTestCase, WorkQueueTestCase):
             self.assertEqual(expected_calls, mock_plugin.fetch_bundle.mock_calls)
 
             # Assert partitioned notifications, straight from the retry queue
-            messages = self._read_queue(self.client.notifications_queue(retry=True))
+            messages = self._read_queue(self.queue_service.notifications_queue(retry=True))
             # Fingerprint the partitions from the resulting notifications
             partitions = defaultdict(set)
             for n in messages:
@@ -241,7 +244,7 @@ class TestIndexController(DCP2IndexerTestCase, WorkQueueTestCase):
                 self.assertEqual({}, partitions)
 
         # We got a tally of one for each
-        tallies = self._read_queue(self.client.tallies_queue())
+        tallies = self._read_queue(self.queue_service.tallies_queue())
         digest = self._digest_tallies(tallies)
         self.assertEqual(expected_digest, digest)
 
@@ -255,11 +258,11 @@ class TestIndexController(DCP2IndexerTestCase, WorkQueueTestCase):
             else:
                 self.fail()
 
-        self.assertEqual([], self._read_queue(self.client.tallies_queue()))
+        self.assertEqual([], self._read_queue(self.queue_service.tallies_queue()))
 
         # Poison the two project and the two bundle tallies, by simulating
         # a number of failed attempts at processing them
-        attempts = self.controller.index_queue_service.num_batched_aggregation_attempts
+        attempts = self.queue_service.num_batched_aggregation_attempts
         # While 0 is a valid value, the test logic below wouldn't work with it
         self.assertGreater(attempts, 0)
         messages = [
@@ -271,7 +274,7 @@ class TestIndexController(DCP2IndexerTestCase, WorkQueueTestCase):
         ]
         self.controller.aggregate(messages, retry=True)
 
-        tallies = self._read_queue(self.client.tallies_queue(retry=True))
+        tallies = self._read_queue(self.queue_service.tallies_queue(retry=True))
         digest = self._digest_tallies(tallies)
         # The two project tallies were consolidated (despite being poisoned) and
         # the resulting tally was deferred
@@ -286,8 +289,8 @@ class TestIndexController(DCP2IndexerTestCase, WorkQueueTestCase):
         self.controller.aggregate(messages, retry=True)
 
         # All tallies were referred
-        self.assertEqual([], self._read_queue(self.client.tallies_queue()))
-        self.assertEqual([], self._read_queue(self.client.tallies_queue(retry=True)))
+        self.assertEqual([], self._read_queue(self.queue_service.tallies_queue()))
+        self.assertEqual([], self._read_queue(self.queue_service.tallies_queue(retry=True)))
 
     def _digest_tallies(self, tallies):
         entities = defaultdict(list)

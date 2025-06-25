@@ -22,7 +22,6 @@ from pprint import (
     PrettyPrinter,
 )
 from typing import (
-    TYPE_CHECKING,
     cast,
 )
 import uuid
@@ -55,12 +54,11 @@ from azul.http import (
     HasCachedHttpClient,
 )
 from azul.indexer import (
-    BundlePartition,
     SourceRef,
     SourcedBundleFQID,
 )
 from azul.indexer.index_queue_service import (
-    IndexAction,
+    IndexQueueService,
 )
 from azul.indexer.index_service import (
     IndexService,
@@ -78,13 +76,7 @@ from azul.queues import (
 from azul.types import (
     JSON,
     JSONs,
-    json_mapping,
 )
-
-if TYPE_CHECKING:
-    from mypy_boto3_sqs.service_resource import (
-        Queue,
-    )
 
 log = logging.getLogger(__name__)
 
@@ -109,40 +101,15 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
     def index_service(self) -> IndexService:
         return IndexService()
 
+    @cached_property
+    def index_queue_service(self) -> IndexQueueService:
+        return IndexQueueService()
+
     def repository_plugin(self, catalog: CatalogName) -> RepositoryPlugin:
         return self.index_service.repository_plugin(catalog)
 
     def metadata_plugin(self, catalog: CatalogName) -> MetadataPlugin:
         return self.index_service.metadata_plugin(catalog)
-
-    def index_bundle_message(self,
-                             action: IndexAction,
-                             catalog: CatalogName,
-                             bundle_fqid: JSON,
-                             bundle_partition: BundlePartition = BundlePartition.root,
-                             ) -> SQSMessage:
-        return SQSMessage(
-            body={
-                'action': action.to_json(),
-                'catalog': catalog,
-                'bundle_fqid': bundle_fqid,
-                'bundle_partition': bundle_partition.to_json(),
-            }
-        )
-
-    def index_partition_message(self,
-                                catalog: CatalogName,
-                                source: SourceRef,
-                                prefix: str
-                                ) -> SQSMessage:
-        return SQSMessage(
-            body={
-                'action': IndexAction.reindex.to_json(),
-                'catalog': catalog,
-                'source': cast(JSON, source.to_json()),
-                'prefix': prefix
-            }
-        )
 
     def mirror_source_message(self,
                               catalog: CatalogName,
@@ -280,70 +247,9 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
                  len(bundle_fqids), prefix, source)
         return bundle_fqids
 
-    def notifications_queue(self, *, retry: bool = False) -> 'Queue':
-        name = config.notifications_queue.derive(retry=retry).name
-        return aws.sqs_queue(name)
-
-    def tallies_queue(self, *, retry: bool = False) -> 'Queue':
-        name = config.tallies_queue.derive(retry=retry).name
-        return aws.sqs_queue(name)
-
     def mirror_queue(self):
         name = config.mirror_queue.name
         return aws.sqs_queue(name)
-
-    def remote_reindex(self,
-                       catalog: CatalogName,
-                       sources: set[str]):
-
-        plugin = self.repository_plugin(catalog)
-        for source_spec in sources:
-            source_ref = plugin.resolve_source(source_spec)
-            source_ref = plugin.partition_source_for_indexing(catalog, source_ref)
-
-            def message(partition_prefix: str) -> SQSMessage:
-                log.info('Remotely reindexing prefix %r of source_ref %r into catalog %r',
-                         partition_prefix, str(source_ref.spec), catalog)
-                return self.index_partition_message(catalog, source_ref, partition_prefix)
-
-            messages = map(message, source_ref.spec.prefix.partition_prefixes())
-            self.queue_notifications(messages)
-
-    def remote_reindex_partition(self, message: JSON) -> None:
-        catalog, prefix = message['catalog'], message['prefix']
-        assert isinstance(catalog, str) and isinstance(prefix, str)
-        source = json_mapping(message['source'])
-        source = self.repository_plugin(catalog).source_ref_cls.from_json(source)
-        bundle_fqids = self.list_bundles(catalog, source, prefix)
-        # All AnVIL bundles and entities use the same version
-        if not config.is_anvil_enabled(catalog):
-            bundle_fqids = self.filter_obsolete_bundle_versions(bundle_fqids)
-            log.info('After filtering obsolete versions, '
-                     '%i bundles remain in prefix %r of source %r in catalog %r',
-                     len(bundle_fqids), prefix, str(source.spec), catalog)
-        messages = (
-            self.index_bundle_message(IndexAction.add, catalog, bundle_fqid.to_json())
-            for bundle_fqid in bundle_fqids
-        )
-        num_messages = self.queue_notifications(messages)
-        log.info('Successfully queued %i notification(s) for prefix %s of '
-                 'source %r', num_messages, prefix, source)
-
-    def queue_notifications(self,
-                            messages: Iterable[SQSMessage],
-                            *,
-                            retry: bool = False
-                            ) -> int:
-        queue = self.notifications_queue(retry=retry)
-        return self.queues.send_messages(queue, messages)
-
-    def queue_tallies(self,
-                      messages: Iterable[SQSMessage],
-                      *,
-                      retry: bool = False
-                      ) -> int:
-        queue = self.tallies_queue(retry=retry)
-        return self.queues.send_messages(queue, messages)
 
     def queue_mirror_messages(self, messages: Iterable[SQSMessage]) -> int:
         return self.queues.send_messages(self.mirror_queue(), messages)
