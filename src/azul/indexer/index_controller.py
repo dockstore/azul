@@ -215,7 +215,7 @@ class IndexController(ActionController[IndexAction]):
                                                    catalog,
                                                    notification['bundle_fqid'],
                                                    BundlePartition.root)
-            service.queue_message(message, retry=False)
+            service.queue_notification(message, retry=False)
             return chalice.app.Response(body='', status_code=http.HTTPStatus.ACCEPTED)
         else:
             raise UnauthorizedError()

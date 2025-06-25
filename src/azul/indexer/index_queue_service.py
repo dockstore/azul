@@ -97,6 +97,15 @@ class IndexQueueService:
         queue = self.notifications_queue(retry=retry)
         return self.queues.send_messages(queue, messages)
 
+    def queue_notification(self,
+                           message: SQSMessage,
+                           *,
+                           retry: bool
+                           ) -> None:
+        queue = self.notifications_queue(retry=retry)
+        self.queues.send_message(queue, message)
+        log.info('Queued notification message %r', message)
+
     def queue_tallies(self,
                       messages: Iterable[SQSMessage],
                       *,
@@ -133,11 +142,6 @@ class IndexQueueService:
                 'prefix': prefix
             }
         )
-
-    def queue_message(self, message: SQSMessage, *, retry: bool):
-        queue = self.notifications_queue(retry=retry)
-        queue.send_message(**message.to_entry())
-        log.info('Queued notification message %r', message)
 
     def remote_reindex(self, catalog: CatalogName, sources: set[str]):
         service = self.index_repository_service
@@ -241,7 +245,7 @@ class IndexQueueService:
                                                     catalog,
                                                     bundle_fqid,
                                                     bundle_partition)
-                self.queue_message(message, retry=True)
+                self.queue_notification(message, retry=True)
             return [], []
         elif isinstance(results, tuple):
             return results

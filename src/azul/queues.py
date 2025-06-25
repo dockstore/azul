@@ -173,6 +173,9 @@ class Queues:
             num_messages += len(batch)
         return num_messages
 
+    def send_message(self, queue: 'Queue', message: SQSMessage):
+        queue.send_message(**message.to_entry())
+
     def _cleanup_messages(self, queue: 'Queue', messages: Iterable['Message']):
         message_batches = list(more_itertools.chunked(messages, self.batch_size))
         if self._delete:
