@@ -14,9 +14,6 @@ from enum import (
 from functools import (
     partial,
 )
-from itertools import (
-    groupby,
-)
 import logging
 from pprint import (
     PrettyPrinter,
@@ -55,10 +52,12 @@ from azul.http import (
 )
 from azul.indexer import (
     SourceRef,
-    SourcedBundleFQID,
 )
 from azul.indexer.index_queue_service import (
     IndexQueueService,
+)
+from azul.indexer.index_repository_service import (
+    IndexRepositoryService,
 )
 from azul.indexer.index_service import (
     IndexService,
@@ -105,8 +104,12 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
     def index_queue_service(self) -> IndexQueueService:
         return IndexQueueService()
 
+    @cached_property
+    def index_repository_service(self) -> IndexRepositoryService:
+        return IndexRepositoryService()
+
     def repository_plugin(self, catalog: CatalogName) -> RepositoryPlugin:
-        return self.index_service.repository_plugin(catalog)
+        return self.index_repository_service.repository_plugin(catalog)
 
     def metadata_plugin(self, catalog: CatalogName) -> MetadataPlugin:
         return self.index_service.metadata_plugin(catalog)
@@ -125,6 +128,7 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
         )
 
     def local_reindex(self, catalog: CatalogName, prefix: str) -> int:
+        service = self.index_repository_service
         notifications: JSONs = [
             # Notifications sent organically by DSS had a different structure,
             # but since DSS is long gone these synthetic notifications are now
@@ -134,7 +138,7 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
                 'bundle_fqid': bundle_fqid.to_json()
             }
             for source in self.catalog_sources(catalog)
-            for bundle_fqid in self.list_bundles(catalog, source, prefix)
+            for bundle_fqid in service.list_bundles(catalog, source, prefix)
         ]
         self.index(catalog, notifications)
         return len(notifications)
@@ -231,123 +235,12 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
             for catalog in catalogs
         }
 
-    def list_bundles(self,
-                     catalog: CatalogName,
-                     source: str | SourceRef,
-                     prefix: str
-                     ) -> list[SourcedBundleFQID]:
-        plugin = self.repository_plugin(catalog)
-        if isinstance(source, str):
-            source = plugin.resolve_source(source)
-        else:
-            assert isinstance(source, SourceRef), source
-        log.info('Listing bundles with prefix %r in source %r.', prefix, source)
-        bundle_fqids = plugin.list_bundles(source, prefix)
-        log.info('There are %i bundle(s) with prefix %r in source %r.',
-                 len(bundle_fqids), prefix, source)
-        return bundle_fqids
-
     def mirror_queue(self):
         name = config.mirror_queue.name
         return aws.sqs_queue(name)
 
     def queue_mirror_messages(self, messages: Iterable[SQSMessage]) -> int:
         return self.queues.send_messages(self.mirror_queue(), messages)
-
-    @classmethod
-    def filter_obsolete_bundle_versions(cls,
-                                        bundle_fqids: Iterable[SourcedBundleFQID]
-                                        ) -> list[SourcedBundleFQID]:
-        """
-        Suppress obsolete bundle versions by only taking the latest version for
-        each bundle UUID.
-        >>> AzulClient.filter_obsolete_bundle_versions([])
-        []
-        >>> from azul.indexer import SimpleSourceSpec, SourceRef, Prefix
-        >>> p = Prefix.parse('/2')
-        >>> s = SourceRef(id='i', spec=SimpleSourceSpec(prefix=p, name='n'))
-        >>> def b(u, v):
-        ...     return SourcedBundleFQID(source=s, uuid=u, version=v)
-        >>> AzulClient.filter_obsolete_bundle_versions([
-        ...     b('c', '0'),
-        ...     b('a', '1'),
-        ...     b('b', '3')
-        ... ]) # doctest: +NORMALIZE_WHITESPACE
-        [SourcedBundleFQID(uuid='c',
-                           version='0',
-                           source=SourceRef(id='i',
-                                            spec=SimpleSourceSpec(prefix=Prefix(common='',
-                                                                                partition=2),
-                                                                  name='n'))),
-        SourcedBundleFQID(uuid='b',
-                          version='3',
-                          source=SourceRef(id='i',
-                                           spec=SimpleSourceSpec(prefix=Prefix(common='',
-                                                                               partition=2),
-                                                                 name='n'))),
-        SourcedBundleFQID(uuid='a',
-                          version='1',
-                          source=SourceRef(id='i',
-                                           spec=SimpleSourceSpec(prefix=Prefix(common='',
-                                                                               partition=2),
-                                                                 name='n')))]
-        >>> AzulClient.filter_obsolete_bundle_versions([
-        ...     b('C', '0'), b('a', '1'), b('a', '0'),
-        ...     b('a', '2'), b('b', '1'), b('c', '2')
-        ... ]) # doctest: +NORMALIZE_WHITESPACE
-        [SourcedBundleFQID(uuid='c',
-                           version='2',
-                           source=SourceRef(id='i',
-                                            spec=SimpleSourceSpec(prefix=Prefix(common='',
-                                                                                partition=2),
-                                                                  name='n'))),
-        SourcedBundleFQID(uuid='b',
-                          version='1',
-                          source=SourceRef(id='i',
-                                           spec=SimpleSourceSpec(prefix=Prefix(common='',
-                                                                               partition=2),
-                                                                 name='n'))),
-        SourcedBundleFQID(uuid='a',
-                          version='2',
-                          source=SourceRef(id='i',
-                                           spec=SimpleSourceSpec(prefix=Prefix(common='',
-                                                                               partition=2),
-                                                                 name='n')))]
-        >>> AzulClient.filter_obsolete_bundle_versions([
-        ...     b('a', '0'), b('A', '1')
-        ... ]) # doctest: +NORMALIZE_WHITESPACE
-        [SourcedBundleFQID(uuid='A',
-                           version='1',
-                           source=SourceRef(id='i',
-                                            spec=SimpleSourceSpec(prefix=Prefix(common='',
-                                                                                partition=2),
-                                                                  name='n')))]
-        """
-
-        # Sort lexicographically by source and FQID. I've observed the DSS
-        # response to already be in this order
-        def sort_key(fqid: SourcedBundleFQID):
-            return (
-                fqid.source,
-                fqid.uuid.lower(),
-                fqid.version.lower()
-            )
-
-        bundle_fqids = sorted(bundle_fqids, key=sort_key, reverse=True)
-
-        # Group by source and bundle UUID
-        def group_key(fqid: SourcedBundleFQID):
-            return (
-                fqid.source.id.lower(),
-                fqid.uuid.lower()
-            )
-
-        groups = groupby(bundle_fqids, key=group_key)
-
-        # Take the first item in each group. Because the oder is reversed, this
-        # is the latest version
-        bundle_fqids = [next(group) for _, group in groups]
-        return bundle_fqids
 
     def delete_all_indices(self, catalog: CatalogName):
         self.index_service.delete_indices(catalog)

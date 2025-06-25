@@ -4,7 +4,6 @@ import unittest
 import azul
 import azul.attrs
 import azul.auth
-import azul.azulclient
 import azul.bigquery
 import azul.bytes
 import azul.caching
@@ -20,6 +19,7 @@ import azul.http
 import azul.indexer
 import azul.indexer.aggregate
 import azul.indexer.document
+import azul.indexer.index_repository_service
 import azul.iterators
 import azul.json
 import azul.json_freeze
@@ -69,7 +69,6 @@ def load_tests(_loader,
         azul,
         azul.attrs,
         azul.auth,
-        azul.azulclient,
         azul.bigquery,
         azul.bytes,
         azul.caching,
@@ -85,6 +84,7 @@ def load_tests(_loader,
         azul.indexer,
         azul.indexer.aggregate,
         azul.indexer.document,
+        azul.indexer.index_repository_service,
         azul.iterators,
         azul.json,
         azul.json_freeze,

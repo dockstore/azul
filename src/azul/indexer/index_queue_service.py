@@ -34,6 +34,9 @@ from azul.indexer.document import (
     EntityReference,
     Replica,
 )
+from azul.indexer.index_repository_service import (
+    IndexRepositoryService,
+)
 from azul.indexer.index_service import (
     CataloguedEntityReference,
     IndexService,
@@ -69,6 +72,10 @@ class IndexQueueService:
     @cached_property
     def index_service(self) -> IndexService:
         return IndexService()
+
+    @cached_property
+    def index_repository_service(self) -> IndexRepositoryService:
+        return IndexRepositoryService()
 
     @cached_property
     def queues(self) -> Queues:
@@ -133,11 +140,8 @@ class IndexQueueService:
         log.info('Queued notification message %r', message)
 
     def remote_reindex(self, catalog: CatalogName, sources: set[str]):
-        from azul.azulclient import (
-            AzulClient,
-        )
-        client = AzulClient()
-        plugin = client.repository_plugin(catalog)
+        service = self.index_repository_service
+        plugin = service.repository_plugin(catalog)
         for source_spec in sources:
             source_ref = plugin.resolve_source(source_spec)
             source_ref = plugin.partition_source_for_indexing(catalog, source_ref)
@@ -151,19 +155,16 @@ class IndexQueueService:
             self.queue_notifications(messages)
 
     def remote_reindex_partition(self, message: JSON) -> None:
-        from azul.azulclient import (
-            AzulClient,
-        )
-        client = AzulClient()
+        service = self.index_repository_service
         catalog, prefix = message['catalog'], message['prefix']
         assert isinstance(catalog, str) and isinstance(prefix, str)
         source = json_mapping(message['source'])
-        plugin = client.repository_plugin(catalog)
+        plugin = service.repository_plugin(catalog)
         source = plugin.source_ref_cls.from_json(source)
-        bundle_fqids = client.list_bundles(catalog, source, prefix)
+        bundle_fqids = service.list_bundles(catalog, source, prefix)
         # All AnVIL bundles and entities use the same version
         if not config.is_anvil_enabled(catalog):
-            bundle_fqids = client.filter_obsolete_bundle_versions(bundle_fqids)
+            bundle_fqids = service.filter_obsolete_bundle_versions(bundle_fqids)
             log.info('After filtering obsolete versions, '
                      '%i bundles remain in prefix %r of source %r in catalog %r',
                      len(bundle_fqids), prefix, str(source.spec), catalog)
@@ -224,9 +225,12 @@ class IndexQueueService:
         representing one metadata entity in the index. Replicas of the original,
         untransformed metadata are returned as well.
         """
-        service = self.index_service
-        bundle = service.fetch_bundle(catalog, bundle_fqid)
-        results = service.transform(catalog, bundle, bundle_partition, delete=delete)
+        bundle = self.index_repository_service.fetch_bundle(catalog,
+                                                            bundle_fqid)
+        results = self.index_service.transform(catalog,
+                                               bundle,
+                                               bundle_partition,
+                                               delete=delete)
         if isinstance(results, list):
             action = IndexAction.delete if delete else IndexAction.add
             for bundle_partition in results:

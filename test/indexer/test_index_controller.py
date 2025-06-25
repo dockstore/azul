@@ -44,8 +44,10 @@ from azul.indexer.index_queue_service import (
     IndexAction,
     IndexQueueService,
 )
+from azul.indexer.index_repository_service import (
+    IndexRepositoryService,
+)
 from azul.indexer.index_service import (
-    IndexService,
     IndexWriter,
 )
 from azul.logging import (
@@ -102,6 +104,10 @@ class TestIndexController(DCP2IndexerTestCase, WorkQueueTestCase):
     def queue_service(self):
         return self.controller.index_queue_service
 
+    @property
+    def index_repository_service(self):
+        return self.queue_service.index_repository_service
+
     def tearDown(self):
         self.index_service.delete_indices(self.catalog)
         super().tearDown()
@@ -125,7 +131,8 @@ class TestIndexController(DCP2IndexerTestCase, WorkQueueTestCase):
     def test_remote_reindex(self, resolve_source):
         source = self.source
         resolve_source.return_value = source
-        self.index_service.repository_plugin(self.catalog)._assert_source(source)
+        plugin = self.index_repository_service.repository_plugin(self.catalog)
+        plugin._assert_source(source)
         self._create_mock_queues(config.indexer_queue_names)
         self.queue_service.remote_reindex(self.catalog, {str(source.spec)})
         messages = one(self._read_queue(self.queue_service.notifications_queue()))
@@ -213,8 +220,12 @@ class TestIndexController(DCP2IndexerTestCase, WorkQueueTestCase):
             mock_plugin.fetch_bundle.side_effect = notified_bundles
             type(mock_plugin).bundle_fqid_cls = PropertyMock(return_value=TDRBundleFQID)
             mock_plugin.sources = [source]
-            with patch.object(IndexService, 'repository_plugin', return_value=mock_plugin):
-                with patch.object(BundlePartition, 'max_partition_size', 4):
+            with patch.object(IndexRepositoryService,
+                              'repository_plugin',
+                              return_value=mock_plugin):
+                with patch.object(BundlePartition,
+                                  'max_partition_size',
+                                  4):
                     event = list(map(self._mock_sqs_record, messages))
                     self.controller.contribute(event)
 

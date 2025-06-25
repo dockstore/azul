@@ -234,6 +234,14 @@ class IntegrationTestCase(AzulTestCase, metaclass=ABCMeta):
     def azul_client(self):
         return AzulClient()
 
+    @property
+    def index_queue_service(self):
+        return self.azul_client.index_queue_service
+
+    @property
+    def index_repository_service(self):
+        return self.azul_client.index_repository_service
+
     def repository_plugin(self, catalog: CatalogName) -> RepositoryPlugin:
         return self.azul_client.repository_plugin(catalog)
 
@@ -466,7 +474,7 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
                                     ma_source=ma_source))
 
         if index:
-            service = self.azul_client.index_queue_service
+            service = self.index_queue_service
             for catalog in catalogs:
                 service.queue_notifications(catalog.notifications)
             self.azul_client.wait_for_indexer()
@@ -1279,23 +1287,25 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
                                catalog: CatalogName,
                                sources: Iterable[SourceRef]
                                ) -> tuple[list[SQSMessage], set[SourcedBundleFQID]]:
-        client, plugin = self.azul_client, self.repository_plugin(catalog)
-        service = client.index_queue_service
+        plugin = self.repository_plugin(catalog)
+        queue_service = self.index_queue_service
+        repository_service = self.index_repository_service
         bundle_fqids, notifications = set(), []
         for source in sources:
             source = plugin.partition_source_for_indexing(catalog, source)
             # Some partitions may be empty, but we include them anyway to
             # ensure test coverage for handling multiple partitions per source
-            for partition_prefix in source.spec.prefix.partition_prefixes():
-                bundle_fqids.update(client.list_bundles(catalog, source, partition_prefix))
-                message = service.index_partition_message(catalog, source, partition_prefix)
+            for prefix in source.spec.prefix.partition_prefixes():
+                partition = repository_service.list_bundles(catalog, source, prefix)
+                bundle_fqids.update(partition)
+                message = queue_service.index_partition_message(catalog, source, prefix)
                 notifications.append(message)
         # Index some bundles again to test that we handle duplicate additions.
         # Note: random.choices() may pick the same element multiple times so
         # some notifications may end up being sent three or more times.
         num_duplicates = len(bundle_fqids) // 2
         duplicate_bundles = [
-            service.index_bundle_message(IndexAction.add, catalog, bundle.to_json())
+            queue_service.index_bundle_message(IndexAction.add, catalog, bundle.to_json())
             for bundle in self.random.choices(sorted(bundle_fqids), k=num_duplicates)
         ]
         notifications.extend(duplicate_bundles)
@@ -1342,7 +1352,8 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
                 expected_fqids -= replica_fqids
                 log.info('Ignoring replica bundles %r', replica_fqids)
             else:
-                expected_fqids = set(self.azul_client.filter_obsolete_bundle_versions(expected_fqids))
+                service = self.index_repository_service
+                expected_fqids = set(service.filter_obsolete_bundle_versions(expected_fqids))
                 obsolete_fqids = bundle_fqids - expected_fqids
                 if obsolete_fqids:
                     log.debug('Ignoring obsolete bundle versions %r', obsolete_fqids)
@@ -1926,7 +1937,7 @@ class CanBundleScriptIntegrationTest(IntegrationTestCase):
         source = self._select_source(catalog)
         # The plugin will raise an exception if the source lacks a prefix
         source = source.with_prefix(Prefix.of_everything)
-        bundle_fqids = self.azul_client.list_bundles(catalog, source, prefix='')
+        bundle_fqids = self.azul_client.index_repository_service.list_bundles(catalog, source, prefix='')
         return self.random.choice(sorted(bundle_fqids))
 
     def _can_bundle(self,
