@@ -78,7 +78,7 @@ class TestMirrorController(DCP2TestCase,
                         self._test_mirror_file(file, file_message)
 
                     self._s3.delete_object(Bucket=self.mirror_bucket,
-                                           Key=self.mirror_controller.service.info_object_key(file))
+                                           Key=self.mirror_controller.service.info_object_key(self.catalog, file))
 
                     with self.subTest('mirror_file', corrupted=True):
                         self._test_corrupted_download(file_message)
@@ -141,7 +141,7 @@ class TestMirrorController(DCP2TestCase,
         with patch.object(MirrorService, '_download', return_value=self._file_contents):
             self.mirror_controller.mirror(event)
         response = self._s3.get_object(Bucket=self.mirror_bucket,
-                                       Key=self.mirror_controller.service.mirror_object_key(file))
+                                       Key=self.mirror_controller.service.mirror_object_key(self.catalog, file))
         mirrored_file_contents = response['Body'].read()
         self.assertEqual(mirrored_file_contents, self._file_contents)
 

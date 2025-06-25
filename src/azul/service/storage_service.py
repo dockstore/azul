@@ -22,6 +22,7 @@ from logging import (
 )
 import time
 from typing import (
+    Collection,
     IO,
     TYPE_CHECKING,
 )
@@ -33,6 +34,9 @@ import botocore
 import botocore.exceptions
 from botocore.response import (
     StreamingBody,
+)
+from more_itertools import (
+    chunked,
 )
 from werkzeug.http import (
     parse_dict_header,
@@ -129,6 +133,20 @@ class StorageService:
                                 **kwargs)
         except botocore.exceptions.ClientError as e:
             self._handle_overwrite(e, object_key)
+
+    def delete(self, keys: Collection[str], batch_size: int = 1000) -> None:
+        assert batch_size <= 1000, R('Batch size must <= 1000', batch_size)
+        num_keys = len(keys)
+        for batch in chunked(keys, batch_size):
+            log.debug('Deleting batch of objects: %r', batch)
+            self._s3.delete_objects(Bucket=self.bucket_name,
+                                    Delete={
+                                        'Objects': [
+                                            {'Key': key}
+                                            for key in batch
+                                        ]
+                                    })
+        log.info('Deleted %d objects overall', num_keys)
 
     def list(self, prefix: str) -> OrderedSet[str]:
         keys, num_keys = OrderedSet(), 0
