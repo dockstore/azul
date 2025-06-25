@@ -1,10 +1,6 @@
 from collections import (
     defaultdict,
 )
-from dataclasses import (
-    dataclass,
-    replace,
-)
 from enum import (
     auto,
 )
@@ -15,6 +11,8 @@ from typing import (
     TYPE_CHECKING,
     cast,
 )
+
+import attrs
 
 from azul import (
     CatalogName,
@@ -305,7 +303,7 @@ class IndexQueueService:
             self.queue_tallies(messages, retry=retry)
 
 
-@dataclass(frozen=True)
+@attrs.frozen(kw_only=True)
 class DocumentTally:
     """
     Tracks the number of bundle contributions to a particular metadata entity.
@@ -348,9 +346,7 @@ class DocumentTally:
                               group_id=str(self.entity))
 
     def consolidate(self, others: list['DocumentTally']) -> Self:
-        assert all(
-            self.entity == other.entity
-            for other in others
-        )
-        return replace(self, num_contributions=sum((other.num_contributions for other in others),
-                                                   self.num_contributions))
+        assert all(self.entity == other.entity for other in others)
+        num_contributions = sum((other.num_contributions for other in others),
+                                start=self.num_contributions)
+        return attrs.evolve(self, num_contributions=num_contributions)
