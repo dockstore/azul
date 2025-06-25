@@ -27,12 +27,13 @@ def main(argv):
     sp.add_argument('path', metavar='FILE_PATH',
                     help='Path of file to write messages to')
     sp.add_argument('--delete', '-D', action='store_true',
-                    help='Remove messages from the queue after writing them to the specified file. By default the '
-                         'messages will be returned to the queue')
+                    help='Remove messages from the queue after writing them to the specified file. '
+                         'By default the messages will be returned to the queue')
     sp.add_argument('--no-json-body', '-J', dest='json_body', action='store_false',
                     help='Do not deserialize JSON in queue message body.')
 
-    sp = sps.add_parser('feed', help='Feed messages from file back into queue')
+    sp = sps.add_parser('feed',
+                        help='Feed messages from file back into queue')
     sp.add_argument('path', metavar='FILE_PATH',
                     help='Path of file to read messages from')
     sp.add_argument('queue', metavar='QUEUE_NAME',
@@ -40,31 +41,41 @@ def main(argv):
     sp.add_argument('--force', '-F', action='store_true',
                     help='Force feeding messages to a queue they did not originate from.')
     sp.add_argument('--delete', '-D', action='store_true',
-                    help='Remove messages from the file after submitting them to the specified queue. By default '
-                         'the messages will remain in the file')
+                    help='Remove messages from the file after adding them to the specified queue. '
+                         'By default the messages will remain in the file')
 
     sp = sps.add_parser('purge',
                         help='Purge all messages in a queue')
     sp.add_argument('queue', metavar='QUEUE_NAME',
                     help='Name of the queue to purge.')
 
+    sps.add_parser('purge_indexer',
+                   help='Purge the queues related to indexing in the current deployment. '
+                        'Use with caution. '
+                        'The messages will be lost forever.')
+    sps.add_parser('purge_mirror',
+                   help='Purge the queues related to indexing in the current deployment. '
+                        'Use with caution. '
+                        'The messages will be lost forever.')
     sps.add_parser('purge_all',
-                   help='Purge all messages in all queues in the current deployment. Use with caution. The '
-                        'messages will be lost forever.')
+                   help='Purge all messages in all queues in the current deployment. '
+                        'Use with caution. '
+                        'The messages will be lost forever.')
 
     sp = sps.add_parser('dump_all',
-                        help='Dump all messages in all queues in the current deployment. Each queue will be '
-                             'dumped into a separate JSON file. The name of the JSON file is the name of '
-                             'the queue followed by ".json"')
+                        help='Dump all messages in all queues in the current deployment. '
+                             'Each queue will be dumped into a separate JSON file. '
+                             'The name of the JSON file is the name of the queue followed by ".json"')
     sp.add_argument('--delete', '-D', action='store_true',
-                    help='Remove messages from each queue after writing them to the its file. By default the '
-                         'messages will be returned to the queue')
+                    help='Remove messages from each queue after writing them to the its file. '
+                         'By default the messages will be returned to the queue')
     sp.add_argument('--no-json-body', '-J', dest='json_body', action='store_false',
                     help='Do not deserialize JSON in queue message body.')
 
     args = p.parse_args(argv)
 
-    if args.command in ('list', 'purge', 'purge_all'):
+    commands = ('list', 'purge', 'purge_all', 'purge_indexer', 'purge_mirror')
+    if args.command in commands:
         queues = Queues()
         if args.command == 'list':
             queues.list()
@@ -72,6 +83,10 @@ def main(argv):
             queues.purge(args.queue)
         elif args.command == 'purge_all':
             queues.purge_all()
+        elif args.command == 'purge_indexer':
+            queues.purge_indexer()
+        elif args.command == 'purge_mirror':
+            queues.purge_mirror()
         else:
             assert False, args.command
     elif args.command in ('dump', 'dump_all'):

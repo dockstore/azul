@@ -214,7 +214,7 @@
                 "description": "\nHealth check of the indexer REST API and all\nresources it depends on. This may take long time to complete\nand exerts considerable load on the API. For that reason it\nshould not be requested frequently or by automated\nmonitoring facilities that would be better served by the\n[`/health/fast`](#operations-Auxiliary-get_health_fast) or\n[`/health/cached`](#operations-Auxiliary-get_health_cached)\nendpoints.\n",
                 "responses": {
                     "200": {
-                        "description": "\nThe checked resources\nare healthy.\n\nThe response consists of the following keys:\n\n* `other_lambdas` \nIndicates whether the companion REST API responds to HTTP requests.\n* `queues` \nReturns information about the SQS queues used by the indexer.\n* `progress` \nThe number of Data Store bundles pending to be indexed and the number\nof index documents in need of updating.\n* `api_endpoints` \nIndicates whether important service API endpoints are operational.\n* `elasticsearch` \nIndicates whether the Elasticsearch cluster is responsive.\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`true`.\n\n\nAll of the nested `up` keys\nare `true`.\n",
+                        "description": "\nThe checked resources\nare healthy.\n\nThe response consists of the following keys:\n\n* `other_lambdas` \nIndicates whether the companion REST API responds to HTTP requests.\n* `queues` \nReturns information about the SQS queues used by the indexer and the\nmirror.\n* `progress` \nThe number of Data Store bundles pending to be indexed and the number\nof index documents in need of updating.\n* `api_endpoints` \nIndicates whether important service API endpoints are operational.\n* `elasticsearch` \nIndicates whether the Elasticsearch cluster is responsive.\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`true`.\n\n\nAll of the nested `up` keys\nare `true`.\n",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -258,7 +258,7 @@
                         }
                     },
                     "503": {
-                        "description": "\nAt least one of the checked resources\nis not healthy.\n\nThe response consists of the following keys:\n\n* `other_lambdas` \nIndicates whether the companion REST API responds to HTTP requests.\n* `queues` \nReturns information about the SQS queues used by the indexer.\n* `progress` \nThe number of Data Store bundles pending to be indexed and the number\nof index documents in need of updating.\n* `api_endpoints` \nIndicates whether important service API endpoints are operational.\n* `elasticsearch` \nIndicates whether the Elasticsearch cluster is responsive.\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`false`.\n\n\nAt least one of the nested `up` keys\nis `false`.\n",
+                        "description": "\nAt least one of the checked resources\nis not healthy.\n\nThe response consists of the following keys:\n\n* `other_lambdas` \nIndicates whether the companion REST API responds to HTTP requests.\n* `queues` \nReturns information about the SQS queues used by the indexer and the\nmirror.\n* `progress` \nThe number of Data Store bundles pending to be indexed and the number\nof index documents in need of updating.\n* `api_endpoints` \nIndicates whether important service API endpoints are operational.\n* `elasticsearch` \nIndicates whether the Elasticsearch cluster is responsive.\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`false`.\n\n\nAt least one of the nested `up` keys\nis `false`.\n",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -408,7 +408,7 @@
                 "description": "\nReturn a cached copy of the\n[`/health/fast`](#operations-Auxiliary-get_health_fast)\nresponse. This endpoint is optimized for continuously\nrunning, distributed health monitors such as Route 53 health\nchecks. The cache ensures that the indexer is not\noverloaded by these types of health monitors. The cache is\nupdated every minute.\n",
                 "responses": {
                     "200": {
-                        "description": "\nThe checked resources\nare healthy.\n\nThe response consists of the following keys:\n\n* `elasticsearch` \nIndicates whether the Elasticsearch cluster is responsive.\n* `queues` \nReturns information about the SQS queues used by the indexer.\n* `progress` \nThe number of Data Store bundles pending to be indexed and the number\nof index documents in need of updating.\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`true`.\n\n\nAll of the nested `up` keys\nare `true`.\n",
+                        "description": "\nThe checked resources\nare healthy.\n\nThe response consists of the following keys:\n\n* `elasticsearch` \nIndicates whether the Elasticsearch cluster is responsive.\n* `queues` \nReturns information about the SQS queues used by the indexer and the\nmirror.\n* `progress` \nThe number of Data Store bundles pending to be indexed and the number\nof index documents in need of updating.\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`true`.\n\n\nAll of the nested `up` keys\nare `true`.\n",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -450,7 +450,7 @@
                         }
                     },
                     "503": {
-                        "description": "\nAt least one of the checked resources\nis not healthy.\n\nThe response consists of the following keys:\n\n* `elasticsearch` \nIndicates whether the Elasticsearch cluster is responsive.\n* `queues` \nReturns information about the SQS queues used by the indexer.\n* `progress` \nThe number of Data Store bundles pending to be indexed and the number\nof index documents in need of updating.\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`false`.\n\n\nAt least one of the nested `up` keys\nis `false`.\n",
+                        "description": "\nAt least one of the checked resources\nis not healthy.\n\nThe response consists of the following keys:\n\n* `elasticsearch` \nIndicates whether the Elasticsearch cluster is responsive.\n* `queues` \nReturns information about the SQS queues used by the indexer and the\nmirror.\n* `progress` \nThe number of Data Store bundles pending to be indexed and the number\nof index documents in need of updating.\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`false`.\n\n\nAt least one of the nested `up` keys\nis `false`.\n",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -506,7 +506,7 @@
                 "description": "\nPerformance-optimized health check of the REST API and other\ncritical resources tht it depends on. This endpoint can be\nrequested more frequently than\n[`/health`](#operations-Auxiliary-get_health) but\nperiodically scheduled, automated requests should be made to\n[`/health/cached`](#operations-Auxiliary-get_health_cached).\n",
                 "responses": {
                     "200": {
-                        "description": "\nThe checked resources\nare healthy.\n\nThe response consists of the following keys:\n\n* `elasticsearch` \nIndicates whether the Elasticsearch cluster is responsive.\n* `queues` \nReturns information about the SQS queues used by the indexer.\n* `progress` \nThe number of Data Store bundles pending to be indexed and the number\nof index documents in need of updating.\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`true`.\n\n\nAll of the nested `up` keys\nare `true`.\n",
+                        "description": "\nThe checked resources\nare healthy.\n\nThe response consists of the following keys:\n\n* `elasticsearch` \nIndicates whether the Elasticsearch cluster is responsive.\n* `queues` \nReturns information about the SQS queues used by the indexer and the\nmirror.\n* `progress` \nThe number of Data Store bundles pending to be indexed and the number\nof index documents in need of updating.\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`true`.\n\n\nAll of the nested `up` keys\nare `true`.\n",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -548,7 +548,7 @@
                         }
                     },
                     "503": {
-                        "description": "\nAt least one of the checked resources\nis not healthy.\n\nThe response consists of the following keys:\n\n* `elasticsearch` \nIndicates whether the Elasticsearch cluster is responsive.\n* `queues` \nReturns information about the SQS queues used by the indexer.\n* `progress` \nThe number of Data Store bundles pending to be indexed and the number\nof index documents in need of updating.\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`false`.\n\n\nAt least one of the nested `up` keys\nis `false`.\n",
+                        "description": "\nAt least one of the checked resources\nis not healthy.\n\nThe response consists of the following keys:\n\n* `elasticsearch` \nIndicates whether the Elasticsearch cluster is responsive.\n* `queues` \nReturns information about the SQS queues used by the indexer and the\nmirror.\n* `progress` \nThe number of Data Store bundles pending to be indexed and the number\nof index documents in need of updating.\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`false`.\n\n\nAt least one of the nested `up` keys\nis `false`.\n",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -625,7 +625,7 @@
                 "description": "\nThis endpoint allows clients to request a health check on a\nspecific set of resources. Each resource is identified by a\n*key*, the same key under which the resource appears in a\n[`/health`](#operations-Auxiliary-get_health) response.\n",
                 "responses": {
                     "200": {
-                        "description": "\nThe checked resources\nare healthy.\n\nThe response consists of the following keys:\n\n* `other_lambdas` \nIndicates whether the companion REST API responds to HTTP requests.\n* `queues` \nReturns information about the SQS queues used by the indexer.\n* `progress` \nThe number of Data Store bundles pending to be indexed and the number\nof index documents in need of updating.\n* `api_endpoints` \nIndicates whether important service API endpoints are operational.\n* `elasticsearch` \nIndicates whether the Elasticsearch cluster is responsive.\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`true`.\n\n\nAll of the nested `up` keys\nare `true`.\n",
+                        "description": "\nThe checked resources\nare healthy.\n\nThe response consists of the following keys:\n\n* `other_lambdas` \nIndicates whether the companion REST API responds to HTTP requests.\n* `queues` \nReturns information about the SQS queues used by the indexer and the\nmirror.\n* `progress` \nThe number of Data Store bundles pending to be indexed and the number\nof index documents in need of updating.\n* `api_endpoints` \nIndicates whether important service API endpoints are operational.\n* `elasticsearch` \nIndicates whether the Elasticsearch cluster is responsive.\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`true`.\n\n\nAll of the nested `up` keys\nare `true`.\n",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -669,7 +669,7 @@
                         }
                     },
                     "503": {
-                        "description": "\nAt least one of the checked resources\nis not healthy.\n\nThe response consists of the following keys:\n\n* `other_lambdas` \nIndicates whether the companion REST API responds to HTTP requests.\n* `queues` \nReturns information about the SQS queues used by the indexer.\n* `progress` \nThe number of Data Store bundles pending to be indexed and the number\nof index documents in need of updating.\n* `api_endpoints` \nIndicates whether important service API endpoints are operational.\n* `elasticsearch` \nIndicates whether the Elasticsearch cluster is responsive.\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`false`.\n\n\nAt least one of the nested `up` keys\nis `false`.\n",
+                        "description": "\nAt least one of the checked resources\nis not healthy.\n\nThe response consists of the following keys:\n\n* `other_lambdas` \nIndicates whether the companion REST API responds to HTTP requests.\n* `queues` \nReturns information about the SQS queues used by the indexer and the\nmirror.\n* `progress` \nThe number of Data Store bundles pending to be indexed and the number\nof index documents in need of updating.\n* `api_endpoints` \nIndicates whether important service API endpoints are operational.\n* `elasticsearch` \nIndicates whether the Elasticsearch cluster is responsive.\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`false`.\n\n\nAt least one of the nested `up` keys\nis `false`.\n",
                         "content": {
                             "application/json": {
                                 "schema": {

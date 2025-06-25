@@ -990,7 +990,7 @@ anvil9_sources = mkdict(anvil8_sources, 284, mkdelta([
     bqsrc('91ecebc5', 'NIMH_Broad_WGSPD_1_McCarroll_Braff_DS_WGS_20240304_ANV5_202502202030'),
 ]))
 
-anvil10_sources = mkdict(anvil9_sources, 288, mkdelta([
+anvil10_sources = mkdict(anvil9_sources, 284, mkdelta([
     bqsrc('6db4e098', 'CCDG_Baylor_CVD_ARIC_20231008_ANV5_202503171456'),
     bqsrc('14967a4d', 'CCDG_WashU_CVD_EOCAD_WashU_CAD_GRU_IRB_WGS_20230525_ANV5_202503171543'),
     bqsrc('2c000b04', 'FetalGenomics_PrenatalSEQ_20250520_ANV5_202505201718'),
@@ -1026,7 +1026,11 @@ anvil10_sources = mkdict(anvil9_sources, 288, mkdelta([
     bqsrc('c3a807a3', 'ccdg_asc_ndd_daly_talkowski_renieri_asd_exome_20250515_ANV5_202505191714'),
     bqsrc('d610c1c1', 'ccdg_asc_ndd_daly_talkowski_schloesser_asd_exome_20250515_ANV5_202505191722'),
     bqsrc('ea8f0099', 'ccdg_asc_ndd_daly_talkowski_weiss_asd_exome_20250515_ANV5_202505191738'),
+    bqsrc('5dd9d83b', 'ccdg_broad_ai_ibd_daly_louis_wes_20240104_ANV5_202409242011', pop),
     bqsrc('f143f633', 'ccdg_broad_ai_ibd_daly_mcgovern_share_wes_20240104_ANV5_202503171541'),
+    bqsrc('1cde4183', 'ccdg_broad_ai_ibd_daly_newberry_share_gsa_20240105_ANV5_202409261616', pop),
+    bqsrc('d1d3e261', 'ccdg_broad_ai_ibd_daly_xavier_prism_gsa_20240108_ANV5_202409261740', pop),
+    bqsrc('eceddedc', 'ccdg_broad_daly_igsr_1kg_twist_wes_20240625_ANV5_202409231828', pop),
 ]))
 
 

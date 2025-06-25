@@ -28,6 +28,9 @@ from moto import (
     mock_aws,
 )
 
+from azul import (
+    config,
+)
 from azul.indexer import (
     BundlePartition,
 )
@@ -112,7 +115,7 @@ class TestIndexController(DCP2IndexerTestCase, WorkQueueTestCase):
         source = self.source
         resolve_source.return_value = source
         self.index_service.repository_plugin(self.catalog)._assert_source(source)
-        self._create_mock_queues()
+        self._create_mock_queues(config.indexer_queue_names)
         self.client.remote_reindex(self.catalog, {str(source.spec)})
         notification = one(self._read_queue(self.client.notifications_queue()))
         expected_notification = dict(action='reindex',
@@ -146,7 +149,7 @@ class TestIndexController(DCP2IndexerTestCase, WorkQueueTestCase):
         multiple contributions.
         """
         self.maxDiff = None
-        self._create_mock_queues()
+        self._create_mock_queues(config.indexer_queue_names)
         source = self.source
         fqids = [
             TDRBundleFQID(source=source,

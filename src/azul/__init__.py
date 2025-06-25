@@ -1550,15 +1550,25 @@ class Config:
         return self.work_queue_names + self.fail_queue_names
 
     @property
+    def work_queue_names(self) -> list[str]:
+        return [
+            *self.indexer_work_queue_names,
+            *(self.mirror_work_queue_names if self.enable_mirroring else []),
+        ]
+
+    @property
     def fail_queue_names(self) -> list[str]:
         return [
-            self.tallies_queue.to_fail.name,
-            self.notifications_queue.to_fail.name,
-            *([self.mirror_queue.to_fail.name] if self.enable_mirroring else []),
+            *self.indexer_fail_queue_names,
+            *(self.mirror_fail_queue_names if self.enable_mirroring else []),
         ]
 
     @property
     def indexer_queue_names(self) -> list[str]:
+        return self.indexer_work_queue_names + self.indexer_fail_queue_names
+
+    @property
+    def indexer_work_queue_names(self) -> list[str]:
         return [
             q.derive(retry=retry).name
             for q in [self.notifications_queue, self.tallies_queue]
@@ -1566,10 +1576,26 @@ class Config:
         ]
 
     @property
-    def work_queue_names(self) -> list[str]:
+    def indexer_fail_queue_names(self) -> list[str]:
         return [
-            *self.indexer_queue_names,
-            *([self.mirror_queue.name] if self.enable_mirroring else []),
+            self.tallies_queue.to_fail.name,
+            self.notifications_queue.to_fail.name
+        ]
+
+    @property
+    def mirror_queue_names(self) -> list[str]:
+        return self.mirror_work_queue_names + self.mirror_fail_queue_names
+
+    @property
+    def mirror_work_queue_names(self) -> list[str]:
+        return [
+            self.mirror_queue.name
+        ]
+
+    @property
+    def mirror_fail_queue_names(self):
+        return [
+            self.mirror_queue.to_fail.name
         ]
 
     url_shortener_whitelist = [
