@@ -77,8 +77,9 @@ class TestMirrorController(DCP2TestCase,
                     with self.subTest('mirror_file', corrupted=False, exists=False):
                         self._test_mirror_file(file, file_message)
 
+                    service = self.mirror_controller.service(self.catalog)
                     self._s3.delete_object(Bucket=self.mirror_bucket,
-                                           Key=self.mirror_controller.service.info_object_key(file))
+                                           Key=service.info_object_key(file))
 
                     with self.subTest('mirror_file', corrupted=True):
                         self._test_corrupted_download(file_message)
@@ -140,8 +141,9 @@ class TestMirrorController(DCP2TestCase,
         event = [self._mock_sqs_record(file_message)]
         with patch.object(MirrorService, '_download', return_value=self._file_contents):
             self.mirror_controller.mirror(event)
+        service = self.mirror_controller.service(self.catalog)
         response = self._s3.get_object(Bucket=self.mirror_bucket,
-                                       Key=self.mirror_controller.service.mirror_object_key(file))
+                                       Key=service.mirror_object_key(file))
         mirrored_file_contents = response['Body'].read()
         self.assertEqual(mirrored_file_contents, self._file_contents)
 
@@ -164,7 +166,8 @@ class TestMirrorController(DCP2TestCase,
     def test_info_schema(self):
         client = http_client(log)
         file = MagicMock(content_type='text/plain')
-        info = self.mirror_controller.service.info_object(file)
+        service = self.mirror_controller.service(self.catalog)
+        info = service.info_object(file)
         response = client.request('GET', info['$schema'])
         self.assertEqual(200, response.status, response.data)
         schema = json.loads(response.data)
