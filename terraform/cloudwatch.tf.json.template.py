@@ -16,10 +16,10 @@ from azul.terraform import (
 )
 
 
-def dashboard_body() -> str:
+def dashboard_body(name: str) -> str:
     module = load_module(config.cloudwatch_dashboard_template,
                          'cloudwatch_dashboard_template')
-    body = json.dumps(module.dashboard_body)
+    body = json.dumps(module.dashboard_body(name))
     return body
 
 
@@ -329,10 +329,20 @@ emit_tf({
         ),
         {
             'aws_cloudwatch_dashboard': {
-                'dashboard': {
-                    'dashboard_name': config.qualified_resource_name('dashboard'),
-                    'dashboard_body': dashboard_body()
-                }
+                'indexer': {
+                    'dashboard_name': config.qualified_resource_name('indexer'),
+                    'dashboard_body': dashboard_body('indexer')
+                },
+                **(
+                    {
+                        'mirror': {
+                            'dashboard_name': config.qualified_resource_name('mirror'),
+                            'dashboard_body': dashboard_body('mirror')
+                        }
+                    }
+                    if config.enable_mirroring else
+                    {}
+                )
             }
         }
     ]
