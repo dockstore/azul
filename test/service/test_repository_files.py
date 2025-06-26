@@ -421,10 +421,11 @@ class TestRepositoryFilesWithMirroring(DCP2TestCase,
                        sha256=hashlib.sha256(file_content).hexdigest(),
                        crc32c=None)
 
-        mirror_service = MirrorService(schema_url_func=MagicMock())
+        mirror_service = MirrorService(catalog=self.catalog,
+                                       schema_url_func=MagicMock())
         with mock.patch.object(MirrorService, '_download', return_value=file_content):
-            mirror_service.mirror_file(self.catalog, file)
-        self.assertTrue(mirror_service.info_exists(self.catalog, file))
+            mirror_service.mirror_file(file)
+        self.assertTrue(mirror_service.info_exists(file))
 
         client = http_client(log)
         args = dict(catalog=self.catalog, version=file_version)
@@ -437,7 +438,7 @@ class TestRepositoryFilesWithMirroring(DCP2TestCase,
         self.assertEqual('https', signed_url.scheme)
         self.assertEqual(f'{self.mirror_bucket}.s3.{config.region}.amazonaws.com',
                          signed_url.netloc)
-        self.assertEqual('/' + mirror_service.mirror_object_key(self.catalog, file),
+        self.assertEqual('/' + mirror_service.mirror_object_key(file),
                          str(signed_url.path))
         self.assertEqual(f'attachment;filename="{file.name}"',
                          signed_url.args.get('response-content-disposition'))

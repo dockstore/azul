@@ -128,6 +128,9 @@ from azul.indexer.document import (
     EntityReference,
     EntityType,
 )
+from azul.indexer.index_queue_service import (
+    IndexAction,
+)
 from azul.indexer.index_service import (
     IndexExistsAndDiffersException,
     IndexService,
@@ -230,6 +233,14 @@ class IntegrationTestCase(AzulTestCase, metaclass=ABCMeta):
     @cached_property
     def azul_client(self):
         return AzulClient()
+
+    @property
+    def index_queue_service(self):
+        return self.azul_client.index_queue_service
+
+    @property
+    def index_repository_service(self):
+        return self.azul_client.index_repository_service
 
     def repository_plugin(self, catalog: CatalogName) -> RepositoryPlugin:
         return self.azul_client.repository_plugin(catalog)
@@ -463,8 +474,9 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
                                     ma_source=ma_source))
 
         if index:
+            service = self.index_queue_service
             for catalog in catalogs:
-                self.azul_client.queue_notifications(catalog.notifications)
+                service.queue_notifications(catalog.notifications)
             self.azul_client.wait_for_indexer()
             self._assert_queues_empty(config.indexer_fail_queue_names)
             for catalog in catalogs:
@@ -1276,23 +1288,24 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
                                sources: Iterable[SourceRef]
                                ) -> tuple[list[SQSMessage], set[SourcedBundleFQID]]:
         plugin = self.repository_plugin(catalog)
-        bundle_fqids = set()
-        notifications = []
+        queue_service = self.index_queue_service
+        repository_service = self.index_repository_service
+        bundle_fqids, notifications = set(), []
         for source in sources:
             source = plugin.partition_source_for_indexing(catalog, source)
             # Some partitions may be empty, but we include them anyway to
             # ensure test coverage for handling multiple partitions per source
-            for partition_prefix in source.spec.prefix.partition_prefixes():
-                bundle_fqids.update(self.azul_client.list_bundles(catalog, source, partition_prefix))
-                notifications.append(self.azul_client.reindex_message(catalog,
-                                                                      source,
-                                                                      partition_prefix))
+            for prefix in source.spec.prefix.partition_prefixes():
+                partition = repository_service.list_bundles(catalog, source, prefix)
+                bundle_fqids.update(partition)
+                message = queue_service.index_partition_message(catalog, source, prefix)
+                notifications.append(message)
         # Index some bundles again to test that we handle duplicate additions.
         # Note: random.choices() may pick the same element multiple times so
         # some notifications may end up being sent three or more times.
         num_duplicates = len(bundle_fqids) // 2
         duplicate_bundles = [
-            self.azul_client.bundle_message(catalog, bundle)
+            queue_service.index_bundle_message(IndexAction.add, catalog, bundle.to_json())
             for bundle in self.random.choices(sorted(bundle_fqids), k=num_duplicates)
         ]
         notifications.extend(duplicate_bundles)
@@ -1339,7 +1352,8 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
                 expected_fqids -= replica_fqids
                 log.info('Ignoring replica bundles %r', replica_fqids)
             else:
-                expected_fqids = set(self.azul_client.filter_obsolete_bundle_versions(expected_fqids))
+                service = self.index_repository_service
+                expected_fqids = set(service.filter_obsolete_bundle_versions(expected_fqids))
                 obsolete_fqids = bundle_fqids - expected_fqids
                 if obsolete_fqids:
                     log.debug('Ignoring obsolete bundle versions %r', obsolete_fqids)
@@ -1735,7 +1749,6 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
                 for c in config.catalogs.values()
                 if c.is_integration_test_catalog and c.atlas == 'hca'
             ]
-            service = BaseMirrorService()
             sources_by_catalog = {
                 catalog: [self._select_source(catalog, public=True)]
                 for catalog in catalogs
@@ -1747,7 +1760,7 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
                     # since each IT catalog currently uses the same mirror
                     # prefix and bucket
                     for catalog in catalogs:
-                        service.delete_it_files(catalog)
+                        BaseMirrorService(catalog=catalog).delete_it_files()
 
             self._assert_queues_empty([config.mirror_queue.name,
                                        config.mirror_queue.to_fail.name])
@@ -1924,7 +1937,7 @@ class CanBundleScriptIntegrationTest(IntegrationTestCase):
         source = self._select_source(catalog)
         # The plugin will raise an exception if the source lacks a prefix
         source = source.with_prefix(Prefix.of_everything)
-        bundle_fqids = self.azul_client.list_bundles(catalog, source, prefix='')
+        bundle_fqids = self.azul_client.index_repository_service.list_bundles(catalog, source, prefix='')
         return self.random.choice(sorted(bundle_fqids))
 
     def _can_bundle(self,

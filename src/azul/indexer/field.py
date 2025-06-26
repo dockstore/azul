@@ -90,15 +90,15 @@ class FieldType[N, X: IndexForm](metaclass=ABCMeta):
     es_sort_mode: ClassVar[str] = 'min'
     allow_sorting_by_empty_lists: ClassVar[bool] = True
 
-    def __init__(self, native_form: Form[N], translated_form: Form[X]):
+    def __init__(self, native_form: Form[N], index_form: Form[X]):
         self.native_form: Final[Form[N]] = native_form
-        self.index_form: Final[Form[X]] = translated_form
+        self.index_form: Final[Form[X]] = index_form
 
     @cached_property
     def native_types(self) -> tuple[type, ...]:
         """
         The possible runtime (reified) types of the value of document fields
-        of this type. This method returns a typle to account for the fact that
+        of this type.
         """
         return reify(self.native_form)
 
@@ -142,7 +142,7 @@ class FieldType[N, X: IndexForm](metaclass=ABCMeta):
         native representation.
         """
         assert isinstance(value, self.native_types), (value, self)
-        return value
+        return cast(N, value)
 
     @property
     def supported_filter_relations(self) -> tuple[str, ...]:

@@ -61,7 +61,7 @@ log = logging.getLogger(__name__)
 
 @attr.s(auto_attribs=True, kw_only=True, frozen=True)
 class TerraformSchema:
-    versions: Sequence[str]
+    versions: JSON
     document: JSON
     path: Path
 

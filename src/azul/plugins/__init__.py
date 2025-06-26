@@ -637,14 +637,16 @@ class RepositoryPlugin[BUNDLE: Bundle,
     @property
     def source_ref_cls(self) -> type[SOURCE_REF]:
         ref_cls = self._generic_params[SOURCE_REF]
+        assert isinstance(ref_cls, type)
         assert issubclass(ref_cls, SourceRef)
-        return ref_cls
+        return cast(type[SOURCE_REF], ref_cls)
 
     @property
     def bundle_fqid_cls(self) -> type[BUNDLE_FQID]:
         fqid_cls = self._generic_params[BUNDLE_FQID]
+        assert isinstance(fqid_cls, type)
         assert issubclass(fqid_cls, SourcedBundleFQID)
-        return fqid_cls
+        return cast(type[BUNDLE_FQID], fqid_cls)
 
     def resolve_source(self, spec: str) -> SOURCE_REF:
         """
