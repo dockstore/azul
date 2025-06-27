@@ -682,6 +682,10 @@ class TDRClient(SAMClient):
     def get_duos(self,
                  source: TDRSourceRef
                  ) -> tuple[str, MutableJSON] | tuple[None, None]:
+        """
+        Return the DUOS ID and DUOS dataset registration information for the
+        given TDR snapshot.
+        """
         body = self._retrieve_source(source)
         try:
             duos_id = json_str(json_dict(body['duosFirecloudGroup'])['duosId'])
