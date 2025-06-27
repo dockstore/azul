@@ -397,6 +397,8 @@ class HCASearchResponseStage(SearchResponseStage):
                                        version=file['version'],
                                        drs_uri=file['drs_uri'])
         }
+        # FIXME: https://github.com/DataBiosphere/azul/issues/6549
+        #        Remove files.url
         translated_file['url'] = translated_file['azul_url']
         return translated_file
 
