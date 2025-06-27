@@ -316,8 +316,6 @@ class BaseTransformer(Transformer, metaclass=ABCMeta):
             # FIXME: Redundant file fields for AnVIL are no longer needed
             #        https://github.com/DataBiosphere/azul/issues/7005
             'uuid': null_str,
-            'size': null_int,
-            'name': null_str,
             'crc32': null_str,
             'sha256': null_str,
             'drs_uri': null_str
@@ -413,11 +411,8 @@ class BaseTransformer(Transformer, metaclass=ABCMeta):
         return self._entity(donor, self._donor_types())
 
     def _file(self, file: EntityReference) -> MutableJSON:
-        metadata = self.bundle.entities[file]
         return self._entity(file,
                             self._file_types(),
-                            size=metadata['file_size'],
-                            name=metadata['file_name'],
                             uuid=file.entity_id)
 
     def _only_dataset(self) -> EntityReference:
