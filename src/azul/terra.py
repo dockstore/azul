@@ -80,6 +80,7 @@ from azul.drs import (
 )
 from azul.http import (
     LimitedRetryHttpClient,
+    LimitedTimeoutException,
     Propagate429HttpClient,
 )
 from azul.indexer import (
@@ -694,7 +695,13 @@ class TDRClient(SAMClient):
             return None, None
         else:
             url = self._duos_endpoint('dataset', 'registration', duos_id)
-            response = self._request('GET', url)
+            # FIXME: Fail on timeout instead of faking response
+            #        https://github.com/DataBiosphere/azul/issues/7230
+            try:
+                response = self._request('GET', url)
+            except LimitedTimeoutException:
+                body = {'studyDescription': '[Description currently not available]'}
+                return duos_id, body
             if response.status == 404:
                 log.warning('No DUOS dataset registration with ID %r from %r',
                             duos_id, source.spec)
