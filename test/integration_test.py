@@ -716,7 +716,12 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
     def _get_one_inner_file(self, catalog: CatalogName) -> tuple[JSON, FileInnerEntity]:
         outer_file = self._get_one_outer_file(catalog)
         inner_files: JSONs = outer_file['files']
-        return outer_file, cast(FileInnerEntity, one(inner_files))
+        inner_file = one(inner_files)
+        assert isinstance(inner_file['uuid'], str), inner_file
+        assert isinstance(inner_file['version'], str), inner_file
+        assert isinstance(inner_file['name'], str), inner_file
+        assert isinstance(inner_file['size'], int), inner_file
+        return outer_file, cast(FileInnerEntity, inner_file)
 
     @cache
     def _get_one_outer_file(self, catalog: CatalogName) -> JSON:
