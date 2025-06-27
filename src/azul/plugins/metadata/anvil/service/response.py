@@ -184,6 +184,8 @@ class AnvilSearchResponseStage(SearchResponseStage):
             inner_entity['url'] = self._file_url(uuid=inner_entity['uuid'],
                                                  version=inner_entity['version'],
                                                  drs_uri=inner_entity['drs_uri'])
+            inner_entity.pop('uuid', None)
+            inner_entity.pop('version', None)
         return inner_entity
 
     def _non_pivotal_entity(self,
