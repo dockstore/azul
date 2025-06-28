@@ -285,7 +285,12 @@ class Queues:
             lengths[queue_name] = length
         return total, lengths
 
-    def wait_to_stabilize(self, queue_names: Iterable[str], timeout: int) -> int:
+    def wait_to_stabilize(self,
+                          queue_names: Iterable[str],
+                          timeout: int,
+                          *,
+                          detect_stall: bool
+                          ) -> int:
         """
         Wait for queues to reach a steady state.
 
@@ -293,6 +298,11 @@ class Queues:
 
         :param timeout: The highest timeout among lambda functions receiving
                         messages from the queues.
+
+        :param detect_stall: If True, the method will raise an exception if
+                             there is no observable progress while the queues
+                             are nonempty. Otherwise, the method will wait
+                             indefinitely for the queues to empty.
 
         :return: The total final length of the stabilized queues. The only
                  observable is zero; otherwise, an exception is raised.
@@ -323,7 +333,7 @@ class Queues:
                     final_length = total_lengths[-1]
                     log.info('The queues have emptied.')
                     break
-                if num_total_lengths == total_lengths.maxlen:
+                elif detect_stall and num_total_lengths == total_lengths.maxlen:
                     cummdiff = sum(
                         abs(first - second)
                         for first, second in more_itertools.pairwise(total_lengths)
@@ -389,6 +399,14 @@ class Queues:
 
     def purge_all(self):
         self.purge_queues_safely(self.all_queues())
+
+    def purge_indexer(self):
+        queues = self.get_queues(config.indexer_work_queue_names)
+        self.purge_queues_safely(queues)
+
+    def purge_mirror(self):
+        queues = self.get_queues(config.mirror_work_queue_names)
+        self.purge_queues_safely(queues)
 
     def purge_queues_safely(self, queues: Mapping[str, 'Queue']):
         self.manage_lambdas(queues, enable=False)

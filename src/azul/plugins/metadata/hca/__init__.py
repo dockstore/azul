@@ -11,6 +11,7 @@ from attrs import (
 
 from azul import (
     JSON,
+    R,
     config,
     iif,
 )
@@ -481,9 +482,7 @@ class HCAFile(File):
                    name=hit['name'],
                    size=hit['size'],
                    drs_uri=hit['drs_uri'],
-                   # FIXME: Remove dcp-type MIME parameter
-                   #        https://github.com/DataBiosphere/azul/issues/7130
-                   content_type=hit['content-type'].split(';')[0],
+                   content_type=hit['content-type'],
                    sha256=hit['sha256'],
                    crc32c=hit['crc32c'],
                    sha1=hit.get('sha1'),
@@ -496,11 +495,20 @@ class HCAFile(File):
                         uuid: str,
                         name: str,
                         drs_uri: str | None) -> Self:
+        content_type = descriptor['content_type']
+        # FIXME: Obsolete MIME parameter in file content types
+        #        https://github.com/HumanCellAtlas/dcp2/issues/73
+        parameter_suffix = '; dcp-type=data'
+        if content_type.endswith(parameter_suffix):
+            content_type = content_type.removesuffix(parameter_suffix)
+        else:
+            assert ';' not in content_type, R(
+                'Unexpected MIME parameter in content type', content_type)
         return cls(uuid=uuid,
                    name=name,
                    version=descriptor['file_version'],
                    size=descriptor['size'],
-                   content_type=descriptor['content_type'],
+                   content_type=content_type,
                    sha256=descriptor['sha256'],
                    crc32c=descriptor['crc32c'],
                    sha1=descriptor.get('sha1'),

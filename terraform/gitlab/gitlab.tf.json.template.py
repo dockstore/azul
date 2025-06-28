@@ -1789,6 +1789,10 @@ emit_tf({} if config.terraform_component != 'gitlab' else {
                                 # the same purpose as firewall rules in the
                                 # guest OS.
                                 'ExecStartPre=/sbin/nft flush ruleset',
+                                # FIXME: Re-enable FIPS mode in GitLab container
+                                #        https://github.com/DataBiosphere/azul/issues/7218
+                                f'ExecStartPre=/bin/mkdir -p {gitlab_mount}/etc',
+                                f'ExecStartPre=/bin/sh -c "echo 0 > {gitlab_mount}/etc/fips_enabled"',
                                 jw(
                                     'ExecStart=/usr/bin/docker',
                                     'run',
@@ -1801,6 +1805,9 @@ emit_tf({} if config.terraform_component != 'gitlab' else {
                                     f'--volume {gitlab_mount}/config:/etc/gitlab',
                                     f'--volume {gitlab_mount}/logs:/var/log/gitlab',
                                     f'--volume {gitlab_mount}/data:/var/opt/gitlab',
+                                    # FIXME: Re-enable FIPS mode in GitLab container
+                                    #        https://github.com/DataBiosphere/azul/issues/7218
+                                    f'--volume {gitlab_mount}/etc/fips_enabled:/proc/sys/crypto/fips_enabled',
                                     *vpc_dns_docker_flags,
                                     str(gitlab_image)
                                 ),
@@ -2230,7 +2237,7 @@ emit_tf({} if config.terraform_component != 'gitlab' else {
         'aws_cloudwatch_metric_alarm': {
             **{
                 'gitlab_' + resource: {
-                    'alarm_name': 'azul-gitlab_' + resource,
+                    'alarm_name': config.qualified_resource_name('gitlab_' + resource),
                     'comparison_operator': 'GreaterThanOrEqualToThreshold',
                     'datapoints_to_alarm': periods,
                     'evaluation_periods': periods,
