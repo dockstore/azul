@@ -457,7 +457,8 @@ class Plugin(TDRPlugin[TDRAnvilBundle, TDRAnvilBundleFQID]):
                 links.update(new_links)
                 frontier = frozenset().union(*(link.all_entities for link in new_links)) - keys
                 keys.update(frontier)
-            log.debug('Found %r linked entities via %r', len(keys) - n, method)
+            log.debug('Found %r linked entities via method %s',
+                      len(keys) - n, method.__name__)
 
         keys_by_type: KeysByType = self._consolidate_by_type(keys)
         if log.isEnabledFor(logging.DEBUG):
