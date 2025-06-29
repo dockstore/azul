@@ -729,7 +729,7 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
         # FIXME: Two AnVIL snapshots with null in anvil_file.file_size column
         #        https://github.com/DataBiosphere/azul/issues/7243
         if inner_file['size'] is None:
-            inner_file = dict(inner_file, size=0)
+            inner_file = dict(inner_file, size=1)
         assert isinstance(inner_file['uuid'], str), inner_file
         assert isinstance(inner_file['version'], str), inner_file
         assert isinstance(inner_file['name'], str), inner_file
