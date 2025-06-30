@@ -13,7 +13,6 @@ from typing import (
     Any,
     Callable,
     Iterator,
-    Literal,
     Optional,
     Self,
     Tuple,
@@ -37,10 +36,12 @@ from more_itertools import (
 
 from azul import (
     R,
+    cached_property,
     config,
     require,
 )
 from azul.json import (
+    PolymorphicSerializable,
     Serializable,
 )
 from azul.types import (
@@ -177,6 +178,9 @@ def is_uuid(version):
 
 type Source = list[str | tuple[str, ...] | Source]
 
+type FromJSON = Callable[[AnyJSON], Any]
+type ToJSON = Callable[[Any], AnyJSON]
+
 
 class SerializableAttrs(Serializable, attrs.AttrsInstance):
     """
@@ -293,10 +297,6 @@ class SerializableAttrs(Serializable, attrs.AttrsInstance):
         assert not cls._deferred_fields, R(
             'Class has fields of unknown type', cls._deferred_fields)
 
-    class Metadata(TypedDict):
-        from_json: Callable[[AnyJSON], Any] | None
-        to_json: Callable[[Any], AnyJSON] | None
-
     def __init_subclass__(cls):
         super().__init_subclass__()
         try:
@@ -366,30 +366,21 @@ class SerializableAttrs(Serializable, attrs.AttrsInstance):
         return deferred_fields
 
     @classmethod
-    def _serializable(cls,
-                      field: attrs.Attribute,
-                      key: Literal['from_json', 'to_json']
-                      ) -> bool:
-        try:
-            return field.metadata['azul'][key] is not None
-        except KeyError:
-            return True
-
-    @classmethod
     def _make_from_json(cls, fields: list[attrs.Attribute]) -> Callable:
         globals = {cls.__name__: cls}
+        deserializers = (cls.Deserializer(cls, field, globals) for field in fields)
         source = cls._indent([
             '@classmethod',
             'def _from_json(cls, json):', [
                 f'kwargs = super({cls.__name__}, cls)._from_json(json)',
                 *flatten(
                     [
-                        f'x = json["{field.name}"]',
-                        *(cls.Deserializer(cls, field, globals).handle('x')),
-                        f'kwargs["{field.name}"] = x'
+                        f'x = json["{deserializer.field.name}"]',
+                        *(deserializer.handle('x')),
+                        f'kwargs["{deserializer.field.name}"] = x'
                     ]
-                    for field in fields
-                    if cls._serializable(field, 'from_json')
+                    for deserializer in deserializers
+                    if deserializer.enabled
                 ),
                 'return kwargs'
             ]
@@ -399,6 +390,7 @@ class SerializableAttrs(Serializable, attrs.AttrsInstance):
     @classmethod
     def _make_to_json(cls, fields: list[attrs.Attribute]) -> Callable:
         globals = {cls.__name__: cls}
+        serializers = (cls.Serializer(cls, field, globals) for field in fields)
         to_json = cls._indent([
             'def to_json(self):', [
                 # Using the super() shortcut would require messing with the
@@ -407,11 +399,11 @@ class SerializableAttrs(Serializable, attrs.AttrsInstance):
                 f'json = super({cls.__name__}, self).to_json()',
                 *flatten(
                     [
-                        f'x = self.{field.name}',
-                        f'json["{field.name}"] = ' + cls.Serializer(cls, field, globals).handle('x')
+                        f'x = self.{serializer.field.name}',
+                        f'json["{serializer.field.name}"] = ' + serializer.handle('x')
                     ]
-                    for field in fields
-                    if cls._serializable(field, 'to_json')
+                    for serializer in serializers
+                    if serializer.enabled
                 ),
                 'return json'
             ]
@@ -438,7 +430,7 @@ class SerializableAttrs(Serializable, attrs.AttrsInstance):
         """
         Compile a function definition from the given source & context
         """
-        if config.debug > 1:
+        if config.debug > 2:
             log.debug('Generating code for method in %r with globals %r. '
                       'See next line for body of method.\n%s', cls, globals, source)
         bytecode = compile(source, cls.__module__, 'exec')
@@ -478,13 +470,29 @@ class SerializableAttrs(Serializable, attrs.AttrsInstance):
         class MustDefer(Exception):
             pass
 
-        def handle(self, x: str) -> T:
+        class Custom(TypedDict):
+            from_json: FromJSON | None
+            to_json: ToJSON | None
+
+        @cached_property
+        def custom(self) -> Custom | None:
+            return self._metadata('custom', None)
+
+        def _metadata[V](self, key: str, default: V) -> V:
             try:
-                metadata = self.field.metadata['azul']
+                return self.field.metadata['azul'][key]
             except KeyError:
+                return default
+
+        @cached_property
+        def discriminator(self) -> str | None:
+            return self._metadata('discriminator', None)
+
+        def handle(self, x: str) -> T:
+            if self.custom is None:
                 return self._handle(x, self._reify(self.field.type))
             else:
-                return self._custom(x, metadata)
+                return self._custom(x)
 
         def _owner(self) -> type:
             """
@@ -531,9 +539,14 @@ class SerializableAttrs(Serializable, attrs.AttrsInstance):
                 if field_type in reify(PrimitiveJSON):
                     return self._primitive(x, field_type)
                 elif issubclass(field_type, Serializable):
-                    inner_cls_name = field_type.__name__
-                    self.globals[inner_cls_name] = field_type
-                    return self._serializable(x, inner_cls_name)
+                    cls_name = field_type.__name__
+                    self.globals[cls_name] = field_type
+                    is_polymorphic = issubclass(field_type, PolymorphicSerializable)
+                    has_discriminator = self.discriminator is not None
+                    if is_polymorphic and has_discriminator:
+                        return self._polymorphic(x, cls_name)
+                    else:
+                        return self._serializable(x, cls_name)
             else:
                 origin = get_origin(field_type)
                 if origin in (Union, UnionType):
@@ -551,6 +564,11 @@ class SerializableAttrs(Serializable, attrs.AttrsInstance):
                     return self._dict(x, key_type, value_type)
             raise TypeError('Unserializable field', field_type, self.field)
 
+        @property
+        @abstractmethod
+        def enabled(self) -> bool:
+            raise NotImplementedError
+
         @abstractmethod
         def _primitive(self, x: str, field_type: type) -> T:
             raise NotImplementedError
@@ -564,7 +582,11 @@ class SerializableAttrs(Serializable, attrs.AttrsInstance):
             raise NotImplementedError
 
         @abstractmethod
-        def _serializable(self, x: str, inner_cls_name: str) -> T:
+        def _serializable(self, x: str, cls: str) -> T:
+            raise NotImplementedError
+
+        @abstractmethod
+        def _polymorphic(self, x: str, base_cls: str) -> T:
             raise NotImplementedError
 
         @abstractmethod
@@ -576,19 +598,32 @@ class SerializableAttrs(Serializable, attrs.AttrsInstance):
             raise NotImplementedError
 
         @abstractmethod
-        def _custom(self, x: str, metadata: 'SerializableAttrs.Metadata') -> T:
+        def _custom(self, x: str) -> T:
             raise NotImplementedError
 
     class Deserializer(Strategy[Source]):
+
+        @property
+        def enabled(self) -> bool:
+            return self.custom is None or self.custom['from_json'] is not None
 
         def _optional(self, x: str, field_type: type) -> Source:
             return [
                 f'if {x} is not None:', self._handle(x, field_type)
             ]
 
-        def _serializable(self, x: str, inner_cls_name: str) -> Source:
+        def _serializable(self, x: str, cls: str) -> Source:
             return [
-                f'{x} = {inner_cls_name}.from_json({x})'
+                f'{x} = {cls}.from_json({x})'
+            ]
+
+        def _polymorphic(self, x: str, base_cls: str) -> Source:
+            depth = next(self.depth)
+            cls = f'cls{depth}'
+            return [
+                f'{cls} = {x}["{self.discriminator}"]',
+                f'{cls} = {base_cls}.cls_from_json({cls})',
+                f'{x} = {cls}.from_json({x})'
             ]
 
         def _primitive(self, x: str, field_type: type) -> Source:
@@ -632,14 +667,19 @@ class SerializableAttrs(Serializable, attrs.AttrsInstance):
                 f'{x} = {d}'
             ]
 
-        def _custom(self, x: str, metadata: 'SerializableAttrs.Metadata') -> Source:
+        def _custom(self, x: str) -> Source:
             var_name = self.field.name + '_from_json'
-            self.globals[var_name] = not_none(metadata['from_json'])
+            from_json = not_none(not_none(self.custom)['from_json'])
+            self.globals[var_name] = from_json
             return [
                 f'{x} = {var_name}({x})'
             ]
 
     class Serializer(Strategy[str]):
+
+        @property
+        def enabled(self) -> bool:
+            return self.custom is None or self.custom['to_json'] is not None
 
         def _primitive(self, x: str, field_type: type) -> str:
             return x
@@ -650,8 +690,11 @@ class SerializableAttrs(Serializable, attrs.AttrsInstance):
         def _optional(self, x: str, field_type: type) -> str:
             return f'{x} if {x} is None else ({self._handle(x, field_type)})'
 
-        def _serializable(self, x: str, inner_cls_name: str) -> str:
+        def _serializable(self, x: str, cls: str) -> str:
             return f'{x}.to_json()'
+
+        def _polymorphic(self, x: str, base_cls: str) -> str:
+            return f'dict({x}.to_json(), {self.discriminator}={x}.cls_to_json())'
 
         def _list(self, x: str, item_type: type) -> str:
             depth = next(self.depth)
@@ -665,22 +708,24 @@ class SerializableAttrs(Serializable, attrs.AttrsInstance):
             k_, v_ = self._handle(k, key_type), self._handle(v, value_type)
             return f'{{{k_}: {v_} for {k}, {v} in x.items()}}'
 
-        def _custom(self, x: str, metadata: 'SerializableAttrs.Metadata') -> str:
+        def _custom(self, x: str) -> str:
+            to_json = not_none(not_none(self.custom)['to_json'])
             var_name = self.field.name + '_to_json'
-            self.globals[var_name] = not_none(metadata['to_json'])
+            self.globals[var_name] = to_json
             return f'{var_name}({x})'
 
 
-def serializable[T: attrs.Attribute](field: T,
-                                     from_json: Callable[[AnyJSON], Any],
-                                     to_json: Callable[[Any], AnyJSON]) -> T:
+def serializable[T: attrs.Attribute](field: T | None = None,
+                                     *,
+                                     from_json: FromJSON,
+                                     to_json: ToJSON) -> T:
     """
     Use the provided callables to (de)serialize values of the given field,
     instead of generating them.
 
     >>> @attrs.frozen
     ... class Foo(SerializableAttrs):
-    ...     x: set[str] = serializable(attrs.field(), to_json=sorted, from_json=set)
+    ...     x: set[str] = serializable(to_json=sorted, from_json=set)
 
     >>> Foo(x={'b','a'}).to_json()
     {'x': ['a', 'b']}
@@ -688,9 +733,9 @@ def serializable[T: attrs.Attribute](field: T,
     >>> Foo.from_json({'x': ['a']})
     Foo(x={'a'})
     """
-    field.metadata['azul'] = SerializableAttrs.Metadata(from_json=from_json,
-                                                        to_json=to_json)
-    return field
+    custom = SerializableAttrs.Strategy.Custom(from_json=from_json,
+                                               to_json=to_json)
+    return _set_field_metadata(field, 'custom', custom)
 
 
 def not_serializable[T: attrs.Attribute](field: T) -> T:
@@ -710,6 +755,106 @@ def not_serializable[T: attrs.Attribute](field: T) -> T:
     >>> Foo.from_json({})
     Foo(x=42)
     """
-    field.metadata['azul'] = SerializableAttrs.Metadata(from_json=None,
-                                                        to_json=None)
+    custom = SerializableAttrs.Strategy.Custom(from_json=None,
+                                               to_json=None)
+    return _set_field_metadata(field, 'custom', custom)
+
+
+def _set_field_metadata[T: attrs.Attribute](field: T | None, key, value):
+    if field is None:
+        field = attrs.field()
+    metadata = field.metadata.setdefault('azul', {})
+    metadata[key] = value
     return field
+
+
+def polymorphic[T: attrs.Attribute](field: T | None = None,
+                                    *,
+                                    discriminator: str
+                                    ) -> T:
+    """
+    Mark an attrs field to use the given name for the discriminator property in
+    serialized instances of PolymorphicSerializable that occur in the value of
+    that field. The given discriminator property of a serialized instance
+    represents the type to use when deserializing that instance again.
+
+    >>> from azul.json import RegisteredPolymorphicSerializable
+
+    >>> class Inner(SerializableAttrs, RegisteredPolymorphicSerializable):
+    ...     pass
+
+    >>> @attrs.frozen
+    ... class InnerWithInt(Inner):
+    ...     x: int
+
+    >>> @attrs.frozen
+    ... class InnerWithStr(Inner):
+    ...     y: str
+
+    >>> @attrs.frozen(kw_only=True)
+    ... class Outer(SerializableAttrs):
+    ...     inner: Inner = polymorphic(discriminator='type')
+    ...     inners: list[Inner] = polymorphic(discriminator='_cls')
+
+    >>> from azul.doctests import assert_json
+
+    >>> outer = Outer(inner=InnerWithInt(42),
+    ...               inners=[InnerWithStr('foo'), InnerWithInt(7)])
+    >>> assert_json(outer.to_json())
+    {
+        "inner": {
+            "x": 42,
+            "type": "InnerWithInt"
+        },
+        "inners": [
+            {
+                "y": "foo",
+                "_cls": "InnerWithStr"
+            },
+            {
+                "x": 7,
+                "_cls": "InnerWithInt"
+            }
+        ]
+    }
+    >>> Outer.from_json(outer.to_json()) == outer
+    True
+
+    In order to enable polymorphic serialization of the value of a given field,
+    the discriminator property needs to be specified explicitly, otherwise the
+    serialization framework will resort to the static type of the field.
+
+    >>> @attrs.frozen
+    ... class GenericOuter[T: Inner](SerializableAttrs):
+    ...     inner: T
+
+    >>> class StaticOuter(GenericOuter[InnerWithInt]):
+    ...     pass
+
+    >>> outer = StaticOuter(InnerWithInt(42))
+    >>> outer.to_json()
+    {'inner': {'x': 42}}
+
+    Despite the fact that ``{'x': 42}`` does not encode any type information,
+    ``from_json`` can tell from the static type of the field that {'x': 42}
+    should be deserialized as an ``InnerWithInt``.
+
+    >>> StaticOuter.from_json(outer.to_json()).inner
+    InnerWithInt(x=42)
+
+    >>> StaticOuter.from_json(outer.to_json()) == outer
+    True
+
+    However, when the static type of the field is not concrete, deserialization
+    may fail or, like in this case, lose information by creating an instance of
+    the parent class instead of the class that was serialized.
+
+    >>> @attrs.frozen
+    ... class AbstractOuter(SerializableAttrs):
+    ...     inner: Inner
+
+    >>> outer = AbstractOuter(InnerWithInt(42))
+    >>> AbstractOuter.from_json(outer.to_json()).inner  # doctest: +ELLIPSIS
+    <azul.attrs.Inner object at ...>
+    """
+    return _set_field_metadata(field, 'discriminator', discriminator)

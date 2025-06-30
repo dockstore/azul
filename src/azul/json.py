@@ -267,6 +267,67 @@ class Serializable:
         raise NotImplementedError
 
 
+class PolymorphicSerializable(Serializable):
+    """
+    A class whose subclasses' instances can be transformed to and from JSON
+    while retaining the concrete type of said instances.
+    """
+
+    @classmethod
+    def cls_to_json(cls) -> AnyJSON:
+        """
+        Serialize the given type to JSON.
+        """
+        raise NotImplementedError
+
+    @classmethod
+    def cls_from_json(cls, json: AnyJSON) -> type[Self]:
+        """
+        Deserialize a subtype of the given type from the given JSON.
+        """
+        raise NotImplementedError
+
+
+class RegisteredPolymorphicSerializable(PolymorphicSerializable):
+    """
+    A polymorphically serializable class that tracks its subclasses in a
+    registry and uses their name to discriminate serialized instances. It
+    requires every subclass to be registered before instances of that subclass
+    can be (de)serialized. It also requires the name of each subclass to be
+    unique, regardless of the module the subclass is defined in.
+    """
+
+    _registry: dict[str, type[Self]] = {}
+
+    @classmethod
+    def cls_to_json(cls) -> AnyJSON:
+        assert cls._registry[cls.__name__] == cls
+        return cls.__name__
+
+    @classmethod
+    def cls_from_json(cls, json: AnyJSON) -> type[Self]:
+        return cls._registry[json_str(json)]
+
+    def __init_subclass__(cls):
+        super().__init_subclass__()
+        try:
+            other_cls = cls._registry[cls.__name__]
+        except KeyError:
+            pass
+        else:
+            # For attrs classes, this hook is invoked twice: once for the
+            # original class and once for the attrs-generated replacement. These
+            # are two different objects, so they are neither the same nor equal
+            # so it is difficult to tell wether we're dealing with the attrs
+            # replacement or a genuine collision. Both original and replacement
+            # reference the same containing module, so we assume that two
+            # classes of the same name from the same module indicate that attrs
+            # is involved and does not constitue a collision.
+            assert other_cls.__module__ == cls.__module__, R(
+                'Class name collision', cls, other_cls)
+        cls._registry[cls.__name__] = cls
+
+
 class Parseable(Serializable):
     """
     A class whose instances have a string representation that can be used in

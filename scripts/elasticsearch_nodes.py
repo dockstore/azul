@@ -82,7 +82,7 @@ def node_placeholder_count() -> int:
     """
     module = load_module(config.cloudwatch_dashboard_template,
                          'cloudwatch_dashboard_template')
-    body = module.dashboard_body
+    body = module.dashboard_body('indexer')
     filters = [
         # Indexing from end so we don't have to deal with the `...` placeholder.
         # The last three elements are the `Client ID` dimension name, its value

@@ -87,9 +87,9 @@ class RepositoryController(SourceController):
     def service(self) -> RepositoryService:
         return RepositoryService()
 
-    @cached_property
-    def mirror_service(self) -> BaseMirrorService:
-        return BaseMirrorService()
+    @cache
+    def mirror_service(self, catalog: CatalogName) -> BaseMirrorService:
+        return BaseMirrorService(catalog=catalog)
 
     @cache
     def repository_plugin(self, catalog: CatalogName) -> RepositoryPlugin:
@@ -265,12 +265,15 @@ class RepositoryController(SourceController):
 
         plugin = self.repository_plugin(catalog)
 
-        is_mirrored = (config.enable_mirroring
-                       and self.mirror_service.info_exists(catalog, file))
+        if config.enable_mirroring:
+            mirror_service = self.mirror_service(catalog)
+            is_mirrored = mirror_service.info_exists(file)
+        else:
+            mirror_service, is_mirrored = None, False
         if is_mirrored:
             download = MirrorFileDownload(
                 file=file,
-                location=self.mirror_service.get_mirror_url(catalog, file),
+                location=mirror_service.get_mirror_url(file),
                 replica=replica,
                 token=token
             )
