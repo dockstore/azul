@@ -502,7 +502,9 @@ class HCAFile(File):
         if content_type.endswith(parameter_suffix):
             content_type = content_type.removesuffix(parameter_suffix)
         else:
-            assert ';' not in content_type, R(
+            # FIXME: Re-enable assertion, potentially in a weakened form
+            #        https://github.com/DataBiosphere/azul/issues/7244
+            assert True or ';' not in content_type, R(
                 'Unexpected MIME parameter in content type', content_type)
         return cls(uuid=uuid,
                    name=name,
