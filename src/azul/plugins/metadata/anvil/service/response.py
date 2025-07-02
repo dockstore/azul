@@ -52,7 +52,8 @@ class AnvilSummaryResponseStage(SummaryResponseStage):
                 'diagnoses.phenotype'
             ],
             'files': [
-                'files.file_format'
+                'files.file_format',
+                'totalFileSize'
             ]
         }
 
@@ -80,6 +81,7 @@ class AnvilSummaryResponseStage(SummaryResponseStage):
             'donorSpecies': bucket_count('donors.organism_type', 'species'),
             'fileCount': doc_count('files.file_format'),
             'fileFormats': bucket_count('files.file_format', 'format'),
+            'totalFileSize': response['totalFileSize']['value'],
         }
 
 
