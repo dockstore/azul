@@ -22,7 +22,6 @@ from typing import (
     Callable,
     TYPE_CHECKING,
     Tuple,
-    TypeVar,
     cast,
 )
 from unittest.mock import (
@@ -119,10 +118,8 @@ if TYPE_CHECKING:
 
 log = logging.getLogger(__name__)
 
-R = TypeVar('R')
 
-
-def _cache(func: Callable[..., R]) -> Callable[..., R]:
+def _cache[R](func: Callable[..., R]) -> Callable[..., R]:
     """
     Methods and properties whose return values depend on the currently active
     AWS credentials must be cached under the currently active Boto3 session.
