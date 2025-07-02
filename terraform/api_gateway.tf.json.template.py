@@ -285,11 +285,11 @@ emit_tf({
     'resource': [
         {
             'aws_wafv2_ip_set': {
-                # The IPs in this set are exempted from the rate limit on
-                # service API requests so as to avoid the integration tests from
-                # tripping them. We include the IP of the GitLab instance as
-                # well as that of the machine deploying this set because those
-                # are the machines most likely to run the integration tests.
+                # The IPs in this set are exempt from the rate limit on service
+                # API requests so as to prevent integration tests from tripping
+                # them. In the set, we include the IP of the GitLab instance and
+                # that of the machine deploying the set because those are the
+                # machines most likely to run integration tests.
                 #
                 'it_v4_ips': {
                     'name': config.qualified_resource_name('it_v4_ips'),
