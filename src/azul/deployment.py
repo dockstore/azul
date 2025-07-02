@@ -42,10 +42,10 @@ from more_itertools import (
 
 from azul import (
     Netloc,
+    R,
     cache,
     cached_property,
     config,
-    reject,
 )
 from azul.logging import (
     azul_boto3_log as boto3_log,
@@ -718,8 +718,9 @@ class AWS:
             }
         ]
 
-    def _validate_bucket_path_prefix(self, path_prefix):
-        reject(path_prefix.startswith('/') or path_prefix.endswith('/'), path_prefix)
+    def _validate_bucket_path_prefix(self, prefix: str) -> None:
+        assert not (prefix.startswith('/') or prefix.endswith('/')), R(
+            'Path prefix must not start or end in slash', prefix)
 
     @property
     def monitoring_topic_name(self):
