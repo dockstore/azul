@@ -100,7 +100,7 @@ class LocalAppTestCase(CatalogTestCase, metaclass=ABCMeta):
         # app modules from different lambdas loaded by different concrete
         # subclasses. It does, however, violate this one invariant:
         # `sys.modules[module.__name__] == module`
-        cls.app_module = load_app_module(cls.lambda_name(), unit_test=True)
+        cls.app_module = load_app_module(cls.lambda_name())
 
     @classmethod
     def tearDownClass(cls):

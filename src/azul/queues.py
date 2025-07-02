@@ -494,7 +494,7 @@ class Queues:
         Returns a dictionary that maps queues to the Lambda function triggered
         by the queue. The keys and values are fully qualified resource names.
         """
-        indexer = load_app_module('indexer', unit_test=True)
+        indexer = load_app_module('indexer')
         functions_by_queue = {
             handler.queue: config.indexer_function_name(handler.name)
             for handler in indexer.app.handler_map.values()

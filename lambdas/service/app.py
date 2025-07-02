@@ -355,9 +355,7 @@ class ServiceApp(HealthApp):
 
     def __init__(self):
         super().__init__(app_name=config.service_name,
-                         app_module_path=__file__,
-                         # see LocalAppTestCase.setUpClass()
-                         unit_test=globals().get('unit_test', False),
+                         globals=globals(),
                          spec=spec)
 
     @attr.s(kw_only=True, auto_attribs=True, frozen=True)
