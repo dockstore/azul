@@ -9,7 +9,7 @@ blessed==1.21.0
 boto3==1.38.37
 boto3-stubs-lite==1.38.37
 botocore==1.38.37
-botocore-stubs==1.38.30
+botocore-stubs==1.38.46
 cachetools==5.5.2
 certifi==2025.6.15
 cffi==1.17.1
@@ -19,7 +19,7 @@ chevron==0.14.0
 click==8.2.1
 colorama==0.4.6
 coverage==7.9.1
-cryptography==45.0.4
+cryptography==45.0.5
 deprecated==1.2.18
 docker==7.1.0
 docutils==0.19
@@ -45,7 +45,7 @@ google-crc32c==1.7.1
 google-resumable-media==2.7.2
 googleapis-common-protos==1.70.0
 greenlet==3.2.3
-grpcio==1.73.0
+grpcio==1.73.1
 grpcio-status==1.62.3
 http-message-signatures==0.6.1
 http_sfv==0.9.9
@@ -68,13 +68,13 @@ mypy==1.16.0
 mypy-boto3-apigateway==1.38.36
 mypy-boto3-cloudwatch==1.38.21
 mypy-boto3-dynamodb==1.38.4
-mypy-boto3-ec2==1.38.33
+mypy-boto3-ec2==1.38.45
 mypy-boto3-ecr==1.38.37
 mypy-boto3-es==1.38.0
 mypy-boto3-iam==1.38.14
-mypy-boto3-kms==1.38.36
+mypy-boto3-kms==1.38.45
 mypy-boto3-lambda==1.38.40
-mypy-boto3-s3==1.38.39
+mypy-boto3-s3==1.38.44
 mypy-boto3-secretsmanager==1.38.0
 mypy-boto3-securityhub==1.38.38
 mypy-boto3-sns==1.38.0
@@ -118,7 +118,7 @@ requirements-parser==0.2.0+1
 responses==0.25.7
 resumablesha256==1.0
 rfc3339-validator==0.1.4
-rpds-py==0.25.1
+rpds-py==0.26.0
 rsa==4.7.2
 runs==1.2.2
 s3transfer==0.13.0
@@ -128,7 +128,7 @@ six==1.17.0
 smmap==5.0.2
 strict-rfc3339==0.7
 tqdm==4.67.1
-types-awscrt==0.27.2
+types-awscrt==0.27.4
 types-chevron==0.14.2
 types-s3transfer==0.13.0
 types-urllib3==1.26.25.14
@@ -144,5 +144,5 @@ wrapt==1.17.2
 www-authenticate==0.9.2
 xmltodict==0.14.2
 xmod==1.8.1
-zope.event==5.0
+zope.event==5.1
 zope.interface==7.2
