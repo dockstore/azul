@@ -44,9 +44,7 @@ trail_alarms = [
     # https://docs.aws.amazon.com/securityhub/latest/userguide/cloudwatch-controls.html#cloudwatch-2
     CloudTrailAlarm(name='api_unauthorized',
                     statistic='Sum',
-                    filter_pattern='{($.errorCode="*UnauthorizedOperation") || ($.errorCode="AccessDenied*")}',
-                    threshold=12,
-                    period=24 * 60 * 60),
+                    filter_pattern='{($.errorCode="*UnauthorizedOperation") || ($.errorCode="AccessDenied*")}'),
     # [CloudWatch.3] Ensure a log metric filter and alarm exist for Management Console sign-in without MFA
     # https://docs.aws.amazon.com/securityhub/latest/userguide/cloudwatch-controls.html#cloudwatch-3
     CloudTrailAlarm(name='console_no_mfa',
