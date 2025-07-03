@@ -8,6 +8,9 @@ from functools import (
     wraps,
 )
 import inspect
+from ipaddress import (
+    IPv4Address,
+)
 import json
 import logging
 import os
@@ -36,6 +39,9 @@ from botocore.awsrequest import (
 import botocore.credentials
 import botocore.session
 import botocore.utils
+from furl import (
+    furl,
+)
 from more_itertools import (
     one,
 )
@@ -46,6 +52,9 @@ from azul import (
     cache,
     cached_property,
     config,
+)
+from azul.http import (
+    http_client,
 )
 from azul.logging import (
     azul_boto3_log as boto3_log,
@@ -739,3 +748,15 @@ class AWS:
 aws = AWS()
 del AWS
 del _cache
+
+
+def public_ip() -> IPv4Address:
+    """
+    Return the public IPv4 address of the machine running this code.
+    """
+    url = furl('https://checkip.amazonaws.com')
+    http = http_client(log)
+    response = http.request('GET', str(url))
+    assert response.status == 200, R('Unexpected response', response)
+    ip_address = response.data.decode().strip()
+    return IPv4Address(ip_address)

@@ -2,15 +2,8 @@ from dataclasses import (
     dataclass,
 )
 import importlib
-from ipaddress import (
-    IPv4Address,
-)
 import json
-import logging
 
-from furl import (
-    furl,
-)
 from more_itertools import (
     one,
 )
@@ -26,9 +19,7 @@ from azul.chalice import (
 )
 from azul.deployment import (
     aws,
-)
-from azul.http import (
-    http_client,
+    public_ip,
 )
 from azul.modules import (
     load_app_module,
@@ -45,8 +36,6 @@ from azul.types import (
     JSON,
     JSONs,
 )
-
-log = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -121,18 +110,6 @@ def check_waf_rules(rules: JSONs) -> JSONs:
         else:
             assert False, rule
     return rules
-
-
-def public_ip() -> IPv4Address:
-    """
-    Return the public IPv4 address of the machine running this code.
-    """
-    url = furl('https://checkip.amazonaws.com')
-    http = http_client(log)
-    response = http.request('GET', str(url))
-    assert response.status == 200, R('Unexpected response', response)
-    ip_address = response.data.decode().strip()
-    return IPv4Address(ip_address)
 
 
 zones_by_domain = {
