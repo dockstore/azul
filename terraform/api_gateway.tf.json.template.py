@@ -30,9 +30,6 @@ from azul.deployment import (
 from azul.http import (
     http_client,
 )
-from azul.logging import (
-    configure_script_logging,
-)
 from azul.modules import (
     load_app_module,
 )
@@ -50,7 +47,6 @@ from azul.types import (
 )
 
 log = logging.getLogger(__name__)
-configure_script_logging(log)
 
 
 @dataclass(frozen=True)
