@@ -6,6 +6,9 @@ from importlib.abc import (
 )
 import importlib.util
 import os
+from pathlib import (
+    Path,
+)
 from typing import (
     Any,
 )
@@ -13,6 +16,9 @@ from typing import (
 from azul import (
     R,
     config,
+)
+from azul.types import (
+    not_none,
 )
 
 
@@ -36,12 +42,12 @@ def load_module(path: str, module_name: str):
     """
     spec = importlib.util.spec_from_file_location(module_name, path)
     assert spec is not None, R('Unable to load module', module_name, path)
+    assert isinstance(spec.loader, Loader)
     module = importlib.util.module_from_spec(spec)
     setattr(module, _loaded_dynamically, True)
-    assert isinstance(spec.loader, Loader)
-    spec.loader.exec_module(module)
-    assert path == module.__file__
+    assert Path(path).samefile(not_none(module.__file__))
     assert module.__name__ == module_name
+    spec.loader.exec_module(module)
     return module
 
 
