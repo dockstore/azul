@@ -11,6 +11,7 @@ from concurrent.futures.thread import (
 )
 from contextlib import (
     contextmanager,
+    nullcontext,
 )
 import csv
 import gzip
@@ -588,8 +589,13 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
                         responses.append(response)
                         return response
 
-                    with mock.patch.object(self, '_get_url', new=get_url):
-
+                    is_anvil = config.is_anvil_enabled(catalog)
+                    with (
+                        mock.patch.object(self, '_get_url', new=get_url),
+                        # Include MA files to reduce the chances of an empty
+                        # manifest due to files not matching the filter
+                        self._service_account_credentials if is_anvil else nullcontext()
+                    ):
                         # Make multiple identical concurrent requests to test
                         # the idempotence of manifest generation, and its
                         # resilience against DOS attacks.
@@ -657,7 +663,12 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
         supported_formats = self._manifest_formats(catalog)
         for format in [ManifestFormat.compact, ManifestFormat.curl]:
             if format in supported_formats:
-                with self.subTest('manifest_tagging_race', catalog=catalog, format=format):
+                with (
+                    self.subTest('manifest_tagging_race', catalog=catalog, format=format),
+                    # Include MA files in manifest to reduce our chances of
+                    # an empty manifest due to files not matching the filter
+                    self._service_account_credentials
+                ):
                     filters = self._manifest_filters(catalog)
                     manifest_url = config.service_endpoint.set(path='/manifest/files',
                                                                args=dict(catalog=catalog,
@@ -731,7 +742,16 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
     def _get_one_inner_file(self, catalog: CatalogName) -> tuple[JSON, FileInnerEntity]:
         outer_file = self._get_one_outer_file(catalog)
         inner_files: JSONs = outer_file['files']
-        return outer_file, cast(FileInnerEntity, one(inner_files))
+        inner_file = one(inner_files)
+        # FIXME: Two AnVIL snapshots with null in anvil_file.file_size column
+        #        https://github.com/DataBiosphere/azul/issues/7243
+        if inner_file['size'] is None:
+            inner_file = dict(inner_file, size=1)
+        assert isinstance(inner_file['uuid'], str), inner_file
+        assert isinstance(inner_file['version'], str), inner_file
+        assert isinstance(inner_file['name'], str), inner_file
+        assert isinstance(inner_file['size'], int), inner_file
+        return outer_file, cast(FileInnerEntity, inner_file)
 
     @cache
     def _get_one_outer_file(self, catalog: CatalogName) -> JSON:

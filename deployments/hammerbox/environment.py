@@ -20,8 +20,9 @@ def bqsrc(google_project: str,
           ) -> tuple[str, str | None]:
     assert len(google_project) == 8, google_project
     project = 'datarepo-' + google_project
-    assert not snapshot.startswith('ANVIL_'), snapshot
-    snapshot = 'ANVIL_' + snapshot
+    # Some snapshots start with AnVIL instead of ANVIL
+    if not snapshot.upper().startswith('ANVIL_'):
+        snapshot = 'ANVIL_' + snapshot
     return mksrc('bigquery', project, snapshot, flags, prefix)
 
 
@@ -976,8 +977,8 @@ anvil9_sources = mkdict(anvil8_sources, 284, mkdelta([
     bqsrc('de339830', 'CMH_GAFK_WGS_20240113_ANV5_202502201948'),
     bqsrc('706dd75a', 'DepMap_HMB_20240827_ANV5_202410240027'),
     bqsrc('cab8b4b3', 'DepMap_HMB_R2_20250224_ANV5_202502241800'),
-    bqsrc('9ebf9c60', 'ENCORE_293T_20250304_ANV5_202503042023'),
-    bqsrc('d4765cad', 'ENCORE_RS293_20250304_ANV5_202503042020'),
+    bqsrc('9ebf9c60', 'AnVIL_ENCORE_293T_20250304_ANV5_202503042023'),
+    bqsrc('d4765cad', 'AnVIL_ENCORE_RS293_20250304_ANV5_202503042020'),
     bqsrc('e944e571', 'GREGoR_R01_GRU_20240208_ANV5_202502202158'),
     bqsrc('24806158', 'GREGoR_R01_HMB_20240208_ANV5_202502202202'),
     bqsrc('37dbd6bc', 'GREGoR_R02_GRU_20241105_ANV5_202502202052'),
@@ -990,11 +991,11 @@ anvil9_sources = mkdict(anvil8_sources, 284, mkdelta([
     bqsrc('91ecebc5', 'NIMH_Broad_WGSPD_1_McCarroll_Braff_DS_WGS_20240304_ANV5_202502202030'),
 ]))
 
-anvil10_sources = mkdict(anvil9_sources, 284, mkdelta([
+anvil10_sources = mkdict(anvil9_sources, 288, mkdelta([
     bqsrc('6db4e098', 'CCDG_Baylor_CVD_ARIC_20231008_ANV5_202503171456'),
     bqsrc('14967a4d', 'CCDG_WashU_CVD_EOCAD_WashU_CAD_GRU_IRB_WGS_20230525_ANV5_202503171543'),
     bqsrc('2c000b04', 'FetalGenomics_PrenatalSEQ_20250520_ANV5_202505201718'),
-    bqsrc('09c1687e', 'MAGE_20250520_ANV5_202505201916'),
+    bqsrc('09c1687e', 'AnVIL_MAGE_20250520_ANV5_202505201916'),
     bqsrc('8ae2d6e6', 'ccdg_asc_ndd_daly_talkowski_AGRE_asd_exome_20250514_ANV5_202505191331'),
     bqsrc('1841de51', 'ccdg_asc_ndd_daly_talkowski_IBIS_asd_exome_20250514_ANV5_202505191529'),
     bqsrc('9a9bd879', 'ccdg_asc_ndd_daly_talkowski_TASC_asd_exome_20250515_ANV5_202505191729'),
@@ -1026,11 +1027,7 @@ anvil10_sources = mkdict(anvil9_sources, 284, mkdelta([
     bqsrc('c3a807a3', 'ccdg_asc_ndd_daly_talkowski_renieri_asd_exome_20250515_ANV5_202505191714'),
     bqsrc('d610c1c1', 'ccdg_asc_ndd_daly_talkowski_schloesser_asd_exome_20250515_ANV5_202505191722'),
     bqsrc('ea8f0099', 'ccdg_asc_ndd_daly_talkowski_weiss_asd_exome_20250515_ANV5_202505191738'),
-    bqsrc('5dd9d83b', 'ccdg_broad_ai_ibd_daly_louis_wes_20240104_ANV5_202409242011', pop),
     bqsrc('f143f633', 'ccdg_broad_ai_ibd_daly_mcgovern_share_wes_20240104_ANV5_202503171541'),
-    bqsrc('1cde4183', 'ccdg_broad_ai_ibd_daly_newberry_share_gsa_20240105_ANV5_202409261616', pop),
-    bqsrc('d1d3e261', 'ccdg_broad_ai_ibd_daly_xavier_prism_gsa_20240108_ANV5_202409261740', pop),
-    bqsrc('eceddedc', 'ccdg_broad_daly_igsr_1kg_twist_wes_20240625_ANV5_202409231828', pop),
 ]))
 
 
