@@ -11,6 +11,9 @@ from typing import (
 )
 
 import attr
+from botocore.httpchecksum import (
+    AwsChunkedWrapper,
+)
 from more_itertools import (
     one,
 )
@@ -193,6 +196,8 @@ def http_body_log_message(kind: Literal['request', 'response'],
     """
     if body is None:
         return f'… without {kind} body'
+    elif isinstance(body, (IO, AwsChunkedWrapper)):
+        return f'… with nonprintable body ({type(body)!r})'
     elif azul.config.debug == 0:
         if isinstance(body, (bytes, bytearray, str)):
             return f'… with a {len(body)} byte long {kind} body of type {type(body)}'
