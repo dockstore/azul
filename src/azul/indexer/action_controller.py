@@ -55,8 +55,8 @@ class ActionController[A: Action](AppController):
                        message_handler: Callable[[A, JSON], None]):
         for record in event:
             message = SQSMessage.from_record(record)
-            log.info('Worker handling message %r, attempt #%i (approx).',
-                     message.body, message.attempts)
+            log.info('Worker handling message %r, attempt #%i (approx), message ID %s',
+                     message.body, message.attempts, message.id)
             start = time.time()
             try:
                 action = self._load_action(json_str(message.body['action']))

@@ -267,8 +267,10 @@ class IndexController(ActionController[IndexAction]):
         for record in event:
             message = SQSFifoMessage.from_record(record)
             tally = DocumentTally.from_message(message)
-            log.info('Attempt %i of handling %i contribution(s) for entity %s',
-                     tally.attempts, tally.num_contributions, tally.entity)
+            log.info('Attempt %i of handling %i contribution(s) for entity %s, '
+                     'message ID %s, group ID %s',
+                     tally.attempts, tally.num_contributions, tally.entity,
+                     message.id, message.group_id)
             tallies.append(tally)
         try:
             self.index_queue_service.aggregate(tallies, retry=retry)
