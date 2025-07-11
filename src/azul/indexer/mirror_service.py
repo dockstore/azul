@@ -159,7 +159,7 @@ class BaseMirrorService:
         return StorageService(bucket)
 
     def get_mirror_url(self, file: File) -> str:
-        return self._storage.get_presigned_url(key=(self.mirror_object_key(file)),
+        return self._storage.get_presigned_url(key=self.mirror_object_key(file),
                                                file_name=file.name)
 
     def _get_info(self, file: File) -> JSON | None:
