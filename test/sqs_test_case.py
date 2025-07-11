@@ -70,6 +70,6 @@ class WorkQueueTestCase(SqsTestCase):
         event_dict = {
             'body': json.dumps(body),
             'receiptHandle': 'ThisWasARandomString',
-            'attributes': {'ApproximateReceiveCount': attempts}
+            'attributes': {'ApproximateReceiveCount': str(attempts)}
         }
         return SQSRecord(event_dict=event_dict, context={})
