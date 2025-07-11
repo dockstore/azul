@@ -107,6 +107,7 @@ class TestAnvilResponse(AnvilIndexerTestCase, WebServiceTestCase):
                             {
                                 'data_modality': [None],
                                 'file_format': ['.vcf.gz'],
+                                'file_size': 213021639,
                                 'reference_assembly': [None],
                                 'is_supplementary': [False],
                                 'count': 1
@@ -176,6 +177,7 @@ class TestAnvilResponse(AnvilIndexerTestCase, WebServiceTestCase):
                             {
                                 'data_modality': [None],
                                 'file_format': ['.bam'],
+                                'file_size': 3306845592,
                                 'reference_assembly': [None],
                                 'is_supplementary': [False],
                                 'count': 1
@@ -371,6 +373,7 @@ class TestAnvilResponse(AnvilIndexerTestCase, WebServiceTestCase):
                             {
                                 'data_modality': [None],
                                 'file_format': ['.vcf.gz'],
+                                'file_size': 213021639,
                                 'reference_assembly': [None],
                                 'is_supplementary': [False],
                                 'count': 1
@@ -378,6 +381,7 @@ class TestAnvilResponse(AnvilIndexerTestCase, WebServiceTestCase):
                             {
                                 'data_modality': [None],
                                 'file_format': ['.bam'],
+                                'file_size': 3306845592,
                                 'reference_assembly': [None],
                                 'is_supplementary': [False],
                                 'count': 1
@@ -586,6 +590,7 @@ class TestAnvilResponse(AnvilIndexerTestCase, WebServiceTestCase):
                                 'count': 1,
                                 'data_modality': [None],
                                 'file_format': ['.vcf.gz'],
+                                'file_size': 213021639,
                                 'is_supplementary': [False],
                                 'reference_assembly': [None]
                             },
@@ -593,6 +598,7 @@ class TestAnvilResponse(AnvilIndexerTestCase, WebServiceTestCase):
                                 'count': 1,
                                 'data_modality': [None],
                                 'file_format': ['.bam'],
+                                'file_size': 3306845592,
                                 'is_supplementary': [False],
                                 'reference_assembly': [None]
                             }
@@ -837,6 +843,7 @@ class TestAnvilResponse(AnvilIndexerTestCase, WebServiceTestCase):
                             {
                                 'data_modality': [None],
                                 'file_format': ['.vcf.gz'],
+                                'file_size': 213021639,
                                 'reference_assembly': [None],
                                 'is_supplementary': [False],
                                 'count': 1
@@ -844,6 +851,7 @@ class TestAnvilResponse(AnvilIndexerTestCase, WebServiceTestCase):
                             {
                                 'data_modality': [None],
                                 'file_format': ['.bam'],
+                                'file_size': 3306845592,
                                 'reference_assembly': [None],
                                 'is_supplementary': [False],
                                 'count': 1
@@ -1040,6 +1048,7 @@ class TestAnvilResponse(AnvilIndexerTestCase, WebServiceTestCase):
                             {
                                 'data_modality': [None],
                                 'file_format': ['.vcf.gz'],
+                                'file_size': 213021639,
                                 'reference_assembly': [None],
                                 'is_supplementary': [False],
                                 'count': 1
@@ -1047,6 +1056,7 @@ class TestAnvilResponse(AnvilIndexerTestCase, WebServiceTestCase):
                             {
                                 'data_modality': [None],
                                 'file_format': ['.bam'],
+                                'file_size': 3306845592,
                                 'reference_assembly': [None],
                                 'is_supplementary': [False],
                                 'count': 1
