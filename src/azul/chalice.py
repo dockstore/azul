@@ -65,7 +65,9 @@ from azul.enums import (
 )
 from azul.json import (
     copy_json,
-    json_head,
+)
+from azul.logging import (
+    http_body_log_message,
 )
 from azul.openapi import (
     format_description,
@@ -83,6 +85,7 @@ from azul.types import (
     json_dict,
     json_list,
     json_str,
+    not_none,
 )
 
 log = logging.getLogger(__name__)
@@ -192,7 +195,7 @@ class AzulChaliceApp(Chalice):
                     patched_event_source_handler)
 
     def _logging_middleware(self, event, get_response):
-        self._log_request()
+        self._log_request(not_none(self.current_request))
         response = get_response(event)
         self._log_response(response)
         return response
@@ -458,35 +461,24 @@ class AzulChaliceApp(Chalice):
         else:
             log.info('Authenticated request as %r', auth)
 
-    def _log_request(self):
-        if log.isEnabledFor(logging.INFO):
-            assert self.current_request is not None
-            context = self.current_request.context
-            request_info = {
-                'query': self.current_request.query_params,
-                'headers': self.current_request.headers
-            }
-            log.info('Received %s request for %r, with %s.',
-                     context['httpMethod'],
-                     context['path'],
-                     json.dumps(request_info, cls=self._LogJSONEncoder))
+    def _log_request(self, request: Request) -> None:
+        info = {
+            'query': request.query_params,
+            'headers': request.headers
+        }
+        info = json.dumps(info, cls=self._LogJSONEncoder)
+        log.info('Received %s request for %r, with %s.',
+                 request.context['httpMethod'], request.context['path'], info)
+        log.info(http_body_log_message('request', request.json_body))
 
-    def _log_response(self, response):
-        if log.isEnabledFor(logging.DEBUG):
-            n = 1024
-            if isinstance(response.body, str):
-                body = response.body[:n]
-            else:
-                body = json_head(n, response.body)
-            log.debug('Returning %i response with headers %s. '
-                      'See next line for the first %i characters of the body.\n%s',
-                      response.status_code,
-                      json.dumps(response.headers, cls=self._LogJSONEncoder),
-                      n, body)
-        else:
-            log.info('Returning %i response. '
-                     'To log headers and body, set AZUL_DEBUG to 1.',
-                     response.status_code)
+    def _log_response(self, response: Response) -> None:
+        info = {
+            'headers': response.headers
+        }
+        info = json.dumps(info, cls=self._LogJSONEncoder)
+        log.info('Returning %i response with headers %s.',
+                 response.status_code, info)
+        log.info(http_body_log_message('response', response.body))
 
     absent = object()
 

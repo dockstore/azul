@@ -13,6 +13,9 @@ from threading import (
     Thread,
 )
 import time
+from unittest import (
+    mock,
+)
 from unittest.mock import (
     PropertyMock,
     patch,
@@ -77,6 +80,7 @@ class TestHttp(AzulUnitTestCase):
             self.sub_test_locals = sub_test_locals
         return self.subTest(**{k: locals[k] for k in sub_test_locals})
 
+    @mock.patch.object(type(config), 'debug', new=1)
     def test(self):
         for restricted, retries, sleep, exception, calls, requests, responses in [
             # @formatter:off
@@ -124,15 +128,30 @@ class TestHttp(AzulUnitTestCase):
                 self.assertEqual(requests, num_actual_requests)
 
                 prefix, url = 'INFO:test_http:', re.escape(url)
+                http_header_pattern = (
+                    r"\{'Server': 'BaseHTTP/\d+\.\d+\s+Python/\d+\.\d+\.\d+', "
+                    r"'Date': '[A-Za-z]{3}, \d{2} [A-Za-z]{3} \d{4} \d{2}:\d{2}:\d{2} GMT', "
+                    r"'Retry-After': '\d+'\}"
+                )
+
                 expected_logs = []
                 for i in range(calls):
-                    expected_logs.append(f"^{prefix}Making GET request to '{url}'$")
+                    expected_logs.extend(
+                        [
+                            f"^{prefix}Making GET request to '{url}'$",
+                            f'^{prefix}… without request body$'
+                        ]
+                    )
                     if i < responses:
-                        expected_logs.append(
-                            rf'^{prefix}Got 503 response after \d.\d\d\ds from GET to {url}$'
+                        expected_logs.extend(
+                            [
+                                rf'^{prefix}Got 503 response after \d.\d\d\ds from GET to {url}$',
+                                rf'^{prefix}… with response headers HTTPHeaderDict\({http_header_pattern}\)$',
+                                f"^{prefix}… with a 0 byte long response body starting in b''$",
+                            ]
                         )
                         if i < calls - 1:
-                            expected_logs.append(f'{prefix}Sleeping 1 to honor Retry-After header')
+                            expected_logs.append(f'^{prefix}Sleeping 1s to honor Retry-After header$')
                 for expected_log, actual_log in zip(expected_logs, logs.output, strict=True):
                     self.assertRegex(actual_log, expected_log)
 
