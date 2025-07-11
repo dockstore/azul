@@ -36,6 +36,9 @@ from typing import (
 import uuid
 
 import attrs
+from chalice.app import (
+    SQSRecord,
+)
 import more_itertools
 from more_itertools import (
     chunked,
@@ -87,11 +90,22 @@ if TYPE_CHECKING:
 class SQSMessage:
     body: JSON
 
+    #: Approximate number of times this message has been received, or None if
+    #: this message was not received from a queue
+    #:
+    attempts: int | None = None
+
     def to_entry(self) -> 'SendMessageRequestQueueSendMessageTypeDef':
         return {'MessageBody': json.dumps(self.body)}
 
     def to_batch_entry(self, id: int) -> 'SendMessageBatchRequestEntryTypeDef':
         return {**self.to_entry(), 'Id': str(id)}
+
+    @classmethod
+    def from_record(cls, record: SQSRecord) -> Self:
+        attributes = json_mapping(record.to_dict()['attributes'])
+        return cls(body=json.loads(record.body),
+                   attempts=int(json_str(attributes['ApproximateReceiveCount'])))
 
 
 @attrs.frozen(kw_only=True)
@@ -105,6 +119,14 @@ class SQSFifoMessage(SQSMessage):
             'MessageGroupId': self.group_id,
             'MessageDeduplicationId': self.dedup_id
         }
+
+    @classmethod
+    def from_record(cls, record: SQSRecord) -> Self:
+        attributes = json_mapping(record.to_dict()['attributes'])
+        return cls(body=json.loads(record.body),
+                   attempts=int(json_str(attributes['ApproximateReceiveCount'])),
+                   group_id=json_str(attributes['MessageGroupId']),
+                   dedup_id=json_str(attributes['MessageDeduplicationId']))
 
 
 class Queues:

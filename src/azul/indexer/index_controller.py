@@ -2,7 +2,6 @@ from collections.abc import (
     Iterable,
 )
 import http
-import json
 import logging
 from typing import (
     Any,
@@ -51,6 +50,7 @@ from azul.openapi.responses import (
 )
 from azul.queues import (
     Queues,
+    SQSFifoMessage,
 )
 
 log = logging.getLogger(__name__)
@@ -265,10 +265,8 @@ class IndexController(ActionController[IndexAction]):
         #
         tallies = []
         for record in event:
-            body = json.loads(record.body)
-            attributes = record.to_dict()['attributes']
-            attempts = int(attributes['ApproximateReceiveCount'])
-            tally = DocumentTally.from_json(json=body, attempts=attempts)
+            message = SQSFifoMessage.from_record(record)
+            tally = DocumentTally.from_message(message)
             log.info('Attempt %i of handling %i contribution(s) for entity %s',
                      tally.attempts, tally.num_contributions, tally.entity)
             tallies.append(tally)
