@@ -18,6 +18,7 @@ from azul.queues import (
     Queues,
 )
 from azul.types import (
+    JSON,
     MutableJSONs,
 )
 from azul_test_case import (
@@ -61,7 +62,11 @@ class WorkQueueTestCase(SqsTestCase):
         message_bodies = [json.loads(m.body) for m in messages]
         return message_bodies
 
-    def _mock_sqs_record(self, body, *, attempts: int = 1):
+    def _mock_sqs_record(self,
+                         body: JSON,
+                         *,
+                         attempts: int = 1
+                         ) -> SQSRecord:
         event_dict = {
             'body': json.dumps(body),
             'receiptHandle': 'ThisWasARandomString',
