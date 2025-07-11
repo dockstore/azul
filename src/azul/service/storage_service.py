@@ -232,7 +232,11 @@ class StorageService:
             kwargs['IfNoneMatch'] = '*'
         return kwargs
 
-    def get_presigned_url(self, key: str, file_name: str | None = None) -> str:
+    def get_presigned_url(self,
+                          key: str,
+                          *,
+                          file_name: str | None = None
+                          ) -> str:
         """
         Return a pre-signed URL to the given key.
 
