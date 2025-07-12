@@ -64,7 +64,8 @@ class ElasticsearchTestCase(DockerContainerTestCase):
             #
             cls.es_client.cluster.put_settings(body={
                 'persistent': {
-                    'action.auto_create_index': False
+                    'action.auto_create_index': False,
+                    'action.destructive_requires_name': False
                 }
             })
         except BaseException:  # no coverage

@@ -26,6 +26,9 @@ from azul import (
     CatalogName,
     config,
 )
+from azul.es import (
+    ESClientFactory,
+)
 from azul.indexer import (
     Bundle,
     BundleFQID,
@@ -208,6 +211,15 @@ class IndexerTestCase(CatalogTestCase,
     def setUpClass(cls):
         super().setUpClass()
         cls.index_service = ForcedRefreshIndexService()
+
+    @classmethod
+    def _purge_indices(cls):
+        """
+        Deletes everything and is faster than deleting indices individually
+        through the service.
+        """
+        es = ESClientFactory.get()
+        es.indices.delete(index='*')
 
     def _get_all_hits(self):
         # Without `preserve_order`, hits are sorted by `_doc`, which is fastest
