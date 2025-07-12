@@ -7,6 +7,7 @@ from pathlib import (
     Path,
 )
 from typing import (
+    ClassVar,
     Literal,
     Optional,
     Type,
@@ -201,7 +202,7 @@ class IndexerTestCase(CatalogTestCase,
                       ElasticsearchTestCase,
                       CannedBundleTestCase,
                       metaclass=ABCMeta):
-    index_service: IndexService
+    index_service: ClassVar[IndexService | None] = None
 
     @classmethod
     def setUpClass(cls):
