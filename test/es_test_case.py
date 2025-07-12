@@ -42,6 +42,7 @@ class ElasticsearchTestCase(DockerContainerTestCase):
         image = resolve_docker_image_for_launch('elasticsearch')
         es_endpoint = cls._create_container(image=image,
                                             container_port=9200,
+                                            cached=True,
                                             environment=['xpack.security.enabled=false',
                                                          'discovery.type=single-node',
                                                          'ES_JAVA_OPTS=-Xms512m -Xmx512m',
@@ -67,7 +68,7 @@ class ElasticsearchTestCase(DockerContainerTestCase):
                 }
             })
         except BaseException:  # no coverage
-            cls._kill_containers()
+            cls._kill_containers(keep_cached=False)
             raise
 
     @classmethod
