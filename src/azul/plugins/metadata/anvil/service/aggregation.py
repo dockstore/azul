@@ -28,6 +28,10 @@ class AnvilSummaryAggregationStage(AnvilAggregationStage):
     def prepare_request(self, request: Search) -> Search:
         request = super().prepare_request(request)
         request = request.extra(size=0)
+        if self.entity_type == 'files':
+            request.aggs.metric('totalFileSize',
+                                'sum',
+                                field='contents.files.size_')
         return request
 
     def process_response(self, response: MutableJSON) -> MutableJSON:

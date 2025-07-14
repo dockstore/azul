@@ -16,6 +16,7 @@ from typing import (
     Iterable,
     Mapping,
     Sequence,
+    TypeAliasType,
     TypedDict,
     cast,
 )
@@ -23,9 +24,6 @@ from typing import (
 from more_itertools import (
     first,
     one,
-)
-from typing_extensions import (
-    TypeAliasType,
 )
 
 from azul import (
@@ -49,7 +47,7 @@ from azul.types import (
 # A type variable named ``N`` denotes the native type of a field in documents as
 # they are being created by a transformer or processed by an aggregator.
 #
-# A type named variable ``X`` denotes the type of a field in a document just
+# A type variable named ``X`` denotes the type of a field in a document just
 # before it's being written to the index. Think "index type".
 
 #: The static (build time) type of a document field value
@@ -92,15 +90,15 @@ class FieldType[N, X: IndexForm](metaclass=ABCMeta):
     es_sort_mode: ClassVar[str] = 'min'
     allow_sorting_by_empty_lists: ClassVar[bool] = True
 
-    def __init__(self, native_form: Form[N], translated_form: Form[X]):
+    def __init__(self, native_form: Form[N], index_form: Form[X]):
         self.native_form: Final[Form[N]] = native_form
-        self.index_form: Final[Form[X]] = translated_form
+        self.index_form: Final[Form[X]] = index_form
 
     @cached_property
     def native_types(self) -> tuple[type, ...]:
         """
         The possible runtime (reified) types of the value of document fields
-        of this type. This method returns a typle to account for the fact that
+        of this type.
         """
         return reify(self.native_form)
 
@@ -144,7 +142,7 @@ class FieldType[N, X: IndexForm](metaclass=ABCMeta):
         native representation.
         """
         assert isinstance(value, self.native_types), (value, self)
-        return value
+        return cast(N, value)
 
     @property
     def supported_filter_relations(self) -> tuple[str, ...]:

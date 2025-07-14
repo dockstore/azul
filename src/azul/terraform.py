@@ -48,6 +48,7 @@ from azul.types import (
     MutableJSON,
     json_composite,
     json_dict,
+    json_element_dicts,
     json_item_dicts,
     json_item_mappings,
     json_mapping,
@@ -60,7 +61,7 @@ log = logging.getLogger(__name__)
 
 @attr.s(auto_attribs=True, kw_only=True, frozen=True)
 class TerraformSchema:
-    versions: Sequence[str]
+    versions: JSON
     document: JSON
     path: Path
 
@@ -732,9 +733,9 @@ class Chalice:
         with open(self.tf_config_path(app_name)) as f:
             tf_config = json.load(f)
         tf_config = self.patch_resource_names(app_name, tf_config)
-        resources = tf_config['resource']
-        data = tf_config['data']
-        locals = tf_config['locals']
+        resources = json_dict(tf_config['resource'])
+        data = json_dict(tf_config['data'])
+        locals = json_dict(tf_config['locals'])
 
         # null_data_source has been deprecated and locals should be used instead.
         # However, the data sources defined underneath it aren't actually used
@@ -744,12 +745,14 @@ class Chalice:
         if config.private_api:
             # Hack to inject the VPC endpoint IDs that Chalice doesn't (but should)
             # add when the `api_gateway_endpoint_vpce` config is used.
-            rest_api = resources['aws_api_gateway_rest_api'][app_name]
-            rest_api['endpoint_configuration']['vpc_endpoint_ids'] = [
+            rest_apis = json_dict(resources['aws_api_gateway_rest_api'])
+            rest_api = json_dict(rest_apis[app_name])
+            json_dict(rest_api['endpoint_configuration'])['vpc_endpoint_ids'] = [
                 '${aws_vpc_endpoint.%s.id}' % app_name
             ]
 
-        for resource in resources['aws_lambda_function'].values():
+        functions = json_item_dicts(json_dict(resources['aws_lambda_function']))
+        for _, resource in functions:
             assert 'layers' not in resource
             resource['layers'] = ['${aws_lambda_layer_version.dependencies.arn}']
             env = config.es_endpoint_env(
@@ -764,18 +767,19 @@ class Chalice:
                     '${aws_elasticsearch_domain.index.cluster_config[0].instance_count}'
                 )
             )
-            resource['environment']['variables'].update(env)
+            json_dict(json_dict(resource['environment'])['variables']).update(env)
             package_zip = str(self.package_zip_path(app_name))
             resource['source_code_hash'] = '${filebase64sha256("%s")}' % package_zip
             resource['filename'] = package_zip
 
         assert 'aws_cloudwatch_log_group' not in resources
+        functions = json_item_dicts(resources['aws_lambda_function'])
         resources['aws_cloudwatch_log_group'] = {
             f'{resource_name}_lambda': {
                 'name': f'/aws/lambda/{resource['function_name']}',
                 'retention_in_days': config.audit_log_retention_days
             }
-            for resource_name, resource in resources['aws_lambda_function'].items()
+            for resource_name, resource in functions
         }
 
         for resource_type, argument in [
@@ -786,8 +790,8 @@ class Chalice:
             # need them to be prefixed with `azul-` to allow for limiting the
             # scope of certain IAM permissions for Gitlab and, more importantly,
             # the deployment stage so these resources are segregated by deployment.
-            for resource in resources[resource_type].values():
-                function_name, _, suffix = resource[argument].partition('-')
+            for _, resource in json_item_dicts(resources[resource_type]):
+                function_name, _, suffix = json_str(resource[argument]).partition('-')
                 assert suffix == 'event', suffix
                 assert function_name, function_name
                 resource[argument] = config.qualified_resource_name(function_name)
@@ -805,19 +809,20 @@ class Chalice:
         else:
             resources['aws_s3_bucket_notification'] = {
                 key.replace('.', '_'): value
-                for key, value in bucket_notifications.items()
+                for key, value in json_item_dicts(bucket_notifications)
             }
             # To prevent a race condition by Terraform, we make the bucket
             # notifications depend on the related aws_lambda_permission.
             permissions_by_function = defaultdict(set)
-            for permission_name, permission in resources['aws_lambda_permission'].items():
+            permissions = resources['aws_lambda_permission']
+            for permission_name, permission in json_item_dicts(permissions):
                 function_ref = permission['function_name']
                 permissions_by_function[function_ref].add(permission_name)
-            for notification in resources['aws_s3_bucket_notification'].values():
+            for _, notification in json_item_dicts(resources['aws_s3_bucket_notification']):
                 assert 'depends_on' not in notification, notification
                 notification['depends_on'] = [
                     f'aws_lambda_permission.{permission_name}'
-                    for function in notification['lambda_function']
+                    for function in json_element_dicts(notification['lambda_function'])
                     for permission_name in permissions_by_function[function['lambda_function_arn']]
                 ]
 
@@ -836,12 +841,13 @@ class Chalice:
         # in TF 1.2 to propagate the replacement downstream is a more intuitive
         # and less intrusive fix.
         #
-        deployment = resources['aws_api_gateway_deployment'][app_name]
+        deployments = json_dict(resources['aws_api_gateway_deployment'])
+        deployment = json_dict(deployments[app_name])
         stage_name = deployment.pop('stage_name')
         require(stage_name == config.deployment_stage,
                 'The TF config from Chalice does not match the selected deployment',
                 stage_name, config.deployment_stage)
-        del deployment['lifecycle']['create_before_destroy']
+        del json_dict(deployment['lifecycle'])['create_before_destroy']
         assert not deployment['lifecycle'], deployment
         del deployment['lifecycle']
         deployment['triggers'] = {'redeployment': deployment.pop('stage_description')}
@@ -857,8 +863,9 @@ class Chalice:
         # default responses for the API, so we use these extensions for that
         # purpose, too.
         #
-        openapi_spec = json.loads(locals[app_name])
-        rest_api = resources['aws_api_gateway_rest_api'][app_name]
+        openapi_spec = json.loads(json_str(locals[app_name]))
+        rest_apis = json_dict(resources['aws_api_gateway_rest_api'])
+        rest_api = json_dict(rest_apis[app_name])
         assert 'minimum_compression_size' not in rest_api, rest_api
         key = 'x-amazon-apigateway-minimum-compression-size'
         openapi_spec[key] = config.minimum_compression_size
@@ -903,8 +910,9 @@ class Chalice:
         # event source mapping depending on it.
         #
         if app_name == 'indexer':
-            for resource in resources['aws_lambda_event_source_mapping'].values():
-                _, _, resource_name = resource['event_source_arn'].rpartition(':')
+            event_source_mappings = resources['aws_lambda_event_source_mapping']
+            for _, resource in json_item_dicts(event_source_mappings):
+                _, _, resource_name = json_str(resource['event_source_arn']).rpartition(':')
                 suffix = '.fifo' if resource_name.endswith('.fifo') else ''
                 sqs_name, _ = config.unqualified_resource_name(resource_name, suffix)
                 resource['event_source_arn'] = f'${{aws_sqs_queue.{sqs_name}.arn}}'
