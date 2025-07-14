@@ -116,7 +116,11 @@ class SetAccumulator(Accumulator):
 
     def accumulate(self, value) -> bool:
         """
-        :return: True, if the given value was incorporated into the set
+        :return: True, if the given value was incorporated into the set. If the
+                 given value is a collection (list or set), the values inside
+                 the collection will be accumulated. If any of the values are
+                 dropped, or if no values are incorporated, False will be
+                 retunred.
 
         >>> acc = SetAccumulator(max_size=4)
         >>> acc.accumulate(1), acc.dropped
@@ -143,28 +147,25 @@ class SetAccumulator(Accumulator):
         >>> acc.get()
         [1, 2, 3, 4]
         """
-        if self.max_size is None or len(self.value) < self.max_size:
-            before = len(self.value)
-            # Tuples are treated as scalars. We rely on this behavior when
-            # aggregating `ValueAndUnit` fields.
-            if isinstance(value, list):
-                self.value.update(value)
-            else:
-                self.value.add(value)
-            after = len(self.value)
-            if before < after:
-                return True
-            elif before == after:
-                return False
-            else:
-                assert False
+        # Tuples are treated as scalars. We rely on this behavior when
+        # aggregating `ValueAndUnit` fields.
+        if not isinstance(value, list):
+            value = [value]
+        initial_len, initial_dropped = len(self.value), self.dropped
+        assert self.max_size is None or initial_len <= self.max_size, (
+            self.value, self.max_size)
+        if self.max_size is None or len(value) + initial_len <= self.max_size:
+            self.value.update(value)
+        elif initial_len == self.max_size:
+            self.dropped += len(value)
         else:
-            if isinstance(value, list):
-                if not self.value.issuperset(value):
+            for v in value:
+                if len(self.value) < self.max_size:
+                    self.value.add(v)
+                elif v not in self.value:
                     self.dropped += 1
-            elif value not in self.value:
-                self.dropped += 1
-            return False
+
+        return len(self.value) > initial_len and self.dropped == initial_dropped
 
     def get(self) -> list[Any]:
         return sorted(self.value, key=self.key)
