@@ -118,7 +118,7 @@ class SetAccumulator(Accumulator):
         """
         :return: True, if the given value was incorporated into the set
 
-        >>> acc = SetAccumulator(max_size=3)
+        >>> acc = SetAccumulator(max_size=4)
         >>> acc.accumulate(1), acc.dropped
         (True, 0)
 
@@ -131,14 +131,17 @@ class SetAccumulator(Accumulator):
         >>> acc.accumulate([1, 2, 3]), acc.dropped
         (True, 0)
 
-        >>> acc.accumulate([2, 3]), acc.dropped
+        >>> acc.accumulate([1, 2, 3]), acc.dropped
         (False, 0)
 
-        >>> acc.accumulate(4), acc.dropped
+        >>> acc.accumulate([3, 4, 5]), acc.dropped
         (False, 1)
 
+        >>> acc.accumulate([5, 6]), acc.dropped
+        (False, 3)
+
         >>> acc.get()
-        [1, 2, 3]
+        [1, 2, 3, 4]
         """
         if self.max_size is None or len(self.value) < self.max_size:
             before = len(self.value)
