@@ -421,10 +421,11 @@ class TestRepositoryFilesWithMirroring(DCP2TestCase,
                        sha256=hashlib.sha256(file_content).hexdigest(),
                        crc32c=None)
 
-        mirror_service = MirrorService(schema_url_func=MagicMock())
+        mirror_service = MirrorService(catalog=self.catalog,
+                                       schema_url_func=MagicMock())
         with mock.patch.object(MirrorService, '_download', return_value=file_content):
-            mirror_service.mirror_file(self.catalog, file)
-        self.assertTrue(mirror_service.info_exists(self.catalog, file))
+            mirror_service.mirror_file(file)
+        self.assertTrue(mirror_service.info_exists(file))
 
         client = http_client(log)
         args = dict(catalog=self.catalog, version=file_version)

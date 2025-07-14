@@ -2,7 +2,6 @@ import json
 import logging
 import time
 from typing import (
-    Any,
     Callable,
     Iterable,
 )
@@ -16,11 +15,11 @@ from azul import (
     R,
     cached_property,
 )
-from azul.azulclient import (
-    Action,
-)
 from azul.chalice import (
     AppController,
+)
+from azul.queues import (
+    Action,
 )
 from azul.types import (
     JSON,
@@ -52,7 +51,7 @@ class ActionController[A: Action](AppController):
 
     def _handle_events(self,
                        event: Iterable[SQSRecord],
-                       message_handler: Callable[[JSON], Any]):
+                       message_handler: Callable[[A, JSON], None]):
         for record in event:
             message = json.loads(record.body)
             attempts = record.to_dict()['attributes']['ApproximateReceiveCount']
@@ -60,7 +59,8 @@ class ActionController[A: Action](AppController):
                      message, attempts)
             start = time.time()
             try:
-                message_handler(message)
+                action = self._load_action(message['action'])
+                message_handler(action, message)
             except BaseException:
                 # Note that another problematic outcome is for the Lambda invocation
                 # to time out, in which case this log message will not be written.

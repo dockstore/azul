@@ -39,7 +39,6 @@ from more_itertools import (
 
 from azul import (
     CatalogName,
-    cache,
     config,
 )
 from azul.deployment import (
@@ -89,9 +88,6 @@ from azul.json_freeze import (
 from azul.logging import (
     silenced_es_logger,
 )
-from azul.plugins import (
-    RepositoryPlugin,
-)
 from azul.types import (
     AnyJSON,
     CompositeJSON,
@@ -113,10 +109,6 @@ class IndexExistsAndDiffersException(Exception):
 
 
 class IndexService(DocumentService):
-
-    @cache
-    def repository_plugin(self, catalog: CatalogName) -> RepositoryPlugin:
-        return RepositoryPlugin.load(catalog).create(catalog)
 
     def settings(self, index_name: IndexName) -> JSON:
         index_name.validate()
@@ -191,11 +183,6 @@ class IndexService(DocumentService):
             if config.enable_replicas else
             []
         )
-
-    def fetch_bundle(self, catalog: CatalogName, bundle_fqid: JSON) -> Bundle:
-        plugin = self.repository_plugin(catalog)
-        bundle_fqid = plugin.bundle_fqid_cls.from_json(bundle_fqid)
-        return plugin.fetch_bundle(bundle_fqid)
 
     def index(self, catalog: CatalogName, bundle: Bundle) -> None:
         """

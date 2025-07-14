@@ -8,6 +8,12 @@ from functools import (
 from threading import (
     get_ident,
 )
+from typing import (
+    Any,
+    Callable,
+    Self,
+    overload,
+)
 
 
 def lru_cache_per_thread(maxsize=128, typed=False):
@@ -89,7 +95,7 @@ def lru_cache_per_thread(maxsize=128, typed=False):
         return decorator
 
 
-class CachedProperty(object):
+class CachedProperty[T]:
     """
     Similar to :class:`property`, except that the getter is only called once.
     This is commonly used to implement lazily initialized attributes.
@@ -177,10 +183,18 @@ class CachedProperty(object):
     5
     """
 
-    def __init__(self, fget):
+    def __init__(self, fget: Callable[[Any], T]):
         self.__doc__ = getattr(fget, '__doc__')
         self.__isabstractmethod__ = getattr(fget, '__isabstractmethod__', False)
         self.fget = fget
+
+    @overload
+    def __get__(self, obj: None, objtype: type[Any] | None = None) -> Self:
+        ...
+
+    @overload
+    def __get__(self, obj: object, objtype: type[Any] | None = None) -> T:
+        ...
 
     def __get__(self, obj, objtype=None):
         if obj is None:
@@ -193,7 +207,7 @@ class CachedProperty(object):
         name = self.__class__.__name__
         return '<%s func=%s>' % (name, self.fget)
 
-    def fset(self, obj, value):
+    def fset(self, obj, value: T):
         obj.__dict__[self.fget.__name__] = value
 
     def fdel(self, obj):

@@ -175,7 +175,7 @@ def main(argv: list[str]):
                 if args.local:
                     num_notifications += azul.local_reindex(catalog, args.prefix)
                 else:
-                    azul.remote_reindex(catalog, sources)
+                    azul.index_queue_service.remote_reindex(catalog, sources)
                     num_notifications = None
             else:
                 log.info('Skipping catalog %r (no matching sources)', catalog)
