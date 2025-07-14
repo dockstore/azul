@@ -47,7 +47,11 @@ class ChaliceServerThread(Thread):
         # FIXME: A newline should separate the unit test description and log output
         #        https://github.com/DataBiosphere/azul/issues/3665
         log.info('Serving on http://%s:%d', self.address[0], self.address[1])
-        self.server_wrapper.server.serve_forever()
+        # A shorter poll intervall causes the server thread to check the exit
+        # flag more frequently, but wastes more CPU. Going from the default of
+        # .5 to .05 caused an improvement of the overall test duration by tens
+        # of seconds.
+        self.server_wrapper.server.serve_forever(poll_interval=.05)
 
     def kill_thread(self):
         self.server_wrapper.server.shutdown()

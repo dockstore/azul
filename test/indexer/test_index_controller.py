@@ -109,7 +109,7 @@ class TestIndexController(DCP2IndexerTestCase, WorkQueueTestCase):
         return self.queue_service.index_repository_service
 
     def tearDown(self):
-        self.index_service.delete_indices(self.catalog)
+        self._purge_indices()
         super().tearDown()
 
     def _fqid_from_message(self, message: JSON) -> TDRBundleFQID:
