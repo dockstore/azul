@@ -234,7 +234,7 @@ format: check_venv check_docker
 	    $$(AZUL_DEBUG=0 python -m azul 'docker.resolve_docker_image_for_launch("pycharm")') \
 	    /opt/pycharm/bin/format.sh -r -settings .pycharm.style.xml -mask '*.py' $(relative_sources)
 
-test_args = -m unittest discover --verbose --durations 0 test
+test_args = -m unittest discover --verbose test
 
 .PHONY: test
 test: check_python
@@ -256,7 +256,7 @@ tag: check_branch
 
 .PHONY: integration_test
 integration_test: check_python check_branch $(project_root)/lambdas/service/.chalice/config.json
-	python -m unittest --verbose --durations 0 integration_test
+	python -m unittest --verbose integration_test
 
 .PHONY: check_clean
 check_clean: check_env
