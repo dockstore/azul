@@ -950,22 +950,6 @@ def env() -> Mapping[str, Optional[str]]:
         #
         'azul_it_flags': None,
 
-        # A global rate limit on file downloads across all regions and IP
-        # addresses, enforced by AWS WAF.
-        #
-        # The syntax is `<limit>/<window>@<concurrency>` where `<limit>` is the
-        # maximum allowed number of download requests made every `<window>`
-        # seconds, and `<concurrency>` is the expected number of distinct IPs
-        # making at least one download request during that time. The concurrency
-        # does not need to be an integer. See
-        #
-        # https://docs.aws.amazon.com/waf/latest/developerguide/waf-rule-statement-type-rate-based-high-level-settings.html
-        #
-        # for restrictions on the supported values for `<limit>` ("Rate limit")
-        # and `<window>` ("Evaluation window").
-        #
-        'azul_waf_download_rate_limit': None,
-
         # Wether to enable bot control in AWS WAF. Setting this to 1 will enable
         # two rules aimed at blocking requests from suspected and verified bots.
         # As of January 2024, this will incur monthly cost of $10 per ACL plus

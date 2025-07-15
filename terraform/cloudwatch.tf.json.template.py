@@ -49,17 +49,6 @@ emit_tf({
                     }
                 },
                 {
-                    'aws_nat_gateway': {
-                        **{
-                            f'gitlab_{zone}': {
-                                'filter': {
-                                    'name': 'tag:Name',
-                                    'values': [f'azul-gitlab_{zone}']
-                                },
-                            }
-                            for zone in range(vpc.num_zones)
-                        }
-                    },
                     'aws_ec2_client_vpn_endpoint': {
                         'gitlab': {
                             'filter': {
@@ -141,7 +130,7 @@ emit_tf({
                                 'ok_actions': ['${data.aws_sns_topic.monitoring.arn}'],
                                 # CloudWatch uses an unconfigurable "evaluation range" when missing
                                 # data is involved. In practice this means that an alarm on the
-                                # absence of logs with an evaluation period of ten minutes would
+                                # absence of logs with an evaluation window of ten minutes would
                                 # require thirty minutes of no logs before the alarm is raised.
                                 # Using a metric query we can fill in missing datapoints with a
                                 # value of zero and avoid the need for the evaluation range.
@@ -189,6 +178,7 @@ emit_tf({
                                             'id': f'm{zone}',
                                             'metric': {
                                                 'dimensions': {
+                                                    # Data source defined in data_sources.tf.json
                                                     'NatGatewayId': f'${{data.aws_nat_gateway.gitlab_{zone}.id}}'
                                                 },
                                                 'namespace': 'AWS/NATGateway',
@@ -316,7 +306,7 @@ emit_tf({
                             'dimensions': {
                                 'WebACL': '${aws_wafv2_web_acl.api_gateway.name}',
                                 'Region': config.region,
-                                'Rule': config.waf_rate_alarm_rule_name
+                                'Rule': config.waf_rate_limit.name
                             },
                             'alarm_actions': ['${data.aws_sns_topic.monitoring.arn}'],
                             'ok_actions': ['${data.aws_sns_topic.monitoring.arn}'],
