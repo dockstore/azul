@@ -119,7 +119,9 @@ class AzulConnection(Connection):
     def _log_request(self, method, full_url, headers, body):
         es_log.info('Making %s request to %s', method, full_url)
         es_log.debug('… with request headers %r', headers)
-        es_log.info(http_body_log_message('request', body))
+        es_log.info(http_body_log_message('request',
+                                          body,
+                                          verbatim=self._log_body_verbatim))
 
     def _log_response(self,
                       log_level: int,
@@ -134,7 +136,13 @@ class AzulConnection(Connection):
         # Note that here we log the full URL actually used, see _full_url above
         es_log.log(log_level, 'Got %s response after %.3fs from %s to %s',
                    status_code, duration, method, full_url, exc_info=exception)
-        es_log.log(log_level, http_body_log_message('response', response))
+        es_log.log(log_level, http_body_log_message('response',
+                                                    response,
+                                                    verbatim=self._log_body_verbatim))
+
+    @property
+    def _log_body_verbatim(self):
+        return es_log.isEnabledFor(logging.DEBUG)
 
 
 class AzulRequestsHttpConnection(AzulConnection, RequestsHttpConnection):
