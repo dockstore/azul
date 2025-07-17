@@ -54,8 +54,9 @@ class ActionController[A: Action](AppController):
                        message_handler: Callable[[A, JSON], None]):
         for record in event:
             message = json.loads(record.body)
-            attempts = record.to_dict()['attributes']['ApproximateReceiveCount']
-            log.info('Worker handling message %r, attempt #%r (approx).',
+            attributes = record.to_dict()['attributes']
+            attempts = int(attributes['ApproximateReceiveCount'])
+            log.info('Worker handling message %r, attempt #%i (approx).',
                      message, attempts)
             start = time.time()
             try:
