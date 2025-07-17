@@ -178,6 +178,79 @@ def waf_match_path(path_regex: str) -> JSON:
     }
 
 
+def add_waf_blocked_alarm(resources: JSON) -> JSON:
+    """
+    Add a metric alarm that trips if the ratio between blocked and overall
+    requests goes above 25%. Note that requests blocked by rules listed in
+    :py:attr:`Config.waf_rules_not_logged` are not considered.
+    """
+    if not config.enable_monitoring:
+        return resources
+    else:
+        rules = [
+            rule['name']
+            for rule in resources['aws_wafv2_web_acl']['api_gateway']['rule']
+            if (
+                (
+                    'block' in rule.get('action', {})
+                    # In the case of AWS-managed rules, each rule's action is
+                    # pre-configured, and 'override_action' must be specified.
+                    # Note, not all possible managed rules use a block action,
+                    # however all the managed rules we use do.
+                    or 'none' in rule.get('override_action', {})
+                )
+                and rule['name'] not in config.waf_rules_not_logged
+            )
+        ]
+        metrics = [
+            ('AllowedRequests', 'ALL'),
+            *[('BlockedRequests', rule) for rule in rules]
+        ]
+        m_sum = '+'.join(f'm{i}' for i in range(1, len(metrics)))
+        expression = f'{m_sum}/(m0+{m_sum})*100'
+
+        assert 'aws_cloudwatch_metric_alarm' not in resources
+        return resources | {
+            'aws_cloudwatch_metric_alarm': {
+                'waf_blocked': {
+                    'alarm_name': config.qualified_resource_name('waf_blocked'),
+                    'comparison_operator': 'GreaterThanThreshold',
+                    'threshold': 25,  # percent blocked of total requests in a period
+                    'evaluation_periods': 4,
+                    'datapoints_to_alarm': 4,
+                    'treat_missing_data': 'notBreaching',
+                    'alarm_actions': ['${data.aws_sns_topic.monitoring.arn}'],
+                    'ok_actions': ['${data.aws_sns_topic.monitoring.arn}'],
+                    'metric_query': [
+                        {
+                            'id': 'waf',
+                            'label': 'Percentage of blocked requests',
+                            'expression': expression,
+                            'return_data': 'true',
+                        },
+                        *(
+                            {
+                                'id': f'm{i}',
+                                'metric': {
+                                    'namespace': 'AWS/WAFV2',
+                                    'metric_name': metric,
+                                    'period': 15 * 60,
+                                    'stat': 'Sum',
+                                    'dimensions': {
+                                        'WebACL': '${aws_wafv2_web_acl.api_gateway.name}',
+                                        'Region': config.region,
+                                        'Rule': rule
+                                    }
+                                }
+                            }
+                            for i, (metric, rule) in enumerate(metrics)
+                        )
+                    ]
+                }
+            }
+        }
+
+
 emit_tf({
     'data': [
         {
@@ -256,7 +329,7 @@ emit_tf({
         for app in apps
     ],
     'resource': [
-        {
+        add_waf_blocked_alarm({
             'aws_wafv2_ip_set': {
                 # The IPs in this set are exempt from the rate limit on service
                 # API requests so as to prevent integration tests from tripping
@@ -298,15 +371,13 @@ emit_tf({
                                     'action': {
                                         action: {}
                                     },
-                                    **(
-                                        {
-                                            'rule_label': {
-                                                'name': config.blocked_v4_ips_term
-                                            }
-                                        }
-                                        if name == config.blocked_v4_ips_term else
-                                        {}
-                                    ),
+                                    # We label these requests to give us the
+                                    # option to exclude them from being logged
+                                    # in the WAF log group. See
+                                    # aws_wafv2_web_acl_logging_configuration
+                                    'rule_label': {
+                                        'name': name
+                                    },
                                     'visibility_config': {
                                         'metric_name': name,
                                         'sampled_requests_enabled': True,
@@ -319,7 +390,7 @@ emit_tf({
                                 ]
                             ],
                             {
-                                'name': 'blocked_user_agents',
+                                'name': config.blocked_user_agents_regex_term,
                                 'statement': {
                                     'or_statement': {
                                         'statement': [
@@ -347,11 +418,15 @@ emit_tf({
                                 'action': {
                                     'block': {}
                                 },
+                                # We label these requests to give us the option
+                                # to exclude them from being logged in the WAF
+                                # log group. See
+                                # aws_wafv2_web_acl_logging_configuration
                                 'rule_label': {
                                     'name': config.blocked_user_agents_regex_term
                                 },
                                 'visibility_config': {
-                                    'metric_name': 'blocked_user_agents',
+                                    'metric_name': config.blocked_user_agents_regex_term,
                                     'sampled_requests_enabled': True,
                                     'cloudwatch_metrics_enabled': True
                                 }
@@ -677,10 +752,7 @@ emit_tf({
                                                               term
                                                           )
                                         }
-                                    } for term in [
-                                        config.blocked_v4_ips_term,
-                                        config.blocked_user_agents_regex_term,
-                                    ]
+                                    } for term in config.waf_rules_not_logged
                                 ]
                             ]
                         ]
@@ -696,7 +768,7 @@ emit_tf({
                 for app in apps
                 for retry in app.chalice.retries
             }
-        },
+        }),
         *(
             chalice.tf_config(app.name)['resource']
             for app in apps
