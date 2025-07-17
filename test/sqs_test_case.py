@@ -90,6 +90,7 @@ class WorkQueueTestCase(SqsTestCase):
                          fifo: bool = False,
                          ) -> SQSRecord:
         event_dict = {
+            'messageId': self.random_uuid(),
             'body': json.dumps(body),
             'receiptHandle': 'ThisWasARandomString',
             'attributes': {

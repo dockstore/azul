@@ -95,6 +95,11 @@ class SQSMessage:
     #:
     attempts: int | None = None
 
+    #: The ID of this message in the queue, or None if this message was not
+    #: received from a queue.
+    #:
+    id: str | None = None
+
     def to_entry(self) -> 'SendMessageRequestQueueSendMessageTypeDef':
         return {'MessageBody': json.dumps(self.body)}
 
@@ -104,7 +109,8 @@ class SQSMessage:
     @classmethod
     def from_record(cls, record: SQSRecord) -> Self:
         attributes = json_mapping(record.to_dict()['attributes'])
-        return cls(body=json.loads(record.body),
+        return cls(id=json_str(record.to_dict()['messageId']),
+                   body=json.loads(record.body),
                    attempts=int(json_str(attributes['ApproximateReceiveCount'])))
 
 
@@ -123,7 +129,8 @@ class SQSFifoMessage(SQSMessage):
     @classmethod
     def from_record(cls, record: SQSRecord) -> Self:
         attributes = json_mapping(record.to_dict()['attributes'])
-        return cls(body=json.loads(record.body),
+        return cls(id=json_str(record.to_dict()['messageId']),
+                   body=json.loads(record.body),
                    attempts=int(json_str(attributes['ApproximateReceiveCount'])),
                    group_id=json_str(attributes['MessageGroupId']),
                    dedup_id=json_str(attributes['MessageDeduplicationId']))
