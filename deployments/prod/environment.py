@@ -1658,6 +1658,37 @@ dcp50_sources = mkdict(dcp49_sources, 506, mkdelta([
     mksrc('bigquery', 'datarepo-4c68d77c', 'hca_prod_e889ffc986f644f5b684dfce78e552a3__20250528_dcp2_20250528_dcp50'),
 ]))
 
+dcp51_sources = mkdict(dcp50_sources, 513, mkdelta([
+    mksrc('bigquery', 'datarepo-42f1b9db', 'hca_prod_0d4aaaac02c344c48ae04465f97f83ed__20221101_dcp2_20250702_dcp51'),
+    mksrc('bigquery', 'datarepo-96fb5b0d', 'hca_prod_16e9915978bc44aab47955a5e903bf50__20221101_dcp2_20250702_dcp51'),
+    mksrc('bigquery', 'datarepo-2cf4df93', 'hca_prod_1c5eaabf075b4b7aa9e607792c2034b3__20231101_dcp2_20250702_dcp51'),
+    mksrc('bigquery', 'datarepo-a1f67b41', 'hca_prod_1ffa222328a64133a5a4badd00faf4bc__20231101_dcp2_20250702_dcp51'),
+    mksrc('bigquery', 'datarepo-642c1565', 'hca_prod_2043c65a1cf84828a6569e247d4e64f1__20220111_dcp2_20250702_dcp51'),
+    mksrc('bigquery', 'datarepo-d6108285', 'hca_prod_2079bb2e676e4bbf8c68f9c6459edcbb__20240327_dcp2_20250702_dcp51'),
+    mksrc('bigquery', 'datarepo-3f39fd30', 'hca_prod_2af52a1365cb4973b51339be38f2df3f__20220111_dcp2_20250702_dcp51'),
+    mksrc('bigquery', 'datarepo-b67c1e0d', 'hca_prod_3d49e5e5976f44cbb6b9079016c31c56__20230614_dcp2_20250702_dcp51'),
+    mksrc('bigquery', 'datarepo-75507299', 'hca_prod_4060444714e44e55ad221fd2d7eb4c68__20250702_dcp2_20250702_dcp51'),
+    mksrc('bigquery', 'datarepo-d4a6add9', 'hca_prod_5bb1f67e2ff04848bbcf17d133f0fd2d__20220117_dcp2_20250702_dcp51'),
+    mksrc('bigquery', 'datarepo-a2be998c', 'hca_prod_6137c3f4261f4192b32e4827a77ff793__20250702_dcp2_20250702_dcp51'),
+    mksrc('bigquery', 'datarepo-fa80d73b', 'hca_prod_73011a86475548ac9f70a28903b4ad77__20230616_dcp2_20250702_dcp51'),
+    mksrc('bigquery', 'datarepo-3e36296c', 'hca_prod_815c5ef50fb14eb798821d160362468e__20240806_dcp2_20250702_dcp51'),
+    mksrc('bigquery', 'datarepo-8896b1cd', 'hca_prod_838d46603d624b08b32ddc5cbd93919d__20240531_dcp2_20250702_dcp51'),
+    mksrc('bigquery', 'datarepo-4f60472d', 'hca_prod_8a666b76daaf4b1f9414e4807a1d1e8b__20220630_dcp2_20250702_dcp51'),
+    mksrc('bigquery', 'datarepo-b80e6888', 'hca_prod_8dcbd84a62434501a6840dcd084bb536__20250702_dcp2_20250702_dcp51'),
+    mksrc('bigquery', 'datarepo-ad8e8c60', 'hca_prod_94023a08611d4f22a8c990956e091b2e__20220118_dcp2_20250702_dcp51'),
+    mksrc('bigquery', 'datarepo-9b90945d', 'hca_prod_9762d70c9b274f578cbc377b9b92ea9b__20241205_dcp2_20250702_dcp51'),
+    mksrc('bigquery', 'datarepo-e7993e15', 'hca_prod_9c20a245f2c043ae82c92232ec6b594f__20220212_dcp2_20250702_dcp51'),
+    mksrc('bigquery', 'datarepo-5d898bf1', 'hca_prod_9f17ed7d93254723a120b00e48db20c0__20230614_dcp2_20250702_dcp51'),
+    mksrc('bigquery', 'datarepo-637990cf', 'hca_prod_9fc0064b84ce40a5a768e6eb3d364ee0__20220630_dcp2_20250702_dcp51'),
+    mksrc('bigquery', 'datarepo-a2779004', 'hca_prod_b486e0d9dd8e462ab6629a5bbad5edae__20250702_dcp2_20250702_dcp51'),
+    mksrc('bigquery', 'datarepo-1f843cbc', 'hca_prod_da74b50760ee4dd1bd02807bb051a337__20230614_dcp2_20250702_dcp51'),
+    mksrc('bigquery', 'datarepo-06170818', 'hca_prod_dbd836cfbfc241f0983441cc6c0b235a__20220212_dcp2_20250702_dcp51'),
+    mksrc('bigquery', 'datarepo-dd62c255', 'hca_prod_ea9f4ea7d7b341e7b23a43f95f569074__20250702_dcp2_20250702_dcp51'),
+    mksrc('bigquery', 'datarepo-82f70d1a', 'hca_prod_f0f89c1474604bab9d4222228a91f185__20220119_dcp2_20250702_dcp51'),
+    mksrc('bigquery', 'datarepo-799d515d', 'hca_prod_f598aee0d269403690e9d6d5b1c84429__20240903_dcp2_20250702_dcp51'),
+    mksrc('bigquery', 'datarepo-2e8b7553', 'hca_prod_fed95462342044fb8b9d2efbffb35479__20250702_dcp2_20250702_dcp51'),
+]))
+
 lungmap_sources = mkdict({}, 3, mkdelta([
     mksrc('bigquery', 'datarepo-32f75497', 'lungmap_prod_00f056f273ff43ac97ff69ca10e38c89__20220308_20220308'),
     mksrc('bigquery', 'datarepo-7066459d', 'lungmap_prod_1bdcecde16be420888f478cd2133d11d__20220308_20220308'),
@@ -1769,6 +1800,7 @@ def env() -> Mapping[str, Optional[str]]:
                                        sources=mklist(sources))
             for atlas, catalog, sources in [
                 ('hca', 'dcp50', dcp50_sources),
+                ('hca', 'dcp51', dcp51_sources),
                 ('lungmap', 'lm9', lm9_sources)
             ] for suffix, internal in [
                 ('', False),
