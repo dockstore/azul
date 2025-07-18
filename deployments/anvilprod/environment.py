@@ -933,7 +933,7 @@ anvil8_sources = mkdict(anvil7_sources, 254, mkdelta([
     bqsrc('db95c1cc', 'nhgri_broad_ibd_daly_winter_wes_20240112_ANV5_202409251622'),
 ]))
 
-anvil9_sources = mkdict(anvil8_sources, 281, mkdelta([
+anvil9_sources = mkdict(anvil8_sources, 280, mkdelta([
     bqsrc('b555b2f5', '1000G_PRIMED_data_model_20240410_ANV5_202502211647'),
     bqsrc('265cde27', 'ALSCompute_Collection_GRU_20231016_ANV5_202410310107'),
     bqsrc('853bbf15', 'ALSCompute_Collection_HMB_20241018_ANV5_202410232001'),
@@ -978,7 +978,6 @@ anvil9_sources = mkdict(anvil8_sources, 281, mkdelta([
     bqsrc('d4765cad', 'AnVIL_ENCORE_RS293_20250304_ANV5_202503042020'),
     bqsrc('e944e571', 'GREGoR_R01_GRU_20240208_ANV5_202502202158'),
     bqsrc('24806158', 'GREGoR_R01_HMB_20240208_ANV5_202502202202'),
-    bqsrc('37dbd6bc', 'GREGoR_R02_GRU_20241105_ANV5_202502202052'),
     bqsrc('88e6ae93', 'GREGoR_R02_HMB_20241105_ANV5_202502202131'),
     bqsrc('46fcac4d', 'MAS_ISO_seq_20240113_ANV5_202409261333'),
     bqsrc('2e8d7a0e', 'NIMH_Broad_ConvergentNeuro_McCarroll_Eggan_CIRM_GRU_WGS_20240206_ANV5_202502202026'),
@@ -990,7 +989,6 @@ anvil10_sources = mkdict(anvil9_sources, 283, mkdelta([
     bqsrc('6db4e098', 'CCDG_Baylor_CVD_ARIC_20231008_ANV5_202503171456'),
     bqsrc('14967a4d', 'CCDG_WashU_CVD_EOCAD_WashU_CAD_GRU_IRB_WGS_20230525_ANV5_202503171543'),
     bqsrc('2c000b04', 'FetalGenomics_PrenatalSEQ_20250520_ANV5_202505201718'),
-    bqsrc('37dbd6bc', 'GREGoR_R02_GRU_20241105_ANV5_202502202052', pop),
     bqsrc('8ae2d6e6', 'ccdg_asc_ndd_daly_talkowski_AGRE_asd_exome_20250514_ANV5_202505191331'),
     bqsrc('1841de51', 'ccdg_asc_ndd_daly_talkowski_IBIS_asd_exome_20250514_ANV5_202505191529'),
     bqsrc('9a9bd879', 'ccdg_asc_ndd_daly_talkowski_TASC_asd_exome_20250515_ANV5_202505191729'),
