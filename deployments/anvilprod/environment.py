@@ -933,7 +933,7 @@ anvil8_sources = mkdict(anvil7_sources, 254, mkdelta([
     bqsrc('db95c1cc', 'nhgri_broad_ibd_daly_winter_wes_20240112_ANV5_202409251622'),
 ]))
 
-anvil9_sources = mkdict(anvil8_sources, 284, mkdelta([
+anvil9_sources = mkdict(anvil8_sources, 280, mkdelta([
     bqsrc('b555b2f5', '1000G_PRIMED_data_model_20240410_ANV5_202502211647'),
     bqsrc('265cde27', 'ALSCompute_Collection_GRU_20231016_ANV5_202410310107'),
     bqsrc('853bbf15', 'ALSCompute_Collection_HMB_20241018_ANV5_202410232001'),
@@ -975,25 +975,20 @@ anvil9_sources = mkdict(anvil8_sources, 284, mkdelta([
     bqsrc('de339830', 'CMH_GAFK_WGS_20240113_ANV5_202502201948'),
     bqsrc('706dd75a', 'DepMap_HMB_20240827_ANV5_202410240027'),
     bqsrc('cab8b4b3', 'DepMap_HMB_R2_20250224_ANV5_202502241800'),
-    bqsrc('9ebf9c60', 'AnVIL_ENCORE_293T_20250304_ANV5_202503042023'),
     bqsrc('d4765cad', 'AnVIL_ENCORE_RS293_20250304_ANV5_202503042020'),
     bqsrc('e944e571', 'GREGoR_R01_GRU_20240208_ANV5_202502202158'),
     bqsrc('24806158', 'GREGoR_R01_HMB_20240208_ANV5_202502202202'),
-    bqsrc('37dbd6bc', 'GREGoR_R02_GRU_20241105_ANV5_202502202052'),
     bqsrc('88e6ae93', 'GREGoR_R02_HMB_20241105_ANV5_202502202131'),
-    bqsrc('e3844840', 'GTEx_v10_hg38_20241105_ANV5_202502202206'),
-    bqsrc('ec623ac1', 'HudsonAlpha_LR_v1_GRU_20241018_ANV5_202410240036'),
     bqsrc('46fcac4d', 'MAS_ISO_seq_20240113_ANV5_202409261333'),
     bqsrc('2e8d7a0e', 'NIMH_Broad_ConvergentNeuro_McCarroll_Eggan_CIRM_GRU_WGS_20240206_ANV5_202502202026'),
     bqsrc('14a38418', 'NIMH_Broad_WGSPD1_McCarroll_COGS_DS_WGS_20240113_ANV5_202502202034'),
     bqsrc('91ecebc5', 'NIMH_Broad_WGSPD_1_McCarroll_Braff_DS_WGS_20240304_ANV5_202502202030'),
 ]))
 
-anvil10_sources = mkdict(anvil9_sources, 288, mkdelta([
+anvil10_sources = mkdict(anvil9_sources, 283, mkdelta([
     bqsrc('6db4e098', 'CCDG_Baylor_CVD_ARIC_20231008_ANV5_202503171456'),
     bqsrc('14967a4d', 'CCDG_WashU_CVD_EOCAD_WashU_CAD_GRU_IRB_WGS_20230525_ANV5_202503171543'),
     bqsrc('2c000b04', 'FetalGenomics_PrenatalSEQ_20250520_ANV5_202505201718'),
-    bqsrc('09c1687e', 'AnVIL_MAGE_20250520_ANV5_202505201916'),
     bqsrc('8ae2d6e6', 'ccdg_asc_ndd_daly_talkowski_AGRE_asd_exome_20250514_ANV5_202505191331'),
     bqsrc('1841de51', 'ccdg_asc_ndd_daly_talkowski_IBIS_asd_exome_20250514_ANV5_202505191529'),
     bqsrc('9a9bd879', 'ccdg_asc_ndd_daly_talkowski_TASC_asd_exome_20250515_ANV5_202505191729'),
