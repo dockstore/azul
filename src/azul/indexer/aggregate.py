@@ -144,7 +144,7 @@ class SetAccumulator(Accumulator):
             before = len(self.value)
             # Tuples are treated as scalars. We rely on this behavior when
             # aggregating `ValueAndUnit` fields.
-            if isinstance(value, (list, set)):
+            if isinstance(value, list):
                 self.value.update(value)
             else:
                 self.value.add(value)
@@ -156,7 +156,7 @@ class SetAccumulator(Accumulator):
             else:
                 assert False
         else:
-            if isinstance(value, (list, set)):
+            if isinstance(value, list):
                 if not self.value.issuperset(value):
                     self.dropped += 1
             elif value not in self.value:
@@ -194,7 +194,7 @@ class ListAccumulator(Accumulator):
         ([1, 2, 3], 1)
         """
         if self.max_size is None or len(self.value) < self.max_size:
-            if isinstance(value, (list, set)):
+            if isinstance(value, list):
                 self.value.extend(value)
             else:
                 self.value.append(value)
@@ -313,7 +313,7 @@ class FrequencySetAccumulator(Accumulator):
     >>> acc = FrequencySetAccumulator(2)
     >>> acc.accumulate('x')
     >>> acc.accumulate(['x','y'])
-    >>> acc.accumulate({'x','y','z'})
+    >>> acc.accumulate(['x','y','z'])
     >>> acc.get()
     ['x', 'y']
     >>> acc = FrequencySetAccumulator(0)
@@ -328,7 +328,7 @@ class FrequencySetAccumulator(Accumulator):
         self.max_size = max_size
 
     def accumulate(self, value) -> None:
-        if isinstance(value, (dict, list, set)):
+        if isinstance(value, (dict, list)):
             self.value.update(value)
         else:
             self.value[value] += 1
