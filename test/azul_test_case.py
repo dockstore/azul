@@ -141,6 +141,8 @@ class AzulTestCase(TestCase):
                 'datetime.datetime.utcnow() is deprecated',
             },
             ElasticsearchWarning: {
+                # FIXME: ES DeprecationWarning for using _id as sort key
+                #        https://github.com/DataBiosphere/azul/issues/7290
                 RE('.*Loading the fielddata on the _id field is deprecated and will be removed in future versions.*'),
             }
         }

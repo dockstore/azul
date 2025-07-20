@@ -1911,6 +1911,9 @@ class VerbatimManifestGenerator(FileBasedManifestGenerator,
         # unique to each replica, so that `_id` only needs to be loaded and
         # compared in the infrequent event that it's needed as a tiebreaker.
         #
+        # FIXME: ES DeprecationWarning for using _id as sort key
+        #        https://github.com/DataBiosphere/azul/issues/7290
+        #
         request = request.sort('entity_id.keyword', '_id')
 
         def request_factory(search_after: SortKey | None) -> Search:
