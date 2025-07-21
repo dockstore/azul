@@ -1360,5 +1360,9 @@ def env() -> Mapping[str, str | None]:
 
         'AZUL_MIRRORING_CONCURRENCY': '128',
 
+        # FIXME: Disable bundle notifications after a month of this feature
+        #        being disabled on lower deployments without problems
+        #        https://github.com/DataBiosphere/azul/issues/6123
+        #
         'AZUL_ENABLE_BUNDLE_NOTIFICATIONS': '1'
     }

@@ -54,6 +54,8 @@ def main():
         patch_config('enable_log_forwarding', False),
         patch_config('enable_replicas', True),
         patch_config('monitoring_email', 'azul-group@ucsc.edu'),
+        # FIXME: Remove patch once bundle notifications are enabled again
+        #        https://github.com/DataBiosphere/azul/issues/7183
         patch_config('enable_bundle_notifications', True)
     ):
         lambda_endpoint = furl('http://localhost')

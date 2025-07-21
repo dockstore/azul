@@ -926,5 +926,8 @@ def env() -> Mapping[str, str | None]:
 
         # Whether to enable bundle notifications for incremental index changes
         #
+        # FIXME: Enable bundle notifications again #7183
+        #        https://github.com/DataBiosphere/azul/issues/7183
+        #
         'AZUL_ENABLE_BUNDLE_NOTIFICATIONS': '0'
     }
