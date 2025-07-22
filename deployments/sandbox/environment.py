@@ -8,7 +8,7 @@ from typing import (
 
 is_sandbox = True
 
-pop = 2  # remove snapshot
+pop = 1  # remove snapshot
 
 type DatasetName = str
 type SourceSpec = str
