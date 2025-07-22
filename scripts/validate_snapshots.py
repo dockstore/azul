@@ -39,11 +39,13 @@ def main(args):
 
     azul = AzulClient(num_workers=1)
     sources_by_catalog = azul.sources_by_catalog(args.catalogs)
+    previous_sources = set()
     for catalog, sources in sources_by_catalog.items():
+        sources -= previous_sources
         tdr_plugin = azul.repository_plugin(catalog)
         log.info('Checking for %r in catalog %s', joiner, catalog)
         if args.snapshot is not None:
-            sources = [s for s in sources if args.snapshot in s]
+            sources = {s for s in sources if args.snapshot in s}
         for spec in sources:
             log.info('Validating snapshot %s', spec)
             source = TDRSourceSpec.parse(spec)
@@ -74,6 +76,7 @@ def main(args):
                         }
                         log.warning('Undesired string found: %r', match)
                         declined_snapshots.append(match)
+        previous_sources = sources
     print()
     if declined_snapshots:
         print(json.dumps(declined_snapshots, indent=4))
