@@ -296,24 +296,24 @@ def env() -> Mapping[str, Optional[str]]:
                 'url': 'https://hub.docker.com/_/python',
             },
             'pycharm': {
-                'ref': 'docker.io/ucscgi/azul-pycharm:2024.3.6-56',
+                'ref': 'docker.io/ucscgi/azul-pycharm:2024.3.6-57',
                 'url': 'https://hub.docker.com/repository/docker/ucscgi/azul-pycharm',
                 'is_custom': True
             },
             'elasticsearch': {
-                'ref': 'docker.io/ucscgi/azul-elasticsearch:7.17.28-47',
+                'ref': 'docker.io/ucscgi/azul-elasticsearch:7.17.28-48',
                 'url': 'https://hub.docker.com/repository/docker/ucscgi/azul-elasticsearch',
                 'is_custom': True
             },
             'bigquery_emulator': {
-                'ref': 'docker.io/ucscgi/azul-bigquery-emulator:0.4.4-38',
+                'ref': 'docker.io/ucscgi/azul-bigquery-emulator:0.4.4-39',
                 'url': 'https://hub.docker.com/repository/docker/ucscgi/azul-bigquery-emulator',
                 'is_custom': True
             },
             # Updating any of the four images below additionally requires
             # redeploying the `gitlab` TF component.
             'clamav': {
-                'ref': 'docker.io/clamav/clamav:1.4.3-46',
+                'ref': 'docker.io/clamav/clamav:1.4.3-48',
                 'url': 'https://hub.docker.com/r/clamav/clamav'
             },
             'gitlab': {

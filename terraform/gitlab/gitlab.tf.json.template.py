@@ -248,7 +248,7 @@ runner_image, _ = resolve_docker_image_for_pull('gitlab_runner')
 # CIS Amazon Linux 2 Kernel 4.14 Benchmark - Level 1 - v01 -4c096026-c6b0-440c-bd2f-6d34904e4fc6
 #
 ami_id = {
-    'us-east-1': 'ami-005aa69a4e42cc74d'
+    'us-east-1': 'ami-0c20d362bca9d3c31'
 }
 
 gitlab_mount = '/mnt/gitlab'

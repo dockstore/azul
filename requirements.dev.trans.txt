@@ -18,7 +18,7 @@ mccabe==0.7.0
 mypy-boto3-apigateway==1.39.0
 mypy-boto3-cloudwatch==1.39.0
 mypy-boto3-dynamodb==1.39.0
-mypy-boto3-ec2==1.39.8
+mypy-boto3-ec2==1.39.10
 mypy-boto3-ecr==1.39.0
 mypy-boto3-es==1.39.0
 mypy-boto3-iam==1.39.0
@@ -29,7 +29,7 @@ mypy-boto3-secretsmanager==1.39.0
 mypy-boto3-securityhub==1.39.0
 mypy-boto3-sns==1.39.0
 mypy-boto3-sqs==1.39.0
-mypy-boto3-ssm==1.39.0
+mypy-boto3-ssm==1.39.9
 mypy-boto3-stepfunctions==1.39.8
 mypy-boto3-sts==1.39.0
 mypy_extensions==1.1.0
@@ -57,5 +57,5 @@ wcwidth==0.2.13
 www-authenticate==0.9.2
 xmltodict==0.14.2
 xmod==1.8.1
-zope.event==5.1
+zope.event==5.1.1
 zope.interface==7.2
