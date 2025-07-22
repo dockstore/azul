@@ -1779,10 +1779,12 @@ class VerbatimManifestGenerator(FileBasedManifestGenerator, metaclass=ABCMeta):
 
     @property
     def include_orphans(self) -> bool:
+
         # When filtering exclusively by properties of implicit hubs, e.g.,
         # data sets for AnVIL or projects for HCA, we include replicas of all
         # entities implicitly connected to the matching hubs, even replicas of
         # orphans, i.e., entities that aren't connected to files.
+        #
         plugin = self.metadata_plugin
         root_entity_fields = {
             field_name
