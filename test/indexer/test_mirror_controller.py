@@ -100,7 +100,7 @@ class TestMirrorController(DCP2TestCase,
         return self.app_module.app.mirror_controller
 
     def _mirror_event(self, body: JSON) -> list[SQSRecord]:
-        return [self._mock_sqs_record(body)]
+        return [self._mock_sqs_record(body, fifo=True)]
 
     def _test_remote_mirror(self):
         self.client.remote_mirror(self.catalog, [self.source])
