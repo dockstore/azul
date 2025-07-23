@@ -88,7 +88,8 @@ class TestAppLogging(AzulUnitTestCase):
                     self.assertEqual(f'INFO:azul.chalice:Received GET request for {path!r}, '
                                      f"with {json.dumps({'query': None, 'headers': info})}.",
                                      azul_log.output[0])
-                    self.assertEqual('INFO:azul.chalice:… without request body', azul_log.output[1])
+                    self.assertEqual('INFO:azul.chalice:… without a request body',
+                                     azul_log.output[1])
                     self.assertEqual('INFO:azul.chalice:Did not authenticate request.',
                                      azul_log.output[2])
 
@@ -130,11 +131,19 @@ class TestAppLogging(AzulUnitTestCase):
                         }
                     }
                     if debug == 0:
-                        expected = "… with response body of type (<class 'dict'>)"
-                    elif debug == 1:
-                        expected = f'… with a response body starting in {body[:1024]!r}'
+                        expected = "… with a response body of type (<class 'dict'>)"
+                    elif debug == 1 and len(body) > 1024:
+                        self.fail('Truncated response bodies are not covered by this test')
                     else:
-                        expected = f'… with the {len(body)} byte long response body {body!r}'
+                        if body.startswith('{'):
+                            # If the response body is deserialized JSON, its
+                            # repr() is logged, not the repr() of the serialized
+                            # JSON. The former starts with a curly brace. In the
+                            # latter, that brace would follow a single quote.
+                            length, body = len(body), body
+                        else:
+                            length, body = len(body), repr(body)
+                        expected = f'… with a response body of length {length} being {body}'
 
                     self.maxDiff = None
                     header = 'INFO:azul.chalice:'
@@ -165,11 +174,11 @@ class TestUnexpectedWarnings(TestCase):
         msg = 'Testing unexpected warnings, nothing to see here.'
         category = ResourceWarning
 
-        for parents in (
+        for parents in [
             (AzulUnitTestCase,),
             (AzulUnitTestCase, AlwaysTearDownTestCase),
             (AlwaysTearDownTestCase, AzulUnitTestCase)
-        ):
+        ]:
             with self.subTest(parents=parents):
                 class Test(*parents):
 

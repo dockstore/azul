@@ -146,7 +146,7 @@ class TestHttp(AzulUnitTestCase):
                     expected_logs.extend(
                         [
                             f"^{prefix}Making GET request to '{url}'$",
-                            f'^{prefix}… without request body$'
+                            f'^{prefix}… without a request body$'
                         ]
                     )
                     if i < responses:
@@ -154,7 +154,7 @@ class TestHttp(AzulUnitTestCase):
                             [
                                 rf'^{prefix}Got 503 response after \d.\d\d\ds from GET to {url}$',
                                 rf'^{prefix}… with response headers HTTPHeaderDict\({http_header_pattern}\)$',
-                                f"^{prefix}… with a 0 byte long response body starting in b''$",
+                                f"^{prefix}… with a response body of length 0 being b''$",
                             ]
                         )
                         if i < calls - 1:
