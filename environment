@@ -323,47 +323,55 @@ _update_clone() {
 # Destroy the most expensive resources in a main deployment and its components.
 # Compared to complete destruction, hibernation has the advantage of needing
 # less time to come back from, and not requiring incrementing the incarnation
-# counter or adding service accounts to Terra groups. This function was written
-# from memory. The `terraform` commands were tested individually but the
-# function as a whole was not.
+# counter or adding service accounts to Terra groups.
 #
 _hibernate() {
 	# shellcheck disable=SC2154
-	if test -z "$azul_terraform_component"; then
-		make -C lambdas && {
-			cd terraform &&
-			make validate && {
-				terraform destroy \
-					-target aws_cloudwatch_metric_alarm.indexercachehealth \
-					-target aws_cloudwatch_metric_alarm.servicecachehealth \
-					-target aws_elasticsearch_domain.index
-			} && {
-				cd shared &&
-				_select "$AZUL_DEPLOYMENT_STAGE.shared" &&
-				make validate &&
-				terraform destroy \
-					-target aws_cloudwatch_metric_alarm.clamscan \
-					-target aws_cloudwatch_metric_alarm.freshclam
-			} && {
-				cd gitlab &&
-				_select "$AZUL_DEPLOYMENT_STAGE.gitlab" &&
-				make validate &&
-				terraform destroy \
-					-target aws_cloudwatch_metric_alarm.gitlab_cpu_use \
-					-target aws_cloudwatch_metric_alarm.gitlab_data_disk_use \
-					-target aws_cloudwatch_metric_alarm.gitlab_root_disk_use \
-					-target aws_ec2_client_vpn_endpoint.gitlab \
-					-target aws_instance.gitlab \
-					-target aws_nat_gateway.gitlab_0 \
-					-target aws_nat_gateway.gitlab_1 \
-					-target aws_lb.gitlab_nlb \
-					-target aws_lb.gitlab_alb
-			}
-		}
-	else
+	if test -n "$azul_terraform_component"; then
 		echo "Must have main component selected"
 		return 1
 	fi
+	if ! {
+    _login_google &&
+    _login_aws &&
+    make -C lambdas && (
+      cd terraform &&
+      make validate &&
+      terraform destroy \
+        -target aws_cloudwatch_metric_alarm.indexercachehealth \
+        -target aws_cloudwatch_metric_alarm.servicecachehealth \
+        -target aws_elasticsearch_domain.index
+    ) && (
+      cd terraform/shared &&
+      _link "$AZUL_DEPLOYMENT_STAGE.shared" &&
+      _refresh &&
+      make validate &&
+      terraform destroy \
+        -target aws_cloudwatch_metric_alarm.clamscan \
+        -target aws_cloudwatch_metric_alarm.freshclam
+    ) && (
+      cd terraform/gitlab &&
+      _link "$AZUL_DEPLOYMENT_STAGE.gitlab" && _refresh &&
+      make validate &&
+      terraform destroy \
+        -target aws_cloudwatch_metric_alarm.gitlab_cpu_use \
+        -target aws_cloudwatch_metric_alarm.gitlab_data_disk_use \
+        -target aws_cloudwatch_metric_alarm.gitlab_root_disk_use \
+        -target aws_ec2_client_vpn_endpoint.gitlab \
+        -target aws_instance.gitlab \
+        -target aws_nat_gateway.gitlab_0 \
+        -target aws_nat_gateway.gitlab_1 \
+        -target aws_lb.gitlab_nlb \
+        -target aws_lb.gitlab_alb
+    ) &&
+    _link "$AZUL_DEPLOYMENT_STAGE" &&
+    _refresh &&
+    echo "Successfully hibernated $AZUL_DEPLOYMENT_STAGE"
+  } then {
+    echo "Failed to hibernate $AZUL_DEPLOYMENT_STAGE."
+    echo "Use _select to ensure that the right deployment is selected."
+    return 1
+  } fi
 }
 
 # We disable `envhook.py` to avoid redundancy. The `envhook.py` script imports
