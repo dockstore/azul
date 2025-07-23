@@ -3,15 +3,9 @@ from abc import (
     abstractmethod,
 )
 import base64
-from collections import (
-    defaultdict,
-)
 from collections.abc import (
     Iterable,
     Mapping,
-)
-from copy import (
-    deepcopy,
 )
 import csv
 from datetime import (
@@ -40,7 +34,6 @@ import os
 import re
 import shlex
 from tempfile import (
-    TemporaryDirectory,
     mkstemp,
 )
 import time
@@ -58,9 +51,6 @@ from uuid import (
 )
 
 import attrs
-from bdbag import (
-    bdbag_api,
-)
 from elasticsearch_dsl import (
     Q,
     Search,
@@ -126,7 +116,6 @@ from azul.plugins import (
     ManifestConfig,
     ManifestFormat,
     MetadataPlugin,
-    MutableManifestConfig,
     RepositoryPlugin,
     dotted,
 )
@@ -285,11 +274,11 @@ class BareManifestKey(AbstractManifestKey):
     every 3 catalog name characters.
 
     >>> manifest_key = BareManifestKey(catalog='a' * 64,
-    ...                                format=ManifestFormat.terra_bdbag,
+    ...                                format=ManifestFormat.terra_pfb,
     ...                                manifest_hash=UUID('d2b0ce3c-46f0-57fe-b9d4-2e38d8934fd4'),
     ...                                source_hash=UUID('77936747-5968-588e-809f-af842d6be9e0'))
     >>> len(manifest_key.encode())
-    154
+    151
     """
     catalog: CatalogName = strict_auto()
     format: ManifestFormat = strict_auto()
@@ -1760,251 +1749,6 @@ class PFBManifestGenerator(FileBasedManifestGenerator):
         os.close(fd)
         avro_pfb.write_pfb_entities(entities, pfb_schema, path)
         return path, None
-
-
-class BDBagManifestGenerator(FileBasedManifestGenerator):
-
-    @classmethod
-    def format(cls) -> ManifestFormat:
-        return ManifestFormat.terra_bdbag
-
-    @classmethod
-    def file_name_extension(cls):
-        return 'zip'
-
-    @property
-    def content_type(self) -> str:
-        return 'application/octet-stream'
-
-    @property
-    def entity_type(self) -> str:
-        return 'files'
-
-    @cached_property
-    def included_fields(self) -> list[FieldPath] | None:
-        return [
-            *super().included_fields,
-            ('contents', 'files', 'drs_uri')
-        ]
-
-    @classmethod
-    def use_content_disposition_file_name(cls) -> bool:
-        # Apparently, Terra does not like the content disposition header
-        return False
-
-    @cached_property
-    def manifest_config(self) -> ManifestConfig:
-        return {
-            field_path: {
-                field_name: column_name.replace('.', self.column_path_separator)
-                for field_name, column_name in column_mapping.items()
-                if column_name is not None
-            }
-            for field_path, column_mapping in super().manifest_config.items()
-        }
-
-    def create_file(self) -> tuple[str, str | None]:
-        with TemporaryDirectory() as temp_path:
-            bag_path = os.path.join(temp_path, 'manifest')
-            os.makedirs(bag_path)
-            bdbag_api.make_bag(bag_path)
-            with open(os.path.join(bag_path, 'data', 'participants.tsv'), 'w') as samples_tsv:
-                self._samples_tsv(samples_tsv)
-            bag = bdbag_api.make_bag(bag_path, update=True)  # update TSV checksums
-            assert bdbag_api.is_bag(bag_path)
-            bdbag_api.validate_bag(bag_path)
-            assert bdbag_api.check_payload_consistency(bag)
-            temp, temp_path = mkstemp()
-            os.close(temp)
-            archive_path = bdbag_api.archive_bag(bag_path, 'zip')
-            # Moves the bdbag archive out of the temporary directory. This prevents
-            # the archive from being deleted when the temporary directory self-destructs.
-            os.rename(archive_path, temp_path)
-            return temp_path, None
-
-    column_path_separator = '__'
-
-    @classmethod
-    def _remove_redundant_entries(cls, bundles: Bundles) -> None:
-        """
-        Remove bundle entries from dict that are redundant based on the set of
-        files it contains (e.g. a primary bundle is made redundant by its derived
-        analysis bundle if the primary only has a subset of files that the
-        analysis bundle contains or if they both have the same files).
-        """
-        redundant_keys = set()
-        # Get a forward mapping of bundle FQID to a set of file uuid
-        bundle_to_file: dict[FQID, set[str]] = defaultdict(set)
-        for bundle_fqid, file_types in bundles.items():
-            for groups in file_types.values():
-                for group in groups:
-                    bundle_to_file[bundle_fqid].add(group['file']['file_uuid'])
-        # Get a reverse mapping of file uuid to set of bundle fqid
-        file_to_bundle = defaultdict(set)
-        for fqid, files in bundle_to_file.items():
-            for file in files:
-                file_to_bundle[file].add(fqid)
-        # Find any file sets that are subset or equal to another
-        for fqid_a, files_a in bundle_to_file.items():
-            if fqid_a in redundant_keys:
-                continue
-            related_bundles: set[FQID] = set(fqid_b
-                                             for file in files_a
-                                             for fqid_b in file_to_bundle[file]
-                                             if fqid_b != fqid_a and fqid_b not in redundant_keys)
-            for fqid_b in related_bundles:
-                files_b = bundle_to_file[fqid_b]
-                # If sets are equal remove the one with a lesser bundle version
-                if files_a == files_b:
-                    redundant_keys.add(fqid_a if fqid_a[1] < fqid_b[1] else fqid_b)
-                    break
-                # If set is a subset of another remove the subset
-                elif files_a.issubset(files_b):
-                    redundant_keys.add(fqid_a)
-                    break
-        # remove the redundant entries
-        for fqid in redundant_keys:
-            del bundles[fqid]
-
-    def _samples_tsv(self, bundle_tsv: IO[str]) -> None:
-        """
-        Write `samples.tsv` to the given stream.
-        """
-        # The cast is safe because deepcopy makes a copy that we *can* modify
-        other_column_mappings = cast(MutableManifestConfig, deepcopy(self.manifest_config))
-        bundle_column_mapping = other_column_mappings.pop(('bundles',))
-        file_column_mapping = other_column_mappings.pop(('contents', 'files'))
-
-        bundles: Bundles = defaultdict(lambda: defaultdict(list))
-
-        # For each outer file entity_type in the response …
-        for hit in self._create_request().scan():
-            doc = self._hit_to_doc(hit)
-            # Extract fields from inner entities other than bundles or files
-            other_cells = {}
-            for field_path, column_mapping in other_column_mappings.items():
-                entities = self._get_entities(field_path, doc)
-                self._extract_fields(field_path=field_path,
-                                     entities=entities,
-                                     column_mapping=column_mapping,
-                                     row=other_cells)
-
-            # Extract fields from the sole inner file entity_type
-            file = copy_json(one(cast(JSONs, doc['contents']['files'])))
-            file['file_url'] = self._azul_file_url(file)
-            file_cells = {}
-            self._extract_fields(field_path=('contents', 'files'),
-                                 entities=[file],
-                                 column_mapping=file_column_mapping,
-                                 row=file_cells)
-
-            # Determine the column qualifier. The qualifier will be used to
-            # prefix the names of file-specific columns in the TSV
-            qualifier: Qualifier = file['file_format']
-            if qualifier in ('fastq.gz', 'fastq'):
-                qualifier = f"fastq_{file['read_index']}"
-            # Terra requires column headers only contain alphanumeric
-            # characters, underscores, and dashes.
-            # See https://github.com/DataBiosphere/azul/issues/2182
-            qualifier = re.sub(r'[^A-Za-z0-9_-]', '-', qualifier)
-
-            # For each bundle containing the current file …
-            doc_bundle: JSON
-            for doc_bundle in doc['bundles']:
-                # Versions indexed by TDR contain ':', but Terra won't allow ':'
-                # in the 'entity:participant_id' field
-                bundle_fqid: FQID = doc_bundle['uuid'], doc_bundle['version'].replace(':', '')
-
-                bundle_cells = {'entity:participant_id': '.'.join(bundle_fqid)}
-                self._extract_fields(field_path=('bundles',),
-                                     entities=[doc_bundle],
-                                     column_mapping=bundle_column_mapping,
-                                     row=bundle_cells)
-
-                # Register the three extracted sets of fields as a group for
-                # this bundle and qualifier
-                group = {
-                    'file': file_cells,
-                    'bundle': bundle_cells,
-                    'other': other_cells
-                }
-                bundles[bundle_fqid][qualifier].append(group)
-
-        self._remove_redundant_entries(bundles)
-
-        # Return a complete column name by adding a qualifier and optionally a
-        # numeric index. The index is necessary to distinguish between more than
-        # one file per file format
-        def qualify(qualifier, column_name, index=None):
-            if index is not None:
-                qualifier = f'{qualifier}_{index}'
-            return f'{self.column_path_separator}{qualifier}{self.column_path_separator}{column_name}'
-
-        num_groups_per_qualifier = defaultdict(int)
-
-        # Track the max number of groups for each qualifier in any bundle
-        for bundle in bundles.values():
-            for qualifier, groups in bundle.items():
-                # Sort the groups by reversed file name. This essentially sorts
-                # by file extension and any other more general suffixes
-                # preceding the extension. It ensures that `patient1_qc.bam` and
-                # `patient2_qc.bam` always end up in qualifier `bam[0]` while
-                # `patient1_metric.bam` and `patient2_metric.bam` end up in
-                # qualifier `bam[1]`.
-                groups.sort(key=lambda group: group['file']['file_name'][::-1])
-                if len(groups) > num_groups_per_qualifier[qualifier]:
-                    num_groups_per_qualifier[qualifier] = len(groups)
-
-        # Compute the column names in deterministic order, bundle_columns first
-        # followed by other columns
-        column_names = dict.fromkeys(chain(
-            ['entity:participant_id'],
-            bundle_column_mapping.values(),
-            *(d.values() for d in other_column_mappings.values())
-        ))
-
-        # Add file columns for each qualifier and group
-        for qualifier, num_groups in sorted(num_groups_per_qualifier.items()):
-            for index in range(num_groups):
-                for column_name in file_column_mapping.values():
-                    index = None if num_groups == 1 else index
-                    column_names[qualify(qualifier, column_name, index=index)] = None
-
-        # Write the TSV header
-        bundle_tsv_writer = csv.DictWriter(bundle_tsv, column_names, dialect='excel-tab')
-        bundle_tsv_writer.writeheader()
-
-        # Write the actual rows of the TSV
-        for bundle in bundles.values():
-            row = {}
-            for qualifier, groups in bundle.items():
-                for i, group in enumerate(groups):
-                    for entity, cells in group.items():
-                        if entity == 'bundle':
-                            # The bundle-specific cells should be consistent across all files in a bundle
-                            if row:
-                                row.update(cells)
-                            else:
-                                assert cells.items() <= row.items()
-                        elif entity == 'other':
-                            # Cells from other entities need to be concatenated.
-                            # Note that for fields that differ between the files
-                            # in a bundle this algorithm retains the values but
-                            # loses the association between each individual
-                            # value and the respective file.
-                            for column_name, cell_value in cells.items():
-                                row.setdefault(column_name, set()).update(cell_value.split(self.padded_joiner))
-                        elif entity == 'file':
-                            # Since file-specific cells are placed into
-                            # qualified columns, no concatenation is necessary
-                            index = None if num_groups_per_qualifier[qualifier] == 1 else i
-                            row.update((qualify(qualifier, column_name, index=index), cell)
-                                       for column_name, cell in cells.items())
-                        else:
-                            assert False
-            # Join concatenated values using the joiner
-            row = {k: self.padded_joiner.join(sorted(v)) if isinstance(v, set) else v for k, v in row.items()}
-            bundle_tsv_writer.writerow(row)
 
 
 class VerbatimManifestGenerator(FileBasedManifestGenerator, metaclass=ABCMeta):

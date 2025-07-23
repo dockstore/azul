@@ -126,7 +126,7 @@ spec = {
         # changes and reset the minor version to zero. Otherwise, increment only
         # the minor version for backwards compatible changes. A backwards
         # compatible change is one that does not require updates to clients.
-        'version': '12.4',
+        'version': '13.0',
         'description': fd(f'''
             # Overview
 
@@ -1208,37 +1208,29 @@ def manifest_route(*, fetch: bool, initiate: bool):
                         - `{ManifestFormat.compact.value}` (the default) for a compact,
                           tab-separated manifest
 
-                        - `{ManifestFormat.terra_bdbag.value}` for a manifest in the
-                          [BDBag format][1]. This provides a ZIP file containing two
-                          manifests: one for Participants (aka Donors) and one for
-                          Samples (aka Specimens). For more on the format of the
-                          manifests see [documentation here][2].
-
                         - `{ManifestFormat.terra_pfb.value}` for a manifest in the [PFB
-                          format][3]. This format is mainly used for exporting data to
+                          format][2]. This format is mainly used for exporting data to
                           Terra.
 
                         - `{ManifestFormat.curl.value}` for a [curl configuration
-                          file][4] manifest. This manifest can be used with the curl
+                          file][3] manifest. This manifest can be used with the curl
                           program to download all the files listed in the manifest.
 
                         - `{ManifestFormat.verbatim_jsonl.value}` for a verbatim
-                          manifest in [JSONL][5] format. Each line contains an
+                          manifest in [JSONL][4] format. Each line contains an
                           unaltered metadata entity from the underlying repository.
 
                         - `{ManifestFormat.verbatim_pfb.value}` for a verbatim
-                          manifest in the [PFB format][3]. This format is mainly
+                          manifest in the [PFB format][2]. This format is mainly
                           used for exporting data to Terra.
 
-                        [1]: https://bd2k.ini.usc.edu/tools/bdbag/
+                        [1]: https://software.broadinstitute.org/firecloud/documentation/article?id=10954
 
-                        [2]: https://software.broadinstitute.org/firecloud/documentation/article?id=10954
+                        [2]: https://github.com/uc-cdis/pypfb
 
-                        [3]: https://github.com/uc-cdis/pypfb
+                        [3]: https://curl.haxx.se/docs/manpage.html#-K
 
-                        [4]: https://curl.haxx.se/docs/manpage.html#-K
-
-                        [5]: https://jsonlines.org/
+                        [4]: https://jsonlines.org/
                     '''
                 )
             ] if initiate else [],
