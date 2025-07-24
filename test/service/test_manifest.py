@@ -1068,53 +1068,59 @@ class TestManifestCache(DCP1ManifestTestCase):
 
     def test_hash_validity(self):
         self.maxDiff = None
-        bundle_uuid = 'aaa96233-bf27-44c7-82df-b4dc15ad4d9d'
-        version1 = '2018-11-02T11:33:44.698028Z'
-        version2 = '2018-11-04T11:33:44.698028Z'
-        assert (version1 != version2)
-        original_fqid = self.bundle_fqid(uuid=bundle_uuid, version=version1)
-        self._index_canned_bundle(original_fqid)
-        filters = self._filters({'project': {'is': ['Single of human pancreas']}})
-        old_keys = {}
+        bundles_by_project = {
+            '67bc798b-a34a-4104-8cab-cad648471f69':
+                self.bundle_fqid(uuid='f79257a7-dfc6-46d6-ae00-ba4b25313c10',
+                                 version='2018-09-14T13:33:14.453337Z'),
+            '6615efae-fca8-4dd2-a223-9cfcf30fe94d':
+                self.bundle_fqid(uuid='587d74b4-1075-4bbf-b96a-4d1ede0481b2',
+                                 version='2018-09-14T13:33:14.453337Z'),
+            '091cf39b-01bc-42e5-9437-f419a66c8a45':
+                self.bundle_fqid(uuid='cfab8304-dc9f-439e-af29-f8eb75b0729d',
+                                 version='2019-07-18T21:28:20.595913Z'),
+        }
+        projects, bundles = zip(*bundles_by_project.items())
+        self._index_canned_bundle(bundles[0])
+        filters = self._filters(cast(FiltersJSON, {
+            'projectId': {
+                'is': [projects[0], projects[1]]
+            }
+        }))
         service = ManifestService(self.storage_service, self._app.file_url)
 
         def manifest_generator(format: ManifestFormat) -> ManifestGenerator:
             generator_cls = ManifestGenerator.cls_for_format(format)
             return generator_cls(service, self.catalog, filters)
 
-        for format in ManifestFormat:
-            with self.subTest('indexing new bundle', format=format):
-                # When a new bundle is indexed and its compact manifest cached,
-                # a matching manifest key is generated ...
-                generator = manifest_generator(format)
-                old_bundle_key = generator.manifest_key()
-                # and should remain valid ...
-                self.assertEqual(old_bundle_key, generator.manifest_key())
-                old_keys[format] = old_bundle_key
+        keys = [{}, {}]
 
-        # ... until a new bundle belonging to the same project is indexed, at
-        # which point a manifest request will generate a different key ...
-        update_fqid = self.bundle_fqid(uuid=bundle_uuid, version=version2)
-        self._index_canned_bundle(update_fqid)
-        new_keys = {}
         for format in ManifestFormat:
-            with self.subTest('indexing second bundle', format=format):
+            with self.subTest('First bundle indexed', format=format):
+                # A manifest for a filter matching files in the first bundle …
                 generator = manifest_generator(format)
-                new_bundle_key = generator.manifest_key()
-                # ... invalidating the cached object previously used for the same filter.
-                self.assertNotEqual(old_keys[format], new_bundle_key)
-                new_keys[format] = new_bundle_key
+                manifest_key = generator.manifest_key()
+                # … should remain cached …
+                self.assertEqual(manifest_key, generator.manifest_key())
+                keys[0][format] = manifest_key
 
-        # Updates or additions, unrelated to that project do not affect object
-        # key generation
-        other_fqid = self.bundle_fqid(uuid='f79257a7-dfc6-46d6-ae00-ba4b25313c10',
-                                      version='2018-09-14T13:33:14.453337Z')
-        self._index_canned_bundle(other_fqid)
+        # … until a new bundle with files also matching the filter is indexed.
+        self._index_canned_bundle(bundles[1])
         for format in ManifestFormat:
-            with self.subTest('indexing unrelated bundle', format=format):
+            with self.subTest('Second bundle indexed', format=format):
                 generator = manifest_generator(format)
-                latest_bundle_key = generator.manifest_key()
-                self.assertEqual(latest_bundle_key, new_keys[format])
+                manifest_key = generator.manifest_key()
+                # The updated manifest is cached under a different key.
+                self.assertNotEqual(keys[0][format], manifest_key)
+                keys[1][format] = manifest_key
+
+        # After indexing a bundle with files that don't match the filter, the
+        # cached manifest remains valid.
+        self._index_canned_bundle(bundles[2])
+        for format in ManifestFormat:
+            with self.subTest('Unrelated bundle indexed', format=format):
+                generator = manifest_generator(format)
+                manifest_key = generator.manifest_key()
+                self.assertEqual(keys[1][format], manifest_key)
 
     @patch.object(StorageService, '_time_until_object_expires')
     def test_get_cached_manifest(self, _time_until_object_expires: MagicMock):
