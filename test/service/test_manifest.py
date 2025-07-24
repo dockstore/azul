@@ -129,6 +129,9 @@ from azul.types import (
     MutableJSON,
     MutableJSONs,
 )
+from azul_test_case import (
+    patch_config,
+)
 from indexer import (
     AnvilCannedBundleTestCase,
     CannedFileTestCase,
@@ -909,18 +912,29 @@ class TestManifests(DCP1ManifestTestCase):
         response = requests.put(str(url))
         self.assertEqual(400, response.status_code, response.content)
 
-    def test_manifest_content_disposition_header(self):
+    @patch_config('enable_bundle_notifications', True)
+    def test_content_disposition_header_with_notifications_enabled(self) -> None:
+        self._test_content_disposition_header()
+
+    @patch_config('enable_bundle_notifications', False)
+    def test_content_disposition_header_with_notifications_disabled(self) -> None:
+        self._test_content_disposition_header()
+
+    def _test_content_disposition_header(self):
         bundle_fqid = self.bundle_fqid(uuid='f79257a7-dfc6-46d6-ae00-ba4b25313c10',
                                        version='2018-09-14T13:33:14.453337Z')
         self._index_canned_bundle(bundle_fqid)
         with patch.object(manifest_service, 'datetime') as mock_datetime:
             mock_datetime.now.return_value = datetime(1985, 10, 25, 1, 21)
             for format in [ManifestFormat.compact]:
+                source_hash = '4bc67e84-4873-591f-b524-a5fe4ec215eb'
                 cases = [
                     # For a single project, the content disposition file name should
                     # be the project name followed by the date and time
                     (
                         {'project': {'is': ['Single of human pancreas']}},
+                        'Single of human pancreas 1985-10-25 01.21'
+                        if config.enable_bundle_notifications else
                         'Single of human pancreas 1985-10-25 01.21'
                     ),
                     # In all other cases, the standard content disposition file name
@@ -928,11 +942,15 @@ class TestManifests(DCP1ManifestTestCase):
                     # a pair of deterministically derived v5 UUIDs.
                     (
                         {'project': {'is': ['Single of human pancreas', 'Mouse Melanoma']}},
-                        'hca-manifest-89bc9973-de91-5fc4-9c6a-8c1f547d45c6.4bc67e84-4873-591f-b524-a5fe4ec215eb'
+                        'hca-manifest-89bc9973-de91-5fc4-9c6a-8c1f547d45c6.' + source_hash
+                        if config.enable_bundle_notifications else
+                        'hca-manifest-e639622e-55b5-597e-907d-e28ceca3357e.' + source_hash
                     ),
                     (
                         {},
-                        'hca-manifest-832a257c-5540-567b-bcb6-260d2e374508.4bc67e84-4873-591f-b524-a5fe4ec215eb'
+                        'hca-manifest-832a257c-5540-567b-bcb6-260d2e374508.' + source_hash
+                        if config.enable_bundle_notifications else
+                        'hca-manifest-57a7eb28-d918-5a62-9462-36b53b1ed111.' + source_hash
                     )
                 ]
                 for filters, expected_name in cases:
@@ -1066,7 +1084,15 @@ class TestManifestCache(DCP1ManifestTestCase):
                 self.assertEqual([2, 2], list(map(len, file_names.values())))
                 self.assertEqual([1, 1], list(map(len, map(set, file_names.values()))))
 
-    def test_hash_validity(self):
+    @patch_config('enable_bundle_notifications', True)
+    def test_hash_validity_with_notifications_enabled(self) -> None:
+        self._test_hash_validity()
+
+    @patch_config('enable_bundle_notifications', False)
+    def test_hash_validity_with_notifications_disabled(self) -> None:
+        self._test_hash_validity()
+
+    def _test_hash_validity(self):
         self.maxDiff = None
         bundles_by_project = {
             '67bc798b-a34a-4104-8cab-cad648471f69':

@@ -922,5 +922,9 @@ def env() -> Mapping[str, str | None]:
         # requests, divided by the number of all requests, times 100) for a
         # configured period before a metric alarm is tripped.
         #
-        'azul_waf_blocked_alarm_threshold': '50'
+        'azul_waf_blocked_alarm_threshold': '50',
+
+        # Whether to enable bundle notifications for incremental index changes
+        #
+        'AZUL_ENABLE_BUNDLE_NOTIFICATIONS': '0'
     }

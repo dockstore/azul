@@ -526,7 +526,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
         if index and delete:
             # FIXME: Test delete notifications
             #        https://github.com/DataBiosphere/azul/issues/3548
-            if false():
+            if false() and config.enable_bundle_notifications:
                 with self._service_account_credentials:
                     for catalog in catalogs:
                         self._assert_catalog_empty(catalog.name)
@@ -1827,10 +1827,12 @@ class AzulClientIntegrationTest(IntegrationTestCase):
     def test_azul_client_error_handling(self):
         invalid_notification = {}
         notifications = [invalid_notification]
-        self.assertRaises(AzulClientNotificationError,
-                          self.azul_client.index,
-                          first(config.integration_test_catalogs),
-                          notifications)
+        with self.assertRaises(AzulClientNotificationError) as cm:
+            self.azul_client.index(catalog=first(config.integration_test_catalogs),
+                                   notifications=notifications)
+        self.assertEqual('Some notifications could not be sent', cm.exception.args[0])
+        expected = 400 if config.enable_bundle_notifications else 403
+        self.assertEqual({expected}, cm.exception.args[1])
 
 
 class OpenAPIIntegrationTest(AzulTestCase):

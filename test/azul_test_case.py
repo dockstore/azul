@@ -538,3 +538,14 @@ class AnvilTestCase(TDRTestCase):
                                                      repository=config.Catalog.Plugin(name='tdr_anvil')),
                                         sources={str(cls.source.spec): {'mirror': True}})
         }
+
+
+class BundleNotificationTestCase(AzulUnitTestCase, metaclass=ABCMeta):
+    """
+    A mixin for test cases that depend on bundle notifications being enabled
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.addClassPatch(patch_config('enable_bundle_notifications', True))

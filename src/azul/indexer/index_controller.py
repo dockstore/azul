@@ -71,6 +71,7 @@ class IndexController(ActionController[IndexAction]):
         @self.app.route(
             '/{catalog}/bundles',
             methods=['POST', 'DELETE'],
+            enabled=config.enable_bundle_notifications,
             spec={
                 'tags': ['Indexing'],
                 'summary': 'Notify the indexer to perform an action on a bundle',
@@ -209,6 +210,8 @@ class IndexController(ActionController[IndexAction]):
                     raise R.propagate(e, chalice.BadRequestError)
             notification = request.json_body
             log.info('Received notification %r for catalog %r', notification, catalog)
+            assert config.enable_bundle_notifications, R(
+                'Bundle notifications are disabled')
             self._validate_notification(notification)
             service = self.index_queue_service
             delete = request.method == 'DELETE'

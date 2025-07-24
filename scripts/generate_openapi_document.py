@@ -53,7 +53,8 @@ def main():
         patch_config(f'{app_name}_function_name', f'azul-{app_name}-dev'),
         patch_config('enable_log_forwarding', False),
         patch_config('enable_replicas', True),
-        patch_config('monitoring_email', 'azul-group@ucsc.edu')
+        patch_config('monitoring_email', 'azul-group@ucsc.edu'),
+        patch_config('enable_bundle_notifications', True)
     ):
         lambda_endpoint = furl('http://localhost')
         with patch.object(target=AzulChaliceApp,
