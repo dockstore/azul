@@ -101,6 +101,7 @@ class MirrorController(ActionController[MirrorAction], SchemaController):
         return super().handlers() | locals()
 
     def mirror(self, event: Iterable[SQSRecord]):
+        assert config.enable_mirroring, R('Mirroring is disabled')
         self._handle_events(event, self._mirror)
 
     def _mirror(self, action: MirrorAction, message: JSON):
