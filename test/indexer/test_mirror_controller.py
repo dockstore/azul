@@ -39,6 +39,9 @@ from azul.logging import (
 from azul.plugins.metadata.hca import (
     HCAFile,
 )
+from azul.service.source_service import (
+    SourceService,
+)
 from azul.types import (
     JSON,
 )
@@ -68,6 +71,17 @@ class TestMirrorController(DCP2TestCase,
     @classmethod
     def app_name(cls) -> str:
         return 'indexer'
+
+    @classmethod
+    def _patch_list_source_ids(cls):
+        cls.addClassPatch(patch.object(SourceService,
+                                       'list_source_ids',
+                                       return_value={cls.source.id}))
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls._patch_list_source_ids()
 
     def test_mirroring(self):
         self._create_mock_queues(config.mirror_queue_names)

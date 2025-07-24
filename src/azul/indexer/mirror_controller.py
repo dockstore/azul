@@ -57,6 +57,9 @@ from azul.queues import (
 from azul.schemas import (
     SchemaController,
 )
+from azul.service.source_controller import (
+    SourceController,
+)
 from azul.types import (
     JSON,
     json_element_strings,
@@ -67,7 +70,9 @@ from azul.types import (
 log = logging.getLogger(__name__)
 
 
-class MirrorController(ActionController[MirrorAction], SchemaController):
+class MirrorController(ActionController[MirrorAction],
+                       SchemaController,
+                       SourceController):
 
     @cached_property
     def client(self) -> AzulClient:
@@ -134,6 +139,8 @@ class MirrorController(ActionController[MirrorAction], SchemaController):
     def mirror_source(self, catalog: CatalogName, source_json: JSON):
         plugin = self.repository_plugin(catalog)
         source = plugin.source_ref_cls.from_json(source_json)
+        assert source.id in self._list_public_source_ids(catalog), R(
+            'Cannot mirror non-public source', source)
         # The desired partition size depends on the maximum number of messages
         # we can send in one Lambda invocation, because queueing the individual
         # mirror_file messages turns out to dominate the running time of

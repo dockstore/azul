@@ -83,6 +83,9 @@ class SourceController(AppController):
         else:
             return source_ids
 
+    def _list_public_source_ids(self, catalog: CatalogName) -> set[str]:
+        return self._list_source_ids(catalog, authentication=None)
+
     def get_filters(self,
                     catalog: CatalogName,
                     authentication: Authentication | None,
