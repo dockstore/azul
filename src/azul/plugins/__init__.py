@@ -23,7 +23,7 @@ from typing import (
     cast,
 )
 
-import attr
+import attrs
 from more_itertools import (
     one,
 )
@@ -124,10 +124,10 @@ class DocumentSlice(TypedDict, total=False):
     excludes: FieldGlobs
 
 
-@attr.s(auto_attribs=True, frozen=True, kw_only=True)
+@attrs.frozen(auto_attribs=True, kw_only=True)
 class Sorting:
     field_name: FieldName
-    descending: bool = attr.ib(default=False)
+    descending: bool = attrs.field(default=False)
     max_page_size: int = 1000
 
     @property
@@ -135,7 +135,7 @@ class Sorting:
         return 'desc' if self.descending else 'asc'
 
 
-@attr.s(auto_attribs=True, frozen=True, kw_only=True)
+@attrs.frozen(auto_attribs=True, kw_only=True)
 class SpecialFields:
     """
     Azul defines a number of fields in each /index/{entity_type} response that
@@ -790,7 +790,7 @@ class RepositoryPlugin[BUNDLE: Bundle,
         raise NotImplementedError
 
 
-@attr.s(auto_attribs=True, frozen=True, kw_only=True)
+@attrs.frozen(auto_attribs=True, kw_only=True)
 class File(SerializableAttrs, metaclass=ABCMeta):
     """
     A reference to a data file in the repository.
@@ -837,7 +837,7 @@ class File(SerializableAttrs, metaclass=ABCMeta):
         raise NotImplementedError
 
 
-@attr.s(auto_attribs=True, kw_only=True)
+@attrs.define(auto_attribs=True, kw_only=True)
 class RepositoryFileDownload(metaclass=ABCMeta):
     #: The file being downloaded
     file: File
