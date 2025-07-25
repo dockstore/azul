@@ -288,15 +288,15 @@ Repeat these steps to reindex any additional catalogs.
 Updating the AMI for GitLab instances
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Once a month, operators must check for updates to the AMI for the root volume of
-the EC2 instance running GitLab. We use a hardened — to the requirements of the
-CIS Amazon Linux 2 benchmark — variant of Amazon's Linux 2 AMI. The license to
-use the AMI for an EC2 instance is sold by CIS as a subscription on the AWS
-Marketplace:
+As part of the upgrades isssue, operators must check for updates to the AMI for
+the root volume of the EC2 instance running GitLab. We use a hardened — to the
+requirements of the CIS Amazon Linux 2 benchmark — variant of Amazon's Linux 2
+AMI. The license to use the AMI for an EC2 instance is sold by CIS as a
+subscription on the AWS Marketplace:
 
-https://aws.amazon.com/marketplace/pp/prodview-5ihz572adcm7i
+https://aws.amazon.com/marketplace/pp/prodview-wv574yqgjv6jg
 
-The license costs $0.02 per instance/hour. Every AWS account must subscribe
+The license costs $0.024 per instance/hour. Every AWS account must subscribe
 separately.
 
 There are ways to dynamically determine the latest AMI released by CIS under the
@@ -313,7 +313,7 @@ component, say, ``_select dev.gitlab`` and run
 
     aws ec2 describe-images \
             --owners aws-marketplace \
-            --filters="Name=name,Values=*4c096026-c6b0-440c-bd2f-6d34904e4fc6*" \
+            --filters="Name=name,Values=*abcfcbaf-134e-4639-a7b4-fd285b9fcf0a*" \
         | jq -r '.Images[] | .CreationDate+"\t"+.ImageId+"\t"+.Name' \
         | sort \
         | tail -1
