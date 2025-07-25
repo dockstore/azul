@@ -1,11 +1,11 @@
 atomicwrites==1.4.1
 attrs==25.3.0
 aws-requests-auth==0.4.3
-awscli==1.41.7
+awscli==1.41.13
 blessed==1.21.0
-boto3==1.39.7
-boto3-stubs-lite==1.39.7
-botocore==1.39.7
+boto3==1.39.13
+boto3-stubs-lite==1.39.13
+botocore==1.39.13
 botocore-stubs==1.38.46
 cachetools==5.5.2
 certifi==2025.7.14
@@ -15,7 +15,7 @@ charset-normalizer==3.4.2
 chevron==0.14.0
 click==8.2.1
 colorama==0.4.6
-coverage==7.9.2
+coverage==7.10.0
 cryptography==45.0.5
 deprecated==1.2.18
 docker==7.1.0
@@ -29,9 +29,9 @@ flake8==7.3.0
 furl==2.1.4
 gevent==25.5.1
 gitdb==4.0.12
-gitpython==3.1.44
+gitpython==3.1.45
 google-api-core==2.25.1
-google-api-python-client==2.176.0
+google-api-python-client==2.177.0
 google-auth==2.40.3
 google-auth-httplib2==0.2.0
 google-cloud-bigquery==3.13.0
@@ -52,7 +52,7 @@ inquirer==3.4.0
 jinja2==3.1.6
 jmespath==1.0.1
 jq==1.10.0
-jsonschema==4.24.0
+jsonschema==4.25.0
 jsonschema-path==0.3.4
 jsonschema-specifications==2025.4.1
 lazy-object-proxy==1.11.0
