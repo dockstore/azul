@@ -99,6 +99,7 @@ class DSSBundle(HCABundle[DSSBundleFQID]):
                         args={'version': file_version}))
 
 
+@attrs.frozen()
 class Plugin(RepositoryPlugin[
                  DSSBundle,
                  SimpleSourceSpec,
@@ -106,16 +107,16 @@ class Plugin(RepositoryPlugin[
                  DSSBundleFQID
              ],
              HasCachedHttpClient):
+    source: str
 
     @classmethod
     def create(cls, catalog: CatalogName) -> RepositoryPlugin:
-        return cls()
+        return cls(source=one(config.sources(catalog)))
 
     @property
     def sources(self) -> AbstractSet[SimpleSourceSpec]:
-        assert config.dss_source is not None
         return {
-            SimpleSourceSpec.parse(config.dss_source)
+            SimpleSourceSpec.parse(self.source)
         }
 
     def _lookup_source_id(self, spec: SimpleSourceSpec) -> str:
