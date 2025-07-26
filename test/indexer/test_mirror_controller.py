@@ -24,6 +24,9 @@ from azul import (
 from azul.http import (
     http_client,
 )
+from azul.indexer import (
+    SourceConfig,
+)
 from azul.indexer.mirror_controller import (
     MirrorController,
 )
@@ -128,7 +131,7 @@ class TestMirrorController(DCP2TestCase,
         return [self._mock_sqs_record(body, fifo=True)]
 
     def _remote_mirror(self) -> MutableJSONs:
-        self.client.remote_mirror(self.catalog, [self.source])
+        self.client.remote_mirror(self.catalog, [(self.source, SourceConfig())])
         return self._read_queue(self.client.mirror_queue())
 
     def _test_remote_mirror(self):

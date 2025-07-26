@@ -50,10 +50,10 @@ def env() -> Mapping[str, str | None]:
         #           plugin_type: {'name'=plugin_package},
         #           ...
         #       }
-        #       'sources': [
-        #                   source,
-        #                   ...
-        #       ]
+        #       'sources': {
+        #           source: {}
+        #           ...
+        #       }
         #   },
         #   ...
         # }

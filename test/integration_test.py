@@ -118,6 +118,7 @@ from azul.http import (
 )
 from azul.indexer import (
     Prefix,
+    SourceConfig,
     SourceRef,
     SourceSpec,
     SourcedBundleFQID,
@@ -285,8 +286,8 @@ class IntegrationTestCase(AzulTestCase, metaclass=ABCMeta):
             if config.is_tdr_enabled(catalog)
         }
         managed_access_sources = {catalog: set() for catalog in config.catalogs}
-        for catalog, specs in configured_sources.items():
-            for spec in specs:
+        for catalog, sources in configured_sources.items():
+            for spec, _ in sources.items():
                 source_id = one(id for id, name in all_sources.items() if name == spec.name)
                 if source_id not in public_sources:
                     ref = TDRSourceRef(id=source_id, spec=spec, prefix=None)
@@ -297,7 +298,7 @@ class IntegrationTestCase(AzulTestCase, metaclass=ABCMeta):
                        catalog: CatalogName,
                        *,
                        public: bool | None = None
-                       ) -> SourceRef | None:
+                       ) -> tuple[SourceRef, SourceConfig] | None:
         """
         Choose an indexed source at random.
 
@@ -323,27 +324,27 @@ class IntegrationTestCase(AzulTestCase, metaclass=ABCMeta):
                 # it's actually needed
                 for source in self.managed_access_sources_by_catalog[catalog]
             }
-            self.assertIsSubset(ma_sources, sources)
+            self.assertIsSubset(ma_sources, sources.keys())
 
-        def _filter(source: SourceSpec) -> bool:
+        def _filter(source: tuple[SourceSpec, SourceConfig]) -> bool:
             if public is None:
                 valid = True
             elif public is True:
-                valid = source not in ma_sources
+                valid = source[0] not in ma_sources
             elif public is False:
-                valid = source in ma_sources
+                valid = source[0] in ma_sources
             else:
                 assert False, public
             return valid
 
-        sources = set(filter(_filter, sources))
+        sources = dict(filter(_filter, sources.items()))
 
         if len(sources) == 0:
             assert public is False, 'An IT catalog must contain at least one public source'
             return None
         else:
-            source = self.random.choice(sorted(sources))
-            return plugin.resolve_source(source)
+            source, cfg = self.random.choice(sorted(sources.items()))
+            return plugin.resolve_source(source), cfg
 
 
 class IndexingIntegrationTest(IntegrationTestCase):
@@ -455,8 +456,10 @@ class IndexingIntegrationTest(IntegrationTestCase):
         catalogs: list[Catalog] = []
         for catalog in config.integration_test_catalogs:
             if index:
-                public_source = self._select_source(catalog, public=True)
+                public_source, _ = self._select_source(catalog, public=True)
                 ma_source = self._select_source(catalog, public=False)
+                if ma_source is not None:
+                    ma_source = ma_source[0]
                 sources = alist(public_source, ma_source)
                 notifications, fqids = self._prepare_notifications(catalog, sources)
             else:
@@ -1894,7 +1897,7 @@ class CanBundleScriptIntegrationTest(IntegrationTestCase):
                                           'repository': config.Catalog.Plugin(name='canned'),
                                       },
                                       sources={
-                                          'https://github.com/HumanCellAtlas/schema-test-data/tree/master/tests'
+                                          'https://github.com/HumanCellAtlas/schema-test-data/tree/master/tests': {}
                                       })
         with mock.patch.object(Config,
                                'catalogs',
@@ -1904,7 +1907,7 @@ class CanBundleScriptIntegrationTest(IntegrationTestCase):
             self._test_catalog(mock_catalog)
 
     def bundle_fqid(self, catalog: CatalogName) -> SourcedBundleFQID:
-        source = self._select_source(catalog)
+        source, _ = self._select_source(catalog)
         # The plugin will raise an exception if the source lacks a prefix
         source = source.with_prefix(Prefix.of_everything)
         bundle_fqids = self.azul_client.index_repository_service.list_bundles(catalog, source, prefix='')
