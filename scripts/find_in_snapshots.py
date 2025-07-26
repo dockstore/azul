@@ -15,6 +15,7 @@ from azul import (
 )
 from azul.args import (
     AzulArgumentHelpFormatter,
+    matching_sources,
 )
 from azul.azulclient import (
     AzulClient,
@@ -41,14 +42,13 @@ def main(args):
 
     azul = AzulClient(num_workers=1)
     sources_by_catalog = azul.sources_by_catalog(args.catalogs)
+    sources_by_catalog = matching_sources(sources_by_catalog, set(args.sources))
     previous_sources: set[str] = set()
     for catalog, sources in sources_by_catalog.items():
         sources -= previous_sources
         tdr_plugin = azul.repository_plugin(catalog)
         assert isinstance(tdr_plugin, TDRPlugin)
         log.info('Checking for %r in catalog %s', args.match, catalog)
-        if args.snapshot is not None:
-            sources = {s for s in sources if args.snapshot in s}
         for spec in sources:
             log.info('Validating snapshot %s', spec)
             source = TDRSourceSpec.parse(spec)
@@ -111,10 +111,12 @@ if __name__ == '__main__':
                         metavar='STR_MATCH',
                         default='||',
                         help='The string pattern to match.')
-    parser.add_argument('--snapshot',
-                        required=False,
+    parser.add_argument('--sources',
+                        default=config.current_sources,
+                        nargs='+',
                         metavar='SNAPSHOT_SEQ',
-                        help='Limit scan to matching string sequence in selected catalog(s).')
+                        help='Limit scan to selected catalog(s). '
+                             'Supports shell-style wildcards to match multiple sources per argument.')
 
     args = parser.parse_args(sys.argv[1:])
     main(args)
