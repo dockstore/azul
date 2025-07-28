@@ -1227,7 +1227,11 @@ emit_tf({} if config.terraform_component != 'gitlab' else {
             f'gitlab_{zone}': {
                 'client_vpn_endpoint_id': '${aws_ec2_client_vpn_endpoint.gitlab.id}',
                 'target_vpc_subnet_id': '${aws_subnet.gitlab_public_%s.id}' % zone,
-                'destination_cidr_block': all_ipv4
+                'destination_cidr_block': all_ipv4,
+                'timeouts': {
+                    # The default is 4 min, which is too short
+                    'create': '10m'
+                }
             }
             for zone in range(num_zones)
             if not split_tunnel
