@@ -390,3 +390,52 @@ class StatusRetryHttpClient(HttpClientDecorator):
                         return response
             else:
                 return response
+
+
+def parse_header(name: str, value: str) -> tuple[str, dict[str, str]]:
+    """
+    Parse a MIME-related HTTP header, like ``content-type`` or
+    ``content-disposition`` into the mandatory part of the header's value and a
+    dictionary with an entry for each optional parameter in that value.
+
+    >>> parse_header('content-type', 'text/html; charset=utf-8')
+    ('text/html', {'charset': 'utf-8'})
+
+    >>> parse_header('content-type', 'application/json; charset=utf-8; foo=bar')
+    ('application/json', {'charset': 'utf-8', 'foo': 'bar'})
+
+    >>> parse_header('content-type', 'text/html')
+    ('text/html', {})
+
+    >>> parse_header('content-disposition', 'attachment; filename="document.pdf"')
+    ('attachment', {'filename': 'document.pdf'})
+
+    >>> parse_header('content-disposition', 'attachment; name="foo.pdf"; name="bar.pdf"')
+    Traceback (most recent call last):
+    ...
+    AssertionError: R('Duplicate parameters', [('name', 'foo.pdf'), ('name', 'bar.pdf')])
+
+    >>> parse_header('content-disposition', '')
+    Traceback (most recent call last):
+    ...
+    AssertionError: R('Empty arguments are disallowed', 'content-disposition', '')
+
+    >>> parse_header('content-type', 'text:charset=utf-8')
+    Traceback (most recent call last):
+    ...
+    AssertionError: R('Unparsable header format', 'text:charset=utf-8')
+    """
+    assert '' not in (name, value), R(
+        'Empty arguments are disallowed', name, value)
+    from email.message import (
+        Message,
+    )
+    m = Message()
+    m[name] = value
+    params = m.get_params(header=name)
+    assert isinstance(params, list)
+    key, delimiter = params.pop(0)
+    assert delimiter == '', R('Unparsable header format', value)
+    params_dict = dict(params)
+    assert len(params_dict) == len(params), R('Duplicate parameters', params)
+    return key, params_dict
