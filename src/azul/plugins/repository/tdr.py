@@ -9,14 +9,11 @@ import datetime
 import logging
 import time
 from typing import (
-    AbstractSet,
     Callable,
     Iterable,
-    Self,
     TypeVar,
 )
 
-import attr
 from chalice import (
     UnauthorizedError,
 )
@@ -25,9 +22,7 @@ from furl import (
 )
 
 from azul import (
-    CatalogName,
     cache_per_thread,
-    config,
     require,
 )
 from azul.auth import (
@@ -88,7 +83,6 @@ T = TypeVar('T')
 TDR_BUNDLE = TypeVar('TDR_BUNDLE', bound=TDRBundle)
 
 
-@attr.s(kw_only=True, auto_attribs=True, frozen=True)
 class TDRPlugin[TDR_BUNDLE: TDRBundle,
                 TDR_BUNDLE_FQID: TDRBundleFQID](
     RepositoryPlugin[
@@ -98,18 +92,6 @@ class TDRPlugin[TDR_BUNDLE: TDRBundle,
         TDR_BUNDLE_FQID
     ]
 ):
-    _sources: AbstractSet[TDRSourceSpec]
-
-    @classmethod
-    def create(cls, catalog: CatalogName) -> Self:
-        return cls(sources=frozenset(
-            TDRSourceSpec.parse(spec)
-            for spec in config.sources(catalog))
-        )
-
-    @property
-    def sources(self) -> AbstractSet[TDRSourceSpec]:
-        return self._sources
 
     def _auth_fallback(self,
                        authentication: Authentication | None,
@@ -238,7 +220,6 @@ class TDRPlugin[TDR_BUNDLE: TDRBundle,
         parse_dcp2_version(version)
 
     def find_in_source(self,
-                       catalog: CatalogName,
                        source: TDRSourceSpec,
                        string: str
                        ) -> Iterable[JSON]:
@@ -263,7 +244,7 @@ class TDRPlugin[TDR_BUNDLE: TDRBundle,
                 '''
                 for row in self._run_sql(query):
                     match = {
-                        'catalog': catalog,
+                        'catalog': self.catalog,
                         'spec': str(source),
                         'table': table_name,
                         'column': column,

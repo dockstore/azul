@@ -46,7 +46,7 @@ def main(args):
         for source_str in sources:
             if source_str not in previous_sources:
                 source = TDRSourceSpec.parse(source_str)
-                invalid_sources.extend(plugin.find_in_source(catalog, source, args.match))
+                invalid_sources.extend(plugin.find_in_source(source, args.match))
                 previous_sources.add(source_str)
     print()
     if invalid_sources:
