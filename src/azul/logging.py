@@ -1,10 +1,13 @@
 from contextlib import (
     contextmanager,
 )
+import json
 import logging
 from typing import (
-    IO,
+    Any,
+    Literal,
     Optional,
+    TYPE_CHECKING,
 )
 
 import attr
@@ -13,17 +16,26 @@ from more_itertools import (
 )
 
 import azul
-from azul.chalice import (
-    AzulChaliceApp,
+from azul.json import (
+    json_head,
 )
 from azul.strings import (
     trunc_ellipses,
 )
+from azul.types import (
+    JSON,
+    reify,
+)
+
+if TYPE_CHECKING:
+    from azul.chalice import (
+        AzulChaliceApp,
+    )
 
 
 @attr.s(frozen=False, kw_only=False, auto_attribs=True)
 class LambdaLogFilter(logging.Filter):
-    app: Optional[AzulChaliceApp] = None
+    app: Optional['AzulChaliceApp'] = None
 
     def filter(self, record):
         if self.app is None or self.app.lambda_context is None:
@@ -43,7 +55,7 @@ lambda_log_format = '\t'.join([
 lambda_log_date_format = '%Y-%m-%dT%H:%M:%S'
 
 
-def configure_app_logging(app: AzulChaliceApp, *loggers):
+def configure_app_logging(app: 'AzulChaliceApp', *loggers):
     _configure_log_levels(app.log, *loggers)
     if not app.loaded_dynamically:
         # Environment is not unit test
@@ -163,20 +175,44 @@ def silenced_es_logger():
             assert es_log.level == original_log_level
 
 
-def http_body_log_message(body_type: str,
-                          body: bytes | bytearray | str | IO[bytes] | IO[str] | None,
-                          *,
-                          verbatim: bool = False,
-                          ) -> str:
+json_body_types = reify(JSON)
+
+
+def http_body_log_message(kind: Literal['request', 'response'], body: Any) -> str:
+    """
+    Returns a log message suitable for logging the given HTTP request or
+    response body. The level set in AZUL_DEBUG determines whether the body is
+    logged in full, truncated, or if only its type and length (if known) are
+    logged.
+
+    :param kind: wether the given body represents a request or a response
+
+    :param body: the request or response body to be logged
+    """
+    debug, max_len = azul.config.debug, 1024
+    assert debug >= 0, debug
     if body is None:
-        return f'… without {body_type} body'
-    elif isinstance(body, (bytes, bytearray, str)):
-        if verbatim:
-            if isinstance(body, (bytes, bytearray)):
-                body = body.decode(errors='ignore')
-        else:
+        return f'… without a {kind} body'
+    elif isinstance(body, (str, bytes, bytearray)):
+        if debug == 0:
+            return f'… with a {kind} body of length {len(body)} and type {type(body)!r}'
+        elif debug == 1 and len(body) > max_len:
             # https://github.com/python/typing/discussions/1911
-            body = trunc_ellipses(body, max_len=128)  # type: ignore[type-var]
-        return f'… with {body_type} body {body!r}'
-    else:
-        return f'… with nonprintable body ({type(body)!r})'
+            prefix = trunc_ellipses(body, max_len)  # type: ignore[type-var]
+            return f'… with a {kind} body of length {len(body)} starting in {prefix!r}'
+        else:
+            return f'… with a {kind} body of length {len(body)} being {body !r}'
+    elif isinstance(body, json_body_types):
+        if debug == 0:
+            pass  # fall through to the default
+        else:
+            if debug == 1:
+                repr_prefix, is_complete = json_head(max_len, body)
+                if is_complete:
+                    repr = repr_prefix
+                else:
+                    return f'… with a {kind} body starting in {repr_prefix}'
+            else:
+                repr = json.dumps(body)
+            return f'… with a {kind} body of length {len(repr)} being {repr}'
+    return f'… with a {kind} body of type ({type(body)!r})'

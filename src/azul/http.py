@@ -77,18 +77,18 @@ class LoggingHttpClient(HttpClientDecorator):
         log.info('Making %s request to %r', method, url)
         if config.debug > 1:
             log.debug('… with keyword args %r', kwargs)
-        log.debug(http_body_log_message('request', body))
+        log.info(http_body_log_message('request', body))
         start = time.time()
         response = super().urlopen(method, url, *args, body=body, **kwargs)
         duration = time.time() - start
         assert isinstance(response, urllib3.HTTPResponse), type(response)
         log.info('Got %s response after %.3fs from %s to %s',
                  response.status, duration, method, url)
-        log.debug('… with response headers %r', response.headers)
+        log.info('… with response headers %r', response.headers)
         if response.isclosed():
-            log.debug(http_body_log_message('response', response.data))
+            log.info(http_body_log_message('response', response.data))
         else:
-            log.debug('… with a streamed response body')
+            log.info('… with a streamed response body')
         return response
 
     def log(self, message: str, *args):
@@ -376,7 +376,7 @@ class StatusRetryHttpClient(HttpClientDecorator):
                         else:
                             retry_after = int(retry_after)
                             if logging_client is not None:
-                                logging_client.log('Sleeping %d to honor Retry-After header', retry_after)
+                                logging_client.log('Sleeping %ds to honor Retry-After header', retry_after)
                             time.sleep(retry_after)
                 else:
                     if retries.raise_on_status:
