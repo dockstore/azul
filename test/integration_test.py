@@ -48,9 +48,6 @@ from unittest.mock import (
     PropertyMock,
 )
 import uuid
-from zipfile import (
-    ZipFile,
-)
 
 import attr
 from chalice import (
@@ -647,7 +644,6 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
     def _manifest_validators(self) -> dict[ManifestFormat, Callable[[str, bytes], None]]:
         return {
             ManifestFormat.compact: self._check_compact_manifest,
-            ManifestFormat.terra_bdbag: self._check_terra_bdbag_manifest,
             ManifestFormat.terra_pfb: self._check_terra_pfb_manifest,
             ManifestFormat.curl: self._check_curl_manifest,
             ManifestFormat.verbatim_jsonl: self._check_jsonl_manifest,
@@ -1002,55 +998,6 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
 
     def _check_compact_manifest(self, catalog: CatalogName, response: bytes):
         self.__check_csv_manifest(BytesIO(response), self._uuid_column_name(catalog))
-
-    def _check_terra_bdbag_manifest(self, catalog: CatalogName, response: bytes):
-        with ZipFile(BytesIO(response)) as zip_fh:
-            data_path = os.path.join(os.path.dirname(first(zip_fh.namelist())), 'data')
-            file_path = os.path.join(data_path, 'participants.tsv')
-            with zip_fh.open(file_path) as file:
-                rows = self.__check_csv_manifest(file, 'bundle_uuid')
-                for row in rows:
-                    # Terra doesn't allow colons in this column, but they may
-                    # exist in versions indexed by TDR
-                    self.assertNotIn(':', row['entity:participant_id'])
-
-        suffix = '__file_drs_uri'
-        prefixes = [
-            c[:-len(suffix)]
-            for c in rows[0].keys()
-            if c.endswith(suffix)
-        ]
-        size, drs_uri, name = min(
-            (
-                int(row[prefix + '__file_size']),
-                row[prefix + suffix],
-                row[prefix + '__file_name'],
-            )
-            for row in rows
-            for prefix in prefixes
-            if row[prefix + suffix]
-        )
-        log.info('Resolving %r (%r) from catalog %r (%i bytes)',
-                 drs_uri, name, catalog, size)
-        plugin = self.azul_client.repository_plugin(catalog)
-        drs_client = plugin.drs_client()
-        access = drs_client.get_object(drs_uri, access_method=AccessMethod.gs)
-        # TDR quirkily uses the GS access method to provide both a GS access URL
-        # *and* an access ID that produces an HTTPS signed URL
-        #
-        # https://github.com/ga4gh/data-repository-service-schemas/issues/360
-        # https://github.com/ga4gh/data-repository-service-schemas/issues/361
-        self.assertIsNone(access.headers)
-        access_url = furl(access.url)
-        self.assertEqual('https', access_url.scheme)
-        # Try HEAD first because it's more efficient, fall back to GET if the
-        # DRS implementations prohibits it, like Azul's DRS proxy of DSS.
-        for method in [HEAD, GET]:
-            response = self._get_url_unchecked(method, access_url)
-            if response.status != 403:
-                break
-        self.assertEqual(200, response.status, response.data)
-        self.assertEqual(size, int(response.headers['Content-Length']))
 
     def _check_terra_pfb_manifest(self, _catalog: CatalogName, response: bytes):
         # A PFB is an Avro Object Container File, i.e., a stream of Avro objects
