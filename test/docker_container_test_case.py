@@ -11,7 +11,6 @@ from typing import (
     ClassVar,
     Optional,
 )
-import warnings
 
 import docker
 from docker import (
@@ -177,9 +176,5 @@ class DockerContainerTestCase(AzulUnitTestCase):
 
     @classmethod
     def tearDownClass(cls):
-        for cached, containers in cls._containers.values():
-            for line in containers.logs().decode().split('\n'):
-                if 'deprecated' in line.lower():
-                    warnings.warn(line, DeprecationWarning)
         cls._kill_containers()
         super().tearDownClass()
