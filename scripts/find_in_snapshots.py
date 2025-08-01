@@ -51,7 +51,10 @@ def main(args):
             log.info('Validating snapshot %s', spec)
             source = TDRSourceSpec.parse(spec)
             tables = tdr_plugin._full_table_name(source, 'INFORMATION_SCHEMA.COLUMNS')
-            query = f'SELECT table_name, column_name FROM {backtick(tables)}'
+            query = f'''
+                SELECT table_name, column_name
+                FROM {backtick(tables)}
+            '''
             rows = tdr_plugin._run_sql(query)
             table_columns = defaultdict(list)
             for row in rows:
@@ -64,10 +67,10 @@ def main(args):
                 table = tdr_plugin._full_table_name(source, table_name)
                 for column in columns:
                     query = f'''
-                            SELECT datarepo_row_id, {column}
-                            FROM {backtick(table)}
-                            WHERE CONTAINS_SUBSTR({column}, '{args.match}')
-                            '''
+                        SELECT datarepo_row_id, {column}
+                        FROM {backtick(table)}
+                        WHERE CONTAINS_SUBSTR({column}, {args.match!r})
+                    '''
                     result = tdr_plugin._run_sql(query)
                     for row in result:
                         match = {
