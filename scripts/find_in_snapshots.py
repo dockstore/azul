@@ -3,9 +3,6 @@ Command line utility to validate snapshots prior to indexing by Azul
 """
 
 import argparse
-from collections import (
-    defaultdict,
-)
 import json
 import logging
 import sys
@@ -19,9 +16,6 @@ from azul.args import (
 from azul.azulclient import (
     AzulClient,
 )
-from azul.bigquery import (
-    backtick,
-)
 from azul.logging import (
     configure_script_logging,
 )
@@ -31,55 +25,29 @@ from azul.plugins.repository.tdr import (
 from azul.terra import (
     TDRSourceSpec,
 )
+from azul.types import (
+    JSON,
+)
 
 log = logging.getLogger(__name__)
 configure_script_logging(log)
 
 
 def main(args):
-    invalid_sources = list()
+    invalid_sources: list[JSON] = list()
 
     azul = AzulClient(num_workers=1)
     sources_by_catalog = azul.matching_sources(args.catalogs, set(args.sources))
     previous_sources: set[str] = set()
     for catalog, sources in sources_by_catalog.items():
-        sources -= previous_sources
         plugin = azul.repository_plugin(catalog)
         assert isinstance(plugin, TDRPlugin)
         log.info('Checking for %r in catalog %s', args.match, catalog)
         for source_str in sources:
-            log.info('Validating snapshot %s', source_str)
-            source = TDRSourceSpec.parse(source_str)
-            query = f'''
-                SELECT table_name, column_name
-                FROM {backtick(plugin._full_table_name(source, 'INFORMATION_SCHEMA.COLUMNS'))}
-            '''
-            table_columns = defaultdict(list)
-            for row in plugin._run_sql(query):
-                table_name, column_name = row['table_name'], row['column_name']
-                assert isinstance(table_name, str), table_name
-                assert isinstance(column_name, str), column_name
-                table_columns[table_name].append(column_name)
-            for table_name, columns in table_columns.items():
-                log.info('Validating table %s', table_name)
-                for column in columns:
-                    query = f'''
-                        SELECT datarepo_row_id, {column}
-                        FROM {backtick(plugin._full_table_name(source, table_name))}
-                        WHERE CONTAINS_SUBSTR({column}, {args.match!r})
-                    '''
-                    for row in plugin._run_sql(query):
-                        match = {
-                            'catalog': catalog,
-                            'spec': source_str,
-                            'table': table_name,
-                            'column': column,
-                            'row_id': row['datarepo_row_id'],
-                            'value': row[column]
-                        }
-                        log.warning('Undesired string found: %r', match)
-                        invalid_sources.append(match)
-        previous_sources = sources
+            if source_str not in previous_sources:
+                source = TDRSourceSpec.parse(source_str)
+                invalid_sources.extend(plugin.find_in_source(catalog, source, args.match))
+                previous_sources.add(source_str)
     print()
     if invalid_sources:
         print(json.dumps(invalid_sources, indent=4))
