@@ -76,7 +76,7 @@ def main(args):
                         match = {
                             'catalog': catalog,
                             'spec': spec,
-                            'table': table,
+                            'table': table_name,
                             'column': column,
                             'row_id': row['datarepo_row_id'],
                             'value': row[column]
