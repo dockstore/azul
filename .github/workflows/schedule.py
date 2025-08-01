@@ -35,6 +35,7 @@ class FrontMatter(TypedDict, total=False):
     name: str
     about: str
     title: str
+    type: str
     labels: list[str]
     assignees: list[str]
     _repository: str
@@ -169,6 +170,8 @@ class IssueTemplate:
         if issues:
             log.info('At least one matching issue already exists: %r', issues)
         else:
+            type = self.properties.get('type')
+            assert type is not None
             command = [
                 'gh', 'api',
                 '--method', 'POST',
@@ -176,7 +179,8 @@ class IssueTemplate:
                 '-H', 'Accept: application/vnd.github+json',
                 '-H', 'X-GitHub-Api-Version: 2022-11-28',
                 '-f', f'title={title}',
-                '-f', f'body={self.body}'
+                '-f', f'body={self.body}',
+                '-f', f'type={type}'
             ]
             assignees = self.properties.get('assignees', [])
             for assignee in assignees:
@@ -203,6 +207,8 @@ class IssueTemplate:
                 assert set(assignees) == actual_assignees, (assignees, actual_assignees)
                 actual_labels = set(map(itemgetter('name'), issue['labels']))
                 assert set(labels) <= actual_labels, (labels, actual_labels)
+                actual_type = issue['type']['name']
+                assert type == actual_type, (type, actual_type)
                 log.info('Successfully created and verfied issue #%s', issue_number)
 
 

@@ -3,6 +3,7 @@ name: Renew server and client VPN certificates
 about: Issue template for the quarterly renewals of VPN certificates
 title: Renew VPN server and client certificates 
 labels: -,infra,orange
+type: Task
 _start: 2025-08-01T09:00
 _period: 3 months
 ---
