@@ -66,6 +66,10 @@ class IndexController(ActionController[IndexAction]):
     def client(self) -> AzulClient:
         return AzulClient()
 
+    @property
+    def actions_are_fifo(self) -> bool:
+        return False
+
     def handlers(self) -> dict[str, Any]:
         @self.app.route(
             '/{catalog}/{action}',

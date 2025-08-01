@@ -71,6 +71,10 @@ class MirrorController(ActionController[MirrorAction], SchemaController):
     def client(self) -> AzulClient:
         return AzulClient()
 
+    @property
+    def actions_are_fifo(self) -> bool:
+        return True
+
     @cache
     def service(self, catalog: CatalogName) -> MirrorService:
         schema_url_func = partial(self.schema_url, facility='mirror')
