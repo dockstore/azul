@@ -242,13 +242,13 @@ dind_image, _ = resolve_docker_image_for_pull('dind')
 gitlab_image, _ = resolve_docker_image_for_pull('gitlab')
 runner_image, _ = resolve_docker_image_for_pull('gitlab_runner')
 
-# For instructions on finding the latest CIS-hardened AMI, see
-# OPERATOR.rst#upgrading-linux-ami
+# For instructions on finding the latest CIS-hardened AMI, see "Updating the AMI
+# for GitLab instances" section in OPERATOR.rst.
 #
-# CIS Amazon Linux 2 Kernel 4.14 Benchmark - Level 1 - v01 -4c096026-c6b0-440c-bd2f-6d34904e4fc6
+# CIS Amazon Linux 2 Kernel 5.10 Benchmark - Level 1 - v06 -abcfcbaf-134e-4639-a7b4-fd285b9fcf0a
 #
 ami_id = {
-    'us-east-1': 'ami-005aa69a4e42cc74d'
+    'us-east-1': 'ami-0c20d362bca9d3c31'
 }
 
 gitlab_mount = '/mnt/gitlab'
@@ -1227,7 +1227,11 @@ emit_tf({} if config.terraform_component != 'gitlab' else {
             f'gitlab_{zone}': {
                 'client_vpn_endpoint_id': '${aws_ec2_client_vpn_endpoint.gitlab.id}',
                 'target_vpc_subnet_id': '${aws_subnet.gitlab_public_%s.id}' % zone,
-                'destination_cidr_block': all_ipv4
+                'destination_cidr_block': all_ipv4,
+                'timeouts': {
+                    # The default is 4 min, which is too short
+                    'create': '10m'
+                }
             }
             for zone in range(num_zones)
             if not split_tunnel

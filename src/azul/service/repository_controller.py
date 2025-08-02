@@ -271,12 +271,17 @@ class RepositoryController(SourceController):
         else:
             mirror_service, is_mirrored = None, False
         if is_mirrored:
+            # The file's content type would be None on subsequent requests since
+            # it isn't propagated via a query parameter. `MirrorFileDownload`
+            # will always be ready immediately.
+            assert request_index == 0, request_index
             download = MirrorFileDownload(
                 file=file,
                 location=mirror_service.get_mirror_url(file),
                 replica=replica,
                 token=token
             )
+            assert download.retry_after is None, download
         else:
             download_cls = plugin.file_download_class()
             download = download_cls(file=file, replica=replica, token=token)
