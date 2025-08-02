@@ -159,8 +159,9 @@ class BaseMirrorService:
         return StorageService(bucket)
 
     def get_mirror_url(self, file: File) -> str:
-        return self._storage.get_presigned_url(key=(self.mirror_object_key(file)),
-                                               file_name=file.name)
+        return self._storage.get_presigned_url(key=self.mirror_object_key(file),
+                                               file_name=file.name,
+                                               content_type=file.content_type)
 
     def _get_info(self, file: File) -> JSON | None:
         key = self.info_object_key(file)
@@ -243,6 +244,19 @@ class SchemaUrlFunc(Protocol):
 class MirrorService(BaseMirrorService, HasCachedHttpClient):
     schema_url_func: SchemaUrlFunc
 
+    # We don't store the mirrored files' actual content type(s) in S3's
+    # `Content-Type` metadata because a single file object may store the
+    # contents of multiple file metadata entities, which may declare different
+    # content types for the same data. When file objects are downloaded from the
+    # mirror bucket via Azul, this value will be overridden with the requested
+    # file's actual content type via a query parameter in the signed URL.
+    #
+    # Files mirrored prior to this change may erroneously specify a different
+    # value in the `Content-Type` metadata. We haven't found an efficient way to
+    # update the content type of an existing object without copying its data.
+    #
+    file_object_content_type = 'application/octet-stream'
+
     @cached_property
     def repository_plugin(self) -> RepositoryPlugin:
         return RepositoryPlugin.load(self.catalog).create(self.catalog)
@@ -255,7 +269,7 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
         file_content = self._download(file)
         self._storage.put(object_key=self.mirror_object_key(file),
                           data=file_content,
-                          content_type=file.content_type,
+                          content_type=self.file_object_content_type,
                           overwrite=False)
         hasher = get_resumable_hasher(file.digest.type)
         hasher.update(file_content)
@@ -270,7 +284,7 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
         storage = self._storage
         key = self.mirror_object_key(file)
         upload = storage.create_multipart_upload(object_key=key,
-                                                 content_type=file.content_type)
+                                                 content_type=self.file_object_content_type)
         return upload.id
 
     def mirror_file_part(self,

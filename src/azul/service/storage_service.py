@@ -232,7 +232,12 @@ class StorageService:
             kwargs['IfNoneMatch'] = '*'
         return kwargs
 
-    def get_presigned_url(self, key: str, file_name: str | None = None) -> str:
+    def get_presigned_url(self,
+                          key: str,
+                          *,
+                          file_name: str | None = None,
+                          content_type: str | None = None
+                          ) -> str:
         """
         Return a pre-signed URL to the given key.
 
@@ -243,6 +248,11 @@ class StorageService:
                           Content-Disposition header in the response to a
                           request to the signed URL. If None, no such header
                           will be present in the response.
+
+        :param content_type: the value for the Content-Type header in the
+                             response to a request to the signed URL. If None,
+                             the value stored in the object's metadata will be
+                             used.
         """
         assert file_name is None or '"' not in file_name, file_name
         return self._s3.generate_presigned_url(
@@ -254,6 +264,11 @@ class StorageService:
                     {}
                     if file_name is None else
                     {'ResponseContentDisposition': f'attachment;filename="{file_name}"'}
+                ),
+                **(
+                    {}
+                    if content_type is None else
+                    {'ResponseContentType': content_type}
                 )
             })
 
