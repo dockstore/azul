@@ -196,7 +196,7 @@ class IssueTemplate:
             log.info('… created %r, verifying labels and assignees …', url)
             path = urllib.parse.urlparse(url).path.removeprefix('/')
             actual_repository, dir, issue_number = path.rsplit('/', maxsplit=2)
-            assert dir == 'issues'
+            assert dir == 'issues', dir
             if repository is not None:
                 assert repository == actual_repository, (repository, actual_repository)
             command = [
