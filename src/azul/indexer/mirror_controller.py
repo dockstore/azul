@@ -318,7 +318,6 @@ class MirrorController(ActionController[MirrorAction], SchemaController):
                               etags: Sequence[str],
                               hasher: Hasher
                               ) -> SQSFifoMessage:
-        service = self.service(catalog)
         return SQSFifoMessage(
             body={
                 'catalog': catalog,
@@ -328,5 +327,5 @@ class MirrorController(ActionController[MirrorAction], SchemaController):
                 'etags': etags,
                 'hasher': hasher_to_str(hasher)
             },
-            group_id=service.mirror_object_key(file)
+            group_id=file.digest.value
         )
