@@ -305,7 +305,7 @@ def env() -> Mapping[str, Optional[str]]:
                 'is_custom': True
             },
             'elasticsearch': {
-                'ref': 'docker.io/ucscgi/azul-elasticsearch:7.17.28-49',
+                'ref': 'docker.io/ucscgi/azul-elasticsearch:7.17.28-50',
                 'url': 'https://hub.docker.com/repository/docker/ucscgi/azul-elasticsearch',
                 'is_custom': True
             },
