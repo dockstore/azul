@@ -1867,6 +1867,9 @@ class TestVerbatimJSONLManifestPartitioningBySource(DCP1ManifestTestCase):
         # We can't assert the presence of every entity from the indexed bundles
         # because some HCA entities still lack replicas.
         #
+        # FIXME: Some replicas are still missing for HCA
+        #        https://github.com/DataBiosphere/azul/issues/6597
+        #
         def replicas_exist_for(entity_type: EntityType) -> bool:
             return entity_type in (
                 'project',
