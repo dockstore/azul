@@ -1,3 +1,5 @@
+import base64
+import bz2
 from collections.abc import (
     Mapping,
 )
@@ -1198,7 +1200,7 @@ def env() -> Mapping[str, Optional[str]]:
         'AZUL_DOMAIN_NAME': 'explore.anvilproject.org',
         'AZUL_SUBDOMAIN_TEMPLATE': '*.{AZUL_DEPLOYMENT_STAGE}',
 
-        'AZUL_CATALOGS': json.dumps({
+        'AZUL_CATALOGS': base64.b64encode(bz2.compress(json.dumps({
             f'{catalog}{suffix}': dict(atlas=atlas,
                                        internal=internal,
                                        plugins=dict(metadata=dict(name='anvil'),
@@ -1212,7 +1214,7 @@ def env() -> Mapping[str, Optional[str]]:
                 ('', False),
                 ('-it', True)
             ]
-        }),
+        }).encode())).decode('ascii'),
 
         'AZUL_TDR_SOURCE_LOCATION': 'us-central1',
         'AZUL_TDR_SERVICE_URL': 'https://data.terra.bio',
