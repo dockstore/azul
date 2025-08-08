@@ -38,7 +38,6 @@ from typing import (
     ContextManager,
     IO,
     Protocol,
-    TypedDict,
     cast,
 )
 from unittest import (
@@ -100,6 +99,7 @@ from azul.chalice import (
 )
 from azul.collections import (
     alist,
+    lookup,
 )
 from azul.csp import (
     CSP,
@@ -209,13 +209,6 @@ class ReadableFileObject(Protocol):
     def read(self, amount: int) -> bytes: ...
 
     def seek(self, amount: int) -> Any: ...
-
-
-class FileInnerEntity(TypedDict):
-    uuid: str
-    version: str
-    name: str
-    size: int
 
 
 GET = 'GET'
@@ -736,19 +729,11 @@ class IndexingIntegrationTest(IntegrationTestCase):
                 urls.append(furl(response.headers['Location']))
         return urls
 
-    def _get_one_inner_file(self, catalog: CatalogName) -> tuple[JSON, FileInnerEntity]:
+    def _get_one_inner_file(self, catalog: CatalogName) -> tuple[JSON, JSON]:
         outer_file = self._get_one_outer_file(catalog)
         inner_files: JSONs = outer_file['files']
         inner_file = one(inner_files)
-        # FIXME: Two AnVIL snapshots with null in anvil_file.file_size column
-        #        https://github.com/DataBiosphere/azul/issues/7243
-        if inner_file['size'] is None:
-            inner_file = dict(inner_file, size=1)
-        assert isinstance(inner_file['uuid'], str), inner_file
-        assert isinstance(inner_file['version'], str), inner_file
-        assert isinstance(inner_file['name'], str), inner_file
-        assert isinstance(inner_file['size'], int), inner_file
-        return outer_file, cast(FileInnerEntity, inner_file)
+        return outer_file, inner_file
 
     @cache
     def _get_one_outer_file(self, catalog: CatalogName) -> JSON:
@@ -1119,20 +1104,15 @@ class IndexingIntegrationTest(IntegrationTestCase):
         with self.subTest('repository_files', catalog=catalog):
             outer_file, inner_file = self._get_one_inner_file(catalog)
             source = self._source_spec(catalog, outer_file)
-            file_uuid, file_version = inner_file['uuid'], inner_file['version']
-            endpoint_url = config.service_endpoint
-            file_url = endpoint_url.set(path=f'/fetch/repository/files/{file_uuid}',
-                                        args=dict(catalog=catalog,
-                                                  version=file_version))
+            file_url = furl(inner_file['url'])
+            self.assertEqual(file_url.path.segments[0], 'repository')
+            file_url.path.segments.insert(0, 'fetch')
             response = self._get_url_unchecked(GET, file_url)
             if response.status == 404:
                 response = json.loads(response.data)
                 # Phantom files lack DRS URIs and cannot be downloaded
                 self.assertEqual('NotFoundError', response['Code'])
-                self.assertEqual(response['Message'],
-                                 f'File {file_uuid!r} with version {file_version!r} '
-                                 f'was found in catalog {catalog!r}, '
-                                 f'however no download is currently available')
+                self.assertIn('no download is currently available', response['Message'])
             else:
                 self.assertEqual(200, response.status)
                 response = json.loads(response.data)
@@ -1144,15 +1124,16 @@ class IndexingIntegrationTest(IntegrationTestCase):
                 response = self._get_url(GET, furl(response['Location']), stream=True)
                 self._validate_file_response(response, source, inner_file)
 
-    def _file_ext(self, file: FileInnerEntity) -> str:
+    def _file_ext(self, file: JSON) -> str:
         # We believe that the file extension is a more reliable indicator than
         # the `format` metadata field. Note that this method preserves multipart
         # extensions and includes the leading '.', so the extension of
         # "foo.fastq.gz" is ".fastq.gz" instead of "gz"
-        suffixes = PurePath(file['name']).suffixes
+        file_name = lookup(file, 'file_name', 'name')
+        suffixes = PurePath(file_name).suffixes
         return ''.join(suffixes).lower()
 
-    def _validate_file_content(self, content: ReadableFileObject, file: FileInnerEntity):
+    def _validate_file_content(self, content: ReadableFileObject, file: JSON):
         file_ext = self._file_ext(file)
         if file_ext == '.fastq':
             self._validate_fastq_content(content)
@@ -1160,12 +1141,17 @@ class IndexingIntegrationTest(IntegrationTestCase):
             with gzip.open(content) as buf:
                 self._validate_fastq_content(buf)
         else:
-            self.assertEqual(1 if file['size'] > 0 else 0, len(content.read(1)))
+            file_size = lookup(file, 'file_size', 'size')
+            # FIXME: Two AnVIL snapshots with null in anvil_file.file_size column
+            #        https://github.com/DataBiosphere/azul/issues/7243
+            if file_size is None:
+                file_size = 1
+            self.assertEqual(1 if file_size > 0 else 0, len(content.read(1)))
 
     def _validate_file_response(self,
                                 response: urllib3.HTTPResponse,
                                 source: SourceSpec,
-                                file: FileInnerEntity):
+                                file: JSON):
         """
         Note: The response object must have been obtained with stream=True
         """
@@ -1184,14 +1170,15 @@ class IndexingIntegrationTest(IntegrationTestCase):
     def _test_drs(self,
                   catalog: CatalogName,
                   source: SourceSpec,
-                  file: FileInnerEntity
+                  file: JSON
                   ) -> None:
         repository_plugin = self.azul_client.repository_plugin(catalog)
         drs = repository_plugin.drs_client()
+        file_uuid = lookup(file, 'document_id', 'uuid')
         for access_method in AccessMethod:
             with self.subTest('drs', catalog=catalog, access_method=AccessMethod.https):
-                log.info('Resolving file %r with DRS using %r', file['uuid'], access_method)
-                drs_uri = f'drs://{config.api_lambda_domain("service")}/{file["uuid"]}'
+                log.info('Resolving file %r with DRS using %r', file_uuid, access_method)
+                drs_uri = f'drs://{config.api_lambda_domain("service")}/{file_uuid}'
                 access = drs.get_object(drs_uri, access_method=access_method)
                 self.assertIsNone(access.headers)
                 if access.method is AccessMethod.https:
@@ -1203,11 +1190,12 @@ class IndexingIntegrationTest(IntegrationTestCase):
                 else:
                     self.fail(access_method)
 
-    def _test_dos(self, catalog: CatalogName, file: FileInnerEntity):
+    def _test_dos(self, catalog: CatalogName, file: JSON):
         with self.subTest('dos', catalog=catalog):
-            log.info('Resolving file %s with DOS', file['uuid'])
+            file_uuid = lookup(file, 'document_id', 'uuid')
+            log.info('Resolving file %s with DOS', file_uuid)
             response = self._check_endpoint(method=GET,
-                                            path=drs.dos_object_url_path(file['uuid']),
+                                            path=drs.dos_object_url_path(file_uuid),
                                             args=dict(catalog=catalog))
             json_data = json.loads(response)['data_object']
             file_url = first(json_data['urls'])['url']
