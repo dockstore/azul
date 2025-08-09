@@ -5,6 +5,9 @@ from unittest.mock import (
     patch,
 )
 
+from chalice.app import (
+    SQSRecord,
+)
 import jsonschema
 from more_itertools import (
     one,
@@ -35,6 +38,9 @@ from azul.logging import (
 )
 from azul.plugins.metadata.hca import (
     HCAFile,
+)
+from azul.types import (
+    JSON,
 )
 from azul_test_case import (
     DCP2TestCase,
@@ -93,6 +99,9 @@ class TestMirrorController(DCP2TestCase,
     def mirror_controller(self) -> MirrorController:
         return self.app_module.app.mirror_controller
 
+    def _mirror_event(self, body: JSON) -> list[SQSRecord]:
+        return [self._mock_sqs_record(body, fifo=True)]
+
     def _test_remote_mirror(self):
         self.client.remote_mirror(self.catalog, [self.source])
         source_message = one(self._read_queue(self.client.mirror_queue()))
@@ -103,7 +112,7 @@ class TestMirrorController(DCP2TestCase,
         return source_message
 
     def _test_mirror_source(self, source_message):
-        event = [self._mock_sqs_record(source_message)]
+        event = self._mirror_event(source_message)
         self.mirror_controller.mirror(event)
         partition_messages = self._read_queue(self.client.mirror_queue())
         partition_message = copy_json(partition_messages[0])
@@ -118,7 +127,7 @@ class TestMirrorController(DCP2TestCase,
         return partition_message
 
     def _test_mirror_partition(self, partition_message):
-        event = [self._mock_sqs_record(partition_message)]
+        event = self._mirror_event(partition_message)
         file = HCAFile(uuid='405852c9-a0cc-4cd8-b9ff-7c6296223661',
                        name='foo.txt',
                        version=None,
@@ -138,7 +147,7 @@ class TestMirrorController(DCP2TestCase,
         return file, file_message
 
     def _test_mirror_file(self, file, file_message):
-        event = [self._mock_sqs_record(file_message)]
+        event = self._mirror_event(file_message)
         with patch.object(MirrorService, '_download', return_value=self._file_contents):
             self.mirror_controller.mirror(event)
         service = self.mirror_controller.service(self.catalog)
@@ -148,7 +157,7 @@ class TestMirrorController(DCP2TestCase,
         self.assertEqual(mirrored_file_contents, self._file_contents)
 
     def _test_corrupted_download(self, file_message):
-        event = [self._mock_sqs_record(file_message)]
+        event = self._mirror_event(file_message)
         corrupted_contents = self._file_contents[:-1] + b'Q'
         with patch.object(MirrorService, '_download', return_value=corrupted_contents):
             with self.assertRaises(AssertionError) as e:
@@ -156,7 +165,7 @@ class TestMirrorController(DCP2TestCase,
             self.assertTrue(R.caused(e.exception))
 
     def _test_reuploaded_file(self, file_message):
-        event = [self._mock_sqs_record(file_message)]
+        event = self._mirror_event(file_message)
         with patch.object(MirrorService, '_download', return_value=self._file_contents):
             with self.assertRaises(AssertionError) as e:
                 self.mirror_controller.mirror(event)

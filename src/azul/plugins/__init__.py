@@ -160,7 +160,6 @@ class SpecialFields:
 
 class ManifestFormat(Enum):
     compact = 'compact'
-    terra_bdbag = 'terra.bdbag'
     terra_pfb = 'terra.pfb'
     curl = 'curl'
     verbatim_jsonl = 'verbatim.jsonl'

@@ -77,8 +77,8 @@ class TestAppLogging(AzulUnitTestCase):
                     self.assertEqual(500, response.status_code)
 
                     # The request is always logged
-                    self.assertEqual(3, len(azul_log.output))
-                    headers = {
+                    self.assertEqual(5, len(azul_log.output))
+                    info = {
                         'host': f'{host}:{port}',
                         'user-agent': 'python-requests/2.32.4',
                         'accept-encoding': 'gzip, deflate',
@@ -86,10 +86,12 @@ class TestAppLogging(AzulUnitTestCase):
                         'connection': 'keep-alive'
                     }
                     self.assertEqual(f'INFO:azul.chalice:Received GET request for {path!r}, '
-                                     f"with {json.dumps({'query': None, 'headers': headers})}.",
+                                     f"with {json.dumps({'query': None, 'headers': info})}.",
                                      azul_log.output[0])
-                    self.assertEqual('INFO:azul.chalice:Did not authenticate request.',
+                    self.assertEqual('INFO:azul.chalice:… without a request body',
                                      azul_log.output[1])
+                    self.assertEqual('INFO:azul.chalice:Did not authenticate request.',
+                                     azul_log.output[2])
 
                     # The exception is always logged
                     self.assertEqual(1, len(app_log.output))
@@ -118,25 +120,41 @@ class TestAppLogging(AzulUnitTestCase):
                         self.assertIn(traceback_header, body)
                         self.assertIn(magic_message, body)
 
-                    headers = {
-                        # At lower debug levels, the content type header isn't
-                        # set when running Chalice locally. If it were, the
-                        # expected value would be `application/json`.
-                        **({} if debug < 2 else {'Content-Type': 'text/plain'}),
-                        **app.security_headers(),
-                        'Cache-Control': 'no-store',
+                    info = {
+                        'headers': {
+                            # At lower debug levels, the content type header
+                            # isn't set when running Chalice locally. If it
+                            # were, the expected value would be application/json
+                            **({} if debug < 2 else {'Content-Type': 'text/plain'}),
+                            **app.security_headers(),
+                            'Cache-Control': 'no-store',
+                        }
                     }
-                    expected = (
-                        'DEBUG:azul.chalice:Returning 500 response with headers ' +
-                        json.dumps(headers) + '. ' +
-                        'See next line for the first 1024 characters of the body.\n' +
-                        body
-                    ) if debug else (
-                        'INFO:azul.chalice:Returning 500 response. ' +
-                        'To log headers and body, set AZUL_DEBUG to 1.'
-                    )
+                    if debug == 0:
+                        expected = "… with a response body of type (<class 'dict'>)"
+                    elif debug == 1 and len(body) > 1024:
+                        self.fail('Truncated response bodies are not covered by this test')
+                    else:
+                        if body.startswith('{'):
+                            # If the response body is deserialized JSON, its
+                            # repr() is logged, not the repr() of the serialized
+                            # JSON. The former starts with a curly brace. In the
+                            # latter, that brace would follow a single quote.
+                            length, body = len(body), body
+                        else:
+                            length, body = len(body), repr(body)
+                        expected = f'… with a response body of length {length} being {body}'
+
                     self.maxDiff = None
-                    self.assertEqual(expected, azul_log.output[2])
+                    header = 'INFO:azul.chalice:'
+                    self.assertEqual(
+                        header + 'Returning 500 response with headers ' + json.dumps(info) + '.',
+                        azul_log.output[3]
+                    )
+                    self.assertEqual(
+                        header + expected,
+                        azul_log.output[4]
+                    )
 
 
 class TestPermittedWarnings(AzulUnitTestCase):
@@ -156,11 +174,11 @@ class TestUnexpectedWarnings(TestCase):
         msg = 'Testing unexpected warnings, nothing to see here.'
         category = ResourceWarning
 
-        for parents in (
+        for parents in [
             (AzulUnitTestCase,),
             (AzulUnitTestCase, AlwaysTearDownTestCase),
             (AlwaysTearDownTestCase, AzulUnitTestCase)
-        ):
+        ]:
             with self.subTest(parents=parents):
                 class Test(*parents):
 
