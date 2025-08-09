@@ -177,7 +177,6 @@ class Plugin(MetadataPlugin[HCABundle]):
     def manifest_formats(self) -> Sequence[ManifestFormat]:
         return [
             ManifestFormat.compact,
-            ManifestFormat.terra_bdbag,
             ManifestFormat.terra_pfb,
             ManifestFormat.curl,
             *iif(config.enable_replicas, [

@@ -71,6 +71,10 @@ class MirrorController(ActionController[MirrorAction], SchemaController):
     def client(self) -> AzulClient:
         return AzulClient()
 
+    @property
+    def actions_are_fifo(self) -> bool:
+        return True
+
     @cache
     def service(self, catalog: CatalogName) -> MirrorService:
         schema_url_func = partial(self.schema_url, facility='mirror')
@@ -314,7 +318,6 @@ class MirrorController(ActionController[MirrorAction], SchemaController):
                               etags: Sequence[str],
                               hasher: Hasher
                               ) -> SQSFifoMessage:
-        service = self.service(catalog)
         return SQSFifoMessage(
             body={
                 'catalog': catalog,
@@ -324,5 +327,5 @@ class MirrorController(ActionController[MirrorAction], SchemaController):
                 'etags': etags,
                 'hasher': hasher_to_str(hasher)
             },
-            group_id=service.mirror_object_key(file)
+            group_id=file.digest.value
         )

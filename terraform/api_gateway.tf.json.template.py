@@ -207,7 +207,7 @@ def add_waf_blocked_alarm(resources: JSON) -> JSON:
             *[('BlockedRequests', rule) for rule in rules]
         ]
         m_sum = '+'.join(f'm{i}' for i in range(1, len(metrics)))
-        expression = f'{m_sum}/(m0+{m_sum})*100'
+        expression = f'({m_sum})/(m0+{m_sum})*100'
 
         assert 'aws_cloudwatch_metric_alarm' not in resources
         return resources | {

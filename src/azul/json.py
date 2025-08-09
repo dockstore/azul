@@ -187,35 +187,37 @@ def copy_json(tree: CompositeJSON, *path: str | int) -> MutableCompositeJSON:
     return tree
 
 
-def json_head(n: int, o: AnyJSON) -> str:
+def json_head(n: int, o: AnyJSON) -> tuple[str, bool]:
     """
-    Return the first n characters of a serialized JSON structure.
+    Return the first n characters of a serialized JSON structure, and a bool
+    indicating if the returned value is the complete serialized structure.
 
     >>> json_head(0, {})
-    ''
+    ('', False)
     >>> json_head(1, {})
-    '{'
+    ('{', False)
     >>> json_head(2, {})
-    '{}'
+    ('{}', True)
     >>> json_head(3, {})
-    '{}'
+    ('{}', True)
     >>> json_head(0, "x")
-    ''
+    ('', False)
     >>> json_head(1, "x")
-    '"'
+    ('"', False)
     >>> json_head(2, "x")
-    '"x'
+    ('"x', False)
     >>> json_head(3, "x")
-    '"x"'
+    ('"x"', True)
     >>> json_head(4, "x")
-    '"x"'
+    ('"x"', True)
     """
     buf = StringIO()
     for chunk in json.JSONEncoder().iterencode(o):
         buf.write(chunk)
         if buf.tell() > n:
-            break
-    return buf.getvalue()[:n]
+            return buf.getvalue()[:n], False
+    else:
+        return buf.getvalue(), True
 
 
 def json_hash(o: AnyJSON, hash=None):

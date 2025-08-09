@@ -1,3 +1,7 @@
+from abc import (
+    ABCMeta,
+    abstractmethod,
+)
 import logging
 import time
 from typing import (
@@ -19,6 +23,7 @@ from azul.chalice import (
 )
 from azul.queues import (
     Action,
+    SQSFifoMessage,
     SQSMessage,
 )
 from azul.types import (
@@ -30,7 +35,12 @@ from azul.types import (
 log = logging.getLogger(__name__)
 
 
-class ActionController[A: Action](AppController):
+class ActionController[A: Action](AppController, metaclass=ABCMeta):
+
+    @property
+    @abstractmethod
+    def actions_are_fifo(self) -> bool:
+        raise NotImplementedError
 
     @cached_property
     def _action_cls(self) -> type[A]:
@@ -54,9 +64,16 @@ class ActionController[A: Action](AppController):
                        event: Iterable[SQSRecord],
                        message_handler: Callable[[A, JSON], None]):
         for record in event:
-            message = SQSMessage.from_record(record)
-            log.info('Worker handling message %r, attempt #%i (approx), message ID %s',
-                     message.body, message.attempts, message.id)
+            message: SQSMessage
+            if self.actions_are_fifo:
+                message = SQSFifoMessage.from_record(record)
+                suffix, args = ', group ID %s', [message.group_id]
+            else:
+                message = SQSMessage.from_record(record)
+                suffix, args = '', []
+            log.info('Worker handling message %r, ' +
+                     'attempt #%i (approx), message ID %s' + suffix,
+                     message.body, message.attempts, message.id, *args)
             start = time.time()
             try:
                 action = self._load_action(json_str(message.body['action']))
