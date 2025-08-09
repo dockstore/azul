@@ -171,44 +171,6 @@ class SetAccumulator(Accumulator):
         return sorted(self.value, key=self.key)
 
 
-class ListAccumulator(Accumulator):
-    """
-    Accumulate values into a list, optionally discarding values that
-    would grow the list past the maximum size, if specified.
-    """
-
-    def __init__(self, max_size=None) -> None:
-        super().__init__()
-        self.value = list()
-        self.max_size = max_size
-
-    def accumulate(self, value):
-        """
-        >>> acc = ListAccumulator(max_size=3)
-        >>> acc.accumulate(1)
-        >>> acc.get(), acc.dropped
-        ([1], 0)
-
-        >>> acc.accumulate([3, 2])
-        >>> acc.get(), acc.dropped
-        ([1, 2, 3], 0)
-
-        >>> acc.accumulate([4])
-        >>> acc.get(), acc.dropped
-        ([1, 2, 3], 1)
-        """
-        if self.max_size is None or len(self.value) < self.max_size:
-            if isinstance(value, list):
-                self.value.extend(value)
-            else:
-                self.value.append(value)
-        else:
-            self.dropped += 1
-
-    def get(self) -> list[Any]:
-        return sorted(self.value)
-
-
 class SetOfDictAccumulator(SetAccumulator):
     """
     A set accumulator that supports mutable mappings as values.
