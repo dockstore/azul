@@ -114,41 +114,40 @@ class SetAccumulator(Accumulator):
         self.max_size = max_size
         self.key = none_safe_key(none_last=True) if key is None else key
 
-    def accumulate(self, value) -> bool:
+    def accumulate(self, value) -> int:
         """
-        :return: True, if the given value was incorporated into the set. If the
-                 given value is a collection (list or set), the values inside
-                 the collection will be accumulated. If any of the values are
-                 dropped, or if no values are incorporated, False will be
-                 returned.
+        :return: The number of values that were incorporated. There are two
+                 reasons a value may not be incorporated: it was already in the
+                 set or the accumulator is full. The latter is reflected in
+                 self.dropped
 
         >>> acc = SetAccumulator(max_size=4)
         >>> acc.accumulate(1), acc.get(), acc.dropped
-        (True, [1], 0)
+        (1, [1], 0)
 
         >>> acc.accumulate(1), acc.get(), acc.dropped
-        (False, [1], 0)
+        (0, [1], 0)
 
         >>> acc.accumulate(2), acc.get(), acc.dropped
-        (True, [1, 2], 0)
+        (1, [1, 2], 0)
 
         >>> acc.accumulate([1, 2, 3]), acc.get(), acc.dropped
-        (True, [1, 2, 3], 0)
+        (1, [1, 2, 3], 0)
 
         >>> acc.accumulate([1, 2, 3]), acc.get(), acc.dropped
-        (False, [1, 2, 3], 0)
+        (0, [1, 2, 3], 0)
 
         >>> acc.accumulate([3, 4, 5]), acc.get(), acc.dropped
-        (False, [1, 2, 3, 4], 1)
+        (1, [1, 2, 3, 4], 1)
 
         >>> acc.accumulate([5, 6]), acc.get(), acc.dropped
-        (False, [1, 2, 3, 4], 3)
+        (0, [1, 2, 3, 4], 3)
         """
         # Tuples are treated as scalars. We rely on this behavior when
         # aggregating `ValueAndUnit` fields.
         if not isinstance(value, list):
             value = [value]
-        initial_len, initial_dropped = len(self.value), self.dropped
+        initial_len = len(self.value)
         assert self.max_size is None or initial_len <= self.max_size, (
             self.value, self.max_size)
         if self.max_size is None or len(value) + initial_len <= self.max_size:
@@ -161,7 +160,7 @@ class SetAccumulator(Accumulator):
                     self.value.add(v)
                 elif v not in self.value:
                     self.dropped += 1
-        return len(self.value) > initial_len and self.dropped == initial_dropped
+        return len(self.value) - initial_len
 
     def get(self) -> list[Any]:
         return sorted(self.value, key=self.key)
@@ -174,23 +173,23 @@ class SetOfDictAccumulator(SetAccumulator):
     >>> acc = SetOfDictAccumulator(key=lambda d: d['foo'])
     >>> d = {'foo': 2}
     >>> acc.accumulate(d)
-    True
+    1
 
     >>> acc.accumulate(d)
-    False
+    0
 
     >>> d = {'foo': 1, 'bar': 1}
     >>> acc.accumulate(d)
-    True
+    1
 
     >>> acc.accumulate([d, d])
-    False
+    0
 
     >>> acc.get()
     [{'foo': 1, 'bar': 1}, {'foo': 2}]
     """
 
-    def accumulate(self, value) -> bool:
+    def accumulate(self, value) -> int:
         if isinstance(value, list):
             # `freeze` converts lists to tuples, which the superclass treats as
             # scalars instead of sequences. Passing a list as a tuple would
