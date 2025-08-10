@@ -164,7 +164,6 @@ class SetAccumulator(Accumulator):
                     self.value.add(v)
                 elif v not in self.value:
                     self.dropped += 1
-
         return len(self.value) > initial_len and self.dropped == initial_dropped
 
     def get(self) -> list[Any]:
