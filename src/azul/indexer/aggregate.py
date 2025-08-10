@@ -120,7 +120,7 @@ class SetAccumulator(Accumulator):
                  given value is a collection (list or set), the values inside
                  the collection will be accumulated. If any of the values are
                  dropped, or if no values are incorporated, False will be
-                 retunred.
+                 returned.
 
         >>> acc = SetAccumulator(max_size=4)
         >>> acc.accumulate(1), acc.dropped
