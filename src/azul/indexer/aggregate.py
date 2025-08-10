@@ -123,29 +123,26 @@ class SetAccumulator(Accumulator):
                  returned.
 
         >>> acc = SetAccumulator(max_size=4)
-        >>> acc.accumulate(1), acc.dropped
-        (True, 0)
+        >>> acc.accumulate(1), acc.get(), acc.dropped
+        (True, [1], 0)
 
-        >>> acc.accumulate(1), acc.dropped
-        (False, 0)
+        >>> acc.accumulate(1), acc.get(), acc.dropped
+        (False, [1], 0)
 
-        >>> (acc.accumulate(2), acc.dropped)
-        (True, 0)
+        >>> acc.accumulate(2), acc.get(), acc.dropped
+        (True, [1, 2], 0)
 
-        >>> acc.accumulate([1, 2, 3]), acc.dropped
-        (True, 0)
+        >>> acc.accumulate([1, 2, 3]), acc.get(), acc.dropped
+        (True, [1, 2, 3], 0)
 
-        >>> acc.accumulate([1, 2, 3]), acc.dropped
-        (False, 0)
+        >>> acc.accumulate([1, 2, 3]), acc.get(), acc.dropped
+        (False, [1, 2, 3], 0)
 
-        >>> acc.accumulate([3, 4, 5]), acc.dropped
-        (False, 1)
+        >>> acc.accumulate([3, 4, 5]), acc.get(), acc.dropped
+        (False, [1, 2, 3, 4], 1)
 
-        >>> acc.accumulate([5, 6]), acc.dropped
-        (False, 3)
-
-        >>> acc.get()
-        [1, 2, 3, 4]
+        >>> acc.accumulate([5, 6]), acc.get(), acc.dropped
+        (False, [1, 2, 3, 4], 3)
         """
         # Tuples are treated as scalars. We rely on this behavior when
         # aggregating `ValueAndUnit` fields.
