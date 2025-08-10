@@ -335,52 +335,6 @@ class SingleValueAccumulator(LastValueAccumulator):
             raise ValueError('Conflicting values:', self.value, value)
 
 
-class OptionalValueAccumulator(LastValueAccumulator):
-    """
-    An accumulator that accepts at most one value and returns it.
-    Occurrence of more than one value, same or different, raises a ValueError.
-    """
-
-    def accumulate(self, value):
-        if self.value is None:
-            super().accumulate(value)
-        else:
-            raise ValueError('Conflicting values:', self.value, value)
-
-
-class MandatoryValueAccumulator(OptionalValueAccumulator):
-    """
-    An accumulator that requires exactly one value and returns it.
-    Occurrence of more than one value or no value at all raises a ValueError.
-    """
-
-    def get(self):
-        if self.value is None:
-            raise ValueError('No value')
-        else:
-            return super().get()
-
-
-class PriorityOptionalValueAccumulator(OptionalValueAccumulator):
-    """
-    An OptionalValueAccumulator that accepts (priority, value) tuples and
-    returns the value whose priority is equal to the maximum priority observed.
-    Occurrence of more than one value per priority raises a ValueError.
-    """
-
-    def __init__(self) -> None:
-        super().__init__()
-        self.priority = None
-
-    def accumulate(self, value):
-        priority, value = value
-        if self.priority is None or self.priority < priority:
-            self.priority = priority
-            self.value = None
-        if self.priority == priority:
-            super().accumulate(value)
-
-
 class MinAccumulator(LastValueAccumulator):
     """
     An accumulator that returns the minimal value seen.
