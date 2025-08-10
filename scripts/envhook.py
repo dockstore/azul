@@ -205,7 +205,8 @@ class EnvHook:
             import botocore.session
             import botocore.utils
         except ImportError:
-            self._print('Looks like boto3 is not installed. Skipping credential sharing with AWS CLI.')
+            self._print('Looks like boto3 is not installed. '
+                        'Skipping credential sharing with AWS CLI.')
         else:
             # Get the AssumeRole credential provider
             session = botocore.session.get_session()
