@@ -361,23 +361,23 @@ class DistinctAccumulator(Accumulator):
     the value from the first pair will be accumulated. The actual values will be
     accumulated in another accumulator instance specified at construction.
 
-        >>> acc = DistinctAccumulator(SumAccumulator(initially=0), max_size=3)
+    >>> acc = DistinctAccumulator(SumAccumulator(initially=0), max_size=3)
 
     Keys can be tuples, too.
 
-        >>> acc.accumulate((('x', 'y'), 3))
+    >>> acc.accumulate((('x', 'y'), 3))
 
     Values associated with a recurring key will not be accumulated.
 
-        >>> acc.accumulate((('x', 'y'), 4))
-        >>> acc.accumulate(('a', 20))
-        >>> acc.accumulate(('b', 100))
+    >>> acc.accumulate((('x', 'y'), 4))
+    >>> acc.accumulate(('a', 20))
+    >>> acc.accumulate(('b', 100))
 
     Accumulation stops at max_size distinct keys.
 
-        >>> acc.accumulate(('c', 1000))
-        >>> acc.get()
-        123
+    >>> acc.accumulate(('c', 1000))
+    >>> acc.get()
+    123
     """
 
     def __init__(self, inner: Accumulator, max_size: int = None) -> None:
