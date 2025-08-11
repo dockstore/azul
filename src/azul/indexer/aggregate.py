@@ -13,7 +13,7 @@ from typing import (
 )
 
 from azul import (
-    require,
+    R,
 )
 from azul.collections import (
     none_safe_key,
@@ -238,7 +238,7 @@ class DictAccumulator(Accumulator):
         >>> acc.accumulate('Foo')
         Traceback (most recent call last):
         ...
-        azul.RequirementError: ('foo', 'Foo')
+        AssertionError: R('Ambiguos key:', 'foo', 'values:', 'foo', 'Foo')
 
         >>> acc.accumulate('Bar')
         >>> acc.accumulate('BAZ')
@@ -256,7 +256,8 @@ class DictAccumulator(Accumulator):
             except KeyError:
                 self.value[key] = value
             else:
-                require(old_value == value, old_value, value)
+                assert old_value == value, R(
+                    'Ambiguos key:', key, 'values:', old_value, value)
         elif key not in self.value:
             self.dropped += 1
 
