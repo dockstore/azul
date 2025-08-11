@@ -269,6 +269,9 @@ class FrequencySetAccumulator(Accumulator):
     An accumulator that accepts any number of values and returns a list with
     at most max_size most frequently occurring values.
 
+    Note the max_size argument only limits the length of the accumulate, the
+    overall menory consumption of this accumulator is unbounded.
+
     >>> acc = FrequencySetAccumulator(2)
     >>> acc.accumulate('x')
     >>> acc.accumulate(['x','y'])
