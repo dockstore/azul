@@ -433,7 +433,7 @@ class SimpleAggregator(EntityAggregator):
         for field, value in entity.items():
             try:
                 accumulator = aggregate[field]
-            except Exception:
+            except KeyError:
                 accumulator = self._accumulator(field)
                 aggregate[field] = accumulator
             if accumulator is not None:
