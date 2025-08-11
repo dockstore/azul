@@ -440,17 +440,14 @@ class SimpleAggregator(EntityAggregator):
                                 accumulator.dropped, self.entity_type, k, self.outer_entity_type)
         return result
 
-    def _accumulate(self,
-                    aggregate: dict[str, Accumulator | None],
-                    entity: JSON
-                    ):
+    def _accumulate(self, aggregate: dict[str, Accumulator | None], entity: JSON):
         entity = self._transform_entity(entity)
-        for field_, value in entity.items():
+        for field, value in entity.items():
             try:
-                accumulator = aggregate[field_]
+                accumulator = aggregate[field]
             except Exception:
-                accumulator = self._accumulator(field_)
-                aggregate[field_] = accumulator
+                accumulator = self._accumulator(field)
+                aggregate[field] = accumulator
             if accumulator is not None:
                 accumulator.accumulate(value)
 
