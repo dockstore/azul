@@ -428,16 +428,6 @@ class SimpleAggregator(EntityAggregator):
             self._accumulate(aggregate, entity)
         return [self._aggregate(aggregate)] if aggregate else []
 
-    def _aggregate(self, aggregate: dict[str, Accumulator]) -> JSON:
-        result = {}
-        for k, accumulator in aggregate.items():
-            if accumulator is not None:
-                result[k] = accumulator.get()
-                if accumulator.dropped > 0:
-                    log.warning('Values were dropped %d times while aggregating %s.%s into %s',
-                                accumulator.dropped, self.entity_type, k, self.outer_entity_type)
-        return result
-
     def _accumulate(self, aggregate: dict[str, Accumulator | None], entity: JSON):
         entity = self._transform_entity(entity)
         for field, value in entity.items():
@@ -448,6 +438,16 @@ class SimpleAggregator(EntityAggregator):
                 aggregate[field] = accumulator
             if accumulator is not None:
                 accumulator.accumulate(value)
+
+    def _aggregate(self, aggregate: dict[str, Accumulator]) -> JSON:
+        result = {}
+        for k, accumulator in aggregate.items():
+            if accumulator is not None:
+                result[k] = accumulator.get()
+                if accumulator.dropped > 0:
+                    log.warning('Values were dropped %d times while aggregating %s.%s into %s',
+                                accumulator.dropped, self.entity_type, k, self.outer_entity_type)
+        return result
 
 
 class GroupingAggregator(SimpleAggregator):
