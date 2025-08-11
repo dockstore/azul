@@ -63,8 +63,9 @@ class SumAccumulator(Accumulator):
     """
     Add values.
 
-    Unlike the sum() built-in, this accumulator doesn't default to an initial
-    value of 0 but defaults to the first accumulated value instead.
+    Unlike the built-in sum() function, this accumulator doesn't default to an
+    initial value of 0 but defaults to the first accumulated value instead. Also
+    unlike sum(), it simply ignores None values.
     """
 
     def __init__(self, *, initially=None) -> None:
