@@ -34,6 +34,9 @@ from botocore.credentials import (
     Credentials,
 )
 import botocore.session
+from elasticsearch.exceptions import (
+    ElasticsearchWarning,
+)
 from furl import (
     furl,
 )
@@ -123,23 +126,6 @@ class AzulTestCase(TestCase):
                 RE(r'.+humancellatlas\.data\.metadata\.api\.LibraryPreparationProcess'),
                 RE(r'.*humancellatlas\.data\.metadata\.api\.SequencingProcess'),
 
-                # FIXME: https://github.com/DataBiosphere/azul/issues/2758
-                'OpenJDK 64-Bit Server VM warning: Option UseConcMarkSweepGC was deprecated',
-
-                RE(r'.*Fielddata access on the _uid field is deprecated, use _id instead'),
-                RE(r'.*Accessing variable \[_aggs\]'),
-                RE(r'.*Accessing variable \[_agg\]'),
-
-                # FIXME: furl.fragmentstr raises deprecation warning
-                #        https://github.com/DataBiosphere/azul/issues/2848
-                'furl.fragmentstr is deprecated',
-
-                (
-                    "Using or importing the ABCs from 'collections' instead of from "
-                    "'collections.abc' is deprecated since Python 3.3, and in 3.9 "
-                    "it will stop working"
-                ),
-
                 'Call to deprecated function (or staticmethod) patch_source_cache',
 
                 # FIXME: DeprecationWarning for ES body parameter
@@ -153,10 +139,11 @@ class AzulTestCase(TestCase):
                 # FIXME: DeprecationWarning for datetime methods in Python 3.12
                 #        https://github.com/DataBiosphere/azul/issues/5953
                 'datetime.datetime.utcnow() is deprecated',
-                'datetime.datetime.utcfromtimestamp() is deprecated',
             },
-            UserWarning: {
-                'https://github.com/DataBiosphere/azul/issues/2114',
+            ElasticsearchWarning: {
+                # FIXME: ES DeprecationWarning for using _id as sort key
+                #        https://github.com/DataBiosphere/azul/issues/7290
+                RE('.*Loading the fielddata on the _id field is deprecated and will be removed in future versions.*'),
             }
         }
         for warning_class, message_patterns in permitted_warnings_.items():
