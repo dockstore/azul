@@ -32,8 +32,6 @@ from azul.types import (
 
 log = logging.getLogger(__name__)
 
-Entities = JSONs
-
 
 class Accumulator(metaclass=ABCMeta):
     """
@@ -418,13 +416,13 @@ class EntityAggregator(metaclass=ABCMeta):
         return SetAccumulator(max_size=100)
 
     @abstractmethod
-    def aggregate(self, entities: Entities) -> Entities:
+    def aggregate(self, entities: JSONs) -> JSONs:
         raise NotImplementedError
 
 
 class SimpleAggregator(EntityAggregator):
 
-    def aggregate(self, entities: Entities) -> Entities:
+    def aggregate(self, entities: JSONs) -> JSONs:
         aggregate = {}
         for entity in entities:
             self._accumulate(aggregate, entity)
@@ -454,7 +452,7 @@ class SimpleAggregator(EntityAggregator):
 
 class GroupingAggregator(SimpleAggregator):
 
-    def aggregate(self, entities: Entities) -> Entities:
+    def aggregate(self, entities: JSONs) -> JSONs:
         aggregates: dict[Any, dict[str, Accumulator | None]] = defaultdict(dict)
         for entity in entities:
             group_keys = self._group_keys(entity)
