@@ -207,8 +207,8 @@ class DictAccumulator(Accumulator):
     """
     Accumulate values into a dictionary, allowing one unique value per key,
     discarding values that would exceed the maximum number of dictionary keys.
-    In a way this is a generalized SetAccumulator. DictAccumulator can replace
-    a SetAccumulator by using the identity function (``lambda _: _``) for the key.
+    In a way this is a generalized SetAccumulator. DictAccumulator can replace a
+    SetAccumulator by using the identity function for the key.
     """
 
     def __init__(self, max_size: int | None, key: Callable):
@@ -267,7 +267,7 @@ class DictAccumulator(Accumulator):
 class FrequencySetAccumulator(Accumulator):
     """
     An accumulator that accepts any number of values and returns a list with
-    length max_size or smaller containing the most frequent values accumulated.
+    at most max_size most frequently occurring values.
 
     >>> acc = FrequencySetAccumulator(2)
     >>> acc.accumulate('x')
@@ -275,6 +275,7 @@ class FrequencySetAccumulator(Accumulator):
     >>> acc.accumulate(['x','y','z'])
     >>> acc.get()
     ['x', 'y']
+
     >>> acc = FrequencySetAccumulator(0)
     >>> acc.accumulate('x')
     >>> acc.get()
