@@ -1,3 +1,7 @@
+from __future__ import (
+    annotations,
+)
+
 from abc import (
     ABCMeta,
     abstractmethod,
@@ -10,6 +14,8 @@ import logging
 from typing import (
     Any,
     Callable,
+    Hashable,
+    TYPE_CHECKING,
 )
 
 from azul import (
@@ -26,14 +32,24 @@ from azul.json_freeze import (
     thaw,
 )
 from azul.types import (
+    AnyJSON,
     JSON,
     JSONs,
+    json_mapping,
 )
 
 log = logging.getLogger(__name__)
 
+if TYPE_CHECKING:
+    from _typeshed import (
+        SupportsAdd,
+        SupportsDunderGT,
+        SupportsDunderLT,
+        SupportsRichComparison,
+    )
 
-class Accumulator(metaclass=ABCMeta):
+
+class Accumulator[V, A](metaclass=ABCMeta):
     """
     Accumulates multiple values into a single value, not necessarily of the same
     type.
@@ -43,7 +59,7 @@ class Accumulator(metaclass=ABCMeta):
         self.dropped = 0
 
     @abstractmethod
-    def accumulate(self, value):
+    def accumulate(self, value: V | list[V]) -> Any:
         """
         Incorporate the given value into this accumulator. If the value is not
         incorporated (due to e.g. a maximum size constraint), implementations
@@ -52,14 +68,33 @@ class Accumulator(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def get(self):
+    def get(self) -> A:
         """
         Return the accumulated value.
         """
         raise NotImplementedError
 
 
-class SumAccumulator(Accumulator):
+class BaseAccumulator[V, A](Accumulator[V, A], metaclass=ABCMeta):
+    """
+    Handles lists of values by accumulating each item individually. For certain
+    types of accumulators this may not be the most efficient way to handle such
+    lists.
+    """
+
+    def accumulate(self, value: V | list[V]) -> None:
+        if isinstance(value, list):
+            for value in value:
+                self._accumulate(value)
+        else:
+            self._accumulate(value)
+
+    @abstractmethod
+    def _accumulate(self, value: V) -> None:
+        raise NotImplementedError
+
+
+class SumAccumulator[V:SupportsAdd](BaseAccumulator[V | None, V | None]):
     """
     Add values.
 
@@ -68,28 +103,28 @@ class SumAccumulator(Accumulator):
     unlike sum(), it simply ignores None values.
     """
 
-    def __init__(self, *, initially=None) -> None:
+    def __init__(self, *, initially: V | None = None) -> None:
         """
         :param initially: the initial value for the sum. If None, the first
                           accumulated value that is not None will be used to
                           initialize the sum. Note that if this parameter is
-                          None, the return value of close() could be None, too.
+                          None, the return value of get() could be None, too.
         """
         super().__init__()
         self.value = initially
 
-    def accumulate(self, value) -> None:
+    def _accumulate(self, value: V | None) -> None:
         if value is not None:
             if self.value is None:
                 self.value = value
             else:
                 self.value += value
 
-    def get(self):
+    def get(self) -> V | None:
         return self.value
 
 
-class SetAccumulator(Accumulator):
+class SetAccumulator[V: Hashable](Accumulator[V, list[V]]):
     """
     Accumulates values into a set, discarding duplicates and, optionally, values
     that would grow the set past the maximum size. The accumulated value is
@@ -98,7 +133,10 @@ class SetAccumulator(Accumulator):
     smallest values, it returns a sorted list of the first N distinct values.
     """
 
-    def __init__(self, max_size=None, key=None) -> None:
+    def __init__(self,
+                 max_size: int | None = None,
+                 key: Callable[[V], SupportsRichComparison] | None = None
+                 ) -> None:
         """
         :param max_size: the maximum number of elements to retain
 
@@ -109,11 +147,11 @@ class SetAccumulator(Accumulator):
                     first element of the returned list will be None.
         """
         super().__init__()
-        self.value = set()
+        self.value: set[V] = set()
         self.max_size = max_size
         self.key = none_safe_key(none_last=True) if key is None else key
 
-    def accumulate(self, value) -> int:
+    def accumulate(self, value: V | list[V]) -> int:
         """
         :return: The number of values that were incorporated. There are two
                  reasons a value may not be incorporated: it was already in the
@@ -161,11 +199,11 @@ class SetAccumulator(Accumulator):
                     self.dropped += 1
         return len(self.value) - initial_len
 
-    def get(self) -> list[Any]:
+    def get(self) -> list[V]:
         return sorted(self.value, key=self.key)
 
 
-class SetOfDictAccumulator(SetAccumulator):
+class SetOfDictAccumulator(SetAccumulator[JSON | None]):
     """
     A set accumulator that supports mutable mappings as values.
 
@@ -188,23 +226,49 @@ class SetOfDictAccumulator(SetAccumulator):
     [{'foo': 1, 'bar': 1}, {'foo': 2}]
     """
 
-    def accumulate(self, value) -> int:
+    def _freeze(self, value: JSON | None) -> JSON | None:
+        return None if value is None else json_mapping(freeze(value))
+
+    def _thaw(self, value: JSON | None) -> JSON | None:
+        return None if value is None else json_mapping(thaw(value))
+
+    def accumulate(self, value: JSON | None | list[JSON | None]) -> int:
         if isinstance(value, list):
             # `freeze` converts lists to tuples, which the superclass treats as
             # scalars instead of sequences. Passing a list as a tuple would
             # therefore introduce an extraneous level of nesting, as every
             # element in `value` would end up in a single element of the
             # accumulated result.
-            frozen_value = list(map(freeze, value))
+            value = list(map(self._freeze, value))
         else:
-            frozen_value = freeze(value)
-        return super().accumulate(frozen_value)
+            value = self._freeze(value)
+        return super().accumulate(value)
 
-    def get(self):
-        return thaw(super().get())
+    def get(self) -> list[JSON | None]:
+        return [self._thaw(value) for value in super().get()]
 
 
-class DictAccumulator(Accumulator):
+if TYPE_CHECKING:
+    # @formatter:off (PyCharm puts two blank lines around indented top-level
+    # classes, flake8 wants one)
+    class HashableAndSupportsDunderLT(SupportsDunderLT,
+                                      Hashable,
+                                      metaclass=ABCMeta):
+        ...
+
+    class HashableAndSupportsDunderGT(SupportsDunderGT,
+                                      Hashable,
+                                      metaclass=ABCMeta):
+        ...
+
+    type HashableAndSortable = (
+        HashableAndSupportsDunderGT
+        | HashableAndSupportsDunderLT
+    )
+    # @formatter:on
+
+
+class DictAccumulator[K: HashableAndSortable, V](Accumulator[V, list[V]]):
     """
     Accumulate values into a dictionary, allowing one unique value per key,
     discarding values that would exceed the maximum number of dictionary keys.
@@ -212,7 +276,10 @@ class DictAccumulator(Accumulator):
     SetAccumulator by using the identity function for the key.
     """
 
-    def __init__(self, max_size: int | None, key: Callable):
+    def __init__(self,
+                 *,
+                 max_size: int | None,
+                 key: Callable[[V], K]):
         """
         :param max_size: The maximum number of elements to retain. A value of
                          None can be used to specify no maximum.
@@ -223,7 +290,7 @@ class DictAccumulator(Accumulator):
         super().__init__()
         self.max_size = max_size
         self.key = key
-        self.value = {}
+        self.value: dict[K, V] = {}
 
     def accumulate(self, value):
         """
@@ -266,7 +333,7 @@ class DictAccumulator(Accumulator):
         return sorted(self.value.values(), key=self.key)
 
 
-class FrequencySetAccumulator(Accumulator):
+class FrequencySetAccumulator[V](Accumulator[V, list[V]]):
     """
     An accumulator that accepts any number of values and returns a list with
     at most max_size most frequently occurring values.
@@ -274,31 +341,31 @@ class FrequencySetAccumulator(Accumulator):
     Note the max_size argument only limits the length of the accumulate, the
     overall menory consumption of this accumulator is unbounded.
 
-    >>> acc = FrequencySetAccumulator(2)
+    >>> acc = FrequencySetAccumulator(max_size=2)
     >>> acc.accumulate('x')
     >>> acc.accumulate(['x','y'])
     >>> acc.accumulate(['x','y','z'])
     >>> acc.get()
     ['x', 'y']
 
-    >>> acc = FrequencySetAccumulator(0)
+    >>> acc = FrequencySetAccumulator(max_size=0)
     >>> acc.accumulate('x')
     >>> acc.get()
     []
     """
 
-    def __init__(self, max_size) -> None:
+    def __init__(self, *, max_size: int) -> None:
         super().__init__()
-        self.value = Counter()
+        self.value: Counter[V] = Counter()
         self.max_size = max_size
 
-    def accumulate(self, value) -> None:
+    def accumulate(self, value: V | list[V]) -> None:
         if isinstance(value, (dict, list)):
             self.value.update(value)
         else:
             self.value[value] += 1
 
-    def get(self) -> list[Any]:
+    def get(self) -> list[V]:
         self.dropped = max(0, len(self.value) - self.max_size)
         return [item for item, count in self.value.most_common(self.max_size)]
 
@@ -354,7 +421,7 @@ class MaxAccumulator(LastValueAccumulator):
             super().accumulate(value)
 
 
-class DistinctAccumulator(Accumulator):
+class DistinctAccumulator[K:Hashable, V, A](BaseAccumulator[tuple[K, V], A]):
     """
     An accumulator for (key, value) tuples. Of two pairs with the same key, only
     the value from the first pair will be accumulated. The actual values will be
@@ -379,27 +446,36 @@ class DistinctAccumulator(Accumulator):
     123
     """
 
-    def __init__(self, inner: Accumulator, max_size: int = None) -> None:
+    def __init__(self,
+                 inner: Accumulator[V, A],
+                 max_size: int | None = None) -> None:
         super().__init__()
-        self.value = inner
-        self.keys = SetAccumulator(max_size=max_size)
+        self.inner = inner
+        self.keys: SetAccumulator[K] = SetAccumulator(max_size=max_size)
 
-    def accumulate(self, value):
+    def _accumulate(self, value: tuple[K, V]) -> None:
         key, value = value
         if self.keys.accumulate(key):
-            self.value.accumulate(value)
+            self.inner.accumulate(value)
 
-    def get(self):
-        return self.value.get()
+    def get(self) -> A:
+        return self.inner.get()
 
 
-class UniqueValueCountAccumulator(SetAccumulator):
+class UniqueValueCountAccumulator[V:Hashable](Accumulator[V, int]):
     """
     Count the number of unique values
     """
 
+    def __init__(self):
+        self.inner: SetAccumulator[V] = SetAccumulator()
+        super().__init__()
+
+    def accumulate(self, value: V | list[V]) -> Any:
+        self.inner.accumulate(value)
+
     def get(self) -> int:
-        return len(super().get())
+        return len(self.inner.get())
 
 
 class EntityAggregator(metaclass=ABCMeta):
@@ -426,15 +502,20 @@ class EntityAggregator(metaclass=ABCMeta):
         raise NotImplementedError
 
 
+type JSONAccumulator = Accumulator[AnyJSON, AnyJSON]
+
+type Aggregate = dict[str, JSONAccumulator | None]
+
+
 class SimpleAggregator(EntityAggregator):
 
     def aggregate(self, entities: JSONs) -> JSONs:
-        aggregate = {}
+        aggregate: Aggregate = {}
         for entity in entities:
             self._accumulate(aggregate, entity)
         return [self._aggregate(aggregate)] if aggregate else []
 
-    def _accumulate(self, aggregate: dict[str, Accumulator | None], entity: JSON):
+    def _accumulate(self, aggregate: Aggregate, entity: JSON) -> None:
         entity = self._transform_entity(entity)
         for field, value in entity.items():
             try:
@@ -445,7 +526,7 @@ class SimpleAggregator(EntityAggregator):
             if accumulator is not None:
                 accumulator.accumulate(value)
 
-    def _aggregate(self, aggregate: dict[str, Accumulator]) -> JSON:
+    def _aggregate(self, aggregate: Aggregate) -> JSON:
         result = {}
         for k, accumulator in aggregate.items():
             if accumulator is not None:
@@ -456,10 +537,13 @@ class SimpleAggregator(EntityAggregator):
         return result
 
 
+type GroupKeys = tuple[Hashable, ...]
+
+
 class GroupingAggregator(SimpleAggregator):
 
     def aggregate(self, entities: JSONs) -> JSONs:
-        aggregates: dict[Any, dict[str, Accumulator | None]] = defaultdict(dict)
+        aggregates: dict[GroupKeys, Aggregate] = defaultdict(dict)
         for entity in entities:
             group_keys = self._group_keys(entity)
             aggregate = aggregates[group_keys]
@@ -470,5 +554,5 @@ class GroupingAggregator(SimpleAggregator):
         ]
 
     @abstractmethod
-    def _group_keys(self, entity) -> tuple[Any, ...]:
+    def _group_keys(self, entity) -> GroupKeys:
         raise NotImplementedError
