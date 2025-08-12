@@ -45,25 +45,25 @@ def mirror_catalog(azul: AzulClient,
         str(source.spec): source
         for source in plugin.list_sources(authentication=None)
     }
-    sources: Iterable[SourceRef]
+    source_refs: Iterable[SourceRef]
     # When the user doesn't specify a source or provides "*" as a source glob,
     # we implicitly filter out managed-access sources. This lets us assert that
     # all sources matching the provided globs are public, without forcing the
     # user to manually specify every public source.
     if '*' in source_globs:
-        sources = public_sources_by_spec.values()
+        source_refs = public_sources_by_spec.values()
     else:
         source_strs = matching_sources(azul.sources_by_catalog([catalog]),
                                        source_globs)[catalog]
         try:
-            sources = {
+            source_refs = {
                 public_sources_by_spec[source]
                 for source in source_strs
             }
         except KeyError as e:
             assert False, R(
                 'Cannot mirror managed-access source', e.args[0])
-    azul.remote_mirror(catalog, sources)
+    azul.remote_mirror(catalog, source_refs)
     if wait:
         azul.wait_for_mirroring()
         assert azul.is_queue_empty(fail_queue), R(
