@@ -180,6 +180,10 @@ class AnvilSearchResponseStage(SearchResponseStage):
                         inner_entity: JSON
                         ) -> MutableJSON:
         inner_entity = copy_json(inner_entity)
+        if inner_entity_type == 'files':
+            inner_entity['url'] = self._file_url(uuid=inner_entity['uuid'],
+                                                 version=inner_entity['version'],
+                                                 drs_uri=inner_entity['drs_uri'])
         return inner_entity
 
     def _non_pivotal_entity(self,

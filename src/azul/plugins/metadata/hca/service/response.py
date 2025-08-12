@@ -392,7 +392,10 @@ class HCASearchResponseStage(SearchResponseStage):
             'uuid': file.get('uuid'),
             'version': file.get('version'),
             'matrixCellCount': file.get('matrix_cell_count'),
-            'drs_uri': file.get('drs_uri')
+            'drs_uri': file.get('drs_uri'),
+            'url': self._file_url(uuid=file['uuid'],
+                                  version=file['version'],
+                                  drs_uri=file['drs_uri'])
         }
         return translated_file
 

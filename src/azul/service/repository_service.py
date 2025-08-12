@@ -15,6 +15,7 @@ from typing import (
     TYPE_CHECKING,
 )
 
+import attrs
 from more_itertools import (
     first,
     one,
@@ -33,6 +34,7 @@ from azul import (
 )
 from azul.plugins import (
     File,
+    RepositoryPlugin,
     dotted,
 )
 from azul.service import (
@@ -51,7 +53,6 @@ from azul.service.elasticsearch_service import (
     _ElasticsearchStage,
 )
 from azul.types import (
-    AnyMutableJSON,
     JSON,
     MutableJSON,
 )
@@ -68,11 +69,29 @@ class EntityNotFoundError(Exception):
         super().__init__(f"Can't find an entity in {entity_type} with an uuid, {entity_id}.")
 
 
+@attrs.frozen(auto_attribs=True, kw_only=True)
 class SearchResponseStage(_ElasticsearchStage[ResponseTriple, MutableJSON],
                           metaclass=ABCMeta):
+    file_url_func: FileUrlFunc
 
     def prepare_request(self, request: Search) -> Search:
         return request
+
+    @property
+    def repository_plugin(self) -> RepositoryPlugin:
+        return self.service.repository_plugin(self.catalog)
+
+    def _file_url(self, *, uuid: str, version: str, drs_uri: str | None) -> str | None:
+        plugin = self.repository_plugin
+        if drs_uri is None and plugin.file_download_class().needs_drs_uri:
+            # Don't emit a download URL if a DRS URI is needed for downloading a
+            # file, but none is available
+            return None
+        else:
+            return str(self.file_url_func(catalog=self.catalog,
+                                          fetch=False,
+                                          file_uuid=uuid,
+                                          version=version))
 
 
 class SummaryResponseStage(ElasticsearchStage[JSON, MutableJSON],
@@ -118,56 +137,14 @@ class RepositoryService(ElasticsearchService):
                                 filters=filters,
                                 pagination=pagination,
                                 aggregate=item_id is None,
-                                entity_type=entity_type)
+                                entity_type=entity_type,
+                                file_url_func=file_url_func)
 
         special_fields = self.metadata_plugin(catalog).special_fields
         for hit in response['hits']:
             entity = one(hit[entity_type])
             source_id = one(hit['sources'])[special_fields.source_id]
             entity[special_fields.accessible] = source_id in filters.source_ids
-
-        def inject_file_urls(node: AnyMutableJSON, *path: str) -> None:
-            if node is None:
-                pass
-            elif isinstance(node, (str, int, float, bool)):
-                pass
-            elif isinstance(node, list):
-                for child in node:
-                    inject_file_urls(child, *path)
-            elif isinstance(node, dict):
-                if path:
-                    try:
-                        next_node = node[path[0]]
-                    except KeyError:
-                        # Not all node trees will match the given path. (e.g. a
-                        # response from the 'files' index won't have a
-                        # 'matrices' in its 'hits[].projects' inner entities.
-                        pass
-                    else:
-                        inject_file_urls(next_node, *path[1:])
-                else:
-                    try:
-                        version = node['version']
-                        uuid = node['uuid']
-                        drs_uri = node['drs_uri']
-                    except KeyError:
-                        for child in node.values():
-                            inject_file_urls(child, *path)
-                    else:
-                        plugin = self.repository_plugin(catalog)
-                        if drs_uri is None and plugin.file_download_class().needs_drs_uri:
-                            node['url'] = None
-                        else:
-                            node['url'] = str(file_url_func(catalog=catalog,
-                                                            fetch=False,
-                                                            file_uuid=uuid,
-                                                            version=version))
-            else:
-                assert False
-
-        inject_file_urls(response['hits'], 'projects', 'contributedAnalyses')
-        inject_file_urls(response['hits'], 'projects', 'matrices')
-        inject_file_urls(response['hits'], 'files')
 
         if item_id is not None:
             response = one(response['hits'], too_short=EntityNotFoundError(entity_type, item_id))
@@ -179,7 +156,8 @@ class RepositoryService(ElasticsearchService):
                 entity_type: str,
                 aggregate: bool,
                 filters: Filters,
-                pagination: Pagination
+                pagination: Pagination,
+                file_url_func: FileUrlFunc
                 ) -> MutableJSON:
         """
         This function does the whole transformation process. It takes the path
@@ -236,7 +214,8 @@ class RepositoryService(ElasticsearchService):
             response_stage_cls = SearchResponseStage
         chain = response_stage_cls(service=self,
                                    catalog=catalog,
-                                   entity_type=entity_type).wrap(chain)
+                                   entity_type=entity_type,
+                                   file_url_func=file_url_func).wrap(chain)
 
         request = self.create_request(catalog, entity_type)
         request = chain.prepare_request(request)
