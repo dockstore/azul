@@ -38,16 +38,16 @@ def main(args):
 
     azul = AzulClient(num_workers=1)
     sources_by_catalog = azul.matching_sources(args.catalogs, set(args.sources))
-    previous_sources: set[str] = set()
+    previous_sources: set[TDRSourceSpec] = set()
     for catalog, sources in sources_by_catalog.items():
         plugin = azul.repository_plugin(catalog)
         assert isinstance(plugin, TDRPlugin)
         log.info('Checking for %r in catalog %s', args.match, catalog)
-        for source_str in sources:
-            if source_str not in previous_sources:
-                source = TDRSourceSpec.parse(source_str)
+        for source in sources:
+            assert isinstance(source, TDRSourceSpec)
+            if source not in previous_sources:
                 invalid_sources.extend(plugin.find_in_source(source, args.match))
-                previous_sources.add(source_str)
+                previous_sources.add(source)
     print()
     if invalid_sources:
         print(json.dumps(invalid_sources, indent=4))

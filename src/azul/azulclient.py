@@ -54,6 +54,7 @@ from azul.http import (
 )
 from azul.indexer import (
     SourceRef,
+    SourceSpec,
 )
 from azul.indexer.index_queue_service import (
     IndexQueueService,
@@ -232,11 +233,12 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
     def matching_sources(self,
                          catalogs: Iterable[CatalogName],
                          globs: AbstractSet[str] = frozenset('*')
-                         ) -> dict[CatalogName, set[str]]:
+                         ) -> dict[CatalogName, set[SourceSpec]]:
         result = {}
         matched_globs = set()
         for catalog in catalogs:
-            raw_specs = set(config.sources(catalog))
+            raw_specs = config.sources(catalog)
+            specs = set(self.repository_plugin(catalog).sources)
             if '*' not in globs:
                 matching_raw_specs: set[str] = set()
                 for glob in globs:
@@ -246,8 +248,8 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
                         matched_globs.add(glob)
                         log.debug('Source glob %r matched sources %r in catalog %r',
                                   glob, _matching_raw_specs, catalog)
-                raw_specs = matching_raw_specs
-            result[catalog] = raw_specs
+                specs = {spec for spec in specs if str(spec) in matching_raw_specs}
+            result[catalog] = specs
         unmatched_globs = globs - matched_globs
         if unmatched_globs:
             log.warning('Source(s) not found in any catalog: %r', unmatched_globs)
@@ -283,7 +285,7 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
         ]
         self.index(catalog, notifications, delete=True)
 
-    def deindex(self, catalog: CatalogName, sources: Iterable[str]):
+    def deindex(self, catalog: CatalogName, sources: Iterable[SourceSpec]):
         plugin = self.repository_plugin(catalog)
         source_ids = [plugin.resolve_source(s).id for s in sources]
         es_client = ESClientFactory.get()
