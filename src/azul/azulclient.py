@@ -230,27 +230,26 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
 
     def matching_sources(self,
                          catalogs: Iterable[CatalogName],
-                         source_globs: AbstractSet[str] = frozenset('*')
+                         globs: AbstractSet[str] = frozenset('*')
                          ) -> dict[CatalogName, set[str]]:
         result = {}
-        globs_matched = set()
-        only_matching = '*' not in source_globs
+        matched_globs = set()
         for catalog in catalogs:
-            sources = set(config.sources(catalog))
-            catalog_matches = set()
-            if only_matching:
-                for source_glob in source_globs:
-                    matches = fnmatch.filter(sources, source_glob)
-                    if matches:
-                        globs_matched.add(source_glob)
-                    log.debug('Source glob %r matched sources %r in catalog %r',
-                              source_glob, matches, catalog)
-                    catalog_matches.update(matches)
-                result[catalog] = catalog_matches
-        if only_matching:
-            unmatched = source_globs - globs_matched
-            if unmatched:
-                log.warning('Source(s) not found in any catalog: %r', unmatched)
+            raw_specs = set(config.sources(catalog))
+            if '*' not in globs:
+                matching_raw_specs: set[str] = set()
+                for glob in globs:
+                    _matching_raw_specs = fnmatch.filter(raw_specs, glob)
+                    if _matching_raw_specs:
+                        matching_raw_specs.update(_matching_raw_specs)
+                        matched_globs.add(glob)
+                        log.debug('Source glob %r matched sources %r in catalog %r',
+                                  glob, _matching_raw_specs, catalog)
+                raw_specs = matching_raw_specs
+            result[catalog] = raw_specs
+        unmatched_globs = globs - matched_globs
+        if unmatched_globs:
+            log.warning('Source(s) not found in any catalog: %r', unmatched_globs)
         assert any(result.values()), R(
             'No valid sources specified for any catalog')
         return result
