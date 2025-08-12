@@ -99,7 +99,12 @@ class DSSBundle(HCABundle[DSSBundleFQID]):
                         args={'version': file_version}))
 
 
-class Plugin(RepositoryPlugin[DSSBundle, SimpleSourceSpec, DSSSourceRef, DSSBundleFQID],
+class Plugin(RepositoryPlugin[
+                 DSSBundle,
+                 SimpleSourceSpec,
+                 DSSSourceRef,
+                 DSSBundleFQID
+             ],
              HasCachedHttpClient):
 
     @classmethod

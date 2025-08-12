@@ -89,7 +89,12 @@ class CannedBundle(HCABundle[CannedBundleFQID]):
 
 
 @dataclass(frozen=True)
-class Plugin(RepositoryPlugin[CannedBundle, SimpleSourceSpec, CannedSourceRef, CannedBundleFQID],
+class Plugin(RepositoryPlugin[
+                 CannedBundle,
+                 SimpleSourceSpec,
+                 CannedSourceRef,
+                 CannedBundleFQID
+             ],
              HasCachedHttpClient):
     _sources: AbstractSet[SimpleSourceSpec]
 
