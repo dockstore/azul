@@ -85,6 +85,10 @@ def setUpModule():
 type Patch = _patch | _patch_dict
 
 
+def patch_config(name: str, value: str) -> Patch:
+    return patch.object(Config, name, new=PropertyMock(return_value=value))
+
+
 class AzulTestCase(TestCase):
     _catch_warnings: Optional[AbstractContextManager]
     _caught_warnings: list[warnings.WarningMessage]
