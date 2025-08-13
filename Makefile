@@ -14,7 +14,7 @@ hello: check_python
 virtualenv: check_env
 	@if test -s "$$VIRTUAL_ENV"; then echo -e "\nRun 'deactivate' first\n"; false; fi
 	if test -e .venv; then rm -rf .venv/; fi
-	python3.12 -m venv .venv
+	python -m venv .venv
 	@echo -e "\nRun 'source .venv/bin/activate' now!\n"
 
 .PHONY: envhook
@@ -98,7 +98,7 @@ lambdas: check_env
 	$(MAKE) -C lambdas
 
 anvil_schema: check_python
-	python3 scripts/download_anvil_schema.py
+	python scripts/download_anvil_schema.py
 
 define deploy
 .PHONY: $(1)terraform

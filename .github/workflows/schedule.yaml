@@ -32,4 +32,4 @@ jobs:
       - uses: 'actions/checkout@v4'
         with:
           sparse-checkout: '.github'
-      - run: 'python3 .github/workflows/schedule.py'
+      - run: 'python .github/workflows/schedule.py'
