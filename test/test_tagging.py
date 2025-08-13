@@ -1,3 +1,6 @@
+from azul import (
+    JSON,
+)
 from azul.logging import (
     configure_test_logging,
 )
@@ -29,7 +32,7 @@ class TestTerraformResourceTags(AzulUnitTestCase):
                 }
             }
         }
-        expected = {
+        expected: JSON = {
             'resource': [{
                 'aws_vpc': [{
                     'foo': {
@@ -49,7 +52,7 @@ class TestTerraformResourceTags(AzulUnitTestCase):
         tagged = _transform_tf(tagged_aws_resource)
         self.assertDictEqual(expected, tagged)
 
-        tagged_gcp_resource = {
+        tagged_gcp_resource: JSON = {
             'resource': {
                 'google_compute_instance': {
                     'foo': {}
@@ -76,12 +79,12 @@ class TestTerraformResourceTags(AzulUnitTestCase):
         tagged = _transform_tf(tagged_gcp_resource)
         self.assertDictEqual(expected, tagged)
 
-        untaggable_aws_resource = {
+        untaggable_aws_resource: JSON = {
             'resource': {
                 'aws_untaggable_resource': {'foo': {}}
             }
         }
-        expected = {
+        expected: JSON = {
             'resource': [
                 {'aws_untaggable_resource': [{'foo': {}}]}
             ]
