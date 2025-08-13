@@ -185,7 +185,6 @@ from azul.types import (
     MutableJSONs,
 )
 from azul_test_case import (
-    AlwaysTearDownTestCase,
     AzulTestCase,
 )
 
@@ -343,7 +342,7 @@ class IntegrationTestCase(AzulTestCase, metaclass=ABCMeta):
             return plugin.resolve_source(source)
 
 
-class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
+class IndexingIntegrationTest(IntegrationTestCase):
     """
     An integration test case that tests indexing of public and managed-access
     metadata from a random selection of bundles, and the expected effects on the
