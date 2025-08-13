@@ -17,6 +17,7 @@ from re import (
     escape,
 )
 from typing import (
+    Callable,
     Iterable,
     Optional,
 )
@@ -25,6 +26,8 @@ from unittest import (
 )
 from unittest.mock import (
     PropertyMock,
+    _patch,
+    _patch_dict,
     patch,
 )
 import warnings
@@ -45,6 +48,7 @@ import moto.core.models
 
 from azul import (
     CatalogName,
+    Config,
     config,
 )
 from azul.deployment import (
@@ -78,6 +82,9 @@ def setUpModule():
     configure_test_logging(log)
 
 
+type Patch = _patch | _patch_dict
+
+
 class AzulTestCase(TestCase):
     _catch_warnings: Optional[AbstractContextManager]
     _caught_warnings: list[warnings.WarningMessage]
@@ -92,7 +99,7 @@ class AzulTestCase(TestCase):
         catch_warnings = warnings.catch_warnings(record=True)
         # Use tuple assignment to modify state atomically
         cls._catch_warnings, cls._caught_warnings = catch_warnings, catch_warnings.__enter__()
-        permitted_warnings_ = {
+        permitted_warnings_: dict[type[Warning], set[str]] = {
             ResourceWarning: {
                 RE(r'.*<ssl\.SSLSocket.*>'),
                 RE(r'.*<socket\.socket.*>'),
@@ -196,14 +203,15 @@ class AzulTestCase(TestCase):
         self.assertEqual(set(), set1 & set2)
 
     @classmethod
-    def addClassPatch(cls, instance: patch) -> None:
+    def addClassPatch(cls, instance: Patch) -> None:
         instance.start()
         cls.addClassCleanup(instance.stop)
 
-    def addPatch(self, instance: patch) -> None:
+    def addPatch(self, instance: Patch) -> None:
         # Moto mock's stop() method has the drastic effect of resetting the
         # model class attributes that are used to track model instances so that
         # they can later be cleaned up when the backend is reset.
+        cleanup: Callable[[], None]
         if isinstance(instance, moto.core.models.MockAWS):
             cleanup = partial(instance.stop, remove_data=False)
         else:
@@ -212,7 +220,7 @@ class AzulTestCase(TestCase):
         self.addCleanup(cleanup)
 
     @contextlib.contextmanager
-    def stacked_patches(self, patches: Iterable[patch]):
+    def stacked_patches(self, patches: Iterable[Patch]):
         with contextlib.ExitStack() as context:
             for cm in patches:
                 context.enter_context(cm)
@@ -309,7 +317,7 @@ class AzulUnitTestCase(AzulTestCase):
 
     @classmethod
     def _patch_dss_query_prefix(cls):
-        cls.addClassPatch(patch.object(target=type(config),
+        cls.addClassPatch(patch.object(target=Config,
                                        attribute='dss_query_prefix',
                                        new_callable=PropertyMock,
                                        return_value=cls.dss_query_prefix))
@@ -339,7 +347,7 @@ class CatalogTestCase(AzulUnitTestCase, metaclass=ABCMeta):
 
     @classmethod
     @abstractmethod
-    def catalog_config(cls) -> dict[CatalogName, config.Catalog]:
+    def catalog_config(cls) -> dict[CatalogName, Config.Catalog]:
         raise NotImplementedError
 
     @classmethod
@@ -414,7 +422,7 @@ class DSSTestCase(CatalogTestCase, metaclass=ABCMeta):
 
     @classmethod
     def _patch_source_cache(cls):
-        from service import (
+        from service import (  # type: ignore[import-untyped]
             patch_source_cache,
         )
         cls.addClassPatch(patch_source_cache())
@@ -441,7 +449,7 @@ class DSSTestCase(CatalogTestCase, metaclass=ABCMeta):
 class DCP1TestCase(DSSTestCase):
 
     @classmethod
-    def catalog_config(cls) -> dict[CatalogName, config.Catalog]:
+    def catalog_config(cls) -> dict[CatalogName, Config.Catalog]:
         return {
             cls.catalog: config.Catalog(name=cls.catalog,
                                         atlas='hca',
@@ -487,7 +495,7 @@ class DCP2TestCase(TDRTestCase):
                           spec=TDRSourceSpec.parse('tdr:bigquery:gcp:test_hca_project:hca_snapshot:/2'))
 
     @classmethod
-    def catalog_config(cls) -> dict[CatalogName, config.Catalog]:
+    def catalog_config(cls) -> dict[CatalogName, Config.Catalog]:
         return {
             cls.catalog: config.Catalog(name=cls.catalog,
                                         atlas='hca',
@@ -503,7 +511,7 @@ class AnvilTestCase(TDRTestCase):
                           spec=TDRSourceSpec.parse('tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0'))
 
     @classmethod
-    def catalog_config(cls) -> dict[CatalogName, config.Catalog]:
+    def catalog_config(cls) -> dict[CatalogName, Config.Catalog]:
         return {
             cls.catalog: config.Catalog(name=cls.catalog,
                                         atlas='anvil',
