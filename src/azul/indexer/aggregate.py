@@ -159,6 +159,9 @@ class SetAccumulator[V: Hashable](Accumulator[V, list[V]]):
                  self.dropped
 
         >>> acc = SetAccumulator(max_size=4)
+        >>> acc.accumulate([]), acc.get(), acc.dropped
+        (0, [], 0)
+
         >>> acc.accumulate(1), acc.get(), acc.dropped
         (1, [1], 0)
 
@@ -179,6 +182,51 @@ class SetAccumulator[V: Hashable](Accumulator[V, list[V]]):
 
         >>> acc.accumulate([5, 6]), acc.get(), acc.dropped
         (0, [1, 2, 3, 4], 3)
+
+        >>> acc.accumulate(1), acc.get(), acc.dropped
+        (0, [1, 2, 3, 4], 3)
+
+        >>> acc.accumulate(5), acc.get(), acc.dropped
+        (0, [1, 2, 3, 4], 4)
+
+        The ``dropped`` attribute is incremented for each of the 5's below since
+        that's what would happen were they incorporated in separate calls.
+
+        >>> acc.accumulate([4, 4, 5, 5]), acc.get(), acc.dropped
+        (0, [1, 2, 3, 4], 6)
+
+        >>> acc = SetAccumulator(max_size=0)
+
+        >>> acc.accumulate([]), acc.get(), acc.dropped
+        (0, [], 0)
+
+        >>> acc.accumulate(1), acc.get(), acc.dropped
+        (0, [], 1)
+
+        >>> acc.accumulate([1, 1]), acc.get(), acc.dropped
+        (0, [], 3)
+
+        >>> import random
+        >>> l = [random.randint(0, 9) for _ in range(10000)]
+        >>> acc = SetAccumulator()
+        >>> acc.accumulate(l)
+        10
+
+        >>> list(set(acc.get())) == acc.get()
+        True
+
+        >>> set(l) == set(acc.get())
+        True
+
+        Tuples are treated as scalars. We rely on this behavior when aggregating
+        `ValueAndUnit` fields.
+
+        >>> acc = SetAccumulator(max_size=2)
+        >>> acc.accumulate((1, 2)), acc.get(), acc.dropped
+        (1, [(1, 2)], 0)
+
+        >>> acc.accumulate([(2, 1), (1, 2), ()]), acc.get(), acc.dropped
+        (1, [(1, 2), (2, 1)], 1)
         """
         # Tuples are treated as scalars. We rely on this behavior when
         # aggregating `ValueAndUnit` fields.
