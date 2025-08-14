@@ -63,6 +63,22 @@
             }
         }
     },
+    "docker.io/opensearchproject/opensearch:2.19.3": {
+        "digest": "sha256:a54d2deebe965848afc0d06f5088baa0fbf77fedb3a2c62de9e032eb6d6aaf7f",
+        "mirror_digest": "sha256:51ad0959df798111b5513b056d9a6b83898092a0854da05ec3027f108a7696e1",
+        "parts": {
+            "linux/amd64": {
+                "digest": "sha256:9c21f88114b185897a88cfd69cb5f02bc3c30502b195fa573af158565a36b32c",
+                "id": "sha256:b9713a137fd77d837349b41830c8aaba72904afbbcaa5f79dd0f7a74f66b31e6",
+                "platform": "linux/amd64"
+            },
+            "linux/arm64": {
+                "digest": "sha256:b1e8187a62da244c0bca4c7724d02baf0ccc13c16dacb209f34b854d381097f2",
+                "id": "sha256:857be6bf6afae22a2baa8976ceaef2924cee2f9ef82924be19cb2ae6444aa7a7",
+                "platform": "linux/arm64"
+            }
+        }
+    },
     "docker.io/ucscgi/azul-bigquery-emulator:0.4.4-41": {
         "digest": "sha256:d504cc667ab5426d81079c97a8233c8f4e8a0e81e83c6f6380517381788f9d97",
         "mirror_digest": "sha256:276d06ad268830bf55b279ffd58d35e6df493b314c8e8f636c89b4079d202269",

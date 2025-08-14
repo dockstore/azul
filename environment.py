@@ -309,6 +309,11 @@ def env() -> Mapping[str, Optional[str]]:
                 'url': 'https://hub.docker.com/repository/docker/ucscgi/azul-elasticsearch',
                 'is_custom': True
             },
+            'opensearch': {
+                'ref': 'docker.io/opensearchproject/opensearch:2.19.3',
+                'url': 'https://hub.docker.com/r/opensearchproject/opensearch',
+                'is_custom': False
+            },
             'bigquery_emulator': {
                 'ref': 'docker.io/ucscgi/azul-bigquery-emulator:0.4.4-41',
                 'url': 'https://hub.docker.com/repository/docker/ucscgi/azul-bigquery-emulator',

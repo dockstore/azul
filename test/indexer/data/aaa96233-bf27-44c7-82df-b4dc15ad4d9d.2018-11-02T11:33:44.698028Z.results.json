@@ -3,7 +3,6 @@
         "_id": "links_aaa96233-bf27-44c7-82df-b4dc15ad4d9d_50b88c774d130ce5cb9e680241549c2df665efca",
         "_index": "azul_v2_dev_test_replica",
         "_score": 1.0,
-        "_type": "_doc",
         "_source": {
             "contents": {
                 "describedBy": "https://schema.humancellatlas.org/system/1.1.3/links",
@@ -82,9 +81,7 @@
     },
     {
         "_index": "azul_v2_dev_test_bundles",
-        "_type": "_doc",
         "_id": "aaa96233-bf27-44c7-82df-b4dc15ad4d9d_aaa96233-bf27-44c7-82df-b4dc15ad4d9d_2018-11-02T11:33:44.698028Z_exists",
-        "_ignored": ["contents.projects.project_description.keyword"],
         "_score": 1.0,
         "_source": {
             "entity_id": "aaa96233-bf27-44c7-82df-b4dc15ad4d9d",
@@ -354,9 +351,7 @@
     },
     {
         "_index": "azul_v2_dev_test_files",
-        "_type": "_doc",
         "_id": "0c5ac7c0-817e-40d4-b1b1-34c3d5cfecdb_aaa96233-bf27-44c7-82df-b4dc15ad4d9d_2018-11-02T11:33:44.698028Z_exists",
-        "_ignored": ["contents.projects.project_description.keyword"],
         "_score": 1.0,
         "_source": {
             "entity_id": "0c5ac7c0-817e-40d4-b1b1-34c3d5cfecdb",
@@ -599,9 +594,7 @@
     },
     {
         "_index": "azul_v2_dev_test_files",
-        "_type": "_doc",
         "_id": "70d1af4a-82c8-478a-8960-e9028b3616ca_aaa96233-bf27-44c7-82df-b4dc15ad4d9d_2018-11-02T11:33:44.698028Z_exists",
-        "_ignored": ["contents.projects.project_description.keyword"],
         "_score": 1.0,
         "_source": {
             "entity_id": "70d1af4a-82c8-478a-8960-e9028b3616ca",
@@ -844,9 +837,7 @@
     },
     {
         "_index": "azul_v2_dev_test_samples",
-        "_type": "_doc",
         "_id": "a21dc760-a500-4236-bcff-da34a0e873d2_aaa96233-bf27-44c7-82df-b4dc15ad4d9d_2018-11-02T11:33:44.698028Z_exists",
-        "_ignored": ["contents.projects.project_description.keyword"],
         "_score": 1.0,
         "_source": {
             "entity_id": "a21dc760-a500-4236-bcff-da34a0e873d2",
@@ -1114,9 +1105,7 @@
     },
     {
         "_index": "azul_v2_dev_test_projects",
-        "_type": "_doc",
         "_id": "e8642221-4c2c-4fd7-b926-a68bce363c88_aaa96233-bf27-44c7-82df-b4dc15ad4d9d_2018-11-02T11:33:44.698028Z_exists",
-        "_ignored": ["contents.projects.project_description.keyword"],
         "_score": 1.0,
         "_source": {
             "entity_id": "e8642221-4c2c-4fd7-b926-a68bce363c88",
@@ -1386,7 +1375,6 @@
     },
     {
         "_index": "azul_v2_dev_test_bundles_aggregate",
-        "_type": "_doc",
         "_id": "aaa96233-bf27-44c7-82df-b4dc15ad4d9d",
         "_score": 1.0,
         "_source": {
@@ -1717,7 +1705,6 @@
     },
     {
         "_index": "azul_v2_dev_test_files_aggregate",
-        "_type": "_doc",
         "_id": "0c5ac7c0-817e-40d4-b1b1-34c3d5cfecdb",
         "_score": 1.0,
         "_source": {
@@ -2021,7 +2008,6 @@
     },
     {
         "_index": "azul_v2_dev_test_files_aggregate",
-        "_type": "_doc",
         "_id": "70d1af4a-82c8-478a-8960-e9028b3616ca",
         "_score": 1.0,
         "_source": {
@@ -2325,7 +2311,6 @@
     },
     {
         "_index": "azul_v2_dev_test_samples_aggregate",
-        "_type": "_doc",
         "_id": "a21dc760-a500-4236-bcff-da34a0e873d2",
         "_score": 1.0,
         "_source": {
@@ -2589,9 +2574,7 @@
     },
     {
         "_index": "azul_v2_dev_test_projects_aggregate",
-        "_type": "_doc",
         "_id": "e8642221-4c2c-4fd7-b926-a68bce363c88",
-        "_ignored": ["contents.projects.project_description.keyword"],
         "_score": 1.0,
         "_source": {
             "entity_id": "e8642221-4c2c-4fd7-b926-a68bce363c88",
@@ -2918,9 +2901,7 @@
     },
     {
         "_index": "azul_v2_dev_test_cell_suspensions",
-        "_type": "_doc",
         "_id": "412898c5-5b9b-4907-b07c-e9b89666e204_aaa96233-bf27-44c7-82df-b4dc15ad4d9d_2018-11-02T11:33:44.698028Z_exists",
-        "_ignored": ["contents.projects.project_description.keyword"],
         "_score": 1.0,
         "_source": {
             "entity_id": "412898c5-5b9b-4907-b07c-e9b89666e204",
@@ -3188,7 +3169,6 @@
     },
     {
         "_index": "azul_v2_dev_test_cell_suspensions_aggregate",
-        "_type": "_doc",
         "_id": "412898c5-5b9b-4907-b07c-e9b89666e204",
         "_score": 1.0,
         "_source": {
@@ -3509,8 +3489,7 @@
                 "0c5ac7c0-817e-40d4-b1b1-34c3d5cfecdb",
                 "e8642221-4c2c-4fd7-b926-a68bce363c88"
             ]
-        },
-        "_type": "_doc"
+        }
     },
     {
         "_id": "cell_suspension_412898c5-5b9b-4907-b07c-e9b89666e204_f8ca7504548249c223277135af497beb5fba29df",
@@ -3553,8 +3532,7 @@
                 "70d1af4a-82c8-478a-8960-e9028b3616ca",
                 "e8642221-4c2c-4fd7-b926-a68bce363c88"
             ]
-        },
-        "_type": "_doc"
+        }
     },
     {
         "_id": "sequence_file_70d1af4a-82c8-478a-8960-e9028b3616ca_8ee6fbddb7c933ebe39b31b977c51af21687f036",
@@ -3589,8 +3567,7 @@
                 "70d1af4a-82c8-478a-8960-e9028b3616ca",
                 "e8642221-4c2c-4fd7-b926-a68bce363c88"
             ]
-        },
-        "_type": "_doc"
+        }
     },
     {
         "_id": "specimen_from_organism_a21dc760-a500-4236-bcff-da34a0e873d2_0bb754590d94de62d6fb15bdbac5f64f54072cb0",
@@ -3647,8 +3624,7 @@
                 "70d1af4a-82c8-478a-8960-e9028b3616ca",
                 "e8642221-4c2c-4fd7-b926-a68bce363c88"
             ]
-        },
-        "_type": "_doc"
+        }
     },
     {
         "_id": "project_e8642221-4c2c-4fd7-b926-a68bce363c88_42d51043dcd0030b5ee9ce47fa30c85bcc92bac6",
@@ -3732,8 +3708,7 @@
             "hub_ids": [
                 "e8642221-4c2c-4fd7-b926-a68bce363c88"
             ]
-        },
-        "_type": "_doc"
+        }
     },
     {
         "_id": "donor_organism_7b07b9d0-cc0e-4098-9f64-f4a569f7d746_7dd78e18008a0c036bb25e84f7742c075e16873f",
@@ -3799,8 +3774,7 @@
                 "e8642221-4c2c-4fd7-b926-a68bce363c88"
             ],
             "replica_type": "donor_organism"
-        },
-        "_type": "_doc"
+        }
     },
     {
         "_id": "library_preparation_protocol_9c32cf70-3ed7-4720-badc-5ee71e8a38af_33c8ff808fc57c3dcb4b3872d1dcbc859e45a85a",
@@ -3845,8 +3819,7 @@
                 "e8642221-4c2c-4fd7-b926-a68bce363c88"
             ],
             "replica_type": "library_preparation_protocol"
-        },
-        "_type": "_doc"
+        }
     },
     {
         "_id": "sequencing_protocol_61e629ed-0135-4492-ac8a-5c4ab3ccca8a_187e49da61e5d3fbf91f3a6cf626bc4ce3c2d2be",
@@ -3885,8 +3858,7 @@
                 "e8642221-4c2c-4fd7-b926-a68bce363c88"
             ],
             "replica_type": "sequencing_protocol"
-        },
-        "_type": "_doc"
+        }
     },
     {
         "_id": "process_771ddaf6-3a4f-4314-97fe-6294ff8e25a4_2e08df0ed1adfe582cd63f4daef287d9a637cdf1",
@@ -3916,7 +3888,6 @@
                 "e8642221-4c2c-4fd7-b926-a68bce363c88"
             ],
             "replica_type": "process"
-        },
-        "_type": "_doc"
+        }
     }
 ]

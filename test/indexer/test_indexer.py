@@ -337,7 +337,7 @@ class TestDCP1Indexer(DCP1IndexerTestCase):
     def test_disable_automatic_index_creation(self):
         with self.assertRaises(elasticsearch.exceptions.NotFoundError) as cm:
             self.es_client.index(index='foo', document={'foo': 'bar'})
-        expected = 'no such index [foo] and [action.auto_create_index] is [false]'
+        expected = 'no such index [foo]'
         self.assertEqual(expected, cm.exception.args[2]['error']['reason'])
 
 

@@ -1,7 +1,6 @@
 [
     {
         "_index": "azul_v2_nadove4_test_activities_aggregate",
-        "_type": "_doc",
         "_id": "1509ef40-d1ba-440d-b298-16b7c173dcd4",
         "_score": 1.0,
         "_source": {
@@ -239,7 +238,6 @@
     },
     {
         "_index": "azul_v2_nadove4_test_activities",
-        "_type": "_doc",
         "_id": "1509ef40-d1ba-440d-b298-16b7c173dcd4_826dea02-e274-affe-aabc-eb3db63ad068_2022-06-01T00:00:00.000000Z_exists",
         "_score": 1.0,
         "_source": {
@@ -426,7 +424,6 @@
     },
     {
         "_index": "azul_v2_nadove4_test_replica",
-        "_type": "_doc",
         "_id": "anvil_sequencingactivity_1509ef40-d1ba-440d-b298-16b7c173dcd4_deaef50719859a3e58b9696a0ca061cf9750e7bb",
         "_score": 1.0,
         "_source": {
@@ -461,7 +458,6 @@
     },
     {
         "_index": "azul_v2_nadove4_test_files_aggregate",
-        "_type": "_doc",
         "_id": "15b76f9c-6b46-433f-851d-34e89f1b9ba6",
         "_score": 1.0,
         "_source": {
@@ -678,7 +674,6 @@
     },
     {
         "_index": "azul_v2_nadove4_test_files",
-        "_type": "_doc",
         "_id": "15b76f9c-6b46-433f-851d-34e89f1b9ba6_826dea02-e274-affe-aabc-eb3db63ad068_2022-06-01T00:00:00.000000Z_exists",
         "_score": 1.0,
         "_source": {
@@ -865,7 +860,6 @@
     },
     {
         "_index": "azul_v2_nadove4_test_replica",
-        "_type": "_doc",
         "_id": "anvil_file_15b76f9c-6b46-433f-851d-34e89f1b9ba6_aec7ac65991cc6ea974a7a86fc30ec96c081cfcf",
         "_score": 1.0,
         "_source": {
@@ -902,7 +896,6 @@
     },
     {
         "_index": "azul_v2_nadove4_test_replica",
-        "_type": "_doc",
         "_id": "anvil_diagnosis_15d85d30-ad4a-4f50-87a8-a27f59dd1b5f_fc4d805825bb627c93588467d22caac1b76f4a17",
         "_score": 1.0,
         "_source": {
@@ -943,7 +936,6 @@
     },
     {
         "_index": "azul_v2_nadove4_test_datasets_aggregate",
-        "_type": "_doc",
         "_id": "2370f948-2783-4eb6-afea-e022897f4dcf",
         "_score": 1.0,
         "_source": {
@@ -1242,7 +1234,6 @@
     },
     {
         "_index": "azul_v2_nadove4_test_datasets",
-        "_type": "_doc",
         "_id": "2370f948-2783-4eb6-afea-e022897f4dcf_826dea02-e274-affe-aabc-eb3db63ad068_2022-06-01T00:00:00.000000Z_exists",
         "_score": 1.0,
         "_source": {
@@ -1474,7 +1465,6 @@
     },
     {
         "_index": "azul_v2_nadove4_test_replica",
-        "_type": "_doc",
         "_id": "anvil_dataset_2370f948-2783-4eb6-afea-e022897f4dcf_f10ae38d485330bf8fc7a95f7eb06626b984ad6a",
         "_score": 1.0,
         "_source": {
@@ -1514,7 +1504,6 @@
     },
     {
         "_index": "azul_v2_nadove4_test_files_aggregate",
-        "_type": "_doc",
         "_id": "3b17377b-16b1-431c-9967-e5d01fc5923f",
         "_score": 1.0,
         "_source": {
@@ -1731,7 +1720,6 @@
     },
     {
         "_index": "azul_v2_nadove4_test_replica",
-        "_type": "_doc",
         "_id": "anvil_file_3b17377b-16b1-431c-9967-e5d01fc5923f_669b7664f4b6865a0604285f923995acaf84b4ab",
         "_score": 1.0,
         "_source": {
@@ -1768,7 +1756,6 @@
     },
     {
         "_index": "azul_v2_nadove4_test_files",
-        "_type": "_doc",
         "_id": "3b17377b-16b1-431c-9967-e5d01fc5923f_826dea02-e274-affe-aabc-eb3db63ad068_2022-06-01T00:00:00.000000Z_exists",
         "_score": 1.0,
         "_source": {
@@ -1955,7 +1942,6 @@
     },
     {
         "_index": "azul_v2_nadove4_test_activities_aggregate",
-        "_type": "_doc",
         "_id": "816e364e-1193-4e5b-a91a-14e4b009157c",
         "_score": 1.0,
         "_source": {
@@ -2193,7 +2179,6 @@
     },
     {
         "_index": "azul_v2_nadove4_test_replica",
-        "_type": "_doc",
         "_id": "anvil_sequencingactivity_816e364e-1193-4e5b-a91a-14e4b009157c_a9ad806d7904ac133ff713446e13e525dc37e263",
         "_score": 1.0,
         "_source": {
@@ -2228,7 +2213,6 @@
     },
     {
         "_index": "azul_v2_nadove4_test_activities",
-        "_type": "_doc",
         "_id": "816e364e-1193-4e5b-a91a-14e4b009157c_826dea02-e274-affe-aabc-eb3db63ad068_2022-06-01T00:00:00.000000Z_exists",
         "_score": 1.0,
         "_source": {
@@ -2415,7 +2399,6 @@
     },
     {
         "_index": "azul_v2_nadove4_test_biosamples_aggregate",
-        "_type": "_doc",
         "_id": "826dea02-e274-4ffe-aabc-eb3db63ad068",
         "_score": 1.0,
         "_source": {
@@ -2706,7 +2689,6 @@
     },
     {
         "_index": "azul_v2_nadove4_test_biosamples",
-        "_type": "_doc",
         "_id": "826dea02-e274-4ffe-aabc-eb3db63ad068_826dea02-e274-affe-aabc-eb3db63ad068_2022-06-01T00:00:00.000000Z_exists",
         "_score": 1.0,
         "_source": {
@@ -2938,7 +2920,6 @@
     },
     {
         "_index": "azul_v2_nadove4_test_replica",
-        "_type": "_doc",
         "_id": "anvil_biosample_826dea02-e274-4ffe-aabc-eb3db63ad068_52f78e49c9a6e761dfd87e0d5e719d4e0099b80c",
         "_score": 1.0,
         "_source": {
@@ -2978,7 +2959,6 @@
     },
     {
         "_index": "azul_v2_nadove4_test_bundles_aggregate",
-        "_type": "_doc",
         "_id": "826dea02-e274-affe-aabc-eb3db63ad068",
         "_score": 1.0,
         "_source": {
@@ -3283,7 +3263,6 @@
     },
     {
         "_index": "azul_v2_nadove4_test_bundles",
-        "_type": "_doc",
         "_id": "826dea02-e274-affe-aabc-eb3db63ad068_826dea02-e274-affe-aabc-eb3db63ad068_2022-06-01T00:00:00.000000Z_exists",
         "_score": 1.0,
         "_source": {
@@ -3515,7 +3494,6 @@
     },
     {
         "_index": "azul_v2_nadove4_test_replica",
-        "_type": "_doc",
         "_id": "anvil_diagnosis_939a4bd3-86ed-4a8a-81f4-fbe0ee673461_f0733af0a2ffd8001c329588ac51db1d72ad33b7",
         "_score": 1.0,
         "_source": {
@@ -3556,7 +3534,6 @@
     },
     {
         "_index": "azul_v2_nadove4_test_donors_aggregate",
-        "_type": "_doc",
         "_id": "bfd991f2-2797-4083-972a-da7c6d7f1b2e",
         "_score": 1.0,
         "_source": {
@@ -3853,7 +3830,6 @@
     },
     {
         "_index": "azul_v2_nadove4_test_donors",
-        "_type": "_doc",
         "_id": "bfd991f2-2797-4083-972a-da7c6d7f1b2e_826dea02-e274-affe-aabc-eb3db63ad068_2022-06-01T00:00:00.000000Z_exists",
         "_score": 1.0,
         "_source": {
@@ -4085,7 +4061,6 @@
     },
     {
         "_index": "azul_v2_nadove4_test_replica",
-        "_type": "_doc",
         "_id": "anvil_donor_bfd991f2-2797-4083-972a-da7c6d7f1b2e_4ac20193963c27e42be696a6006a071f6cee4472",
         "_score": 1.0,
         "_source": {
