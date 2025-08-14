@@ -11,6 +11,7 @@ from collections import (
     defaultdict,
 )
 import logging
+import sys
 from typing import (
     Any,
     Callable,
@@ -153,9 +154,9 @@ class SetAccumulator[V: Hashable](Accumulator[V, list[V]]):
 
     def accumulate(self, value: V | list[V]) -> int:
         """
-        :return: The number of values that were incorporated. There are two
-                 reasons a value may not be incorporated: it was already in the
-                 set or the accumulator is full. The latter is reflected in
+        :return: The number of distinct values that were incorporated. There are
+                 two reasons a value may not be incorporated: it was already in
+                 the set or the accumulator is full. The latter is reflected in
                  self.dropped
 
         >>> acc = SetAccumulator(max_size=4)
@@ -228,24 +229,52 @@ class SetAccumulator[V: Hashable](Accumulator[V, list[V]]):
         >>> acc.accumulate([(2, 1), (1, 2), ()]), acc.get(), acc.dropped
         (1, [(1, 2), (2, 1)], 1)
         """
-        # Tuples are treated as scalars. We rely on this behavior when
-        # aggregating `ValueAndUnit` fields.
-        if not isinstance(value, list):
-            value = [value]
-        initial_len = len(self.value)
-        assert self.max_size is None or initial_len <= self.max_size, (
-            self.value, self.max_size)
-        if self.max_size is None or len(value) + initial_len <= self.max_size:
-            self.value.update(value)
-        elif initial_len == self.max_size:
-            self.dropped += len(value)
+        current, max_size = self.value, self.max_size
+        initial_len = len(current)
+        free_space = sys.maxsize if max_size is None else max_size - initial_len
+        assert free_space >= 0
+        if isinstance(value, list):
+            if len(value) <= free_space:
+                # If there is sufficient free space to incorporate all values,
+                # even if they're all the same, do so.
+                current.update(value)
+            else:
+                # If there are no duplicates in the argument, we can add as many
+                # items from the argument as we have free space for.
+                current.update(value[0:free_space])
+                value = value[free_space:]
+                new_len = len(current)
+                # We may still have free space left if there were duplicate
+                # items in the slice we just incorporated, or if some of those
+                # items had already been incorporated before the slice was.
+                num_added = new_len - initial_len
+                free_space -= num_added
+                assert free_space >= 0
+                # We could repeat the above but that could lead to many slices
+                # of length one. Instead we'll switch to handling elements
+                # individually until we run out of space.
+                i = iter(value)
+                try:
+                    while free_space > 0:
+                        current.add(next(i))
+                        if new_len != len(current):
+                            new_len += 1
+                            free_space -= 1
+                    # We've run out of space. Report any elements not already
+                    # accumulated as dropped.
+                    while True:
+                        if next(i) not in current:
+                            self.dropped += 1
+                except StopIteration:
+                    pass
         else:
-            for v in value:
-                if len(self.value) < self.max_size:
-                    self.value.add(v)
-                elif v not in self.value:
-                    self.dropped += 1
-        return len(self.value) - initial_len
+            if free_space > 0:
+                current.add(value)
+            elif value not in current:
+                self.dropped += 1
+        final_len = len(current)
+        assert max_size is None or final_len <= max_size
+        return final_len - initial_len
 
     def get(self) -> list[V]:
         return sorted(self.value, key=self.key)
