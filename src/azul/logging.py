@@ -147,7 +147,7 @@ def silent_es_log_level():
     return [logging.ERROR, logging.INFO, logging.DEBUG][azul.config.debug]
 
 
-es_log = logging.getLogger('elasticsearch')
+es_log = logging.getLogger('opensearch')
 azul_boto3_log = logging.getLogger('azul.boto3')
 
 

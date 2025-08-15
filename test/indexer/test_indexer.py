@@ -33,14 +33,14 @@ from uuid import (
 )
 
 import attr
-import elasticsearch
-from elasticsearch import (
-    Elasticsearch,
-)
 from more_itertools import (
     bucket,
     ilen,
     one,
+)
+import opensearchpy
+from opensearchpy import (
+    OpenSearch,
 )
 
 from azul import (
@@ -335,8 +335,8 @@ class TestDCP1Indexer(DCP1IndexerTestCase):
                     self._purge_indices()
 
     def test_disable_automatic_index_creation(self):
-        with self.assertRaises(elasticsearch.exceptions.NotFoundError) as cm:
-            self.es_client.index(index='foo', document={'foo': 'bar'})
+        with self.assertRaises(opensearchpy.exceptions.NotFoundError) as cm:
+            self.es_client.index(index='foo', body={'foo': 'bar'})
         expected = 'no such index [foo]'
         self.assertEqual(expected, cm.exception.args[2]['error']['reason'])
 
@@ -452,7 +452,7 @@ class TestDCP1IndexerWithIndexesSetUp(DCP1IndexerTestCase):
         for tally in tallies:
             tallies[tally] = 0
         # Aggregating should not be a non-op even though tallies are all zero
-        with self.assertLogs(elasticsearch.client.logger, level='INFO') as logs:
+        with self.assertLogs(opensearchpy.client.logger, level='INFO') as logs:
             self.index_service.aggregate(tallies)
         doc_ids = {
             '70d1af4a-82c8-478a-8960-e9028b3616ca',
@@ -462,7 +462,7 @@ class TestDCP1IndexerWithIndexesSetUp(DCP1IndexerTestCase):
             'aaa96233-bf27-44c7-82df-b4dc15ad4d9d',
         }
         for doc_id in doc_ids:
-            message_re = re.compile(fr'INFO:elasticsearch:'
+            message_re = re.compile(fr'INFO:opensearch:'
                                     fr'Got 201 response after [^ ]+ from PUT to '
                                     fr'.*_aggregate/_create/{doc_id}.*')
             self.assertTrue(any(message_re.fullmatch(message) for message in logs.output))
@@ -1364,7 +1364,7 @@ class TestDCP1IndexerWithIndexesSetUp(DCP1IndexerTestCase):
             self.bundle_fqid(uuid='56a338fe-7554-4b5d-96a2-7df127a7640b',
                              version='2018-03-29T15:35:07.198365Z')
         ]
-        original_mget = Elasticsearch.mget
+        original_mget = OpenSearch.mget
         latch = Latch(len(bundles))
 
         def mocked_mget(self, body, _source_includes):
@@ -1373,7 +1373,7 @@ class TestDCP1IndexerWithIndexesSetUp(DCP1IndexerTestCase):
             latch.decrement(1)
             return mget_return
 
-        with patch.object(Elasticsearch, 'mget', new=mocked_mget):
+        with patch.object(OpenSearch, 'mget', new=mocked_mget):
             with self.assertLogs(level='WARNING') as cm:
                 with ThreadPoolExecutor(max_workers=len(bundles)) as executor:
                     thread_results = executor.map(self._index_canned_bundle, bundles)

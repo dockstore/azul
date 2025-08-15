@@ -3,7 +3,6 @@ from typing import (
     Any,
     Collection,
     Mapping,
-    MutableMapping,
     Tuple,
     cast,
 )
@@ -14,14 +13,10 @@ from urllib.parse import (
 from aws_requests_auth.boto_utils import (
     BotoAWSRequestsAuth,
 )
-from elasticsearch import (
+from opensearchpy import (
     Connection,
-    Elasticsearch,
-    RequestsHttpConnection,
+    OpenSearch,
     Urllib3HttpConnection,
-)
-from elasticsearch.transport import (
-    Transport,
 )
 import requests
 import requests.auth
@@ -69,11 +64,11 @@ class AzulConnection(Connection):
     def perform_request(self,
                         method: str,
                         url: str,
-                        params: MutableMapping[str, Any] | None = None,
+                        params: Mapping[str, Any] | None = None,
                         body: bytes | None = None,
                         timeout: int | float | None = None,
                         ignore: Collection[int] = (),
-                        headers: MutableMapping[str, str] | None = None
+                        headers: Mapping[str, str] | None = None
                         ) -> Tuple[int, Mapping[str, str], str]:
         self._log_request(method, self._full_url(url, params), headers, body)
         return super().perform_request(method, url, params, body, timeout, ignore, headers)
@@ -135,10 +130,6 @@ class AzulConnection(Connection):
         es_log.log(log_level, 'Got %s response after %.3fs from %s to %s',
                    status_code, duration, method, full_url, exc_info=exception)
         es_log.log(log_level, http_body_log_message('response', response))
-
-
-class AzulRequestsHttpConnection(AzulConnection, RequestsHttpConnection):
-    pass
 
 
 class AWSAuthHttpClient(urllib3.request.RequestMethods):
@@ -218,7 +209,7 @@ class AzulUrllib3HttpConnection(AzulConnection, Urllib3HttpConnection):
 class ESClientFactory:
 
     @classmethod
-    def get(cls) -> Elasticsearch:
+    def get(cls) -> OpenSearch:
         host, port = aws.es_endpoint
         return cls._create_client(host, port, config.es_timeout)
 
@@ -235,28 +226,16 @@ class ESClientFactory:
         # error handling, we disable the implicit retries via max_retries=0.
         common_params = dict(hosts=[dict(host=host, port=port)],
                              timeout=timeout,
-                             max_retries=0,
-                             transport_class=ProductAgnosticTransport)
+                             max_retries=0)
         if host.endswith('.amazonaws.com'):
             aws_auth = CachedBotoAWSRequestsAuth(aws_host=host,
                                                  aws_region=aws.region_name,
                                                  aws_service='es')
-            return Elasticsearch(http_auth=aws_auth,
-                                 use_ssl=True,
-                                 verify_certs=True,
-                                 connection_class=AzulUrllib3HttpConnection,
-                                 **common_params)
+            return OpenSearch(http_auth=aws_auth,
+                              use_ssl=True,
+                              verify_certs=True,
+                              connection_class=AzulUrllib3HttpConnection,
+                              **common_params)
         else:
-            return Elasticsearch(connection_class=AzulUrllib3HttpConnection,
-                                 **common_params)
-
-
-class ProductAgnosticTransport(Transport):
-    """
-    A transport class that disables client-side product verification. This
-    bypasses the check that would otherwise prevent us from using ES v7.15+ with
-    OpenSearch.
-    """
-
-    def _do_verify_elasticsearch(self, *_args, **__kwargs):
-        self._verified_elasticsearch = True
+            return OpenSearch(connection_class=AzulUrllib3HttpConnection,
+                              **common_params)

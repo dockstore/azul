@@ -15,16 +15,16 @@ from typing import (
     TYPE_CHECKING,
 )
 
-import elasticsearch
-from elasticsearch_dsl import (
-    Search,
-)
-from elasticsearch_dsl.response import (
-    Hit,
-)
 from more_itertools import (
     first,
     one,
+)
+import opensearchpy
+from opensearchpy import (
+    Search,
+)
+from opensearchpy.helpers.response import (
+    Hit,
 )
 
 from azul import (
@@ -248,7 +248,7 @@ class RepositoryService(ElasticsearchService):
         request = chain.prepare_request(request)
         try:
             response = request.execute(ignore_cache=True)
-        except elasticsearch.NotFoundError as e:
+        except opensearchpy.NotFoundError as e:
             raise IndexNotFoundError(e.info['error']['index'])
         response = chain.process_response(response)
         return response
