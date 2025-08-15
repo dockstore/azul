@@ -38,6 +38,7 @@ from tempfile import (
 )
 import time
 from typing import (
+    Callable,
     ClassVar,
     IO,
     Protocol,
@@ -128,9 +129,11 @@ from azul.service.avro_pfb import (
     PFBRelation,
 )
 from azul.service.elasticsearch_service import (
+    ElasticsearchChain,
     ElasticsearchService,
     Pagination,
     PaginationStage,
+    SortKey,
     ToDictStage,
 )
 from azul.service.storage_service import (
@@ -502,7 +505,7 @@ class ManifestPartition:
 
     #: The `sort` value of the first hit of the current page in this partition,
     #: or None if there is no current page.
-    search_after: tuple[str, str] | None = None
+    search_after: SortKey | None = None
 
     @classmethod
     def from_json(cls, partition: JSON) -> Self:
@@ -520,10 +523,10 @@ class ManifestPartition:
                    is_last=False)
 
     @property
-    def is_first(self):
+    def is_first(self) -> bool:
         return not (self.index or self.page_index)
 
-    def with_config(self, config: AnyJSON):
+    def with_config(self, config: AnyJSON) -> Self:
         return attrs.evolve(self, config=config)
 
     def with_upload(self, multipart_upload_id) -> Self:
@@ -539,7 +542,7 @@ class ManifestPartition:
 
     def next_page(self,
                   file_name: str | None,
-                  search_after: tuple[str, str]
+                  search_after: SortKey | None
                   ) -> Self:
         assert self.page_index is not None, self
         # If different pages yield different file names, use default file name
@@ -551,7 +554,7 @@ class ManifestPartition:
                             file_name=file_name,
                             search_after=search_after)
 
-    def last_page(self):
+    def last_page(self) -> Self:
         return attrs.evolve(self, is_last_page=True)
 
     def next(self, part_etag: str) -> Self:
@@ -1036,7 +1039,7 @@ class ManifestGenerator(metaclass=ABCMeta):
         # The response is processed by the generator, not the pipeline
         return request
 
-    def _create_pipeline(self):
+    def _create_pipeline(self) -> ElasticsearchChain:
         if self.included_fields is None:
             document_slice = DocumentSlice()
         else:
@@ -1209,10 +1212,49 @@ class ManifestGenerator(metaclass=ABCMeta):
         return self.service.storage_service
 
 
-class PagedManifestGenerator(ManifestGenerator):
+class ClientSidePagingManifestGenerator(ManifestGenerator, metaclass=ABCMeta):
     """
-    A manifest generator whose output can be split over multiple concatenable
-    IO streams.
+    A mixin for manifest generators that use client-side paging to query
+    Elasticsearch.
+    """
+    page_size = 500
+
+    def _create_paged_request(self, search_after: SortKey | None) -> Search:
+        pagination = Pagination(sort='entryId',
+                                order='asc',
+                                size=self.page_size,
+                                search_after=search_after)
+        pipeline = self._create_pipeline()
+        # Only needs this to satisfy the type constraints
+        pipeline = ToDictStage(service=self.service,
+                               catalog=self.catalog,
+                               entity_type=self.entity_type).wrap(pipeline)
+        pipeline = PaginationStage(service=self.service,
+                                   catalog=self.catalog,
+                                   entity_type=self.entity_type,
+                                   pagination=pagination,
+                                   filters=self.filters,
+                                   peek_ahead=False).wrap(pipeline)
+        request = self.service.create_request(catalog=self.catalog,
+                                              entity_type=self.entity_type)
+        # The response is processed by the generator, not the pipeline
+        request = pipeline.prepare_request(request)
+        return request
+
+    def _search_after(self, hit: Hit) -> SortKey:
+        a, b = hit.meta.sort
+        return a, b
+
+
+class PagedManifestGenerator(ClientSidePagingManifestGenerator):
+    """
+    A manifest generator whose output is split over several concatenable
+    segments, also known as pages.
+
+    In some subclasses, e.g. CompactManifestGenerator and CurlManifestGenerator,
+    a manifest page corresponds to a page of hits from a paginated Elasticsearch
+    request. In others, e.g. JSONLVerbatimManifestGenerator, the relationship
+    between manifest pages and Elasticsearch pages is more complicated.
     """
 
     @abstractmethod
@@ -1265,52 +1307,22 @@ class PagedManifestGenerator(ManifestGenerator):
             with TextIOWrapper(buffer, encoding='utf-8', write_through=True) as text_buffer:
                 while True:
                     partition = self.write_page_to(partition, output=text_buffer)
+                    # Manifest lambda has 2 GB of memory
+                    assert buffer.tell() < 1.5 * 1024 ** 3
                     if partition.is_last_page or buffer.tell() > self.part_size:
                         break
-
-                def upload_part():
+                if buffer.tell() > 0:
                     buffer.seek(0)
-                    return self.storage.upload_multipart_part(buffer, partition.index + 1, upload)
-
+                    part_etag = self.storage.upload_multipart_part(buffer, partition.index + 1, upload)
+                    partition = partition.next(part_etag=part_etag)
                 if partition.is_last_page:
-                    if buffer.tell() > 0:
-                        partition = partition.next(part_etag=upload_part())
                     self.storage.complete_multipart_upload(upload, partition.part_etags)
                     file_name = self.file_name(manifest_key, base_name=partition.file_name)
                     tagging = self.tagging(file_name)
                     if tagging is not None:
                         self.storage.put_object_tagging(object_key, tagging)
-                    return partition.last(file_name)
-                else:
-                    return partition.next(part_etag=upload_part())
-
-    page_size = 500
-
-    def _create_paged_request(self, partition: ManifestPartition) -> Search:
-        pagination = Pagination(sort='entryId',
-                                order='asc',
-                                size=self.page_size,
-                                search_after=partition.search_after)
-        pipeline = self._create_pipeline()
-        # Only needs this to satisfy the type constraints
-        pipeline = ToDictStage(service=self.service,
-                               catalog=self.catalog,
-                               entity_type=self.entity_type).wrap(pipeline)
-        pipeline = PaginationStage(service=self.service,
-                                   catalog=self.catalog,
-                                   entity_type=self.entity_type,
-                                   pagination=pagination,
-                                   filters=self.filters,
-                                   peek_ahead=False).wrap(pipeline)
-        request = self.service.create_request(catalog=self.catalog,
-                                              entity_type=self.entity_type)
-        # The response is processed by the generator, not the pipeline
-        request = pipeline.prepare_request(request)
-        return request
-
-    def _search_after(self, hit: Hit) -> tuple[str, str]:
-        a, b = hit.meta.sort
-        return a, b
+                    partition = partition.last(file_name)
+                return partition
 
 
 class FileBasedManifestGenerator(ManifestGenerator):
@@ -1495,7 +1507,7 @@ class CurlManifestGenerator(PagedManifestGenerator):
             output.write('\n\n'.join(curl_options))
             output.write('\n\n')
 
-        request = self._create_paged_request(partition)
+        request = self._create_paged_request(partition.search_after)
         response = request.execute()
         if response.hits:
             hit = None
@@ -1639,7 +1651,7 @@ class CompactManifestGenerator(PagedManifestGenerator):
         if partition.page_index == 0:
             writer.writeheader()
 
-        request = self._create_paged_request(partition)
+        request = self._create_paged_request(partition.search_after)
         response = request.execute()
         if response.hits:
             project_short_names = set()
@@ -1751,7 +1763,8 @@ class PFBManifestGenerator(FileBasedManifestGenerator):
         return path, None
 
 
-class VerbatimManifestGenerator(FileBasedManifestGenerator, metaclass=ABCMeta):
+class VerbatimManifestGenerator(ClientSidePagingManifestGenerator,
+                                metaclass=ABCMeta):
 
     @property
     def entity_type(self) -> str:
@@ -1779,17 +1792,34 @@ class VerbatimManifestGenerator(FileBasedManifestGenerator, metaclass=ABCMeta):
 
     @property
     def include_orphans(self) -> bool:
+
         # When filtering exclusively by properties of implicit hubs, e.g.,
         # data sets for AnVIL or projects for HCA, we include replicas of all
         # entities implicitly connected to the matching hubs, even replicas of
         # orphans, i.e., entities that aren't connected to files.
+        #
         plugin = self.metadata_plugin
         root_entity_fields = {
             field_name
             for field_name, field_path in plugin.field_mapping.items()
             if field_path[0] == 'contents' and field_path[1] == plugin.root_entity_type
         }
-        return self.filters.explicit.keys() < root_entity_fields
+
+        # For both HCA and AnVIL, these root entities are bijective with the
+        # sources used for indexing, and filtering by a specific project
+        # or dataset entity should produce the same results as filtering by
+        # that entity's source.
+        #
+        # The verbatim JSONL generator temporarily inserts a source ID condition
+        # into its provided filters in order to partition the manifest. If the
+        # source ID field were not included below, that insertion would cause
+        # orphans to be absent from the manifest, which is incorrect.
+        #
+        source_fields = {
+            plugin.special_fields.source_id,
+            plugin.special_fields.source_spec
+        }
+        return self.filters.explicit.keys() < (root_entity_fields | source_fields)
 
     @attrs.frozen(kw_only=True)
     class ReplicaKeys:
@@ -1805,9 +1835,36 @@ class VerbatimManifestGenerator(FileBasedManifestGenerator, metaclass=ABCMeta):
         hub_id: str
         replica_ids: list[str]
 
-    def _replica_keys(self) -> Iterable[ReplicaKeys]:
-        request = self._create_request()
-        for hit in request.scan():
+    def _paginate_hits(self,
+                       request_factory: Callable[[SortKey | None], Search]
+                       ) -> Iterable[Hit]:
+        """
+        Yield all hits in every page of Elasticsearch hits in responses to
+        requests that use client-side paging.
+
+        :param request_factory:  A callable that returns a prepared Elasticsearch
+                                 request for the given search-after key, with the
+                                 appropriate filters and sorting applied. The
+                                 returned request should yield one page worth of
+                                 hits, starting at the first page (if the argument
+                                 is None), or the hit right after the hit with
+                                 given search-after key
+        """
+        search_after = None
+        while True:
+            request = request_factory(search_after)
+            response = request.execute()
+            if response.hits:
+                hit = None
+                for hit in response.hits:
+                    yield hit
+                assert hit is not None
+                search_after = self._search_after(hit)
+            else:
+                break
+
+    def _list_replica_keys(self) -> Iterable[ReplicaKeys]:
+        for hit in self._paginate_hits(self._create_paged_request):
             document_ids = [
                 document_id
                 for entity_type in self.hot_entity_types
@@ -1820,10 +1877,9 @@ class VerbatimManifestGenerator(FileBasedManifestGenerator, metaclass=ABCMeta):
             yield self.ReplicaKeys(hub_id=hit['entity_id'],
                                    replica_ids=document_ids)
 
-    def _all_replicas(self) -> Iterable[JSON]:
+    def _list_replicas(self) -> Iterable[JSON]:
         emitted_replica_ids = set()
-        page_size = 100
-        for page in chunked(self._replica_keys(), page_size):
+        for page in chunked(self._list_replica_keys(), self.page_size):
             num_replicas = 0
             num_new_replicas = 0
             for replica in self._join_replicas(page):
@@ -1840,21 +1896,40 @@ class VerbatimManifestGenerator(FileBasedManifestGenerator, metaclass=ABCMeta):
                      num_replicas, num_replicas - num_new_replicas, len(page))
 
     def _join_replicas(self, keys: Iterable[ReplicaKeys]) -> Iterable[Hit]:
-        request = self.service.create_request(catalog=self.catalog,
-                                              entity_type='replica',
-                                              doc_type=DocumentType.replica)
         hub_ids, replica_ids = set(), set()
         for key in keys:
             hub_ids.add(key.hub_id)
             replica_ids.update(key.replica_ids)
+
+        request = self.service.create_request(catalog=self.catalog,
+                                              entity_type='replica',
+                                              doc_type=DocumentType.replica)
         request = request.query(Q('bool', should=[
             {'terms': {'hub_ids.keyword': list(hub_ids)}},
             {'terms': {'entity_id.keyword': list(replica_ids)}}
         ]))
-        return request.scan()
+        request = request.extra(size=self.page_size)
+
+        # `_id` is currently the only index field that is unique to each replica
+        # document (and thus results in an unambiguous total ordering). However,
+        # sorting just by `_id` is unacceptably slow, an Elasticsearch quirk. To
+        # overcome the performance hit, we sort by a field that's *almost*
+        # unique to each replica, so that `_id` only needs to be loaded and
+        # compared in the infrequent event that it's needed as a tiebreaker.
+        #
+        # FIXME: ES DeprecationWarning for using _id as sort key
+        #        https://github.com/DataBiosphere/azul/issues/7290
+        #
+        request = request.sort('entity_id.keyword', '_id')
+
+        def request_factory(search_after: SortKey | None) -> Search:
+            return request.extra(search_after=search_after)
+
+        return self._paginate_hits(request_factory)
 
 
-class JSONLVerbatimManifestGenerator(VerbatimManifestGenerator):
+class JSONLVerbatimManifestGenerator(PagedManifestGenerator,
+                                     VerbatimManifestGenerator):
 
     @property
     def content_type(self) -> str:
@@ -1868,21 +1943,65 @@ class JSONLVerbatimManifestGenerator(VerbatimManifestGenerator):
     def format(cls) -> ManifestFormat:
         return ManifestFormat.verbatim_jsonl
 
-    def create_file(self) -> tuple[str, str | None]:
-        fd, path = mkstemp(suffix=f'.{self.file_name_extension()}')
-        os.close(fd)
-        with open(path, 'w') as f:
-            for replica in self._all_replicas():
+    @property
+    def source_id_field(self) -> str:
+        return self.metadata_plugin.special_fields.source_id
+
+    def source_ids(self) -> list[str]:
+        # Currently, we process each source that might be included in the
+        # manifest. This can be very inefficient since many partitions may be
+        # empty for small manifests. A potential optimization is to use a terms
+        # aggregation to query for the set of nonempty sources before
+        # processing any hits.
+
+        # It's possible that inaccessible sources are included in the explicit
+        # sources. If they are, an exception will be raised when the filters are
+        # reified, so it's safe to skip that check here.
+        try:
+            source_filter = self.filters.explicit[self.source_id_field]
+        except KeyError:
+            sources = self.filters.source_ids
+        else:
+            sources = source_filter['is']
+        return sorted(sources)
+
+    def write_page_to(self,
+                      partition: ManifestPartition,
+                      output: IO[str]
+                      ) -> ManifestPartition:
+        # All replicas from each source must be held in memory simultaneously to
+        # avoid emitting duplicates. Therefore, each "page" of this manifest
+        # must retrieve every replica from a given source, using multiple paged
+        # requests to ElasticSearch if necessary.
+        source_ids = self.source_ids()
+        source_id = source_ids[partition.page_index]
+        log.info('Listing replicas from source %r for manifest page %d',
+                 source_id, partition.page_index)
+        partition_filter = {self.source_id_field: {'is': [source_id]}}
+        original_filters = self.filters
+        try:
+            self.filters = original_filters.update(partition_filter)
+            replicas = self._list_replicas()
+            for replica in replicas:
                 entry = {
                     'value': replica['contents'],
                     'type': replica['replica_type']
                 }
-                json.dump(entry, f)
-                f.write('\n')
-        return path, None
+                json.dump(entry, output)
+                output.write('\n')
+        finally:
+            self.filters = original_filters
+        last_page = len(source_ids) - 1
+        if partition.page_index < last_page:
+            return partition.next_page(file_name=None, search_after=None)
+        elif partition.page_index == last_page:
+            return partition.last_page()
+        else:
+            assert False, (partition, source_ids)
 
 
-class PFBVerbatimManifestGenerator(VerbatimManifestGenerator):
+class PFBVerbatimManifestGenerator(FileBasedManifestGenerator,
+                                   VerbatimManifestGenerator):
 
     @property
     def content_type(self) -> str:
@@ -1934,7 +2053,7 @@ class PFBVerbatimManifestGenerator(VerbatimManifestGenerator):
         )
 
     def create_file(self) -> tuple[str, str | None]:
-        replicas = list(self._all_replicas())
+        replicas = list(self._list_replicas())
         plugin = self.metadata_plugin
         replica_schemas = plugin.verbatim_pfb_schema(replicas)
         # Ensure field order is consistent for unit tests

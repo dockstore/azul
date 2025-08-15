@@ -344,7 +344,8 @@ class StorageService:
                           object_key: str
                           ):
         error = exception.response['Error']
-        code, condition = error['Code'], error['Condition']
+        # `Condition` is only present when using conditional writes
+        code, condition = error['Code'], error.get('Condition')
         if code == 'PreconditionFailed' and condition == 'If-None-Match':
             raise StorageObjectExists(object_key)
         else:

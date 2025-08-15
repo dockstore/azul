@@ -503,6 +503,7 @@ def content_security_policy() -> str:
         jw('object-src', none),
         jw('frame-src', none),
         jw('frame-ancestors', none),
+        jw('form-action', self),
         jw('child-src', none),
         jw('img-src',
            self,
