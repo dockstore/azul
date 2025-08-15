@@ -405,6 +405,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
         # Without a filter, the test takes so long that there's a real risk of
         # failure due to new snapshots being added mid-test.
         snapshot_filters_by_deployment = {
+            'tempdev': 'anvil_',  # ~5 snapshots
             'anvildev': 'anvil_',  # ~5 snapshots
             'dev': 'hca_dev_5',  # ~10 snapshots
             'anvilprod': 'anvil_page_',  # ~13 snapshots
