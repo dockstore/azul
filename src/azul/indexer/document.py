@@ -1027,14 +1027,8 @@ class Aggregate(Document[AggregateCoordinates]):
         return {
             **super().field_types(field_types),
             'num_contributions': pass_thru_int,
-            'sources': {
-                'id': pass_thru_str,
-                'spec': pass_thru_str
-            },
-            'bundles': {
-                'uuid': pass_thru_str,
-                'version': pass_thru_str,
-            }
+            'sources': SourceRef.field_types(),
+            'bundles': BundleFQID.field_types()
         }
 
     @classmethod
@@ -1062,8 +1056,7 @@ class Aggregate(Document[AggregateCoordinates]):
     def mandatory_source_fields(cls) -> list[str]:
         return super().mandatory_source_fields() + [
             'num_contributions',
-            'sources.id',
-            'sources.spec'
+            *(f'sources.{f}' for f in SourceRef.field_types().keys())
         ]
 
     def to_json(self) -> JSON:

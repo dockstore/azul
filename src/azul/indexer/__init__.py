@@ -33,6 +33,10 @@ from azul import (
 from azul.attrs import (
     SerializableAttrs,
 )
+from azul.indexer.field import (
+    FieldTypes,
+    pass_thru_str,
+)
 from azul.json import (
     Parseable,
 )
@@ -72,6 +76,13 @@ class BundleFQID(SerializableAttrs):
 
     def _nucleus(self) -> tuple[str, str]:
         return self.uuid.lower(), self.version.lower()
+
+    @classmethod
+    def field_types(cls) -> FieldTypes:
+        return {
+            'uuid': pass_thru_str,
+            'version': pass_thru_str,
+        }
 
     # We can't use attrs' generated implementation because it always
     # considers operands with different types to be unequal, regardless of
@@ -595,6 +606,13 @@ class SourceRef[SOURCE_SPEC: SourceSpec](SerializableAttrs,
 
     def with_prefix(self, prefix: Prefix) -> Self:
         return attrs.evolve(self, spec=attrs.evolve(self.spec, prefix=prefix))
+
+    @classmethod
+    def field_types(cls) -> FieldTypes:
+        return {
+            'id': pass_thru_str,
+            'spec': pass_thru_str,
+        }
 
 
 @attrs.frozen(kw_only=True, eq=False)
