@@ -402,7 +402,7 @@ class PolymorphicSerializable(Serializable):
         raise NotImplementedError
 
 
-class RegisteredPolymorphicSerializable(PolymorphicSerializable):
+class StaticRegisteredPolymorphicSerializable(PolymorphicSerializable):
     """
     A polymorphically serializable class that tracks its subclasses in a
     registry and uses their name to discriminate serialized instances. It

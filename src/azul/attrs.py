@@ -784,9 +784,9 @@ def polymorphic[T](field: T | None = None,
     that field. The given discriminator property of a serialized instance
     represents the type to use when deserializing that instance again.
 
-    >>> from azul.json import RegisteredPolymorphicSerializable
+    >>> from azul.json import StaticRegisteredPolymorphicSerializable
 
-    >>> class Inner(SerializableAttrs, RegisteredPolymorphicSerializable):
+    >>> class Inner(SerializableAttrs, StaticRegisteredPolymorphicSerializable):
     ...     pass
 
     >>> @attrs.frozen
