@@ -35,7 +35,7 @@ emit_tf({
                     'query': {},
                     'depends_on': ([]
                                    if config.share_es_domain else
-                                   ['aws_elasticsearch_domain.index'])
+                                   ['aws_opensearch_domain.index'])
                 }
             }
         },

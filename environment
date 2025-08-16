@@ -340,7 +340,7 @@ _hibernate() {
       terraform destroy \
         -target aws_cloudwatch_metric_alarm.indexercachehealth \
         -target aws_cloudwatch_metric_alarm.servicecachehealth \
-        -target aws_elasticsearch_domain.index
+        -target aws_opensearch_domain.index
     ) && (
       cd terraform/shared &&
       _link "$AZUL_DEPLOYMENT_STAGE.shared" &&

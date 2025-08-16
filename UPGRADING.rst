@@ -20,6 +20,28 @@ reverted. This is all fairly informal and loosely defined. Hopefully we won't
 have too many entries in this file.
 
 
+#6779 Switch ES domain to OpenSearch 2.19
+=========================================
+
+Operator
+--------
+
+Before pushing the PR branch to GitLab ``dev`` or ``anvildev``, confirm with
+team mates on Slack that all personal deployments sharing a domain with the
+respective sandbox deployment are idle.
+
+The ``deploy`` job on GitLab will fail due to a ResourceAlreadyExistsException
+for the OpenSearch domain. This exception is raised because this PR changes the
+Terraform resource type from the deprecated ``aws_elasticsearch_domain`` to the
+recommended ``aws_opensearch_domain`` without changing the Terraform resource
+name. Terraform does not realize that it can't create one resource while
+destroying the other. Retrying the job will eventually succeed.
+
+Once the deploy job succeeds for ``sandbox`` or ``anvilbox``, notify all team
+members to rebase their branches and redeploy any personal deployments that
+share a domain with these deployments.
+
+
 #7076 Populate schema property in info objects
 ==============================================
 
