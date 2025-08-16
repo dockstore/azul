@@ -53,9 +53,6 @@ from azul.indexer import (
     BundlePartition,
     BundleUUID,
 )
-from azul.indexer.aggregate import (
-    Entities,
-)
 from azul.indexer.document import (
     Aggregate,
     AggregateCoordinates,
@@ -745,7 +742,7 @@ class IndexService(DocumentService):
     def _reconcile(self,
                    transformer: type[Transformer],
                    contributions: Sequence[Contribution],
-                   ) -> Mapping[EntityType, Entities]:
+                   ) -> Mapping[EntityType, JSONs]:
         """
         Given all the contributions to a certain outer entity, reconcile
         potentially different copies of the same inner entity in those

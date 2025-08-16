@@ -357,6 +357,23 @@ class AzulImports:
         self.tree = tree
         self.tokens = file_tokens
         self.file_name = filename
+        self.__typeshed_fix()
+
+    def __typeshed_fix(self):
+        """
+        MyPY vendors typeshed which includes stubs for the Python standard
+        library. We'd like to import these stubs conditionally as documented in
+
+        https://github.com/python/typeshed/tree/main/stdlib/_typeshed
+
+        Ensure that these stubs are available to this plugin.
+        """
+        from pathlib import (
+            Path,
+        )
+        import mypy
+        bundled_stubs = Path(mypy.__file__).parent / 'typeshed' / 'stdlib'
+        sys.path.append(str(bundled_stubs))
 
     def _run(self) -> list[ErrorInfo]:
         visitor = ImportVisitor(self.file_name, self.tokens)

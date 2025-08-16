@@ -205,7 +205,8 @@ class EnvHook:
             import botocore.session
             import botocore.utils
         except ImportError:
-            self._print('Looks like boto3 is not installed. Skipping credential sharing with AWS CLI.')
+            self._print('Looks like boto3 is not installed. '
+                        'Skipping credential sharing with AWS CLI.')
         else:
             # Get the AssumeRole credential provider
             session = botocore.session.get_session()
@@ -226,18 +227,26 @@ class EnvHook:
                 # `environment` and ensures that child processes also get access
                 # to AWS credentials, albeit temporary, unrefreshable ones.
                 credentials = session.get_credentials()
-                self.set_env(dict(AWS_ACCESS_KEY_ID=credentials.access_key,
-                                  AWS_SECRET_ACCESS_KEY=credentials.secret_key,
-                                  AWS_SESSION_TOKEN=credentials.token))
-                # We remove the `env` provider to ensure that these variables
-                # won't affect botocore/boto3, so that it can continue to use
-                # refreshable credentials from the CLI. Note that we already
-                # called get_credentials on the default session object above.
-                # This caused refreshable credentials to be stored in that
-                # session. Removing the `env` provider from the default session
-                # may therefore not strictly be necessary. We do it anyways, so
-                # as to not rely on an undocumented side effect.
-                resolver.remove('env')
+                if (
+                    isinstance(credentials, botocore.credentials.DeferredRefreshableCredentials)
+                    and credentials.refresh_needed()
+                ):
+                    self._print('Looks like botocore credentials are not cached. '
+                                'Skipping credential sharing with AWS CLI. '
+                                'Use _login from a shell to avoid this.')
+                else:
+                    self.set_env(dict(AWS_ACCESS_KEY_ID=credentials.access_key,
+                                      AWS_SECRET_ACCESS_KEY=credentials.secret_key,
+                                      AWS_SESSION_TOKEN=credentials.token))
+                    # We remove the `env` provider to ensure that these variables
+                    # won't affect botocore/boto3, so that it can continue to use
+                    # refreshable credentials from the CLI. Note that we already
+                    # called get_credentials on the default session object above.
+                    # This caused refreshable credentials to be stored in that
+                    # session. Removing the `env` provider from the default session
+                    # may therefore not strictly be necessary. We do it anyways, so
+                    # as to not rely on an undocumented side effect.
+                    resolver.remove('env')
 
 
 K = TypeVar('K')

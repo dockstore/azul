@@ -32,7 +32,6 @@ from azul.logging import (
     configure_test_logging,
 )
 from azul_test_case import (
-    AlwaysTearDownTestCase,
     AzulUnitTestCase,
 )
 
@@ -174,27 +173,21 @@ class TestUnexpectedWarnings(TestCase):
         msg = 'Testing unexpected warnings, nothing to see here.'
         category = ResourceWarning
 
-        for parents in [
-            (AzulUnitTestCase,),
-            (AzulUnitTestCase, AlwaysTearDownTestCase),
-            (AlwaysTearDownTestCase, AzulUnitTestCase)
-        ]:
-            with self.subTest(parents=parents):
-                class Test(*parents):
+        class Test(AzulUnitTestCase):
 
-                    def test(self):
-                        warnings.warn(message=msg, category=category)
+            def test(self):
+                warnings.warn(message=msg, category=category)
 
-                case = Test('test')
-                suite = TestSuite()
-                result = TestResult()
-                suite.addTest(case)
-                suite.run(result)
+        case = Test('test')
+        suite = TestSuite()
+        result = TestResult()
+        suite.addTest(case)
+        suite.run(result)
 
-                self.assertEqual(1, result.testsRun)
-                self.assertEqual(1, len(result.errors), repr(result.errors))
-                failed_test, trace_back = cast(tuple[Any, str], one(result.errors))
-                self.assertEqual(f'tearDownClass ({__name__}.{Test.__qualname__})', str(failed_test))
-                error_line = trace_back.splitlines()[-1]
-                self.assertRegex(error_line, '^AssertionError')
-                self.assertIn(str(category(msg)), error_line)
+        self.assertEqual(1, result.testsRun)
+        self.assertEqual(1, len(result.errors), repr(result.errors))
+        failed_test, trace_back = cast(tuple[Any, str], one(result.errors))
+        self.assertEqual(f'tearDownClass ({__name__}.{Test.__qualname__})', str(failed_test))
+        error_line = trace_back.splitlines()[-1]
+        self.assertRegex(error_line, '^AssertionError')
+        self.assertIn(str(category(msg)), error_line)
