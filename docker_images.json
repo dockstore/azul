@@ -152,5 +152,21 @@
         "digest": "sha256:6e96a761f087cb0e3917998e6ed439ebc5a5bdb910f5477c1c39eb7bcbe54210",
         "id": "sha256:5afa1090aae4d2df1754c9d071ccdd23c13cafe65ab1963d3223c8be8ee83629",
         "platform": "linux/amd64"
+    },
+    "docker.io/opensearchproject/opensearch-dashboards:2.19.3": {
+        "digest": "sha256:a6b92ab4ccdb71a056347c1ca1022c4266e2cfd20fc0a74a6687433cb258ae71",
+        "mirror_digest": "sha256:0654300473c9f3b3e6dccbbf906eafb996293bcf9b42208fcf353cfb19a357fb",
+        "parts": {
+            "linux/amd64": {
+                "digest": "sha256:b51521e7ff99d6dbdc160835a2fbeb90465bfc58f92f3aa4387ecd56ae051d2f",
+                "id": "sha256:1534f70025563f31d9dea585dae5aeb508e7fbd24b4d40672bdab61f1351b094",
+                "platform": "linux/amd64"
+            },
+            "linux/arm64": {
+                "digest": "sha256:4de79bb89763da9dd068335c8f57d6190dcc4e97b43d6440bab21a495a630e55",
+                "id": "sha256:cb69221a8c12e29464f69660ec60e4776d4b03fb0a8a9acc3b80f8fd4d312086",
+                "platform": "linux/arm64"
+            }
+        }
     }
 }
