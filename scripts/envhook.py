@@ -185,9 +185,6 @@ class EnvHook:
     def _print(cls, msg):
         print(Path(__file__).resolve().name + ':', msg, file=sys.stderr)
 
-    def _parse(self, env: str) -> dict[str, str]:
-        return {k: v for k, _, v in (line.partition('=') for line in env.splitlines())}
-
     def share_aws_cli_credential_cache(self):
         """
         By default, boto3 and botocore do not use a cache for the assume-role
