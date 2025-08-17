@@ -34,9 +34,7 @@ from typing import (
 
 class EnvHook:
 
-    @classmethod
-    def main(cls):
-        self = cls()
+    def main(self):
         try:
             self._main(sys.argv[1:])
         except EnvhookError as e:
@@ -45,9 +43,7 @@ class EnvHook:
         finally:
             sys.stderr.flush()
 
-    @classmethod
-    def sitecustomize(cls):
-        self = cls()
+    def sitecustomize(self):
         try:
             enabled = int(os.environ.get('ENVHOOK', '1'))
             if enabled == 0:
@@ -372,6 +368,6 @@ class ThirdPartySiteCustomize(EnvhookError):
 
 
 if __name__ == '__main__':
-    EnvHook.main()
+    EnvHook().main()
 elif __name__ == 'sitecustomize':
-    EnvHook.sitecustomize()
+    EnvHook().sitecustomize()
