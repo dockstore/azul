@@ -40,7 +40,7 @@ class EnvHook:
         try:
             self._main(sys.argv[1:])
         except EnvhookError as e:
-            self._print(e.args[0])
+            self.print(e.args[0])
             sys.exit(1)
         finally:
             sys.stderr.flush()
@@ -51,7 +51,7 @@ class EnvHook:
         try:
             enabled = int(os.environ.get('ENVHOOK', '1'))
             if enabled == 0:
-                self._print('Currently disabled because the ENVHOOK environment variable is set to 0.')
+                self.print('Currently disabled because the ENVHOOK environment variable is set to 0.')
             else:
                 self.set_env(self.load_env())
                 self.share_aws_cli_credential_cache()
@@ -110,17 +110,17 @@ class EnvHook:
 
         if options.action == 'install':
             if cur_dst is None:
-                self._print(f'Installing by creating symbolic link from {link} to {dst}.')
+                self.print(f'Installing by creating symbolic link from {link} to {dst}.')
                 link.symlink_to(dst)
             elif dst == cur_dst:
-                self._print(f'Already installed. Symbolic link from {link} to {dst} exists.')
+                self.print(f'Already installed. Symbolic link from {link} to {dst} exists.')
             else:
                 raise BadSymlinkDestination(link, cur_dst, dst)
         elif options.action == 'remove':
             if cur_dst is None:
-                self._print(f'Not currently installed. Symbolic link {link} does not exist.')
+                self.print(f'Not currently installed. Symbolic link {link} does not exist.')
             elif cur_dst == dst:
-                self._print(f'Uninstalling by removing {link}.')
+                self.print(f'Uninstalling by removing {link}.')
                 link.unlink()
             else:
                 raise BadSymlinkDestination(link, cur_dst, dst)
@@ -140,23 +140,23 @@ class EnvHook:
         for k, (o, n) in sorted(zip_dict(old, new).items()):
             if o is None:
                 if self.pycharm_hosted:
-                    self._print(f'Setting {k} to {redact(k, n)!r}')
+                    self.print(f'Setting {k} to {redact(k, n)!r}')
                     os.environ[k] = n
                 else:
-                    self._print(f'Warning: {k} is not set but should be {redact(k, n)!r}, '
-                                f'you should run `source environment`')
+                    self.print(f'Warning: {k} is not set but should be {redact(k, n)!r}, '
+                               f'you should run `source environment`')
             elif n is None:
                 pass
             elif n != o:
                 if k.startswith('PYTHON'):
-                    self._print(f'Ignoring change in {k} from {redact(k, o)!r} to {redact(k, n)!r}')
+                    self.print(f'Ignoring change in {k} from {redact(k, o)!r} to {redact(k, n)!r}')
                 else:
                     if self.pycharm_hosted:
-                        self._print(f'Changing {k} from {redact(k, o)!r} to {redact(k, n)!r}')
+                        self.print(f'Changing {k} from {redact(k, o)!r} to {redact(k, n)!r}')
                         os.environ[k] = n
                     else:
-                        self._print(f'Warning: {k} is {redact(k, o)!r} but should be {redact(k, n)!r}, '
-                                    f'you must run `source environment`')
+                        self.print(f'Warning: {k} is {redact(k, o)!r} but should be {redact(k, n)!r}, '
+                                   f'you must run `source environment`')
 
     @property
     def pycharm_hosted(self):
@@ -182,7 +182,7 @@ class EnvHook:
         return self.import_sibling_script('export_environment')
 
     @classmethod
-    def _print(cls, msg):
+    def print(cls, msg):
         print(Path(__file__).resolve().name + ':', msg, file=sys.stderr)
 
     def share_aws_cli_credential_cache(self):
@@ -202,8 +202,8 @@ class EnvHook:
             import botocore.session
             import botocore.utils
         except ImportError:
-            self._print('Looks like boto3 is not installed. '
-                        'Skipping credential sharing with AWS CLI.')
+            self.print('Looks like boto3 is not installed. '
+                       'Skipping credential sharing with AWS CLI.')
         else:
             # Get the AssumeRole credential provider
             session = botocore.session.get_session()
@@ -228,9 +228,9 @@ class EnvHook:
                     isinstance(credentials, botocore.credentials.DeferredRefreshableCredentials)
                     and credentials.refresh_needed()
                 ):
-                    self._print('Looks like botocore credentials are not cached. '
-                                'Skipping credential sharing with AWS CLI. '
-                                'Use _login from a shell to avoid this.')
+                    self.print('Looks like botocore credentials are not cached. '
+                               'Skipping credential sharing with AWS CLI. '
+                               'Use _login from a shell to avoid this.')
                 else:
                     self.set_env(dict(AWS_ACCESS_KEY_ID=credentials.access_key,
                                       AWS_SECRET_ACCESS_KEY=credentials.secret_key,
