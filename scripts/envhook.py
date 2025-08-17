@@ -358,12 +358,12 @@ class BadSymlinkDestination(EnvhookError):
 
 class ThirdPartySiteCustomize(EnvhookError):
 
-    def __init__(self, sitecustomize: Path) -> None:
+    def __init__(self, other: Path) -> None:
         super().__init__(
-            f'A different `sitecustomize` module already exists at '
-            f'{sitecustomize}. Make a backup of that file, remove the original '
-            f'and try again. Note that removing the file may break other, '
-            f'third-party site customizations.'
+            f'A different `sitecustomize` module already exists at {other}. '
+            f'Make a backup of that file, remove the original and try again. '
+            f'Note that removing the file may break other, third-party site '
+            f'customizations.'
         )
 
 
