@@ -37,9 +37,6 @@ class EnvHook:
     def main(self):
         try:
             self._main(sys.argv[1:])
-        except EnvhookError as e:
-            self.print(e.args[0])
-            sys.exit(1)
         finally:
             sys.stderr.flush()
 
@@ -51,6 +48,15 @@ class EnvHook:
             else:
                 self.set_env(self.load_env())
                 self.share_aws_cli_credential_cache()
+        except EnvhookError as e:
+            if self.pycharm_hosted:
+                # Under PyCharm, something suppresses sys.exit, probably
+                # wrongly catching BaseException instead of Exception, so we
+                # need to force the exit.
+                self.print(e.args)
+                os._exit(1)
+            else:
+                raise
         finally:
             sys.stderr.flush()
 
@@ -327,7 +333,7 @@ class Path(pathlib.PosixPath):
             return other.parts[:len(self.parts)] == self.parts
 
 
-class EnvhookError(RuntimeError):
+class EnvhookError(SystemExit):
     pass
 
 
