@@ -29,12 +29,10 @@ from opensearchpy.helpers.response import (
 
 from azul import (
     CatalogName,
-    cache,
     config,
 )
 from azul.plugins import (
     File,
-    RepositoryPlugin,
     dotted,
 )
 from azul.service import (
@@ -90,10 +88,6 @@ class SummaryResponseStage(ElasticsearchStage[JSON, MutableJSON],
 
 
 class RepositoryService(ElasticsearchService):
-
-    @cache
-    def repository_plugin(self, catalog: CatalogName) -> RepositoryPlugin:
-        return RepositoryPlugin.load(catalog).create(catalog)
 
     def search(self,
                *,
