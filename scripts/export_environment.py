@@ -9,6 +9,7 @@ from collections.abc import (
     Iterator,
     Mapping,
 )
+import hashlib
 from importlib.abc import (
     Loader,
 )
@@ -389,6 +390,17 @@ def resolve_env(env: Environment) -> Environment:
     return dict(ResolvedEnvironment(env))
 
 
+azul_env_hash = 'azul_env_hash'
+
+
+def hash_env(env: Environment) -> Environment:
+    hash = hashlib.sha1()
+    encoder = json.JSONEncoder(sort_keys=True, separators=(',', ':'))
+    hash.update(encoder.encode(env).encode())
+    assert azul_env_hash not in env, env[azul_env_hash]
+    return {**env, azul_env_hash: hash.hexdigest()}
+
+
 azul_env_vars = 'azul_env_vars'
 
 
@@ -433,9 +445,8 @@ def main():
     # confusing the shell's eval. Note the  `|| echo false` in the recommended
     # usage below.
     output = None if os.isatty(sys.stdout.fileno()) else StringIO()
-    env, warning = load_env()
-    resolved_env = resolve_env(env)
-    export_env(resolved_env, output)
+    hashed_env, warning = prepare_env()
+    export_env(hashed_env, output)
     if warning:
         print(warning, file=sys.stderr)
     if output is None:
@@ -446,6 +457,13 @@ def main():
         sys.exit(1)
     else:
         print(output.getvalue(), file=sys.stdout)
+
+
+def prepare_env() -> Tuple[Environment, Optional[str]]:
+    env, warning = load_env()
+    resolved_env = resolve_env(env)
+    hashed_env = hash_env(resolved_env)
+    return hashed_env, warning
 
 
 if __name__ == '__main__':
