@@ -47,22 +47,6 @@
             }
         }
     },
-    "docker.io/ucscgi/azul-elasticsearch:7.17.28-50": {
-        "digest": "sha256:8b79e67b000789ddf651e653d2c8cce9dfcc9ec46333f4d434b69dc2a7853669",
-        "mirror_digest": "sha256:fbbb91e2e8e293134df5ba8dfdceb17accd5e8590764d9e959bb5ce2d17dbe16",
-        "parts": {
-            "linux/amd64": {
-                "digest": "sha256:ee11876c7f652bf9ecb9b712cda743d8f62447999f5e7def838a722f01703400",
-                "id": "sha256:711b3ef48350b2e74813bacf5eb1290f4ceee9e536e1638d33c3752d05f9c44d",
-                "platform": "linux/amd64"
-            },
-            "linux/arm64": {
-                "digest": "sha256:76e381af5bd601240b5a4d17397442bec33c21abc8fb163d48d882f9bd110d51",
-                "id": "sha256:c564c57ff7145797b7a27ad220740f7e4a31be15551c3c52f62782056ab33f25",
-                "platform": "linux/arm64"
-            }
-        }
-    },
     "docker.io/opensearchproject/opensearch:2.19.3": {
         "digest": "sha256:a54d2deebe965848afc0d06f5088baa0fbf77fedb3a2c62de9e032eb6d6aaf7f",
         "mirror_digest": "sha256:51ad0959df798111b5513b056d9a6b83898092a0854da05ec3027f108a7696e1",

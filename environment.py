@@ -304,11 +304,6 @@ def env() -> Mapping[str, Optional[str]]:
                 'url': 'https://hub.docker.com/repository/docker/ucscgi/azul-pycharm',
                 'is_custom': True
             },
-            'elasticsearch': {
-                'ref': 'docker.io/ucscgi/azul-elasticsearch:7.17.28-50',
-                'url': 'https://hub.docker.com/repository/docker/ucscgi/azul-elasticsearch',
-                'is_custom': True
-            },
             'opensearch': {
                 'ref': 'docker.io/opensearchproject/opensearch:2.19.3',
                 'url': 'https://hub.docker.com/r/opensearchproject/opensearch',
