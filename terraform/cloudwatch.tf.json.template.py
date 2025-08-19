@@ -80,13 +80,10 @@ emit_tf({
                                 },
                                 'statistic': 'Sum',
                                 'comparison_operator': 'GreaterThanThreshold',
-                                'threshold': 1,
-                                # This alarm catches persistent 5XX errors occurring over
-                                # one hour, specifically when more than one occurrence is
-                                # sampled in a ten-minute period for six consecutive periods.
-                                'evaluation_periods': 6,
-                                'period': 60 * 10,
-                                'datapoints_to_alarm': 6,
+                                'threshold': 0,
+                                'evaluation_periods': 1,
+                                'period': 60 * 60,  # one hour
+                                'datapoints_to_alarm': 1,
                                 'alarm_actions': ['${data.aws_sns_topic.monitoring.arn}'],
                                 'ok_actions': ['${data.aws_sns_topic.monitoring.arn}'],
                                 'treat_missing_data': 'notBreaching',
