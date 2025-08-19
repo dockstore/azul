@@ -227,7 +227,7 @@ def add_waf_blocked_alarm(resources: JSON) -> JSON:
                                         'Rule': rule
                                     },
                                     'stat': 'Sum',
-                                    'period': 15 * 60,
+                                    'period': 60 * 60,  # one hour
                                 }
                             }
                             for i, (metric, rule) in enumerate(metrics)
@@ -241,8 +241,8 @@ def add_waf_blocked_alarm(resources: JSON) -> JSON:
                     ],
                     'comparison_operator': 'GreaterThanThreshold',
                     'threshold': 25,  # percent blocked of total requests in a period
-                    'evaluation_periods': 4,
-                    'datapoints_to_alarm': 4,
+                    'evaluation_periods': 1,
+                    'datapoints_to_alarm': 1,
                     'alarm_actions': ['${data.aws_sns_topic.monitoring.arn}'],
                     'ok_actions': ['${data.aws_sns_topic.monitoring.arn}'],
                     'treat_missing_data': 'notBreaching',
