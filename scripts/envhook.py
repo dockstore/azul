@@ -41,7 +41,6 @@ class EnvHook:
                 self.print('Currently disabled because the ENVHOOK environment variable is set to 0.')
             else:
                 self.handle_env()
-                self.share_aws_cli_credential_cache()
         except EnvhookError as e:
             if self.pycharm_hosted:
                 # Under PyCharm, something suppresses sys.exit, probably
@@ -188,66 +187,6 @@ class EnvHook:
     @classmethod
     def print(cls, msg):
         print(Path(__file__).resolve().name + ':', msg, file=sys.stderr)
-
-    def share_aws_cli_credential_cache(self):
-        """
-        By default, boto3 and botocore do not use a cache for the assume-role
-        provider even though the credentials cache mechanism exists in botocore.
-        This means that if assuming a role requires you to enter a MFA code, you
-        will have to enter it every time you instantiate a boto3 or botocore client,
-        even if your previous session would have lasted longer.
-
-        This function connects the assume-role provider with the cache used by the
-        AWS CLI, saving tedious code reentry. It does so only for boto3.
-        """
-        try:
-            import boto3
-            import botocore.credentials
-            import botocore.session
-            import botocore.utils
-        except ImportError:
-            self.print('Looks like boto3 is not installed. '
-                       'Skipping credential sharing with AWS CLI.')
-        else:
-            # Get the AssumeRole credential provider
-            session = botocore.session.get_session()
-            resolver = session.get_component('credential_provider')
-            provider = resolver.get_provider('assume-role')
-
-            # Make the provider use the same cache as the AWS CLI
-            cli_cache = Path('~', '.aws', 'cli', 'cache').expanduser()
-            provider.cache = botocore.utils.JSONFileCache(cli_cache)
-
-            # Set up the default Boto3 session with the modified Botocore
-            # session so that calls to boto3.client() and .resource(), which use
-            # the default session, also get access to cached CLI credentials.
-            boto3.setup_default_session(botocore_session=session)
-
-            if self.pycharm_hosted:
-                # This is the equivalent of the _login_aws function in
-                # `environment` and ensures that child processes also get access
-                # to AWS credentials, albeit temporary, unrefreshable ones.
-                credentials = session.get_credentials()
-                if (
-                    isinstance(credentials, botocore.credentials.DeferredRefreshableCredentials)
-                    and credentials.refresh_needed()
-                ):
-                    self.print('Looks like botocore credentials are not cached. '
-                               'Skipping credential sharing with AWS CLI. '
-                               'Invoke `_login` from a shell to avoid this.')
-                else:
-                    self.set_env(dict(AWS_ACCESS_KEY_ID=credentials.access_key,
-                                      AWS_SECRET_ACCESS_KEY=credentials.secret_key,
-                                      AWS_SESSION_TOKEN=credentials.token))
-                    # We remove the `env` provider to ensure that these variables
-                    # won't affect botocore/boto3, so that it can continue to use
-                    # refreshable credentials from the CLI. Note that we already
-                    # called get_credentials on the default session object above.
-                    # This caused refreshable credentials to be stored in that
-                    # session. Removing the `env` provider from the default session
-                    # may therefore not strictly be necessary. We do it anyways, so
-                    # as to not rely on an undocumented side effect.
-                    resolver.remove('env')
 
 
 class Path(pathlib.PosixPath):
