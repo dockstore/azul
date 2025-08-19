@@ -21,40 +21,36 @@ from importlib.abc import (
     Loader,
 )
 import importlib.util
-from itertools import (
-    chain,
-)
 import os
 import pathlib
 import sys
-from typing import (
-    TypeVar,
-)
 
 
 class EnvHook:
 
-    @classmethod
-    def main(cls):
-        self = cls()
+    def main(self):
         try:
             self._main(sys.argv[1:])
-        except EnvhookError as e:
-            self._print(e.args[0])
-            sys.exit(1)
         finally:
             sys.stderr.flush()
 
-    @classmethod
-    def sitecustomize(cls):
-        self = cls()
+    def sitecustomize(self):
         try:
             enabled = int(os.environ.get('ENVHOOK', '1'))
             if enabled == 0:
-                self._print('Currently disabled because the ENVHOOK environment variable is set to 0.')
+                self.print('Currently disabled because the ENVHOOK environment variable is set to 0.')
             else:
-                self.set_env(self.load_env())
+                self.handle_env()
                 self.share_aws_cli_credential_cache()
+        except EnvhookError as e:
+            if self.pycharm_hosted:
+                # Under PyCharm, something suppresses sys.exit, probably
+                # wrongly catching BaseException instead of Exception, so we
+                # need to force the exit.
+                self.print(e.args)
+                os._exit(1)
+            else:
+                raise
         finally:
             sys.stderr.flush()
 
@@ -110,53 +106,54 @@ class EnvHook:
 
         if options.action == 'install':
             if cur_dst is None:
-                self._print(f'Installing by creating symbolic link from {link} to {dst}.')
+                self.print(f'Installing by creating symbolic link from {link} to {dst}.')
                 link.symlink_to(dst)
             elif dst == cur_dst:
-                self._print(f'Already installed. Symbolic link from {link} to {dst} exists.')
+                self.print(f'Already installed. Symbolic link from {link} to {dst} exists.')
             else:
                 raise BadSymlinkDestination(link, cur_dst, dst)
         elif options.action == 'remove':
             if cur_dst is None:
-                self._print(f'Not currently installed. Symbolic link {link} does not exist.')
+                self.print(f'Not currently installed. Symbolic link {link} does not exist.')
             elif cur_dst == dst:
-                self._print(f'Uninstalling by removing {link}.')
+                self.print(f'Uninstalling by removing {link}.')
                 link.unlink()
             else:
                 raise BadSymlinkDestination(link, cur_dst, dst)
         else:
             assert False
 
-    def load_env(self) -> Mapping[str, str]:
-        resolve_env = self.export_environment.resolve_env
-        load_env = self.export_environment.load_env
-        new, _ = load_env()
-        new = resolve_env(new)
+    def handle_env(self):
+        env = self.prepare_env()
+        azul_env_hash = self.export_environment.azul_env_hash
+        expected, actual = env[azul_env_hash], os.environ.get(azul_env_hash)
+        if self.pycharm_hosted:
+            if actual is None:
+                self.set_env(env)
+            else:
+                raise TaintedEnv()
+        else:
+            if actual is None:
+                raise EmptyEnv()
+            elif actual != expected:
+                raise StaleEnv()
+
+    def prepare_env(self) -> Mapping[str, str]:
+        prepare_env = self.export_environment.prepare_env
+        new, message = prepare_env()
         return new
 
-    def set_env(self, new: Mapping[str, str]):
+    def set_env(self, env: Mapping[str, str]):
         redact = self.export_environment.redact
-        old = os.environ
-        for k, (o, n) in sorted(zip_dict(old, new).items()):
-            if o is None:
-                if self.pycharm_hosted:
-                    self._print(f'Setting {k} to {redact(k, n)!r}')
-                    os.environ[k] = n
-                else:
-                    self._print(f'Warning: {k} is not set but should be {redact(k, n)!r}, '
-                                f'you should run `source environment`')
-            elif n is None:
-                pass
-            elif n != o:
-                if k.startswith('PYTHON'):
-                    self._print(f'Ignoring change in {k} from {redact(k, o)!r} to {redact(k, n)!r}')
-                else:
-                    if self.pycharm_hosted:
-                        self._print(f'Changing {k} from {redact(k, o)!r} to {redact(k, n)!r}')
-                        os.environ[k] = n
-                    else:
-                        self._print(f'Warning: {k} is {redact(k, o)!r} but should be {redact(k, n)!r}, '
-                                    f'you must run `source environment`')
+        for k, v in env.items():
+            try:
+                v_ = os.environ[k]
+            except KeyError:
+                self.print(f'Setting {k} to {redact(k, v)!r}')
+                os.environ[k] = v
+            else:
+                self.print(f'Not setting {k} to {redact(k, v)!r} '
+                           f'because it is already set to {redact(k, v_)!r}')
 
     @property
     def pycharm_hosted(self):
@@ -182,11 +179,8 @@ class EnvHook:
         return self.import_sibling_script('export_environment')
 
     @classmethod
-    def _print(cls, msg):
+    def print(cls, msg):
         print(Path(__file__).resolve().name + ':', msg, file=sys.stderr)
-
-    def _parse(self, env: str) -> dict[str, str]:
-        return {k: v for k, _, v in (line.partition('=') for line in env.splitlines())}
 
     def share_aws_cli_credential_cache(self):
         """
@@ -205,8 +199,8 @@ class EnvHook:
             import botocore.session
             import botocore.utils
         except ImportError:
-            self._print('Looks like boto3 is not installed. '
-                        'Skipping credential sharing with AWS CLI.')
+            self.print('Looks like boto3 is not installed. '
+                       'Skipping credential sharing with AWS CLI.')
         else:
             # Get the AssumeRole credential provider
             session = botocore.session.get_session()
@@ -231,9 +225,9 @@ class EnvHook:
                     isinstance(credentials, botocore.credentials.DeferredRefreshableCredentials)
                     and credentials.refresh_needed()
                 ):
-                    self._print('Looks like botocore credentials are not cached. '
-                                'Skipping credential sharing with AWS CLI. '
-                                'Use _login from a shell to avoid this.')
+                    self.print('Looks like botocore credentials are not cached. '
+                               'Skipping credential sharing with AWS CLI. '
+                               'Invoke `_login` from a shell to avoid this.')
                 else:
                     self.set_env(dict(AWS_ACCESS_KEY_ID=credentials.access_key,
                                       AWS_SECRET_ACCESS_KEY=credentials.secret_key,
@@ -247,44 +241,6 @@ class EnvHook:
                     # may therefore not strictly be necessary. We do it anyways, so
                     # as to not rely on an undocumented side effect.
                     resolver.remove('env')
-
-
-K = TypeVar('K')
-OV = TypeVar('OV')
-NV = TypeVar('NV')
-
-
-def zip_dict(old: Mapping[K, OV],
-             new: Mapping[K, NV],
-             missing=None
-             ) -> dict[K, tuple[OV, NV]]:
-    """
-    Merge two dictionaries. The resulting dictionary contains an entry for every
-    key in either `old` or `new`. Each entry in the result associates a key to
-    two values: the value from `old` for that key followed by the value from
-    `new` for that key. If the key is absent from either argument, the
-    respective tuple element will be `missing`, which defaults to None. If
-    either `old` or `new` could contain None values, some other value should be
-    passed for `missing` in order to distinguish None values from values for
-    absent entries.
-
-    >>> zip_dict({1:2}, {1:2})
-    {1: (2, 2)}
-    >>> zip_dict({1:2}, {3:4})
-    {1: (2, None), 3: (None, 4)}
-    >>> zip_dict({1:2}, {1:3})
-    {1: (2, 3)}
-    >>> zip_dict({1:2}, {})
-    {1: (2, None)}
-    >>> zip_dict({}, {1:2})
-    {1: (None, 2)}
-    >>> zip_dict({'deleted': 1, 'same': 2, 'changed': 3}, {'same': 2, 'changed': 4, 'added': 5}, missing=-1)
-    {'deleted': (1, -1), 'same': (2, 2), 'changed': (3, 4), 'added': (-1, 5)}
-    """
-    result = ((k, (old.get(k, missing), n)) for k, n in new.items())
-    removed = ((k, o) for k, o in old.items() if k not in new)
-    removed = ((k, (o, missing)) for k, o in removed)
-    return dict(chain(removed, result))
 
 
 class Path(pathlib.PosixPath):
@@ -334,7 +290,7 @@ class Path(pathlib.PosixPath):
             return other.parts[:len(self.parts)] == self.parts
 
 
-class EnvhookError(RuntimeError):
+class EnvhookError(SystemExit):
     pass
 
 
@@ -365,16 +321,41 @@ class BadSymlinkDestination(EnvhookError):
 
 class ThirdPartySiteCustomize(EnvhookError):
 
-    def __init__(self, sitecustomize: Path) -> None:
+    def __init__(self, other: Path) -> None:
         super().__init__(
-            f'A different `sitecustomize` module already exists at '
-            f'{sitecustomize}. Make a backup of that file, remove the original '
-            f'and try again. Note that removing the file may break other, '
-            f'third-party site customizations.'
+            f'A different `sitecustomize` module already exists at {other}. '
+            f'Make a backup of that file, remove the original and try again. '
+            f'Note that removing the file may break other, third-party site '
+            f'customizations.'
+        )
+
+
+class TaintedEnv(EnvhookError):
+
+    def __init__(self):
+        super().__init__(
+            'The current process is a child of the PyCharm process but '
+            'unexpectedly already has the Azul environment loaded'
+        )
+
+
+class StaleEnv(EnvhookError):
+
+    def __init__(self):
+        super().__init__(
+            'The environment is stale. You need to run `source environment`.'
+        )
+
+
+class EmptyEnv(EnvhookError):
+
+    def __init__(self):
+        super().__init__(
+            'The environment is empty. You need to run `source environment`.'
         )
 
 
 if __name__ == '__main__':
-    EnvHook.main()
+    EnvHook().main()
 elif __name__ == 'sitecustomize':
-    EnvHook.sitecustomize()
+    EnvHook().sitecustomize()
