@@ -619,8 +619,8 @@ class AzulChaliceApp(Chalice):
             # first.
             for_errors = metric is LambdaMetric.errors
             alarm = self.metric_alarm(metric=metric,
-                                      threshold=1 if for_errors else 0,
-                                      period=24 * 60 * 60 if for_errors else 5 * 60)
+                                      threshold=0,
+                                      period=60 * 60 if for_errors else 5 * 60)
             yield alarm.bind(self)
         for handler_name, handler in self.handler_map.items():
             if isinstance(handler, chalice.app.EventSourceHandler):
