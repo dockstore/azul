@@ -2,17 +2,18 @@ from abc import (
     ABC,
     abstractmethod,
 )
+from collections import (
+    defaultdict,
+)
 import datetime
 import logging
 import time
 from typing import (
-    AbstractSet,
     Callable,
-    Self,
+    Iterable,
     TypeVar,
 )
 
-import attr
 from chalice import (
     UnauthorizedError,
 )
@@ -21,9 +22,7 @@ from furl import (
 )
 
 from azul import (
-    CatalogName,
     cache_per_thread,
-    config,
     require,
 )
 from azul.auth import (
@@ -32,6 +31,7 @@ from azul.auth import (
 )
 from azul.bigquery import (
     BigQueryRows,
+    backtick,
 )
 from azul.drs import (
     AccessMethod,
@@ -83,7 +83,6 @@ T = TypeVar('T')
 TDR_BUNDLE = TypeVar('TDR_BUNDLE', bound=TDRBundle)
 
 
-@attr.s(kw_only=True, auto_attribs=True, frozen=True)
 class TDRPlugin[TDR_BUNDLE: TDRBundle,
                 TDR_BUNDLE_FQID: TDRBundleFQID](
     RepositoryPlugin[
@@ -93,18 +92,6 @@ class TDRPlugin[TDR_BUNDLE: TDRBundle,
         TDR_BUNDLE_FQID
     ]
 ):
-    _sources: AbstractSet[TDRSourceSpec]
-
-    @classmethod
-    def create(cls, catalog: CatalogName) -> Self:
-        return cls(sources=frozenset(
-            TDRSourceSpec.parse(spec)
-            for spec in config.sources(catalog))
-        )
-
-    @property
-    def sources(self) -> AbstractSet[TDRSourceSpec]:
-        return self._sources
 
     def _auth_fallback(self,
                        authentication: Authentication | None,
@@ -231,6 +218,41 @@ class TDRPlugin[TDR_BUNDLE: TDRBundle,
 
     def validate_version(self, version: str) -> None:
         parse_dcp2_version(version)
+
+    def find_in_source(self,
+                       source: TDRSourceSpec,
+                       string: str
+                       ) -> Iterable[JSON]:
+        log.info('Validating snapshot %s', source)
+        query = f'''
+            SELECT table_name, column_name
+            FROM {backtick(self._full_table_name(source, 'INFORMATION_SCHEMA.COLUMNS'))}
+        '''
+        table_columns = defaultdict(list)
+        for row in self._run_sql(query):
+            table_name, column_name = row['table_name'], row['column_name']
+            assert isinstance(table_name, str), table_name
+            assert isinstance(column_name, str), column_name
+            table_columns[table_name].append(column_name)
+        for table_name, columns in table_columns.items():
+            log.info('Validating table %s', table_name)
+            for column in columns:
+                query = f'''
+                    SELECT datarepo_row_id, {column}
+                    FROM {backtick(self._full_table_name(source, table_name))}
+                    WHERE CONTAINS_SUBSTR({column}, {string!r})
+                '''
+                for row in self._run_sql(query):
+                    match = {
+                        'catalog': self.catalog,
+                        'spec': str(source),
+                        'table': table_name,
+                        'column': column,
+                        'row_id': row['datarepo_row_id'],
+                        'value': row[column]
+                    }
+                    log.warning('Undesired string found: %r', match)
+                    yield match
 
 
 class TDRFileDownload(RepositoryFileDownload):
