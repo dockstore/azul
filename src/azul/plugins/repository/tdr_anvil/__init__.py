@@ -908,16 +908,11 @@ class Plugin(TDRPlugin[TDRAnvilBundle, TDRAnvilBundleFQID]):
                 WHERE {pk_column} IN ({', '.join(map(repr, keys))})
             ''')
 
-            def convert_column(value):
-                if isinstance(value, list):
-                    value.sort()
-                if isinstance(value, datetime.datetime):
-                    return self.format_version(value)
-                else:
-                    return value
-
             rows = [
-                {k: convert_column(v) for k, v in row.items()}
+                {
+                    k: self.format_version(v) if isinstance(v, datetime.datetime) else v
+                    for k, v in row.items()
+                }
                 for row in rows
             ]
             log.debug('Retrieved %i entities of type %r', len(rows), entity_type)
