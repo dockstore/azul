@@ -1824,17 +1824,12 @@ class Config:
                                          period=10 * 60,
                                          retry_after=30)
 
-    #: The rate limit for file download requests
+    #: The rate limit for file download requests.
     #:
-    #: We aim for a global limit of 60 file downloads per 10 minutes. Based on
-    #: an observed average of 2.9 distinct IPs concurrently downloading files
-    #: in any 10-minute window, the maximum per-IP request rate we can allow is
-    #: 20/10min, or 10/5min.
+    #: Now that most files are mirrored, we can serve them at the general rate.
     #:
-    waf_rate_limit_files = RateLimit(name='rate_limit_files',
-                                     value=10,
-                                     period=5 * 60,
-                                     retry_after=30)
+    waf_rate_limit_files = evolve(waf_rate_limit,
+                                  name='rate_limit_files')
 
     @property
     def waf_bot_control(self) -> bool:
