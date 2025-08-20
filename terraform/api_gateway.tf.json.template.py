@@ -214,38 +214,38 @@ def add_waf_blocked_alarm(resources: JSON) -> JSON:
             'aws_cloudwatch_metric_alarm': {
                 'waf_blocked': {
                     'alarm_name': config.qualified_resource_name('waf_blocked'),
-                    'comparison_operator': 'GreaterThanThreshold',
-                    'threshold': 25,  # percent blocked of total requests in a period
-                    'evaluation_periods': 4,
-                    'datapoints_to_alarm': 4,
-                    'treat_missing_data': 'notBreaching',
-                    'alarm_actions': ['${data.aws_sns_topic.monitoring.arn}'],
-                    'ok_actions': ['${data.aws_sns_topic.monitoring.arn}'],
                     'metric_query': [
-                        {
-                            'id': 'waf',
-                            'label': 'Percentage of blocked requests',
-                            'expression': expression,
-                            'return_data': 'true',
-                        },
                         *(
                             {
                                 'id': f'm{i}',
                                 'metric': {
                                     'namespace': 'AWS/WAFV2',
                                     'metric_name': metric,
-                                    'period': 15 * 60,
-                                    'stat': 'Sum',
                                     'dimensions': {
                                         'WebACL': '${aws_wafv2_web_acl.api_gateway.name}',
                                         'Region': config.region,
                                         'Rule': rule
-                                    }
+                                    },
+                                    'stat': 'Sum',
+                                    'period': 15 * 60,
                                 }
                             }
                             for i, (metric, rule) in enumerate(metrics)
-                        )
-                    ]
+                        ),
+                        {
+                            'id': 'waf',
+                            'label': 'Percentage of blocked requests',
+                            'expression': expression,
+                            'return_data': 'true',
+                        }
+                    ],
+                    'comparison_operator': 'GreaterThanThreshold',
+                    'threshold': 25,  # percent blocked of total requests in a period
+                    'evaluation_periods': 4,
+                    'datapoints_to_alarm': 4,
+                    'alarm_actions': ['${data.aws_sns_topic.monitoring.arn}'],
+                    'ok_actions': ['${data.aws_sns_topic.monitoring.arn}'],
+                    'treat_missing_data': 'notBreaching',
                 }
             }
         }

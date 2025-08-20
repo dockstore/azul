@@ -72,23 +72,24 @@ emit_tf({
                         'aws_cloudwatch_metric_alarm': {
                             f'{lambda_}_5xx': {
                                 'alarm_name': config.qualified_resource_name(lambda_ + '_5xx'),
+                                'namespace': 'AWS/ApiGateway',
+                                'metric_name': '5XXError',
+                                'dimensions': {
+                                    'ApiName': config.qualified_resource_name(lambda_),
+                                    'Stage': config.deployment_stage,
+                                },
+                                'statistic': 'Sum',
                                 'comparison_operator': 'GreaterThanThreshold',
+                                'threshold': 1,
                                 # This alarm catches persistent 5XX errors occurring over
                                 # one hour, specifically when more than one occurrence is
                                 # sampled in a ten-minute period for six consecutive periods.
                                 'evaluation_periods': 6,
                                 'period': 60 * 10,
-                                'metric_name': '5XXError',
-                                'namespace': 'AWS/ApiGateway',
-                                'statistic': 'Sum',
-                                'threshold': 1,
-                                'treat_missing_data': 'notBreaching',
-                                'dimensions': {
-                                    'ApiName': config.qualified_resource_name(lambda_),
-                                    'Stage': config.deployment_stage,
-                                },
+                                'datapoints_to_alarm': 6,
                                 'alarm_actions': ['${data.aws_sns_topic.monitoring.arn}'],
                                 'ok_actions': ['${data.aws_sns_topic.monitoring.arn}'],
+                                'treat_missing_data': 'notBreaching',
                             }
                         }
                     }
@@ -121,13 +122,6 @@ emit_tf({
                         'aws_cloudwatch_metric_alarm': {
                             f'{lambda_}cachehealth': {
                                 'alarm_name': config.qualified_resource_name(f'{lambda_}cachehealth', suffix='.alarm'),
-                                'comparison_operator': 'LessThanThreshold',
-                                'threshold': 1,
-                                'datapoints_to_alarm': 1,
-                                'evaluation_periods': 1,
-                                'treat_missing_data': 'breaching',
-                                'alarm_actions': ['${data.aws_sns_topic.monitoring.arn}'],
-                                'ok_actions': ['${data.aws_sns_topic.monitoring.arn}'],
                                 # CloudWatch uses an unconfigurable "evaluation range" when missing
                                 # data is involved. In practice this means that an alarm on the
                                 # absence of logs with an evaluation window of ten minutes would
@@ -136,21 +130,28 @@ emit_tf({
                                 # value of zero and avoid the need for the evaluation range.
                                 'metric_query': [
                                     {
+                                        'id': 'log_count_raw',
+                                        'metric': {
+                                            'namespace': 'LogMetrics',
+                                            'metric_name': '${aws_cloudwatch_log_metric_filter.'
+                                                           '%scachehealth.metric_transformation[0].name}' % lambda_,
+                                            'stat': 'Sum',
+                                            'period': 10 * 60,
+                                        }
+                                    },
+                                    {
                                         'id': 'log_count_filled',
                                         'expression': 'FILL(log_count_raw, 0)',
                                         'return_data': True,
-                                    },
-                                    {
-                                        'id': 'log_count_raw',
-                                        'metric': {
-                                            'metric_name': '${aws_cloudwatch_log_metric_filter.'
-                                                           '%scachehealth.metric_transformation[0].name}' % lambda_,
-                                            'namespace': 'LogMetrics',
-                                            'period': 10 * 60,
-                                            'stat': 'Sum',
-                                        }
                                     }
-                                ]
+                                ],
+                                'comparison_operator': 'LessThanThreshold',
+                                'threshold': 1,
+                                'evaluation_periods': 1,
+                                'datapoints_to_alarm': 1,
+                                'alarm_actions': ['${data.aws_sns_topic.monitoring.arn}'],
+                                'ok_actions': ['${data.aws_sns_topic.monitoring.arn}'],
+                                'treat_missing_data': 'breaching',
                             }
                         }
                     }
@@ -161,37 +162,37 @@ emit_tf({
                         **{
                             f'internet_{direction}': {
                                 'alarm_name': config.qualified_resource_name(f'internet_{direction}'),
-                                'comparison_operator': 'GreaterThanThreshold',
-                                'threshold': threshold,
-                                'evaluation_periods': 1,
-                                'datapoints_to_alarm': 1,
-                                'treat_missing_data': 'notBreaching',
                                 'metric_query': [
+                                    *(
+                                        {
+                                            'id': f'm{zone}',
+                                            'metric': {
+                                                'namespace': 'AWS/NATGateway',
+                                                'metric_name': metric_name,
+                                                'dimensions': {
+                                                    # Data source defined in data_sources.tf.json
+                                                    'NatGatewayId': f'${{data.aws_nat_gateway.gitlab_{zone}.id}}'
+                                                },
+                                                'stat': 'Sum',
+                                                'period': 1 * 60 * 60,
+                                            }
+                                        }
+                                        for zone in range(vpc.num_zones)
+                                    ),
                                     {
                                         'id': f'internet_{direction}',
                                         'label': f'Internet {direction} bytes/h',
                                         'expression': ' + '.join(f'm{zone}' for zone in range(vpc.num_zones)),
                                         'return_data': True,
-                                    },
-                                    *(
-                                        {
-                                            'id': f'm{zone}',
-                                            'metric': {
-                                                'dimensions': {
-                                                    # Data source defined in data_sources.tf.json
-                                                    'NatGatewayId': f'${{data.aws_nat_gateway.gitlab_{zone}.id}}'
-                                                },
-                                                'namespace': 'AWS/NATGateway',
-                                                'metric_name': metric_name,
-                                                'period': 1 * 60 * 60,
-                                                'stat': 'Sum',
-                                            }
-                                        }
-                                        for zone in range(vpc.num_zones)
-                                    )
+                                    }
                                 ],
+                                'comparison_operator': 'GreaterThanThreshold',
+                                'threshold': threshold,
+                                'evaluation_periods': 1,
+                                'datapoints_to_alarm': 1,
                                 'alarm_actions': ['${data.aws_sns_topic.monitoring.arn}'],
                                 'ok_actions': ['${data.aws_sns_topic.monitoring.arn}'],
+                                'treat_missing_data': 'notBreaching',
                             }
                             for direction, metric_name, threshold in [
                                 ('ingress', 'BytesInFromDestination', 50 * 1024 * 1024 * 1024),
@@ -201,29 +202,29 @@ emit_tf({
                         **{
                             f'vpn_{direction}': {
                                 'alarm_name': config.qualified_resource_name(f'vpn_{direction}'),
-                                'comparison_operator': 'GreaterThanThreshold',
-                                'threshold': threshold,
-                                'evaluation_periods': 1,
-                                'datapoints_to_alarm': 1,
-                                'treat_missing_data': 'notBreaching',
                                 'metric_query': [
                                     {
                                         'id': f'vpn_{direction}',
                                         'label': f'VPN {direction} bytes/h',
                                         'metric': {
+                                            'namespace': 'AWS/ClientVPN',
+                                            'metric_name': metric_name,
                                             'dimensions': {
                                                 'Endpoint': '${data.aws_ec2_client_vpn_endpoint.gitlab.id}'
                                             },
-                                            'namespace': 'AWS/ClientVPN',
-                                            'metric_name': metric_name,
-                                            'period': 1 * 60 * 60,
                                             'stat': 'Sum',
+                                            'period': 1 * 60 * 60,
                                         },
                                         'return_data': True,
                                     }
                                 ],
+                                'comparison_operator': 'GreaterThanThreshold',
+                                'threshold': threshold,
+                                'evaluation_periods': 1,
+                                'datapoints_to_alarm': 1,
                                 'alarm_actions': ['${data.aws_sns_topic.monitoring.arn}'],
                                 'ok_actions': ['${data.aws_sns_topic.monitoring.arn}'],
+                                'treat_missing_data': 'notBreaching',
                             }
                             for direction, metric_name, threshold in [
                                 ('ingress', 'IngressBytes', 100 * 1024 * 1024 * 1024),
@@ -237,44 +238,44 @@ emit_tf({
                                     suffix='.alarm'
                                 ),
                                 'namespace': 'AWS/Lambda',
+                                'metric_name': metric_alarm.metric.aws_name,
                                 'dimensions': {
                                     'FunctionName': '${' + '.'.join((
                                         'aws_lambda_function', metric_alarm.tf_function_resource_name,
                                         'function_name'
                                     )) + '}'
                                 },
-                                'metric_name': metric_alarm.metric.aws_name,
-                                'comparison_operator': 'GreaterThanThreshold',
                                 'statistic': 'Sum',
+                                'comparison_operator': 'GreaterThanThreshold',
                                 'threshold': metric_alarm.threshold,
+                                'evaluation_periods': 1,
                                 'period': metric_alarm.period,
                                 'datapoints_to_alarm': 1,
-                                'evaluation_periods': 1,
-                                'treat_missing_data': 'notBreaching',
                                 'alarm_actions': ['${data.aws_sns_topic.monitoring.arn}'],
                                 'ok_actions': ['${data.aws_sns_topic.monitoring.arn}'],
+                                'treat_missing_data': 'notBreaching',
                             }
                             for lambda_name in config.lambda_names()
                             for metric_alarm in load_app_module(lambda_name).app.metric_alarms
                         },
                         'waf_rate_blocked': {
                             'alarm_name': config.qualified_resource_name('waf_rate_blocked'),
-                            'comparison_operator': 'GreaterThanThreshold',
-                            'threshold': 0,
-                            'datapoints_to_alarm': 1,
-                            'evaluation_periods': 1,
-                            'period': 5 * 60,
-                            'metric_name': 'BlockedRequests',
                             'namespace': 'AWS/WAFV2',
-                            'statistic': 'Sum',
-                            'treat_missing_data': 'notBreaching',
+                            'metric_name': 'BlockedRequests',
                             'dimensions': {
                                 'WebACL': '${aws_wafv2_web_acl.api_gateway.name}',
                                 'Region': config.region,
                                 'Rule': config.waf_rate_limit_alarm.name
                             },
+                            'statistic': 'Sum',
+                            'comparison_operator': 'GreaterThanThreshold',
+                            'threshold': 0,
+                            'evaluation_periods': 1,
+                            'period': 5 * 60,
+                            'datapoints_to_alarm': 1,
                             'alarm_actions': ['${data.aws_sns_topic.monitoring.arn}'],
                             'ok_actions': ['${data.aws_sns_topic.monitoring.arn}'],
+                            'treat_missing_data': 'notBreaching',
                         }
                     }
                 }
