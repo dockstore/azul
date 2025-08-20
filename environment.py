@@ -341,10 +341,6 @@ def env() -> Mapping[str, Optional[str]]:
                 'ref': 'docker.io/lmenezes/cerebro:0.9.4',
                 'url': 'https://hub.docker.com/r/lmenezes/cerebro'
             },
-            '_kibana': {
-                'ref': 'docker.io/bitnami/kibana:7.10.2',
-                'url': 'https://hub.docker.com/r/bitnami/kibana'
-            },
             '_opensearch_dashboards': {
                 'ref': 'docker.io/opensearchproject/opensearch-dashboards:2.19.3',
                 'url': 'https://hub.docker.com/r/opensearchproject/opensearch-dashboards'

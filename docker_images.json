@@ -148,11 +148,6 @@
         "id": "sha256:617b8f87c98a03ec4efffbca9534dd36dcdbf68235f775a78c6599a96c0bdb40",
         "platform": "linux/amd64"
     },
-    "docker.io/bitnami/kibana:7.10.2": {
-        "digest": "sha256:6e96a761f087cb0e3917998e6ed439ebc5a5bdb910f5477c1c39eb7bcbe54210",
-        "id": "sha256:5afa1090aae4d2df1754c9d071ccdd23c13cafe65ab1963d3223c8be8ee83629",
-        "platform": "linux/amd64"
-    },
     "docker.io/opensearchproject/opensearch-dashboards:2.19.3": {
         "digest": "sha256:a6b92ab4ccdb71a056347c1ca1022c4266e2cfd20fc0a74a6687433cb258ae71",
         "mirror_digest": "sha256:0654300473c9f3b3e6dccbbf906eafb996293bcf9b42208fcf353cfb19a357fb",
