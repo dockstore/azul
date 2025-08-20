@@ -432,11 +432,11 @@ class RegisteredPolymorphicSerializable(PolymorphicSerializable):
             # For attrs classes, this hook is invoked twice: once for the
             # original class and once for the attrs-generated replacement. These
             # are two different objects, so they are neither the same nor equal
-            # so it is difficult to tell wether we're dealing with the attrs
+            # so it is difficult to tell whether we're dealing with the attrs
             # replacement or a genuine collision. Both original and replacement
             # reference the same containing module, so we assume that two
             # classes of the same name from the same module indicate that attrs
-            # is involved and does not constitue a collision.
+            # is involved and does not constitute a collision.
             assert other_cls.__module__ == cls.__module__, R(
                 'Class name collision', cls, other_cls)
         cls._registry[cls.__name__] = cls
