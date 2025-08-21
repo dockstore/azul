@@ -371,7 +371,7 @@ class RepositoryService(ElasticsearchService):
             assert file_version is None, len(hits)
 
         file = one(first(hits)['contents']['files'])
-        file = plugin.file_class.from_hit(file)
+        file = plugin.file_class.from_index(file)
         if file_version is not None:
             assert file_version == file.version
         return file

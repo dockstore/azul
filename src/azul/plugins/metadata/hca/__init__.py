@@ -475,7 +475,7 @@ class HCAFile(File):
     s3_etag: str | None = None
 
     @classmethod
-    def from_hit(cls, hit: JSON) -> Self:
+    def from_index(cls, hit: JSON) -> Self:
         return cls(uuid=hit['uuid'],
                    version=hit['version'],
                    name=hit['name'],
@@ -488,12 +488,12 @@ class HCAFile(File):
                    s3_etag=hit.get('s3_etag'))
 
     @classmethod
-    def from_descriptor(cls,
-                        descriptor: JSON,
-                        *,
-                        uuid: str,
-                        name: str,
-                        drs_uri: str | None) -> Self:
+    def from_metadata(cls,
+                      descriptor: JSON,
+                      *,
+                      uuid: str,
+                      name: str,
+                      drs_uri: str | None) -> Self:
         content_type = descriptor['content_type']
         # FIXME: Obsolete MIME parameter in file content types
         #        https://github.com/HumanCellAtlas/dcp2/issues/73
