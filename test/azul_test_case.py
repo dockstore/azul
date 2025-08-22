@@ -37,14 +37,14 @@ from botocore.credentials import (
     Credentials,
 )
 import botocore.session
-from elasticsearch.exceptions import (
-    ElasticsearchWarning,
-)
 from furl import (
     furl,
 )
 import moto.backends
 import moto.core.models
+from opensearchpy.exceptions import (
+    OpenSearchWarning,
+)
 
 from azul import (
     CatalogName,
@@ -151,7 +151,7 @@ class AzulTestCase(TestCase):
                 #        https://github.com/DataBiosphere/azul/issues/5953
                 'datetime.datetime.utcnow() is deprecated',
             },
-            ElasticsearchWarning: {
+            OpenSearchWarning: {
                 # FIXME: ES DeprecationWarning for using _id as sort key
                 #        https://github.com/DataBiosphere/azul/issues/7290
                 RE('.*Loading the fielddata on the _id field is deprecated and will be removed in future versions.*'),

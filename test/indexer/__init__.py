@@ -15,11 +15,11 @@ from typing import (
     cast,
 )
 
-from elasticsearch.helpers import (
-    scan,
-)
 from more_itertools import (
     one,
+)
+from opensearchpy.helpers import (
+    scan,
 )
 
 from azul import (

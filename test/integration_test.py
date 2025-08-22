@@ -54,7 +54,6 @@ from chalice import (
     UnauthorizedError,
 )
 import chalice.cli
-import elasticsearch
 import fastavro
 from furl import (
     furl,
@@ -74,6 +73,7 @@ from more_itertools import (
 from openapi_spec_validator import (
     validate,
 )
+import opensearchpy
 import requests
 import urllib3
 import urllib3.request
@@ -405,6 +405,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
         # Without a filter, the test takes so long that there's a real risk of
         # failure due to new snapshots being added mid-test.
         snapshot_filters_by_deployment = {
+            'tempdev': 'anvil_',  # ~5 snapshots
             'anvildev': 'anvil_',  # ~5 snapshots
             'dev': 'hca_dev_5',  # ~10 snapshots
             'anvilprod': 'anvil_page_',  # ~13 snapshots
@@ -1977,8 +1978,8 @@ class DisableAutomaticIndexCreationTest(IntegrationTestCase):
         es = ESClientFactory.get()
         index_name = 'no-auto-create-' + self.random.randbytes(4).hex() + '-it'
         try:
-            with self.assertRaises(elasticsearch.exceptions.NotFoundError) as cm:
-                es.index(index=index_name, document={'foo': 'bar'})
+            with self.assertRaises(opensearchpy.exceptions.NotFoundError) as cm:
+                es.index(index=index_name, body={'foo': 'bar'})
             expected = ('no such index [' + index_name + ']')
             self.assertEqual(expected, cm.exception.args[2]['error']['reason'])
         finally:

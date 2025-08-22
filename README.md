@@ -2123,24 +2123,17 @@ xargs docker exec gitlab-dind docker kill` and again but with `rm` instead
 of `kill`.
 
 
-# 9. Kibana and Cerebro
+# 9. OpenSearch Dashboards and Cerebro
 
-Kibana is a web UI for interactively querying and managing an Elasticsearch
-instance. To use Kibana with Azul's AWS Elasticsearch instance, you have two
-options:
+OpenSearch Dashboards, formerly known as Kibana, is a web UI for interactively
+querying and managing an OpenSearch instance. To use Dashboards with Azul's
+AWS Elasticsearch instance, you can use `scripts/kibana_proxy.py` to run
+Dashboards locally as a Docker container and have it point at Azul's AWS
+OpenSearch instance. The script also starts a proxy that signs the Dashboard
+requests to the OpenSearch domain using your local AWS credentials for
+authentication.
 
-* For one, you can add your local IP to the policy of Azul's AWS Elasticsearch
-  instance and access its Kibana directly. This can take 10 minutes and you
-  might have to do it repeatedly because the policy is reset periodically,
-  potentially multiple times a day.
-
-* Alternatively, you can use `scripts/kibana_proxy.py` to run Kibana locally
-  and have it point at Azul's AWS Elasticsearch instance. The script also
-  starts a signing proxy which eliminates the need to add your local IP to the
-  Elasticsearch policy, using your local AWS credentials instead for
-  authentication.
-
-  For the script to work, you need to
+For the script to work, you need to
 
   * have Docker installed,
 
@@ -2150,12 +2143,13 @@ options:
 
 [Cerebro] is a cluster management web UI for Elasticsearch. It is very useful
 for determining the status of individual nodes and shards. In addition to the
-Kibana container, `scripts/kibana_proxy.py` also starts one for Cerebro.
+Dashboards container, `scripts/kibana_proxy.py` also starts a container for
+Cerebro. Note that Dashboards added similar functionality 
 
 Look for this line in the script output:
 
 ```
-Now open Kibana at http://127.0.0.1:5601/ and open Cerebro at
+Now open Dashboards at http://127.0.0.1:5601/ and open Cerebro at
 http://127.0.0.1:5602/#/overview?host=http://localhost:5603 (or paste in
 http://localhost:5603)
 ```
@@ -2164,39 +2158,62 @@ and open the specified URLs in your browser.
 
 [Cerebro]: https://github.com/lmenezes/cerebro
 
-## 9.1 Connecting Kibana to a local Elasticsearch instance
+## 9.1 Connecting OpenSearch Dashboards to a local OpenSearch instance
 
-Certain unit tests use a locally running Elasticsearch container. It's possible 
-to connect a Kibana instance to such a container, in order to aid debugging.
+Note: The steps outlined in this section were only tested on macOS, using Docker
+Desktop. They may not work without modification with a standard installation of
+Docker on Linux. On such systems, try replacing every mention of
+`host.docker.internal` with `localhost`.
 
-While the unit test is running (paused at a breakpoint), open a terminal window.
+Certain unit tests use a locally running OpenSearch container. It's possible to
+connect an OpenSearch Dashboards instance to such a container and interactively
+submit queries to it via the dashboards' Dev Tools feature.
 
-Download the Kibana container:
+1) Run the unit test with a breakpoint set somewhere between setup and teardown.
 
-```
-kibana_image=$azul_docker_registry$(python -m azul 'docker.resolve_docker_image_for_launch("pycharm")')
-docker pull $kibana_image
-```
+2) While the unit test is paused at that breakpoint, open a terminal window.
 
-Copy the container name for the Elasticsearch instance you want to examine. This
-is likely the most recent entry in
+3) Invoke `docker ps` to determine the ephemeral host port that OpenSearch is
+   listening on. For example:
 
-```
-docker ps
-```
+   ```shell
+   $ docker ps
+   CONTAINER ID   IMAGE          COMMAND                  CREATED          STATUS          PORTS                       NAMES
+   5c7f5181e343   857be6bf6afa   "./opensearch-docker…"   20 seconds ago   Up 20 seconds   127.0.0.1:53804->9200/tcp   nice_zhukovsky
+   ```
 
-Run
+   In the above example, the ephemeral host port is 53804. In the current
+   directory, create a file called `dashboards.yaml` with the content below. Be
+   sure to replace the example value of 53804 with the actual port from the
+   `docker ps` output.
 
-```
-docker run --link ES_CONTAINER_NAME:elasticsearch -p 5601:5601 $kibana_image
-```
+   ```json
+   {
+     "server.host": "0.0.0.0",
+     "server.port": 5601,
+     "opensearch.hosts": [ "http://host.docker.internal:53804" ]
+   }
+   ``` 
 
-where `ES_CONTAINER_NAME` is what you copied from above.
+4) Resolve and pull the OpenSearch Dashboards image:
 
-Kibana should now be available at `http://0.0.0.0:5601`.
+   ```shell
+   dashboards_image=$(python -m azul 'docker.resolve_docker_image_for_launch("_opensearch_dashboards")')
+   ```
 
-Some of these steps were taken or modified from the official [Elasticsearch 
-documentation](https://www.elastic.co/guide/en/kibana/7.10/docker.html#_run_kibana_on_docker_for_development).
+5) Run the dashboards image
+
+   ```shell
+   docker run --rm \
+      -e DISABLE_INSTALL_DEMO_CONFIG=true \
+      -e DISABLE_SECURITY_DASHBOARDS_PLUGIN=true \
+      -v ${PWD}/dashboards.yaml:/usr/share/opensearch-dashboards/config/opensearch_dashboards.yml \
+      -p 5601:5601 \
+      $dashboards_image
+   ```
+
+The Dev Tools of OpenSearch Dashboards should now be available at
+`http://127.0.0.1:5601/app/dev_tools`.
 
 # 10. Managing dependencies
 

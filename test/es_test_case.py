@@ -39,12 +39,14 @@ class ElasticsearchTestCase(DockerContainerTestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        image = resolve_docker_image_for_launch('elasticsearch')
+        image = resolve_docker_image_for_launch('opensearch')
         es_endpoint = cls._create_container(image=image,
                                             container_port=9200,
                                             cached=True,
-                                            environment=['xpack.security.enabled=false',
-                                                         'discovery.type=single-node',
+                                            environment=['discovery.type=single-node',
+                                                         'DISABLE_INSTALL_DEMO_CONFIG=true',
+                                                         'DISABLE_SECURITY_PLUGIN=true',
+                                                         'DISABLE_SECURITY_DASHBOARDS_PLUGIN=true',
                                                          'ES_JAVA_OPTS=-Xms512m -Xmx512m',
                                                          'indices.breaker.total.use_real_memory=false'])
         try:

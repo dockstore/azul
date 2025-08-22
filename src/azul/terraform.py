@@ -763,12 +763,12 @@ class Chalice:
                 es_endpoint=(
                     aws.es_endpoint
                     if config.share_es_domain else
-                    '${aws_elasticsearch_domain.index.endpoint}:443'
+                    '${aws_opensearch_domain.index.endpoint}:443'
                 ),
                 es_instance_count=(
                     not_none(aws.es_instance_count)
                     if config.share_es_domain else
-                    '${aws_elasticsearch_domain.index.cluster_config[0].instance_count}'
+                    '${aws_opensearch_domain.index.cluster_config[0].instance_count}'
                 )
             )
             json_dict(json_dict(resource['environment'])['variables']).update(env)

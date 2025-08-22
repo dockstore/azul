@@ -21,9 +21,8 @@ deprecated==1.2.18
 docker==7.1.0
 docutils==0.19
 editor==1.6.6
-elasticsearch==7.17.12
-elasticsearch-dsl==7.4.1
 et_xmlfile==2.0.0
+events==0.5
 fastavro==1.12.0
 flake8==7.3.0
 furl==2.1.4
@@ -67,7 +66,7 @@ mypy-boto3-cloudwatch==1.40.0
 mypy-boto3-dynamodb==1.40.14
 mypy-boto3-ec2==1.40.13
 mypy-boto3-ecr==1.40.0
-mypy-boto3-es==1.40.0
+mypy-boto3-es==1.40.15
 mypy-boto3-iam==1.40.0
 mypy-boto3-kms==1.40.0
 mypy-boto3-lambda==1.40.7
@@ -83,6 +82,7 @@ mypy_extensions==1.1.0
 openapi-schema-validator==0.6.3
 openapi-spec-validator==0.7.2
 openpyxl==3.1.5
+opensearch-py==2.8.0
 orderedmultidict==1.0.1
 packaging==25.0
 pathable==0.4.4

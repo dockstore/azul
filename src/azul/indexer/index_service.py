@@ -21,20 +21,20 @@ from typing import (
     cast,
 )
 
-from elasticsearch import (
-    ConflictError,
-    ElasticsearchException,
-)
-from elasticsearch.exceptions import (
-    NotFoundError,
-    RequestError,
-)
-from elasticsearch.helpers import (
-    streaming_bulk,
-)
 from more_itertools import (
     first,
     one,
+)
+from opensearchpy import (
+    ConflictError,
+    OpenSearchException,
+)
+from opensearchpy.exceptions import (
+    NotFoundError,
+    RequestError,
+)
+from opensearchpy.helpers import (
+    streaming_bulk,
 )
 
 from azul import (
@@ -852,7 +852,7 @@ class IndexWriter:
                 method(refresh=self.refresh, **doc.to_index(self.catalog, self.field_types))
             except ConflictError as e:
                 self._on_conflict(doc, e)
-            except ElasticsearchException as e:
+            except OpenSearchException as e:
                 self._on_error(doc, e)
             else:
                 self._on_success(doc)
