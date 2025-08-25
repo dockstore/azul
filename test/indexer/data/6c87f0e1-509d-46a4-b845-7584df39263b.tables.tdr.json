@@ -47,8 +47,8 @@
                 {
                     "anatomical_site": null,
                     "apriori_cell_type": [
-                        "bar",
-                        "foo"
+                        "foo",
+                        "bar"
                     ],
                     "biosample_id": "f9d40cf6-37b8-22f3-ce35-0dc614d2452b",
                     "biosample_type": null,
