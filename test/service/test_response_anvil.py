@@ -338,7 +338,7 @@ class TestAnvilResponse(AnvilIndexerTestCase, WebServiceTestCase):
                                 'source_datarepo_row_ids': ['sample:98048c3b-2525-4090-94fd-477de31f2608'],
                                 'biosample_id': 'f9d40cf6-37b8-22f3-ce35-0dc614d2452b',
                                 'anatomical_site': None,
-                                'apriori_cell_type': [None],
+                                'apriori_cell_type': ['bar', 'foo'],
                                 'biosample_type': None,
                                 'disease': None,
                                 'donor_age_at_collection_unit': None,

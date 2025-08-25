@@ -3,7 +3,10 @@
         "type": "anvil_biosample",
         "value": {
             "anatomical_site": null,
-            "apriori_cell_type": [],
+            "apriori_cell_type": [
+                "bar",
+                "foo"
+            ],
             "biosample_id": "f9d40cf6-37b8-22f3-ce35-0dc614d2452b",
             "biosample_type": null,
             "datarepo_row_id": "826dea02-e274-4ffe-aabc-eb3db63ad068",
