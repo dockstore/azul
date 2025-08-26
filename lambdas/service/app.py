@@ -57,7 +57,6 @@ from azul.drs import (
 )
 from azul.health import (
     HealthApp,
-    HealthController,
 )
 from azul.indexer.document import (
     EntityType,
@@ -302,10 +301,6 @@ class ServiceApp(HealthApp):
     @property
     def drs_controller(self) -> DRSController:
         return DRSController(app=self, file_url_func=self.file_url)
-
-    @cached_property
-    def health_controller(self) -> HealthController:
-        return HealthController(app=self, lambda_name=self.unqualified_app_name)
 
     @cached_property
     def catalog_controller(self) -> CatalogController:
