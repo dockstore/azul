@@ -13,6 +13,7 @@ from azul.service.elasticsearch_service import (
 )
 from azul.types import (
     MutableJSON,
+    json_dict,
 )
 
 
@@ -36,4 +37,4 @@ class AnvilSummaryAggregationStage(AnvilAggregationStage):
 
     def process_response(self, response: MutableJSON) -> MutableJSON:
         response = super().process_response(response)
-        return response['aggregations']
+        return json_dict(response['aggregations'])
