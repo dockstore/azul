@@ -41,11 +41,11 @@ class ParseInspectorFindings:
     ]
     default_severities = [
         'CRITICAL',
-        'HIGH',
+        'HIGH'
     ]
     weights = {
         'CRITICAL': 10,
-        'HIGH': 1,
+        'HIGH': 1
     }
 
     @classmethod
