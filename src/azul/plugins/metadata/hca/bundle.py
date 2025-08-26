@@ -14,6 +14,7 @@ from azul.indexer import (
 )
 from azul.types import (
     MutableJSON,
+    json_element_strings,
 )
 
 log = logging.getLogger(__name__)
@@ -42,7 +43,7 @@ class HCABundle[BUNDLE_FQID: SourcedBundleFQID](Bundle[BUNDLE_FQID],
     links: MutableJSON
     stitched: set[str] = serializable(attrs.field(factory=set),
                                       to_json=sorted,
-                                      from_json=set)
+                                      from_json=lambda x: set(json_element_strings(x)))
 
     def reject_joiner(self):
         # We can skip the `stitched` attribute because it only contains UUIDs
