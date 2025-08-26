@@ -59,9 +59,13 @@ class DonorAggregator(SimpleAggregator):
 class FileAggregator(GroupingAggregator):
 
     def _transform_entity(self, entity: JSON) -> JSON:
-        return super()._transform_entity(entity) | {
+        file_aggregate_fields = {
             'file_size': (entity['document_id'], entity['file_size']),
             'count': (entity['document_id'], 1)
+        }
+        return {
+            **super()._transform_entity(entity),
+            **file_aggregate_fields
         }
 
     def _group_keys(self, entity) -> tuple[Any, ...]:
