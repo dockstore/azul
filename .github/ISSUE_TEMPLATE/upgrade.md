@@ -28,6 +28,7 @@ _period: 14 days
     - [ ] … update to [Terraform](https://hub.docker.com/r/hashicorp/terraform/tags) (only patch versions) <sub>or no update available</sub>
     - [ ] … new [PyCharm image](https://hub.docker.com/repository/docker/ucscgi/azul-pycharm/tags)
     - [ ] … new [BigQuery Emulator image](https://hub.docker.com/repository/docker/ucscgi/azul-bigquery-emulator/tags)
+    - [ ] … update to [OpenSearch image](https://hub.docker.com/r/opensearchproject/opensearch/tags) (only minor and patch versions) <sub>or no update available</sub>
     - [ ] … update to [Docker images](https://hub.docker.com/_/docker/tags) (only minor and patch versions) <sub>or no update available</sub>
     - [ ] … update to [GitLab](https://hub.docker.com/r/gitlab/gitlab-ce/tags) & [GitLab runner images](https://hub.docker.com/r/gitlab/gitlab-runner/tags) <sub>or no update available</sub>
     - [ ] … update to [ClamAV image](https://hub.docker.com/r/clamav/clamav/tags) <sub>or no update available</sub>
@@ -37,3 +38,4 @@ _period: 14 days
   - [ ] … to next major or minor Python version <sub>or such ticket already exists</sub>
   - [ ] … to next major Docker version <sub>or such ticket already exists</sub>
   - [ ] … to next major or minor Terraform version <sub>or such ticket already exists</sub>
+  - [ ] … to next major OpenSearch version <sub>or such ticket already exists</sub>
