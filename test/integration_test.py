@@ -1106,6 +1106,8 @@ class IndexingIntegrationTest(IntegrationTestCase):
             source = self._source_spec(catalog, outer_file)
             file_url = furl(inner_file['url'])
             self.assertEqual(file_url.path.segments[0], 'repository')
+            # FIXME: Use _check_endpoint() instead
+            #        https://github.com/DataBiosphere/azul/issues/7373
             file_url.path.segments.insert(0, 'fetch')
             response = self._get_url_unchecked(GET, file_url)
             if response.status == 404:
