@@ -41,11 +41,11 @@ class ParseInspectorFindings:
     ]
     default_severities = [
         'CRITICAL',
-        'HIGH'
+        'HIGH',
     ]
     weights = {
         'CRITICAL': 10,
-        'HIGH': 1
+        'HIGH': 1,
     }
 
     @classmethod
@@ -158,6 +158,13 @@ class ParseInspectorFindings:
             for tag in resource['details']['awsEcrContainerImage']['imageTags']:
                 repo = resource['details']['awsEcrContainerImage']['repositoryName']
                 image = f'{repo}/{tag}'
+                summary['resources'].add(image)
+                self.images.add(image)
+            # in Dockstore, sometimes we use images without tags, just check whether they are in use
+            if (resource['details']['awsEcrContainerImage']['inUseCount'] > 0):
+                imageHash = resource['details']['awsEcrContainerImage']['imageHash']  
+                repo = resource['details']['awsEcrContainerImage']['repositoryName']
+                image = f'{repo}/{imageHash}'
                 summary['resources'].add(image)
                 self.images.add(image)
         elif resource_type == 'AWS_EC2_INSTANCE':
