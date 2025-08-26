@@ -27,7 +27,7 @@ _period: 14 days
     - [ ] … update to [Python](https://hub.docker.com/_/python/tags) (only patch versions) <sub>or no update available</sub>
     - [ ] … update to [Terraform](https://hub.docker.com/r/hashicorp/terraform/tags) (only patch versions) <sub>or no update available</sub>
     - [ ] … new [PyCharm image](https://hub.docker.com/repository/docker/ucscgi/azul-pycharm/tags)
-    - [ ] … new [BigQuery Emulator image](https://hub.docker.com/repository/docker/ucscgi/azul-bigquery-emulator/tags))
+    - [ ] … new [BigQuery Emulator image](https://hub.docker.com/repository/docker/ucscgi/azul-bigquery-emulator/tags)
     - [ ] … update to [Docker images](https://hub.docker.com/_/docker/tags) (only minor and patch versions) <sub>or no update available</sub>
     - [ ] … update to [GitLab](https://hub.docker.com/r/gitlab/gitlab-ce/tags) & [GitLab runner images](https://hub.docker.com/r/gitlab/gitlab-runner/tags) <sub>or no update available</sub>
     - [ ] … update to [ClamAV image](https://hub.docker.com/r/clamav/clamav/tags) <sub>or no update available</sub>
