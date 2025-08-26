@@ -360,6 +360,8 @@ class BaseTransformer(Transformer, metaclass=ABCMeta):
                     value = metadata[field]
                 except KeyError:
                     value = additional_fields[field]
+            if isinstance(value, list):
+                value = sorted(value)
             entity[field] = value
         return entity
 
