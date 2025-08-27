@@ -715,10 +715,10 @@ class SerializableAttrs(Serializable, attrs.AttrsInstance):
             return f'{var_name}({x})'
 
 
-def serializable[T: attrs.Attribute](field: T | None = None,
-                                     *,
-                                     from_json: FromJSON,
-                                     to_json: ToJSON) -> T:
+def serializable[T](field: T | None = None,
+                    *,
+                    from_json: FromJSON,
+                    to_json: ToJSON) -> T:
     """
     Use the provided callables to (de)serialize values of the given field,
     instead of generating them.
@@ -738,7 +738,7 @@ def serializable[T: attrs.Attribute](field: T | None = None,
     return _set_field_metadata(field, 'custom', custom)
 
 
-def not_serializable[T: attrs.Attribute](field: T) -> T:
+def not_serializable[T](field: T) -> T:
     """
     Skip the given field during (de)serialization. The field should have a
     default value or there should be some other provision for the constructor to
@@ -760,18 +760,24 @@ def not_serializable[T: attrs.Attribute](field: T) -> T:
     return _set_field_metadata(field, 'custom', custom)
 
 
-def _set_field_metadata[T: attrs.Attribute](field: T | None, key, value):
+def _set_field_metadata[T](field: T | None, key, value):
     if field is None:
         field = attrs.field()
+    # The actual return value of `attrs.field` is of a type that's internal to
+    # attrs and unrelated to any types in the public API. The declared return
+    # type is the same as the field's type, to facilitate type checking. Hence,
+    # there's no satisfactory type bound to declare for `T` or type to assert
+    # here.
+    assert hasattr(field, 'metadata'), field
     metadata = field.metadata.setdefault('azul', {})
     metadata[key] = value
     return field
 
 
-def polymorphic[T: attrs.Attribute](field: T | None = None,
-                                    *,
-                                    discriminator: str
-                                    ) -> T:
+def polymorphic[T](field: T | None = None,
+                   *,
+                   discriminator: str
+                   ) -> T:
     """
     Mark an attrs field to use the given name for the discriminator property in
     serialized instances of PolymorphicSerializable that occur in the value of
