@@ -1,7 +1,6 @@
 from contextlib import (
     contextmanager,
 )
-import json
 import logging
 from typing import (
     Any,
@@ -42,6 +41,29 @@ class LambdaLogFilter(logging.Filter):
             record.aws_request_id = '00010ca1-b0ba-466f-8c58-dabbad000000'
         else:
             record.aws_request_id = self.app.lambda_context.aws_request_id
+
+        # The boto3.resources.action logger logs request parameters verbatim at
+        # level DEBUG, which is enabled when AZUL_DEBUG is 2. That logger is
+        # used for all Boto3 resources, one of which is MultipartUpload, which
+        # StorageService uses to upload parts to S3 during mirroring. The parts
+        # are very large, causing a memory error when the log message is being
+        # prepared in an AWS Lambda function with limited memory. We need to
+        # truncate the parameters to a reasonable size.
+        #
+        if azul.config.debug > 1 and record.name == 'boto3.resources.action':
+
+            def truncate(arg):
+                if isinstance(arg, string_types):
+                    return arg[:max_log_arg_len]
+                elif isinstance(arg, dict):
+                    return {k: truncate(v) for k, v in arg.items()}
+                elif isinstance(arg, (tuple, list)):
+                    return type(arg)(map(truncate, arg))
+                else:
+                    return arg
+
+            record.args = truncate(record.args)
+
         return True
 
 
@@ -61,21 +83,21 @@ def configure_app_logging(app: 'AzulChaliceApp', *loggers):
         # Environment is not unit test
         root_logger = logging.getLogger()
         if root_logger.hasHandlers():
-            # If a handler is already present, assume we're running in AWS Lambda. The
-            # handler is setup by AWS Lambda's bootstrap.py, around line 443. That
-            # module can be found on GitHub, in the repository linked below. Note
-            # that one must extract the image tarball to get to the module.
+            # If a handler is already present, we're running on AWS Lambda. See
             #
-            # https://github.com/aws/aws-lambda-base-images/tree/python3.12
+            # https://github.com/aws/aws-lambda-python-runtime-interface-client/blob/3f43f4d0/awslambdaric/bootstrap.py#L454
+            #
+            # for details.
             #
             handler = one(root_logger.handlers)
             root_formatter = logging.Formatter(lambda_log_format, lambda_log_date_format)
             handler.setFormatter(root_formatter)
-            root_logger.addHandler(handler)
         else:
             # Otherwise, we're running `chalice local`
             handler = logging.StreamHandler()
-            logging.basicConfig(format=lambda_log_format, datefmt=lambda_log_date_format, handlers=[handler])
+            logging.basicConfig(format=lambda_log_format,
+                                datefmt=lambda_log_date_format,
+                                handlers=[handler])
         handler.addFilter(LambdaLogFilter(app))
 
 
@@ -177,6 +199,10 @@ def silenced_es_logger():
 
 json_body_types = reify(JSON)
 
+string_types = str, bytes, bytearray
+
+max_log_arg_len = 1024 * 1024
+
 
 def http_body_log_message(kind: Literal['request', 'response'], body: Any) -> str:
     """
@@ -189,30 +215,27 @@ def http_body_log_message(kind: Literal['request', 'response'], body: Any) -> st
 
     :param body: the request or response body to be logged
     """
-    debug, max_len = azul.config.debug, 1024
+    debug = azul.config.debug
+    max_len = max_log_arg_len if debug > 1 else 1024
     assert debug >= 0, debug
     if body is None:
         return f'… without a {kind} body'
-    elif isinstance(body, (str, bytes, bytearray)):
+    elif isinstance(body, string_types):
         if debug == 0:
             return f'… with a {kind} body of length {len(body)} and type {type(body)!r}'
-        elif debug == 1 and len(body) > max_len:
+        elif len(body) <= max_len:
+            return f'… with a {kind} body of length {len(body)} being {body !r}'
+        else:
             # https://github.com/python/typing/discussions/1911
             prefix = trunc_ellipses(body, max_len)  # type: ignore[type-var]
             return f'… with a {kind} body of length {len(body)} starting in {prefix!r}'
-        else:
-            return f'… with a {kind} body of length {len(body)} being {body !r}'
     elif isinstance(body, json_body_types):
         if debug == 0:
             pass  # fall through to the default
         else:
-            if debug == 1:
-                repr_prefix, is_complete = json_head(max_len, body)
-                if is_complete:
-                    repr = repr_prefix
-                else:
-                    return f'… with a {kind} body starting in {repr_prefix}'
+            repr, is_complete = json_head(max_len, body)
+            if is_complete:
+                return f'… with a {kind} body of length {len(repr)} being {repr}'
             else:
-                repr = json.dumps(body)
-            return f'… with a {kind} body of length {len(repr)} being {repr}'
+                return f'… with a {kind} body starting in {repr}'
     return f'… with a {kind} body of type ({type(body)!r})'
