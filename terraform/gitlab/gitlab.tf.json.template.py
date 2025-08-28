@@ -2242,12 +2242,8 @@ emit_tf({} if config.terraform_component != 'gitlab' else {
             **{
                 'gitlab_' + resource: {
                     'alarm_name': config.qualified_resource_name('gitlab_' + resource),
-                    'comparison_operator': 'GreaterThanOrEqualToThreshold',
-                    'datapoints_to_alarm': periods,
-                    'evaluation_periods': periods,
-                    'period': 60 * 10,
-                    'metric_name': metric,
                     'namespace': 'CWAgent',
+                    'metric_name': metric,
                     'dimensions': dimensions | {
                         # Instead of using 'InstanceId' here, we use a custom
                         # dimension that has been appended to each metric. This
@@ -2258,12 +2254,16 @@ emit_tf({} if config.terraform_component != 'gitlab' else {
                         'InstanceName': 'azul-gitlab'
                     },
                     'statistic': stat,
+                    'comparison_operator': 'GreaterThanOrEqualToThreshold',
                     'threshold': threshold,
-                    'treat_missing_data': 'missing',
+                    'evaluation_periods': periods,
+                    'period': 60 * 10,
+                    'datapoints_to_alarm': periods,
                     **{
                         state + '_actions': ['${data.aws_sns_topic.monitoring.arn}']
                         for state in ('insufficient_data', 'alarm', 'ok')
                     },
+                    'treat_missing_data': 'missing',
                 } for resource, metric, periods, stat, threshold, dimensions in
                 [
                     # FIXME: Add `mem_used_percent` alarm
