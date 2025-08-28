@@ -16,7 +16,7 @@
         }
     },
     "docker.io/library/python:3.12.11-slim-bookworm": {
-        "digest": "sha256:3a4908d9f85cf155ef5847883c247e420d7f9d2686027f0575ac44c2b6db9782",
+        "digest": "sha256:42cf2422587a3dac0e0a3674a4d86f01570d5d7260588f3845f51e6176d8134b",
         "mirror_digest": "sha256:7ad2683bddd96dd1cdd2fa74c17a06d00a4df93a63c450bc1b51190e7a8dd7bd",
         "parts": {
             "linux/amd64": {
@@ -48,17 +48,17 @@
         }
     },
     "docker.io/opensearchproject/opensearch:2.19.3": {
-        "digest": "sha256:a54d2deebe965848afc0d06f5088baa0fbf77fedb3a2c62de9e032eb6d6aaf7f",
-        "mirror_digest": "sha256:51ad0959df798111b5513b056d9a6b83898092a0854da05ec3027f108a7696e1",
+        "digest": "sha256:674ffaf327f9be0088104132da24b627ff8d922f1a5de21f3e85d8ca8adf729b",
+        "mirror_digest": "sha256:0849d075ad68d441b3c2b953d995c05857dc227a49f6f6cf86e01588ab5b6c46",
         "parts": {
             "linux/amd64": {
-                "digest": "sha256:9c21f88114b185897a88cfd69cb5f02bc3c30502b195fa573af158565a36b32c",
-                "id": "sha256:b9713a137fd77d837349b41830c8aaba72904afbbcaa5f79dd0f7a74f66b31e6",
+                "digest": "sha256:d061ea683129a91adfe42abc6b5aff6d945855657f7409a89cbbd1bb010a2632",
+                "id": "sha256:b0317fd5558dcef16fae1cd022a79917b061d331be069b11f927595931d6ffb5",
                 "platform": "linux/amd64"
             },
             "linux/arm64": {
-                "digest": "sha256:b1e8187a62da244c0bca4c7724d02baf0ccc13c16dacb209f34b854d381097f2",
-                "id": "sha256:857be6bf6afae22a2baa8976ceaef2924cee2f9ef82924be19cb2ae6444aa7a7",
+                "digest": "sha256:e45bb17e95f37b85b74e8ca48b28cd763a14e4224cc7358bddda7c95cb016384",
+                "id": "sha256:30d9305227ddc47261cf7806d017bed626cea001079bac41862344d8d51c03a1",
                 "platform": "linux/arm64"
             }
         }
