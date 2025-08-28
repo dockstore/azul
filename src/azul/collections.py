@@ -556,19 +556,15 @@ def singleton[T](x: T) -> frozenset[T]:
     return frozenset((x,))
 
 
-K = TypeVar('K')
-V = TypeVar('V')
-
-
 class LookupDefault(Enum):
     RAISE = 0
 
 
-def lookup(d: Mapping[K, V],
-           k: K,
-           *ks: K,
-           default: V | LookupDefault | None = LookupDefault.RAISE
-           ) -> V | None:
+def lookup[K, V](d: Mapping[K, V],
+                 k: K,
+                 *ks: K,
+                 default: V | LookupDefault | None = LookupDefault.RAISE
+                 ) -> V | None:
     """
     Look up a value in the specified dictionary given one or more candidate
     keys.
