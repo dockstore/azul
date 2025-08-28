@@ -8,7 +8,7 @@ google-cloud-core==2.4.3
 google-crc32c==1.7.1
 google-resumable-media==2.7.2
 googleapis-common-protos==1.70.0
-grpcio==1.74.0
+grpcio==1.75.0rc1
 grpcio-status==1.62.3
 idna==3.10
 markupsafe==3.0.2
