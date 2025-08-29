@@ -1592,8 +1592,8 @@ class TestAnvilManifests(AnvilManifestTestCase):
             (
                 'biosamples.apriori_cell_type',
                 '',
-                '',
-                ''
+                'bar || foo',
+                'bar || foo'
             ),
             (
                 'biosamples.biosample_type',

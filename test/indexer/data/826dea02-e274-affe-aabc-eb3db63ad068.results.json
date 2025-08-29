@@ -41,7 +41,8 @@
                             "~null"
                         ],
                         "apriori_cell_type": [
-                            "~null"
+                            "bar",
+                            "foo"
                         ],
                         "biosample_type": [
                             "~null"
@@ -272,7 +273,8 @@
                         "biosample_id": "f9d40cf6-37b8-22f3-ce35-0dc614d2452b",
                         "anatomical_site": "~null",
                         "apriori_cell_type": [
-                            "~null"
+                            "bar",
+                            "foo"
                         ],
                         "biosample_type": "~null",
                         "disease": "~null",
@@ -506,7 +508,8 @@
                             "~null"
                         ],
                         "apriori_cell_type": [
-                            "~null"
+                            "bar",
+                            "foo"
                         ],
                         "biosample_type": [
                             "~null"
@@ -708,7 +711,8 @@
                         "biosample_id": "f9d40cf6-37b8-22f3-ce35-0dc614d2452b",
                         "anatomical_site": "~null",
                         "apriori_cell_type": [
-                            "~null"
+                            "bar",
+                            "foo"
                         ],
                         "biosample_type": "~null",
                         "disease": "~null",
@@ -987,7 +991,8 @@
                             "~null"
                         ],
                         "apriori_cell_type": [
-                            "~null"
+                            "bar",
+                            "foo"
                         ],
                         "biosample_type": [
                             "~null"
@@ -1286,7 +1291,8 @@
                         "biosample_id": "f9d40cf6-37b8-22f3-ce35-0dc614d2452b",
                         "anatomical_site": "~null",
                         "apriori_cell_type": [
-                            "~null"
+                            "bar",
+                            "foo"
                         ],
                         "biosample_type": "~null",
                         "disease": "~null",
@@ -1552,7 +1558,8 @@
                             "~null"
                         ],
                         "apriori_cell_type": [
-                            "~null"
+                            "bar",
+                            "foo"
                         ],
                         "biosample_type": [
                             "~null"
@@ -1790,7 +1797,8 @@
                         "biosample_id": "f9d40cf6-37b8-22f3-ce35-0dc614d2452b",
                         "anatomical_site": "~null",
                         "apriori_cell_type": [
-                            "~null"
+                            "bar",
+                            "foo"
                         ],
                         "biosample_type": "~null",
                         "disease": "~null",
@@ -1982,7 +1990,8 @@
                             "~null"
                         ],
                         "apriori_cell_type": [
-                            "~null"
+                            "bar",
+                            "foo"
                         ],
                         "biosample_type": [
                             "~null"
@@ -2247,7 +2256,8 @@
                         "biosample_id": "f9d40cf6-37b8-22f3-ce35-0dc614d2452b",
                         "anatomical_site": "~null",
                         "apriori_cell_type": [
-                            "~null"
+                            "bar",
+                            "foo"
                         ],
                         "biosample_type": "~null",
                         "disease": "~null",
@@ -2444,7 +2454,8 @@
                         "biosample_id": "f9d40cf6-37b8-22f3-ce35-0dc614d2452b",
                         "anatomical_site": "~null",
                         "apriori_cell_type": [
-                            "~null"
+                            "bar",
+                            "foo"
                         ],
                         "biosample_type": "~null",
                         "disease": "~null",
@@ -2741,7 +2752,8 @@
                         "biosample_id": "f9d40cf6-37b8-22f3-ce35-0dc614d2452b",
                         "anatomical_site": "~null",
                         "apriori_cell_type": [
-                            "~null"
+                            "bar",
+                            "foo"
                         ],
                         "biosample_type": "~null",
                         "disease": "~null",
@@ -2920,7 +2932,7 @@
     },
     {
         "_index": "azul_v2_nadove4_test_replica",
-        "_id": "anvil_biosample_826dea02-e274-4ffe-aabc-eb3db63ad068_52f78e49c9a6e761dfd87e0d5e719d4e0099b80c",
+        "_id": "anvil_biosample_826dea02-e274-4ffe-aabc-eb3db63ad068_f32b94c9a42264f7b1e9869215ca648f75558b2e",
         "_score": 1.0,
         "_source": {
             "entity_id": "826dea02-e274-4ffe-aabc-eb3db63ad068",
@@ -2936,7 +2948,10 @@
             },
             "contents": {
                 "anatomical_site": null,
-                "apriori_cell_type": [],
+                "apriori_cell_type": [
+                    "bar",
+                    "foo"
+                ],
                 "biosample_id": "f9d40cf6-37b8-22f3-ce35-0dc614d2452b",
                 "biosample_type": null,
                 "datarepo_row_id": "826dea02-e274-4ffe-aabc-eb3db63ad068",
@@ -3010,7 +3025,8 @@
                             "~null"
                         ],
                         "apriori_cell_type": [
-                            "~null"
+                            "bar",
+                            "foo"
                         ],
                         "biosample_type": [
                             "~null"
@@ -3315,7 +3331,8 @@
                         "biosample_id": "f9d40cf6-37b8-22f3-ce35-0dc614d2452b",
                         "anatomical_site": "~null",
                         "apriori_cell_type": [
-                            "~null"
+                            "bar",
+                            "foo"
                         ],
                         "biosample_type": "~null",
                         "disease": "~null",
@@ -3585,7 +3602,8 @@
                             "~null"
                         ],
                         "apriori_cell_type": [
-                            "~null"
+                            "bar",
+                            "foo"
                         ],
                         "biosample_type": [
                             "~null"
@@ -3882,7 +3900,8 @@
                         "biosample_id": "f9d40cf6-37b8-22f3-ce35-0dc614d2452b",
                         "anatomical_site": "~null",
                         "apriori_cell_type": [
-                            "~null"
+                            "bar",
+                            "foo"
                         ],
                         "biosample_type": "~null",
                         "disease": "~null",
