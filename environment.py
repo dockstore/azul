@@ -73,7 +73,7 @@ def env() -> Mapping[str, Optional[str]]:
         # A source represents a TDR snapshot or canned staging area to index.
         # Each source is a string matching the following EBNF grammar:
         #
-        # source = TDR source | canned source ;
+        # source = TDR source | canned source | DSS source;
         #
         # TDR source = 'tdr:', Google Cloud project name,
         #              ':', TDR dataset or snapshot name,
@@ -87,6 +87,10 @@ def env() -> Mapping[str, Optional[str]]:
         #                 ['/', path],
         #                 ':', [ prefix ],
         #                 '/', partition prefix length ;
+        #
+        # DSS sources = 'dss.data.humancellatlas.org/v1',
+        #               ':', [ prefix ],
+        #               '/', partition prefix length ;
         #
         # The `prefix` is an optional string of hexadecimal digits constraining
         # the set of indexed subgraphs from the source. A subgraph will be
@@ -236,7 +240,7 @@ def env() -> Mapping[str, Optional[str]]:
         # `gitlab` components, as well as building and pushing the executor
         # image (see terraform/gitlab/runner/Dockerfile for how).
         #
-        'azul_docker_version': '28.3.2',
+        'azul_docker_version': '28.3.3',
 
         # The version of Python used throughout the system.
         #
@@ -296,32 +300,32 @@ def env() -> Mapping[str, Optional[str]]:
                 'url': 'https://hub.docker.com/_/python',
             },
             'pycharm': {
-                'ref': 'docker.io/ucscgi/azul-pycharm:2024.3.6-58',
+                'ref': 'docker.io/ucscgi/azul-pycharm:2024.3.6-59',
                 'url': 'https://hub.docker.com/repository/docker/ucscgi/azul-pycharm',
                 'is_custom': True
             },
-            'elasticsearch': {
-                'ref': 'docker.io/ucscgi/azul-elasticsearch:7.17.28-49',
-                'url': 'https://hub.docker.com/repository/docker/ucscgi/azul-elasticsearch',
-                'is_custom': True
+            'opensearch': {
+                'ref': 'docker.io/opensearchproject/opensearch:2.19.3',
+                'url': 'https://hub.docker.com/r/opensearchproject/opensearch',
+                'is_custom': False
             },
             'bigquery_emulator': {
-                'ref': 'docker.io/ucscgi/azul-bigquery-emulator:0.4.4-40',
+                'ref': 'docker.io/ucscgi/azul-bigquery-emulator:0.4.4-41',
                 'url': 'https://hub.docker.com/repository/docker/ucscgi/azul-bigquery-emulator',
                 'is_custom': True
             },
             # Updating any of the four images below additionally requires
             # redeploying the `gitlab` TF component.
             'clamav': {
-                'ref': 'docker.io/clamav/clamav:1.4.3-49',
+                'ref': 'docker.io/clamav/clamav:1.4.3-51',
                 'url': 'https://hub.docker.com/r/clamav/clamav'
             },
             'gitlab': {
-                'ref': 'docker.io/gitlab/gitlab-ce:18.2.1-ce.0',
+                'ref': 'docker.io/gitlab/gitlab-ce:18.2.2-ce.0',
                 'url': 'https://hub.docker.com/r/gitlab/gitlab-ce'
             },
             'gitlab_runner': {
-                'ref': 'docker.io/gitlab/gitlab-runner:ubuntu-v18.2.0',
+                'ref': 'docker.io/gitlab/gitlab-runner:ubuntu-v18.2.1',
                 'url': 'https://hub.docker.com/r/gitlab/gitlab-runner'
             },
             'dind': {
@@ -337,9 +341,9 @@ def env() -> Mapping[str, Optional[str]]:
                 'ref': 'docker.io/lmenezes/cerebro:0.9.4',
                 'url': 'https://hub.docker.com/r/lmenezes/cerebro'
             },
-            '_kibana': {
-                'ref': 'docker.io/bitnami/kibana:7.10.2',
-                'url': 'https://hub.docker.com/r/bitnami/kibana'
+            '_opensearch_dashboards': {
+                'ref': 'docker.io/opensearchproject/opensearch-dashboards:2.19.3',
+                'url': 'https://hub.docker.com/r/opensearchproject/opensearch-dashboards'
             }
         }),
 
@@ -626,23 +630,6 @@ def env() -> Mapping[str, Optional[str]]:
         # (1 yes, 0 no).
         #
         'AZUL_ENABLE_VERBATIM_RELATIONS': '1',
-
-        # Identifies the DSS repository endpoint and prefix to index.
-        # The syntax in EBNF is:
-        #
-        # source = endpoint,
-        #          ':', [ prefix ],
-        #          '/', partition prefix length ;
-        #
-        # `endpoint` is the URL of the DSS instance. For `prefix` and
-        # `partition prefix length` see `AZUL_CATALOGS` above.
-        #
-        # Examples:
-        #
-        # https://dss.data.humancellatlas.org/v1:/1
-        # https://dss.data.humancellatlas.org/v1:aa/1
-        #
-        'AZUL_DSS_SOURCE': None,
 
         # Mirror data files from the indexed repository in an S3 bucket
         # (1 yes, 0 no).

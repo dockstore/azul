@@ -11,6 +11,7 @@ from concurrent.futures import (
 from enum import (
     auto,
 )
+import fnmatch
 from functools import (
     partial,
 )
@@ -19,6 +20,7 @@ from pprint import (
     PrettyPrinter,
 )
 from typing import (
+    AbstractSet,
     cast,
 )
 import uuid
@@ -52,6 +54,7 @@ from azul.http import (
 )
 from azul.indexer import (
     SourceRef,
+    SourceSpec,
 )
 from azul.indexer.index_queue_service import (
     IndexQueueService,
@@ -129,6 +132,7 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
 
     def local_reindex(self, catalog: CatalogName, prefix: str) -> int:
         service = self.index_repository_service
+        plugin = self.repository_plugin(catalog)
         notifications: JSONs = [
             # Notifications sent organically by DSS had a different structure,
             # but since DSS is long gone these synthetic notifications are now
@@ -137,7 +141,7 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
                 'transaction_id': str(uuid.uuid4()),
                 'bundle_fqid': bundle_fqid.to_json()
             }
-            for source in self.catalog_sources(catalog)
+            for source in map(plugin.resolve_source, config.sources(catalog))
             for bundle_fqid in service.list_bundles(catalog, source, prefix)
         ]
         self.index(catalog, notifications)
@@ -226,14 +230,32 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
         if errors or missing:
             raise AzulClientNotificationError
 
-    def catalog_sources(self, catalog: CatalogName) -> set[str]:
-        return set(map(str, self.repository_plugin(catalog).sources))
-
-    def sources_by_catalog(self, catalogs: Iterable[str]) -> dict[str, set[str]]:
-        return {
-            catalog: self.catalog_sources(catalog)
-            for catalog in catalogs
-        }
+    def matching_sources(self,
+                         catalogs: Iterable[CatalogName],
+                         globs: AbstractSet[str] = frozenset('*')
+                         ) -> dict[CatalogName, set[SourceSpec]]:
+        result = {}
+        matched_globs = set()
+        for catalog in catalogs:
+            raw_specs = config.sources(catalog)
+            specs = set(self.repository_plugin(catalog).sources)
+            if '*' not in globs:
+                matching_raw_specs: set[str] = set()
+                for glob in globs:
+                    _matching_raw_specs = fnmatch.filter(raw_specs, glob)
+                    if _matching_raw_specs:
+                        matching_raw_specs.update(_matching_raw_specs)
+                        matched_globs.add(glob)
+                        log.debug('Source glob %r matched sources %r in catalog %r',
+                                  glob, _matching_raw_specs, catalog)
+                specs = {spec for spec in specs if str(spec) in matching_raw_specs}
+            result[catalog] = specs
+        unmatched_globs = globs - matched_globs
+        if unmatched_globs:
+            log.warning('Source(s) not found in any catalog: %r', unmatched_globs)
+        assert any(result.values()), R(
+            'No valid sources specified for any catalog')
+        return result
 
     def mirror_queue(self):
         name = config.mirror_queue.name
@@ -263,7 +285,7 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
         ]
         self.index(catalog, notifications, delete=True)
 
-    def deindex(self, catalog: CatalogName, sources: Iterable[str]):
+    def deindex(self, catalog: CatalogName, sources: Iterable[SourceSpec]):
         plugin = self.repository_plugin(catalog)
         source_ids = [plugin.resolve_source(s).id for s in sources]
         es_client = ESClientFactory.get()

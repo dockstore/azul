@@ -73,12 +73,11 @@ class TerraValidator:
 
     def verify_sources(self) -> None:
         futures = []
-        all_sources = set()
+        all_sources: set[TDRSourceSpec] = set()
         with ThreadPoolExecutor(max_workers=8) as tpe:
             for catalog in self.catalogs:
-                catalog_sources = config.sources(catalog)
+                catalog_sources = self.repository_plugin(catalog).sources
                 for source in catalog_sources - all_sources:
-                    source = TDRSourceSpec.parse(source)
                     futures.append(tpe.submit(self.verify_source, catalog, source))
                 all_sources |= catalog_sources
             for completed_future in as_completed(futures):
@@ -94,7 +93,7 @@ class TerraValidator:
                       source_spec: TDRSourceSpec
                       ) -> None:
         plugin = self.repository_plugin(catalog)
-        ref = plugin.resolve_source(str(source_spec))
+        ref = plugin.resolve_source(source_spec)
         log.info('TDR client is authorized for API access to %s.', source_spec)
         if config.deployment.is_main:
             if source_spec.prefix is not None:

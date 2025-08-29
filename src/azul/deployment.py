@@ -481,11 +481,12 @@ class AWS:
             provider = resolver.get_provider('assume-role')
             # Make the provider use the same cache as the AWS CLI
             provider.cache = botocore.utils.JSONFileCache(cli_cache)
-            # Remove the provider that reads from environment variables. It
-            # typically precedes the assume-role provider so its presence would
+            # Remove the provider that reads from environment variables. By
+            # default, it precedes the assume-role provider so its presence will
             # defeat the CLI cache sharing if credentials are present in the
-            # environment, which is typically the case on developer machines
-            # (see envhook.py and _login_aws in `environment`).
+            # environment, as is the case for Python processes started from a
+            # shell in which the _login or, more specifically, the _login_aws
+            # shell functions were invoked.
             resolver.remove('env')
         return boto3.session.Session(botocore_session=session)
 

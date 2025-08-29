@@ -52,7 +52,6 @@ import azul.types
 import azul.uuids
 import azul.vendored.frozendict
 import service
-import test_tagging
 
 
 # noinspection PyPep8Naming
@@ -114,7 +113,6 @@ def load_tests(_loader,
         load_script('export_environment'),
         load_module(root + '/.flake8/azul_flake8.py', 'azul_flake8'),
         load_module(root + '/.github/workflows/schedule.py', 'schedule'),
-        test_tagging,
         service
     ]:
         suite = doctest.DocTestSuite(module)

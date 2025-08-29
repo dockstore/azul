@@ -52,13 +52,6 @@ from uuid import (
 )
 
 import attrs
-from elasticsearch_dsl import (
-    Q,
-    Search,
-)
-from elasticsearch_dsl.response import (
-    Hit,
-)
 from furl import (
     furl,
 )
@@ -68,6 +61,13 @@ from more_itertools import (
     one,
 )
 import msgpack
+from opensearchpy import (
+    Q,
+    Search,
+)
+from opensearchpy.helpers.response import (
+    Hit,
+)
 
 from azul import (
     CatalogName,
@@ -1923,7 +1923,10 @@ class VerbatimManifestGenerator(ClientSidePagingManifestGenerator,
         request = request.sort('entity_id.keyword', '_id')
 
         def request_factory(search_after: SortKey | None) -> Search:
-            return request.extra(search_after=search_after)
+            if search_after is None:
+                return request
+            else:
+                return request.extra(search_after=search_after)
 
         return self._paginate_hits(request_factory)
 

@@ -23,7 +23,7 @@ from typing import (
     cast,
 )
 
-import attr
+import attrs
 from more_itertools import (
     one,
 )
@@ -124,10 +124,10 @@ class DocumentSlice(TypedDict, total=False):
     excludes: FieldGlobs
 
 
-@attr.s(auto_attribs=True, frozen=True, kw_only=True)
+@attrs.frozen(auto_attribs=True, kw_only=True)
 class Sorting:
     field_name: FieldName
-    descending: bool = attr.ib(default=False)
+    descending: bool = attrs.field(default=False)
     max_page_size: int = 1000
 
     @property
@@ -135,7 +135,7 @@ class Sorting:
         return 'desc' if self.descending else 'asc'
 
 
-@attr.s(auto_attribs=True, frozen=True, kw_only=True)
+@attrs.frozen(auto_attribs=True, kw_only=True)
 class SpecialFields:
     """
     Azul defines a number of fields in each /index/{entity_type} response that
@@ -547,32 +547,32 @@ class MetadataPlugin[BUNDLE: Bundle](Plugin[BUNDLE]):
         raise NotImplementedError
 
 
+@attrs.frozen(auto_attribs=True, kw_only=True)
 class RepositoryPlugin[BUNDLE: Bundle,
                        SOURCE_SPEC: SourceSpec,
                        SOURCE_REF: SourceRef,
                        BUNDLE_FQID: SourcedBundleFQID](
     Plugin[BUNDLE]
 ):
+    catalog: CatalogName
 
     @classmethod
     def type_name(cls) -> str:
         return 'repository'
 
     @classmethod
-    @abstractmethod
     def create(cls, catalog: CatalogName) -> Self:
         """
         Return a plugin instance suitable for populating the given catalog.
         """
-        raise NotImplementedError
+        return cls(catalog=catalog)
 
-    @property
-    @abstractmethod
+    @cached_property
     def sources(self) -> AbstractSet[SOURCE_SPEC]:
         """
-        The names of the sources the plugin is configured to read metadata from.
+        The sources the plugin is configured to read metadata from.
         """
-        raise NotImplementedError
+        return frozenset(map(self.parse_source, config.sources(self.catalog)))
 
     def _assert_source(self, source: SOURCE_REF):
         """
@@ -630,31 +630,35 @@ class RepositoryPlugin[BUNDLE: Bundle,
     @cached_property
     def _generic_params(self) -> dict[TypeVar, type]:
         params = derived_type_params(type(self), root=RepositoryPlugin)
-        assert all(isinstance(p, type) for p in params.values())
+        assert all(isinstance(p, type) for p in params.values()), params
         return cast(dict[TypeVar, type], params)
 
     @property
     def source_ref_cls(self) -> type[SOURCE_REF]:
         ref_cls = self._generic_params[SOURCE_REF]
-        assert isinstance(ref_cls, type)
-        assert issubclass(ref_cls, SourceRef)
+        assert isinstance(ref_cls, type), ref_cls
+        assert issubclass(ref_cls, SourceRef), ref_cls
         return cast(type[SOURCE_REF], ref_cls)
 
     @property
     def bundle_fqid_cls(self) -> type[BUNDLE_FQID]:
         fqid_cls = self._generic_params[BUNDLE_FQID]
-        assert isinstance(fqid_cls, type)
-        assert issubclass(fqid_cls, SourcedBundleFQID)
+        assert isinstance(fqid_cls, type), fqid_cls
+        assert issubclass(fqid_cls, SourcedBundleFQID), fqid_cls
         return cast(type[BUNDLE_FQID], fqid_cls)
 
-    def resolve_source(self, spec: str) -> SOURCE_REF:
+    def parse_source(self, spec: str) -> SOURCE_SPEC:
+        return self.source_ref_cls.spec_cls().parse(spec)
+
+    def resolve_source(self, spec: SOURCE_SPEC) -> SOURCE_REF:
         """
         Return an instance of :class:`SourceRef` for the repository source
         matching the given specification or raise an exception if no such source
         exists.
         """
         ref_cls = self.source_ref_cls
-        spec = ref_cls.spec_cls().parse(spec)
+        spec_cls = ref_cls.spec_cls()
+        assert isinstance(spec, spec_cls), spec
         id = self._lookup_source_id(spec)
         return ref_cls(id=id, spec=spec)
 
@@ -790,7 +794,7 @@ class RepositoryPlugin[BUNDLE: Bundle,
         raise NotImplementedError
 
 
-@attr.s(auto_attribs=True, frozen=True, kw_only=True)
+@attrs.frozen(auto_attribs=True, kw_only=True)
 class File(SerializableAttrs, metaclass=ABCMeta):
     """
     A reference to a data file in the repository.
@@ -837,7 +841,7 @@ class File(SerializableAttrs, metaclass=ABCMeta):
         raise NotImplementedError
 
 
-@attr.s(auto_attribs=True, kw_only=True)
+@attrs.define(auto_attribs=True, kw_only=True)
 class RepositoryFileDownload(metaclass=ABCMeta):
     #: The file being downloaded
     file: File

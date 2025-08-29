@@ -25,7 +25,6 @@ from azul.indexer.aggregate import (
     DistinctAccumulator,
     FrequencySetAccumulator,
     GroupingAggregator,
-    ListAccumulator,
     MaxAccumulator,
     MinAccumulator,
     SetAccumulator,
@@ -184,7 +183,7 @@ class ProjectAggregator(SimpleAggregator):
 
     def _accumulator(self, field) -> Accumulator | None:
         if field == 'document_id':
-            return ListAccumulator(max_size=100)
+            return SetAccumulator(max_size=100)
         elif field in ('project_description',
                        'contact_names',
                        'contributors',
