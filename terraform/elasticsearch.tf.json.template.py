@@ -57,7 +57,7 @@ emit_tf(None if config.share_es_domain else {
             }
         },
         {
-            'aws_elasticsearch_domain': {
+            'aws_opensearch_domain': {
                 'index': {
                     'access_policies': json.dumps({
                         'Version': '2012-10-17',
@@ -99,7 +99,7 @@ emit_tf(None if config.share_es_domain else {
                         ],
                         'security_group_ids': ['${aws_security_group.elasticsearch.id}']
                     },
-                    'elasticsearch_version': '7.10',
+                    'engine_version': 'OpenSearch_2.19',
                     'log_publishing_options': [
                         {
                             'cloudwatch_log_group_arn': '${aws_cloudwatch_log_group.' + log + '_log.arn}',
@@ -147,14 +147,14 @@ emit_tf(None if config.share_es_domain else {
             'null_resource': {
                 'cluster_settings': {
                     'depends_on': [
-                        'aws_elasticsearch_domain.index'
+                        'aws_opensearch_domain.index'
                     ],
                     'triggers': {
                         'script_hash': '${filesha256("%s/scripts/manage_cluster_settings.py")}' % config.project_root
                     },
                     'lifecycle': {
                         'replace_triggered_by': [
-                            'aws_elasticsearch_domain.index'
+                            'aws_opensearch_domain.index'
                         ]
                     },
                     'provisioner': {

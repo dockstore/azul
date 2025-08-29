@@ -21,26 +21,24 @@ from typing import (
 )
 
 import attr
-from elasticsearch import (
-    Elasticsearch,
+from more_itertools import (
+    one,
 )
-from elasticsearch_dsl import (
+from opensearchpy import (
     A,
+    OpenSearch,
     Q,
     Search,
 )
-from elasticsearch_dsl.aggs import (
+from opensearchpy.helpers.aggs import (
     Agg,
     Terms,
 )
-from elasticsearch_dsl.query import (
+from opensearchpy.helpers.query import (
     Query,
 )
-from elasticsearch_dsl.response import (
+from opensearchpy.helpers.response import (
     Response,
-)
-from more_itertools import (
-    one,
 )
 
 from azul import (
@@ -669,7 +667,7 @@ class PaginationStage(_ElasticsearchStage[JSON, ResponseTriple]):
 class ElasticsearchService(DocumentService):
 
     @cached_property
-    def _es_client(self) -> Elasticsearch:
+    def _es_client(self) -> OpenSearch:
         return ESClientFactory.get()
 
     def create_chain(self,

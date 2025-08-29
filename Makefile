@@ -219,7 +219,7 @@ relative_sources = $(subst $(project_root)/,,$(absolute_sources))
 
 .PHONY: pep8
 pep8: check_python
-	flake8 --config .flake8/conf $(absolute_sources)
+	python -m flake8 --config .flake8/conf $(absolute_sources)
 
 # The container path resolution in the recipe below is needed on Gitlab where
 # the build is already running in a container and the container below will be a

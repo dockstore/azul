@@ -8,11 +8,9 @@ import sys
 
 from azul import (
     config,
-    reject,
 )
 from azul.args import (
     AzulArgumentHelpFormatter,
-    matching_sources,
 )
 from azul.azulclient import (
     AzulClient,
@@ -132,24 +130,26 @@ def main(argv: list[str]):
 
     source_globs = set(args.sources)
     every_source = '*' in source_globs
-    sources_by_catalog = azul.sources_by_catalog(args.catalogs)
-
-    if not every_source:
-        if args.local:
-            parser.error('Cannot specify sources when performing a local reindex')
-            assert False
-        sources_by_catalog = matching_sources(sources_by_catalog, source_globs)
-
-    reject(args.deindex and (args.delete or args.create),
-           '--deindex is incompatible with --create and --delete.')
-
-    azul.require_no_failures_before()
     deindex = args.deindex or (args.delete and not every_source)
     delete = args.delete and every_source
 
+    if every_source:
+        if deindex:
+            parser.error('--deindex is incompatible with source `*`. Use --delete instead.')
+            assert False
+    else:
+        if args.local:
+            parser.error('Cannot specify sources when performing a local reindex')
+            assert False
+
+    if args.deindex and (args.delete or args.create):
+        parser.error('--deindex is incompatible with --create and --delete.')
+        assert False
+
+    sources_by_catalog = azul.matching_sources(args.catalogs, source_globs)
+    azul.require_no_failures_before()
+
     if deindex:
-        reject(every_source, '--deindex is incompatible with source `*`. '
-                             'Use --delete instead.')
         for catalog, sources in sources_by_catalog.items():
             if sources:
                 azul.deindex(catalog, sources)
@@ -176,7 +176,7 @@ def main(argv: list[str]):
                     num_notifications += azul.local_reindex(catalog, args.prefix)
                 else:
                     azul.index_queue_service.remote_reindex(catalog, sources)
-                    num_notifications = None
+                    num_notifications = -1
             else:
                 log.info('Skipping catalog %r (no matching sources)', catalog)
         if args.wait:

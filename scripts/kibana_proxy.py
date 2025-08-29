@@ -30,9 +30,15 @@ from concurrent.futures.thread import (
 from functools import (
     partial,
 )
+import io
+import json
 import logging
 import os
+from pathlib import (
+    Path,
+)
 import sys
+import tarfile
 import time
 
 import docker
@@ -101,16 +107,23 @@ class KibanaProxy:
                 proxy = None
                 es_port = self.options.local_port
                 network_mode = 'host'
-            image = resolve_docker_image_for_launch('_kibana')
+            image = resolve_docker_image_for_launch('_opensearch_dashboards')
             kibana = self.create_container(image=image,
                                            name='kibana',
-                                           auto_remove=True,
+                                           auto_remove=False,
                                            detach=True,
                                            environment={
-                                               'KIBANA_ELASTICSEARCH_URL': f'http://localhost:{es_port}',
-                                               'KIBANA_PORT_NUMBER': kibana_port
+                                               'DISABLE_INSTALL_DEMO_CONFIG': 'true',
+                                               'DISABLE_SECURITY_DASHBOARDS_PLUGIN': 'true',
                                            },
                                            network_mode=network_mode)
+            self.add_file(container=kibana,
+                          path=Path('/usr/share/opensearch-dashboards/config/opensearch_dashboards.yml'),
+                          contents=json.dumps({
+                              'server.host': '0.0.0.0',
+                              'server.port': kibana_port,
+                              'opensearch.hosts': [f'http://localhost:{es_port}']
+                          }).encode())
             containers.append(kibana)
             image = resolve_docker_image_for_launch('_cerebro')
             cerebro = self.create_container(image=image,
@@ -138,7 +151,7 @@ class KibanaProxy:
 
             def print_instructions():
                 time.sleep(10)
-                log.info('Now open Kibana at http://127.0.0.1:%i/ or Cerebro at '
+                log.info('Now open Dashboards at http://127.0.0.1:%i/ or Cerebro at '
                          'http://127.0.0.1:%i/#!/overview?host=http://localhost:%i/',
                          kibana_port, cerebro_port, es_port)
 
@@ -154,6 +167,19 @@ class KibanaProxy:
         finally:
             for container in containers:
                 container.kill()
+
+    def add_file(self,
+                 container: Container,
+                 path: Path,
+                 contents: bytes) -> None:
+        tar_buf, file_buf = io.BytesIO(), io.BytesIO(contents)
+        with tarfile.open(fileobj=tar_buf, mode='w|') as tar:
+            info = tar.tarinfo(name=path.name)
+            info.size = len(file_buf.getvalue())
+            # Should probably be arguments:
+            info.mode, info.uid, info.gid = 0o644, 1000, 1000
+            tar.addfile(info, file_buf)
+        container.put_archive(str(path.parent), tar_buf.getvalue())
 
     @cached_property
     def es_endpoint(self):

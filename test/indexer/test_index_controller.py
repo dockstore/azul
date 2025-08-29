@@ -18,14 +18,14 @@ import attrs
 from chalice.app import (
     BadRequestError,
 )
-from elasticsearch import (
-    TransportError,
-)
 from more_itertools import (
     one,
 )
 from moto import (
     mock_aws,
+)
+from opensearchpy import (
+    TransportError,
 )
 
 from azul import (

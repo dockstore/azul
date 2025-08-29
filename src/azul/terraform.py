@@ -290,25 +290,29 @@ def _tags(resource_type: str, resource_name: str, tags: JSON) -> JSON:
     :param tags: Additional tags that override the defaults
 
     >>> from azul.doctests import assert_json
-    >>> assert_json(_tags('aws_instance', 'service', {}))
-    ... #doctest: +ELLIPSIS
+    >>> from test.azul_test_case import patch_config
+
+    >>> with patch_config('terraform_component', 'foo'):
+    ...     assert_json(_tags('aws_instance', 'service', {}))
+    ...     #doctest: +ELLIPSIS
     {
         "billing": "...",
         "service": "azul",
         "deployment": "...",
-        "owner": ...,
-        "Name": "azul-service-...",
-        "component": "azul-service"
+        "owner": "...",
+        "Name": "azul-...",
+        "component": "azul-service",
+        "terraform_component": "foo"
     }
 
-    >>> from azul.doctests import assert_json
-    >>> assert_json(_tags('aws_instance', 'service', {'billing' : 'foo'}))
-    ... #doctest: +ELLIPSIS
+    >>> with patch_config('terraform_component', None):
+    ...     assert_json(_tags('aws_instance', 'service', {'billing' : 'foo'}))
+    ...     #doctest: +ELLIPSIS
     {
         "billing": "foo",
         "service": "azul",
         "deployment": "...",
-        "owner": ...,
+        "owner": "...",
         "Name": "azul-service-...",
         "component": "azul-service"
     }
@@ -759,12 +763,12 @@ class Chalice:
                 es_endpoint=(
                     aws.es_endpoint
                     if config.share_es_domain else
-                    '${aws_elasticsearch_domain.index.endpoint}:443'
+                    '${aws_opensearch_domain.index.endpoint}:443'
                 ),
                 es_instance_count=(
                     not_none(aws.es_instance_count)
                     if config.share_es_domain else
-                    '${aws_elasticsearch_domain.index.cluster_config[0].instance_count}'
+                    '${aws_opensearch_domain.index.cluster_config[0].instance_count}'
                 )
             )
             json_dict(json_dict(resource['environment'])['variables']).update(env)

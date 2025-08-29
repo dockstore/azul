@@ -27,6 +27,7 @@ jobs:
       # didn't work at the time this comment was written.
       #
       GITHUB_TOKEN: '${{ secrets.AZUL_GITHUB_ACCESS_TOKEN_SCHEDULE_ACTION }}'
+      GITHUB_REPO: '${{ github.repository }}'
     steps:
       - uses: 'actions/checkout@v4'
         with:

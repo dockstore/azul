@@ -1236,7 +1236,6 @@ def env() -> Mapping[str, Optional[str]]:
                                                     repository=dict(name='tdr_anvil')),
                                        sources=list(filter(None, sources.values())))
             for atlas, catalog, sources in [
-                ('anvil', 'anvil9', anvil9_sources),
                 ('anvil', 'anvil11', anvil11_sources),
             ]
             for suffix, internal in [
@@ -1253,7 +1252,7 @@ def env() -> Mapping[str, Optional[str]]:
 
         'AZUL_ENABLE_MONITORING': '1',
 
-        'AZUL_ES_INSTANCE_TYPE': 'r6gd.xlarge.elasticsearch',
+        'AZUL_ES_INSTANCE_TYPE': 'r6gd.xlarge.search',
         'AZUL_ES_INSTANCE_COUNT': '6',
 
         'AZUL_CONTRIBUTION_CONCURRENCY': '300/64',

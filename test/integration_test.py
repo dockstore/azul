@@ -54,7 +54,6 @@ from chalice import (
     UnauthorizedError,
 )
 import chalice.cli
-import elasticsearch
 import fastavro
 from furl import (
     furl,
@@ -74,6 +73,7 @@ from more_itertools import (
 from openapi_spec_validator import (
     validate,
 )
+import opensearchpy
 import requests
 import urllib3
 import urllib3.request
@@ -185,7 +185,6 @@ from azul.types import (
     MutableJSONs,
 )
 from azul_test_case import (
-    AlwaysTearDownTestCase,
     AzulTestCase,
 )
 
@@ -288,7 +287,7 @@ class IntegrationTestCase(AzulTestCase, metaclass=ABCMeta):
         public_sources = self._public_tdr_client.snapshot_names_by_id()
         all_sources = self._tdr_client.snapshot_names_by_id()
         configured_sources = {
-            catalog: [TDRSourceSpec.parse(source) for source in config.sources(catalog)]
+            catalog: self.repository_plugin(catalog).sources
             for catalog in config.integration_test_catalogs
             if config.is_tdr_enabled(catalog)
         }
@@ -319,10 +318,10 @@ class IntegrationTestCase(AzulTestCase, metaclass=ABCMeta):
                        sources.
         """
         plugin = self.repository_plugin(catalog)
-        sources = set(config.sources(catalog))
+        sources = set(plugin.sources)
         if public is not None:
             ma_sources = {
-                str(source.spec)
+                source.spec
                 # This would raise a KeyError during the can bundle script test
                 # due to it using a mock catalog, so we only evaluate it when
                 # it's actually needed
@@ -343,7 +342,7 @@ class IntegrationTestCase(AzulTestCase, metaclass=ABCMeta):
             return plugin.resolve_source(source)
 
 
-class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
+class IndexingIntegrationTest(IntegrationTestCase):
     """
     An integration test case that tests indexing of public and managed-access
     metadata from a random selection of bundles, and the expected effects on the
@@ -406,6 +405,7 @@ class IndexingIntegrationTest(IntegrationTestCase, AlwaysTearDownTestCase):
         # Without a filter, the test takes so long that there's a real risk of
         # failure due to new snapshots being added mid-test.
         snapshot_filters_by_deployment = {
+            'tempdev': 'anvil_',  # ~5 snapshots
             'anvildev': 'anvil_',  # ~5 snapshots
             'dev': 'hca_dev_5',  # ~10 snapshots
             'anvilprod': 'anvil_page_',  # ~13 snapshots
@@ -1978,8 +1978,8 @@ class DisableAutomaticIndexCreationTest(IntegrationTestCase):
         es = ESClientFactory.get()
         index_name = 'no-auto-create-' + self.random.randbytes(4).hex() + '-it'
         try:
-            with self.assertRaises(elasticsearch.exceptions.NotFoundError) as cm:
-                es.index(index=index_name, document={'foo': 'bar'})
+            with self.assertRaises(opensearchpy.exceptions.NotFoundError) as cm:
+                es.index(index=index_name, body={'foo': 'bar'})
             expected = ('no such index [' + index_name + ']')
             self.assertEqual(expected, cm.exception.args[2]['error']['reason'])
         finally:

@@ -1,32 +1,15 @@
-from collections.abc import (
-    Mapping,
-    Sequence,
-)
-import json
-from typing import (
-    Optional,
-    Union,
-)
-from unittest.mock import (
-    MagicMock,
-    patch,
-)
-
-from more_itertools import (
-    first,
-)
-
-from azul.json import (
-    AnyJSON,
+from azul import (
+    JSON,
 )
 from azul.logging import (
     configure_test_logging,
 )
 from azul.terraform import (
-    _transform_tf,  # noqa
+    _transform_tf,
 )
-from azul_test_case import (
+from test.azul_test_case import (
     AzulUnitTestCase,
+    patch_config,
 )
 
 
@@ -37,219 +20,84 @@ def setUpModule():
 
 class TestTerraformResourceTags(AzulUnitTestCase):
 
-    def assertDictEqualPermissive(self,
-                                  expected: AnyJSON,
-                                  actual: AnyJSON
-                                  ) -> None:
-        path = self.permissive_compare(expected, actual)
-        self.assertIsNone(path, f'Discrepancy at path: {path}')
-
-    def permissive_compare(self,
-                           expected: AnyJSON,
-                           actual: AnyJSON,
-                           *path: Union[str, int]
-                           ) -> Optional[tuple[Union[int, str], ...]]:
-        """
-        Recursive JSON comparison. A None value in `expected` matches any value
-        at the same position in `actual`.
-
-        :return: None, if the two arguments, the path of the discrepancy as a
-                 tuple of strings otherwise.
-
-        >>> t = TestTerraformResourceTags()
-        >>> t.permissive_compare(
-        ...     {'foo': 'bar', 'qaz': [{'qux': 123, '456': 789}]},
-        ...     {'foo': 'bar', 'qaz': [{'qux': 123, '456': 789}]}
-        ... )
-
-        >>> t.permissive_compare(
-        ...     {'foo': 'bar', 'qaz': [{'qux': 123, '456': None}]},
-        ...     {'foo': 'bar', 'qaz': [{'qux': 123, '456': 'abc'}]}
-        ... )
-
-        >>> t.permissive_compare(
-        ...     {'foo': 'bar', 'qaz': [{'qux': 123, '456': 'def'}]},
-        ...     {'foo': 'bar', 'qaz': [{'qux': 123, '456': 'abc'}]}
-        ... )
-        ...
-        ('qaz', 0, '456')
-
-        >>> t.permissive_compare(
-        ...     {'foo': 'bar', 'qaz': [{'qux': 123, '456': 'def'}]},
-        ...     {'foo': 'bar', 'qaz': [{'qux': 123, '456': None}]}
-        ... )
-        ('qaz', 0, '456')
-
-        >>> t.permissive_compare(
-        ...     {'foo': 'bar', 'qaz': None, '456': 'def'},
-        ...     {'foo': 'bar', 'qaz': [{'qux': 123, '456': 'abc'}]}
-        ... )
-        ('456',)
-
-        >>> t.permissive_compare(
-        ...     {'foo': 'bar', 'qaz': [{'qux': {'123': 890}}]},
-        ...     {'foo': 'bar', 'qaz': [{'qux': {'123': 456}}]}
-        ... )
-        ('qaz', 0, 'qux', '123')
-
-        >>> t.permissive_compare(None, 123)
-
-        >>> t.permissive_compare({}, [])
-        ()
-
-        >>> t.permissive_compare([], [1])
-        (0,)
-
-        >>> t.permissive_compare([1], [])
-        (0,)
-
-        >>> t.permissive_compare({}, {'0':1})
-        ('0',)
-
-        >>> t.permissive_compare({'0':1}, {})
-        ('0',)
-        """
-        primitive_json = (str, int, float, bool)
-        if isinstance(actual, primitive_json) and isinstance(expected, primitive_json):
-            if expected != actual:
-                return path
-            else:
-                return None
-        elif expected is None:
-            return None
-        elif isinstance(actual, Sequence) and isinstance(expected, Sequence):
-            if len(actual) > len(expected):
-                return *path, len(expected)
-            else:
-                for i, expected_v in enumerate(expected):
-                    try:
-                        actual_v = actual[i]
-                    except IndexError:
-                        return *path, i
-                    else:
-                        diff = self.permissive_compare(expected_v, actual_v, *path, i)
-                        if diff is not None:
-                            return diff
-                return None
-        elif isinstance(actual, Mapping) and isinstance(expected, Mapping):
-            if len(actual) > len(expected):
-                return *path, first(actual.keys() - expected.keys())
-            else:
-                for k, expected_v in expected.items():
-                    assert isinstance(k, str)
-                    try:
-                        actual_v = actual[k]
-                    except KeyError:
-                        return *path, k
-                    else:
-                        diff = self.permissive_compare(expected_v, actual_v, *path, k)
-                        if diff is not None:
-                            return diff
-                return None
-        else:
-            return path
-
-    @patch('subprocess.run', new_callable=MagicMock)
-    def test(self, terraform_mock):
-        terraform_mock.return_value.stdout = json.dumps({
-            'format_version': '0.1',
-            'provider_schemas': {
-                'aws': {
-                    'resource_schemas': {
-                        'aws_vpc': {
-                            'block': {
-                                'attributes': {
-                                    'tags': {}
-                                }
-                            }
-                        }
-                    }
-                },
-                'gcp': {
-                    'resource_schemas': {
-                        'google_compute_instance': {
-                            'block': {
-                                'attributes': {
-                                    'tags': {}
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }).encode()
-
-        tagged_aws_resource = {
+    @patch_config('deployment_stage', 'spam')
+    @patch_config('owner', 'spam@alot.tld')
+    @patch_config('billing', 'donald')
+    @patch_config('terraform_component', 'blimp')
+    def test(self):
+        tagged_aws_resource: JSON = {
             'resource': {
                 'aws_vpc': {
-                    'name': {}
+                    'foo': {}
                 }
             }
         }
-        expected = {
+        expected: JSON = {
             'resource': [{
                 'aws_vpc': [{
-                    'name': {
+                    'foo': {
                         'tags': {
-                            'billing': None,
-                            'service': None,
-                            'deployment': None,
-                            'owner': None,
-                            'Name': None,
-                            'component': None
+                            'billing': 'donald',
+                            'service': 'azul',
+                            'deployment': 'spam',
+                            'owner': 'spam@alot.tld',
+                            'Name': 'azul-foo',
+                            'component': 'azul-foo',
+                            'terraform_component': 'blimp'
                         }
                     }
                 }]
             }]
         }
         tagged = _transform_tf(tagged_aws_resource)
-        self.assertDictEqualPermissive(expected, tagged)
+        self.assertDictEqual(expected, tagged)
 
-        tagged_gcp_resource = {
+        tagged_gcp_resource: JSON = {
             'resource': {
                 'google_compute_instance': {
-                    'name': {}
+                    'foo': {}
                 }
             }
         }
         expected = {
             'resource': [{
                 'google_compute_instance': [{
-                    'name': {
+                    'foo': {
                         'tags': {
-                            'billing': None,
-                            'service': None,
-                            'deployment': None,
-                            'owner': None,
-                            'name': None,
-                            'component': None
+                            'billing': 'donald',
+                            'service': 'azul',
+                            'deployment': 'spam',
+                            'owner': 'spam@alot.tld',
+                            'name': 'azul-foo',
+                            'component': 'azul-foo',
+                            'terraform_component': 'blimp'
                         }
                     }
                 }]
             }]
         }
         tagged = _transform_tf(tagged_gcp_resource)
-        self.assertDictEqualPermissive(expected, tagged)
+        self.assertDictEqual(expected, tagged)
 
-        untaggable_aws_resource = {
+        untaggable_aws_resource: JSON = {
             'resource': {
-                'aws_untaggable_resource': {'name': {}}
+                'aws_untaggable_resource': {'foo': {}}
             }
         }
-        expected = {
+        expected: JSON = {
             'resource': [
-                {'aws_untaggable_resource': [{'name': {}}]}
+                {'aws_untaggable_resource': [{'foo': {}}]}
             ]
         }
         tagged = _transform_tf(untaggable_aws_resource)
-        self.assertDictEqualPermissive(expected, tagged)
+        self.assertDictEqual(expected, tagged)
 
         manually_tagged_resource = {
             'resource': {
                 'aws_vpc': {
-                    'name': {
+                    'foo': {
                         'tags': {
-                            'component': 'foo'
+                            'component': 'bar'
                         }
                     }
                 }
@@ -258,18 +106,19 @@ class TestTerraformResourceTags(AzulUnitTestCase):
         expected = {
             'resource': [{
                 'aws_vpc': [{
-                    'name': {
+                    'foo': {
                         'tags': {
-                            'billing': None,
-                            'service': None,
-                            'deployment': None,
-                            'owner': None,
-                            'Name': None,
-                            'component': 'foo'
+                            'billing': 'donald',
+                            'service': 'azul',
+                            'deployment': 'spam',
+                            'owner': 'spam@alot.tld',
+                            'Name': 'azul-foo',
+                            'component': 'bar',
+                            'terraform_component': 'blimp'
                         }
                     }
                 }]
             }]
         }
         tagged = _transform_tf(manually_tagged_resource)
-        self.assertDictEqualPermissive(expected, tagged)
+        self.assertDictEqual(expected, tagged)

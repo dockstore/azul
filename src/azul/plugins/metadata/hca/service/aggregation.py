@@ -2,11 +2,11 @@ from typing import (
     Mapping,
 )
 
-from elasticsearch_dsl import (
+from opensearchpy import (
     Q,
     Search,
 )
-from elasticsearch_dsl.aggs import (
+from opensearchpy.helpers.aggs import (
     Agg,
 )
 
