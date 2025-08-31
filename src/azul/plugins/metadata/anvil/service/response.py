@@ -14,6 +14,7 @@ from azul import (
     cached_property,
 )
 from azul.json import (
+    copy_any_json,
     copy_json,
 )
 from azul.plugins import (
@@ -197,7 +198,7 @@ class AnvilSearchResponseStage(SearchResponseStage):
                             ) -> MutableJSON:
         fields = self._non_pivotal_fields_by_entity_type[inner_entity_type]
         return {
-            k: v
+            k: copy_any_json(v)
             for k, v in inner_entity.items()
             if k in fields
         }
