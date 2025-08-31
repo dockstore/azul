@@ -331,14 +331,10 @@ class BaseTransformer(Transformer, metaclass=ABCMeta):
     def _range(self, entity: EntityReference, *field_prefixes: str) -> MutableJSON:
         metadata = self.bundle.entities[entity]
 
-        def get_bound(field_name: str) -> float | None:
-            val = metadata[field_name]
-            return None if val is None else float(val)
-
         return {
             field_prefix: {
-                'gte': get_bound(field_prefix + '_lower_bound'),
-                'lte': get_bound(field_prefix + '_upper_bound')
+                'gte': metadata[field_prefix + '_lower_bound'],
+                'lte': metadata[field_prefix + '_upper_bound']
             }
             for field_prefix in field_prefixes
         }
