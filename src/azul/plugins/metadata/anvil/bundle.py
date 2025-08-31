@@ -49,9 +49,10 @@ class KeyReference(SerializableAttrs):
 
 
 def ref_set_field():
-    return serializable(attrs.field(),
-                        from_json=lambda x: frozenset(map(EntityReference.parse, x)),
-                        to_json=lambda x: sorted(map(str, x)))
+    return serializable(
+        from_json=lambda x: frozenset(map(EntityReference.parse, x)),
+        to_json=lambda x: sorted(map(str, x))
+    )
 
 
 @attrs.frozen(kw_only=True, order=False)
