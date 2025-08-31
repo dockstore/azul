@@ -23,6 +23,7 @@ from typing import (
 
 from azul.collections import (
     OrderedSet,
+    none_safe_key,
 )
 
 
@@ -90,8 +91,21 @@ def json_elements_are_mappings(vs: JSONArray) -> TypeGuard[JSONs]:
     return True
 
 
+def json_elements_are_optional_strings(vs: JSONArray
+                                       ) -> TypeGuard[Sequence[str | None]]:
+    for v in vs:
+        optional(json_str, v)
+    return True
+
+
 def json_element_strings(vs: AnyJSON) -> Iterable[str]:
     return map(json_str, json_sequence(vs))
+
+
+def json_sequence_of_optional_strings(vs: AnyJSON) -> Sequence[str | None]:
+    vs = json_sequence(vs)
+    assert json_elements_are_optional_strings(vs)
+    return vs
 
 
 def json_dict(v: AnyMutableJSON) -> MutableJSON:
@@ -123,6 +137,10 @@ def json_elements_are_dicts(vs: MutableJSONArray) -> TypeGuard[MutableJSONs]:
     for v in vs:
         json_dict(v)
     return True
+
+
+def json_sorted[S: PrimitiveJSON](vs: Iterable[S]) -> MutableJSONArray:
+    return sorted(vs, key=none_safe_key(none_last=True))
 
 
 def json_str(v: AnyMutableJSON | AnyJSON) -> str:

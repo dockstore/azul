@@ -22,6 +22,7 @@ from typing import (
     Callable,
     Collection,
     Iterable,
+    Iterator,
     Self,
 )
 from uuid import (
@@ -82,9 +83,14 @@ from azul.strings import (
     pluralize,
 )
 from azul.types import (
+    AnyMutableJSON,
     JSON,
     MutableJSON,
     MutableJSONs,
+    json_element_mappings,
+    json_sequence_of_optional_strings,
+    json_sorted,
+    json_str,
 )
 
 log = logging.getLogger(__name__)
@@ -93,7 +99,7 @@ EntityRefsByType = dict[EntityType, set[EntityReference]]
 
 
 @attr.s(auto_attribs=True, kw_only=True, frozen=True)
-class LinkedEntities:
+class LinkedEntities(Iterable[EntityReference]):
     origin: EntityReference
     ancestors: EntityRefsByType
     descendants: EntityRefsByType
@@ -101,7 +107,7 @@ class LinkedEntities:
     def __getitem__(self, item: EntityType) -> set[EntityReference]:
         return self.ancestors[item] | self.descendants[item]
 
-    def __iter__(self) -> Iterable[EntityReference]:
+    def __iter__(self) -> Iterator[EntityReference]:
         for entities in self.ancestors.values():
             yield from entities
         for entities in self.descendants.values():
@@ -156,6 +162,7 @@ class BaseTransformer(Transformer, metaclass=ABCMeta):
 
     @classmethod
     def aggregator(cls, entity_type) -> EntityAggregator:
+        agg_cls: type[EntityAggregator]
         if entity_type == 'activities':
             agg_cls = ActivityAggregator
         elif entity_type == 'biosamples':
@@ -330,7 +337,6 @@ class BaseTransformer(Transformer, metaclass=ABCMeta):
 
     def _range(self, entity: EntityReference, *field_prefixes: str) -> MutableJSON:
         metadata = self.bundle.entities[entity]
-
         return {
             field_prefix: {
                 'gte': metadata[field_prefix + '_lower_bound'],
@@ -345,8 +351,9 @@ class BaseTransformer(Transformer, metaclass=ABCMeta):
                 **additional_fields
                 ) -> MutableJSON:
         metadata = self.bundle.entities[ref]
-        entity = {}
+        entity: MutableJSON = {}
         for field in field_types:
+            value: AnyMutableJSON
             if field == 'document_id':
                 value = ref.entity_id
             else:
@@ -355,7 +362,7 @@ class BaseTransformer(Transformer, metaclass=ABCMeta):
                 except KeyError:
                     value = additional_fields[field]
             if isinstance(value, list):
-                value = sorted(value)
+                value = json_sorted(json_sequence_of_optional_strings(value))
             entity[field] = value
         return entity
 
@@ -423,14 +430,14 @@ class BaseTransformer(Transformer, metaclass=ABCMeta):
             anvil_schema,
         )
         return {
-            table['name']
-            for table in anvil_schema['tables']
-            if table['name'].endswith('activity')
+            json_str(table['name'])
+            for table in json_element_mappings(anvil_schema['tables'])
+            if json_str(table['name']).endswith('activity')
         }
 
     @classmethod
     def inner_entity_id(cls, entity_type: EntityType, entity: JSON) -> EntityID:
-        return entity['document_id']
+        return json_str(entity['document_id'])
 
     @classmethod
     def reconcile_inner_entities(cls,
@@ -469,7 +476,9 @@ class BaseTransformer(Transformer, metaclass=ABCMeta):
     @classmethod
     @cache
     def _complete_dataset_keys(cls) -> AbstractSet[str]:
-        return cls.field_types()['datasets'].keys()
+        field_types = cls.field_types()['datasets']
+        assert isinstance(field_types, dict), field_types
+        return field_types.keys()
 
 
 class SingletonTransformer(BaseTransformer, metaclass=ABCMeta):
