@@ -16,7 +16,9 @@ from typing import (
     TypeAliasType,
     TypeGuard,
     TypeVar,
+    TypedDict,
     Union,
+    cast,
     get_args,
     get_origin,
 )
@@ -73,6 +75,11 @@ def json_composite(v: AnyJSON) -> CompositeJSON:
 def json_item_mappings(vs: AnyJSON) -> Iterable[tuple[str, JSON]]:
     for k, v in json_mapping(vs).items():
         yield k, json_mapping(v)
+
+
+def json_item_sequences(vs: AnyJSON) -> Iterable[tuple[str, JSONArray]]:
+    for k, v in json_mapping(vs).items():
+        yield k, json_sequence(v)
 
 
 def json_element_mappings(vs: AnyJSON) -> Iterable[JSON]:
@@ -166,6 +173,17 @@ def json_bool(v: AnyMutableJSON | AnyJSON) -> bool:
 def json_none(v: AnyMutableJSON | AnyJSON) -> None:
     assert v is None, type(v)
     return v
+
+
+class JSONTypedDict(TypedDict):
+    """
+    Use this as a base class for TypedDict's that are also JSON.
+    """
+    pass
+
+
+def json_untyped_dict(v: JSONTypedDict) -> MutableJSON:
+    return cast(MutableJSON, v)
 
 
 class LambdaContext:
