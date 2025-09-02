@@ -183,6 +183,8 @@ class JSONTypedDict(TypedDict):
 
 
 def json_untyped_dict(v: JSONTypedDict) -> MutableJSON:
+    # FIXME: json_untyped_dict is unsafe
+    #        https://github.com/DataBiosphere/azul/issues/7381
     return cast(MutableJSON, v)
 
 
