@@ -393,10 +393,11 @@ class HCASearchResponseStage(SearchResponseStage):
             'version': file.get('version'),
             'matrixCellCount': file.get('matrix_cell_count'),
             'drs_uri': file.get('drs_uri'),
-            'url': self._file_url(uuid=file['uuid'],
-                                  version=file['version'],
-                                  drs_uri=file['drs_uri'])
+            'azul_url': self._file_url(uuid=file['uuid'],
+                                       version=file['version'],
+                                       drs_uri=file['drs_uri'])
         }
+        translated_file['url'] = translated_file['azul_url']
         return translated_file
 
     def make_specimen(self, specimen) -> MutableJSON:
