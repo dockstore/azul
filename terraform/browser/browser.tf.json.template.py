@@ -416,7 +416,7 @@ def emit():
                         },
                         'lifecycle': {
                             'replace_triggered_by': [
-                                '${null_resource.deploy_site_%s}' % name
+                                'null_resource.deploy_site_%s' % name
                             ]
                         },
                         'provisioner': {
