@@ -346,7 +346,7 @@ class Plugin(MetadataPlugin[AnvilBundle]):
         # The file URL is synthesized from the `uuid` and `version` fields.
         # Above, we already configured these two fields to be omitted from the
         # manifest since they are not informative to the user.
-        result[('contents', 'files')]['file_url'] = 'files.azul_file_url'
+        result[('contents', 'files')]['file_url'] = 'files.azul_url'
         return result
 
     primary_keys_by_table = {

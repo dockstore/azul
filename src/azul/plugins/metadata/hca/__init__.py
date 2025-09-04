@@ -369,7 +369,7 @@ class Plugin(MetadataPlugin[HCABundle]):
                 'sha256': 'file_sha256',
                 'content-type': 'file_content_type',
                 'drs_uri': 'file_drs_uri',
-                'file_url': 'file_url'
+                'file_url': 'file_azul_url'
             },
             ('contents', 'cell_suspensions'): {
                 'document_id': 'cell_suspension.provenance.document_id',
