@@ -346,18 +346,24 @@ class BaseTransformer(Transformer, metaclass=ABCMeta):
         }
 
     def _entity(self,
-                entity: EntityReference,
+                ref: EntityReference,
                 field_types: FieldTypes,
                 **additional_fields
                 ) -> MutableJSON:
-        metadata = self.bundle.entities[entity]
-        field_values = ChainMap(metadata,
-                                {'document_id': entity.entity_id},
-                                additional_fields)
-        return {
-            field: field_values[field]
-            for field in field_types
-        }
+        metadata = self.bundle.entities[ref]
+        entity = {}
+        for field in field_types:
+            if field == 'document_id':
+                value = ref.entity_id
+            else:
+                try:
+                    value = metadata[field]
+                except KeyError:
+                    value = additional_fields[field]
+            if isinstance(value, list):
+                value = sorted(value)
+            entity[field] = value
+        return entity
 
     def _entities(self,
                   factory: Callable[[EntityReference], MutableJSON],

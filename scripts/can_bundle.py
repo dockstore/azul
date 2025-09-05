@@ -176,13 +176,7 @@ def redact_json(o: AnyJSON, key: bytes) -> AnyMutableJSON:
         assert isinstance(o, int), o
         return (o & 0xFFFFFFFFFFFF) + 42000000000000000
     elif isinstance(o, list):
-
-        # Preserve sorted-ness from AnVIL repository plugin
-        def sort_key(e: AnyMutableJSON) -> bool | int | float | str:
-            assert isinstance(e, (bool, int, float, str))
-            return e
-
-        return sorted((redact_json(e, key) for e in o), key=sort_key)
+        return [redact_json(e, key) for e in o]
     elif isinstance(o, dict):
         return {
             # Preserve references to original dataset
