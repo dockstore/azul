@@ -268,7 +268,10 @@
         "name": "anvil_biosample",
         "object": {
             "anatomical_site": null,
-            "apriori_cell_type": [],
+            "apriori_cell_type": [
+                "foo",
+                "bar"
+            ],
             "biosample_id": "f9d40cf6-37b8-22f3-ce35-0dc614d2452b",
             "biosample_type": null,
             "datarepo_row_id": "826dea02-e274-4ffe-aabc-eb3db63ad068",
@@ -406,7 +409,7 @@
         "relations": [
             {
                 "dst_name": "anvil_donor",
-                "dst_id":"1e2bd7e5-f45e-a391-daea-7c060be76acd"
+                "dst_id": "1e2bd7e5-f45e-a391-daea-7c060be76acd"
             }
         ]
     },

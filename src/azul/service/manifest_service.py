@@ -1399,7 +1399,7 @@ class CurlManifestGenerator(PagedManifestGenerator):
             '--location',
             '--fail',
         ]
-        rate_limit = config.waf_rate_limit
+        rate_limit = config.waf_rate_limit_files
         # Some options are added to the command-line instead of the curl
         # manifest so that the user can more easily customize them.
         file_options = [
