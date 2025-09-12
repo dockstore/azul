@@ -394,6 +394,7 @@ def emit():
                                         'aws', 's3', 'sync',
                                         '--exclude', bucket_id_key,
                                         '--delete',
+                                        '--exact-timestamps',
                                         f'out_{name}/',
                                         's3://${aws_s3_bucket.%s.id}/' % name
                                     ]),
@@ -412,6 +413,11 @@ def emit():
                         'triggers': {
                             f'{trigger}_{name}': '${null_resource.deploy_site_%s.triggers.%s}' % (name, trigger)
                             for trigger in ['tarball_hash', 'bucket_id']
+                        },
+                        'lifecycle': {
+                            'replace_triggered_by': [
+                                'null_resource.deploy_site_%s' % name
+                            ]
                         },
                         'provisioner': {
                             'local-exec': {
