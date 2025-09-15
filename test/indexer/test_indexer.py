@@ -95,6 +95,8 @@ from azul.plugins.metadata.hca import (
 )
 from azul.plugins.repository.dss import (
     DSSBundle,
+    DSSBundleFQID,
+    DSSSourceRef,
 )
 from azul.threads import (
     Latch,
@@ -466,6 +468,22 @@ class TestDCP1IndexerWithIndexesSetUp(DCP1IndexerTestCase):
                                     fr'Got 201 response after [^ ]+ from PUT to '
                                     fr'.*_aggregate/_create/{doc_id}.*')
             self.assertTrue(any(message_re.fullmatch(message) for message in logs.output))
+
+    def test_entity_disjunctivity(self):
+        bundle1 = self._load_canned_bundle(self.old_bundle)
+        self._index_bundle(bundle1)
+        # For bundle2 we create a new bundle using bundle1's contents, however
+        # with a different source and bundle UUID, which, when indexed, creates
+        # aggregate entities that have more than one source.
+        new_source = DSSSourceRef.for_dss_source('https://fake_dss_instance2/v1:/2')
+        new_fqid = DSSBundleFQID(source=new_source,
+                                 uuid='3ccbc8a7-009e-4bc6-8854-da47bffae862',
+                                 version=bundle1.version).to_json()
+        bundle2 = bundle1.from_json({**bundle1.to_json(), 'fqid': new_fqid})
+        with self.assertRaises(AssertionError) as cm:
+            self._index_bundle(bundle2)
+        expected = 'Entity has an invalid number of sources'
+        self.assertEqual(expected, cm.exception.args[0].args[0])
 
     def test_deletion_before_addition(self):
         self._index_canned_bundle(self.new_bundle, delete=True)
