@@ -5,7 +5,7 @@ coverage==7.10.6
 docker==7.1.0
 flake8==7.3.0
 gevent==25.8.2
-git+https://github.com/DataBiosphere/azul-chalice@1.31.3+16#egg=chalice
+git+https://github.com/DataBiosphere/azul-chalice@1.32.0+17#egg=chalice
 git+https://github.com/DataBiosphere/azul-requirements-parser@v0.13.0+2#egg=requirements-parser
 gitpython==3.1.45
 google-api-python-client==2.181.0
