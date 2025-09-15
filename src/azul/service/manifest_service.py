@@ -2062,6 +2062,8 @@ class PFBVerbatimManifestGenerator(FileBasedManifestGenerator,
         replicas = list(self._list_replicas())
         plugin = self.metadata_plugin
         replica_schemas = plugin.verbatim_pfb_schema(replicas)
+        # FIXME: Move injection of snapshot ID field to metadata plugin
+        #        https://github.com/DataBiosphere/azul/issues/7411
         if config.is_anvil_enabled(self.catalog):
             for replica in replicas:
                 if replica['replica_type'] == 'anvil_dataset':
