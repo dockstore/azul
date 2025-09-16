@@ -8,6 +8,7 @@ from io import (
 )
 import json
 from typing import (
+    Mapping,
     Self,
     overload,
 )
@@ -30,6 +31,103 @@ from azul.types import (
     MutableJSONArray,
     json_str,
 )
+
+
+@overload
+def dig(cj: JSON, k: str, *ks: int | str) -> AnyJSON: ...
+
+
+@overload
+def dig(cj: JSONArray, k: int, *ks: int | str) -> AnyJSON: ...
+
+
+def dig(composite, k, *ks):
+    """
+    Extract a value from a JSON structure.
+
+    If the first argument is a dictionary, the second argument ``k`` must be a
+    string and it is used to get the value in the given dictionary at key ``k``.
+    If no further keys were passed, that value is returned.
+
+    >>> dig({'a': [42]}, 'a')
+    [42]
+
+    Conversely, If the first argument is a list, the second argument ``k`` must
+    be an integer and it is used to get the value in the given list at index
+    ``k``. If no further keys were passed, that value is returned.
+
+    >>> dig([{'a': 42}], 0)
+    {'a': 42}
+
+    If a third argument is passed, the process repeats to extract a value or 
+    item from the value extracted in the first step, using the third argument 
+    as a key or index.
+
+    >>> dig({'a': [42]}, 'a', 0)
+    42
+
+    >>> dig([{'a': 42}], 0, 'a')
+    42
+
+    If the given key (or index) refer to a non-existing value (or item), None is 
+    returned any additional arguments are ignored.
+
+    >>> dig({'a': [42]}, 'b')
+    >>> dig([42], 1)
+    >>> dig({'a': [42]}, 'b', 0)
+    >>> dig({'a': [42]}, 'a', 1)
+
+    The type of the key/index must correspond to that of the current value
+    against which the key/index is used. If it doesn't, an exception is raised.
+
+    >>> dig({'a': [42]}, 0)
+    Traceback (most recent call last):
+    ...
+    TypeError: ('Dictionary keys must be strings', <class 'int'>)
+
+    >>> dig([42], 'a')  # noqa
+    Traceback (most recent call last):
+    ...
+    TypeError: list indices must be integers or slices, not str
+
+    >>> dig({'a': [42]}, 'a', 0, 'b')
+    Traceback (most recent call last):
+    ...
+    TypeError: 'int' object is not subscriptable
+
+    An absent key is indistinguishable from a dictionary entry whose value is
+    None under the specified key. Similarly, an out-of-bounds index is
+    indistinguishable from a list element that is None at the specified index.
+    Subsequent key or index arguments are ignored.
+
+    >>> dig({}, 'a')
+    >>> dig({'a':None}, 'a')
+    >>> dig({'a':None}, 'a', 0)
+    >>> dig([], 0)
+    >>> dig([None], 0)
+    >>> dig([None], 0, 'a')
+
+    This applies at any level.
+
+    >>> dig({'a': []}, 'a', 0)
+    >>> dig({'a': [None]}, 'a', 0)
+    >>> dig([{}], 0, 'a')
+    >>> dig([{'a': None}], 0, 'a')
+    """
+    try:
+        v = composite[k]
+    except KeyError:
+        if isinstance(composite, Mapping) and isinstance(k, str):
+            return None
+        else:
+            raise TypeError('Dictionary keys must be strings', type(k))
+    except IndexError:
+        return None
+    else:
+        if v is not None and ks:
+            return dig(v, *ks)
+        else:
+            return v
 
 
 def copy_any_json(v: AnyJSON) -> AnyMutableJSON:

@@ -14,6 +14,7 @@ from typing import (
     Optional,
     Protocol,
     TypeAliasType,
+    TypeGuard,
     TypeVar,
     Union,
     get_args,
@@ -77,6 +78,18 @@ def json_element_mappings(vs: AnyJSON) -> Iterable[JSON]:
     return map(json_mapping, json_sequence(vs))
 
 
+def json_sequence_of_mappings(vs: AnyJSON) -> JSONs:
+    vs = json_sequence(vs)
+    assert json_elements_are_mappings(vs)
+    return vs
+
+
+def json_elements_are_mappings(vs: JSONArray) -> TypeGuard[JSONs]:
+    for v in vs:
+        json_mapping(v)
+    return True
+
+
 def json_element_strings(vs: AnyJSON) -> Iterable[str]:
     return map(json_str, json_sequence(vs))
 
@@ -98,6 +111,18 @@ def json_item_dicts(vs: AnyMutableJSON) -> Iterable[tuple[str, MutableJSON]]:
 
 def json_element_dicts(vs: AnyMutableJSON) -> Iterable[MutableJSON]:
     return map(json_dict, json_list(vs))
+
+
+def json_list_of_dicts(vs: AnyMutableJSON) -> MutableJSONs:
+    vs = json_list(vs)
+    assert json_elements_are_dicts(vs)
+    return vs
+
+
+def json_elements_are_dicts(vs: MutableJSONArray) -> TypeGuard[MutableJSONs]:
+    for v in vs:
+        json_dict(v)
+    return True
 
 
 def json_str(v: AnyMutableJSON | AnyJSON) -> str:
