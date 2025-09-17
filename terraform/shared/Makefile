@@ -42,7 +42,6 @@ apply: import_resources
 .PHONY: apply_keep_unused
 apply_keep_unused:
 	azul_terraform_keep_unused=1 $(MAKE) apply
-	@echo -e "\n" It is safe to ignore any warnings above about azul_terraform_keep_unused. "\n"
 
 .PHONY: auto_apply
 auto_apply: import_resources
