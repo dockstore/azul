@@ -1770,12 +1770,15 @@ class Config:
 
     blocked_user_agents_custom_regex_term = 'blocked_user_agents_custom'
 
+    aws_ip_reputation_list_term = 'aws_amazon_ip_reputation_list'
+
     #: The WAF rules whose matching requests will neither be logged in the WAF
     #: log group, nor trip the corresponding Cloudwatch alarm
     #:
     waf_rules_not_logged = [
         blocked_v4_ips_term,
-        blocked_user_agents_regex_term
+        blocked_user_agents_regex_term,
+        aws_ip_reputation_list_term
     ]
 
     waf_rate_rule_name = 'rate_limit'

@@ -292,7 +292,7 @@ class ManifestController(SourceController):
             command_line: FlatJSON = body.pop('CommandLine', None)
             headers = {k: str(v) for k, v in body.items()}
             if command_line is None:
-                new_body = None
+                new_body = ''
             else:
                 headers['Content-Type'] = 'text/plain'
                 new_body = ''.join(
