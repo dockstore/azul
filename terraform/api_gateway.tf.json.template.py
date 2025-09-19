@@ -480,7 +480,7 @@ emit_tf({
                                 }
                             },
                             {
-                                'name': 'aws_amazon_ip_reputation_list',
+                                'name': config.aws_ip_reputation_list_term,
                                 'statement': {
                                     'managed_rule_group_statement': {
                                         'name': 'AWSManagedRulesAmazonIpReputationList',
@@ -491,7 +491,7 @@ emit_tf({
                                     'none': {}
                                 },
                                 'visibility_config': {
-                                    'metric_name': 'aws_amazon_ip_reputation_list',
+                                    'metric_name': config.aws_ip_reputation_list_term,
                                     'sampled_requests_enabled': True,
                                     'cloudwatch_metrics_enabled': True
                                 }
