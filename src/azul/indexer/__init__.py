@@ -239,32 +239,34 @@ class Prefix:
         return cls(common=entry, partition=partition)
 
     @classmethod
-    def for_main_deployment(cls, num_elements: int) -> Self:
+    def for_main_deployment(cls, num_elements: int, partition_size: int) -> Self:
         """
-        A prefix that is expected to rarely exceed 8192 elements per partition.
+        A prefix that divides a source containing the given number of elements
+        (subgraphs, files, …) into partitions that rarely exceed the given size.
 
-        >>> str(Prefix.for_main_deployment(0))
+        >>> n = 8192
+
+        >>> str(Prefix.for_main_deployment(0, n))
         Traceback (most recent call last):
         ...
         ValueError: math domain error
 
-        >>> str(Prefix.for_main_deployment(1))
+        >>> str(Prefix.for_main_deployment(1, n))
         '/0'
 
         >>> cases = [-1, 0, 1, 2]
 
-        >>> n = 8192
-        >>> [str(Prefix.for_main_deployment(n + i)) for i in cases]
+        >>> [str(Prefix.for_main_deployment(n + i, n)) for i in cases]
         ['/0', '/0', '/1', '/1']
 
         Sources with this many bundles are very rare, so we have a generous
         margin of error surrounding this cutoff point
 
-        >>> n = 8192 * 16
-        >>> [str(Prefix.for_main_deployment(n + i)) for i in cases]
+        >>> m = n * 16
+        >>> [str(Prefix.for_main_deployment(m + i, n)) for i in cases]
         ['/1', '/1', '/2', '/2']
         """
-        partition = cls._prefix_length(num_elements, 8192)
+        partition = cls._prefix_length(num_elements, partition_size)
         return cls(common='', partition=partition)
 
     @classmethod
