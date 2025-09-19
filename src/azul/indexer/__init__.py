@@ -239,9 +239,9 @@ class Prefix:
         return cls(common=entry, partition=partition)
 
     @classmethod
-    def for_main_deployment(cls, num_subgraphs: int) -> Self:
+    def for_main_deployment(cls, num_elements: int) -> Self:
         """
-        A prefix that is expected to rarely exceed 8192 subgraphs per partition
+        A prefix that is expected to rarely exceed 8192 elements per partition.
 
         >>> str(Prefix.for_main_deployment(0))
         Traceback (most recent call last):
@@ -264,13 +264,13 @@ class Prefix:
         >>> [str(Prefix.for_main_deployment(n + i)) for i in cases]
         ['/1', '/1', '/2', '/2']
         """
-        partition = cls._prefix_length(num_subgraphs, 8192)
+        partition = cls._prefix_length(num_elements, 8192)
         return cls(common='', partition=partition)
 
     @classmethod
-    def for_lesser_deployment(cls, num_subgraphs: int) -> Self:
+    def for_lesser_deployment(cls, num_elements: int) -> Self:
         """
-        A prefix that yields an average of approximately 24 subgraphs per
+        A prefix that yields an average of approximately 24 elements per
         source, using an experimentally derived heuristic formula designed to
         minimize manual adjustment of the computed common prefixes. The
         partition prefix length is always 1, even though some partitions may be
@@ -294,9 +294,9 @@ class Prefix:
         >>> [str(Prefix.for_lesser_deployment(n + i)) for i in cases]
         ['e/1', 'f/1', '00/1', '10/1']
         """
-        digits = f'{num_subgraphs - 1:x}'[::-1]
-        length = cls._prefix_length(num_subgraphs, 64)
-        assert length < len(digits), num_subgraphs
+        digits = f'{num_elements - 1:x}'[::-1]
+        length = cls._prefix_length(num_elements, 64)
+        assert length < len(digits), num_elements
         return cls(common=digits[:length], partition=1)
 
     @classmethod
