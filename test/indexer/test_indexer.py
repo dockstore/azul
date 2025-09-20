@@ -33,6 +33,7 @@ from uuid import (
 )
 
 import attr
+import attrs
 from more_itertools import (
     bucket,
     ilen,
@@ -60,6 +61,7 @@ from azul.indexer.document import (
     CataloguedEntityReference,
     Contribution,
     ContributionCoordinates,
+    DocumentSource,
     DocumentType,
     EntityReference,
     EntityType,
@@ -96,7 +98,6 @@ from azul.plugins.metadata.hca import (
 from azul.plugins.repository.dss import (
     DSSBundle,
     DSSBundleFQID,
-    DSSSourceRef,
 )
 from azul.threads import (
     Latch,
@@ -473,17 +474,27 @@ class TestDCP1IndexerWithIndexesSetUp(DCP1IndexerTestCase):
         bundle1 = self._load_canned_bundle(self.old_bundle)
         self._index_bundle(bundle1)
         # For bundle2 we create a new bundle using bundle1's contents, however
-        # with a different source and bundle UUID, which, when indexed, creates
-        # aggregate entities that have more than one source.
-        new_source = DSSSourceRef.for_dss_source('https://fake_dss_instance2/v1:/2')
-        new_fqid = DSSBundleFQID(source=new_source,
-                                 uuid='3ccbc8a7-009e-4bc6-8854-da47bffae862',
-                                 version=bundle1.version).to_json()
-        bundle2 = bundle1.from_json({**bundle1.to_json(), 'fqid': new_fqid})
+        # with a different source and bundle UUID, which, when indexed, results
+        # in aggregates with two sources.
+        source1 = bundle1.fqid.source
+        source2 = attrs.evolve(source1, id='6b26d8d7-6e5a-4bcb-910d-1804cc59e32e')
+        fqid2 = DSSBundleFQID(source=source2,
+                              uuid='3ccbc8a7-009e-4bc6-8854-da47bffae862',
+                              version=bundle1.version)
+        bundle2 = attrs.evolve(bundle1, fqid=fqid2)
         with self.assertRaises(AssertionError) as cm:
             self._index_bundle(bundle2)
-        expected = 'Entity has an invalid number of sources'
-        self.assertEqual(expected, cm.exception.args[0].args[0])
+        expected = R(
+            'Entity has an invalid number of sources',
+            CataloguedEntityReference(entity_type='cell_suspensions',
+                                      entity_id='412898c5-5b9b-4907-b07c-e9b89666e204',
+                                      catalog='test'),
+            {
+                DocumentSource(id=source1.id, spec=source1.spec),
+                DocumentSource(id=source2.id, spec=source2.spec)
+            }
+        )
+        self.assertEqual(expected, one(cm.exception.args))
 
     def test_deletion_before_addition(self):
         self._index_canned_bundle(self.new_bundle, delete=True)
