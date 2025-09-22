@@ -29,6 +29,8 @@ from azul.indexer.document import (
 )
 from azul.types import (
     MutableJSON,
+    json_element_mappings,
+    json_element_strings,
 )
 
 # AnVIL snapshots do not use UUIDs for primary/foreign keys. This type alias
@@ -39,7 +41,7 @@ from azul.types import (
 Key = str
 
 
-@attrs.frozen(kw_only=True)
+@attrs.frozen(kw_only=True, order=True)
 class KeyReference(SerializableAttrs):
     key: Key
     entity_type: EntityType
@@ -47,13 +49,14 @@ class KeyReference(SerializableAttrs):
 
 def ref_set_field():
     return serializable(
-        from_json=lambda x: frozenset(map(EntityReference.parse, x)),
+        from_json=lambda x: frozenset(map(EntityReference.parse,
+                                          json_element_strings(x))),
         to_json=lambda x: sorted(map(str, x))
     )
 
 
 @attrs.frozen(kw_only=True, order=False)
-class Link[REF: EntityReference | KeyReference](SerializableAttrs):
+class Link[REF: (EntityReference, KeyReference)](SerializableAttrs):
     inputs: frozenset[REF] = ref_set_field()
     activity: REF | None = None
     outputs: frozenset[REF] = ref_set_field()
@@ -91,7 +94,7 @@ class AnvilBundle[BUNDLE_FQID: SourcedBundleFQID](Bundle[BUNDLE_FQID],
     entities: dict[EntityReference, MutableJSON] = attrs.field(factory=dict)
     links: set[EntityLink] = serializable(
         attrs.field(factory=set),
-        from_json=lambda x: set(EntityLink.from_json(v) for v in x),
+        from_json=lambda x: set(map(EntityLink.from_json, json_element_mappings(x))),
         to_json=lambda x: [v.to_json() for v in sorted(x)]
     )
     orphans: dict[EntityReference, MutableJSON] = attrs.field(factory=dict)

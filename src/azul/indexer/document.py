@@ -62,7 +62,7 @@ type EntityID = str
 type EntityType = str
 
 
-@frozen(kw_only=True)
+@frozen(kw_only=True, order=True)
 class EntityReference(Parseable):
     entity_type: EntityType
     entity_id: EntityID
