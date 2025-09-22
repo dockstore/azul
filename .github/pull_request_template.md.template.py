@@ -1031,6 +1031,33 @@ def emit(t: T, target_branch: str):
                     'content': 'Created backport PR and linked to it in a comment on this PR'
                 })
             ]),
+            *iif(t in (T.default, T.hotfix, T.promotion), [
+                {
+                    'type': 'h2',
+                    'content': 'Operator (mirroring)'
+                },
+                *flatten(zip(*(
+                    [
+                        *[
+                            {
+                                'type': 'cli',
+                                'content': f'{action} in `{d}`',
+                                'alt': (
+                                    'or neither this PR nor a failed, prior promotion requires it'
+                                    if t is T.hotfix else
+                                    f'or this PR does not require mirroring `{d}`'
+                                )
+                            }
+                            for action in [
+                                'Started mirroring',
+                                'Checked for, triaged and possibly requeued messages in mirror fail queue',
+                                'Emptied mirror fail queue'
+                            ]
+                        ]
+                    ]
+                    for d, s in t.target_deployments(target_branch).items()
+                )))
+            ]),
             {
                 'type': 'h2',
                 'content': 'Operator'

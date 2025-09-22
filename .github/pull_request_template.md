@@ -194,6 +194,16 @@ title is `Fix: ` followed by the issue title
 - [ ] Restarted `deploy_browser` job in the GitLab pipeline for this PR in `anvildev` <sub>or this PR does not require reindexing `anvildev`</sub>
 
 
+### Operator (mirroring)
+
+- [ ] Started mirroring in `dev` <sub>or this PR does not require mirroring `dev`</sub>
+- [ ] Started mirroring in `anvildev` <sub>or this PR does not require mirroring `anvildev`</sub>
+- [ ] Checked for, triaged and possibly requeued messages in mirror fail queue in `dev` <sub>or this PR does not require mirroring `dev`</sub>
+- [ ] Checked for, triaged and possibly requeued messages in mirror fail queue in `anvildev` <sub>or this PR does not require mirroring `anvildev`</sub>
+- [ ] Emptied mirror fail queue in `dev` <sub>or this PR does not require mirroring `dev`</sub>
+- [ ] Emptied mirror fail queue in `anvildev` <sub>or this PR does not require mirroring `anvildev`</sub>
+
+
 ### Operator
 
 - [ ] Propagated the `deploy:shared`, `deploy:gitlab`, `deploy:runner`, `API`, `reindex:partial`, `reindex:anvilprod` and `reindex:prod` labels to the next promotion PRs <sub>or this PR carries none of these labels</sub>
