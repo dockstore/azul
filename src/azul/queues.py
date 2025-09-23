@@ -194,11 +194,23 @@ class Queues:
         self._cleanup_messages(queue, messages)
         return messages
 
-    def send_messages(self, queue: 'Queue', messages: Iterable[SQSMessage]) -> int:
+    def send_messages(self,
+                      queue: 'Queue',
+                      messages: Iterable[SQSMessage],
+                      rate_limit: float | None = None
+                      ) -> int:
         num_messages = 0
         for batch in chunked(messages, self.batch_size):
             entries = [message.to_batch_entry(i) for i, message in enumerate(batch)]
+            start = time.time()
             queue.send_messages(Entries=entries)
+            if rate_limit is not None:
+                period = 1 / rate_limit
+                time_spent = time.time() - start
+                time_to_sleep = period - time_spent
+                if time_to_sleep > 0:
+                    log.debug('Sleeping %.3fs to prevent exceeding rate limit', time_to_sleep)
+                    time.sleep(time_to_sleep)
             num_messages += len(batch)
         return num_messages
 

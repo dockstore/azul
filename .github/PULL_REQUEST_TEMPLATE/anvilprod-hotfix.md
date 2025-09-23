@@ -83,6 +83,13 @@ Connected issue: #0000
 - [ ] Created backport PR and linked to it in a comment on this PR
 
 
+### Operator (mirroring)
+
+- [ ] Started mirroring in `anvilprod` <sub>or neither this PR nor a failed, prior promotion requires it</sub>
+- [ ] Checked for, triaged and possibly requeued messages in mirror fail queue in `anvilprod` <sub>or neither this PR nor a failed, prior promotion requires it</sub>
+- [ ] Emptied mirror fail queue in `anvilprod` <sub>or neither this PR nor a failed, prior promotion requires it</sub>
+
+
 ### Operator
 
 - [ ] PR is assigned to no one
