@@ -34,7 +34,8 @@ emit({
             "lambda_functions": {
                 "api_handler": chalice.vpc_lambda_config(app_name),
                 service.generate_manifest.name: {
-                    "lambda_timeout": config.service_lambda_timeout
+                    "lambda_timeout": config.service_lambda_timeout,
+                    "lambda_memory_size": 3072 if config.deployment.is_stable else 2048,
                 },
                 service.update_health_cache.name: {
                     "lambda_memory_size": 128,
