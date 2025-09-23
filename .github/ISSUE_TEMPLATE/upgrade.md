@@ -21,7 +21,7 @@ _period: 14 days
   - [ ] Push commit to GitHub (directly to `azul` branch, no PR needed)
   - [ ] GH Action workflow succeeded
   - [ ] Image is available on [DockerHub](https://hub.docker.com/repository/docker/ucscgi/azul-bigquery-emulator/tags) 
-- [ ] Create Azul PR, connected to this issue, with … 
+- [ ] Create Azul PR, linked to this issue, with … 
     - [ ] … changes to `requirements*.txt` from open Dependabot PRs, one commit per PR
     - [ ] … upgrade direct Python dependencies, [reference the operator manual](https://github.com/DataBiosphere/azul/blob/develop/OPERATOR.rst#upgrade-direct-python-dependencies) for instructions <sub>or not applicable</sub>
     - [ ] … update to [Python](https://hub.docker.com/_/python/tags) (only patch versions) <sub>or no update available</sub>

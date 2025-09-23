@@ -2,7 +2,7 @@
 This is the PR template for upgrading Azul dependencies.
 -->
 
-Connected issue: #0000
+Linked issue: #0000
 
 
 ## Checklist
@@ -12,9 +12,9 @@ Connected issue: #0000
 
 - [ ] Target branch is `develop`
 - [ ] Name of PR branch matches `upgrades/yyyy-mm-dd`
-- [ ] On ZenHub, PR is connected to the upgrade issue it resolves
+- [ ] PR is linked to the upgrade issue it resolves
 - [ ] PR title matches `Upgrade dependencies yyyy-mm-dd`
-- [ ] PR title references the connected issue
+- [ ] PR title references the linked issue
 
 
 ### Author (upgrading deployments)
@@ -41,10 +41,10 @@ Connected issue: #0000
 ### System administrator (after approval)
 
 - [ ] Actually approved the PR
-- [ ] Labeled connected issue as `no demo`
+- [ ] Labeled linked issue as `no demo`
 - [ ] A comment to this PR details the completed security design review
 - [ ] PR title is appropriate as title of merge commit
-- [ ] Moved connected issue to *Approved* column
+- [ ] Moved linked issue to *Approved* column
 - [ ] PR is assigned to only the operator
 
 
@@ -85,8 +85,8 @@ Connected issue: #0000
 - [ ] The title of the merge commit starts with the title of this PR
 - [ ] Added PR # reference to merge commit title
 - [ ] Collected commit title tags in merge commit title <sub>but excluded any `p` tags</sub>
-- [ ] Moved connected issue to *Merged lower* column in ZenHub
-- [ ] Moved blocked issues to *Triage* <sub>or no issues are blocked on the connected issue</sub>
+- [ ] Moved linked issue to *Merged lower* column in ZenHub
+- [ ] Moved blocked issues to *Triage* <sub>or no issues are blocked on the linked issue</sub>
 - [ ] Closed related Dependabot PRs with a comment referencing the corresponding commit in this PR <sub>or this PR does not include any such commits</sub>
 - [ ] Pushed merge commit to GitHub
 
@@ -109,7 +109,7 @@ Connected issue: #0000
 ### Operator
 
 - [ ] At least 24 hours have passed since `anvildev.shared` was last deployed
-- [ ] Ran `scripts/export_inspector_findings.py` against `anvildev`, imported results to [Google Sheet](https://docs.google.com/spreadsheets/d/1RWF7g5wRKWPGovLw4jpJGX_XMi8aWLXLOvvE5rxqgH8) and posted screenshot of relevant<sup>1</sup> findings as a comment on the connected issue.
+- [ ] Ran `scripts/export_inspector_findings.py` against `anvildev`, imported results to [Google Sheet](https://docs.google.com/spreadsheets/d/1RWF7g5wRKWPGovLw4jpJGX_XMi8aWLXLOvvE5rxqgH8) and posted screenshot of relevant<sup>1</sup> findings as a comment on the linked issue.
 - [ ] Propagated the `deploy:shared`, `deploy:gitlab`, `deploy:runner` and `backup:gitlab` labels to the next promotion PRs <sub>or this PR carries none of these labels</sub>
 - [ ] Propagated any specific instructions related to the `deploy:shared`, `deploy:gitlab`, `deploy:runner` and `backup:gitlab` labels, from the description of this PR to that of the next promotion PRs <sub>or this PR carries none of these labels</sub>
 - [ ] PR is assigned to only the system administrator

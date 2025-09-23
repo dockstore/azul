@@ -292,8 +292,7 @@ def emit(t: T, target_branch: str):
             },
             iif(t is not T.backport, {
                 'type': 'p',
-                'content': f'Connected {t.issues}: #0000'
-
+                'content': f'Linked {t.issues}: #0000'
             }),
             {
                 'type': 'h1',
@@ -324,10 +323,10 @@ def emit(t: T, target_branch: str):
             iif(t is not t.backport, {
                 'type': 'cli',
                 'content': {
-                    T.default: 'On ZenHub, PR is connected to all issues it (partially) resolves',
-                    T.upgrade: 'On ZenHub, PR is connected to the upgrade issue it resolves',
-                    T.hotfix: 'On ZenHub, PR is connected to the issue it hotfixes',
-                    T.promotion: 'On ZenHub, PR is connected to the promotion issue it resolves',
+                    T.default: 'PR is linked to all issues it (partially) resolves',
+                    T.upgrade: 'PR is linked to the upgrade issue it resolves',
+                    T.hotfix: 'PR is linked to the issue it hotfixes',
+                    T.promotion: 'PR is linked to the promotion issue it resolves',
                     T.backport: None
                 }[t]
             }),
@@ -337,16 +336,16 @@ def emit(t: T, target_branch: str):
             }),
             iif(t is T.promotion, {
                 'type': 'cli',
-                'content': 'Title of connected issue matches `Promotion yyyy-mm-dd`'
+                'content': 'Title of linked issue matches `Promotion yyyy-mm-dd`'
             }),
             {
                 'type': 'cli',
                 'content': {
-                    t.default: 'PR title matches<footnote title/> that of a connected issue',
-                    t.promotion: f'PR title starts with title of connected issue '
+                    t.default: 'PR title matches<footnote title/> that of a linked issue',
+                    t.promotion: f'PR title starts with title of linked issue '
                                  f'followed by ` {target_branch}`',
                     t.hotfix: f'PR title is `Hotfix {target_branch}: ` '
-                              f'followed by title of connected issue',
+                              f'followed by title of linked issue',
                     t.upgrade: 'PR title matches `Upgrade dependencies yyyy-mm-dd`',
                     t.backport: 'PR title contains the 7-digit SHA1 of the backported commits'
                 }[t],
@@ -354,7 +353,7 @@ def emit(t: T, target_branch: str):
             },
             iif(t is not T.backport, {
                 'type': 'cli',
-                'content': f'PR title references {t.issues('all', 'the')} connected {t.issues}'
+                'content': f'PR title references {t.issues('all', 'the')} linked {t.issues}'
             }),
             *(
                 [
@@ -373,7 +372,7 @@ def emit(t: T, target_branch: str):
             *iif(t is T.default, [
                 {
                     'type': 'cli',
-                    'content': 'For each connected issue, there is at least one commit whose title '
+                    'content': 'For each linked issue, there is at least one commit whose title '
                                'references that issue'
                 },
                 {
@@ -392,11 +391,11 @@ def emit(t: T, target_branch: str):
                 {
                     'type': 'cli',
                     'content': 'This PR is labeled `partial`',
-                    'alt': 'or completely resolves all connected issues'
+                    'alt': 'or completely resolves all linked issues'
                 },
                 {
                     'type': 'cli',
-                    'content': 'This PR partially resolves each of the connected issues',
+                    'content': 'This PR partially resolves each of the linked issues',
                     'alt': 'or does not have the `partial` label'
                 }
             ]),
@@ -462,7 +461,7 @@ def emit(t: T, target_branch: str):
                 *iif(t is T.default, [
                     {
                         'type': 'cli',
-                        'content': 'This PR and its connected issues are labeled `API`',
+                        'content': 'This PR and its linked issues are labeled `API`',
                         'alt': 'or this PR does not modify a REST API'
                     },
                     {
@@ -540,10 +539,10 @@ def emit(t: T, target_branch: str):
                         },
                         {
                             'type': 'cli',
-                            'content': 'Reverted the temporary hotfixes for any connected issues',
+                            'content': 'Reverted the temporary hotfixes for any linked issues',
                             'alt': 'or the none of the stable branches (' +
                                    join_grammatically(list(map(bq, T.promotion.target_branches))) +
-                                   ') have temporary hotfixes for any of the issues connected to this PR'
+                                   ') have temporary hotfixes for any of the issues linked to this PR'
                         }
                     ] if t is T.default else [
                         {
@@ -640,16 +639,16 @@ def emit(t: T, target_branch: str):
             },
             iif(t is T.default, {
                 'type': 'cli',
-                'content': 'Labeled connected issues as `demo` or `no demo`'
+                'content': 'Labeled linked issues as `demo` or `no demo`'
             }),
             iif(t is T.upgrade, {
                 'type': 'cli',
-                'content': 'Labeled connected issue as `no demo`'
+                'content': 'Labeled linked issue as `no demo`'
             }),
             iif(t is T.default, {
                 'type': 'cli',
-                'content': 'Commented on connected issues about demo expectations',
-                'alt': 'or all connected issues are labeled `no demo`'
+                'content': 'Commented on linked issues about demo expectations',
+                'alt': 'or all linked issues are labeled `no demo`'
             }),
             iif(t is not T.upgrade, {
                 'type': 'cli',
@@ -673,7 +672,7 @@ def emit(t: T, target_branch: str):
             }),
             {
                 'type': 'cli',
-                'content': f'Moved connected {t.issues} to *Approved* column'
+                'content': f'Moved linked {t.issues} to *Approved* column'
             },
             {
                 'type': 'cli',
@@ -691,7 +690,7 @@ def emit(t: T, target_branch: str):
                 {
                     'type': 'cli',
                     'content': 'Checked that demo expectations are clear',
-                    'alt': 'or all connected issues are labeled `no demo`'
+                    'alt': 'or all linked issues are labeled `no demo`'
                 }
             ]),
             iif(t not in (T.promotion, T.backport), {
@@ -854,13 +853,13 @@ def emit(t: T, target_branch: str):
             iif(t in (T.default, T.upgrade, T.hotfix), {
                 'type': 'cli',
                 'content': iif(t is t.hotfix,
-                               'Moved connected issue to *Merged stable* column in ZenHub',
-                               f'Moved connected {t.issues} to *Merged lower* column in ZenHub')
+                               'Moved linked issue to *Merged stable* column in ZenHub',
+                               f'Moved linked {t.issues} to *Merged lower* column in ZenHub')
             }),
             iif(target_branch == 'develop' and t is not T.backport, {
                 'type': 'cli',
                 'content': 'Moved blocked issues to *Triage*',
-                'alt': f'or no issues are blocked on the connected {t.issues}'
+                'alt': f'or no issues are blocked on the linked {t.issues}'
             }),
             iif(t is T.upgrade,
                 {
@@ -943,7 +942,7 @@ def emit(t: T, target_branch: str):
             *iif(t is T.promotion, [
                 {
                     'type': 'cli',
-                    'content': 'Moved connected issue to *Merged stable* column on ZenHub'
+                    'content': 'Moved linked issue to *Merged stable* column on ZenHub'
                 },
                 {
                     'type': 'cli',
@@ -1068,7 +1067,7 @@ def emit(t: T, target_branch: str):
                     'content': 'Ran `scripts/export_inspector_findings.py` against `anvildev`, imported results '
                                'to [Google Sheet](https://docs.google.com/spreadsheets/d/'
                                '1RWF7g5wRKWPGovLw4jpJGX_XMi8aWLXLOvvE5rxqgH8) and posted screenshot of '
-                               'relevant<footnote relevant/> findings as a comment on the connected issue.'
+                               'relevant<footnote relevant/> findings as a comment on the linked issue.'
                 }
             ]),
             *iif(target_branch == 'develop' and t is not T.backport, [

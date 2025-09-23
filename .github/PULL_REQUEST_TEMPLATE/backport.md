@@ -28,7 +28,7 @@ This is the PR template for backport PRs against `develop`.
 - [ ] Actually approved the PR
 - [ ] Decided if PR can be labeled `no sandbox`
 - [ ] PR title is appropriate as title of merge commit
-- [ ] Moved connected issue to *Approved* column
+- [ ] Moved linked issue to *Approved* column
 - [ ] PR is assigned to only the operator
 
 
