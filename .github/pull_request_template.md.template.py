@@ -624,7 +624,7 @@ def emit(t: T, target_branch: str):
                 },
                 {
                     'type': 'cli',
-                    'content': 'Ticket is in *Review requested* column'
+                    'content': 'Issue is in *Review requested* column'
                 },
                 {
                     'type': 'cli',

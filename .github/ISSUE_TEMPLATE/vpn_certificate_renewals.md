@@ -9,7 +9,7 @@ _period: 3 months
 ---
 
 - [ ] Deploy `tempdev.gitlab`
-- [ ] Assign this ticket to the system administrator
+- [ ] Assign this issue to the system administrator
 - [ ] Renew server certificate on `tempdev`
 - [ ] Renew client certificates on `tempdev`
 - [ ] Hibernate `tempdev`
