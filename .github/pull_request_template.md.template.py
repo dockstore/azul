@@ -356,11 +356,6 @@ def emit(t: T, target_branch: str):
                 'type': 'cli',
                 'content': f'PR title references {t.issues('all', 'the')} connected {t.issues}'
             }),
-            iif(t is T.promotion, {
-                'type': 'cli',
-                'content': 'The promoted issues are part of the same sprint as the connected '
-                           'issue'
-            }),
             *(
                 [
                     {
