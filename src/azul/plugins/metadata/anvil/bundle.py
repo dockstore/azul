@@ -1,9 +1,6 @@
 from abc import (
     ABCMeta,
 )
-from collections import (
-    defaultdict,
-)
 from itertools import (
     chain,
 )
@@ -64,23 +61,6 @@ class Link[REF: EntityReference | KeyReference](SerializableAttrs):
     @property
     def all_entities(self) -> frozenset[REF]:
         return self.inputs | self.outputs | aset(self.activity)
-
-    @classmethod
-    def group_by_activity(cls, links: set[Self]):
-        """
-        Merge links that share the same (non-null) activity.
-        """
-        groups_by_activity: Mapping[KeyReference, set[Self]] = defaultdict(set)
-        for link in links:
-            if link.activity is not None:
-                groups_by_activity[link.activity].add(link)
-        for activity, group in groups_by_activity.items():
-            if len(group) > 1:
-                links -= group
-                merged_link = cls(inputs=frozenset.union(*[link.inputs for link in group]),
-                                  activity=activity,
-                                  outputs=frozenset.union(*[link.outputs for link in group]))
-                links.add(merged_link)
 
     def __lt__(self, other: Self) -> bool:
         return min(self.inputs) < min(other.inputs)

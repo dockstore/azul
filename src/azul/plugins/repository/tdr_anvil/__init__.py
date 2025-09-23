@@ -1,4 +1,7 @@
-﻿import datetime
+﻿from collections import (
+    defaultdict,
+)
+import datetime
 from enum import (
     Enum,
 )
@@ -216,7 +219,20 @@ class TDRAnvilBundle(AnvilBundle[TDRAnvilBundleFQID], TDRBundle):
 
     def add_links(self, links: Iterable[EntityLink]):
         self.links.update(links)
-        EntityLink.group_by_activity(self.links)
+        # Merge links that share the same (non-null) activity
+        groups_by_activity: dict[EntityReference, set[EntityLink]] = defaultdict(set)
+        for link in self.links:
+            if link.activity is not None:
+                groups_by_activity[link.activity].add(link)
+        for activity, group in groups_by_activity.items():
+            if len(group) > 1:
+                self.links -= group
+                merged_link = EntityLink(
+                    inputs=frozenset.union(*[link.inputs for link in group]),
+                    activity=activity,
+                    outputs=frozenset.union(*[link.outputs for link in group])
+                )
+                self.links.add(merged_link)
 
 
 class Plugin(TDRPlugin[TDRAnvilBundle, TDRAnvilBundleFQID]):
