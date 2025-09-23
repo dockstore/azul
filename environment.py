@@ -254,7 +254,7 @@ def env() -> Mapping[str, Optional[str]]:
         # and committing the resulting changes. It also requires redeploying the
         # `shared` component.
         #
-        'azul_python_version': '3.12.11',
+        'azul_python_version': '3.13.7',
 
         # The version of Terraform used throughout the system.
         #
