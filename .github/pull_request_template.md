@@ -84,7 +84,7 @@ title is `Fix: ` followed by the issue title
 
 - [ ] Actually approved the PR
 - [ ] PR is not a draft
-- [ ] Issue is in *Review requested* column
+- [ ] Issue is in *Review requested*
 - [ ] PR is awaiting requested review from system administrator
 - [ ] PR is assigned to only the system administrator
 
@@ -98,7 +98,7 @@ title is `Fix: ` followed by the issue title
 - [ ] A comment to this PR details the completed security design review
 - [ ] PR title is appropriate as title of merge commit
 - [ ] `N reviews` label is accurate
-- [ ] Moved linked issues to *Approved* column
+- [ ] Moved linked issues to *Approved*
 - [ ] PR is assigned to only the operator
 
 
@@ -145,7 +145,7 @@ title is `Fix: ` followed by the issue title
 - [ ] The title of the merge commit starts with the title of this PR
 - [ ] Added PR # reference to merge commit title
 - [ ] Collected commit title tags in merge commit title <sub>but only included `p` if the PR is also labeled `partial`</sub>
-- [ ] Moved linked issues to *Merged lower* column in ZenHub
+- [ ] Moved linked issues to *Merged lower*
 - [ ] Moved blocked issues to *Triage* <sub>or no issues are blocked on the linked issues</sub>
 - [ ] Pushed merge commit to GitHub
 

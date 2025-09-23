@@ -618,7 +618,7 @@ def emit(t: T, target_branch: str):
                 },
                 {
                     'type': 'cli',
-                    'content': 'Issue is in *Review requested* column'
+                    'content': 'Issue is in *Review requested*'
                 },
                 {
                     'type': 'cli',
@@ -672,7 +672,7 @@ def emit(t: T, target_branch: str):
             }),
             {
                 'type': 'cli',
-                'content': f'Moved linked {t.issues} to *Approved* column'
+                'content': f'Moved linked {t.issues} to *Approved*'
             },
             {
                 'type': 'cli',
@@ -853,8 +853,8 @@ def emit(t: T, target_branch: str):
             iif(t in (T.default, T.upgrade, T.hotfix), {
                 'type': 'cli',
                 'content': iif(t is t.hotfix,
-                               'Moved linked issue to *Merged stable* column in ZenHub',
-                               f'Moved linked {t.issues} to *Merged lower* column in ZenHub')
+                               'Moved linked issue to *Merged stable*',
+                               f'Moved linked {t.issues} to *Merged lower*')
             }),
             iif(target_branch == 'develop' and t is not T.backport, {
                 'type': 'cli',
@@ -942,15 +942,15 @@ def emit(t: T, target_branch: str):
             *iif(t is T.promotion, [
                 {
                     'type': 'cli',
-                    'content': 'Moved linked issue to *Merged stable* column on ZenHub'
+                    'content': 'Moved linked issue to *Merged stable*'
                 },
                 {
                     'type': 'cli',
-                    'content': 'Moved promoted issues from *Merged lower* to *Merged stable* column on ZenHub'
+                    'content': 'Moved promoted issues in status *Merged lower* to *Merged stable*'
                 },
                 {
                     'type': 'cli',
-                    'content': 'Moved promoted issues from *Lower* to *Stable* column on ZenHub'
+                    'content': 'Moved promoted issues in status *Lower* to *Stable*'
                 }
             ]),
             *iif(t in (T.default, T.hotfix, T.promotion), [

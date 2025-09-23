@@ -40,7 +40,7 @@ Linked issue: #0000
 - [ ] Labeled PR as `no sandbox`
 - [ ] A comment to this PR details the completed security design review
 - [ ] PR title is appropriate as title of merge commit
-- [ ] Moved linked issue to *Approved* column
+- [ ] Moved linked issue to *Approved*
 - [ ] PR is assigned to only the operator
 
 
@@ -53,7 +53,7 @@ Linked issue: #0000
 - [ ] The title of the merge commit starts with the title of this PR
 - [ ] Added PR # reference to merge commit title
 - [ ] Collected commit title tags in merge commit title <sub>but excluded any `p` tags</sub>
-- [ ] Moved linked issue to *Merged stable* column in ZenHub
+- [ ] Moved linked issue to *Merged stable*
 - [ ] Pushed merge commit to GitHub
 
 

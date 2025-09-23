@@ -44,7 +44,7 @@ Linked issue: #0000
 - [ ] Labeled linked issue as `no demo`
 - [ ] A comment to this PR details the completed security design review
 - [ ] PR title is appropriate as title of merge commit
-- [ ] Moved linked issue to *Approved* column
+- [ ] Moved linked issue to *Approved*
 - [ ] PR is assigned to only the operator
 
 
@@ -85,7 +85,7 @@ Linked issue: #0000
 - [ ] The title of the merge commit starts with the title of this PR
 - [ ] Added PR # reference to merge commit title
 - [ ] Collected commit title tags in merge commit title <sub>but excluded any `p` tags</sub>
-- [ ] Moved linked issue to *Merged lower* column in ZenHub
+- [ ] Moved linked issue to *Merged lower*
 - [ ] Moved blocked issues to *Triage* <sub>or no issues are blocked on the linked issue</sub>
 - [ ] Closed related Dependabot PRs with a comment referencing the corresponding commit in this PR <sub>or this PR does not include any such commits</sub>
 - [ ] Pushed merge commit to GitHub

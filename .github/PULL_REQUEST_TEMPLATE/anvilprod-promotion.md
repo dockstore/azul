@@ -42,7 +42,7 @@ Linked issue: #0000
 
 - [ ] Actually approved the PR
 - [ ] Decided if PR can be labeled `no sandbox`
-- [ ] Moved linked issue to *Approved* column
+- [ ] Moved linked issue to *Approved*
 - [ ] PR is assigned to only the operator
 
 
@@ -84,9 +84,9 @@ Linked issue: #0000
 - [ ] Ran `_select anvilprod.shared && make -C terraform/shared apply` <sub>or this PR is not labeled `deploy:shared`</sub>
 - [ ] Deleted PR branch from GitHub
 - [ ] Deleted PR branch from GitLab `anvilprod`
-- [ ] Moved linked issue to *Merged stable* column on ZenHub
-- [ ] Moved promoted issues from *Merged lower* to *Merged stable* column on ZenHub
-- [ ] Moved promoted issues from *Lower* to *Stable* column on ZenHub
+- [ ] Moved linked issue to *Merged stable*
+- [ ] Moved promoted issues in status *Merged lower* to *Merged stable*
+- [ ] Moved promoted issues in status *Lower* to *Stable*
 
 
 ### Operator (reindex)
