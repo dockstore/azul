@@ -3,7 +3,7 @@ name: Apply Amazon OpenSearch software updates
 about: Issue template for operator to update the service software version on all OpenSearch domains 
 title: Apply Amazon OpenSearch software updates
 labels: -,infra,no demo,operator,orange
-type: Task
+type: Chore
 _start: 2024-02-26T09:00
 _period: 14 days
 ---
