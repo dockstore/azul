@@ -423,7 +423,7 @@ def emit(t: T, target_branch: str):
             *iif(t in (T.default, T.promotion), [
                 {
                     'type': 'h2',
-                    'content': 'Author (reindex, API changes)'
+                    'content': 'Author (reindex)'
                 },
                 iif(t is T.default, {
                     'type': 'cli',
@@ -459,6 +459,10 @@ def emit(t: T, target_branch: str):
                     )
                 },
                 *iif(t is T.default, [
+                    {
+                        'type': 'h2',
+                        'content': 'Author (API changes)'
+                    },
                     {
                         'type': 'cli',
                         'content': 'This PR and its linked issues are labeled `API`',

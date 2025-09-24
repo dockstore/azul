@@ -41,7 +41,7 @@ title is `Fix: ` followed by the issue title
 - [ ] This PR is labeled `chained` <sub>or is not chained to another PR</sub>
 
 
-### Author (reindex, API changes)
+### Author (reindex)
 
 - [ ] Added `r` tag to commit title <sub>or the changes introduced by this PR will not require reindexing of any deployment</sub>
 - [ ] This PR is labeled `reindex:dev` <sub>or the changes introduced by it will not require reindexing of `dev`</sub>
@@ -49,6 +49,10 @@ title is `Fix: ` followed by the issue title
 - [ ] This PR is labeled `reindex:anvilprod` <sub>or the changes introduced by it will not require reindexing of `anvilprod`</sub>
 - [ ] This PR is labeled `reindex:prod` <sub>or the changes introduced by it will not require reindexing of `prod`</sub>
 - [ ] This PR is labeled `reindex:partial` and its description documents the specific reindexing procedure for `dev`, `anvildev`, `anvilprod` and `prod` <sub>or requires a full reindex or carries none of the labels `reindex:dev`, `reindex:anvildev`, `reindex:anvilprod` and `reindex:prod`</sub>
+
+
+### Author (API changes)
+
 - [ ] This PR and its linked issues are labeled `API` <sub>or this PR does not modify a REST API</sub>
 - [ ] Added `a` (`A`) tag to commit title for backwards (in)compatible changes <sub>or this PR does not modify a REST API</sub>
 - [ ] Updated REST API version number in `app.py` <sub>or this PR does not modify a REST API</sub>
