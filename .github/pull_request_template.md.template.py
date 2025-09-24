@@ -605,6 +605,18 @@ def emit(t: T, target_branch: str):
             ]),
             *iif(t is T.default, [
                 {
+                    'type': 'cli',
+                    'content': 'PR is awaiting requested review from a peer'
+                },
+                {
+                    'type': 'cli',
+                    'content': 'Status of PR is *Review requested*'
+                },
+                {
+                    'type': 'cli',
+                    'content': 'PR is assigned to only the peer'
+                },
+                {
                     'type': 'h2',
                     'content': 'Peer reviewer (after approval)'
                 },
@@ -612,23 +624,23 @@ def emit(t: T, target_branch: str):
                     'type': 'cli',
                     'content': 'Actually approved the PR'
                 },
-                {
-                    'type': 'cli',
-                    'content': 'PR is not a draft'
-                },
-                {
-                    'type': 'cli',
-                    'content': 'Issue is in *Review requested*'
-                },
-                {
-                    'type': 'cli',
-                    'content': 'PR is awaiting requested review from system administrator'
-                },
-                {
-                    'type': 'cli',
-                    'content': 'PR is assigned to only the system administrator'
-                }
             ]),
+            {
+                'type': 'cli',
+                'content': 'PR is not a draft'
+            },
+            {
+                'type': 'cli',
+                'content': 'PR is awaiting requested review from system administrator'
+            },
+            {
+                'type': 'cli',
+                'content': 'Status of PR is *Review requested*'
+            },
+            {
+                'type': 'cli',
+                'content': 'PR is assigned to only the system administrator'
+            },
             {
                 'type': 'h2',
                 'content': 'System administrator (after approval)'
@@ -672,7 +684,7 @@ def emit(t: T, target_branch: str):
             }),
             {
                 'type': 'cli',
-                'content': f'Moved linked {t.issues} to *Approved*'
+                'content': 'Status of PR is *Approved*'
             },
             {
                 'type': 'cli',
@@ -850,17 +862,6 @@ def emit(t: T, target_branch: str):
                            'but only included `p` if the PR is also labeled `partial`',
                            'but excluded any `p` tags')
             },
-            iif(t in (T.default, T.upgrade, T.hotfix), {
-                'type': 'cli',
-                'content': iif(t is t.hotfix,
-                               'Moved linked issue to *Merged stable*',
-                               f'Moved linked {t.issues} to *Merged lower*')
-            }),
-            iif(target_branch == 'develop' and t is not T.backport, {
-                'type': 'cli',
-                'content': 'Moved blocked issues to *Triage*',
-                'alt': f'or no issues are blocked on the linked {t.issues}'
-            }),
             iif(t is T.upgrade,
                 {
                     'type': 'cli',
@@ -873,6 +874,16 @@ def emit(t: T, target_branch: str):
                 'type': 'cli',
                 'content': 'Pushed merge commit to GitHub'
             },
+            {
+                'type': 'cli',
+                'content': f'Status of PR is '
+                           f'*Merged {'lower' if target_branch == 'develop' else 'stable'}*'
+            },
+            iif(target_branch == 'develop' and t is not T.backport, {
+                'type': 'cli',
+                'content': 'Status of blocked issues is *Triage*',
+                'alt': f'or no issues are blocked on the linked {t.issues}'
+            }),
             *iif(t is T.default, [
                 {
                     'type': 'h2',
@@ -939,20 +950,38 @@ def emit(t: T, target_branch: str):
                 for d, s in t.target_deployments(target_branch).items()
                 if s is not None
             ),
-            *iif(t is T.promotion, [
-                {
-                    'type': 'cli',
-                    'content': 'Moved linked issue to *Merged stable*'
-                },
-                {
-                    'type': 'cli',
-                    'content': 'Moved promoted issues in status *Merged lower* to *Merged stable*'
-                },
-                {
-                    'type': 'cli',
-                    'content': 'Moved promoted issues in status *Lower* to *Stable*'
-                }
-            ]),
+            *(
+                [
+                    {
+                        'type': 'cli',
+                        'content': f'Status of linked {t.issues} is '
+                                   f'*{'Lower' if target_branch == 'develop' else 'Stable'}*'
+                    }
+                ]
+                if t is not T.promotion else
+                [
+                    {
+                        'type': 'cli',
+                        'content': 'Status of linked issue is *Stable*'
+                    },
+                    {
+                        'type': 'cli',
+                        'content': 'Status of promoted<footnote promoted/> PRs is *Merged stable*'
+                    },
+                    {
+                        'type': 'cli',
+                        'content': 'Status of promoted<footnote promoted/> issues is *Stable*'
+                    },
+                    {
+                        'type': 'p',
+                        'content': '<footnote promoted/> Promoted issues and PRs are referenced in '
+                                   'the titles of the commits that the promotion branch introduces to '
+                                   'the stable branch. Prior to the promotion, the status of promoted '
+                                   'issues (PRs) is *Lower* (*Merged lower*). Promoted PRs in status '
+                                   '*Done* do not need to be moved.'
+                    }
+                ]
+            ),
             *iif(t in (T.default, T.hotfix, T.promotion), [
                 {
                     'type': 'h2',

@@ -36,13 +36,17 @@ Linked issue: #0000
 ### Author (before every review)
 
 - [ ] PR branch is up to date (if not, merge `anvilprod` into PR branch to integrate upstream changes)
+- [ ] PR is not a draft
+- [ ] PR is awaiting requested review from system administrator
+- [ ] Status of PR is *Review requested*
+- [ ] PR is assigned to only the system administrator
 
 
 ### System administrator (after approval)
 
 - [ ] Actually approved the PR
 - [ ] Decided if PR can be labeled `no sandbox`
-- [ ] Moved linked issue to *Approved*
+- [ ] Status of PR is *Approved*
 - [ ] PR is assigned to only the operator
 
 
@@ -74,6 +78,7 @@ Linked issue: #0000
 - [ ] Added PR # reference to merge commit title
 - [ ] Collected commit title tags in merge commit title <sub>but excluded any `p` tags</sub>
 - [ ] Pushed merge commit to GitHub
+- [ ] Status of PR is *Merged stable*
 
 
 ### Operator (after pushing the merge commit)
@@ -84,9 +89,14 @@ Linked issue: #0000
 - [ ] Ran `_select anvilprod.shared && make -C terraform/shared apply` <sub>or this PR is not labeled `deploy:shared`</sub>
 - [ ] Deleted PR branch from GitHub
 - [ ] Deleted PR branch from GitLab `anvilprod`
-- [ ] Moved linked issue to *Merged stable*
-- [ ] Moved promoted issues in status *Merged lower* to *Merged stable*
-- [ ] Moved promoted issues in status *Lower* to *Stable*
+- [ ] Status of linked issue is *Stable*
+- [ ] Status of promoted<sup>1</sup> PRs is *Merged stable*
+- [ ] Status of promoted<sup>1</sup> issues is *Stable*
+
+<sup>1</sup> Promoted issues and PRs are referenced in the titles of the commits
+that the promotion branch introduces to the stable branch. Prior to the
+promotion, the status of promoted issues (PRs) is *Lower* (*Merged lower*).
+Promoted PRs in status *Done* do not need to be moved.
 
 
 ### Operator (reindex)

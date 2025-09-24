@@ -36,6 +36,10 @@ Linked issue: #0000
 - [ ] Added `R` tag to commit title <sub>or this PR does not modify `requirements*.txt`</sub>
 - [ ] This PR is labeled `reqs` <sub>or does not modify `requirements*.txt`</sub>
 - [ ] `make integration_test` passes in personal deployment <sub>or this PR does not modify functionality that could affect the IT outcome</sub>
+- [ ] PR is not a draft
+- [ ] PR is awaiting requested review from system administrator
+- [ ] Status of PR is *Review requested*
+- [ ] PR is assigned to only the system administrator
 
 
 ### System administrator (after approval)
@@ -44,7 +48,7 @@ Linked issue: #0000
 - [ ] Labeled linked issue as `no demo`
 - [ ] A comment to this PR details the completed security design review
 - [ ] PR title is appropriate as title of merge commit
-- [ ] Moved linked issue to *Approved*
+- [ ] Status of PR is *Approved*
 - [ ] PR is assigned to only the operator
 
 
@@ -85,10 +89,10 @@ Linked issue: #0000
 - [ ] The title of the merge commit starts with the title of this PR
 - [ ] Added PR # reference to merge commit title
 - [ ] Collected commit title tags in merge commit title <sub>but excluded any `p` tags</sub>
-- [ ] Moved linked issue to *Merged lower*
-- [ ] Moved blocked issues to *Triage* <sub>or no issues are blocked on the linked issue</sub>
 - [ ] Closed related Dependabot PRs with a comment referencing the corresponding commit in this PR <sub>or this PR does not include any such commits</sub>
 - [ ] Pushed merge commit to GitHub
+- [ ] Status of PR is *Merged lower*
+- [ ] Status of blocked issues is *Triage* <sub>or no issues are blocked on the linked issue</sub>
 
 
 ### Operator (after pushing the merge commit)
@@ -104,6 +108,7 @@ Linked issue: #0000
 - [ ] Deleted PR branch from GitHub
 - [ ] Deleted PR branch from GitLab `dev`
 - [ ] Deleted PR branch from GitLab `anvildev`
+- [ ] Status of linked issue is *Lower*
 
 
 ### Operator

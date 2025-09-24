@@ -78,14 +78,17 @@ title is `Fix: ` followed by the issue title
 - [ ] Added `R` tag to commit title <sub>or this PR does not modify `requirements*.txt`</sub>
 - [ ] This PR is labeled `reqs` <sub>or does not modify `requirements*.txt`</sub>
 - [ ] `make integration_test` passes in personal deployment <sub>or this PR does not modify functionality that could affect the IT outcome</sub>
+- [ ] PR is awaiting requested review from a peer
+- [ ] Status of PR is *Review requested*
+- [ ] PR is assigned to only the peer
 
 
 ### Peer reviewer (after approval)
 
 - [ ] Actually approved the PR
 - [ ] PR is not a draft
-- [ ] Issue is in *Review requested*
 - [ ] PR is awaiting requested review from system administrator
+- [ ] Status of PR is *Review requested*
 - [ ] PR is assigned to only the system administrator
 
 
@@ -98,7 +101,7 @@ title is `Fix: ` followed by the issue title
 - [ ] A comment to this PR details the completed security design review
 - [ ] PR title is appropriate as title of merge commit
 - [ ] `N reviews` label is accurate
-- [ ] Moved linked issues to *Approved*
+- [ ] Status of PR is *Approved*
 - [ ] PR is assigned to only the operator
 
 
@@ -145,9 +148,9 @@ title is `Fix: ` followed by the issue title
 - [ ] The title of the merge commit starts with the title of this PR
 - [ ] Added PR # reference to merge commit title
 - [ ] Collected commit title tags in merge commit title <sub>but only included `p` if the PR is also labeled `partial`</sub>
-- [ ] Moved linked issues to *Merged lower*
-- [ ] Moved blocked issues to *Triage* <sub>or no issues are blocked on the linked issues</sub>
 - [ ] Pushed merge commit to GitHub
+- [ ] Status of PR is *Merged lower*
+- [ ] Status of blocked issues is *Triage* <sub>or no issues are blocked on the linked issues</sub>
 
 
 ### Operator (chain shortening)
@@ -171,6 +174,7 @@ title is `Fix: ` followed by the issue title
 - [ ] Deleted PR branch from GitHub
 - [ ] Deleted PR branch from GitLab `dev`
 - [ ] Deleted PR branch from GitLab `anvildev`
+- [ ] Status of linked issues is *Lower*
 
 
 ### Operator (reindex)
