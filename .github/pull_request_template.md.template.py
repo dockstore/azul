@@ -588,7 +588,7 @@ def emit(t: T, target_branch: str):
                                ),
                                f'Rebased PR branch on `{target_branch}`, squashed fixups from prior reviews')
             },
-            *iif(t is not T.promotion, [
+            *iif(target_branch == 'develop' or t is T.hotfix, [
                 {
                     'type': 'cli',
                     'content': 'Ran `make requirements_update`',
@@ -605,7 +605,7 @@ def emit(t: T, target_branch: str):
                     'content': 'This PR is labeled `reqs`',
                     'alt': 'or does not modify `requirements*.txt`'
                 },
-                iif(t in (T.default, T.upgrade), {
+                iif(t not in (T.backport, T.hotfix), {
                     'type': 'cli',
                     'content': '`make integration_test` passes in personal deployment',
                     'alt': 'or this PR does not modify functionality that could affect the IT outcome'
