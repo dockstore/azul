@@ -18,7 +18,7 @@ This is the PR template for backport PRs against `develop`.
 ### Author (before every review)
 
 - [ ] PR branch is up to date (if not, merge `develop` into PR branch to integrate upstream changes)
-- [ ] Ran `make requirements_update` <sub>or this PR does not modify `requirements*.txt`, `common.mk`, `Makefile` and `Dockerfile`</sub>
+- [ ] Ran `make requirements_update` <sub>or this PR does not modify `requirements*.txt`, `common.mk`, `Makefile`, `Dockerfile` or `environment.boot`</sub>
 - [ ] Added `R` tag to commit title <sub>or this PR does not modify `requirements*.txt`</sub>
 - [ ] This PR is labeled `reqs` <sub>or does not modify `requirements*.txt`</sub>
 
