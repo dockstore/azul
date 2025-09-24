@@ -548,7 +548,9 @@ def emit(t: T, target_branch: str):
                                    join_grammatically(list(map(bq, T.promotion.target_branches))) +
                                    ') have temporary hotfixes for any of the issues linked to this PR'
                         }
-                    ] if t is T.default else [
+                    ]
+                    if t is T.default else
+                    [
                         {
                             'type': 'cli',
                             'content': 'Added `h` tag to commit title',
@@ -568,8 +570,10 @@ def emit(t: T, target_branch: str):
                             'content': 'This PR is labeled `partial`',
                             'alt': 'or represents a permanent hotfix'
                         },
-                    ] if t is T.hotfix else [
-                    ]),
+                    ]
+                    if t is T.hotfix else
+                    []
+                ),
             ]),
             {
                 'type': 'h2',
