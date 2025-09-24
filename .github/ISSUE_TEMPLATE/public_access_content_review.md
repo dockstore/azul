@@ -1,6 +1,6 @@
 ---
-name: Review publicly accessible content
-about: Issue template for the system administrator to perform a review of publicly accessible content.
+name: Monthly review of publicly accessible content
+about: Issue template for the system administrator to perform a review of publicly accessible content on a monthly basis
 title: Monthly review of publicly accessible content
 labels: -,compliance,infra,doc,orange
 assignees: hannes-ucsc

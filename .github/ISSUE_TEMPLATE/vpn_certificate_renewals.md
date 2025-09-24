@@ -1,6 +1,6 @@
 ---
 name: Renew server and client VPN certificates 
-about: Issue template for the quarterly renewals of VPN certificates
+about: Issue template for the quarterly renewal of all VPN certificates
 title: Renew VPN server and client certificates 
 labels: -,infra,orange
 type: Task

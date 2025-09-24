@@ -1,6 +1,6 @@
 ---
-name: OpenSearch service software update
-about: Issue template for operator tasks to update OpenSearch instances software
+name: Apply Amazon OpenSearch software updates
+about: Issue template for operator to update the service software version on all OpenSearch domains 
 title: Apply Amazon OpenSearch software updates
 labels: -,infra,no demo,operator,orange
 type: Task

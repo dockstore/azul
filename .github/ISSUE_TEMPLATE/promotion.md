@@ -1,6 +1,6 @@
 ---
-name: Promotion pull request
-about: Issue template for promoting changes to stable deployments
+name: Promotion
+about: Issue template for promoting changes to stable deployments on a weekly basis
 title: Promotion
 labels: -,infra,no demo,operator,orange
 type: Feature

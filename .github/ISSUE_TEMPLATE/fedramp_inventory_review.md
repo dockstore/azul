@@ -1,7 +1,7 @@
 ---
-name: Review FedRAMP inventory
-about: Issue template for the current operator to perform a Port and Protocol review with system administrator
-title: Monthly inventory review
+name: Monthly FedRAMP inventory review
+about: Issue template for the monthly creation and review of the FedRAMP cloud infrastructure inventory   
+title: Monthly FedRAMP inventory review
 labels: +,compliance,infra,no demo,operator,orange
 assignees: hannes-ucsc
 type: Task
