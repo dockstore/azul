@@ -3,6 +3,9 @@ from abc import (
     abstractmethod,
 )
 import base64
+from bisect import (
+    insort,
+)
 from collections.abc import (
     Iterable,
     Mapping,
@@ -2059,6 +2062,20 @@ class PFBVerbatimManifestGenerator(FileBasedManifestGenerator,
         replicas = list(self._list_replicas())
         plugin = self.metadata_plugin
         replica_schemas = plugin.verbatim_pfb_schema(replicas)
+        # FIXME: Move injection of snapshot ID field to metadata plugin
+        #        https://github.com/DataBiosphere/azul/issues/7411
+        if config.is_anvil_enabled(self.catalog):
+            for replica in replicas:
+                if replica['replica_type'] == 'anvil_dataset':
+                    source_id = replica['source']['id']
+                    replica['contents']['datarepo_snapshot_id'] = source_id
+            for schema in replica_schemas:
+                if schema['name'] == 'anvil_dataset':
+                    field_schema = plugin._pfb_schema_from_anvil_column(table_name='anvil_dataset',
+                                                                        column_name='datarepo_snapshot_id',
+                                                                        anvil_datatype='string',
+                                                                        is_optional=False)
+                    insort(schema['fields'], field_schema, key=itemgetter('name'))
         # Ensure field order is consistent for unit tests
         replica_schemas.sort(key=itemgetter('name'))
         links = {
