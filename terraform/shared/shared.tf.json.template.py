@@ -116,10 +116,10 @@ trail_alarms = [
 
 # The deployment and/or backup of the GitLab instance requires a reboot, which
 # can interrupt an ongoing ClamAV scan. Since scans are run twice a day, we set
-# the alarm period to 24 hours (maximum allowed by CloudWatch) to allow enough
-# time for the next scan to complete following an interrupted scan.
+# the alarm period to 36 hours to allow enough time for the next scan to
+# complete following an interrupted scan.
 #
-clam_alarm_period = 24 * 60 * 60
+clam_alarm_period = 36 * 60 * 60
 
 tf_config = {
     'data': {
