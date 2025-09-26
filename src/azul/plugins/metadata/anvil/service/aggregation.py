@@ -31,7 +31,7 @@ class AnvilSummaryAggregationStage(AnvilAggregationStage):
         if self.entity_type == 'files':
             request.aggs.metric('totalFileSize',
                                 'sum',
-                                field='contents.files.size_')
+                                field='contents.files.file_size_')
         return request
 
     def process_response(self, response: MutableJSON) -> MutableJSON:

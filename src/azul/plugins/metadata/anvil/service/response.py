@@ -181,7 +181,14 @@ class AnvilSearchResponseStage(SearchResponseStage):
                         ) -> MutableJSON:
         inner_entity = copy_json(inner_entity)
         if inner_entity_type == 'files':
-            inner_entity['uuid'] = inner_entity['document_id']
+            inner_entity['azul_url'] = self._file_url(uuid=inner_entity['uuid'],
+                                                      version=inner_entity['version'],
+                                                      drs_uri=inner_entity['drs_uri'])
+            # FIXME: https://github.com/DataBiosphere/azul/issues/6549
+            #        Remove files.url
+            inner_entity['url'] = inner_entity['azul_url']
+            inner_entity.pop('uuid', None)
+            inner_entity.pop('version', None)
         return inner_entity
 
     def _non_pivotal_entity(self,

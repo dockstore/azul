@@ -818,7 +818,6 @@ def load_tests(_loader, tests, _ignore):
         'humancellatlas.data.metadata.age_range',
         'humancellatlas.data.metadata.api',
         'humancellatlas.data.metadata.datetime',
-        'humancellatlas.data.metadata.lookup',
     )
     for module in modules:
         tests.addTests(doctest.DocTestSuite(module))

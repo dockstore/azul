@@ -392,8 +392,14 @@ class HCASearchResponseStage(SearchResponseStage):
             'uuid': file.get('uuid'),
             'version': file.get('version'),
             'matrixCellCount': file.get('matrix_cell_count'),
-            'drs_uri': file.get('drs_uri')
+            'drs_uri': file.get('drs_uri'),
+            'azul_url': self._file_url(uuid=file['uuid'],
+                                       version=file['version'],
+                                       drs_uri=file['drs_uri'])
         }
+        # FIXME: https://github.com/DataBiosphere/azul/issues/6549
+        #        Remove files.url
+        translated_file['url'] = translated_file['azul_url']
         return translated_file
 
     def make_specimen(self, specimen) -> MutableJSON:
