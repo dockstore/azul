@@ -28,6 +28,9 @@ from azul.azulclient import (
 from azul.chalice import (
     LambdaMetric,
 )
+from azul.deployment import (
+    aws,
+)
 from azul.digests import (
     Hasher,
     get_resumable_hasher,
@@ -131,7 +134,18 @@ class MirrorController(ActionController[MirrorAction], SchemaController):
     def mirror_source(self, catalog: CatalogName, source_json: JSON):
         plugin = self.repository_plugin(catalog)
         source = plugin.source_ref_cls.from_json(source_json)
-        source = plugin.partition_source_for_mirroring(catalog, source)
+        # The desired partition size depends on the maximum number of messages
+        # we can send in one Lambda invocation, because queueing the individual
+        # mirror_file messages turns out to dominate the running time of
+        # handling a mirror_source message.
+        partition_size = int(
+            aws.sqs_fifo_rate_limit  # max. # of SendMessage calls per second
+            * self.client.queues.batch_size  # number of messages per call
+            * config.mirror_lambda_timeout  # max. duration of the invocation
+            / config.mirroring_concurrency  # number of concurrent invocations
+            / 2  # safety margin
+        )
+        source = plugin.partition_source_for_mirroring(catalog, source, partition_size)
         prefix = source.spec.prefix
         log.info('Queueing %d partitions of source %r in catalog %r',
                  prefix.num_partitions, str(source.spec), catalog)

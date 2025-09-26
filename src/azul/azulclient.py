@@ -262,7 +262,12 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
         return aws.sqs_queue(name)
 
     def queue_mirror_messages(self, messages: Iterable[SQSMessage]) -> int:
-        return self.queues.send_messages(self.mirror_queue(), messages)
+        rate_limit = float(aws.sqs_fifo_rate_limit)
+        if config.is_in_lambda:
+            rate_limit /= config.mirroring_concurrency
+        return self.queues.send_messages(self.mirror_queue(),
+                                         messages,
+                                         rate_limit=rate_limit)
 
     def delete_all_indices(self, catalog: CatalogName):
         self.index_service.delete_indices(catalog)

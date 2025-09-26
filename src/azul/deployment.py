@@ -745,6 +745,14 @@ class AWS:
     def sqs_queue(self, queue_name: str) -> 'Queue':
         return self.sqs_resource.get_queue_by_name(QueueName=queue_name)
 
+    #: The maximum number of SendMessage, ReceiveMessage, or DeleteMessage API
+    #: calls per second supported for normal-throughput (as opposed to high-
+    #: throughput) FIFO queues.
+    #:
+    #: https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/quotas-messages.html
+    #:
+    sqs_fifo_rate_limit = 300
+
 
 aws = AWS()
 del AWS

@@ -390,11 +390,33 @@ def emit():
                                             f'-C out_{name}'
                                         ])
                                     ]),
+                                    # Can't use `aws s3 sync` because it doesn't
+                                    # copy a file that has different content on
+                                    # the destination if a) the source has the
+                                    # same size and an older timestamp (the
+                                    # default strategy), or b) the source has
+                                    # the same size (the --size-only strategy),
+                                    # or c) if the destination is local and the
+                                    # source has the same size and modification
+                                    # time (the --exact-timestamp strategy).
+                                    # None of these strategies work in the case
+                                    # of a downgrade, where we want an older
+                                    # copy of a file to overwrite a newer one,
+                                    # even if they have the same size. The
+                                    # --exact-timestamp might have worked if it
+                                    # weren't inexplicably restricted to local
+                                    # destinations.
                                     ' '.join([
-                                        'aws', 's3', 'sync',
+                                        'aws', 's3', 'rm',
+                                        '--recursive',
                                         '--exclude', bucket_id_key,
-                                        '--delete',
-                                        '--exact-timestamps',
+                                        's3://${aws_s3_bucket.%s.id}/' % name
+                                    ]),
+                                    ' '.join([
+                                        'aws', 's3', 'cp',
+                                        '--recursive',
+                                        '--no-progress',
+                                        '--exclude', bucket_id_key,
                                         f'out_{name}/',
                                         's3://${aws_s3_bucket.%s.id}/' % name
                                     ]),

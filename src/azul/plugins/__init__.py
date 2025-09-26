@@ -697,23 +697,26 @@ class RepositoryPlugin[BUNDLE: Bundle,
         an updated copy of the source with a heuristically computed prefix that
         should be appropriate for indexing in the given catalog.
         """
-        return self._partition_source(catalog, source, self.count_bundles)
+        partition_size = 8192
+        return self._partition_source(catalog, source, self.count_bundles, partition_size)
 
     def partition_source_for_mirroring(self,
                                        catalog: CatalogName,
-                                       source: SOURCE_REF
+                                       source: SOURCE_REF,
+                                       partition_size: int,
                                        ) -> SOURCE_REF:
         """
         If the source already has a prefix, return the source. Otherwise, return
         an updated copy of the source with a heuristically computed prefix that
         should be appropriate for mirroring in the given catalog.
         """
-        return self._partition_source(catalog, source, self.count_files)
+        return self._partition_source(catalog, source, self.count_files, partition_size)
 
     def _partition_source(self,
                           catalog: CatalogName,
                           source: SOURCE_REF,
-                          counter: Callable[[SOURCE_SPEC], int]
+                          counter: Callable[[SOURCE_SPEC], int],
+                          partition_size: int
                           ) -> SOURCE_REF:
         if source.spec.prefix is None:
             count = counter(source.spec)
@@ -722,7 +725,13 @@ class RepositoryPlugin[BUNDLE: Bundle,
             # We use the "lesser" heuristic during IT to keep the cost and
             # performance of the tests within reasonable limits
             if is_main and not is_it:
-                prefix = Prefix.for_main_deployment(count)
+                # Sanity-check the partition size. We know the upper bound
+                # caused some mirror Lambda invocations to time out. The lower
+                # bound is hypothetical. It'll likely still work for mirroring
+                # but we'd like to know if partitions get that small. For
+                # indexing, the partition size is fixed at the upper bound.
+                assert 512 <= partition_size <= 8192, partition_size
+                prefix = Prefix.for_main_deployment(count, partition_size)
             else:
                 prefix = Prefix.for_lesser_deployment(count)
             return source.with_prefix(prefix)

@@ -242,6 +242,10 @@ class LimitedRetryHttpClient(HttpClientDecorator):
                                        timeout=timeout / (1 + retries),
                                        **kwargs)
         except (urllib3.exceptions.TimeoutError, urllib3.exceptions.MaxRetryError):
+            # Any wrapped instance of LoggingHttpClient may not have had a
+            # chance to log anything the response, so we hope that the exception
+            # captures enough information about the cause.
+            logging.warning('Exception during request or response', exc_info=True)
             raise LimitedTimeoutException(url, timeout)
         else:
             if response.status in retry.status_forcelist:
