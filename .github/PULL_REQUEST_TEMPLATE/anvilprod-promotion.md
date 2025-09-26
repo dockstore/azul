@@ -102,6 +102,13 @@ Connected issue: #0000
 - [ ] Restarted `deploy_browser` job in the GitLab pipeline for this PR in `anvilprod` <sub>or this PR does not require reindexing `anvilprod`</sub>
 
 
+### Operator (mirroring)
+
+- [ ] Started mirroring in `anvilprod` <sub>or this PR does not require mirroring `anvilprod`</sub>
+- [ ] Checked for, triaged and possibly requeued messages in mirror fail queue in `anvilprod` <sub>or this PR does not require mirroring `anvilprod`</sub>
+- [ ] Emptied mirror fail queue in `anvilprod` <sub>or this PR does not require mirroring `anvilprod`</sub>
+
+
 ### Operator
 
 - [ ] PR is assigned to only the system administrator

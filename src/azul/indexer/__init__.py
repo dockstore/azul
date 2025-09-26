@@ -239,38 +239,40 @@ class Prefix:
         return cls(common=entry, partition=partition)
 
     @classmethod
-    def for_main_deployment(cls, num_subgraphs: int) -> Self:
+    def for_main_deployment(cls, num_elements: int, partition_size: int) -> Self:
         """
-        A prefix that is expected to rarely exceed 8192 subgraphs per partition
+        A prefix that divides a source containing the given number of elements
+        (subgraphs, files, …) into partitions that rarely exceed the given size.
 
-        >>> str(Prefix.for_main_deployment(0))
+        >>> n = 8192
+
+        >>> str(Prefix.for_main_deployment(0, n))
         Traceback (most recent call last):
         ...
         ValueError: math domain error
 
-        >>> str(Prefix.for_main_deployment(1))
+        >>> str(Prefix.for_main_deployment(1, n))
         '/0'
 
         >>> cases = [-1, 0, 1, 2]
 
-        >>> n = 8192
-        >>> [str(Prefix.for_main_deployment(n + i)) for i in cases]
+        >>> [str(Prefix.for_main_deployment(n + i, n)) for i in cases]
         ['/0', '/0', '/1', '/1']
 
         Sources with this many bundles are very rare, so we have a generous
         margin of error surrounding this cutoff point
 
-        >>> n = 8192 * 16
-        >>> [str(Prefix.for_main_deployment(n + i)) for i in cases]
+        >>> m = n * 16
+        >>> [str(Prefix.for_main_deployment(m + i, n)) for i in cases]
         ['/1', '/1', '/2', '/2']
         """
-        partition = cls._prefix_length(num_subgraphs, 8192)
+        partition = cls._prefix_length(num_elements, partition_size)
         return cls(common='', partition=partition)
 
     @classmethod
-    def for_lesser_deployment(cls, num_subgraphs: int) -> Self:
+    def for_lesser_deployment(cls, num_elements: int) -> Self:
         """
-        A prefix that yields an average of approximately 24 subgraphs per
+        A prefix that yields an average of approximately 24 elements per
         source, using an experimentally derived heuristic formula designed to
         minimize manual adjustment of the computed common prefixes. The
         partition prefix length is always 1, even though some partitions may be
@@ -294,9 +296,9 @@ class Prefix:
         >>> [str(Prefix.for_lesser_deployment(n + i)) for i in cases]
         ['e/1', 'f/1', '00/1', '10/1']
         """
-        digits = f'{num_subgraphs - 1:x}'[::-1]
-        length = cls._prefix_length(num_subgraphs, 64)
-        assert length < len(digits), num_subgraphs
+        digits = f'{num_elements - 1:x}'[::-1]
+        length = cls._prefix_length(num_elements, 64)
+        assert length < len(digits), num_elements
         return cls(common=digits[:length], partition=1)
 
     @classmethod

@@ -98,6 +98,13 @@ Connected issue: #0000
 - [ ] Restarted `deploy_browser` job in the GitLab pipeline for this PR in `prod` <sub>or this PR does not require reindexing `prod`</sub>
 
 
+### Operator (mirroring)
+
+- [ ] Started mirroring in `prod` <sub>or this PR does not require mirroring `prod`</sub>
+- [ ] Checked for, triaged and possibly requeued messages in mirror fail queue in `prod` <sub>or this PR does not require mirroring `prod`</sub>
+- [ ] Emptied mirror fail queue in `prod` <sub>or this PR does not require mirroring `prod`</sub>
+
+
 ### Operator
 
 - [ ] PR is assigned to only the system administrator
