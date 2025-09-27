@@ -80,7 +80,7 @@ class Main:
         'Epics': 'Backlog',
         'Parked': 'Parked',
         'Debt': 'Backlog',
-        'Compliance controls': 'Backlog',  # add label
+        'Compliance controls': 'Backlog',
         'Compliance': 'Backlog',
         'Backlog': 'Backlog',
         'Up next': 'Up next',
