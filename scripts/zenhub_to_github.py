@@ -66,6 +66,9 @@ log = logging.getLogger(__name__)
 class Main:
     owner = 'DataBiosphere'
 
+    #: Only issues with this label will be migrated
+    label = 'orange'
+
     project_title = 'Azul'
 
     status_field_name = 'Status'
@@ -405,7 +408,7 @@ class Main:
         while True:
             response = self._zenhub(self._body(
                 container_id=container_id,
-                label='orange',
+                label=self.label,
                 cursor=cursor,
                 query=query
             ))
