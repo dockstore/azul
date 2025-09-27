@@ -18,9 +18,13 @@ This is the PR template for backport PRs against `develop`.
 ### Author (before every review)
 
 - [ ] PR branch is up to date (if not, merge `develop` into PR branch to integrate upstream changes)
-- [ ] Ran `make requirements_update` <sub>or this PR does not modify `requirements*.txt`, `common.mk`, `Makefile` and `Dockerfile`</sub>
+- [ ] Ran `make requirements_update` <sub>or this PR does not modify `requirements*.txt`, `common.mk`, `Makefile`, `Dockerfile` or `environment.boot`</sub>
 - [ ] Added `R` tag to commit title <sub>or this PR does not modify `requirements*.txt`</sub>
 - [ ] This PR is labeled `reqs` <sub>or does not modify `requirements*.txt`</sub>
+- [ ] PR is not a draft
+- [ ] PR is awaiting requested review from system administrator
+- [ ] Status of PR is *Review requested*
+- [ ] PR is assigned to only the system administrator
 
 
 ### System administrator (after approval)
@@ -28,7 +32,7 @@ This is the PR template for backport PRs against `develop`.
 - [ ] Actually approved the PR
 - [ ] Decided if PR can be labeled `no sandbox`
 - [ ] PR title is appropriate as title of merge commit
-- [ ] Moved connected issue to *Approved* column
+- [ ] Status of PR is *Approved*
 - [ ] PR is assigned to only the operator
 
 
@@ -48,6 +52,7 @@ This is the PR template for backport PRs against `develop`.
 - [ ] Added PR # reference (to this PR) to merge commit title
 - [ ] Collected commit title tags in merge commit title <sub>but excluded any `p` tags</sub>
 - [ ] Pushed merge commit to GitHub
+- [ ] Status of PR is *Merged lower*
 
 
 ### Operator (after pushing the merge commit)
@@ -61,6 +66,7 @@ This is the PR template for backport PRs against `develop`.
 - [ ] Deleted PR branch from GitHub
 - [ ] Deleted PR branch from GitLab `dev`
 - [ ] Deleted PR branch from GitLab `anvildev`
+- [ ] Status of linked issue is *Lower*
 
 
 ### Operator

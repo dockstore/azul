@@ -6,7 +6,7 @@ hotfix.md`, `&template=backport.md` or `&template=upgrade.md` to switch the
 template.
 -->
 
-Connected issues: #0000
+Linked issues: #0000
 
 
 ## Checklist
@@ -17,11 +17,11 @@ Connected issues: #0000
 - [ ] PR is a draft
 - [ ] Target branch is `develop`
 - [ ] Name of PR branch matches `issues/<GitHub handle of author>/<issue#>-<slug>`
-- [ ] On ZenHub, PR is connected to all issues it (partially) resolves
+- [ ] PR is linked to all issues it (partially) resolves
 - [ ] PR description links to connected issues
-- [ ] PR title matches<sup>1</sup> that of a connected issue <sub>or comment in PR explains why they're different</sub>
-- [ ] PR title references all connected issues
-- [ ] For each connected issue, there is at least one commit whose title references that issue
+- [ ] PR title matches<sup>1</sup> that of a linked issue <sub>or comment in PR explains why they're different</sub>
+- [ ] PR title references all linked issues
+- [ ] For each linked issue, there is at least one commit whose title references that issue
 
 <sup>1</sup> when the issue title describes a problem, the corresponding PR
 title is `Fix: ` followed by the issue title
@@ -30,8 +30,8 @@ title is `Fix: ` followed by the issue title
 ### Author (partiality)
 
 - [ ] Added `p` tag to titles of partial commits
-- [ ] This PR is labeled `partial` <sub>or completely resolves all connected issues</sub>
-- [ ] This PR partially resolves each of the connected issues <sub>or does not have the `partial` label</sub>
+- [ ] This PR is labeled `partial` <sub>or completely resolves all linked issues</sub>
+- [ ] This PR partially resolves each of the linked issues <sub>or does not have the `partial` label</sub>
 
 
 ### Author (chains)
@@ -41,7 +41,7 @@ title is `Fix: ` followed by the issue title
 - [ ] This PR is labeled `chained` <sub>or is not chained to another PR</sub>
 
 
-### Author (reindex, API changes)
+### Author (reindex)
 
 - [ ] Added `r` tag to commit title <sub>or the changes introduced by this PR will not require reindexing of any deployment</sub>
 - [ ] This PR is labeled `reindex:dev` <sub>or the changes introduced by it will not require reindexing of `dev`</sub>
@@ -49,7 +49,11 @@ title is `Fix: ` followed by the issue title
 - [ ] This PR is labeled `reindex:anvilprod` <sub>or the changes introduced by it will not require reindexing of `anvilprod`</sub>
 - [ ] This PR is labeled `reindex:prod` <sub>or the changes introduced by it will not require reindexing of `prod`</sub>
 - [ ] This PR is labeled `reindex:partial` and its description documents the specific reindexing procedure for `dev`, `anvildev`, `anvilprod` and `prod` <sub>or requires a full reindex or carries none of the labels `reindex:dev`, `reindex:anvildev`, `reindex:anvilprod` and `reindex:prod`</sub>
-- [ ] This PR and its connected issues are labeled `API` <sub>or this PR does not modify a REST API</sub>
+
+
+### Author (API changes)
+
+- [ ] This PR and its linked issues are labeled `API` <sub>or this PR does not modify a REST API</sub>
 - [ ] Added `a` (`A`) tag to commit title for backwards (in)compatible changes <sub>or this PR does not modify a REST API</sub>
 - [ ] Updated REST API version number in `app.py` <sub>or this PR does not modify a REST API</sub>
 
@@ -68,44 +72,47 @@ title is `Fix: ` followed by the issue title
 ### Author (hotfixes)
 
 - [ ] Added `F` tag to main commit title <sub>or this PR does not include permanent fix for a temporary hotfix</sub>
-- [ ] Reverted the temporary hotfixes for any connected issues <sub>or the none of the stable branches (`anvilprod` and `prod`) have temporary hotfixes for any of the issues connected to this PR</sub>
+- [ ] Reverted the temporary hotfixes for any linked issues <sub>or the none of the stable branches (`anvilprod` and `prod`) have temporary hotfixes for any of the issues linked to this PR</sub>
 
 
 ### Author (before every review)
 
 - [ ] Rebased PR branch on `develop`, squashed fixups from prior reviews
-- [ ] Ran `make requirements_update` <sub>or this PR does not modify `requirements*.txt`, `common.mk`, `Makefile` and `Dockerfile`</sub>
+- [ ] Ran `make requirements_update` <sub>or this PR does not modify `requirements*.txt`, `common.mk`, `Makefile`, `Dockerfile` or `environment.boot`</sub>
 - [ ] Added `R` tag to commit title <sub>or this PR does not modify `requirements*.txt`</sub>
 - [ ] This PR is labeled `reqs` <sub>or does not modify `requirements*.txt`</sub>
 - [ ] `make integration_test` passes in personal deployment <sub>or this PR does not modify functionality that could affect the IT outcome</sub>
+- [ ] PR is awaiting requested review from a peer
+- [ ] Status of PR is *Review requested*
+- [ ] PR is assigned to only the peer
 
 
 ### Peer reviewer (after approval)
 
 - [ ] Actually approved the PR
 - [ ] PR is not a draft
-- [ ] Ticket is in *Review requested* column
 - [ ] PR is awaiting requested review from system administrator
+- [ ] Status of PR is *Review requested*
 - [ ] PR is assigned to only the system administrator
 
 
 ### System administrator (after approval)
 
 - [ ] Actually approved the PR
-- [ ] Labeled connected issues as `demo` or `no demo`
-- [ ] Commented on connected issues about demo expectations <sub>or all connected issues are labeled `no demo`</sub>
+- [ ] Labeled linked issues as `demo` or `no demo`
+- [ ] Commented on linked issues about demo expectations <sub>or all linked issues are labeled `no demo`</sub>
 - [ ] Decided if PR can be labeled `no sandbox`
 - [ ] A comment to this PR details the completed security design review
 - [ ] PR title is appropriate as title of merge commit
 - [ ] `N reviews` label is accurate
-- [ ] Moved connected issues to *Approved* column
+- [ ] Status of PR is *Approved*
 - [ ] PR is assigned to only the operator
 
 
 ### Operator (before pushing merge the commit)
 
 - [ ] Checked `reindex:…` labels and `r` commit title tag
-- [ ] Checked that demo expectations are clear <sub>or all connected issues are labeled `no demo`</sub>
+- [ ] Checked that demo expectations are clear <sub>or all linked issues are labeled `no demo`</sub>
 - [ ] Squashed PR branch and rebased onto `develop`
 - [ ] Sanity-checked history
 - [ ] Pushed PR branch to GitHub
@@ -145,9 +152,9 @@ title is `Fix: ` followed by the issue title
 - [ ] The title of the merge commit starts with the title of this PR
 - [ ] Added PR # reference to merge commit title
 - [ ] Collected commit title tags in merge commit title <sub>but only included `p` if the PR is also labeled `partial`</sub>
-- [ ] Moved connected issues to *Merged lower* column in ZenHub
-- [ ] Moved blocked issues to *Triage* <sub>or no issues are blocked on the connected issues</sub>
 - [ ] Pushed merge commit to GitHub
+- [ ] Status of PR is *Merged lower*
+- [ ] Status of blocked issues is *Triage* <sub>or no issues are blocked on the linked issues</sub>
 
 
 ### Operator (chain shortening)
@@ -171,6 +178,7 @@ title is `Fix: ` followed by the issue title
 - [ ] Deleted PR branch from GitHub
 - [ ] Deleted PR branch from GitLab `dev`
 - [ ] Deleted PR branch from GitLab `anvildev`
+- [ ] Status of linked issues is *Lower*
 
 
 ### Operator (reindex)

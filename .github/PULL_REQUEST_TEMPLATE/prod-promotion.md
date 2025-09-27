@@ -2,7 +2,7 @@
 This is the PR template for a promotion PR against `prod`.
 -->
 
-Connected issue: #0000
+Linked issue: #0000
 
 
 ## Checklist
@@ -12,15 +12,14 @@ Connected issue: #0000
 
 - [ ] Target branch is `prod`
 - [ ] Name of PR branch matches `promotions/yyyy-mm-dd-prod`
-- [ ] On ZenHub, PR is connected to the promotion issue it resolves
+- [ ] PR is linked to the promotion issue it resolves
 - [ ] PR description links to connected issue
-- [ ] Title of connected issue matches `Promotion yyyy-mm-dd`
-- [ ] PR title starts with title of connected issue followed by ` prod`
-- [ ] PR title references the connected issue
-- [ ] The promoted issues are part of the same sprint as the connected issue
+- [ ] Title of linked issue matches `Promotion yyyy-mm-dd`
+- [ ] PR title starts with title of linked issue followed by ` prod`
+- [ ] PR title references the linked issue
 
 
-### Author (reindex, API changes)
+### Author (reindex)
 
 - [ ] This PR is labeled `reindex:prod` <sub>or the changes introduced by it will not require reindexing of `prod`</sub>
 - [ ] This PR is labeled `reindex:partial` and its description documents the specific reindexing procedure for `prod` <sub>or requires a full reindex or is not labeled`reindex:prod`</sub>
@@ -37,13 +36,17 @@ Connected issue: #0000
 ### Author (before every review)
 
 - [ ] PR branch is up to date (if not, merge `prod` into PR branch to integrate upstream changes)
+- [ ] PR is not a draft
+- [ ] PR is awaiting requested review from system administrator
+- [ ] Status of PR is *Review requested*
+- [ ] PR is assigned to only the system administrator
 
 
 ### System administrator (after approval)
 
 - [ ] Actually approved the PR
 - [ ] Labeled PR as `no sandbox`
-- [ ] Moved connected issue to *Approved* column
+- [ ] Status of PR is *Approved*
 - [ ] PR is assigned to only the operator
 
 
@@ -71,6 +74,7 @@ Connected issue: #0000
 - [ ] Added PR # reference to merge commit title
 - [ ] Collected commit title tags in merge commit title <sub>but excluded any `p` tags</sub>
 - [ ] Pushed merge commit to GitHub
+- [ ] Status of PR is *Merged stable*
 
 
 ### Operator (after pushing the merge commit)
@@ -80,9 +84,14 @@ Connected issue: #0000
 - [ ] Reviewed build logs for anomalies on GitLab `prod`
 - [ ] Ran `_select prod.shared && make -C terraform/shared apply` <sub>or this PR is not labeled `deploy:shared`</sub>
 - [ ] Deleted PR branch from GitHub
-- [ ] Moved connected issue to *Merged stable* column on ZenHub
-- [ ] Moved promoted issues from *Merged lower* to *Merged stable* column on ZenHub
-- [ ] Moved promoted issues from *Lower* to *Stable* column on ZenHub
+- [ ] Status of linked issue is *Stable*
+- [ ] Status of promoted<sup>1</sup> PRs is *Merged stable*
+- [ ] Status of promoted<sup>1</sup> issues is *Stable*
+
+<sup>1</sup> Promoted issues and PRs are referenced in the titles of the commits
+that the promotion branch introduces to the stable branch. Prior to the
+promotion, the status of promoted issues (PRs) is *Lower* (*Merged lower*).
+Promoted PRs in status *Done* do not need to be moved.
 
 
 ### Operator (reindex)
