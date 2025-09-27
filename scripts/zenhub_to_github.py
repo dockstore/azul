@@ -248,7 +248,8 @@ class Main:
                 zh_blockees = {}
                 for blockee in nodes(zh_issue, 'blockedIssues'):
                     if json_str(blockee['ghNodeId']).startswith('PR_'):
-                        log.warning('GitHub cannot block PRs on issues, ignoring blockee %s')
+                        log.warning('GitHub cannot block PRs on issues. '
+                                    'Ignoring blockee %s', blockee['htmlUrl'])
                     elif any(json_str(blockee['htmlUrl']).startswith(repo) for repo in self.archived_repos):
                         log.warning('GitHub cannot block issues in archived repositories. '
                                     'Ignoring blockee %s', blockee['htmlUrl'])
