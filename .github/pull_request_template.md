@@ -105,7 +105,7 @@ Note that when requesting changes, the PR must be assigned back to the author.
 - [ ] PR is assigned to only the operator
 
 
-### Operator (before pushing merge the commit)
+### Operator (before pushing the merge commit)
 
 - [ ] Checked `reindex:…` labels and `r` commit title tag
 - [ ] Checked that demo expectations are clear <sub>or all linked issues are labeled `no demo`</sub>
@@ -127,7 +127,7 @@ Note that when requesting changes, the PR must be assigned back to the author.
 - [ ] PR is assigned to only the operator
 
 
-### Operator (before pushing merge the commit)
+### Operator (before pushing the merge commit)
 
 - [ ] Ran `_select dev.gitlab && make -C terraform/gitlab/runner` <sub>or this PR is not labeled `deploy:runner`</sub>
 - [ ] Ran `_select anvildev.gitlab && make -C terraform/gitlab/runner` <sub>or this PR is not labeled `deploy:runner`</sub>

@@ -687,7 +687,7 @@ def emit(t: T, target_branch: str):
             },
             {
                 'type': 'h2',
-                'content': 'Operator (before pushing merge the commit)'
+                'content': 'Operator (before pushing the merge commit)'
             },
             *iif(t is T.default, [
                 {
@@ -775,7 +775,7 @@ def emit(t: T, target_branch: str):
                 },
                 {
                     'type': 'h2',
-                    'content': 'Operator (before pushing merge the commit)'
+                    'content': 'Operator (before pushing the merge commit)'
                 },
                 *[
                     {

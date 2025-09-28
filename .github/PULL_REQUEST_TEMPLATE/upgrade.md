@@ -53,7 +53,7 @@ Linked issue: #0000
 - [ ] PR is assigned to only the operator
 
 
-### Operator (before pushing merge the commit)
+### Operator (before pushing the merge commit)
 
 - [ ] Squashed PR branch and rebased onto `develop`
 - [ ] Sanity-checked history
@@ -75,7 +75,7 @@ Linked issue: #0000
 - [ ] PR is assigned to only the operator
 
 
-### Operator (before pushing merge the commit)
+### Operator (before pushing the merge commit)
 
 - [ ] Ran `_select dev.gitlab && make -C terraform/gitlab/runner` <sub>or this PR is not labeled `deploy:runner`</sub>
 - [ ] Ran `_select anvildev.gitlab && make -C terraform/gitlab/runner` <sub>or this PR is not labeled `deploy:runner`</sub>

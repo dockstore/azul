@@ -49,7 +49,7 @@ Linked issue: #0000
 - [ ] PR is assigned to only the operator
 
 
-### Operator (before pushing merge the commit)
+### Operator (before pushing the merge commit)
 
 - [ ] Squashed PR branch and rebased onto `prod`
 - [ ] Sanity-checked history

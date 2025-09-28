@@ -37,7 +37,7 @@ This is the PR template for backport PRs against `develop`.
 - [ ] PR is assigned to only the operator
 
 
-### Operator (before pushing merge the commit)
+### Operator (before pushing the merge commit)
 
 - [ ] Sanity-checked history
 - [ ] Pushed PR branch to GitHub

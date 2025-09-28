@@ -51,7 +51,7 @@ Linked issue: #0000
 - [ ] PR is assigned to only the operator
 
 
-### Operator (before pushing merge the commit)
+### Operator (before pushing the merge commit)
 
 - [ ] Pushed PR branch to GitHub
 - [ ] Ran `_select prod.shared && CI_COMMIT_REF_NAME=prod make -C terraform/shared apply_keep_unused` <sub>or this PR is not labeled `deploy:shared`</sub>
@@ -67,7 +67,7 @@ Linked issue: #0000
 - [ ] PR is assigned to only the operator
 
 
-### Operator (before pushing merge the commit)
+### Operator (before pushing the merge commit)
 
 - [ ] Ran `_select prod.gitlab && make -C terraform/gitlab/runner` <sub>or this PR is not labeled `deploy:runner`</sub>
 - [ ] All status checks passed and the PR is mergeable
