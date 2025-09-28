@@ -10,6 +10,7 @@ Linked issue: #0000
 
 ### Author
 
+- [ ] PR is assigned to the author
 - [ ] Target branch is `prod`
 - [ ] Name of PR branch matches `hotfixes/<GitHub handle of author>/<issue#>-<slug>-prod`
 - [ ] PR is linked to the issue it hotfixes

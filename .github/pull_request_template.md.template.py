@@ -302,6 +302,10 @@ def emit(t: T, target_branch: str):
                 'type': 'h2',
                 'content': 'Author'
             },
+            {
+                'type': 'cli',
+                'content': 'PR is assigned to the author'
+            },
             iif(t is T.default, {
                 'type': 'cli',
                 'content': 'PR is a draft'
@@ -627,6 +631,10 @@ def emit(t: T, target_branch: str):
                 {
                     'type': 'h2',
                     'content': 'Peer reviewer (after approval)'
+                },
+                {
+                    'type': 'p',
+                    'content': 'Note that when requesting changes, the PR must be assigned back to the author.'
                 },
                 {
                     'type': 'cli',

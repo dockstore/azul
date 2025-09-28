@@ -10,6 +10,7 @@ Linked issue: #0000
 
 ### Author
 
+- [ ] PR is assigned to the author
 - [ ] Target branch is `develop`
 - [ ] Name of PR branch matches `upgrades/yyyy-mm-dd`
 - [ ] PR is linked to the upgrade issue it resolves

@@ -14,6 +14,7 @@ Linked issues: #0000
 
 ### Author
 
+- [ ] PR is assigned to the author
 - [ ] PR is a draft
 - [ ] Target branch is `develop`
 - [ ] Name of PR branch matches `issues/<GitHub handle of author>/<issue#>-<slug>`
@@ -88,6 +89,8 @@ title is `Fix: ` followed by the issue title
 
 
 ### Peer reviewer (after approval)
+
+Note that when requesting changes, the PR must be assigned back to the author.
 
 - [ ] Actually approved the PR
 - [ ] PR is not a draft

@@ -8,6 +8,7 @@ This is the PR template for backport PRs against `develop`.
 
 ### Author
 
+- [ ] PR is assigned to the author
 - [ ] Target branch is `develop`
 - [ ] Name of PR branch matches `backports/<7-digit SHA1 of most recent backported commit>`
 - [ ] PR title contains the 7-digit SHA1 of the backported commits

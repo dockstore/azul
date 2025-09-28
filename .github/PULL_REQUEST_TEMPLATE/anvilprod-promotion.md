@@ -10,6 +10,7 @@ Linked issue: #0000
 
 ### Author
 
+- [ ] PR is assigned to the author
 - [ ] Target branch is `anvilprod`
 - [ ] Name of PR branch matches `promotions/yyyy-mm-dd-anvilprod`
 - [ ] PR is linked to the promotion issue it resolves
