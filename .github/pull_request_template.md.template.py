@@ -687,7 +687,7 @@ def emit(t: T, target_branch: str):
             },
             {
                 'type': 'h2',
-                'content': 'Operator (before pushing the merge commit)'
+                'content': 'Operator'
             },
             *iif(t is T.default, [
                 {
@@ -713,6 +713,10 @@ def emit(t: T, target_branch: str):
                 'content': 'Pushed PR branch to GitHub'
             },
             *iif(t.needs_shared_deploy, [
+                {
+                    'type': 'h2',
+                    'content': 'Operator (deploy `.shared` and `.gitlab` components)'
+                },
                 *flatten([
                     [
                         {
@@ -757,7 +761,7 @@ def emit(t: T, target_branch: str):
                 },
                 {
                     'type': 'h2',
-                    'content': 'System administrator'
+                    'content': 'System administrator (post-deploy of `.gitlab` component)'
                 },
                 *[
                     {
@@ -773,27 +777,33 @@ def emit(t: T, target_branch: str):
                     'type': 'cli',
                     'content': 'PR is assigned to only the operator',
                 },
+            ]),
+            {
+                'type': 'h2',
+                'content': 'Operator (deploy runner image)'
+            },
+            *[
+                {
+                    'type': 'cli',
+                    'content': 'Ran ' + bq(
+                        f'_select {d}.gitlab && '
+                        f'make -C terraform/gitlab/runner'
+                    ),
+                    'alt': 'or this PR is not labeled `deploy:runner`'
+                }
+                for d in t.target_deployments(target_branch)
+            ],
+            *iif(t.has_sandbox_for(target_branch), [
                 {
                     'type': 'h2',
-                    'content': 'Operator (before pushing the merge commit)'
+                    'content': 'Operator (sandbox build)'
                 },
-                *[
-                    {
-                        'type': 'cli',
-                        'content': 'Ran ' + bq(
-                            f'_select {d}.gitlab && '
-                            f'make -C terraform/gitlab/runner'
-                        ),
-                        'alt': 'or this PR is not labeled `deploy:runner`'
-                    }
-                    for d in t.target_deployments(target_branch)
-                ],
+                {
+                    'type': 'cli',
+                    'content': 'Added `sandbox` label',
+                    'alt': iif(t is T.upgrade, None, 'or PR is labeled `no sandbox`')
+                }
             ]),
-            iif(t.has_sandbox_for(target_branch), {
-                'type': 'cli',
-                'content': 'Added `sandbox` label',
-                'alt': iif(t is T.upgrade, None, 'or PR is labeled `no sandbox`')
-            }),
             # zip() is used to interleave the steps for each deployment so
             # that first, step 1 is done for all deployments, then step 2
             # for all of them, and so on.
@@ -836,6 +846,10 @@ def emit(t: T, target_branch: str):
                 for i, (d, s) in enumerate(t.target_deployments(target_branch).items())
                 if s is not None
             ))),
+            {
+                'type': 'h2',
+                'content': 'Operator (merge the branch)'
+            },
             {
                 'type': 'cli',
                 'content': 'All status checks passed and the PR is mergeable'
@@ -881,7 +895,7 @@ def emit(t: T, target_branch: str):
             }),
             {
                 'type': 'h2',
-                'content': 'Operator (after pushing the merge commit)'
+                'content': 'Operator (main build)'
             },
             *[
                 {

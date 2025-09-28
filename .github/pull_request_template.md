@@ -105,13 +105,17 @@ Note that when requesting changes, the PR must be assigned back to the author.
 - [ ] PR is assigned to only the operator
 
 
-### Operator (before pushing the merge commit)
+### Operator
 
 - [ ] Checked `reindex:…` labels and `r` commit title tag
 - [ ] Checked that demo expectations are clear <sub>or all linked issues are labeled `no demo`</sub>
 - [ ] Squashed PR branch and rebased onto `develop`
 - [ ] Sanity-checked history
 - [ ] Pushed PR branch to GitHub
+
+
+### Operator (deploy `.shared` and `.gitlab` components)
+
 - [ ] Ran `_select dev.shared && CI_COMMIT_REF_NAME=develop make -C terraform/shared apply_keep_unused` <sub>or this PR is not labeled `deploy:shared`</sub>
 - [ ] Ran `_select dev.gitlab && CI_COMMIT_REF_NAME=develop make -C terraform/gitlab apply` <sub>or this PR is not labeled `deploy:gitlab`</sub>
 - [ ] Ran `_select anvildev.shared && CI_COMMIT_REF_NAME=develop make -C terraform/shared apply_keep_unused` <sub>or this PR is not labeled `deploy:shared`</sub>
@@ -120,17 +124,21 @@ Note that when requesting changes, the PR must be assigned back to the author.
 - [ ] PR is assigned to only the system administrator <sub>or this PR is not labeled `deploy:gitlab`</sub>
 
 
-### System administrator
+### System administrator (post-deploy of `.gitlab` component)
 
 - [ ] Background migrations for [`dev.gitlab`](https://gitlab.dev.singlecell.gi.ucsc.edu/admin/background_migrations) are complete <sub>or this PR is not labeled `deploy:gitlab`</sub>
 - [ ] Background migrations for [`anvildev.gitlab`](https://gitlab.anvil.gi.ucsc.edu/admin/background_migrations) are complete <sub>or this PR is not labeled `deploy:gitlab`</sub>
 - [ ] PR is assigned to only the operator
 
 
-### Operator (before pushing the merge commit)
+### Operator (deploy runner image)
 
 - [ ] Ran `_select dev.gitlab && make -C terraform/gitlab/runner` <sub>or this PR is not labeled `deploy:runner`</sub>
 - [ ] Ran `_select anvildev.gitlab && make -C terraform/gitlab/runner` <sub>or this PR is not labeled `deploy:runner`</sub>
+
+
+### Operator (sandbox build)
+
 - [ ] Added `sandbox` label <sub>or PR is labeled `no sandbox`</sub>
 - [ ] Pushed PR branch to GitLab `dev` <sub>or PR is labeled `no sandbox`</sub>
 - [ ] Pushed PR branch to GitLab `anvildev` <sub>or PR is labeled `no sandbox`</sub>
@@ -144,6 +152,10 @@ Note that when requesting changes, the PR must be assigned back to the author.
 - [ ] Started reindex in `anvilbox` <sub>or this PR is not labeled `reindex:anvildev`</sub>
 - [ ] Checked for failures in `sandbox` <sub>or this PR is not labeled `reindex:dev`</sub>
 - [ ] Checked for failures in `anvilbox` <sub>or this PR is not labeled `reindex:anvildev`</sub>
+
+
+### Operator (merge the branch)
+
 - [ ] All status checks passed and the PR is mergeable
 - [ ] The title of the merge commit starts with the title of this PR
 - [ ] Added PR # reference to merge commit title
@@ -153,7 +165,7 @@ Note that when requesting changes, the PR must be assigned back to the author.
 - [ ] Status of blocked issues is *Triage* <sub>or no issues are blocked on the linked issues</sub>
 
 
-### Operator (after pushing the merge commit)
+### Operator (main build)
 
 - [ ] Pushed merge commit to GitLab `dev`
 - [ ] Pushed merge commit to GitLab `anvildev`

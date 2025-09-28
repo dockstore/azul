@@ -37,10 +37,20 @@ This is the PR template for backport PRs against `develop`.
 - [ ] PR is assigned to only the operator
 
 
-### Operator (before pushing the merge commit)
+### Operator
 
 - [ ] Sanity-checked history
 - [ ] Pushed PR branch to GitHub
+
+
+### Operator (deploy runner image)
+
+- [ ] Ran `_select dev.gitlab && make -C terraform/gitlab/runner` <sub>or this PR is not labeled `deploy:runner`</sub>
+- [ ] Ran `_select anvildev.gitlab && make -C terraform/gitlab/runner` <sub>or this PR is not labeled `deploy:runner`</sub>
+
+
+### Operator (sandbox build)
+
 - [ ] Added `sandbox` label <sub>or PR is labeled `no sandbox`</sub>
 - [ ] Pushed PR branch to GitLab `dev` <sub>or PR is labeled `no sandbox`</sub>
 - [ ] Pushed PR branch to GitLab `anvildev` <sub>or PR is labeled `no sandbox`</sub>
@@ -48,6 +58,10 @@ This is the PR template for backport PRs against `develop`.
 - [ ] Build passes in `anvilbox` deployment <sub>or PR is labeled `no sandbox`</sub>
 - [ ] Reviewed build logs for anomalies in `sandbox` deployment <sub>or PR is labeled `no sandbox`</sub>
 - [ ] Reviewed build logs for anomalies in `anvilbox` deployment <sub>or PR is labeled `no sandbox`</sub>
+
+
+### Operator (merge the branch)
+
 - [ ] All status checks passed and the PR is mergeable
 - [ ] The title of the merge commit starts with the title of this PR
 - [ ] Added PR # reference (to this PR) to merge commit title
@@ -56,7 +70,7 @@ This is the PR template for backport PRs against `develop`.
 - [ ] Status of PR is *Merged lower*
 
 
-### Operator (after pushing the merge commit)
+### Operator (main build)
 
 - [ ] Pushed merge commit to GitLab `dev`
 - [ ] Pushed merge commit to GitLab `anvildev`

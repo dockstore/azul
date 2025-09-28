@@ -51,9 +51,13 @@ Linked issue: #0000
 - [ ] PR is assigned to only the operator
 
 
-### Operator (before pushing the merge commit)
+### Operator
 
 - [ ] Pushed PR branch to GitHub
+
+
+### Operator (deploy `.shared` and `.gitlab` components)
+
 - [ ] Ran `_select anvilprod.shared && CI_COMMIT_REF_NAME=anvilprod make -C terraform/shared apply_keep_unused` <sub>or this PR is not labeled `deploy:shared`</sub>
 - [ ] Ran `_select anvilprod.gitlab && python scripts/create_gitlab_snapshot.py --no-restart` (see [operator manual](../blob/develop/OPERATOR.rst#backup-gitlab-volumes) for details) <sub>or this PR is not labeled `backup:gitlab`</sub>
 - [ ] Ran `_select anvilprod.gitlab && CI_COMMIT_REF_NAME=anvilprod make -C terraform/gitlab apply` <sub>or this PR is not labeled `deploy:gitlab`</sub>
@@ -61,19 +65,27 @@ Linked issue: #0000
 - [ ] PR is assigned to only the system administrator <sub>or this PR is not labeled `deploy:gitlab`</sub>
 
 
-### System administrator
+### System administrator (post-deploy of `.gitlab` component)
 
 - [ ] Background migrations for [`anvilprod.gitlab`](https://gitlab.explore.anvilproject.org/admin/background_migrations) are complete <sub>or this PR is not labeled `deploy:gitlab`</sub>
 - [ ] PR is assigned to only the operator
 
 
-### Operator (before pushing the merge commit)
+### Operator (deploy runner image)
 
 - [ ] Ran `_select anvilprod.gitlab && make -C terraform/gitlab/runner` <sub>or this PR is not labeled `deploy:runner`</sub>
+
+
+### Operator (sandbox build)
+
 - [ ] Added `sandbox` label <sub>or PR is labeled `no sandbox`</sub>
 - [ ] Pushed PR branch to GitLab `anvilprod` <sub>or PR is labeled `no sandbox`</sub>
 - [ ] Build passes in `hammerbox` deployment <sub>or PR is labeled `no sandbox`</sub>
 - [ ] Reviewed build logs for anomalies in `hammerbox` deployment <sub>or PR is labeled `no sandbox`</sub>
+
+
+### Operator (merge the branch)
+
 - [ ] All status checks passed and the PR is mergeable
 - [ ] The title of the merge commit starts with the title of this PR
 - [ ] Added PR # reference to merge commit title
@@ -82,7 +94,7 @@ Linked issue: #0000
 - [ ] Status of PR is *Merged stable*
 
 
-### Operator (after pushing the merge commit)
+### Operator (main build)
 
 - [ ] Pushed merge commit to GitLab `anvilprod`
 - [ ] Build passes on GitLab `anvilprod`

@@ -49,11 +49,20 @@ Linked issue: #0000
 - [ ] PR is assigned to only the operator
 
 
-### Operator (before pushing the merge commit)
+### Operator
 
 - [ ] Squashed PR branch and rebased onto `prod`
 - [ ] Sanity-checked history
 - [ ] Pushed PR branch to GitHub
+
+
+### Operator (deploy runner image)
+
+- [ ] Ran `_select prod.gitlab && make -C terraform/gitlab/runner` <sub>or this PR is not labeled `deploy:runner`</sub>
+
+
+### Operator (merge the branch)
+
 - [ ] All status checks passed and the PR is mergeable
 - [ ] The title of the merge commit starts with the title of this PR
 - [ ] Added PR # reference to merge commit title
@@ -62,7 +71,7 @@ Linked issue: #0000
 - [ ] Status of PR is *Merged stable*
 
 
-### Operator (after pushing the merge commit)
+### Operator (main build)
 
 - [ ] Pushed merge commit to GitLab `prod`
 - [ ] Build passes on GitLab `prod`
