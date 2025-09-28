@@ -403,27 +403,6 @@ def emit(t: T, target_branch: str):
                     'alt': 'or does not have the `partial` label'
                 }
             ]),
-            *iif(t is T.default, [
-                {
-                    'type': 'h2',
-                    'content': 'Author (chains)'
-                },
-                {
-                    'type': 'cli',
-                    'content': 'This PR is blocked by previous PR in the chain',
-                    'alt': 'or is not chained to another PR'
-                },
-                {
-                    'type': 'cli',
-                    'content': 'The blocking PR is labeled `base`',
-                    'alt': 'or this PR is not chained to another PR'
-                },
-                {
-                    'type': 'cli',
-                    'content': 'This PR is labeled `chained`',
-                    'alt': 'or is not chained to another PR'
-                }
-            ]),
             *iif(t in (T.default, T.promotion), [
                 {
                     'type': 'h2',
@@ -900,25 +879,6 @@ def emit(t: T, target_branch: str):
                 'content': 'Status of blocked issues is *Triage*',
                 'alt': f'or no issues are blocked on the linked {t.issues}'
             }),
-            *iif(t is T.default, [
-                {
-                    'type': 'h2',
-                    'content': 'Operator (chain shortening)'
-                },
-                *[
-                    {
-                        'type': 'cli',
-                        'content': content,
-                        'alt': 'or this PR is not labeled `base`'
-                    }
-                    for content in [
-                        f'Changed the target branch of the blocked PR to {bq(target_branch)}',
-                        'Removed the `chained` label from the blocked PR',
-                        'Removed the blocking relationship from the blocked PR',
-                        'Removed the `base` label from this PR'
-                    ]
-                ]
-            ]),
             {
                 'type': 'h2',
                 'content': 'Operator (after pushing the merge commit)'

@@ -35,13 +35,6 @@ title is `Fix: ` followed by the issue title
 - [ ] This PR partially resolves each of the linked issues <sub>or does not have the `partial` label</sub>
 
 
-### Author (chains)
-
-- [ ] This PR is blocked by previous PR in the chain <sub>or is not chained to another PR</sub>
-- [ ] The blocking PR is labeled `base` <sub>or this PR is not chained to another PR</sub>
-- [ ] This PR is labeled `chained` <sub>or is not chained to another PR</sub>
-
-
 ### Author (reindex)
 
 - [ ] Added `r` tag to commit title <sub>or the changes introduced by this PR will not require reindexing of any deployment</sub>
@@ -158,14 +151,6 @@ Note that when requesting changes, the PR must be assigned back to the author.
 - [ ] Pushed merge commit to GitHub
 - [ ] Status of PR is *Merged lower*
 - [ ] Status of blocked issues is *Triage* <sub>or no issues are blocked on the linked issues</sub>
-
-
-### Operator (chain shortening)
-
-- [ ] Changed the target branch of the blocked PR to `develop` <sub>or this PR is not labeled `base`</sub>
-- [ ] Removed the `chained` label from the blocked PR <sub>or this PR is not labeled `base`</sub>
-- [ ] Removed the blocking relationship from the blocked PR <sub>or this PR is not labeled `base`</sub>
-- [ ] Removed the `base` label from this PR <sub>or this PR is not labeled `base`</sub>
 
 
 ### Operator (after pushing the merge commit)
