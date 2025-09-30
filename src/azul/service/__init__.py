@@ -37,6 +37,7 @@ log = logging.getLogger(__name__)
 # supports serializing them by default.
 #
 type FilterRange = list[int] | list[float] | list[str]
+type FilterRangeEnd = int | float | str
 
 # `is` is a reserved keyword so we can't use the class-based syntax for
 # TypedDict, but have to use the constructor-based one instead. We don't
@@ -49,7 +50,7 @@ FilterOperator = TypedDict(
         'is': list[PrimitiveJSON | FlatJSON],
         'is_not': list[PrimitiveJSON | FlatJSON],
         'intersects': list[FilterRange],
-        'contains': list[FilterRange | int | float | str],
+        'contains': list[FilterRange | FilterRangeEnd],
         'within': list[FilterRange],
     },
     total=False
