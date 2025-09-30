@@ -13,7 +13,7 @@ from azul.plugins import (
     SpecialFields,
 )
 from azul.service import (
-    FilterOperator,
+    FilterJSON,
     Filters,
     FiltersJSON,
 )
@@ -66,7 +66,7 @@ class TestFilterReification(AzulTestCase):
         return filters.reify(plugin=self.plugin, limit_access=limit_access)
 
     def _test_filters(self,
-                      expected_source_id_filter: Optional[FilterOperator],
+                      expected_source_id_filter: Optional[FilterJSON],
                       *,
                       limit_access: bool,
                       explicit_sources: Optional[list[str]] = None,

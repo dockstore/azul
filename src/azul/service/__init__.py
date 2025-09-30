@@ -1,6 +1,3 @@
-from collections.abc import (
-    Mapping,
-)
 import logging
 from typing import (
     Protocol,
@@ -44,8 +41,8 @@ type FilterRangeEnd = int | float | str
 # currently represent the mutual exclusivity of the operators. We could, as a
 # union of singleton TypeDict subclasses, but PyCharm doesn't support that.
 #
-FilterOperator = TypedDict(
-    'FilterOperator',
+FilterJSON = TypedDict(
+    'FilterJSON',
     {
         'is': list[PrimitiveJSON | FlatJSON],
         'is_not': list[PrimitiveJSON | FlatJSON],
@@ -56,7 +53,7 @@ FilterOperator = TypedDict(
     total=False
 )
 
-type FiltersJSON = Mapping[FieldName, FilterOperator]
+type FiltersJSON = dict[FieldName, FilterJSON]
 
 
 @attr.s(auto_attribs=True, kw_only=True, frozen=True)
