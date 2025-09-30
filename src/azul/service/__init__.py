@@ -21,6 +21,7 @@ from azul.json import (
     copy_json,
 )
 from azul.plugins import (
+    FieldName,
     MetadataPlugin,
 )
 from azul.types import (
@@ -54,7 +55,7 @@ FilterOperator = TypedDict(
     total=False
 )
 
-FiltersJSON = Mapping[str, FilterOperator]
+FiltersJSON = Mapping[FieldName, FilterOperator]
 
 
 @attr.s(auto_attribs=True, kw_only=True, frozen=True)
