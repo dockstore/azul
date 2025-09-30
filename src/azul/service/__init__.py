@@ -1,6 +1,5 @@
 from collections.abc import (
     Mapping,
-    Sequence,
 )
 import logging
 from typing import (
@@ -32,10 +31,11 @@ from azul.types import (
 
 log = logging.getLogger(__name__)
 
-# We can't express that these are actually pairs. We could, using tuples, but
-# those are not JSON, generally speaking, even though the `json` module supports
-# serializing them by default.
-FilterRange = Sequence[int] | Sequence[float] | Sequence[str]
+# We can't express that these are actually pairs, i.e. lists of length 2. We
+# could, using tuples, but those are not JSON, even though the `json` module
+# supports serializing them by default.
+#
+FilterRange = list[int] | list[float] | list[str]
 
 # `is` is a reserved keyword so we can't use the class-based syntax for
 # TypedDict, but have to use the constructor-based one instead. We don't
@@ -47,9 +47,9 @@ FilterOperator = TypedDict(
     {
         'is': list[PrimitiveJSON | FlatJSON],
         'is_not': list[PrimitiveJSON | FlatJSON],
-        'intersects': Sequence[FilterRange],
-        'contains': Sequence[FilterRange | int | float | str],
-        'within': Sequence[FilterRange],
+        'intersects': list[FilterRange],
+        'contains': list[FilterRange | int | float | str],
+        'within': list[FilterRange],
     },
     total=False
 )
