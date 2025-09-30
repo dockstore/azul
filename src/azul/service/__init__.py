@@ -36,7 +36,7 @@ log = logging.getLogger(__name__)
 # could, using tuples, but those are not JSON, even though the `json` module
 # supports serializing them by default.
 #
-FilterRange = list[int] | list[float] | list[str]
+type FilterRange = list[int] | list[float] | list[str]
 
 # `is` is a reserved keyword so we can't use the class-based syntax for
 # TypedDict, but have to use the constructor-based one instead. We don't
@@ -55,7 +55,7 @@ FilterOperator = TypedDict(
     total=False
 )
 
-FiltersJSON = Mapping[FieldName, FilterOperator]
+type FiltersJSON = Mapping[FieldName, FilterOperator]
 
 
 @attr.s(auto_attribs=True, kw_only=True, frozen=True)
