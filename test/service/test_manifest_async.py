@@ -36,8 +36,8 @@ import requests
 from app_test_case import (
     LocalAppTestCase,
 )
-from azul.collections import (
-    deep_dict_merge,
+from azul.json import (
+    copy_json,
 )
 from azul.logging import (
     configure_test_logging,
@@ -214,7 +214,7 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
         for format, fetch in product([ManifestFormat.compact, ManifestFormat.curl],
                                      [True, False]):
             with self.subTest(format=format, fetch=fetch):
-                filters = {'organ': {'is': ['lymph node']}, 'fileFormat': {'is': ['txt']}}
+                filters = {'fileFormat': {'is': ['txt']}, 'organ': {'is': ['heart', 'lung']}}
                 filters = Filters(explicit=filters, source_ids={self.source.id})
                 params = {
                     'catalog': self.catalog,
@@ -471,7 +471,7 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                         sign_manifest_key.return_value = signed_manifest_key
                     equivalent_url = initial_url.copy()
                     equivalent_filters = json.loads(equivalent_url.args['filters'])
-                    equivalent_filters = dict(reversed(equivalent_filters.items()))
+                    equivalent_filters['organ']['is'].reverse()
                     equivalent_url.args['filters'] = json.dumps(equivalent_filters)
                     url = self._request('PUT', equivalent_url, expect=302)
                     self.assertEqual(final_url, url)
@@ -489,10 +489,8 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                 def modified_put_after_expiration():
                     nonlocal url, state, token_url, equivalent_input
                     get_cached_manifest.side_effect = not_found
-                    equivalent_input = deep_dict_merge(
-                        {'filters': {'explicit': equivalent_filters}},
-                        input
-                    )
+                    equivalent_input = copy_json(input)
+                    equivalent_input['filters']['explicit'] = equivalent_filters
                     iterations.append(equivalent_input)
                     mock_start_generation()
                     url = self._request('PUT', equivalent_url, expect=301)
