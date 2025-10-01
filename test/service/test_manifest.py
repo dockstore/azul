@@ -923,11 +923,11 @@ class TestManifests(DCP1ManifestTestCase):
                     # a pair of deterministically derived v5 UUIDs.
                     (
                         {'project': {'is': ['Single of human pancreas', 'Mouse Melanoma']}},
-                        'hca-manifest-20d97863-d8cf-54f3-8575-0f9593d3d7ef.4bc67e84-4873-591f-b524-a5fe4ec215eb'
+                        'hca-manifest-89bc9973-de91-5fc4-9c6a-8c1f547d45c6.4bc67e84-4873-591f-b524-a5fe4ec215eb'
                     ),
                     (
                         {},
-                        'hca-manifest-c3cf398e-1927-5aae-ba2a-81d8d1800b2d.4bc67e84-4873-591f-b524-a5fe4ec215eb'
+                        'hca-manifest-832a257c-5540-567b-bcb6-260d2e374508.4bc67e84-4873-591f-b524-a5fe4ec215eb'
                     )
                 ]:
                     with self.subTest(filters=filters, format=format):

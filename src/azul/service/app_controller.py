@@ -1,4 +1,3 @@
-import json
 from typing import (
     Any,
     Callable,
@@ -8,6 +7,7 @@ from typing import (
 import attr
 from chalice import (
     BadRequestError as BRE,
+    BadRequestError,
     NotFoundError,
 )
 
@@ -22,6 +22,7 @@ from azul.chalice import (
 from azul.service import (
     FileUrlFunc,
     FiltersJSON,
+    parse_filters,
 )
 from azul.strings import (
     pluralize,
@@ -33,14 +34,13 @@ class ServiceAppController(AppController):
     file_url_func: FileUrlFunc
 
     def _parse_filters(self, filters: str | None) -> FiltersJSON:
-        """
-        Parses a string with Azul filters in JSON syntax. Handles default cases
-        where filters are None or '{}'.
-        """
-        if filters is None:
-            return {}
-        else:
-            return json.loads(filters)
+        try:
+            return parse_filters(filters)
+        except AssertionError as e:
+            if R.caused(e):
+                raise R.propagate(e, BadRequestError)
+            else:
+                raise
 
 
 def validate_catalog(catalog):

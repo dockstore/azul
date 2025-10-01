@@ -36,9 +36,6 @@ import requests
 from app_test_case import (
     LocalAppTestCase,
 )
-from azul.json import (
-    copy_json,
-)
 from azul.logging import (
     configure_test_logging,
 )
@@ -313,7 +310,6 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                 final_url: furl
                 equivalent_url: furl
                 equivalent_filters: FiltersJSON
-                equivalent_input: ManifestGenerationState
 
                 iterations: list[JSON] = []
 
@@ -475,7 +471,7 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                     equivalent_url.args['filters'] = json.dumps(equivalent_filters)
                     url = self._request('PUT', equivalent_url, expect=302)
                     self.assertEqual(final_url, url)
-                    assert_get_cached_manifest(filters.update(equivalent_filters))
+                    assert_get_cached_manifest(filters)
 
                 modified_put()
 
@@ -487,11 +483,9 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                 #
                 @reset
                 def modified_put_after_expiration():
-                    nonlocal url, state, token_url, equivalent_input
+                    nonlocal url, state, token_url
                     get_cached_manifest.side_effect = not_found
-                    equivalent_input = copy_json(input)
-                    equivalent_input['filters']['explicit'] = equivalent_filters
-                    iterations.append(equivalent_input)
+                    iterations.append(input)
                     mock_start_generation()
                     url = self._request('PUT', equivalent_url, expect=301)
                     assert_get_cached_manifest()
@@ -499,7 +493,7 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                     assert_get_cached_manifest()
                     assert_start_generation()
                     token_url = url
-                    state = equivalent_input
+                    state = input
 
                 modified_put_after_expiration()
                 get_token_while_running()
@@ -516,7 +510,7 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                     state = self.app_module.generate_manifest(state, None)
                     get_cached_manifest_with_key.side_effect = not_found
                     previous_iteration = len(iterations)
-                    iterations.append(equivalent_input)
+                    iterations.append(input)
                     mock_start_generation(start=previous_iteration,
                                           describe=previous_iteration - 1)
                     url = self._request('GET', url, expect=301)
@@ -526,7 +520,7 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                     assert_start_generation(start=previous_iteration,
                                             describe=previous_iteration - 1)
                     token_url = url
-                    state = equivalent_input
+                    state = input
 
                 get_stale_token_when_done()
                 get_token_while_running()
