@@ -483,21 +483,17 @@ def oauth2_redirect():
                     body=html)
 
 
-def validate_repository_search(entity_type: EntityType,
-                               params: Mapping[str, str],
-                               **validators):
-    validate_params(params, **{
-        'catalog': validate_catalog,
-        'filters': validate_filters,
-        'order': validate_order,
-        'search_after': partial(validate_json_param, 'search_after'),
-        'search_after_uid': str,
-        'search_before': partial(validate_json_param, 'search_before'),
-        'search_before_uid': str,
-        'size': partial(validate_size, entity_type),
-        'sort': validate_field,
-        **validators
-    })
+def validate_repository_search(entity_type: EntityType, params: Mapping[str, str]):
+    validate_params(params,
+                    catalog=validate_catalog,
+                    filters=validate_filters,
+                    order=validate_order,
+                    search_after=partial(validate_json_param, 'search_after'),
+                    search_after_uid=str,
+                    search_before=partial(validate_json_param, 'search_before'),
+                    search_before_uid=str,
+                    size=partial(validate_size, entity_type),
+                    sort=validate_field)
 
 
 def validate_entity_type(entity_type: str):
