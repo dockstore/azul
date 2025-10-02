@@ -11,9 +11,11 @@ Linked issue: #0000
 ### Author
 
 - [ ] PR is assigned to the author
+- [ ] Status of PR is *In progress*
 - [ ] Target branch is `prod`
 - [ ] Name of PR branch matches `promotions/yyyy-mm-dd-prod`
 - [ ] PR is linked to the promotion issue it resolves
+- [ ] Status of linked issue is *In progress*
 - [ ] PR description links to connected issue
 - [ ] Title of linked issue matches `Promotion yyyy-mm-dd`
 - [ ] PR title starts with title of linked issue followed by ` prod`

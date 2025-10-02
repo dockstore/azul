@@ -15,10 +15,12 @@ Linked issues: #0000
 ### Author
 
 - [ ] PR is assigned to the author
+- [ ] Status of PR is *In progress*
 - [ ] PR is a draft
 - [ ] Target branch is `develop`
 - [ ] Name of PR branch matches `issues/<GitHub handle of author>/<issue#>-<slug>`
 - [ ] PR is linked to all issues it (partially) resolves
+- [ ] Status of linked issues is *In progress*
 - [ ] PR description links to connected issues
 - [ ] PR title matches<sup>1</sup> that of a linked issue <sub>or comment in PR explains why they're different</sub>
 - [ ] PR title references all linked issues
