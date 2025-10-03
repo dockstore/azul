@@ -222,6 +222,7 @@
             "source_datarepo_row_ids": [
                 "sequencing:d4f6c0c4-1e11-438e-8218-cfea63b8b051"
             ],
+            "source_datarepo_snapshot_id": "6c87f0e1-509d-46a4-b845-7584df39263b",
             "used_biosample_id": [
                 "f9d40cf6-37b8-22f3-ce35-0dc614d2452b"
             ]
@@ -254,7 +255,8 @@
             "reference_assembly": [],
             "source_datarepo_row_ids": [
                 "file_inventory:81d16471-97ac-48fe-99a0-73d9ec62c2c0"
-            ]
+            ],
+            "source_datarepo_snapshot_id": "6c87f0e1-509d-46a4-b845-7584df39263b"
         },
         "relations": []
     },
@@ -273,7 +275,8 @@
             ],
             "source_datarepo_row_ids": [
                 "subject:c23887a0-20c1-44e4-a09e-1c5dfdc2d0ef"
-            ]
+            ],
+            "source_datarepo_snapshot_id": "6c87f0e1-509d-46a4-b845-7584df39263b"
         },
         "relations": [
             {
@@ -299,7 +302,8 @@
             "reference_assembly": [],
             "source_datarepo_row_ids": [
                 "file_inventory:04ff3af2-0543-4ea6-830a-d31b957fa2ee"
-            ]
+            ],
+            "source_datarepo_snapshot_id": "6c87f0e1-509d-46a4-b845-7584df39263b"
         },
         "relations": []
     },
@@ -325,7 +329,8 @@
             ],
             "source_datarepo_row_ids": [
                 "subject:c23887a0-20c1-44e4-a09e-1c5dfdc2d0ef"
-            ]
+            ],
+            "source_datarepo_snapshot_id": "6c87f0e1-509d-46a4-b845-7584df39263b"
         },
         "relations": [
             {
@@ -340,6 +345,7 @@
         "object": {
             "datarepo_row_id": "28ed0f3a-157b-417b-a05a-48f57f9d3a34",
             "non_schema_column": "eggs",
+            "source_datarepo_snapshot_id": "6c87f0e1-509d-46a4-b845-7584df39263b",
             "version": "2022-06-01T00:00:00.000000Z"
         },
         "relations": []
@@ -356,7 +362,6 @@
                 "DS-BDIS"
             ],
             "datarepo_row_id": "2370f948-2783-4eb6-afea-e022897f4dcf",
-            "datarepo_snapshot_id": "6c87f0e1-509d-46a4-b845-7584df39263b",
             "dataset_id": "52ee7665-7033-63f2-a8d9-ce8e32666739",
             "owner": [
                 "Debbie Nickerson"
@@ -368,6 +373,7 @@
             "source_datarepo_row_ids": [
                 "workspace_attributes:7a22b629-9d81-4e4d-9297-f9e44ed760bc"
             ],
+            "source_datarepo_snapshot_id": "6c87f0e1-509d-46a4-b845-7584df39263b",
             "title": "ANVIL_CMG_UWASH_DS_BDIS"
         },
         "relations": []
@@ -394,7 +400,8 @@
             ],
             "source_datarepo_row_ids": [
                 "subject:c23887a0-20c1-44e4-a09e-1c5dfdc2d0ef"
-            ]
+            ],
+            "source_datarepo_snapshot_id": "6c87f0e1-509d-46a4-b845-7584df39263b"
         },
         "relations": [
             {
@@ -420,7 +427,8 @@
             "reference_assembly": [],
             "source_datarepo_row_ids": [
                 "file_inventory:9658d94a-511d-4b49-82c3-d0cb07e0cff2"
-            ]
+            ],
+            "source_datarepo_snapshot_id": "6c87f0e1-509d-46a4-b845-7584df39263b"
         },
         "relations": []
     },
@@ -430,6 +438,7 @@
         "object": {
             "datarepo_row_id": "9687b86d-a2ae-a083-b910-a16bcbef1ba4",
             "non_schema_column": "spam",
+            "source_datarepo_snapshot_id": "6c87f0e1-509d-46a4-b845-7584df39263b",
             "version": "2022-06-01T00:00:00.000000Z"
         },
         "relations": []
@@ -440,6 +449,7 @@
         "object": {
             "datarepo_row_id": "9db5952c-c454-49d9-8a62-5abb026701c0",
             "non_schema_column": "baked beans",
+            "source_datarepo_snapshot_id": "6c87f0e1-509d-46a4-b845-7584df39263b",
             "version": "2022-06-01T00:00:00.000000Z"
         },
         "relations": []
@@ -451,6 +461,7 @@
             "dataset_id": "52ee7665-7033-63f2-a8d9-ce8e32666739",
             "description": "Study description from DUOS",
             "duos_id": "DUOS-000000",
+            "source_datarepo_snapshot_id": "6c87f0e1-509d-46a4-b845-7584df39263b",
             "version": "2022-06-01T00:00:00.000000Z"
         },
         "relations": [
@@ -475,6 +486,7 @@
             "source_datarepo_row_ids": [
                 "sequencing:a6c663c7-6f26-4ed2-af9d-48e9c709a22b"
             ],
+            "source_datarepo_snapshot_id": "6c87f0e1-509d-46a4-b845-7584df39263b",
             "used_biosample_id": [
                 "f9d40cf6-37b8-22f3-ce35-0dc614d2452b"
             ]
@@ -514,7 +526,8 @@
             ],
             "source_datarepo_row_ids": [
                 "sample:98048c3b-2525-4090-94fd-477de31f2608"
-            ]
+            ],
+            "source_datarepo_snapshot_id": "6c87f0e1-509d-46a4-b845-7584df39263b"
         },
         "relations": [
             {

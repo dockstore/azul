@@ -163,6 +163,11 @@
                         },
                         {
                             "namespace": "anvil_activity",
+                            "name": "source_datarepo_snapshot_id",
+                            "type": "string"
+                        },
+                        {
+                            "namespace": "anvil_activity",
                             "name": "used_biosample_id",
                             "type": {
                                 "type": "array",
@@ -253,6 +258,11 @@
                         },
                         {
                             "namespace": "anvil_alignmentactivity",
+                            "name": "source_datarepo_snapshot_id",
+                            "type": "string"
+                        },
+                        {
+                            "namespace": "anvil_alignmentactivity",
                             "name": "used_file_id",
                             "type": {
                                 "type": "array",
@@ -288,6 +298,11 @@
                                     "string"
                                 ]
                             }
+                        },
+                        {
+                            "namespace": "anvil_antibody",
+                            "name": "source_datarepo_snapshot_id",
+                            "type": "string"
                         },
                         {
                             "namespace": "anvil_antibody",
@@ -372,6 +387,11 @@
                                     "string"
                                 ]
                             }
+                        },
+                        {
+                            "namespace": "anvil_assayactivity",
+                            "name": "source_datarepo_snapshot_id",
+                            "type": "string"
                         },
                         {
                             "namespace": "anvil_assayactivity",
@@ -491,6 +511,11 @@
                                     "string"
                                 ]
                             }
+                        },
+                        {
+                            "namespace": "anvil_biosample",
+                            "name": "source_datarepo_snapshot_id",
+                            "type": "string"
                         }
                     ]
                 },
@@ -534,11 +559,6 @@
                         {
                             "namespace": "anvil_dataset",
                             "name": "datarepo_row_id",
-                            "type": "string"
-                        },
-                        {
-                            "namespace": "anvil_dataset",
-                            "name": "datarepo_snapshot_id",
                             "type": "string"
                         },
                         {
@@ -589,6 +609,11 @@
                                     "string"
                                 ]
                             }
+                        },
+                        {
+                            "namespace": "anvil_dataset",
+                            "name": "source_datarepo_snapshot_id",
+                            "type": "string"
                         },
                         {
                             "namespace": "anvil_dataset",
@@ -713,6 +738,11 @@
                                     "string"
                                 ]
                             }
+                        },
+                        {
+                            "namespace": "anvil_diagnosis",
+                            "name": "source_datarepo_snapshot_id",
+                            "type": "string"
                         }
                     ]
                 },
@@ -786,6 +816,11 @@
                                     "string"
                                 ]
                             }
+                        },
+                        {
+                            "namespace": "anvil_donor",
+                            "name": "source_datarepo_snapshot_id",
+                            "type": "string"
                         }
                     ]
                 },
@@ -891,6 +926,11 @@
                                     "string"
                                 ]
                             }
+                        },
+                        {
+                            "namespace": "anvil_file",
+                            "name": "source_datarepo_snapshot_id",
+                            "type": "string"
                         }
                     ]
                 },
@@ -962,6 +1002,11 @@
                                     "string"
                                 ]
                             }
+                        },
+                        {
+                            "namespace": "anvil_project",
+                            "name": "source_datarepo_snapshot_id",
+                            "type": "string"
                         },
                         {
                             "namespace": "anvil_project",
@@ -1041,6 +1086,11 @@
                         },
                         {
                             "namespace": "anvil_sequencingactivity",
+                            "name": "source_datarepo_snapshot_id",
+                            "type": "string"
+                        },
+                        {
+                            "namespace": "anvil_sequencingactivity",
                             "name": "used_biosample_id",
                             "type": {
                                 "type": "array",
@@ -1115,6 +1165,11 @@
                         },
                         {
                             "namespace": "anvil_variantcallingactivity",
+                            "name": "source_datarepo_snapshot_id",
+                            "type": "string"
+                        },
+                        {
+                            "namespace": "anvil_variantcallingactivity",
                             "name": "used_file_id",
                             "type": {
                                 "type": "array",
@@ -1152,6 +1207,11 @@
                         },
                         {
                             "namespace": "duos_dataset_registration",
+                            "name": "source_datarepo_snapshot_id",
+                            "type": "string"
+                        },
+                        {
+                            "namespace": "duos_dataset_registration",
                             "name": "version",
                             "type": "string"
                         }
@@ -1169,6 +1229,11 @@
                         {
                             "namespace": "non_schema_orphan_table",
                             "name": "non_schema_column",
+                            "type": "string"
+                        },
+                        {
+                            "namespace": "non_schema_orphan_table",
+                            "name": "source_datarepo_snapshot_id",
                             "type": "string"
                         },
                         {

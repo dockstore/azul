@@ -2064,16 +2064,14 @@ class PFBVerbatimManifestGenerator(FileBasedManifestGenerator,
         #        https://github.com/DataBiosphere/azul/issues/7411
         if config.is_anvil_enabled(self.catalog):
             for replica in replicas:
-                if replica['replica_type'] == 'anvil_dataset':
-                    source_id = replica['source']['id']
-                    replica['contents']['datarepo_snapshot_id'] = source_id
+                source_id = replica['source']['id']
+                replica['contents']['source_datarepo_snapshot_id'] = source_id
             for schema in replica_schemas:
-                if schema['name'] == 'anvil_dataset':
-                    field_schema = plugin._pfb_schema_from_anvil_column(table_name='anvil_dataset',
-                                                                        column_name='datarepo_snapshot_id',
-                                                                        anvil_datatype='string',
-                                                                        is_optional=False)
-                    insort(schema['fields'], field_schema, key=itemgetter('name'))
+                field_schema = plugin._pfb_schema_from_anvil_column(table_name=schema['name'],
+                                                                    column_name='source_datarepo_snapshot_id',
+                                                                    anvil_datatype='string',
+                                                                    is_optional=False)
+                insort(schema['fields'], field_schema, key=itemgetter('name'))
         # Ensure field order is consistent for unit tests
         replica_schemas.sort(key=itemgetter('name'))
         links = {
