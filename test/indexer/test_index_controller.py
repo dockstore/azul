@@ -134,7 +134,7 @@ class TestIndexController(DCP2IndexerTestCase, WorkQueueTestCase):
         plugin = self.index_repository_service.repository_plugin(self.catalog)
         plugin._assert_source(source)
         self._create_mock_queues(config.indexer_queue_names)
-        self.queue_service.remote_reindex(self.catalog, {str(source.spec)})
+        self.queue_service.remote_reindex(self.catalog, [source.spec])
         messages = one(self._read_queue(self.queue_service.notifications_queue()))
         expected_notification = dict(action='reindex',
                                      catalog=self.catalog,
