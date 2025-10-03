@@ -284,13 +284,16 @@ class SerializableAttrs(Serializable, attrs.AttrsInstance):
         """
         return {}
 
-    def to_json(self) -> dict[str, AnyJSON]:
+    def _to_json(self) -> dict[str, AnyJSON]:
         """
         Typically, the overrides in subclasses will be generated automatically
         but if a subclass explicitly defines an override, it will be left alone.
         """
-        self._assert_concrete()
         return {}
+
+    def to_json(self) -> dict[str, AnyJSON]:
+        self._assert_concrete()
+        return self._to_json()
 
     @classmethod
     def _assert_concrete(cls):
@@ -337,7 +340,7 @@ class SerializableAttrs(Serializable, attrs.AttrsInstance):
         # additional fields defined so we need to start from scratch and reset
         # any left-overs that would interfere with that.
         #
-        if cls._has_custom('to_json') and cls._has_custom('_from_json'):
+        if cls._has_custom('_to_json') and cls._has_custom('_from_json'):
             pass
         else:
             if '_deferred_fields' in cls.__dict__:
@@ -392,11 +395,11 @@ class SerializableAttrs(Serializable, attrs.AttrsInstance):
         globals = {cls.__name__: cls}
         serializers = (cls.Serializer(cls, field, globals) for field in fields)
         to_json = cls._indent([
-            'def to_json(self):', [
+            'def _to_json(self):', [
                 # Using the super() shortcut would require messing with the
                 # ``__closure__`` attribute of the function, and, we assume,
                 # would be slower.
-                f'json = super({cls.__name__}, self).to_json()',
+                f'json = super({cls.__name__}, self)._to_json()',
                 *flatten(
                     [
                         f'x = self.{serializer.field.name}',
