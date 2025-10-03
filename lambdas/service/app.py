@@ -483,23 +483,6 @@ def oauth2_redirect():
                     body=html)
 
 
-def validate_repository_search(entity_type: EntityType,
-                               params: Mapping[str, str],
-                               **validators):
-    validate_params(params, **{
-        'catalog': validate_catalog,
-        'filters': validate_filters,
-        'order': validate_order,
-        'search_after': partial(validate_json_param, 'search_after'),
-        'search_after_uid': str,
-        'search_before': partial(validate_json_param, 'search_before'),
-        'search_before_uid': str,
-        'size': partial(validate_size, entity_type),
-        'sort': validate_field,
-        **validators
-    })
-
-
 def validate_entity_type(entity_type: str):
     entity_types = app.metadata_plugin.exposed_indices.keys()
     if entity_type not in entity_types:
@@ -994,7 +977,16 @@ def repository_search(entity_type: str, entity_id: str | None = None) -> JSON:
     request = app.current_request
     query_params = request.query_params or {}
     _hoist_parameters(query_params, request)
-    validate_repository_search(entity_type, query_params)
+    validate_params(query_params,
+                    catalog=validate_catalog,
+                    filters=validate_filters,
+                    order=validate_order,
+                    search_after=partial(validate_json_param, 'search_after'),
+                    search_after_uid=str,
+                    search_before=partial(validate_json_param, 'search_before'),
+                    search_before_uid=str,
+                    size=partial(validate_size, entity_type),
+                    sort=validate_field)
     validate_entity_type(entity_type)
     return app.repository_controller.search(catalog=app.catalog,
                                             entity_type=entity_type,
