@@ -1,7 +1,6 @@
 from abc import (
     ABCMeta,
 )
-import cgi
 from collections import (
     defaultdict,
 )
@@ -67,6 +66,9 @@ from azul.collections import (
     adict,
     compose_keys,
     none_safe_tuple_key,
+)
+from azul.http import (
+    parse_header,
 )
 from azul.indexer import (
     Prefix,
@@ -1037,8 +1039,9 @@ class TestManifestCache(DCP1ManifestTestCase):
                         else:
                             _time_until_object_expires.assert_called_once()
                         _time_until_object_expires.reset_mock()
-                        header = response.headers['Content-Disposition']
-                        value, params = cgi.parse_header(header)
+                        name = 'Content-Disposition'
+                        value = response.headers[name]
+                        value, params = parse_header(name, value)
                         self.assertEqual('attachment', value)
                         file_names[filter_project_id].append(params['filename'])
             with self.subTest(bundle_fqid=bundle_fqid.uuid[0:8]):
