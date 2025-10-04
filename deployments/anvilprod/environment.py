@@ -1171,7 +1171,7 @@ anvil11_sources = mkdict(anvil10_sources, 371, mkdelta([
     bqsrc('b2659034', 'CCDG_Broad_NP_Epilepsy_USAVANControls_HMB_GSO_GSA_MD_20250721_ANV5_202508052211'),
     bqsrc('cf9e28f1', 'CCDG_Broad_NP_Epilepsy_USAVAN_HMB_GSO_GSA_MD_20250721_ANV5_202508052202'),
     bqsrc('11a5f960', 'CCDG_Broad_NP_Epilepsy_USAVAN_HMB_GSO_WES_20250721_ANV5_202507300959'),
-    # Supersedes snapshot ccdg_broad_np_epilepsy_usavancontrols_hmb_gso_wes… popped below
+    # Supersedes snapshot ccdg_broad_np_epilepsy_usavancontrols_hmb_gso_wes_… popped below
     bqsrc('ce5b4d0e', 'CCDG_Broad_NP_Epilepsy_USAVANcontrols_HMB_GSO_WES_20250721_ANV5_202507301007'),
     bqsrc('84b1d212', 'CCDG_Broad_NP_Epilepsy_ZAFAGN_DS_EPI_COMO_MDS_GSA_MD_20250721_ANV5_202508052220'),
     # Supersedes snapshot ccdg_broad_np_epilepsy_zafagn_ds_epi_como_mds_wes… popped below
