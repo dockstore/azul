@@ -200,15 +200,6 @@
                         "uuid": [
                             "15b76f9c-6b46-433f-851d-34e89f1b9ba6"
                         ],
-                        "size": [
-                            213021639
-                        ],
-                        "size_": [
-                            213021639
-                        ],
-                        "name": [
-                            "307500.merged.matefixed.sorted.markeddups.recal.g.vcf.gz"
-                        ],
                         "crc32": [
                             ""
                         ],
@@ -405,9 +396,6 @@
                         "is_supplementary": 0,
                         "version": "2022-06-01T00:00:00.000000Z",
                         "uuid": "15b76f9c-6b46-433f-851d-34e89f1b9ba6",
-                        "size": 213021639,
-                        "size_": 213021639,
-                        "name": "307500.merged.matefixed.sorted.markeddups.recal.g.vcf.gz",
                         "crc32": "",
                         "sha256": "",
                         "drs_uri": "drs://mock_tdr.lan/v1_6c87f0e1-509d-46a4-b845-7584df39263b_1e269f04-4347-4188-b060-1dcc69e71d67"
@@ -651,9 +639,6 @@
                         "is_supplementary": 0,
                         "version": "2022-06-01T00:00:00.000000Z",
                         "uuid": "15b76f9c-6b46-433f-851d-34e89f1b9ba6",
-                        "size": 213021639,
-                        "size_": 213021639,
-                        "name": "307500.merged.matefixed.sorted.markeddups.recal.g.vcf.gz",
                         "crc32": "",
                         "sha256": "",
                         "drs_uri": "drs://mock_tdr.lan/v1_6c87f0e1-509d-46a4-b845-7584df39263b_1e269f04-4347-4188-b060-1dcc69e71d67"
@@ -843,9 +828,6 @@
                         "is_supplementary": 0,
                         "version": "2022-06-01T00:00:00.000000Z",
                         "uuid": "15b76f9c-6b46-433f-851d-34e89f1b9ba6",
-                        "size": 213021639,
-                        "size_": 213021639,
-                        "name": "307500.merged.matefixed.sorted.markeddups.recal.g.vcf.gz",
                         "crc32": "",
                         "sha256": "",
                         "drs_uri": "drs://mock_tdr.lan/v1_6c87f0e1-509d-46a4-b845-7584df39263b_1e269f04-4347-4188-b060-1dcc69e71d67"
@@ -1144,15 +1126,6 @@
                         "uuid": [
                             "15b76f9c-6b46-433f-851d-34e89f1b9ba6"
                         ],
-                        "size": [
-                            213021639
-                        ],
-                        "size_": [
-                            213021639
-                        ],
-                        "name": [
-                            "307500.merged.matefixed.sorted.markeddups.recal.g.vcf.gz"
-                        ],
                         "crc32": [
                             ""
                         ],
@@ -1199,15 +1172,6 @@
                         ],
                         "uuid": [
                             "3b17377b-16b1-431c-9967-e5d01fc5923f"
-                        ],
-                        "size": [
-                            3306845592
-                        ],
-                        "size_": [
-                            3306845592
-                        ],
-                        "name": [
-                            "307500.merged.matefixed.sorted.markeddups.recal.bam"
                         ],
                         "crc32": [
                             ""
@@ -1423,9 +1387,6 @@
                         "is_supplementary": 0,
                         "version": "2022-06-01T00:00:00.000000Z",
                         "uuid": "15b76f9c-6b46-433f-851d-34e89f1b9ba6",
-                        "size": 213021639,
-                        "size_": 213021639,
-                        "name": "307500.merged.matefixed.sorted.markeddups.recal.g.vcf.gz",
                         "crc32": "",
                         "sha256": "",
                         "drs_uri": "drs://mock_tdr.lan/v1_6c87f0e1-509d-46a4-b845-7584df39263b_1e269f04-4347-4188-b060-1dcc69e71d67"
@@ -1450,9 +1411,6 @@
                         "is_supplementary": 0,
                         "version": "2022-06-01T00:00:00.000000Z",
                         "uuid": "3b17377b-16b1-431c-9967-e5d01fc5923f",
-                        "size": 3306845592,
-                        "size_": 3306845592,
-                        "name": "307500.merged.matefixed.sorted.markeddups.recal.bam",
                         "crc32": "",
                         "sha256": "",
                         "drs_uri": "drs://mock_tdr.lan/v1_6c87f0e1-509d-46a4-b845-7584df39263b_8b722e88-8103-49c1-b351-e64fa7c6ab37"
@@ -1701,9 +1659,6 @@
                         "is_supplementary": 0,
                         "version": "2022-06-01T00:00:00.000000Z",
                         "uuid": "3b17377b-16b1-431c-9967-e5d01fc5923f",
-                        "size": 3306845592,
-                        "size_": 3306845592,
-                        "name": "307500.merged.matefixed.sorted.markeddups.recal.bam",
                         "crc32": "",
                         "sha256": "",
                         "drs_uri": "drs://mock_tdr.lan/v1_6c87f0e1-509d-46a4-b845-7584df39263b_8b722e88-8103-49c1-b351-e64fa7c6ab37"
@@ -1929,9 +1884,6 @@
                         "is_supplementary": 0,
                         "version": "2022-06-01T00:00:00.000000Z",
                         "uuid": "3b17377b-16b1-431c-9967-e5d01fc5923f",
-                        "size": 3306845592,
-                        "size_": 3306845592,
-                        "name": "307500.merged.matefixed.sorted.markeddups.recal.bam",
                         "crc32": "",
                         "sha256": "",
                         "drs_uri": "drs://mock_tdr.lan/v1_6c87f0e1-509d-46a4-b845-7584df39263b_8b722e88-8103-49c1-b351-e64fa7c6ab37"
@@ -2148,15 +2100,6 @@
                         ],
                         "uuid": [
                             "3b17377b-16b1-431c-9967-e5d01fc5923f"
-                        ],
-                        "size": [
-                            3306845592
-                        ],
-                        "size_": [
-                            3306845592
-                        ],
-                        "name": [
-                            "307500.merged.matefixed.sorted.markeddups.recal.bam"
                         ],
                         "crc32": [
                             ""
@@ -2388,9 +2331,6 @@
                         "is_supplementary": 0,
                         "version": "2022-06-01T00:00:00.000000Z",
                         "uuid": "3b17377b-16b1-431c-9967-e5d01fc5923f",
-                        "size": 3306845592,
-                        "size_": 3306845592,
-                        "name": "307500.merged.matefixed.sorted.markeddups.recal.bam",
                         "crc32": "",
                         "sha256": "",
                         "drs_uri": "drs://mock_tdr.lan/v1_6c87f0e1-509d-46a4-b845-7584df39263b_8b722e88-8103-49c1-b351-e64fa7c6ab37"
@@ -2605,15 +2545,6 @@
                         "uuid": [
                             "15b76f9c-6b46-433f-851d-34e89f1b9ba6"
                         ],
-                        "size": [
-                            213021639
-                        ],
-                        "size_": [
-                            213021639
-                        ],
-                        "name": [
-                            "307500.merged.matefixed.sorted.markeddups.recal.g.vcf.gz"
-                        ],
                         "crc32": [
                             ""
                         ],
@@ -2660,15 +2591,6 @@
                         ],
                         "uuid": [
                             "3b17377b-16b1-431c-9967-e5d01fc5923f"
-                        ],
-                        "size": [
-                            3306845592
-                        ],
-                        "size_": [
-                            3306845592
-                        ],
-                        "name": [
-                            "307500.merged.matefixed.sorted.markeddups.recal.bam"
                         ],
                         "crc32": [
                             ""
@@ -2884,9 +2806,6 @@
                         "is_supplementary": 0,
                         "version": "2022-06-01T00:00:00.000000Z",
                         "uuid": "15b76f9c-6b46-433f-851d-34e89f1b9ba6",
-                        "size": 213021639,
-                        "size_": 213021639,
-                        "name": "307500.merged.matefixed.sorted.markeddups.recal.g.vcf.gz",
                         "crc32": "",
                         "sha256": "",
                         "drs_uri": "drs://mock_tdr.lan/v1_6c87f0e1-509d-46a4-b845-7584df39263b_1e269f04-4347-4188-b060-1dcc69e71d67"
@@ -2911,9 +2830,6 @@
                         "is_supplementary": 0,
                         "version": "2022-06-01T00:00:00.000000Z",
                         "uuid": "3b17377b-16b1-431c-9967-e5d01fc5923f",
-                        "size": 3306845592,
-                        "size_": 3306845592,
-                        "name": "307500.merged.matefixed.sorted.markeddups.recal.bam",
                         "crc32": "",
                         "sha256": "",
                         "drs_uri": "drs://mock_tdr.lan/v1_6c87f0e1-509d-46a4-b845-7584df39263b_8b722e88-8103-49c1-b351-e64fa7c6ab37"
@@ -3184,15 +3100,6 @@
                         "uuid": [
                             "15b76f9c-6b46-433f-851d-34e89f1b9ba6"
                         ],
-                        "size": [
-                            213021639
-                        ],
-                        "size_": [
-                            213021639
-                        ],
-                        "name": [
-                            "307500.merged.matefixed.sorted.markeddups.recal.g.vcf.gz"
-                        ],
                         "crc32": [
                             ""
                         ],
@@ -3239,15 +3146,6 @@
                         ],
                         "uuid": [
                             "3b17377b-16b1-431c-9967-e5d01fc5923f"
-                        ],
-                        "size": [
-                            3306845592
-                        ],
-                        "size_": [
-                            3306845592
-                        ],
-                        "name": [
-                            "307500.merged.matefixed.sorted.markeddups.recal.bam"
                         ],
                         "crc32": [
                             ""
@@ -3463,9 +3361,6 @@
                         "is_supplementary": 0,
                         "version": "2022-06-01T00:00:00.000000Z",
                         "uuid": "15b76f9c-6b46-433f-851d-34e89f1b9ba6",
-                        "size": 213021639,
-                        "size_": 213021639,
-                        "name": "307500.merged.matefixed.sorted.markeddups.recal.g.vcf.gz",
                         "crc32": "",
                         "sha256": "",
                         "drs_uri": "drs://mock_tdr.lan/v1_6c87f0e1-509d-46a4-b845-7584df39263b_1e269f04-4347-4188-b060-1dcc69e71d67"
@@ -3490,9 +3385,6 @@
                         "is_supplementary": 0,
                         "version": "2022-06-01T00:00:00.000000Z",
                         "uuid": "3b17377b-16b1-431c-9967-e5d01fc5923f",
-                        "size": 3306845592,
-                        "size_": 3306845592,
-                        "name": "307500.merged.matefixed.sorted.markeddups.recal.bam",
                         "crc32": "",
                         "sha256": "",
                         "drs_uri": "drs://mock_tdr.lan/v1_6c87f0e1-509d-46a4-b845-7584df39263b_8b722e88-8103-49c1-b351-e64fa7c6ab37"
@@ -3753,15 +3645,6 @@
                         "uuid": [
                             "15b76f9c-6b46-433f-851d-34e89f1b9ba6"
                         ],
-                        "size": [
-                            213021639
-                        ],
-                        "size_": [
-                            213021639
-                        ],
-                        "name": [
-                            "307500.merged.matefixed.sorted.markeddups.recal.g.vcf.gz"
-                        ],
                         "crc32": [
                             ""
                         ],
@@ -3808,15 +3691,6 @@
                         ],
                         "uuid": [
                             "3b17377b-16b1-431c-9967-e5d01fc5923f"
-                        ],
-                        "size": [
-                            3306845592
-                        ],
-                        "size_": [
-                            3306845592
-                        ],
-                        "name": [
-                            "307500.merged.matefixed.sorted.markeddups.recal.bam"
                         ],
                         "crc32": [
                             ""
@@ -4032,9 +3906,6 @@
                         "is_supplementary": 0,
                         "version": "2022-06-01T00:00:00.000000Z",
                         "uuid": "15b76f9c-6b46-433f-851d-34e89f1b9ba6",
-                        "size": 213021639,
-                        "size_": 213021639,
-                        "name": "307500.merged.matefixed.sorted.markeddups.recal.g.vcf.gz",
                         "crc32": "",
                         "sha256": "",
                         "drs_uri": "drs://mock_tdr.lan/v1_6c87f0e1-509d-46a4-b845-7584df39263b_1e269f04-4347-4188-b060-1dcc69e71d67"
@@ -4059,9 +3930,6 @@
                         "is_supplementary": 0,
                         "version": "2022-06-01T00:00:00.000000Z",
                         "uuid": "3b17377b-16b1-431c-9967-e5d01fc5923f",
-                        "size": 3306845592,
-                        "size_": 3306845592,
-                        "name": "307500.merged.matefixed.sorted.markeddups.recal.bam",
                         "crc32": "",
                         "sha256": "",
                         "drs_uri": "drs://mock_tdr.lan/v1_6c87f0e1-509d-46a4-b845-7584df39263b_8b722e88-8103-49c1-b351-e64fa7c6ab37"

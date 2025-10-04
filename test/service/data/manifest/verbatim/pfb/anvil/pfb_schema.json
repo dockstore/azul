@@ -533,6 +533,11 @@
                             "type": "string"
                         },
                         {
+                            "name": "datarepo_snapshot_id",
+                            "namespace": "anvil_dataset",
+                            "type": "string"
+                        },
+                        {
                             "name": "dataset_id",
                             "namespace": "anvil_dataset",
                             "type": "string"

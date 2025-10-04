@@ -66,6 +66,9 @@ log = logging.getLogger(__name__)
 class Main:
     owner = 'DataBiosphere'
 
+    #: Only issues with this label will be migrated
+    label = 'orange'
+
     project_title = 'Azul'
 
     status_field_name = 'Status'
@@ -80,7 +83,7 @@ class Main:
         'Epics': 'Backlog',
         'Parked': 'Parked',
         'Debt': 'Backlog',
-        'Compliance controls': 'Backlog',  # add label
+        'Compliance controls': 'Backlog',
         'Compliance': 'Backlog',
         'Backlog': 'Backlog',
         'Up next': 'Up next',
@@ -248,7 +251,8 @@ class Main:
                 zh_blockees = {}
                 for blockee in nodes(zh_issue, 'blockedIssues'):
                     if json_str(blockee['ghNodeId']).startswith('PR_'):
-                        log.warning('GitHub cannot block PRs on issues, ignoring blockee %s')
+                        log.warning('GitHub cannot block PRs on issues. '
+                                    'Ignoring blockee %s', blockee['htmlUrl'])
                     elif any(json_str(blockee['htmlUrl']).startswith(repo) for repo in self.archived_repos):
                         log.warning('GitHub cannot block issues in archived repositories. '
                                     'Ignoring blockee %s', blockee['htmlUrl'])
@@ -404,7 +408,7 @@ class Main:
         while True:
             response = self._zenhub(self._body(
                 container_id=container_id,
-                label='orange',
+                label=self.label,
                 cursor=cursor,
                 query=query
             ))

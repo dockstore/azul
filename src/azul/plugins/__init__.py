@@ -837,7 +837,7 @@ class File(SerializableAttrs, metaclass=ABCMeta):
 
     @classmethod
     @abstractmethod
-    def from_hit(cls, hit: JSON) -> Self:
+    def from_index(cls, hit: JSON) -> Self:
         """
         Instantiate this class from an entity aggregate document retrieved from
         Elasticsearch.

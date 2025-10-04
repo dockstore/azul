@@ -504,7 +504,7 @@ class TestManifests(DCP1ManifestTestCase):
              self._drs_uri('f2b6c6f0-8d25-4aae-b255-1974cc110cfe',
                            '2018-09-14T12:33:43.720332Z')),
 
-            ('file_url',
+            ('file_azul_url',
              self._file_url('5f9b45af-9a26-4b16-a785-7f2d1053dd7c',
                             '2018-09-14T12:33:47.012715Z'),
              self._file_url('f2b6c6f0-8d25-4aae-b255-1974cc110cfe',
@@ -653,8 +653,8 @@ class TestManifests(DCP1ManifestTestCase):
                 'file_uuid': 'c1c4a2bc-b5fb-4083-af64-f5dec70d7f9d',
                 'file_drs_uri': self._drs_uri('c1c4a2bc-b5fb-4083-af64-f5dec70d7f9d',
                                               '2018-10-10T03:10:37.983672Z'),
-                'file_url': self._file_url('c1c4a2bc-b5fb-4083-af64-f5dec70d7f9d',
-                                           '2018-10-10T03:10:37.983672Z'),
+                'file_azul_url': self._file_url('c1c4a2bc-b5fb-4083-af64-f5dec70d7f9d',
+                                                '2018-10-10T03:10:37.983672Z'),
                 'specimen_from_organism.organ': 'brain'
             },
             # Related files from zarray store
@@ -664,8 +664,8 @@ class TestManifests(DCP1ManifestTestCase):
                 'file_uuid': '54541cc5-9010-425b-9037-22e43948c97c',
                 'file_drs_uri': self._drs_uri('54541cc5-9010-425b-9037-22e43948c97c',
                                               '2018-10-10T03:10:38.239541Z'),
-                'file_url': self._file_url('54541cc5-9010-425b-9037-22e43948c97c',
-                                           '2018-10-10T03:10:38.239541Z'),
+                'file_azul_url': self._file_url('54541cc5-9010-425b-9037-22e43948c97c',
+                                                '2018-10-10T03:10:38.239541Z'),
                 'specimen_from_organism.organ': 'brain'
             },
             {
@@ -674,8 +674,8 @@ class TestManifests(DCP1ManifestTestCase):
                 'file_uuid': '66b8f976-6f1e-45b3-bd97-069658c3c847',
                 'file_drs_uri': self._drs_uri('66b8f976-6f1e-45b3-bd97-069658c3c847',
                                               '2018-10-10T03:10:38.474167Z'),
-                'file_url': self._file_url('66b8f976-6f1e-45b3-bd97-069658c3c847',
-                                           '2018-10-10T03:10:38.474167Z'),
+                'file_azul_url': self._file_url('66b8f976-6f1e-45b3-bd97-069658c3c847',
+                                                '2018-10-10T03:10:38.474167Z'),
                 'specimen_from_organism.organ': 'brain'
             },
             {
@@ -684,8 +684,8 @@ class TestManifests(DCP1ManifestTestCase):
                 'file_uuid': 'ac05d7fb-d6b9-4ab1-8c04-6211450dbb62',
                 'file_drs_uri': self._drs_uri('ac05d7fb-d6b9-4ab1-8c04-6211450dbb62',
                                               '2018-10-10T03:10:38.714461Z'),
-                'file_url': self._file_url('ac05d7fb-d6b9-4ab1-8c04-6211450dbb62',
-                                           '2018-10-10T03:10:38.714461Z'),
+                'file_azul_url': self._file_url('ac05d7fb-d6b9-4ab1-8c04-6211450dbb62',
+                                                '2018-10-10T03:10:38.714461Z'),
                 'specimen_from_organism.organ': 'brain'
             },
             {
@@ -694,8 +694,8 @@ class TestManifests(DCP1ManifestTestCase):
                 'file_uuid': '0c518a52-f315-4ea2-beed-1c9d8f2d802b',
                 'file_drs_uri': self._drs_uri('0c518a52-f315-4ea2-beed-1c9d8f2d802b',
                                               '2018-10-10T03:10:39.039270Z'),
-                'file_url': self._file_url('0c518a52-f315-4ea2-beed-1c9d8f2d802b',
-                                           '2018-10-10T03:10:39.039270Z'),
+                'file_azul_url': self._file_url('0c518a52-f315-4ea2-beed-1c9d8f2d802b',
+                                                '2018-10-10T03:10:39.039270Z'),
                 'specimen_from_organism.organ': 'brain'
             },
             {
@@ -704,8 +704,8 @@ class TestManifests(DCP1ManifestTestCase):
                 'file_uuid': '136108ab-277e-47a4-acc3-1feed8fb2f25',
                 'file_drs_uri': self._drs_uri('136108ab-277e-47a4-acc3-1feed8fb2f25',
                                               '2018-10-10T03:10:39.426609Z'),
-                'file_url': self._file_url('136108ab-277e-47a4-acc3-1feed8fb2f25',
-                                           '2018-10-10T03:10:39.426609Z'),
+                'file_azul_url': self._file_url('136108ab-277e-47a4-acc3-1feed8fb2f25',
+                                                '2018-10-10T03:10:39.426609Z'),
                 'specimen_from_organism.organ': 'brain'
             },
             {
@@ -714,8 +714,8 @@ class TestManifests(DCP1ManifestTestCase):
                 'file_uuid': '0bef5419-739c-4a2c-aedb-43754d55d51c',
                 'file_drs_uri': self._drs_uri('0bef5419-739c-4a2c-aedb-43754d55d51c',
                                               '2018-10-10T03:10:39.642846Z'),
-                'file_url': self._file_url('0bef5419-739c-4a2c-aedb-43754d55d51c',
-                                           '2018-10-10T03:10:39.642846Z'),
+                'file_azul_url': self._file_url('0bef5419-739c-4a2c-aedb-43754d55d51c',
+                                                '2018-10-10T03:10:39.642846Z'),
                 'specimen_from_organism.organ': 'brain'
             },
             {
@@ -724,8 +724,8 @@ class TestManifests(DCP1ManifestTestCase):
                 'file_uuid': '3a5f7299-1aa1-4060-9631-212c29b4d807',
                 'file_drs_uri': self._drs_uri('3a5f7299-1aa1-4060-9631-212c29b4d807',
                                               '2018-10-10T03:10:39.899615Z'),
-                'file_url': self._file_url('3a5f7299-1aa1-4060-9631-212c29b4d807',
-                                           '2018-10-10T03:10:39.899615Z'),
+                'file_azul_url': self._file_url('3a5f7299-1aa1-4060-9631-212c29b4d807',
+                                                '2018-10-10T03:10:39.899615Z'),
                 'specimen_from_organism.organ': 'brain'
             },
             {
@@ -734,8 +734,8 @@ class TestManifests(DCP1ManifestTestCase):
                 'file_uuid': 'a8f0dc39-6019-4fc7-899d-4e34a48d03e5',
                 'file_drs_uri': self._drs_uri('a8f0dc39-6019-4fc7-899d-4e34a48d03e5',
                                               '2018-10-10T03:10:40.113268Z'),
-                'file_url': self._file_url('a8f0dc39-6019-4fc7-899d-4e34a48d03e5',
-                                           '2018-10-10T03:10:40.113268Z'),
+                'file_azul_url': self._file_url('a8f0dc39-6019-4fc7-899d-4e34a48d03e5',
+                                                '2018-10-10T03:10:40.113268Z'),
                 'specimen_from_organism.organ': 'brain'
             },
             {
@@ -744,8 +744,8 @@ class TestManifests(DCP1ManifestTestCase):
                 'file_uuid': '68ba4711-1447-42ac-aa40-9c0e4cda1666',
                 'file_drs_uri': self._drs_uri('68ba4711-1447-42ac-aa40-9c0e4cda1666',
                                               '2018-10-10T03:10:40.583439Z'),
-                'file_url': self._file_url('68ba4711-1447-42ac-aa40-9c0e4cda1666',
-                                           '2018-10-10T03:10:40.583439Z'),
+                'file_azul_url': self._file_url('68ba4711-1447-42ac-aa40-9c0e4cda1666',
+                                                '2018-10-10T03:10:40.583439Z'),
                 'specimen_from_organism.organ': 'brain'
             },
             {
@@ -754,8 +754,8 @@ class TestManifests(DCP1ManifestTestCase):
                 'file_uuid': '27e66328-e337-4bcd-ba15-7893ecaf841f',
                 'file_drs_uri': self._drs_uri('27e66328-e337-4bcd-ba15-7893ecaf841f',
                                               '2018-10-10T03:10:40.801631Z'),
-                'file_url': self._file_url('27e66328-e337-4bcd-ba15-7893ecaf841f',
-                                           '2018-10-10T03:10:40.801631Z'),
+                'file_azul_url': self._file_url('27e66328-e337-4bcd-ba15-7893ecaf841f',
+                                                '2018-10-10T03:10:40.801631Z'),
                 'specimen_from_organism.organ': 'brain'
             },
             {
@@ -764,8 +764,8 @@ class TestManifests(DCP1ManifestTestCase):
                 'file_uuid': '2ab1a516-ef36-41b6-a78f-513361658feb',
                 'file_drs_uri': self._drs_uri('2ab1a516-ef36-41b6-a78f-513361658feb',
                                               '2018-10-10T03:10:40.958708Z'),
-                'file_url': self._file_url('2ab1a516-ef36-41b6-a78f-513361658feb',
-                                           '2018-10-10T03:10:40.958708Z'),
+                'file_azul_url': self._file_url('2ab1a516-ef36-41b6-a78f-513361658feb',
+                                                '2018-10-10T03:10:40.958708Z'),
                 'specimen_from_organism.organ': 'brain'
             },
             {
@@ -774,8 +774,8 @@ class TestManifests(DCP1ManifestTestCase):
                 'file_uuid': '351970aa-bc4c-405e-a274-be9e08e42e98',
                 'file_drs_uri': self._drs_uri('351970aa-bc4c-405e-a274-be9e08e42e98',
                                               '2018-10-10T03:10:41.135992Z'),
-                'file_url': self._file_url('351970aa-bc4c-405e-a274-be9e08e42e98',
-                                           '2018-10-10T03:10:41.135992Z'),
+                'file_azul_url': self._file_url('351970aa-bc4c-405e-a274-be9e08e42e98',
+                                                '2018-10-10T03:10:41.135992Z'),
                 'specimen_from_organism.organ': 'brain'
             }
         ]
@@ -1740,7 +1740,7 @@ class TestAnvilManifests(AnvilManifestTestCase):
                 self._drs_uri('v1_6c87f0e1-509d-46a4-b845-7584df39263b_8b722e88-8103-49c1-b351-e64fa7c6ab37')
             ),
             (
-                'files.azul_file_url',
+                'files.azul_url',
                 self._file_url('6b0f6c0f-5d80-4242-accb-840921351cd5', self.version),
                 self._file_url('15b76f9c-6b46-433f-851d-34e89f1b9ba6', self.version),
                 self._file_url('3b17377b-16b1-431c-9967-e5d01fc5923f', self.version)
