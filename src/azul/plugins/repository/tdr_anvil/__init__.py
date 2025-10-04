@@ -423,7 +423,7 @@ class Plugin(TDRPlugin[TDRAnvilBundle, TDRAnvilBundleFQID]):
                     GROUP BY ROLLUP ({repeat('p{i}')})
                 )
                 GROUP BY batch_prefix_length
-                ORDER BY ABS({target_size} - average_batch_size)
+                ORDER BY ABS({target_size} - average_batch_size), batch_prefix_length
                 LIMIT 1
             )
         )''' for table_name in table_names)
