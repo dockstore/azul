@@ -188,10 +188,10 @@ class TDRHCABundle(HCABundle[TDRBundleFQID], TDRBundle):
         # FIXME: Move validation of descriptor to the metadata API
         #        https://github.com/DataBiosphere/azul/issues/6299
         api.Entity.validate_described_by(descriptor)
-        return HCAFile.from_descriptor(descriptor,
-                                       uuid=descriptor['file_id'],
-                                       name=row['file_name'],
-                                       drs_uri=cls._parse_drs_uri(row['file_id'], descriptor))
+        return HCAFile.from_metadata(descriptor,
+                                     uuid=descriptor['file_id'],
+                                     name=row['file_name'],
+                                     drs_uri=cls._parse_drs_uri(row['file_id'], descriptor))
 
     def _add_manifest_entry(self,
                             entity: EntityReference,

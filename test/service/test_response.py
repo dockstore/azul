@@ -137,6 +137,10 @@ class TestIndexResponse(IndexResponseTestCase):
         cls._teardown_indices()
         super().tearDownClass()
 
+    @property
+    def file_url_func(self):
+        return self.app_module.app.file_url
+
     def _get_hits(self, entity_type: str, entity_id: str):
         """
         Fetches hits from ES instance searching for a particular entity ID
@@ -236,6 +240,12 @@ class TestIndexResponse(IndexResponseTestCase):
                         "sha256": "77337cb51b2e584b5ae1b99db6c163b988cbc5b894dda2f5d22424978c3bfc7a",
                         "size": 195142097,
                         "fileSource": None,
+                        **{
+                            field: f'{self.base_url}/repository/files/'
+                                   f'7b07f99e-4a8a-4ad0-bd4f-db0d7a00c7bb'
+                                   f'?catalog=test&version=2018-11-02T11%3A33%3A44.698028Z'
+                            for field in ['azul_url', 'url']
+                        },
                         "drs_uri": f"drs://{self._drs_domain_name}/"
                                    f"7b07f99e-4a8a-4ad0-bd4f-db0d7a00c7bb?version=2018-11-02T11%3A33%3A44.698028Z",
                         "uuid": "7b07f99e-4a8a-4ad0-bd4f-db0d7a00c7bb",
@@ -351,7 +361,8 @@ class TestIndexResponse(IndexResponseTestCase):
                 hits = self._get_hits('files', '0c5ac7c0-817e-40d4-b1b1-34c3d5cfecdb')
                 stage = HCASearchResponseStage(service=self.index_service,
                                                entity_type='files',
-                                               catalog=self.catalog)
+                                               catalog=self.catalog,
+                                               file_url_func=self.file_url_func)
                 response = stage.process_response((hits, self.paginations[n], {}))
                 self.assertElasticEqual(responses[n], response)
 
@@ -364,7 +375,8 @@ class TestIndexResponse(IndexResponseTestCase):
         hits = self._get_hits('samples', 'a21dc760-a500-4236-bcff-da34a0e873d2')
         stage = HCASearchResponseStage(service=self.index_service,
                                        entity_type='samples',
-                                       catalog=self.catalog)
+                                       catalog=self.catalog,
+                                       file_url_func=self.file_url_func)
         response = stage.process_response((hits, self.paginations[0], {}))
 
         for hit in response['hits']:
@@ -421,7 +433,8 @@ class TestIndexResponse(IndexResponseTestCase):
         #        https://github.com/DataBiosphere/azul/issues/2970
         stage = HCASearchResponseStage(service=self.index_service,
                                        entity_type='files',
-                                       catalog=self.catalog)
+                                       catalog=self.catalog,
+                                       file_url_func=self.file_url_func)
         facets = stage.make_facets(self.canned_aggs)
         expected_output = {
             "organ": {
@@ -465,7 +478,8 @@ class TestIndexResponse(IndexResponseTestCase):
         hits = self._get_hits('projects', 'e8642221-4c2c-4fd7-b926-a68bce363c88')
         stage = HCASearchResponseStage(service=self.index_service,
                                        entity_type='projects',
-                                       catalog=self.catalog)
+                                       catalog=self.catalog,
+                                       file_url_func=self.file_url_func)
         response = stage.process_response((hits, self.paginations[0], self.canned_aggs))
 
         expected_response = {
@@ -699,7 +713,8 @@ class TestIndexResponse(IndexResponseTestCase):
         hits = self._get_hits('projects', '627cb0ba-b8a1-405a-b58f-0add82c3d635')
         stage = HCASearchResponseStage(service=self.index_service,
                                        entity_type='projects',
-                                       catalog=self.catalog)
+                                       catalog=self.catalog,
+                                       file_url_func=self.file_url_func)
         response = stage.process_response((hits, self.paginations[0], {}))
         expected_hits = [
             {
@@ -921,7 +936,8 @@ class TestIndexResponse(IndexResponseTestCase):
         hits = self._get_hits('projects', '250aef61-a15b-4d97-b8b4-54bb997c1d7d')
         stage = HCASearchResponseStage(service=self.index_service,
                                        entity_type='projects',
-                                       catalog=self.catalog)
+                                       catalog=self.catalog,
+                                       file_url_func=self.file_url_func)
         response = stage.process_response((hits, self.paginations[0], {}))
         cell_suspension = one(response['hits'][0]['cellSuspensions'])
         self.assertEqual(["Plasma cells"], cell_suspension['selectedCellType'])
@@ -935,7 +951,8 @@ class TestIndexResponse(IndexResponseTestCase):
         hits = self._get_hits('projects', 'c765e3f9-7cfc-4501-8832-79e5f7abd321')
         stage = HCASearchResponseStage(service=self.index_service,
                                        entity_type='projects',
-                                       catalog=self.catalog)
+                                       catalog=self.catalog,
+                                       file_url_func=self.file_url_func)
         response = stage.process_response((hits, self.paginations[0], {}))
         expected_cell_lines = {
             'id': ['cell_line_Day7_hiPSC-CM_BioRep2', 'cell_line_GM18517'],
@@ -964,7 +981,8 @@ class TestIndexResponse(IndexResponseTestCase):
         hits = self._get_hits('files', '4015da8b-18d8-4f3c-b2b0-54f0b77ae80a')
         stage = HCASearchResponseStage(service=self.index_service,
                                        entity_type='files',
-                                       catalog=self.catalog)
+                                       catalog=self.catalog,
+                                       file_url_func=self.file_url_func)
         response = stage.process_response((hits, self.paginations[0], {}))
         expected_file = {
             'contentDescription': ['RNA sequence'],
@@ -975,6 +993,12 @@ class TestIndexResponse(IndexResponseTestCase):
             'sha256': '709fede4736213f0f71ae4d76719fd51fa402a9112582a4c52983973cb7d7e47',
             'size': 22819025,
             'fileSource': None,
+            **{
+                field: f'{self.base_url}/repository/files/'
+                       f'a8b8479d-cfa9-4f74-909f-49552439e698'
+                       f'?catalog=test&version=2019-10-09T17%3A22%3A51.560099Z'
+                for field in ['azul_url', 'url']
+            },
             'drs_uri': f'drs://{self._drs_domain_name}/'
                        f'a8b8479d-cfa9-4f74-909f-49552439e698?version=2019-10-09T17%3A22%3A51.560099Z',
             'uuid': 'a8b8479d-cfa9-4f74-909f-49552439e698',
@@ -2947,10 +2971,13 @@ class TestProjectMatrices(IndexResponseTestCase):
                                                     path='bd98f428-881e-501a-ac16-24f27a68ce2f',
                                                     args=dict(version='2021-02-11T23:11:45.000000Z')
                                                 )),
-                                                'url': str(self.base_url.set(
-                                                    path='/repository/files/bd98f428-881e-501a-ac16-24f27a68ce2f',
-                                                    args=dict(catalog='test', version='2021-02-11T23:11:45.000000Z')
-                                                ))
+                                                **{
+                                                    field: str(self.base_url.set(
+                                                        path='/repository/files/bd98f428-881e-501a-ac16-24f27a68ce2f',
+                                                        args=dict(catalog='test', version='2021-02-11T23:11:45.000000Z')
+                                                    ))
+                                                    for field in ['azul_url', 'url']
+                                                }
                                             }
                                         ]
                                     }
@@ -2979,10 +3006,13 @@ class TestProjectMatrices(IndexResponseTestCase):
                                                     path='538faa28-3235-5e4b-a998-5672e2d964e8',
                                                     args=dict(version='2020-12-03T10:39:17.144517Z')
                                                 )),
-                                                'url': str(self.base_url.set(
-                                                    path='/repository/files/538faa28-3235-5e4b-a998-5672e2d964e8',
-                                                    args=dict(catalog='test', version='2020-12-03T10:39:17.144517Z')
-                                                ))
+                                                **{
+                                                    field: str(self.base_url.set(
+                                                        path='/repository/files/538faa28-3235-5e4b-a998-5672e2d964e8',
+                                                        args=dict(catalog='test', version='2020-12-03T10:39:17.144517Z')
+                                                    ))
+                                                    for field in ['azul_url', 'url']
+                                                }
                                             },
                                             {
                                                 # Supplementary file, source from submitter_id
@@ -3001,10 +3031,13 @@ class TestProjectMatrices(IndexResponseTestCase):
                                                     path='6c142250-567c-5b63-bd4f-0d78499863f8',
                                                     args=dict(version='2020-12-03T10:39:17.144517Z')
                                                 )),
-                                                'url': str(self.base_url.set(
-                                                    path='/repository/files/6c142250-567c-5b63-bd4f-0d78499863f8',
-                                                    args=dict(catalog='test', version='2020-12-03T10:39:17.144517Z')
-                                                ))
+                                                **{
+                                                    field: str(self.base_url.set(
+                                                        path='/repository/files/6c142250-567c-5b63-bd4f-0d78499863f8',
+                                                        args=dict(catalog='test', version='2020-12-03T10:39:17.144517Z')
+                                                    ))
+                                                    for field in ['azul_url', 'url']
+                                                }
                                             },
                                             {
                                                 # Supplementary file, source from submitter_id
@@ -3023,10 +3056,13 @@ class TestProjectMatrices(IndexResponseTestCase):
                                                     path='8d2ba1c1-bc9f-5c2a-a74d-fe5e09bdfb18',
                                                     args=dict(version='2020-12-03T10:39:17.144517Z')
                                                 )),
-                                                'url': str(self.base_url.set(
-                                                    path='/repository/files/8d2ba1c1-bc9f-5c2a-a74d-fe5e09bdfb18',
-                                                    args=dict(catalog='test', version='2020-12-03T10:39:17.144517Z')
-                                                ))
+                                                **{
+                                                    field: str(self.base_url.set(
+                                                        path='/repository/files/8d2ba1c1-bc9f-5c2a-a74d-fe5e09bdfb18',
+                                                        args=dict(catalog='test', version='2020-12-03T10:39:17.144517Z')
+                                                    ))
+                                                    for field in ['azul_url', 'url']
+                                                }
                                             }
                                         ]
                                     }
@@ -3064,10 +3100,13 @@ class TestProjectMatrices(IndexResponseTestCase):
                                                     path='87f31102-ebbc-5875-abdf-4fa5cea48e8d',
                                                     args=dict(version='2021-02-10T16:56:40.419579Z')
                                                 )),
-                                                'url': str(self.base_url.set(
-                                                    path='/repository/files/87f31102-ebbc-5875-abdf-4fa5cea48e8d',
-                                                    args=dict(catalog='test', version='2021-02-10T16:56:40.419579Z')
-                                                ))
+                                                **{
+                                                    field: str(self.base_url.set(
+                                                        path='/repository/files/87f31102-ebbc-5875-abdf-4fa5cea48e8d',
+                                                        args=dict(catalog='test', version='2021-02-10T16:56:40.419579Z')
+                                                    ))
+                                                    for field in ['azul_url', 'url']
+                                                }
                                             },
                                             {
                                                 # Supplementary file, source from submitter_id
@@ -3086,10 +3125,13 @@ class TestProjectMatrices(IndexResponseTestCase):
                                                     path='733318e0-19c2-51e8-9ad6-d94ad562dd46',
                                                     args=dict(version='2021-02-10T16:56:40.419579Z')
                                                 )),
-                                                'url': str(self.base_url.set(
-                                                    path='/repository/files/733318e0-19c2-51e8-9ad6-d94ad562dd46',
-                                                    args=dict(catalog='test', version='2021-02-10T16:56:40.419579Z')
-                                                ))
+                                                **{
+                                                    field: str(self.base_url.set(
+                                                        path='/repository/files/733318e0-19c2-51e8-9ad6-d94ad562dd46',
+                                                        args=dict(catalog='test', version='2021-02-10T16:56:40.419579Z')
+                                                    ))
+                                                    for field in ['azul_url', 'url']
+                                                }
                                             },
                                             {
                                                 # Supplementary file, source from submitter_id
@@ -3108,10 +3150,13 @@ class TestProjectMatrices(IndexResponseTestCase):
                                                     path='c59e2de5-01fe-56eb-be56-679ed14161bf',
                                                     args=dict(version='2021-02-10T16:56:40.419579Z')
                                                 )),
-                                                'url': str(self.base_url.set(
-                                                    path='/repository/files/c59e2de5-01fe-56eb-be56-679ed14161bf',
-                                                    args=dict(catalog='test', version='2021-02-10T16:56:40.419579Z')
-                                                ))
+                                                **{
+                                                    field: str(self.base_url.set(
+                                                        path='/repository/files/c59e2de5-01fe-56eb-be56-679ed14161bf',
+                                                        args=dict(catalog='test', version='2021-02-10T16:56:40.419579Z')
+                                                    ))
+                                                    for field in ['azul_url', 'url']
+                                                }
                                             },
                                             {
                                                 # Supplementary file, source from submitter_id
@@ -3130,10 +3175,13 @@ class TestProjectMatrices(IndexResponseTestCase):
                                                     path='68bda896-3b3e-5f2a-9212-f4030a0f37e2',
                                                     args=dict(version='2021-02-10T16:56:40.419579Z')
                                                 )),
-                                                'url': str(self.base_url.set(
-                                                    path='/repository/files/68bda896-3b3e-5f2a-9212-f4030a0f37e2',
-                                                    args=dict(catalog='test', version='2021-02-10T16:56:40.419579Z')
-                                                ))
+                                                **{
+                                                    field: str(self.base_url.set(
+                                                        path='/repository/files/68bda896-3b3e-5f2a-9212-f4030a0f37e2',
+                                                        args=dict(catalog='test', version='2021-02-10T16:56:40.419579Z')
+                                                    ))
+                                                    for field in ['azul_url', 'url']
+                                                }
                                             },
                                             {
                                                 # Supplementary file, source from submitter_id
@@ -3152,10 +3200,13 @@ class TestProjectMatrices(IndexResponseTestCase):
                                                     path='0c5ab869-da2d-5c11-b4ae-f978a052899f',
                                                     args=dict(version='2021-02-10T16:56:40.419579Z')
                                                 )),
-                                                'url': str(self.base_url.set(
-                                                    path='/repository/files/0c5ab869-da2d-5c11-b4ae-f978a052899f',
-                                                    args=dict(catalog='test', version='2021-02-10T16:56:40.419579Z')
-                                                ))
+                                                **{
+                                                    field: str(self.base_url.set(
+                                                        path='/repository/files/0c5ab869-da2d-5c11-b4ae-f978a052899f',
+                                                        args=dict(catalog='test', version='2021-02-10T16:56:40.419579Z')
+                                                    ))
+                                                    for field in ['azul_url', 'url']
+                                                }
                                             },
                                             {
                                                 # Supplementary file, source from submitter_id
@@ -3174,10 +3225,13 @@ class TestProjectMatrices(IndexResponseTestCase):
                                                     path='cade4593-bfba-56ed-80ab-080d0de7d5a4',
                                                     args=dict(version='2021-02-10T16:56:40.419579Z')
                                                 )),
-                                                'url': str(self.base_url.set(
-                                                    path='/repository/files/cade4593-bfba-56ed-80ab-080d0de7d5a4',
-                                                    args=dict(catalog='test', version='2021-02-10T16:56:40.419579Z')
-                                                ))
+                                                **{
+                                                    field: str(self.base_url.set(
+                                                        path='/repository/files/cade4593-bfba-56ed-80ab-080d0de7d5a4',
+                                                        args=dict(catalog='test', version='2021-02-10T16:56:40.419579Z')
+                                                    ))
+                                                    for field in ['azul_url', 'url']
+                                                }
                                             },
                                             {
                                                 # Supplementary file, source from submitter_id
@@ -3196,10 +3250,13 @@ class TestProjectMatrices(IndexResponseTestCase):
                                                     path='5b465aad-0981-5152-b468-e615e20f5884',
                                                     args=dict(version='2021-02-10T16:56:40.419579Z')
                                                 )),
-                                                'url': str(self.base_url.set(
-                                                    path='/repository/files/5b465aad-0981-5152-b468-e615e20f5884',
-                                                    args=dict(catalog='test', version='2021-02-10T16:56:40.419579Z')
-                                                ))
+                                                **{
+                                                    field: str(self.base_url.set(
+                                                        path='/repository/files/5b465aad-0981-5152-b468-e615e20f5884',
+                                                        args=dict(catalog='test', version='2021-02-10T16:56:40.419579Z')
+                                                    ))
+                                                    for field in ['azul_url', 'url']
+                                                }
                                             },
                                             {
                                                 # Supplementary file, source from submitter_id
@@ -3218,10 +3275,13 @@ class TestProjectMatrices(IndexResponseTestCase):
                                                     path='b905c8be-2e2d-592c-8481-3eb7a87c6484',
                                                     args=dict(version='2021-02-10T16:56:40.419579Z')
                                                 )),
-                                                'url': str(self.base_url.set(
-                                                    path='/repository/files/b905c8be-2e2d-592c-8481-3eb7a87c6484',
-                                                    args=dict(catalog='test', version='2021-02-10T16:56:40.419579Z')
-                                                ))
+                                                **{
+                                                    field: str(self.base_url.set(
+                                                        path='/repository/files/b905c8be-2e2d-592c-8481-3eb7a87c6484',
+                                                        args=dict(catalog='test', version='2021-02-10T16:56:40.419579Z')
+                                                    ))
+                                                    for field in ['azul_url', 'url']
+                                                }
                                             }
                                         ]
                                     }

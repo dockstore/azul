@@ -1963,6 +1963,10 @@ class R:
             case args:
                 return class_name + repr(args)
 
+    @final
+    def __eq__(self, other: object):
+        return isinstance(other, R) and self.args == other.args
+
 
 @deprecated("Use 'assert False, R(…)' instead", category=None)
 class RequirementError(AssertionError):

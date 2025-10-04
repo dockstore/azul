@@ -39,6 +39,7 @@ from opensearchpy.helpers import (
 
 from azul import (
     CatalogName,
+    R,
     config,
 )
 from azul.deployment import (
@@ -483,6 +484,13 @@ class IndexService(DocumentService):
             for old_aggregate in old_aggregates.values():
                 old_aggregate.contents = {}
                 new_aggregates.append(old_aggregate)
+
+            for aggregate in new_aggregates:
+                assert len(aggregate.sources) == 1, R(
+                    'Entity has an invalid number of sources',
+                    aggregate.entity,
+                    aggregate.sources
+                )
 
             # Write new aggregates
             writer.write(new_aggregates)

@@ -1,15 +1,15 @@
 ---
 name: Renew server and client VPN certificates 
-about: Issue template for the quarterly renewals of VPN certificates
+about: Issue template for the quarterly renewal of all VPN certificates
 title: Renew VPN server and client certificates 
 labels: -,infra,orange
-type: Task
+type: Chore
 _start: 2025-08-01T09:00
 _period: 3 months
 ---
 
 - [ ] Deploy `tempdev.gitlab`
-- [ ] Assign this ticket to the system administrator
+- [ ] Assign this issue to the system administrator
 - [ ] Renew server certificate on `tempdev`
 - [ ] Renew client certificates on `tempdev`
 - [ ] Hibernate `tempdev`

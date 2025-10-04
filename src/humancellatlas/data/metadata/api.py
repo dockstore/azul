@@ -39,9 +39,11 @@ from azul import (
     cached_property,
 )
 from azul.collections import (
+    LookupDefault,
     OrderedSet,
     adict,
     dict_merge,
+    lookup,
 )
 
 from azul.indexer.document import (
@@ -57,10 +59,6 @@ from humancellatlas.data.metadata.age_range import (
 )
 from humancellatlas.data.metadata.datetime import (
     parse_jsonschema_date_time,
-)
-from humancellatlas.data.metadata.lookup import (
-    LookupDefault,
-    lookup,
 )
 
 # A few helpful type aliases

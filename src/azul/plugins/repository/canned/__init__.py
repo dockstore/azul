@@ -209,10 +209,10 @@ class Plugin(RepositoryPlugin[
         assert prefix == prefix.lower(), prefix
         staging_area = self.staging_area(source.spec.name)
         return [
-            HCAFile.from_descriptor(descriptor.content,
-                                    uuid=file_uuid,
-                                    name=descriptor.content['file_name'],
-                                    drs_uri=None)
+            HCAFile.from_metadata(descriptor.content,
+                                  uuid=file_uuid,
+                                  name=descriptor.content['file_name'],
+                                  drs_uri=None)
             for file_uuid, descriptor in staging_area.descriptors.items()
             if descriptor.content['sha256'].lower().startswith(prefix)
         ]
