@@ -11,8 +11,11 @@ from typing import (
     Self,
     overload,
 )
-
-import attr
+from attrs import (
+    define,
+    evolve,
+    frozen,
+)
 from more_itertools import (
     one,
 )
@@ -59,7 +62,7 @@ type EntityID = str
 type EntityType = str
 
 
-@attr.s(frozen=True, auto_attribs=True, kw_only=True, slots=True)
+@frozen(kw_only=True, order=True)
 class EntityReference(Parseable):
     entity_type: EntityType
     entity_id: EntityID
@@ -73,7 +76,7 @@ class EntityReference(Parseable):
         return cls(entity_type=entity_type, entity_id=entity_id)
 
 
-@attr.s(frozen=True, auto_attribs=True, kw_only=True, slots=True)
+@frozen(kw_only=True)
 class CataloguedEntityReference(EntityReference):
     catalog: CatalogName
 
@@ -96,7 +99,7 @@ class DocumentType(Enum):
         return f'<{self.__class__.__name__}.{self._name_}>'
 
 
-@attr.s(frozen=True, kw_only=True, auto_attribs=True)
+@frozen(kw_only=True)
 class IndexName:
     """
     The name of an Elasticsearch index used by an Azul deployment, parsed into
@@ -408,7 +411,7 @@ class IndexName:
 type CataloguedDocumentCoordinates = DocumentCoordinates[CataloguedEntityReference]
 
 
-@attr.s(frozen=True, auto_attribs=True, kw_only=True, slots=True)
+@frozen(kw_only=True)
 class DocumentCoordinates[E: EntityReference](metaclass=ABCMeta):
     """
     The coordinates of a document ultimately define two strings: 1) the name of
@@ -485,13 +488,13 @@ class DocumentCoordinates[E: EntityReference](metaclass=ABCMeta):
         else:
             assert catalog is not None
             entity = CataloguedEntityReference.for_entity(catalog, self.entity)
-            return attr.evolve(self, entity=entity)
+            return evolve(self, entity=entity)
 
 
 type CataloguedContributionCoordinates = ContributionCoordinates[CataloguedEntityReference]
 
 
-@attr.s(frozen=True, auto_attribs=True, kw_only=True, slots=True)
+@frozen(kw_only=True)
 class ContributionCoordinates[E: EntityReference](DocumentCoordinates[E]):
     """
     Coordinates of contribution documents. Contributions originate from a
@@ -550,7 +553,7 @@ class ContributionCoordinates[E: EntityReference](DocumentCoordinates[E]):
         ))
 
 
-@attr.s(frozen=True, auto_attribs=True, kw_only=True, slots=True)
+@frozen(kw_only=True)
 class AggregateCoordinates(DocumentCoordinates[CataloguedEntityReference]):
     """
     Coordinates of aggregate documents. Aggregate coordinates always carry a
@@ -581,7 +584,7 @@ class AggregateCoordinates(DocumentCoordinates[CataloguedEntityReference]):
 type CataloguedReplicaCoordinates = ReplicaCoordinates[CataloguedEntityReference]
 
 
-@attr.s(frozen=True, auto_attribs=True, kw_only=True, slots=True)
+@frozen(kw_only=True)
 class ReplicaCoordinates[E: EntityReference](DocumentCoordinates[E]):
     """
     Coordinates of replica documents. Replicas are content-addressed, so these
@@ -648,7 +651,7 @@ class OpType(Enum):
     update = auto()
 
 
-@attr.s(frozen=False, kw_only=True, auto_attribs=True)
+@define(kw_only=True)
 class Document[C: DocumentCoordinates](metaclass=ABCMeta):
     needs_translation: ClassVar[bool] = True
 
@@ -926,7 +929,7 @@ class DocumentSource(SourceRef[SimpleSourceSpec]):
     pass
 
 
-@attr.s(frozen=False, kw_only=True, auto_attribs=True)
+@define(kw_only=True)
 class Contribution[E: EntityReference](Document[ContributionCoordinates[E]]):
 
     @classmethod
@@ -1005,7 +1008,7 @@ class Contribution[E: EntityReference](Document[ContributionCoordinates[E]]):
                     bundle_deleted=self.coordinates.deleted)
 
 
-@attr.s(frozen=False, kw_only=True, auto_attribs=True)
+@define(kw_only=True)
 class Aggregate(Document[AggregateCoordinates]):
     sources: set[DocumentSource]
     bundles: list[BundleFQID] | None
@@ -1087,7 +1090,7 @@ class Aggregate(Document[AggregateCoordinates]):
         raise NotImplementedError
 
 
-@attr.s(frozen=False, kw_only=True, auto_attribs=True)
+@define(kw_only=True)
 class Replica[E: EntityReference](Document[ReplicaCoordinates[E]]):
     """
     A verbatim copy of a metadata document
