@@ -16,7 +16,7 @@ Linked issue: #0000
 - [ ] Name of PR branch matches `promotions/yyyy-mm-dd-prod`
 - [ ] PR is linked to the promotion issue it resolves
 - [ ] Status of linked issue is *In progress*
-- [ ] PR description links to connected issue
+- [ ] PR description links to linked issue
 - [ ] Title of linked issue matches `Promotion yyyy-mm-dd`
 - [ ] PR title starts with title of linked issue followed by ` prod`
 - [ ] PR title references the linked issue

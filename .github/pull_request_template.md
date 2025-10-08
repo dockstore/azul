@@ -21,7 +21,7 @@ Linked issues: #0000
 - [ ] Name of PR branch matches `issues/<GitHub handle of author>/<issue#>-<slug>`
 - [ ] PR is linked to all issues it (partially) resolves
 - [ ] Status of linked issues is *In progress*
-- [ ] PR description links to connected issues
+- [ ] PR description links to linked issues
 - [ ] PR title matches<sup>1</sup> that of a linked issue <sub>or comment in PR explains why they're different</sub>
 - [ ] PR title references all linked issues
 - [ ] For each linked issue, there is at least one commit whose title references that issue

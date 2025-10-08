@@ -344,7 +344,7 @@ def emit(t: T, target_branch: str):
             },
             iif(t not in (T.backport, T.upgrade), {
                 'type': 'cli',
-                'content': f'PR description links to connected {t.issues}'
+                'content': f'PR description links to linked {t.issues}'
             }),
             iif(t is T.promotion, {
                 'type': 'cli',
