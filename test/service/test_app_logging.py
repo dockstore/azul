@@ -59,33 +59,33 @@ class TestServiceAppLogging(DCP1CannedBundleTestCase, WebServiceTestCase):
         def filter_body(organ: str) -> JSON:
             return {'filters': json.dumps({'organ': {'is': [organ]}})}
 
-        for debug, authenticated, request_body_json in product(
+        for debug, authenticated, body_json in product(
             [0, 1, 2],
             [False, True],
             [None, filter_body('foo'), filter_body('foo' * int(prefix_len / 3 + 1))]
         ):
-            if request_body_json is None:
-                request_body = ''
+            if body_json is None:
+                body = ''
             else:
-                request_body = json.dumps(request_body_json)
+                body = json.dumps(body_json)
 
             with self.subTest(azul_debug=debug,
                               authenticated=authenticated,
-                              request_body=len(request_body)):
+                              body=len(body)):
                 url = self.base_url.set(path='/index/projects')
                 request_headers = {'authorization': 'Bearer foo_token'} if authenticated else {}
                 level = [INFO, DEBUG, DEBUG][debug]
                 with self.assertLogs(logger=log, level=level) as logs:
                     with patch.object(Config, 'debug', new=PropertyMock(return_value=debug)):
-                        if request_body:
+                        if body:
                             request_headers = {
-                                'content-length': str(len(request_body)),
+                                'content-length': str(len(body)),
                                 'content-type': 'application/json',
                                 **request_headers
                             }
                         response = requests.get(str(url),
                                                 headers=request_headers,
-                                                json=request_body_json)
+                                                json=body_json)
                 logs = [(r.levelno, r.getMessage()) for r in logs.records]
                 body_log_level, body_log_message = logs.pop()  # asserted separately
                 request_headers = {
@@ -117,7 +117,7 @@ class TestServiceAppLogging(DCP1CannedBundleTestCase, WebServiceTestCase):
                             INFO,
                             '… without a request body'
                         )
-                        if request_body == '' else
+                        if body == '' else
                         (
                             INFO,
                             "… with a request body of type (<class 'dict'>)"
@@ -125,9 +125,9 @@ class TestServiceAppLogging(DCP1CannedBundleTestCase, WebServiceTestCase):
                         if debug == 0 else
                         (
                             INFO,
-                            f'… with a request body starting in {request_body[:prefix_len]}'
-                            if debug == 1 and len(request_body) > prefix_len else
-                            f'… with a request body of length {len(request_body)} being {request_body}'
+                            f'… with a request body starting in {body[:prefix_len]}'
+                            if debug == 1 and len(body) > prefix_len else
+                            f'… with a request body of length {len(body)} being {body}'
                         ),
                         (
                             INFO,
