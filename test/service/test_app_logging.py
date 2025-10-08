@@ -71,7 +71,7 @@ class TestServiceAppLogging(DCP1CannedBundleTestCase, WebServiceTestCase):
 
             with self.subTest(azul_debug=debug,
                               authenticated=authenticated,
-                              body=len(body)):
+                              body_len=len(body)):
                 url = self.base_url.set(path='/index/projects')
                 request_headers = {'authorization': 'Bearer foo_token'} if authenticated else {}
                 level = [INFO, DEBUG, DEBUG][debug]
