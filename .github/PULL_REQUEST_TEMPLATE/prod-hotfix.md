@@ -32,7 +32,7 @@ Linked issue: #0000
 ### Author (before every review)
 
 - [ ] Rebased PR branch on `prod`, squashed fixups from prior reviews
-- [ ] Ran `make requirements_update` <sub>or this PR does not modify `requirements*.txt`, `common.mk`, `Makefile`, `Dockerfile` or `environment.boot`</sub>
+- [ ] Ran `make requirements_update` <sub>or this PR does not modify `Dockerfile`, `requirements*.txt`, `common.mk`, `Makefile` or `environment.boot`</sub>
 - [ ] Added `R` tag to commit title <sub>or this PR does not modify `requirements*.txt`</sub>
 - [ ] This PR is labeled `reqs` <sub>or does not modify `requirements*.txt`</sub>
 - [ ] PR is not a draft

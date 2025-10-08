@@ -584,10 +584,10 @@ def emit(t: T, target_branch: str):
                     'type': 'cli',
                     'content': 'Ran `make requirements_update`',
                     'alt': 'or this PR does not modify ' + join_grammatically(list(map(bq, [
+                        'Dockerfile',
                         'requirements*.txt',
                         'common.mk',
                         'Makefile',
-                        'Dockerfile',
                         'environment.boot',
                     ])), last_joiner=' or ')
                 },
