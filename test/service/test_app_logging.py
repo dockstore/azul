@@ -65,9 +65,9 @@ class TestServiceAppLogging(DCP1CannedBundleTestCase, WebServiceTestCase):
             [None, filter_body('foo'), filter_body('foo' * int(prefix_len / 3 + 1))]
         ):
             if body_json is None:
-                body = ''
+                body = b''
             else:
-                body = json.dumps(body_json)
+                body = json.dumps(body_json).encode()
 
             with self.subTest(azul_debug=debug,
                               authenticated=authenticated,
@@ -106,6 +106,7 @@ class TestServiceAppLogging(DCP1CannedBundleTestCase, WebServiceTestCase):
                     **AzulChaliceApp.security_headers(),
                     'Cache-Control': 'no-store'
                 }
+                body_prefix = body[:prefix_len - 3] + b'...'
                 self.assertEqual(
                     [
                         (
@@ -117,17 +118,17 @@ class TestServiceAppLogging(DCP1CannedBundleTestCase, WebServiceTestCase):
                             INFO,
                             '… without a request body'
                         )
-                        if body == '' else
+                        if body == b'' else
                         (
                             INFO,
-                            "… with a request body of type (<class 'dict'>)"
+                            f"… with a request body of length {len(body)} and type <class 'bytes'>"
                         )
                         if debug == 0 else
                         (
                             INFO,
-                            f'… with a request body starting in {body[:prefix_len]}'
+                            f'… with a request body of length {len(body)} starting in {body_prefix!r}'
                             if debug == 1 and len(body) > prefix_len else
-                            f'… with a request body of length {len(body)} being {body}'
+                            f"… with a request body of length {len(body)} being {body!r}"
                         ),
                         (
                             INFO,

@@ -467,7 +467,7 @@ class AzulChaliceApp(Chalice):
         info = json.dumps(info, cls=self._LogJSONEncoder)
         log.info('Received %s request for %r, with %s.',
                  request.context['httpMethod'], request.context['path'], info)
-        log.info(http_body_log_message('request', request.json_body))
+        log.info(http_body_log_message('request', request.raw_body))
 
     def _log_response(self, response: Response) -> None:
         info = {
