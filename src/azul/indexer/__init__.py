@@ -28,6 +28,7 @@ from azul import (
     config,
 )
 from azul.attrs import (
+    DiscriminatingPolymorphicSerializableAttrs,
     SerializableAttrs,
 )
 from azul.indexer.field import (
@@ -35,6 +36,7 @@ from azul.indexer.field import (
     pass_thru_str,
 )
 from azul.json import (
+    DynamicPolymorphicSerializable,
     Parseable,
 )
 from azul.types import (
@@ -514,8 +516,11 @@ class SimpleSourceSpec(SourceSpec):
 
 
 @attrs.frozen(kw_only=True, order=True)
-class SourceRef[SOURCE_SPEC: SourceSpec](SerializableAttrs,
-                                         SupportsLessAndGreaterThan):
+class SourceRef[SOURCE_SPEC: SourceSpec](
+    DiscriminatingPolymorphicSerializableAttrs,
+    DynamicPolymorphicSerializable,
+    SupportsLessAndGreaterThan
+):
     """
     A reference to a repository source containing bundles to index. A repository
     has at least one source. A source is primarily referenced by its ID but we
@@ -540,6 +545,10 @@ class SourceRef[SOURCE_SPEC: SourceSpec](SerializableAttrs,
     spec: SOURCE_SPEC = attrs.field(order=False)
 
     @classmethod
+    def discriminator(cls) -> str:
+        return 'type'
+
+    @classmethod
     def spec_cls(cls) -> type[SOURCE_SPEC]:
         spec_cls = derived_type_params(cls, root=SourceRef)[SOURCE_SPEC]
         assert isinstance(spec_cls, type)
@@ -554,6 +563,7 @@ class SourceRef[SOURCE_SPEC: SourceSpec](SerializableAttrs,
         return {
             'id': pass_thru_str,
             'spec': pass_thru_str,
+            cls.discriminator(): pass_thru_str,
         }
 
 

@@ -30,7 +30,6 @@ from azul.enums import (
 )
 from azul.indexer import (
     BundleFQID,
-    SimpleSourceSpec,
     SourceRef,
 )
 from azul.indexer.field import (
@@ -925,10 +924,6 @@ class Document[C: DocumentCoordinates](metaclass=ABCMeta):
         return body
 
 
-class DocumentSource(SourceRef[SimpleSourceSpec]):
-    pass
-
-
 @define(kw_only=True)
 class Contribution[E: EntityReference](Document[ContributionCoordinates[E]]):
 
@@ -938,7 +933,7 @@ class Contribution[E: EntityReference](Document[ContributionCoordinates[E]]):
 
     # This narrows the type declared in the superclass. See comment there.
     contents: JSON
-    source: DocumentSource
+    source: SourceRef
 
     #: The op_type attribute will change to OpType.index if writing
     #: to Elasticsearch fails with 409
@@ -980,7 +975,7 @@ class Contribution[E: EntityReference](Document[ContributionCoordinates[E]]):
         self = super().from_json(coordinates=coordinates,
                                  document=document,
                                  version=version,
-                                 source=DocumentSource.from_json(document['source']),
+                                 source=SourceRef.from_json(document['source']),
                                  **kwargs)
         assert self.coordinates.document_id == document['document_id']
         assert self.coordinates.bundle.uuid == document['bundle_uuid']
@@ -1010,7 +1005,7 @@ class Contribution[E: EntityReference](Document[ContributionCoordinates[E]]):
 
 @define(kw_only=True)
 class Aggregate(Document[AggregateCoordinates]):
-    sources: set[DocumentSource]
+    sources: set[SourceRef]
     bundles: list[BundleFQID] | None
     num_contributions: int
 
@@ -1039,7 +1034,8 @@ class Aggregate(Document[AggregateCoordinates]):
                   version: InternalVersion | None,
                   **kwargs
                   ) -> Self:
-        sources = set(map(DocumentSource.from_json, json_sequence(document['sources'])))
+        sources: set[SourceRef] = set(map(SourceRef.from_json,
+                                          json_sequence(document['sources'])))
         bundles = optional(json_sequence, document.get('bundles'))
         bundles = None if bundles is None else list(map(BundleFQID.from_json, bundles))
         num_contributions = json_int(document['num_contributions'])
@@ -1105,7 +1101,7 @@ class Replica[E: EntityReference](Document[ReplicaCoordinates[E]]):
 
     contents: JSON
 
-    source: DocumentSource
+    source: SourceRef
 
     hub_ids: list[EntityID]
 

@@ -153,7 +153,9 @@ class TestIndexController(DCP2IndexerTestCase, WorkQueueTestCase):
             self.controller.contribute(event)
 
         messages = one(self._read_queue(self.queue_service.notifications_queue()))
-        expected_source = dict(id=source.id, spec=str(source.spec))
+        expected_source = dict(id=source.id,
+                               spec=str(source.spec),
+                               type=source.cls_to_json())
         source = messages['bundle_fqid']['source']
         self.assertEqual(expected_source, source)
 
