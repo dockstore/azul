@@ -718,6 +718,54 @@ class SerializableAttrs(Serializable, attrs.AttrsInstance):
             return f'{var_name}({x})'
 
 
+class DiscriminatingPolymorphicSerializableAttrs(
+    SerializableAttrs,
+    PolymorphicSerializable,
+    metaclass=ABCMeta
+):
+    """
+    This class provides an alternative serialization format that includes the
+    discriminator field, facilitating the polymorphic deserialization of
+    subclasses even when they are not being used as polymorphic fields of a
+    larger serializable object. Each subclass is responsible for ensuring that
+    the name of the discriminator property does not conflict with the names of
+    any instance attributes.
+    """
+
+    @classmethod
+    @abstractmethod
+    def discriminator(cls) -> str:
+        """
+        The name of a property in serialized instances that contains the name
+        of the type said instances will be deserialized as.
+        """
+        raise NotImplementedError
+
+    # The @final decorator in SerializableAttrs is intended to only apply to
+    # clients of this module, not to parts of the module.
+
+    @classmethod  # type: ignore[misc]
+    def from_json(cls, json: AnyJSON) -> Self:
+        json = json_mapping(json)
+        try:
+            discriminator = json[cls.discriminator()]
+        except KeyError:
+            return super().from_json(json)
+        else:
+            subcls = cls.cls_from_json(discriminator)
+            kwargs = subcls._from_json(json)
+            return subcls(**kwargs)
+
+    def to_json(self) -> dict[str, AnyJSON]:
+        json = self._to_json()
+        discriminator = self.discriminator()
+        assert discriminator not in json, (discriminator, json)
+        return {
+            **json,
+            discriminator: self.cls_to_json()
+        }
+
+
 def serializable[T](field: T | None = None,
                     *,
                     from_json: FromJSON,

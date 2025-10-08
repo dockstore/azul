@@ -3,11 +3,13 @@ from copy import (
     deepcopy,
 )
 import hashlib
+import importlib
 from io import (
     StringIO,
 )
 import json
 from typing import (
+    ClassVar,
     Mapping,
     Self,
     overload,
@@ -440,6 +442,36 @@ class StaticRegisteredPolymorphicSerializable(PolymorphicSerializable):
             assert other_cls.__module__ == cls.__module__, R(
                 'Class name collision', cls, other_cls)
         cls._registry[cls.__name__] = cls
+
+
+class DynamicPolymorphicSerializable(PolymorphicSerializable):
+    """
+    A polymorphically serializable class that tracks its subclasses in a
+    registry and uses their qualified name to discriminate serialized instances.
+    Nested classes are not supported. Analogously, this class doesn't work in
+    doctests.
+    """
+
+    _subcls_by_qualname: ClassVar[dict[str, type[Self]]] = {}
+
+    @classmethod
+    def cls_to_json(cls) -> AnyJSON:
+        assert cls.__name__ == cls.__qualname__, 'Nested classes are not supported'
+        return f'{cls.__module__}.{cls.__name__}'
+
+    @classmethod
+    def cls_from_json(cls, json: AnyJSON) -> type[Self]:
+        subcls_qualname = json_str(json)
+        try:
+            subcls = cls._subcls_by_qualname[subcls_qualname]
+        except KeyError:
+            module_name, subcls_name = subcls_qualname.rsplit('.', 1)
+            module = importlib.import_module(module_name)
+            subcls = getattr(module, subcls_name)
+            assert isinstance(subcls, type), subcls_qualname
+            assert issubclass(subcls, cls), subcls_qualname
+            cls._subcls_by_qualname[subcls_qualname] = subcls
+        return subcls
 
 
 class Parseable(Serializable):
