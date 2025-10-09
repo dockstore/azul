@@ -1372,7 +1372,8 @@ class IndexingIntegrationTest(IntegrationTestCase):
                       filters: JSON | None = None
                       ) -> MutableJSONs:
         entities = []
-        size = 100
+        indices = self.metadata_plugin(catalog).exposed_indices
+        size = min(100, indices[entity_type].max_page_size)
         params = dict(catalog=catalog,
                       size=str(size),
                       filters=json.dumps(filters if filters else {}))
