@@ -1,7 +1,6 @@
 from abc import (
     ABCMeta,
 )
-import cgi
 from collections import (
     defaultdict,
 )
@@ -67,6 +66,9 @@ from azul.collections import (
     adict,
     compose_keys,
     none_safe_tuple_key,
+)
+from azul.http import (
+    parse_header,
 )
 from azul.indexer import (
     Prefix,
@@ -251,29 +253,17 @@ class ManifestTestCase(WebServiceTestCase,
     def setUp(self):
         super().setUp()
         self.addPatch(patch.object(PagedManifestGenerator, 'page_size', 1))
+        self.addPatch(patch.dict(os.environ,
+                                 azul_git_commit='9347432ab0da43c73409ac7fd3edfe29cf3ae678',
+                                 azul_git_dirty=str(False)))
         self._setup_indices()
-        self._setup_git_commit()
 
     def tearDown(self):
         self._teardown_indices()
-        self._teardown_git_commit()
         super().tearDown()
 
     def _filters(self, filters: FiltersJSON) -> Filters:
         return Filters(explicit=filters, source_ids={self.source.id})
-
-    def _setup_git_commit(self):
-        """
-        Set git variables required to derive the manifest object key
-        """
-        assert 'azul_git_commit' not in os.environ
-        assert 'azul_git_dirty' not in os.environ
-        os.environ['azul_git_commit'] = '9347432ab0da43c73409ac7fd3edfe29cf3ae678'
-        os.environ['azul_git_dirty'] = 'False'
-
-    def _teardown_git_commit(self):
-        os.environ.pop('azul_git_commit')
-        os.environ.pop('azul_git_dirty')
 
     @property
     def _service(self):
@@ -921,11 +911,11 @@ class TestManifests(DCP1ManifestTestCase):
                     # a pair of deterministically derived v5 UUIDs.
                     (
                         {'project': {'is': ['Single of human pancreas', 'Mouse Melanoma']}},
-                        'hca-manifest-20d97863-d8cf-54f3-8575-0f9593d3d7ef.4bc67e84-4873-591f-b524-a5fe4ec215eb'
+                        'hca-manifest-89bc9973-de91-5fc4-9c6a-8c1f547d45c6.4bc67e84-4873-591f-b524-a5fe4ec215eb'
                     ),
                     (
                         {},
-                        'hca-manifest-c3cf398e-1927-5aae-ba2a-81d8d1800b2d.4bc67e84-4873-591f-b524-a5fe4ec215eb'
+                        'hca-manifest-832a257c-5540-567b-bcb6-260d2e374508.4bc67e84-4873-591f-b524-a5fe4ec215eb'
                     )
                 ]:
                     with self.subTest(filters=filters, format=format):
@@ -1037,8 +1027,9 @@ class TestManifestCache(DCP1ManifestTestCase):
                         else:
                             _time_until_object_expires.assert_called_once()
                         _time_until_object_expires.reset_mock()
-                        header = response.headers['Content-Disposition']
-                        value, params = cgi.parse_header(header)
+                        name = 'Content-Disposition'
+                        value = response.headers[name]
+                        value, params = parse_header(name, value)
                         self.assertEqual('attachment', value)
                         file_names[filter_project_id].append(params['filename'])
             with self.subTest(bundle_fqid=bundle_fqid.uuid[0:8]):

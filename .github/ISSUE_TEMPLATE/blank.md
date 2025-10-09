@@ -2,7 +2,7 @@
 name: A new blank issue
 about: Template for new issues
 title: ''
-labels: orange
+labels:
 ---
 
 <!--

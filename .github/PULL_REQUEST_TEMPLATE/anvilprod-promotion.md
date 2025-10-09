@@ -11,10 +11,12 @@ Linked issue: #0000
 ### Author
 
 - [ ] PR is assigned to the author
+- [ ] Status of PR is *In progress*
 - [ ] Target branch is `anvilprod`
 - [ ] Name of PR branch matches `promotions/yyyy-mm-dd-anvilprod`
 - [ ] PR is linked to the promotion issue it resolves
-- [ ] PR description links to connected issue
+- [ ] Status of linked issue is *In progress*
+- [ ] PR description links to linked issue
 - [ ] Title of linked issue matches `Promotion yyyy-mm-dd`
 - [ ] PR title starts with title of linked issue followed by ` anvilprod`
 - [ ] PR title references the linked issue

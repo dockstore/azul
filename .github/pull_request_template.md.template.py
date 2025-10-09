@@ -306,6 +306,10 @@ def emit(t: T, target_branch: str):
                 'type': 'cli',
                 'content': 'PR is assigned to the author'
             },
+            {
+                'type': 'cli',
+                'content': 'Status of PR is *In progress*'
+            },
             iif(t is T.default, {
                 'type': 'cli',
                 'content': 'PR is a draft'
@@ -334,9 +338,13 @@ def emit(t: T, target_branch: str):
                     T.backport: None
                 }[t]
             }),
+            {
+                'type': 'cli',
+                'content': f'Status of linked {t.issues} is *In progress*'
+            },
             iif(t not in (T.backport, T.upgrade), {
                 'type': 'cli',
-                'content': f'PR description links to connected {t.issues}'
+                'content': f'PR description links to linked {t.issues}'
             }),
             iif(t is T.promotion, {
                 'type': 'cli',
@@ -575,8 +583,14 @@ def emit(t: T, target_branch: str):
                 {
                     'type': 'cli',
                     'content': 'Ran `make requirements_update`',
-                    'alt': 'or this PR does not modify `requirements*.txt`, '
-                           '`common.mk`, `Makefile`, `Dockerfile` or `environment.boot`'
+                    'alt': 'or this PR does not modify ' + join_grammatically(list(map(bq, [
+                        'Dockerfile',
+                        'environment',
+                        'requirements*.txt',
+                        'common.mk',
+                        'Makefile',
+                        'environment.boot',
+                    ])), last_joiner=' or ')
                 },
                 {
                     'type': 'cli',

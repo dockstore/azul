@@ -5,10 +5,6 @@ from itertools import (
     chain,
     product,
 )
-from typing import (
-    Mapping,
-    Sequence,
-)
 
 from azul.collections import (
     NestedDict,
@@ -16,6 +12,8 @@ from azul.collections import (
 from azul.types import (
     JSON,
     JSONs,
+    json_sequence,
+    json_str,
 )
 
 default_order_of_matrix_dimensions = [
@@ -80,7 +78,7 @@ def parse_strata(strata: str) -> JSONs:
     ]
 
 
-def make_stratification_tree(files: Sequence[Mapping[str, str]]) -> JSON:
+def make_stratification_tree(files: JSONs) -> JSON:
     """
     >>> from azul.doctests import assert_json
     >>> def f(files):
@@ -304,28 +302,24 @@ def make_stratification_tree(files: Sequence[Mapping[str, str]]) -> JSON:
     """
     assert len(set(file['uuid'] for file in files)) == len(files), files
 
-    files = [
-        {
-            **file,
-            # Each line in the stratification string represents a stratum,
-            # each stratum is a list of points, each point has a dimension
-            # and a list of values. Transform that string into a list of
-            # dictionaries. Each entry in those dictionaries maps the
-            # dimension to a value in that dimension. If dimension in a
-            # stratum has multiple values, the stratum is expanded into
-            # multiple strata, one per value. The strata are identical except
-            # in the dimension that had the multiple values.
-            'strata': list(chain.from_iterable(
-                map(dict, product(*(
-                    [(dimension, value) for value in values]
-                    for dimension, values in stratum.items()
-                )))
-                for stratum in parse_strata(file['strata'])
-            )),
-            'drs_uri': file.get('drs_uri')
-        }
+    strata_by_uuid = {
+        # Each line in the stratification string represents a stratum,
+        # each stratum is a list of points, each point has a dimension
+        # and a list of values. Transform that string into a list of
+        # dictionaries. Each entry in those dictionaries maps the
+        # dimension to a value in that dimension. If dimension in a
+        # stratum has multiple values, the stratum is expanded into
+        # multiple strata, one per value. The strata are identical except
+        # in the dimension that had the multiple values.
+        file['uuid']: list(chain.from_iterable(
+            map(dict, product(*(
+                [(dimension, value) for value in json_sequence(values)]
+                for dimension, values in stratum.items()
+            )))
+            for stratum in parse_strata(json_str(file['strata']))
+        ))
         for file in files
-    ]
+    }
 
     def dimension_placement(dimension: str) -> tuple[int, int]:
         dimension_index = default_order_of_matrix_dimensions.index(dimension)
@@ -335,15 +329,15 @@ def make_stratification_tree(files: Sequence[Mapping[str, str]]) -> JSON:
     # the dimensions by number of distinct values on each dimension, and
     # secondarily sort according to the defined default ordering.
     distinct_values = defaultdict(set)
-    for file in files:
-        for stratum in file['strata']:
+    for strata in strata_by_uuid.values():
+        for stratum in strata:
             for dimension, value in stratum.items():
                 distinct_values[dimension].add(value)
     sorted_dimensions = sorted(distinct_values, key=dimension_placement)
 
     # Ensure every stratum of every file has the same dimensions
-    for file in files:
-        for stratum in file['strata']:
+    for strata in strata_by_uuid.values():
+        for stratum in strata:
             # FIXME: https://github.com/DataBiosphere/azul/issues/2443
             #        Instead of creating 'Unspecified' nodes the tree branches
             #        should not include those nodes, making the branches shorter
@@ -357,11 +351,15 @@ def make_stratification_tree(files: Sequence[Mapping[str, str]]) -> JSON:
     # multiple times in the tree.
     tree = NestedDict(2 * len(sorted_dimensions) - 1, list)
     for file in files:
-        for stratum in file['strata']:
+        file = dict(file)
+        file.pop('strata')
+        file.setdefault('drs_uri', None)
+        for stratum in strata_by_uuid[file['uuid']]:
             node = tree
             for dimension in sorted_dimensions:
                 value = stratum[dimension]
                 node = node[dimension][value]
-            node.append({k: v for k, v in file.items() if k != 'strata'})
+            assert isinstance(node, list)
+            node.append(file)
 
     return tree.to_dict()

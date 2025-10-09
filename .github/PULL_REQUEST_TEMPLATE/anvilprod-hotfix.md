@@ -11,10 +11,12 @@ Linked issue: #0000
 ### Author
 
 - [ ] PR is assigned to the author
+- [ ] Status of PR is *In progress*
 - [ ] Target branch is `anvilprod`
 - [ ] Name of PR branch matches `hotfixes/<GitHub handle of author>/<issue#>-<slug>-anvilprod`
 - [ ] PR is linked to the issue it hotfixes
-- [ ] PR description links to connected issue
+- [ ] Status of linked issue is *In progress*
+- [ ] PR description links to linked issue
 - [ ] PR title is `Hotfix anvilprod: ` followed by title of linked issue
 - [ ] PR title references the linked issue
 
@@ -30,7 +32,7 @@ Linked issue: #0000
 ### Author (before every review)
 
 - [ ] Rebased PR branch on `anvilprod`, squashed fixups from prior reviews
-- [ ] Ran `make requirements_update` <sub>or this PR does not modify `requirements*.txt`, `common.mk`, `Makefile`, `Dockerfile` or `environment.boot`</sub>
+- [ ] Ran `make requirements_update` <sub>or this PR does not modify `Dockerfile`, `environment`, `requirements*.txt`, `common.mk`, `Makefile` or `environment.boot`</sub>
 - [ ] Added `R` tag to commit title <sub>or this PR does not modify `requirements*.txt`</sub>
 - [ ] This PR is labeled `reqs` <sub>or does not modify `requirements*.txt`</sub>
 - [ ] PR is not a draft

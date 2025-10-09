@@ -110,10 +110,6 @@ from azul.indexer.field import (
 from azul.json import (
     copy_json,
 )
-from azul.json_freeze import (
-    freeze,
-    sort_frozen,
-)
 from azul.plugins import (
     ColumnMapping,
     DocumentSlice,
@@ -983,8 +979,10 @@ class ManifestGenerator(metaclass=ABCMeta):
         Different parameters should, with a very high probability, produce
         different return values.
         """
-        git_commit = config.lambda_git_status['commit']
-        filter_string = repr(sort_frozen(freeze(self.filters.explicit)))
+        git_commit = config.git_status['commit']
+        # The explicit filters are already normalized so we don't to do anything
+        # special to desensitize the hash to insignificat differences
+        filter_string = json.dumps(self.filters.explicit)
         content_hash = str(self.manifest_content_hash)
         catalog = self.catalog
         format = self.format()
@@ -2066,16 +2064,14 @@ class PFBVerbatimManifestGenerator(FileBasedManifestGenerator,
         #        https://github.com/DataBiosphere/azul/issues/7411
         if config.is_anvil_enabled(self.catalog):
             for replica in replicas:
-                if replica['replica_type'] == 'anvil_dataset':
-                    source_id = replica['source']['id']
-                    replica['contents']['datarepo_snapshot_id'] = source_id
+                source_id = replica['source']['id']
+                replica['contents']['source_datarepo_snapshot_id'] = source_id
             for schema in replica_schemas:
-                if schema['name'] == 'anvil_dataset':
-                    field_schema = plugin._pfb_schema_from_anvil_column(table_name='anvil_dataset',
-                                                                        column_name='datarepo_snapshot_id',
-                                                                        anvil_datatype='string',
-                                                                        is_optional=False)
-                    insort(schema['fields'], field_schema, key=itemgetter('name'))
+                field_schema = plugin._pfb_schema_from_anvil_column(table_name=schema['name'],
+                                                                    column_name='source_datarepo_snapshot_id',
+                                                                    anvil_datatype='string',
+                                                                    is_optional=False)
+                insort(schema['fields'], field_schema, key=itemgetter('name'))
         # Ensure field order is consistent for unit tests
         replica_schemas.sort(key=itemgetter('name'))
         links = {

@@ -1171,7 +1171,7 @@ anvil11_sources = mkdict(anvil10_sources, 371, mkdelta([
     bqsrc('b2659034', 'CCDG_Broad_NP_Epilepsy_USAVANControls_HMB_GSO_GSA_MD_20250721_ANV5_202508052211'),
     bqsrc('cf9e28f1', 'CCDG_Broad_NP_Epilepsy_USAVAN_HMB_GSO_GSA_MD_20250721_ANV5_202508052202'),
     bqsrc('11a5f960', 'CCDG_Broad_NP_Epilepsy_USAVAN_HMB_GSO_WES_20250721_ANV5_202507300959'),
-    # Supersedes snapshot ccdg_broad_np_epilepsy_usavancontrols_hmb_gso_wes… popped below
+    # Supersedes snapshot ccdg_broad_np_epilepsy_usavancontrols_hmb_gso_wes_… popped below
     bqsrc('ce5b4d0e', 'CCDG_Broad_NP_Epilepsy_USAVANcontrols_HMB_GSO_WES_20250721_ANV5_202507301007'),
     bqsrc('84b1d212', 'CCDG_Broad_NP_Epilepsy_ZAFAGN_DS_EPI_COMO_MDS_GSA_MD_20250721_ANV5_202508052220'),
     # Supersedes snapshot ccdg_broad_np_epilepsy_zafagn_ds_epi_como_mds_wes… popped below
@@ -1179,14 +1179,14 @@ anvil11_sources = mkdict(anvil10_sources, 371, mkdelta([
     bqsrc('bdc5f5a9', 'CCDG_Broad_Spalletta_HMB_NPU_MDS_WES_20250721_ANV5_202507301024'),
     bqsrc('2b98851b', 'CMG_Yale_GRU_20221020_ANV5_202507091800'),
     bqsrc('83ab11a0', 'CMH_GAFK_R5_20250801_ANV5_202508011248'),
-    bqsrc('e5c7dfdd', 'ENCORE_293T_20250710_ANV5_202507211509'),
-    bqsrc('43e71067', 'ENCORE_RS293_20250710_ANV5_202507211507'),
+    bqsrc('3f7226ca', 'ENCORE_293T_20250925_ANV5_202509251455'),
+    bqsrc('b0e9efde', 'ENCORE_RS293_20250925_ANV5_202509251451'),
     bqsrc('262cd5df', 'GREGOR_R03_GRU_20250612_ANV5_202506271443'),
     bqsrc('a50f51b8', 'GREGOR_R03_HMB_20250612_ANV5_202506271503'),
     bqsrc('fe5fb412', 'GTEx_v10_hg38_20241105_ANV5_202506201300'),
     bqsrc('e6508a35', 'HudsonAlpha_LR_v1_GRU_20241018_ANV5_202507091815'),
     bqsrc('4ed55ce5', 'IGVF_HMB_MDS_R1_20250801_ANV5_202508011316'),
-    bqsrc('34477ca5', 'MAGE_20250710_ANV5_202507211510'),
+    bqsrc('04778e89', 'MAGE_20250925_ANV5_202509251453'),
     bqsrc('027605b3', 'NIA_CARD_LR_WGS_HBCC_20250731_ANV5_202508011421'),
     bqsrc('31f7c3dd', 'NIA_CARD_LR_WGS_NABEC_GRU_V2_20250731_ANV5_202508011423'),
     bqsrc('04b6f4d8', 'PAGE_BioMe_GRU_WGS_20250224_ANV5_202502241731'),

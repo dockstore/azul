@@ -19,12 +19,12 @@ import logging
 import re
 from typing import (
     Callable,
+    ClassVar,
     Generic,
     Iterable,
     Iterator,
     Mapping,
     Protocol,
-    Self,
     TypeVar,
     get_args,
 )
@@ -47,7 +47,6 @@ from azul import (
 )
 from azul.collections import (
     OrderedSet,
-    none_safe_key,
 )
 from azul.enums import (
     auto,
@@ -119,8 +118,13 @@ from azul.time import (
 )
 from azul.types import (
     JSON,
-    JSONs,
     MutableJSON,
+    json_element_mappings,
+    json_element_strings,
+    json_sorted,
+    json_str,
+    not_none,
+    optional,
 )
 from humancellatlas.data.metadata import (
     api,
@@ -132,7 +136,7 @@ Sample = api.CellLine | api.Organoid | api.SpecimenFromOrganism
 sample_types = api.CellLine, api.Organoid, api.SpecimenFromOrganism
 assert get_args(Sample) == sample_types  # since we can't use * in generic types
 
-pass_thru_uuid4: PassThrough[api.UUID4] = PassThrough(str, es_type='keyword')
+pass_thru_uuid4: PassThrough[str] = PassThrough(str, es_type='keyword')
 
 
 def _format_dcp2_datetime(d: datetime | None) -> str | None:
@@ -295,7 +299,7 @@ class ValueAndUnit(Nullable[JSON, str]):
         return schema.object(value=str, unit=str)
 
 
-value_and_unit: ValueAndUnit = ValueAndUnit(JSON, str)
+value_and_unit: ValueAndUnit = ValueAndUnit(dict, str)
 
 accession: Nested = Nested(namespace=null_str, accession=null_str)
 
@@ -313,15 +317,16 @@ class SubmitterCategory(Enum):
     external = auto()
 
 
-class SubmitterBase:
-    # These class attributes must be defined in a superclass because Enum and
-    # EnumMeta would get confused if they were defined in the Enum subclass.
-    by_id: dict[str, 'Submitter'] = {}
-    by_title: dict[str, 'Submitter'] = {}
-    id_namespace = UUID('382415e5-67a6-49be-8f3c-aaaa707d82db')
+class Submitters:
+    # These class attributes must be defined in a separate class because Enum
+    # and EnumMeta would get confused if they were defined in the Enum subclass.
+    # It also helps with mypy.
+    by_id: ClassVar[dict[str, 'Submitter']] = {}
+    by_title: ClassVar[dict[str, 'Submitter']] = {}
+    id_namespace: ClassVar[UUID] = UUID('382415e5-67a6-49be-8f3c-aaaa707d82db')
 
 
-class Submitter(SubmitterBase, Enum):
+class Submitter(Enum):
     """
     The known submitters of data files, specifically matrix files.
     """
@@ -392,25 +397,25 @@ class Submitter(SubmitterBase, Enum):
     def __init__(self, id: str, title: str, category: SubmitterCategory):
         super().__init__()
         slug = self.name.replace('_', ' ')
-        generated_uuid = str(uuid5(self.id_namespace, slug))
+        generated_uuid = str(uuid5(Submitters.id_namespace, slug))
         assert id == generated_uuid, (id, generated_uuid)
         self.id = id
         self.slug = slug
         self.title = title
         self.category = category
-        assert title not in self.by_title, title
-        self.by_title[title] = self
-        self.by_id[id] = self
+        assert title not in Submitters.by_title, title
+        Submitters.by_title[title] = self
+        Submitters.by_id[id] = self
 
     @classmethod
-    def for_id(cls, submitter_id: str) -> Self | None:
+    def for_id(cls, submitter_id: str) -> 'Submitter | None':
         try:
-            return cls.by_id[submitter_id]
+            return Submitters.by_id[submitter_id]
         except KeyError:
             return None
 
     @classmethod
-    def for_file(cls, file: api.File) -> Self | None:
+    def for_file(cls, file: api.File) -> 'Submitter | None':
         if file.file_source is None:
             if (
                 # The DCP/2 system design specification mistakenly required that
@@ -436,7 +441,7 @@ class Submitter(SubmitterBase, Enum):
             else:
                 self = cls.for_id(file.submitter_id)
         else:
-            self = cls.by_title[file.file_source]
+            self = Submitters.by_title[file.file_source]
         return self
 
     @classmethod
@@ -459,7 +464,7 @@ class Entity(Protocol):
 
 class DatedEntity(Entity, Protocol):
     submission_date: datetime
-    update_date: datetime
+    update_date: datetime | None
 
 
 @attr.s(frozen=True, kw_only=True, auto_attribs=True)
@@ -469,6 +474,7 @@ class BaseTransformer(Transformer, metaclass=ABCMeta):
 
     @classmethod
     def aggregator(cls, entity_type: EntityType) -> EntityAggregator | None:
+        agg_cls: type[EntityAggregator]
         if entity_type == 'files':
             agg_cls = FileAggregator
         elif entity_type in SampleTransformer.inner_entity_types():
@@ -639,7 +645,7 @@ class BaseTransformer(Transformer, metaclass=ABCMeta):
             'doi': null_str
         }
 
-    def _publication(self, p: api.ProjectPublication):
+    def _publication(self, p: api.ProjectPublication) -> MutableJSON:
         # noinspection PyDeprecation
         return {
             'publication_title': p.publication_title,
@@ -721,13 +727,14 @@ class BaseTransformer(Transformer, metaclass=ABCMeta):
             'contributors': list(map(self._contact, project.contributors)),
             'publication_titles': list(publication_titles),
             'publications': list(map(self._publication, project.publications)),
-            'supplementary_links': sorted(project.supplementary_links),
+            'supplementary_links': json_sorted(project.supplementary_links),
             '_type': 'project',
             'accessions': list(map(self._accession, project.accessions)),
             'is_tissue_atlas_project': any(bionetwork.atlas_project
                                            for bionetwork in project.bionetworks),
             'tissue_atlas': list(map(self._tissue_atlas, project.bionetworks)),
-            'bionetwork_name': sorted(bionetwork.name for bionetwork in project.bionetworks),
+            'bionetwork_name': json_sorted(bionetwork.name
+                                           for bionetwork in project.bionetworks),
             'estimated_cell_count': project.estimated_cell_count,
             'data_use_restriction': project.data_use_restriction,
             'duos_id': project.duos_id
@@ -752,9 +759,9 @@ class BaseTransformer(Transformer, metaclass=ABCMeta):
             **self._biomaterial(specimen),
             'has_input_biomaterial': specimen.has_input_biomaterial,
             '_source': api.schema_names[type(specimen)],
-            'disease': sorted(specimen.diseases),
+            'disease': json_sorted(specimen.diseases),
             'organ': specimen.organ,
-            'organ_part': sorted(specimen.organ_parts),
+            'organ_part': json_sorted(specimen.organ_parts),
             'storage_method': specimen.storage_method,
             'preservation_method': specimen.preservation_method,
             '_type': 'specimen'
@@ -777,7 +784,7 @@ class BaseTransformer(Transformer, metaclass=ABCMeta):
 
     def _cell_suspension(self, cell_suspension: api.CellSuspension) -> MutableJSON:
         organs = set()
-        organ_parts = set()
+        organ_parts: set[str | None] = set()
         samples: dict[str, Sample] = dict()
         self._find_ancestor_samples(cell_suspension, samples)
         for sample in samples.values():
@@ -799,10 +806,10 @@ class BaseTransformer(Transformer, metaclass=ABCMeta):
                 field: cell_suspension.estimated_cell_count if is_leaf_field == is_leaf else 0
                 for field, is_leaf_field in self.cell_count_fields
             },
-            'selected_cell_type': sorted(cell_suspension.selected_cell_types),
-            'organ': sorted(organs),
+            'selected_cell_type': json_sorted(cell_suspension.selected_cell_types),
+            'organ': json_sorted(organs),
             # With multiple samples it is possible to have str and None values
-            'organ_part': sorted(organ_parts, key=none_safe_key(none_last=True))
+            'organ_part': json_sorted(organ_parts)
         }
 
     @classmethod
@@ -835,7 +842,8 @@ class BaseTransformer(Transformer, metaclass=ABCMeta):
             'donor_count': null_int
         }
 
-    def _donor(self, donor: api.DonorOrganism) -> MutableJSON:
+    def _donor(self, donor: api.DonorOrganism) -> JSON:
+        organism_age: MutableJSON | None
         if donor.organism_age is None:
             assert donor.organism_age_unit is None, R('Unit must be None if value is')
             organism_age = None
@@ -847,9 +855,9 @@ class BaseTransformer(Transformer, metaclass=ABCMeta):
         return {
             **self._biomaterial(donor),
             'biological_sex': donor.sex,
-            'genus_species': sorted(donor.genus_species),
+            'genus_species': json_sorted(donor.genus_species),
             'development_stage': donor.development_stage,
-            'diseases': sorted(donor.diseases),
+            'diseases': json_sorted(donor.diseases),
             'organism_age': organism_age,
             **(
                 {
@@ -935,12 +943,12 @@ class BaseTransformer(Transformer, metaclass=ABCMeta):
             'crc32c': file.manifest_entry.crc32c,
             'sha256': file.manifest_entry.sha256,
             'size': file.manifest_entry.size,
-            'uuid': file.manifest_entry.uuid,
+            'uuid': str(file.manifest_entry.uuid),
             'drs_uri': self.bundle.drs_uri(file.manifest_entry.json),
             'version': file.manifest_entry.version,
             'file_type': file.schema_name,
             'file_format': file.file_format,
-            'content_description': sorted(file.content_description),
+            'content_description': json_sorted(file.content_description),
             'is_intermediate': self._is_intermediate_matrix(file),
             'file_source': Submitter.title_for_file(file),
             '_type': 'file',
@@ -1080,25 +1088,29 @@ class BaseTransformer(Transformer, metaclass=ABCMeta):
             'effective_organ': null_str,
         }
 
-    class Sample:
+    class Sample[B: api.Biomaterial](metaclass=ABCMeta):
+        """
+        Neither this class nor any of its subclasses are ever instantiated. We
+        simply use it to associate custom functionality with types of
+        biomaterials that are used as samples.
+        """
         entity_type: str
-        api_class: type[api.Biomaterial]
+        api_cls: type[B]
 
         @classmethod
-        def to_dict(cls, sample: api.Biomaterial) -> MutableJSON:
-            assert isinstance(sample, cls.api_class)
+        def to_dict(cls, sample: B) -> MutableJSON:
             return {
-                'document_id': sample.document_id,
+                'document_id': str(sample.document_id),
                 'biomaterial_id': sample.biomaterial_id,
                 'entity_type': cls.entity_type,
             }
 
-    class SampleCellLine(Sample):
+    class SampleCellLine(Sample[api.CellLine]):
         entity_type = 'cell_lines'
-        api_class = api.CellLine
+        api_cls = api.CellLine
 
         @classmethod
-        def to_dict(cls, cellline: api_class) -> MutableJSON:
+        def to_dict(cls, cellline: api.CellLine) -> MutableJSON:
             return {
                 **super().to_dict(cellline),
                 'organ': None,
@@ -1108,12 +1120,12 @@ class BaseTransformer(Transformer, metaclass=ABCMeta):
                 'effective_organ': cellline.model_organ,
             }
 
-    class SampleOrganoid(Sample):
+    class SampleOrganoid(Sample[api.Organoid]):
         entity_type = 'organoids'
-        api_class = api.Organoid
+        api_cls = api.Organoid
 
         @classmethod
-        def to_dict(cls, organoid: api_class) -> MutableJSON:
+        def to_dict(cls, organoid: api.Organoid) -> MutableJSON:
             return {
                 **super().to_dict(organoid),
                 'organ': None,
@@ -1123,16 +1135,16 @@ class BaseTransformer(Transformer, metaclass=ABCMeta):
                 'effective_organ': organoid.model_organ,
             }
 
-    class SampleSpecimen(Sample):
+    class SampleSpecimen(Sample[api.SpecimenFromOrganism]):
         entity_type = 'specimens'
-        api_class = api.SpecimenFromOrganism
+        api_cls = api.SpecimenFromOrganism
 
         @classmethod
-        def to_dict(cls, specimen: api_class) -> MutableJSON:
+        def to_dict(cls, specimen: api.SpecimenFromOrganism) -> MutableJSON:
             return {
                 **super().to_dict(specimen),
                 'organ': specimen.organ,
-                'organ_part': sorted(specimen.organ_parts),
+                'organ_part': json_sorted(specimen.organ_parts),
                 'model_organ': None,
                 'model_organ_part': None,
                 'effective_organ': specimen.organ,
@@ -1144,7 +1156,9 @@ class BaseTransformer(Transformer, metaclass=ABCMeta):
         _specimen: SampleSpecimen
     }
 
-    def _samples(self, samples: Iterable[api.Biomaterial]) -> MutableJSON:
+    def _samples(self,
+                 samples: Iterable[api.Biomaterial]
+                 ) -> dict[str, list[JSON]]:
         """
         Returns inner entities representing the given samples as both, generic
         'samples' inner entities and specific 'sample_{entity_type}' entities.
@@ -1152,10 +1166,10 @@ class BaseTransformer(Transformer, metaclass=ABCMeta):
         the properties common to all samples. This allows filtering on these
         common properties regardless of the sample entity type.
         """
-        result = defaultdict(list)
+        result: dict[str, list[JSON]] = defaultdict(list)
         for sample in samples:
             for to_dict, sample_type in self.sample_types.items():
-                if isinstance(sample, sample_type.api_class):
+                if isinstance(sample, sample_type.api_cls):
                     entity_type = f'sample_{sample_type.entity_type}'
                     result[entity_type].append(to_dict(self, sample))
                     result['samples'].append(sample_type.to_dict(sample))
@@ -1178,7 +1192,7 @@ class BaseTransformer(Transformer, metaclass=ABCMeta):
         if isinstance(file, api.SupplementaryFile):
             # Stratification values for supplementary files are
             # provided in the 'file_description' field of the file JSON.
-            strata_string = file.json['file_description']
+            strata_string = optional(json_str, file.json['file_description'])
         elif isinstance(file, api.File):
             # Stratification values for other file types are gathered by
             # visiting the file and using values from the graph.
@@ -1197,7 +1211,7 @@ class BaseTransformer(Transformer, metaclass=ABCMeta):
 
     dimension_value_re = re.compile(r'[^,=;\n]+')
 
-    def _build_strata_string(self, file):
+    def _build_strata_string(self, file) -> str:
         visitor, samples = self._visit_file(file)
         points = {
             'genusSpecies': {
@@ -1261,7 +1275,7 @@ class BaseTransformer(Transformer, metaclass=ABCMeta):
             'dates': cls._date_types(),
         }
 
-    def _protocols(self, visitor) -> Mapping[str, JSONs]:
+    def _protocols(self, visitor) -> Mapping[str, list[JSON]]:
         return {
             p + 's': list(map(getattr(self, '_' + p), getattr(visitor, p + 's').values()))
             for p in (
@@ -1283,7 +1297,7 @@ class BaseTransformer(Transformer, metaclass=ABCMeta):
 
     @classmethod
     def inner_entity_id(cls, entity_type: EntityType, entity: JSON) -> EntityID:
-        return entity['document_id']
+        return json_str(entity['document_id'])
 
     @classmethod
     def reconcile_inner_entities(cls,
@@ -1309,13 +1323,13 @@ BaseTransformer.validate_class()
 
 
 def _parse_zarr_file_name(file_name: str
-                          ) -> tuple[bool, str | None, str | None]:
+                          ) -> tuple[str, str] | tuple[None, None]:
     file_name = file_name.split('.zarr/')
     if len(file_name) == 1:
-        return False, None, None
+        return None, None
     elif len(file_name) == 2:
         zarr_name, sub_name = file_name
-        return True, zarr_name, sub_name
+        return zarr_name, sub_name
     else:
         assert False
 
@@ -1383,10 +1397,10 @@ class TransformerVisitor(api.EntityVisitor):
         elif isinstance(entity, api.File):
             # noinspection PyDeprecation
             file_name = entity.manifest_entry.name
-            is_zarr, zarr_name, sub_name = _parse_zarr_file_name(file_name)
+            zarr_name, sub_name = _parse_zarr_file_name(file_name)
             # zarray files no longer exist in DCP2. This condition may no longer
             # be needed to support them, but we don't want to risk removing it.
-            if not is_zarr or sub_name.endswith('.zattrs'):
+            if sub_name is None or sub_name.endswith('.zattrs'):
                 self.files[entity.document_id] = entity
 
     @property
@@ -1458,16 +1472,17 @@ class FileTransformer(PartitionedTransformer[api.File], ReplicaTransformer):
         zarr_stores: Mapping[str, list[api.File]] = self.group_zarrs(files)
         for file in files:
             file_name = file.manifest_entry.name
-            is_zarr, zarr_name, sub_name = _parse_zarr_file_name(file_name)
+            zarr_name, sub_name = _parse_zarr_file_name(file_name)
             # zarray files no longer exist in DCP2. This condition may no longer
             # be needed to support them, but we don't want to risk removing it.
-            if not is_zarr or sub_name.endswith('.zattrs'):
-                if is_zarr:
+            if sub_name is None or sub_name.endswith('.zattrs'):
+                if zarr_name is not None:
                     # This is the representative file, so add the related files
                     related_files = zarr_stores[zarr_name]
                 else:
-                    related_files = ()
+                    related_files = []
                 visitor, samples = self._visit_file(file)
+                contents: dict[str, list[JSON]]
                 contents = dict(self._samples(samples.values()),
                                 sequencing_inputs=list(
                                     map(self._sequencing_input, visitor.sequencing_inputs.values())
@@ -1493,7 +1508,7 @@ class FileTransformer(PartitionedTransformer[api.File], ReplicaTransformer):
                     ):
                         additional_contents = self.matrix_stratification_values(file)
                         for entity_type, values in additional_contents.items():
-                            contents[entity_type].extend(values)
+                            contents[entity_type].extend(json_element_mappings(values))
                 file_id = file.ref.entity_id
                 yield self._contribution(contents, file_id)
                 if config.enable_replicas:
@@ -1508,19 +1523,20 @@ class FileTransformer(PartitionedTransformer[api.File], ReplicaTransformer):
         Returns inner entity values (contents) read from the stratification
         values provided by a supplementary file project-level matrix.
         """
-        contents = defaultdict(list)
-        file_description = file.json.get('file_description')
+        contents: dict[str, list[MutableJSON]] = defaultdict(list)
+        file_description = optional(json_str, file.json.get('file_description'))
         if file_description:
             file_name = file.manifest_entry.name
             strata = parse_strata(file_description)
             for stratum in strata:
-                donor = {}
+                donor: MutableJSON = {}
                 genus_species = stratum.get('genusSpecies')
                 if genus_species is not None:
-                    donor['genus_species'] = sorted(genus_species)
+                    donor['genus_species'] = json_sorted(json_element_strings(genus_species))
                 development_stage = stratum.get('developmentStage')
                 if development_stage is not None:
-                    donor['development_stage'] = sorted(development_stage)
+                    development_stage = json_sorted(json_element_strings(development_stage))
+                    donor['development_stage'] = development_stage
                 if donor:
                     donor.update(
                         {
@@ -1530,18 +1546,19 @@ class FileTransformer(PartitionedTransformer[api.File], ReplicaTransformer):
                     contents['donors'].append(donor)
                 organ = stratum.get('organ')
                 if organ is not None:
-                    for i, one_organ in enumerate(sorted(organ)):
+                    for i, one_organ in enumerate(sorted(json_element_strings(organ))):
                         contents['specimens'].append(
                             {
                                 'biomaterial_id': f'specimen_from_organism_{i}_{file_name}',
                                 'organ': one_organ,
                             },
                         )
-                library = stratum.get('libraryConstructionApproach')
+                library = optional(json_element_strings,
+                                   stratum.get('libraryConstructionApproach'))
                 if library is not None:
                     contents['library_preparation_protocols'].append(
                         {
-                            'library_construction_approach': sorted(library),
+                            'library_construction_approach': json_sorted(library),
                         }
                     )
         return contents
@@ -1552,11 +1569,11 @@ class FileTransformer(PartitionedTransformer[api.File], ReplicaTransformer):
         zarr_stores = defaultdict(list)
         for file in files:
             file_name = file.manifest_entry.name
-            is_zarr, zarr_name, sub_name = _parse_zarr_file_name(file_name)
-            if is_zarr:
+            zarr_name, sub_name = _parse_zarr_file_name(file_name)
+            if sub_name is not None:
                 # Leave the representative file out of the list since it's already in the manifest
                 if not sub_name.startswith('.zattrs'):
-                    zarr_stores[zarr_name].append(file)
+                    zarr_stores[not_none(zarr_name)].append(file)
         return zarr_stores
 
 
@@ -1580,6 +1597,7 @@ class CellSuspensionTransformer(PartitionedTransformer):
             visitor = TransformerVisitor()
             cell_suspension.accept(visitor)
             cell_suspension.ancestors(visitor)
+            contents: JSON
             contents = dict(self._samples(samples.values()),
                             sequencing_inputs=list(
                                 map(self._sequencing_input, visitor.sequencing_inputs.values())
@@ -1625,6 +1643,7 @@ class SampleTransformer(PartitionedTransformer):
             visitor = TransformerVisitor()
             sample.accept(visitor)
             sample.ancestors(visitor)
+            contents: JSON
             contents = dict(self._samples([sample]),
                             sequencing_inputs=list(
                                 map(self._sequencing_input, visitor.sequencing_inputs.values())
@@ -1721,6 +1740,7 @@ class SingletonTransformer(BaseTransformer, metaclass=ABCMeta):
             )
         ]
 
+        contents: JSON
         contents = dict(self._samples(samples.values()),
                         sequencing_inputs=list(
                             map(self._sequencing_input, visitor.sequencing_inputs.values())

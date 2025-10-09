@@ -15,11 +15,13 @@ Linked issues: #0000
 ### Author
 
 - [ ] PR is assigned to the author
+- [ ] Status of PR is *In progress*
 - [ ] PR is a draft
 - [ ] Target branch is `develop`
 - [ ] Name of PR branch matches `issues/<GitHub handle of author>/<issue#>-<slug>`
 - [ ] PR is linked to all issues it (partially) resolves
-- [ ] PR description links to connected issues
+- [ ] Status of linked issues is *In progress*
+- [ ] PR description links to linked issues
 - [ ] PR title matches<sup>1</sup> that of a linked issue <sub>or comment in PR explains why they're different</sub>
 - [ ] PR title references all linked issues
 - [ ] For each linked issue, there is at least one commit whose title references that issue
@@ -72,7 +74,7 @@ title is `Fix: ` followed by the issue title
 ### Author (before every review)
 
 - [ ] Rebased PR branch on `develop`, squashed fixups from prior reviews
-- [ ] Ran `make requirements_update` <sub>or this PR does not modify `requirements*.txt`, `common.mk`, `Makefile`, `Dockerfile` or `environment.boot`</sub>
+- [ ] Ran `make requirements_update` <sub>or this PR does not modify `Dockerfile`, `environment`, `requirements*.txt`, `common.mk`, `Makefile` or `environment.boot`</sub>
 - [ ] Added `R` tag to commit title <sub>or this PR does not modify `requirements*.txt`</sub>
 - [ ] This PR is labeled `reqs` <sub>or does not modify `requirements*.txt`</sub>
 - [ ] `make integration_test` passes in personal deployment <sub>or this PR does not modify functionality that could affect the IT outcome</sub>

@@ -21,7 +21,6 @@ from pprint import (
 )
 from typing import (
     AbstractSet,
-    cast,
 )
 import uuid
 
@@ -125,7 +124,7 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
             body={
                 'action': MirrorAction.mirror_source.to_json(),
                 'catalog': catalog,
-                'source': cast(JSON, source.to_json()),
+                'source': source.to_json(),
             },
             group_id=source.id
         )

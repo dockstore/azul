@@ -467,19 +467,27 @@ Updating the Swagger UI
 
 Operators should regularly check for available updates to the Swagger UI. The
 current version used by Azul is hardcoded in ``scripts/update_swagger.py``. The
-upstream source is located here:
-
-https://github.com/swagger-api/swagger-ui/tree/master/dist
+latest upstream version is available as the `latest release tag`_.
 
 Scheduled upgrade PR's should only include minor and hotfix updates to the
 Swagger UI. If a new major version is available, open a new issue instead. To
 perform the update, edit the ``tag`` variable in the ``update_swagger`` script
-and run it. If there are nontrivial changes to the ``swagger-initializer.js`` or
-``oauth2-redirect.html`` files, cancel the update and open a new issue instead.
-Otherwise, forward any changes to those two files to their respective mustache
-template files, and commit the changes to the script and all modified files in
-the ``swagger/`` directory. The commit message must include the new tag, as well
-as a link to the upstream source in the commit body, e.g.::
+and run it. The script copies the files from the `dist directory`_, but at the
+specified version, which may be different on the master `branch`, which the link
+points to.
+
+.. _latest release tag: https://github.com/swagger-api/swagger-ui/releases/latest
+
+.. _dist directory: https://github.com/swagger-api/swagger-ui/tree/master/dist
+
+If, after running the script, there are nontrivial changes to the
+``swagger-initializer.js`` or ``oauth2-redirect.html`` files, cancel the update
+and open a new issue instead. You may need to try updating to an older,
+intermediate version. Forward trivial changes to those two files to their
+respective Mustache template copies, and commit the changes to the script and
+all modified files in the ``swagger/`` directory. The commit message must
+include the new tag, as well as a link to the upstream source in the commit
+body, e.g.::
 
     Update Swagger UI to v<release version> (#issue-number)
 

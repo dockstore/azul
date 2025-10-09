@@ -53,7 +53,7 @@ check_python: check_venv
 	@if ! python -c "import sys; \
                      from chalice import chalice_version as v; \
 		             p = lambda v: tuple(map(int, v.split('.'))); \
-		             sys.exit(0 if p(v) == p('1.31.3') else 1)"; then \
+		             sys.exit(0 if p(v) == p('1.32.0') else 1)"; then \
 		echo -e "\nLooks like chalice is out of date. Please run 'make requirements'\n"; \
 		false; \
 	fi
