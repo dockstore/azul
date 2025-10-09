@@ -6,7 +6,6 @@ from typing import (
     Any,
     Iterable,
     Sequence,
-    cast,
 )
 
 import chalice
@@ -283,7 +282,7 @@ class MirrorController(ActionController[MirrorAction], SchemaController):
             body={
                 'action': MirrorAction.mirror_partition.to_json(),
                 'catalog': catalog,
-                'source': cast(JSON, source.to_json()),
+                'source': source.to_json(),
                 'prefix': prefix
             },
             group_id=f'{source.id}:{prefix}'
@@ -298,7 +297,7 @@ class MirrorController(ActionController[MirrorAction], SchemaController):
             body={
                 'action': MirrorAction.mirror_file.to_json(),
                 'catalog': catalog,
-                'source': cast(JSON, source.to_json()),
+                'source': source.to_json(),
                 'file': file.to_json()
             },
             group_id=file.digest.value

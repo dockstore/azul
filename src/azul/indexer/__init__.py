@@ -11,9 +11,6 @@ from itertools import (
 import json
 import logging
 import math
-from threading import (
-    RLock,
-)
 from typing import (
     Any,
     ClassVar,
@@ -31,9 +28,15 @@ from azul import (
     config,
 )
 from azul.attrs import (
+    DiscriminatingPolymorphicSerializableAttrs,
     SerializableAttrs,
 )
+from azul.indexer.field import (
+    FieldTypes,
+    pass_thru_str,
+)
 from azul.json import (
+    DynamicPolymorphicSerializable,
     Parseable,
 )
 from azul.types import (
@@ -72,6 +75,13 @@ class BundleFQID(SerializableAttrs):
 
     def _nucleus(self) -> tuple[str, str]:
         return self.uuid.lower(), self.version.lower()
+
+    @classmethod
+    def field_types(cls) -> FieldTypes:
+        return {
+            'uuid': pass_thru_str,
+            'version': pass_thru_str,
+        }
 
     # We can't use attrs' generated implementation because it always
     # considers operands with different types to be unequal, regardless of
@@ -506,21 +516,16 @@ class SimpleSourceSpec(SourceSpec):
 
 
 @attrs.frozen(kw_only=True, order=True)
-class SourceRef[SOURCE_SPEC: SourceSpec](SerializableAttrs,
-                                         SupportsLessAndGreaterThan):
+class SourceRef[SOURCE_SPEC: SourceSpec](
+    DiscriminatingPolymorphicSerializableAttrs,
+    DynamicPolymorphicSerializable,
+    SupportsLessAndGreaterThan
+):
     """
     A reference to a repository source containing bundles to index. A repository
     has at least one source. A source is primarily referenced by its ID but we
     drag the spec along to 1) avoid repeatedly looking it up and 2) ensure that
     the mapping between the two doesn't change while we index a source.
-
-    Instances of this class are interned: within a Python interpreter process,
-    there will only ever be one instance of this class for any given ID and
-    spec. There may be an instance of a subclass of this class that has the same
-    ID and spec as an instance of this class or another subclass of this class.
-
-    FIXME: Improve equality and interning semantics for source ref and spec
-           https://github.com/DataBiosphere/azul/issues/6778
 
     Note to plugin implementers: Since the source ID can't be assumed to be
     globally unique, plugins should subclass this class, even if the subclass
@@ -539,52 +544,9 @@ class SourceRef[SOURCE_SPEC: SourceSpec](SerializableAttrs,
     id: str = attrs.field(order=str.lower)
     spec: SOURCE_SPEC = attrs.field(order=False)
 
-    _lookup: ClassVar[dict[tuple[type['SourceRef'], str, SourceSpec], 'SourceRef']] = {}
-    _lookup_lock = RLock()
-
-    def __new__(cls, *, id: str, spec: SOURCE_SPEC) -> Self:
-        """
-        Interns instances by their ID and spec. Two different sources may still
-        use the same ID or spec.
-
-        FIXME: Improve equality and interning semantics for source ref and spec
-               https://github.com/DataBiosphere/azul/issues/6778
-
-        >>> class S(SourceRef): pass
-        >>> a, b  = SimpleSourceSpec.parse('a:/0'), SimpleSourceSpec.parse('b:/0')
-
-        >>> S(id='1', spec=a) is S(id='1', spec=a)
-        True
-
-        >>> S(id='1', spec=a) is S(id='2', spec=a)
-        False
-
-        >>> S(id='1', spec=b) # doctest: +NORMALIZE_WHITESPACE
-        S(id='1', spec=SimpleSourceSpec(prefix=Prefix(common='',
-                                                      partition=0),
-                                        name='b'))
-
-        Interning is done per class:
-
-        >>> class T(S): pass
-        >>> T(id='1', spec=a) is S(id='1', spec=a)
-        False
-
-        >>> T(id='1', spec=a) == S(id='1', spec=a)
-        False
-        """
-        with cls._lookup_lock:
-            lookup = cls._lookup
-            try:
-                self = lookup[cls, id, spec]
-            except KeyError:
-                self = super().__new__(cls)
-                cls.__init__(self, id=id, spec=spec)
-                lookup[cls, id, spec] = self
-            assert isinstance(self, cls)
-            assert self.id == id
-            assert self.spec == spec, (self.spec, spec)
-            return self
+    @classmethod
+    def discriminator(cls) -> str:
+        return 'type'
 
     @classmethod
     def spec_cls(cls) -> type[SOURCE_SPEC]:
@@ -595,6 +557,14 @@ class SourceRef[SOURCE_SPEC: SourceSpec](SerializableAttrs,
 
     def with_prefix(self, prefix: Prefix) -> Self:
         return attrs.evolve(self, spec=attrs.evolve(self.spec, prefix=prefix))
+
+    @classmethod
+    def field_types(cls) -> FieldTypes:
+        return {
+            'id': pass_thru_str,
+            'spec': pass_thru_str,
+            cls.discriminator(): pass_thru_str,
+        }
 
 
 @attrs.frozen(kw_only=True, eq=False)

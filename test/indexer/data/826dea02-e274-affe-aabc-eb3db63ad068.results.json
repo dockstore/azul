@@ -217,7 +217,8 @@
             "sources": [
                 {
                     "id": "6c87f0e1-509d-46a4-b845-7584df39263b",
-                    "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0"
+                    "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0",
+                    "type": "azul.terra.TDRSourceRef"
                 }
             ],
             "bundles": [
@@ -405,7 +406,8 @@
             "document_id": "1509ef40-d1ba-440d-b298-16b7c173dcd4_826dea02-e274-affe-aabc-eb3db63ad068_2022-06-01T00:00:00.000000Z_exists",
             "source": {
                 "id": "6c87f0e1-509d-46a4-b845-7584df39263b",
-                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0"
+                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0",
+                "type": "azul.terra.TDRSourceRef"
             },
             "bundle_uuid": "826dea02-e274-affe-aabc-eb3db63ad068",
             "bundle_version": "2022-06-01T00:00:00.000000Z",
@@ -425,7 +427,8 @@
             ],
             "source": {
                 "id": "6c87f0e1-509d-46a4-b845-7584df39263b",
-                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0"
+                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0",
+                "type": "azul.terra.TDRSourceRef"
             },
             "contents": {
                 "activity_type": "Sequencing",
@@ -649,7 +652,8 @@
             "sources": [
                 {
                     "id": "6c87f0e1-509d-46a4-b845-7584df39263b",
-                    "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0"
+                    "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0",
+                    "type": "azul.terra.TDRSourceRef"
                 }
             ],
             "bundles": [
@@ -837,7 +841,8 @@
             "document_id": "15b76f9c-6b46-433f-851d-34e89f1b9ba6_826dea02-e274-affe-aabc-eb3db63ad068_2022-06-01T00:00:00.000000Z_exists",
             "source": {
                 "id": "6c87f0e1-509d-46a4-b845-7584df39263b",
-                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0"
+                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0",
+                "type": "azul.terra.TDRSourceRef"
             },
             "bundle_uuid": "826dea02-e274-affe-aabc-eb3db63ad068",
             "bundle_version": "2022-06-01T00:00:00.000000Z",
@@ -857,7 +862,8 @@
             ],
             "source": {
                 "id": "6c87f0e1-509d-46a4-b845-7584df39263b",
-                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0"
+                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0",
+                "type": "azul.terra.TDRSourceRef"
             },
             "contents": {
                 "data_modality": [],
@@ -894,7 +900,8 @@
             ],
             "source": {
                 "id": "6c87f0e1-509d-46a4-b845-7584df39263b",
-                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0"
+                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0",
+                "type": "azul.terra.TDRSourceRef"
             },
             "contents": {
                 "datarepo_row_id": "15d85d30-ad4a-4f50-87a8-a27f59dd1b5f",
@@ -1190,7 +1197,8 @@
             "sources": [
                 {
                     "id": "6c87f0e1-509d-46a4-b845-7584df39263b",
-                    "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0"
+                    "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0",
+                    "type": "azul.terra.TDRSourceRef"
                 }
             ],
             "bundles": [
@@ -1420,7 +1428,8 @@
             "document_id": "2370f948-2783-4eb6-afea-e022897f4dcf_826dea02-e274-affe-aabc-eb3db63ad068_2022-06-01T00:00:00.000000Z_exists",
             "source": {
                 "id": "6c87f0e1-509d-46a4-b845-7584df39263b",
-                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0"
+                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0",
+                "type": "azul.terra.TDRSourceRef"
             },
             "bundle_uuid": "826dea02-e274-affe-aabc-eb3db63ad068",
             "bundle_version": "2022-06-01T00:00:00.000000Z",
@@ -1439,7 +1448,8 @@
             ],
             "source": {
                 "id": "6c87f0e1-509d-46a4-b845-7584df39263b",
-                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0"
+                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0",
+                "type": "azul.terra.TDRSourceRef"
             },
             "contents": {
                 "consent_group": [
@@ -1669,7 +1679,8 @@
             "sources": [
                 {
                     "id": "6c87f0e1-509d-46a4-b845-7584df39263b",
-                    "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0"
+                    "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0",
+                    "type": "azul.terra.TDRSourceRef"
                 }
             ],
             "bundles": [
@@ -1708,7 +1719,8 @@
             "replica_type": "anvil_file",
             "source": {
                 "id": "6c87f0e1-509d-46a4-b845-7584df39263b",
-                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0"
+                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0",
+                "type": "azul.terra.TDRSourceRef"
             },
             "hub_ids": [
                 "2370f948-2783-4eb6-afea-e022897f4dcf",
@@ -1893,7 +1905,8 @@
             "document_id": "3b17377b-16b1-431c-9967-e5d01fc5923f_826dea02-e274-affe-aabc-eb3db63ad068_2022-06-01T00:00:00.000000Z_exists",
             "source": {
                 "id": "6c87f0e1-509d-46a4-b845-7584df39263b",
-                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0"
+                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0",
+                "type": "azul.terra.TDRSourceRef"
             },
             "bundle_uuid": "826dea02-e274-affe-aabc-eb3db63ad068",
             "bundle_version": "2022-06-01T00:00:00.000000Z",
@@ -2118,7 +2131,8 @@
             "sources": [
                 {
                     "id": "6c87f0e1-509d-46a4-b845-7584df39263b",
-                    "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0"
+                    "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0",
+                    "type": "azul.terra.TDRSourceRef"
                 }
             ],
             "bundles": [
@@ -2142,7 +2156,8 @@
             ],
             "source": {
                 "id": "6c87f0e1-509d-46a4-b845-7584df39263b",
-                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0"
+                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0",
+                "type": "azul.terra.TDRSourceRef"
             },
             "contents": {
                 "activity_type": "Sequencing",
@@ -2340,7 +2355,8 @@
             "document_id": "816e364e-1193-4e5b-a91a-14e4b009157c_826dea02-e274-affe-aabc-eb3db63ad068_2022-06-01T00:00:00.000000Z_exists",
             "source": {
                 "id": "6c87f0e1-509d-46a4-b845-7584df39263b",
-                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0"
+                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0",
+                "type": "azul.terra.TDRSourceRef"
             },
             "bundle_uuid": "826dea02-e274-affe-aabc-eb3db63ad068",
             "bundle_version": "2022-06-01T00:00:00.000000Z",
@@ -2609,7 +2625,8 @@
             "sources": [
                 {
                     "id": "6c87f0e1-509d-46a4-b845-7584df39263b",
-                    "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0"
+                    "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0",
+                    "type": "azul.terra.TDRSourceRef"
                 }
             ],
             "bundles": [
@@ -2839,7 +2856,8 @@
             "document_id": "826dea02-e274-4ffe-aabc-eb3db63ad068_826dea02-e274-affe-aabc-eb3db63ad068_2022-06-01T00:00:00.000000Z_exists",
             "source": {
                 "id": "6c87f0e1-509d-46a4-b845-7584df39263b",
-                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0"
+                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0",
+                "type": "azul.terra.TDRSourceRef"
             },
             "bundle_uuid": "826dea02-e274-affe-aabc-eb3db63ad068",
             "bundle_version": "2022-06-01T00:00:00.000000Z",
@@ -2860,7 +2878,8 @@
             ],
             "source": {
                 "id": "6c87f0e1-509d-46a4-b845-7584df39263b",
-                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0"
+                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0",
+                "type": "azul.terra.TDRSourceRef"
             },
             "contents": {
                 "anatomical_site": null,
@@ -3164,7 +3183,8 @@
             "sources": [
                 {
                     "id": "6c87f0e1-509d-46a4-b845-7584df39263b",
-                    "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0"
+                    "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0",
+                    "type": "azul.terra.TDRSourceRef"
                 }
             ],
             "bundles": [
@@ -3394,7 +3414,8 @@
             "document_id": "826dea02-e274-affe-aabc-eb3db63ad068_826dea02-e274-affe-aabc-eb3db63ad068_2022-06-01T00:00:00.000000Z_exists",
             "source": {
                 "id": "6c87f0e1-509d-46a4-b845-7584df39263b",
-                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0"
+                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0",
+                "type": "azul.terra.TDRSourceRef"
             },
             "bundle_uuid": "826dea02-e274-affe-aabc-eb3db63ad068",
             "bundle_version": "2022-06-01T00:00:00.000000Z",
@@ -3415,7 +3436,8 @@
             ],
             "source": {
                 "id": "6c87f0e1-509d-46a4-b845-7584df39263b",
-                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0"
+                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0",
+                "type": "azul.terra.TDRSourceRef"
             },
             "contents": {
                 "datarepo_row_id": "939a4bd3-86ed-4a8a-81f4-fbe0ee673461",
@@ -3709,7 +3731,8 @@
             "sources": [
                 {
                     "id": "6c87f0e1-509d-46a4-b845-7584df39263b",
-                    "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0"
+                    "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0",
+                    "type": "azul.terra.TDRSourceRef"
                 }
             ],
             "bundles": [
@@ -3939,7 +3962,8 @@
             "document_id": "bfd991f2-2797-4083-972a-da7c6d7f1b2e_826dea02-e274-affe-aabc-eb3db63ad068_2022-06-01T00:00:00.000000Z_exists",
             "source": {
                 "id": "6c87f0e1-509d-46a4-b845-7584df39263b",
-                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0"
+                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0",
+                "type": "azul.terra.TDRSourceRef"
             },
             "bundle_uuid": "826dea02-e274-affe-aabc-eb3db63ad068",
             "bundle_version": "2022-06-01T00:00:00.000000Z",
@@ -3970,7 +3994,8 @@
             "replica_type": "anvil_donor",
             "source": {
                 "id": "6c87f0e1-509d-46a4-b845-7584df39263b",
-                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0"
+                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0",
+                "type": "azul.terra.TDRSourceRef"
             },
             "hub_ids": [
                 "15b76f9c-6b46-433f-851d-34e89f1b9ba6",

@@ -9,7 +9,6 @@ from typing import (
     Iterable,
     Self,
     TYPE_CHECKING,
-    cast,
 )
 
 import attrs
@@ -137,7 +136,7 @@ class IndexQueueService:
             body={
                 'action': IndexAction.reindex.to_json(),
                 'catalog': catalog,
-                'source': cast(JSON, source.to_json()),
+                'source': source.to_json(),
                 'prefix': prefix
             }
         )
