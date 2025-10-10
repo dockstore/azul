@@ -1774,31 +1774,6 @@ emit_tf({} if config.terraform_component != 'gitlab' else {
                                 'ExecStartPre=-/usr/bin/docker stop gitlab',
                                 'ExecStartPre=-/usr/bin/docker rm gitlab',
                                 'ExecStartPre=/usr/bin/docker pull ' + str(gitlab_image),
-                                # The hardened AMI contains some code that
-                                # creates a default nftables ruleset at boot
-                                # time, in order to satisfy some CIS control, I
-                                # believe. Also at boot time, Docker creates a
-                                # competing iptables ruleset using the
-                                # `iptables` command, which is symlinked to the
-                                # `iptables-legacy` alternative. The result was
-                                # that the GitLab web app provided by this
-                                # container was not reachable from outside the
-                                # host. I tried switching to the `iptables-nft`
-                                # alternative and that prevented the creation of
-                                # a competing iptables ruleset, with only the
-                                # nftables ruleset present, but the webapp
-                                # remained unreachable. I assume this is because
-                                # the nftables ruleset had both the rules from
-                                # the hardened AMI code and those created by
-                                # Docker, still contradicting each other. For
-                                # the time being, we will simply delete the
-                                # default nftables ruleset. This is acceptable
-                                # because even without any firewall rules, the
-                                # the EC2 instance has no public IP and is
-                                # protected by EC2 security groups, which serve
-                                # the same purpose as firewall rules in the
-                                # guest OS.
-                                'ExecStartPre=/sbin/nft flush ruleset',
                                 # FIXME: Re-enable FIPS mode in GitLab container
                                 #        https://github.com/DataBiosphere/azul/issues/7218
                                 f'ExecStartPre=/bin/mkdir -p {gitlab_mount}/etc',
