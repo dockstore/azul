@@ -178,7 +178,7 @@ class BundleFQID(SerializableAttrs):
 
 
 @attrs.frozen(kw_only=True)
-class Prefix:
+class Prefix(Parseable):
     common: str = ''
     partition: int
     of_everything: ClassVar['Prefix']
