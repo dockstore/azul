@@ -47,21 +47,22 @@ def mksrc(source_type: Literal['bigquery', 'parquet'],
     return project, source
 
 
-def mkdelta(items: list[tuple[str, str]]) -> dict[str, str]:
+def mkdelta(items: list[tuple[str, str | None]]
+            ) -> dict[str, str | None]:
     result = dict(items)
     assert len(items) == len(result), 'collisions detected'
     assert list(result.keys()) == sorted(result.keys()), 'input not sorted'
     return result
 
 
-def mklist(catalog: dict[str, str]) -> list[str]:
+def mklist(catalog: dict[str, str | None]) -> list[str]:
     return list(filter(None, catalog.values()))
 
 
-def mkdict(previous_catalog: dict[str, str],
+def mkdict(previous_catalog: dict[str, str | None],
            num_expected: int,
-           delta: dict[str, str]
-           ) -> dict[str, str]:
+           delta: dict[str, str | None],
+           ) -> dict[str, str | None]:
     catalog = previous_catalog | delta
     num_actual = len(mklist(catalog))
     assert num_expected == num_actual, (num_expected, num_actual)
