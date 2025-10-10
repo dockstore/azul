@@ -532,10 +532,10 @@ class SourceRef[SOURCE_SPEC: SourceSpec](
     body is empty.
 
     >>> spec = SimpleSourceSpec(name='', prefix=(Prefix(partition=0)))
-    >>> list(sorted([
+    >>> sorted([
     ...     SourceRef(id='d', spec=spec),
     ...     SourceRef(id='a', spec=spec),
-    ... ]))
+    ... ])
     ... # doctest: +NORMALIZE_WHITESPACE
     [SourceRef(id='a', spec=SimpleSourceSpec(prefix=Prefix(common='', partition=0), name='')),
     SourceRef(id='d', spec=SimpleSourceSpec(prefix=Prefix(common='', partition=0), name=''))]
@@ -571,11 +571,11 @@ class SourceRef[SOURCE_SPEC: SourceSpec](
 class SourcedBundleFQID[SOURCE_REF: SourceRef](BundleFQID):
     """
     >>> spec = SimpleSourceSpec(name='', prefix=(Prefix(partition=0)))
-    >>> list(sorted([
+    >>> sorted([
     ...     SourcedBundleFQID(uuid='d', version='e', source=SourceRef(id='1', spec=spec)),
     ...     SourcedBundleFQID(uuid='a', version='c', source=SourceRef(id='2', spec=spec)),
     ...     SourcedBundleFQID(uuid='a', version='b', source=SourceRef(id='3', spec=spec)),
-    ... ]))
+    ... ])
     ... # doctest: +NORMALIZE_WHITESPACE
     [SourcedBundleFQID(uuid='a', version='b',
         source=SourceRef(id='3', spec=SimpleSourceSpec(prefix=Prefix(common='', partition=0), name=''))),

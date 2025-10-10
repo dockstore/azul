@@ -333,7 +333,7 @@ class TestDCP1Indexer(DCP1IndexerTestCase):
                             self.assertIs(doc_type, DocumentType.replica)
 
                     for pair in docs_by_entity.values():
-                        self.assertEqual(list(sorted(doc.coordinates.deleted for doc in pair)), [False, True])
+                        self.assertEqual(sorted(doc.coordinates.deleted for doc in pair), [False, True])
                 finally:
                     self._purge_indices()
 
