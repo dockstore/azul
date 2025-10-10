@@ -2,6 +2,7 @@ import logging
 import time
 from typing import (
     NoReturn,
+    Self,
 )
 import urllib
 import urllib.parse
@@ -66,7 +67,7 @@ class DSSSourceRef(SourceRef[SimpleSourceSpec]):
     namespace: UUID = UUID('6925391e-6519-41d9-879f-c6307eb83c1c')
 
     @classmethod
-    def for_dss_source(cls, source: str):
+    def for_dss_source(cls, source: str) -> Self:
         # We hash the endpoint instead of using it verbatim to distinguish them
         # within a document, which is helpful for testing.
         spec = SimpleSourceSpec.parse(source)
