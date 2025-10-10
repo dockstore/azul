@@ -166,6 +166,7 @@ class TestHttp(AzulUnitTestCase):
                     expected_logs.extend(
                         [
                             f"^{prefix}Making GET request to '{url}'$",
+                            f'^{prefix}… without request headers$',
                             f'^{prefix}… without a request body$'
                         ]
                     )

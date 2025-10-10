@@ -75,8 +75,11 @@ class LoggingHttpClient(HttpClientDecorator):
     def urlopen(self, method, url, *args, body=None, **kwargs) -> urllib3.HTTPResponse:
         log = self._log
         log.info('Making %s request to %r', method, url)
-        if config.debug > 1:
-            log.debug('… with keyword args %r', kwargs)
+        headers = kwargs.get('headers')
+        if headers is None or headers == {}:
+            log.info('… without request headers')
+        else:
+            log.info('… with request headers %r', headers)
         log.info(http_body_log_message('request', body))
         start = time.monotonic()
         response = super().urlopen(method, url, *args, body=body, **kwargs)
