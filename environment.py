@@ -3,12 +3,9 @@ from collections.abc import (
 )
 import json
 import os
-from typing import (
-    Optional,
-)
 
 
-def env() -> Mapping[str, Optional[str]]:
+def env() -> Mapping[str, str | None]:
     """
     Returns a dictionary that maps environment variable names to values. The
     values are either None or strings. String values can contain references to

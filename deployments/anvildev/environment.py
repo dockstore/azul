@@ -4,7 +4,6 @@ from collections.abc import (
 import json
 from typing import (
     Literal,
-    Optional,
 )
 
 pop = 1  # remove snapshot
@@ -71,7 +70,7 @@ anvil_sources = mkdict({}, 3, mkdelta([
 ]))
 
 
-def env() -> Mapping[str, Optional[str]]:
+def env() -> Mapping[str, str | None]:
     """
     Returns a dictionary that maps environment variable names to values. The
     values are either None or strings. String values can contain references to
