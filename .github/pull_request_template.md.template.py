@@ -306,6 +306,10 @@ def emit(t: T, target_branch: str):
                 'type': 'cli',
                 'content': 'PR is assigned to the author'
             },
+            {
+                'type': 'cli',
+                'content': 'Status of PR is *In progress*'
+            },
             iif(t is T.default, {
                 'type': 'cli',
                 'content': 'PR is a draft'
@@ -334,6 +338,10 @@ def emit(t: T, target_branch: str):
                     T.backport: None
                 }[t]
             }),
+            {
+                'type': 'cli',
+                'content': f'Status of linked {t.issues} is *In progress*'
+            },
             iif(t not in (T.backport, T.upgrade), {
                 'type': 'cli',
                 'content': f'PR description links to connected {t.issues}'

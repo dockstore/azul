@@ -11,9 +11,11 @@ Linked issue: #0000
 ### Author
 
 - [ ] PR is assigned to the author
+- [ ] Status of PR is *In progress*
 - [ ] Target branch is `anvilprod`
 - [ ] Name of PR branch matches `hotfixes/<GitHub handle of author>/<issue#>-<slug>-anvilprod`
 - [ ] PR is linked to the issue it hotfixes
+- [ ] Status of linked issue is *In progress*
 - [ ] PR description links to connected issue
 - [ ] PR title is `Hotfix anvilprod: ` followed by title of linked issue
 - [ ] PR title references the linked issue

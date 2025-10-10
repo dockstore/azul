@@ -11,9 +11,11 @@ Linked issue: #0000
 ### Author
 
 - [ ] PR is assigned to the author
+- [ ] Status of PR is *In progress*
 - [ ] Target branch is `develop`
 - [ ] Name of PR branch matches `upgrades/yyyy-mm-dd`
 - [ ] PR is linked to the upgrade issue it resolves
+- [ ] Status of linked issue is *In progress*
 - [ ] PR title matches `Upgrade dependencies yyyy-mm-dd`
 - [ ] PR title references the linked issue
 

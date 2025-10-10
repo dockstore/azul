@@ -110,10 +110,6 @@ from azul.indexer.field import (
 from azul.json import (
     copy_json,
 )
-from azul.json_freeze import (
-    freeze,
-    sort_frozen,
-)
 from azul.plugins import (
     ColumnMapping,
     DocumentSlice,
@@ -984,7 +980,9 @@ class ManifestGenerator(metaclass=ABCMeta):
         different return values.
         """
         git_commit = config.lambda_git_status['commit']
-        filter_string = repr(sort_frozen(freeze(self.filters.explicit)))
+        # The explicit filters are already normalized so we don't to do anything
+        # special to desensitize the hash to insignificat differences
+        filter_string = json.dumps(self.filters.explicit)
         content_hash = str(self.manifest_content_hash)
         catalog = self.catalog
         format = self.format()

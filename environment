@@ -375,10 +375,10 @@ _hibernate() {
 }
 
 # We disable `envhook.py` to avoid redundancy. The `envhook.py` script imports
-# `export_environment.py`, too. We could also pass -S to `python3` but that
+# `export_environment.py`, too. We could also pass -S to `python` but that
 # causes problems on Travis (`importlib.util` failing to import `contextlib`).
 #
-eval "$(ENVHOOK=0 python3 "${project_root}/scripts/export_environment.py" || echo false)"
+eval "$(ENVHOOK=0 python "${project_root}/scripts/export_environment.py" || echo false)"
 
 # Auto-completion for _select
 #
