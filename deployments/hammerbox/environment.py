@@ -19,23 +19,19 @@ type SourceSpec = str
 def bqsrc(google_project: str,
           snapshot: str,
           flags: int = 0,
-          /,
-          prefix: str = ''
           ) -> tuple[ProjectName, SourceSpec | None]:
     assert len(google_project) == 8, google_project
     project = 'datarepo-' + google_project
     # Some snapshots start with AnVIL instead of ANVIL
     if not snapshot.upper().startswith('ANVIL_'):
         snapshot = 'ANVIL_' + snapshot
-    return mksrc('bigquery', project, snapshot, flags, prefix)
+    return mksrc('bigquery', project, snapshot, flags)
 
 
 def mksrc(source_type: Literal['bigquery', 'parquet'],
           google_project,
           snapshot,
           flags: int = 0,
-          /,
-          prefix: str = ''
           ) -> tuple[ProjectName, SourceSpec | None]:
     project = '_'.join(snapshot.split('_')[1:-3])
     assert flags <= pop
@@ -45,7 +41,7 @@ def mksrc(source_type: Literal['bigquery', 'parquet'],
         'gcp',
         google_project,
         snapshot,
-        prefix
+        ''
     ])
     return project, source
 

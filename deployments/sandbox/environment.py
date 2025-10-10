@@ -18,8 +18,6 @@ def mksrc(source_type: Literal['bigquery', 'parquet'],
           google_project,
           snapshot,
           flags: int = 0,
-          /,
-          prefix: str = ''
           ) -> tuple[ProjectName, SourceSpec | None]:
     _, env, project, _ = snapshot.split('_', 3)
     assert flags <= pop
@@ -29,7 +27,7 @@ def mksrc(source_type: Literal['bigquery', 'parquet'],
         'gcp',
         google_project,
         snapshot,
-        prefix
+        ''
     ])
     return project, source
 
