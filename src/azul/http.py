@@ -78,9 +78,9 @@ class LoggingHttpClient(HttpClientDecorator):
         if config.debug > 1:
             log.debug('… with keyword args %r', kwargs)
         log.info(http_body_log_message('request', body))
-        start = time.time()
+        start = time.monotonic()
         response = super().urlopen(method, url, *args, body=body, **kwargs)
-        duration = time.time() - start
+        duration = time.monotonic() - start
         assert isinstance(response, urllib3.HTTPResponse), type(response)
         log.info('Got %s response after %.3fs from %s to %s',
                  response.status, duration, method, url)
@@ -189,7 +189,7 @@ class _LimitedRetry(urllib3.Retry):
                    other=retries,
                    status_forcelist={500, 502, 503},
                    raise_on_status=True)
-        self.start = time.time()
+        self.start = time.monotonic()
         self.retries = retries
         self.timeout = timeout
         return self
@@ -202,7 +202,7 @@ class _LimitedRetry(urllib3.Retry):
         if super().is_exhausted():
             return True
         else:
-            elapsed = time.time() - self.start
+            elapsed = time.monotonic() - self.start
             return self.retries == 0 and elapsed > .01 or elapsed >= self.timeout
 
     def new(self, **kwargs) -> Self:
