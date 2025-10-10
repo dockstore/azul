@@ -180,7 +180,7 @@ Note that when requesting changes, the PR must be assigned back to the author.
 - [ ] Deleted PR branch from GitHub
 - [ ] Deleted PR branch from GitLab `dev`
 - [ ] Deleted PR branch from GitLab `anvildev`
-- [ ] Status of linked issues is *Lower*
+- [ ] Status of linked issues is *Lower*, or *Triage*, if PR is partial
 
 
 ### Operator (reindex)

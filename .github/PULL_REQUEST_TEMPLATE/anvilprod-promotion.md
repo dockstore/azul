@@ -49,6 +49,7 @@ Linked issue: #0000
 
 - [ ] Actually approved the PR
 - [ ] Decided if PR can be labeled `no sandbox`
+- [ ] `N reviews` label is accurate
 - [ ] Status of PR is *Approved*
 - [ ] PR is assigned to only the operator
 
