@@ -340,7 +340,11 @@ def emit(t: T, target_branch: str):
             }),
             {
                 'type': 'cli',
-                'content': f'Status of linked {t.issues} is *In progress*'
+                'content': f'Status of linked {t.issues} is ' + (
+                    '*In progress*'
+                    if t is not T.backport else
+                    '*Stable*'
+                )
             },
             iif(t not in (T.backport, T.upgrade), {
                 'type': 'cli',
@@ -958,8 +962,11 @@ def emit(t: T, target_branch: str):
                 [
                     {
                         'type': 'cli',
-                        'content': f'Status of linked {t.issues} is '
-                                   f'*{'Lower' if target_branch == 'develop' else 'Stable'}*'
+                        'content': f'Status of linked {t.issues} is ' + (
+                            '*Lower*' + iif(t is not T.upgrade, ', or *Triage*, if PR is partial')
+                            if target_branch == 'develop' and t is not T.backport else
+                            '*Stable*'
+                        )
                     }
                 ]
                 if t is not T.promotion else

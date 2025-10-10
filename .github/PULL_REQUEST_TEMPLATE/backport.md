@@ -12,7 +12,7 @@ This is the PR template for backport PRs against `develop`.
 - [ ] Status of PR is *In progress*
 - [ ] Target branch is `develop`
 - [ ] Name of PR branch matches `backports/<7-digit SHA1 of most recent backported commit>`
-- [ ] Status of linked issue is *In progress*
+- [ ] Status of linked issue is *Stable*
 - [ ] PR title contains the 7-digit SHA1 of the backported commits
 - [ ] PR title references the issues relating to the backported commits
 - [ ] PR title references the PRs that introduced the backported commits
@@ -84,7 +84,7 @@ This is the PR template for backport PRs against `develop`.
 - [ ] Deleted PR branch from GitHub
 - [ ] Deleted PR branch from GitLab `dev`
 - [ ] Deleted PR branch from GitLab `anvildev`
-- [ ] Status of linked issue is *Lower*
+- [ ] Status of linked issue is *Stable*
 
 
 ### Operator
