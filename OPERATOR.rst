@@ -363,20 +363,20 @@ dependencies listed in ``requirements.txt`` and ``requirements.dev.txt`` against
 the Package tool window, where the dependency indicates of an available version.
 When updating:
 
- * Update to the latest mature release (a release with a high patch number or
-   where the most recent patch release is at least a couple of months old) and go
-   backward if problems occur.
+- Update to the latest mature release (a release with a high patch number or
+  where the most recent patch release is at least a couple of months old) and go
+  backward if problems occur.
 
-  * Document each of these problems with a dedicated FIXME, with its respective
-    ticket & reference, when non-trivial code base changes are necessary due to
-    a package version upgrade.
+- Document each of these problems with a dedicated FIXME, with its respective
+  ticket & reference, when non-trivial code base changes are necessary due to a
+  package version upgrade.
 
-  * Reference the GitHub link in a comment beside the conflictive package.
+- Reference the GitHub link in a comment beside the conflictive package.
 
- * If updating a package causes a trivial change or a dismissable warning when
-   including a FIXME (e.g., deprecation warnings), it should be done on its own
-   commit, to easily identify the dependencies forcing the change and the given
-   resolution.
+- If updating a package causes a trivial change or a dismissable warning when
+  including a FIXME (e.g., deprecation warnings), it should be done on its own
+  commit, to easily identify the dependencies forcing the change and the given
+  resolution.
 
 Note, a way to display all available versions of a given package in a concise
 way, is to pretend to install a non-existing version from a terminal console
