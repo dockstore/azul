@@ -25,8 +25,8 @@ have too many entries in this file.
 
 In your personal deployments' ``environment.py`` files:
 
-1. Update the type annotations for ``mkdelta``, ``mklist``, ``mkdict``, and
-   ``env``.
+1. Update the type annotations for ``bqsrc``, ``mksrc``, ``mkdelta``, ``mklist``,
+   ``mkdict``, and ``env``.
 
 As always, use the sandbox deployment's ``environment.py`` as a model when
 upgrading personal deployments.

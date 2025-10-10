@@ -8,6 +8,9 @@ from typing import (
 
 pop = 1  # remove snapshot
 
+type ProjectName = str
+type SourceSpec = str
+
 
 def mksrc(source_type: Literal['bigquery', 'parquet'],
           google_project,
@@ -15,8 +18,8 @@ def mksrc(source_type: Literal['bigquery', 'parquet'],
           flags: int = 0,
           /,
           prefix: str = ''
-          ) -> tuple[str, str | None]:
-    project = '_'.join(snapshot.split('_')[1:-3])
+          ) -> tuple[ProjectName, SourceSpec | None]:
+    _, env, project, _ = snapshot.split('_', 3)
     assert flags <= pop
     source = None if flags & pop else ':'.join([
         'tdr',
@@ -29,22 +32,22 @@ def mksrc(source_type: Literal['bigquery', 'parquet'],
     return project, source
 
 
-def mkdelta(items: list[tuple[str, str | None]]
-            ) -> dict[str, str | None]:
+def mkdelta(items: list[tuple[ProjectName, SourceSpec | None]]
+            ) -> dict[ProjectName, SourceSpec | None]:
     result = dict(items)
     assert len(items) == len(result), 'collisions detected'
     assert list(result.keys()) == sorted(result.keys()), 'input not sorted'
     return result
 
 
-def mklist(catalog: dict[str, str | None]) -> list[str]:
+def mklist(catalog: dict[ProjectName, SourceSpec | None]) -> list[SourceSpec]:
     return list(filter(None, catalog.values()))
 
 
-def mkdict(previous_catalog: dict[str, str | None],
+def mkdict(previous_catalog: dict[ProjectName, SourceSpec | None],
            num_expected: int,
-           delta: dict[str, str | None],
-           ) -> dict[str, str | None]:
+           delta: dict[ProjectName, SourceSpec | None],
+           ) -> dict[ProjectName, SourceSpec | None]:
     catalog = previous_catalog | delta
     num_actual = len(mklist(catalog))
     assert num_expected == num_actual, (num_expected, num_actual)
