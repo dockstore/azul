@@ -1615,7 +1615,8 @@ emit_tf({} if config.terraform_component != 'gitlab' else {
                         'docker',
                         'amazon-cloudwatch-agent',
                         'amazon-ecr-credential-helper',
-                        'dracut-fips',
+                        'crypto-policies',
+                        'crypto-policies-scripts',
                         (
                             'https://s3.amazonaws.com'
                             '/ec2-downloads-windows/SSMAgent/latest/linux_amd64'
@@ -1623,6 +1624,7 @@ emit_tf({} if config.terraform_component != 'gitlab' else {
                         )
                     ],
                     'ssh_authorized_keys': [] if config.deployment.is_stable else operator_keys,
+                    'ssh_genkeytypes': ['rsa', 'dsa', 'ecdsa'],
                     'bootcmd': [
                         '; '.join([
                             'until [ -b /dev/nvme1n1 ]',
@@ -2175,8 +2177,7 @@ emit_tf({} if config.terraform_component != 'gitlab' else {
                     ],
                     'runcmd': [
                         ['systemctl', 'daemon-reload'],
-                        ['dracut', '-f'],
-                        ['/sbin/grubby', '--update-kernel=ALL', '--args="fips=1"'],
+                        ['fips-mode-setup', '--enable'],
                         [
                             'sed',
                             '--in-place',
@@ -2206,12 +2207,23 @@ emit_tf({} if config.terraform_component != 'gitlab' else {
                             '-c', 'file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json',
                             '-s'  # restart agent afterwards
                         ],
-                        ['yum', '-y', 'update'],
                         ['systemctl', 'enable', '--now', 'amazon-ssm-agent.service']
                     ],
-                    # Reboot to realize the added kernel parameter the changed sshd configuration
+                    'package_update': True,
+                    'package_upgrade': True,
+                    'package_reboot_if_required': True,
                     'power_state': {
-                        'mode': 'reboot'
+                        'mode': 'reboot',
+                        # A bug in Amazon's AMI causes a 'condition' to be added
+                        # to the effective cloud-init config. That condition
+                        # depends on the creation of a file that is never
+                        # created (/run/cloud-init-selinux-reboot), except when
+                        # Amazon's cc_selinux.py has to modify the SELinux
+                        # configuration, which by default, it does not. Luckily,
+                        # our cloud-init config takes precedence, so we can just
+                        # override the condition here.
+                        'condition': True,
+                        'message': 'Rebooting to finalize FIPS-mode setup and possibly other things',
                     },
                 }, indent=2),
                 'tags': {
