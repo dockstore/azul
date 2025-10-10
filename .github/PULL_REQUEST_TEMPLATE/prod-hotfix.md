@@ -47,6 +47,7 @@ Linked issue: #0000
 - [ ] Labeled PR as `no sandbox`
 - [ ] A comment to this PR details the completed security design review
 - [ ] PR title is appropriate as title of merge commit
+- [ ] `N reviews` label is accurate
 - [ ] Status of PR is *Approved*
 - [ ] PR is assigned to only the operator
 

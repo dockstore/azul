@@ -687,10 +687,10 @@ def emit(t: T, target_branch: str):
                 'type': 'cli',
                 'content': 'PR title is appropriate as title of merge commit'
             }),
-            iif(t is T.default, {
+            {
                 'type': 'cli',
                 'content': '`N reviews` label is accurate'
-            }),
+            },
             {
                 'type': 'cli',
                 'content': 'Status of PR is *Approved*'
