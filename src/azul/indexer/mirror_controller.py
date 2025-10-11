@@ -145,7 +145,7 @@ class MirrorController(ActionController[MirrorAction], SchemaController):
             / 2  # safety margin
         )
         source = plugin.partition_source_for_mirroring(catalog, source, partition_size)
-        prefix = source.spec.prefix
+        prefix = source.prefix
         assert prefix is not None, source
         log.info('Queueing %d partitions of source %r in catalog %r',
                  prefix.num_partitions, str(source.spec), catalog)

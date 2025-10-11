@@ -97,7 +97,7 @@ from azul.deployment import (
     aws,
 )
 from azul.indexer import (
-    SourceSpec,
+    Prefix,
 )
 from azul.indexer.document import (
     DocumentType,
@@ -2049,7 +2049,7 @@ class PFBVerbatimManifestGenerator(FileBasedManifestGenerator,
         # (1) can only occur when orphans are included, and (2) and (3)
         # can only occur when orphans are *not* included.
         #
-        prefix = SourceSpec.parse_prefix_only(replica['source']['spec'])
+        prefix = Prefix.parse(replica['source']['prefix'])
         return (
             config.enable_verbatim_relations
             and self.include_orphans

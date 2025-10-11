@@ -73,42 +73,15 @@ def env() -> Mapping[str, str | None]:
         # source = TDR source | canned source | DSS source;
         #
         # TDR source = 'tdr:', Google Cloud project name,
-        #              ':', TDR dataset or snapshot name,
-        #              ':', [ prefix ],
-        #              '/', partition prefix length ;
+        #              ':', TDR dataset or snapshot name
         #
         # canned source = 'https://github.com',
         #                 '/', owner,
         #                 '/', repo,
         #                 '/tree/', ref,
-        #                 ['/', path],
-        #                 ':', [ prefix ],
-        #                 '/', partition prefix length ;
+        #                 ['/', path]
         #
         # DSS source = 'dss.data.humancellatlas.org/v1',
-        #              ':', [ prefix ],
-        #              '/', partition prefix length ;
-        #
-        # The `prefix` is an optional string of hexadecimal digits constraining
-        # the set of indexed subgraphs from the source. A subgraph will be
-        # indexed if its UUID begins with the `prefix`. The default `prefix` is
-        # the empty string.
-        #
-        # The partition prefix length is an integer that is used to further
-        # partition the set of indexed subgraphs. Each partition is assigned a
-        # prefix of `partition prefix length` hexadecimal digits. A subgraph
-        # belongs to a partition if its UUID starts with the overall `prefix`
-        # followed by the partition's prefix. The number of partitions of a
-        # source is therefore `16 ** partition prefix length`. Partition
-        # prefixes that are too long result in many small or even empty
-        # partitions and waste some amount of resources. Partition prefixes that
-        # are too short result in few large partitions that could exceed the
-        # memory and running time limitations of the AWS Lambda function that
-        # processes them. If in doubt err on the side of too many small
-        # partitions.
-        #
-        # The `partition prefix length` plus the length of `prefix` must not
-        # exceed 8.
         #
         # `ref` can be a branch, tag, or commit SHA. If `ref` contains special
         # characters like `/`, '?` or `#` they must be URL-encoded.

@@ -152,24 +152,24 @@ class TDRHCABundle(HCABundle[TDRBundleFQID], TDRBundle):
 
 class Plugin(TDRPlugin[TDRHCABundle, TDRBundleFQID]):
 
-    def count_bundles(self, source: TDRSourceSpec) -> int:
+    def count_bundles(self, source: TDRSourceRef) -> int:
         prefix = '' if source.prefix is None else source.prefix.common
         assert prefix == prefix.lower(), source
         query = f'''
         SELECT COUNT(*) AS count
-        FROM {backtick(self._full_table_name(source, 'links'))}
+        FROM {backtick(self._full_table_name(source.spec, 'links'))}
         WHERE STARTS_WITH(LOWER(datarepo_row_id), {prefix!r})
         '''
         rows = self._run_sql(query)
         return one(rows)['count']
 
-    def count_files(self, source: TDRSourceSpec) -> int:
+    def count_files(self, source: TDRSourceRef) -> int:
         prefix = '' if source.prefix is None else source.prefix.common
         assert prefix == prefix.lower(), source
         query = ' UNION ALL '.join(
             f'''
             SELECT COUNT(*) AS count
-            FROM {backtick(self._full_table_name(source, entity_type))}
+            FROM {backtick(self._full_table_name(source.spec, entity_type))}
             WHERE STARTS_WITH(LOWER(JSON_EXTRACT_SCALAR(descriptor, "$.sha256")),
                               {prefix!r})
             '''

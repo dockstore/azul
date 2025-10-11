@@ -45,6 +45,7 @@ from azul.collections import (
 )
 from azul.indexer import (
     BundleFQID,
+    Prefix,
     SourcedBundleFQID,
 )
 from azul.indexer.document import (
@@ -295,6 +296,7 @@ class TestIndexResponse(IndexResponseTestCase):
                 ],
                 'sources': [{
                     'sourceId': self.source.id,
+                    'sourcePrefix': str(self.source.prefix),
                     'sourceSpec': str(self.source.spec)
                 }],
                 'specimens': [
@@ -633,6 +635,7 @@ class TestIndexResponse(IndexResponseTestCase):
                     ],
                     'sources': [{
                         'sourceId': self.source.id,
+                        'sourcePrefix': str(self.source.prefix),
                         'sourceSpec': str(self.source.spec)
                     }],
                     'specimens': [
@@ -902,6 +905,7 @@ class TestIndexResponse(IndexResponseTestCase):
                 ],
                 'sources': [{
                     'sourceId': self.source.id,
+                    'sourcePrefix': str(self.source.prefix),
                     'sourceSpec': str(self.source.spec)
                 }],
                 'specimens': [
@@ -3723,7 +3727,7 @@ class TestListCatalogsResponse(DCP1CannedBundleTestCase, LocalAppTestCase):
                         'repository': {
                             'name': 'dss',
                             'sources': [
-                                'https://fake_dss_instance/v1:/2'
+                                'https://fake_dss_instance/v1'
                             ],
                         }
                     }
@@ -3761,7 +3765,8 @@ class TestResponseWithDCP2Cans(DCP2CannedBundleTestCase, WebServiceTestCase):
         for hit in response_json['hits']:
             source = one(hit['sources'])
             source = TDRSourceRef(id=source[special_fields.source_id],
-                                  spec=TDRSourceSpec.parse(source[special_fields.source_spec]))
+                                  spec=TDRSourceSpec.parse(source[special_fields.source_spec]),
+                                  prefix=Prefix.parse(source[special_fields.source_prefix]))
             self.assertEqual(self.source, source)
 
     def get_file(self, entry_id: str) -> JSON:

@@ -39,6 +39,7 @@ from azul.http import (
     HasCachedHttpClient,
 )
 from azul.indexer import (
+    Prefix,
     SimpleSourceSpec,
     SourceRef,
     SourcedBundleFQID,
@@ -67,11 +68,12 @@ class DSSSourceRef(SourceRef[SimpleSourceSpec]):
     namespace: UUID = UUID('6925391e-6519-41d9-879f-c6307eb83c1c')
 
     @classmethod
-    def for_dss_source(cls, source: str) -> Self:
+    def for_dss_source(cls, source: str, prefix: str) -> Self:
         # We hash the endpoint instead of using it verbatim to distinguish them
         # within a document, which is helpful for testing.
         spec = SimpleSourceSpec.parse(source)
-        return cls(id=cls.id_from_spec(spec), spec=spec)
+        prefix = Prefix.parse(prefix)
+        return cls(id=cls.id_from_spec(spec), spec=spec, prefix=prefix)
 
     @classmethod
     def id_from_spec(cls, spec: SimpleSourceSpec) -> str:
@@ -109,17 +111,17 @@ class Plugin(RepositoryPlugin[
     def _lookup_source_id(self, spec: SimpleSourceSpec) -> str:
         return DSSSourceRef.id_from_spec(spec)
 
-    def count_bundles(self, source: SimpleSourceSpec) -> NoReturn:
+    def count_bundles(self, source: DSSSourceRef) -> NoReturn:
         assert False, 'DSS is EOL'
 
-    def count_files(self, source: SimpleSourceSpec) -> NoReturn:
+    def count_files(self, source: DSSSourceRef) -> NoReturn:
         assert False, 'DSS is EOL'
 
     def list_sources(self,
                      authentication: Authentication | None
                      ) -> list[DSSSourceRef]:
         return [
-            DSSSourceRef(id=self._lookup_source_id(spec), spec=spec)
+            DSSSourceRef(id=self._lookup_source_id(spec), spec=spec, prefix=None)
             for spec in self.sources
         ]
 

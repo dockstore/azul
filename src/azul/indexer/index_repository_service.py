@@ -52,7 +52,7 @@ class IndexRepositoryService:
         []
         >>> from azul.indexer import SimpleSourceSpec, SourceRef, Prefix
         >>> p = Prefix.parse('/2')
-        >>> s = SourceRef(id='i', spec=SimpleSourceSpec(prefix=p, name='n'))
+        >>> s = SourceRef(id='i', spec=SimpleSourceSpec(name='n'), prefix=p)
         >>> def b(u, v):
         ...     return SourcedBundleFQID(source=s, uuid=u, version=v)
         >>> service.filter_obsolete_bundle_versions([
@@ -63,21 +63,18 @@ class IndexRepositoryService:
         [SourcedBundleFQID(uuid='c',
                            version='0',
                            source=SourceRef(id='i',
-                                            spec=SimpleSourceSpec(prefix=Prefix(common='',
-                                                                                partition=2),
-                                                                  name='n'))),
+                                            spec=SimpleSourceSpec(name='n'),
+                                            prefix=Prefix(common='', partition=2))),
         SourcedBundleFQID(uuid='b',
                           version='3',
                           source=SourceRef(id='i',
-                                           spec=SimpleSourceSpec(prefix=Prefix(common='',
-                                                                               partition=2),
-                                                                 name='n'))),
+                                           spec=SimpleSourceSpec(name='n'),
+                                           prefix=Prefix(common='', partition=2))),
         SourcedBundleFQID(uuid='a',
                           version='1',
                           source=SourceRef(id='i',
-                                           spec=SimpleSourceSpec(prefix=Prefix(common='',
-                                                                               partition=2),
-                                                                 name='n')))]
+                                           spec=SimpleSourceSpec(name='n'),
+                                           prefix=Prefix(common='', partition=2)))]
         >>> service.filter_obsolete_bundle_versions([
         ...     b('C', '0'), b('a', '1'), b('a', '0'),
         ...     b('a', '2'), b('b', '1'), b('c', '2')
@@ -85,30 +82,26 @@ class IndexRepositoryService:
         [SourcedBundleFQID(uuid='c',
                            version='2',
                            source=SourceRef(id='i',
-                                            spec=SimpleSourceSpec(prefix=Prefix(common='',
-                                                                                partition=2),
-                                                                  name='n'))),
+                                           spec=SimpleSourceSpec(name='n'),
+                                           prefix=Prefix(common='', partition=2))),
         SourcedBundleFQID(uuid='b',
                           version='1',
                           source=SourceRef(id='i',
-                                           spec=SimpleSourceSpec(prefix=Prefix(common='',
-                                                                               partition=2),
-                                                                 name='n'))),
+                                           spec=SimpleSourceSpec(name='n'),
+                                           prefix=Prefix(common='', partition=2))),
         SourcedBundleFQID(uuid='a',
                           version='2',
                           source=SourceRef(id='i',
-                                           spec=SimpleSourceSpec(prefix=Prefix(common='',
-                                                                               partition=2),
-                                                                 name='n')))]
+                                           spec=SimpleSourceSpec(name='n'),
+                                           prefix=Prefix(common='', partition=2)))]
         >>> service.filter_obsolete_bundle_versions([
         ...     b('a', '0'), b('A', '1')
         ... ]) # doctest: +NORMALIZE_WHITESPACE
         [SourcedBundleFQID(uuid='A',
                            version='1',
                            source=SourceRef(id='i',
-                                            spec=SimpleSourceSpec(prefix=Prefix(common='',
-                                                                                partition=2),
-                                                                  name='n')))]
+                                            spec=SimpleSourceSpec(name='n'),
+                                            prefix=Prefix(common='', partition=2)))]
         """
 
         # Sort lexicographically by source and FQID. I've observed the DSS

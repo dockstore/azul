@@ -41,7 +41,6 @@ def mksrc(source_type: Literal['bigquery', 'parquet'],
         'gcp',
         google_project,
         snapshot,
-        ''
     ])
     return project, source
 

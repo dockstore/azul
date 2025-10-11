@@ -28,6 +28,8 @@ In your personal deployments' ``environment.py`` files:
 1. Update the type annotations for ``bqsrc``, ``mksrc``, ``mkdelta``, ``mklist``,
    ``mkdict``, and ``env``.
 
+2. Remove the ``prefix`` parameter and its uses from ``bqsrc`` and ``mksrc``.
+
 As always, use the sandbox deployment's ``environment.py`` as a model when
 upgrading personal deployments.
 

@@ -147,7 +147,7 @@ class IndexQueueService:
         for source_spec in sources:
             source_ref = plugin.resolve_source(source_spec)
             source_ref = plugin.partition_source_for_indexing(catalog, source_ref)
-            prefix = source_ref.spec.prefix
+            prefix = source_ref.prefix
             assert prefix is not None, source_ref
 
             def message(partition_prefix: str) -> SQSMessage:

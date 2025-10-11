@@ -98,7 +98,8 @@ class BundleFQID(SerializableAttrs):
         >>> b1 == b2
         True
 
-        >>> s1 = SourceRef(id='x', spec=SimpleSourceSpec.parse('y:/0'))
+        >>> p = Prefix.parse('/0')
+        >>> s1 = SourceRef(id='x', spec=SimpleSourceSpec.parse('y'), prefix=p)
         >>> sb1 = SourcedBundleFQID(uuid='a', version='b', source=s1)
         >>> sb2 = SourcedBundleFQID(uuid='a', version='b', source=s1)
         >>> sb1 == sb2
@@ -107,7 +108,7 @@ class BundleFQID(SerializableAttrs):
         >>> b1 == sb1
         True
 
-        >>> s2 = SourceRef(id='w', spec=SimpleSourceSpec.parse('z:/0'))
+        >>> s2 = SourceRef(id='w', spec=SimpleSourceSpec.parse('z'), prefix=p)
         >>> sb3 = SourcedBundleFQID(uuid='a', version='b', source=s2)
         >>> b1 == sb3
         True
@@ -117,8 +118,8 @@ class BundleFQID(SerializableAttrs):
         Traceback (most recent call last):
         ...
         AssertionError: (('a', 'b'),
-        SourceRef(id='x', spec=SimpleSourceSpec(prefix=Prefix(common='', partition=0), name='y')),
-        SourceRef(id='w', spec=SimpleSourceSpec(prefix=Prefix(common='', partition=0), name='z')))
+        SourceRef(id='x', spec=SimpleSourceSpec(name='y'), prefix=Prefix(common='', partition=0)),
+        SourceRef(id='w', spec=SimpleSourceSpec(name='z'), prefix=Prefix(common='', partition=0)))
         """
         if isinstance(other, BundleFQID):
             same_bundle = self._nucleus() == other._nucleus()
@@ -212,6 +213,16 @@ class Prefix(Parseable):
         Traceback (most recent call last):
         ...
         AssertionError: R('Prefix source cannot end in a delimiter', 'aa/', '/')
+
+        >>> Prefix.parse('8F53/0')
+        Traceback (most recent call last):
+        ...
+        azul.uuids.InvalidUUIDPrefixError: '8F53' is not a valid UUID prefix.
+
+        >>> Prefix.parse('https:foo.edu/0')
+        Traceback (most recent call last):
+        ...
+        azul.uuids.InvalidUUIDPrefixError: 'https:foo.edu' is not a valid UUID prefix.
 
         >>> Prefix.parse('8f538f53/1').partition_prefixes() # doctest: +NORMALIZE_WHITESPACE
         Traceback (most recent call last):
@@ -407,60 +418,6 @@ class SourceSpec(Parseable, metaclass=ABCMeta):
 
     # FIXME: Improve equality and interning semantics for source ref and spec
     #        https://github.com/DataBiosphere/azul/issues/6778
-    prefix: Prefix | None
-
-    @classmethod
-    def parse_prefix_only(cls, spec: str) -> Prefix | None:
-        """
-        Parse only the prefix component of a string representation of a
-        `SourceSpec.` To parse the entire spec, use :meth:`parse`. A return
-        value of `None` indicates that no prefix is configured for the spec.
-
-        >>> SourceSpec.parse_prefix_only('foo:/0')
-        Prefix(common='', partition=0)
-
-        >>> SourceSpec.parse_prefix_only('foo:') is None
-        True
-
-        >>> SourceSpec.parse_prefix_only('foo')
-        Traceback (most recent call last):
-        ...
-        AssertionError: R('Invalid source specification', 'foo')
-        """
-        _, prefix = cls._parse(spec)
-        return prefix
-
-    @classmethod
-    @abstractmethod
-    def parse(cls, spec: str) -> Self:
-        raise NotImplementedError
-
-    @classmethod
-    def _parse(cls, spec: str) -> tuple[str, Prefix | None]:
-        rest, sep, prefix = spec.rpartition(':')
-        assert sep != '', R('Invalid source specification', spec)
-        prefix = Prefix.parse(prefix) if prefix else None
-        return rest, prefix
-
-    @property
-    def _prefix_str(self) -> str:
-        return '' if self.prefix is None else str(self.prefix)
-
-    @abstractmethod
-    def __str__(self) -> str:
-        raise NotImplementedError
-
-    def eq_ignoring_prefix(self, other: Self) -> bool:
-        """
-        >>> p = SimpleSourceSpec.parse
-
-        >>> p('foo:4/0').eq_ignoring_prefix(p('foo:42/0'))
-        True
-
-        >>> p('foo:4/0').eq_ignoring_prefix(p('bar:4/0'))
-        False
-        """
-        return self == attrs.evolve(other, prefix=self.prefix)
 
 
 @attrs.frozen(kw_only=True)
@@ -473,46 +430,20 @@ class SimpleSourceSpec(SourceSpec):
     @classmethod
     def parse(cls, spec: str) -> Self:
         """
-        >>> SimpleSourceSpec.parse('https://foo.edu:12/0') # doctest: +NORMALIZE_WHITESPACE
-        SimpleSourceSpec(prefix=Prefix(common='12',
-                                       partition=0),
-                         name='https://foo.edu')
-
-        >>> SimpleSourceSpec.parse('foo')
-        Traceback (most recent call last):
-        ...
-        AssertionError: R('Invalid source specification', 'foo')
-
-        >>> SimpleSourceSpec.parse('foo:8F53/0')
-        Traceback (most recent call last):
-        ...
-        azul.uuids.InvalidUUIDPrefixError: '8F53' is not a valid UUID prefix.
-
-        >>> SimpleSourceSpec.parse('https:foo.edu/0')
-        Traceback (most recent call last):
-        ...
-        azul.uuids.InvalidUUIDPrefixError: 'foo.edu' is not a valid UUID prefix.
+        >>> SimpleSourceSpec.parse('https://foo.edu') # doctest: +NORMALIZE_WHITESPACE
+        SimpleSourceSpec(name='https://foo.edu')
         """
-        name, prefix = cls._parse(spec)
-        self = cls(prefix=prefix, name=name)
+        self = cls(name=spec)
         assert spec == str(self), spec
         return self
 
     def __str__(self) -> str:
         """
-        >>> s = 'foo:bar/baz:/0'
-        >>> s == str(SimpleSourceSpec.parse(s))
-        True
-
-        >>> s = 'foo:bar/baz:12/0'
-        >>> s == str(SimpleSourceSpec.parse(s))
-        True
-
-        >>> s = 'foo:bar/baz:12/2'
+        >>> s = 'foo:bar/baz'
         >>> s == str(SimpleSourceSpec.parse(s))
         True
         """
-        return f'{self.name}:{self._prefix_str}'
+        return self.name
 
 
 @attrs.frozen(kw_only=True, order=True)
@@ -531,18 +462,20 @@ class SourceRef[SOURCE_SPEC: SourceSpec](
     globally unique, plugins should subclass this class, even if the subclass
     body is empty.
 
-    >>> spec = SimpleSourceSpec(name='', prefix=(Prefix(partition=0)))
+    >>> spec = SimpleSourceSpec(name='')
+    >>> prefix = Prefix(partition=0)
     >>> sorted([
-    ...     SourceRef(id='d', spec=spec),
-    ...     SourceRef(id='a', spec=spec),
+    ...     SourceRef(id='d', spec=spec, prefix=prefix),
+    ...     SourceRef(id='a', spec=spec, prefix=prefix),
     ... ])
     ... # doctest: +NORMALIZE_WHITESPACE
-    [SourceRef(id='a', spec=SimpleSourceSpec(prefix=Prefix(common='', partition=0), name='')),
-    SourceRef(id='d', spec=SimpleSourceSpec(prefix=Prefix(common='', partition=0), name=''))]
+    [SourceRef(id='a', spec=SimpleSourceSpec(name=''), prefix=Prefix(common='', partition=0)),
+    SourceRef(id='d', spec=SimpleSourceSpec(name=''), prefix=Prefix(common='', partition=0))]
 
     """
     id: str = attrs.field(order=str.lower)
     spec: SOURCE_SPEC = attrs.field(order=False)
+    prefix: Prefix | None = attrs.field(order=False)
 
     @classmethod
     def discriminator(cls) -> str:
@@ -556,13 +489,14 @@ class SourceRef[SOURCE_SPEC: SourceSpec](
         return cast(type[SOURCE_SPEC], spec_cls)
 
     def with_prefix(self, prefix: Prefix) -> Self:
-        return attrs.evolve(self, spec=attrs.evolve(self.spec, prefix=prefix))
+        return attrs.evolve(self, prefix=prefix)
 
     @classmethod
     def field_types(cls) -> FieldTypes:
         return {
             'id': pass_thru_str,
             'spec': pass_thru_str,
+            'prefix': pass_thru_str,
             cls.discriminator(): pass_thru_str,
         }
 
@@ -570,19 +504,20 @@ class SourceRef[SOURCE_SPEC: SourceSpec](
 @attrs.frozen(kw_only=True, eq=False)
 class SourcedBundleFQID[SOURCE_REF: SourceRef](BundleFQID):
     """
-    >>> spec = SimpleSourceSpec(name='', prefix=(Prefix(partition=0)))
+    >>> spec = SimpleSourceSpec(name='')
+    >>> prefix = Prefix(partition=0)
     >>> sorted([
-    ...     SourcedBundleFQID(uuid='d', version='e', source=SourceRef(id='1', spec=spec)),
-    ...     SourcedBundleFQID(uuid='a', version='c', source=SourceRef(id='2', spec=spec)),
-    ...     SourcedBundleFQID(uuid='a', version='b', source=SourceRef(id='3', spec=spec)),
+    ...     SourcedBundleFQID(uuid='d', version='e', source=SourceRef(id='1', spec=spec, prefix=prefix)),
+    ...     SourcedBundleFQID(uuid='a', version='c', source=SourceRef(id='2', spec=spec, prefix=prefix)),
+    ...     SourcedBundleFQID(uuid='a', version='b', source=SourceRef(id='3', spec=spec, prefix=prefix)),
     ... ])
     ... # doctest: +NORMALIZE_WHITESPACE
     [SourcedBundleFQID(uuid='a', version='b',
-        source=SourceRef(id='3', spec=SimpleSourceSpec(prefix=Prefix(common='', partition=0), name=''))),
+        source=SourceRef(id='3', spec=SimpleSourceSpec(name=''), prefix=Prefix(common='', partition=0))),
     SourcedBundleFQID(uuid='a', version='c',
-        source=SourceRef(id='2', spec=SimpleSourceSpec(prefix=Prefix(common='', partition=0), name=''))),
+        source=SourceRef(id='2', spec=SimpleSourceSpec(name=''), prefix=Prefix(common='', partition=0))),
     SourcedBundleFQID(uuid='d', version='e',
-        source=SourceRef(id='1', spec=SimpleSourceSpec(prefix=Prefix(common='', partition=0), name='')))]
+        source=SourceRef(id='1', spec=SimpleSourceSpec(name=''), prefix=Prefix(common='', partition=0)))]
     """
 
     source: SOURCE_REF

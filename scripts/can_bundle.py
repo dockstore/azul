@@ -99,14 +99,13 @@ def fetch_bundle(source: str, fqid_args: JSON) -> Bundle:
         else:
             source_ref = plugin.resolve_source(source_spec)
             log.debug('Searching for %r in catalog %r', source, catalog)
-            for plugin_source_spec in plugin.sources:
-                if source_ref.spec.eq_ignoring_prefix(plugin_source_spec):
-                    fqid = dict(fqid_args, source=source_ref.to_json())
-                    fqid = plugin.bundle_fqid_cls.from_json(fqid)
-                    bundle = plugin.fetch_bundle(fqid)
-                    log.info('Fetched bundle %r version %r from catalog %r.',
-                             fqid.uuid, fqid.version, catalog)
-                    return bundle
+            if source_spec in plugin.sources:
+                fqid = dict(fqid_args, source=source_ref.to_json())
+                fqid = plugin.bundle_fqid_cls.from_json(fqid)
+                bundle = plugin.fetch_bundle(fqid)
+                log.info('Fetched bundle %r version %r from catalog %r.',
+                         fqid.uuid, fqid.version, catalog)
+                return bundle
     raise ValueError(f'No repository using source {source!r}')
 
 
