@@ -89,6 +89,25 @@ class TestHttp(AzulUnitTestCase):
 
     @mock.patch.object(type(config), 'debug', new=1)
     def test(self):
+        #: If True (False), use a limited retry client under restricted
+        #: (unrestricted) timing. If None, use a normal client.
+        restricted: bool | None
+        #: The number of retries to configure the client with or None to use
+        #: the default. Must be None if restricted is not.
+        retries: int | None
+        #: Number of seconds the server sleeps before responding to a request.
+        sleep: float
+        #: The type of exception expected to be raised, or None of no exception
+        #: is expected.
+        exception: Exception | None
+        #: The expected number of calls to LoggingHttpClient.urlopen(). Explicit
+        #: retries by StatusRetryHttpClient will cause more than one call.
+        calls: int
+        #: The expected number of requests to be made. Implicit retries done by
+        #: urllib3 can cause more than one request per call.
+        requests: int
+        #: The expected number of responses to be received.
+        responses: int
         for restricted, retries, sleep, exception, calls, requests, responses in [
             # @formatter:off
             (  None,    0,           0,                    None, 1, 1, 1 ),  # noqa
@@ -118,6 +137,8 @@ class TestHttp(AzulUnitTestCase):
                         self.end_headers()
 
                 with self.http_server(Handler) as url:
+                    # The standard client is a urllib3 PoolManager, wrapped by
+                    # a LoggingHttpClient and a StatusRetryHttpClient instance
                     client = http_client(log)
                     with self.mock_api_gateway() if restricted else nullcontext():
                         if restricted is not None:
@@ -157,6 +178,7 @@ class TestHttp(AzulUnitTestCase):
                                 f"^{prefix}… without a response body$",
                             ]
                         )
+                        # StatusRetryHttpClient sleeps between calls
                         if i < calls - 1:
                             expected_logs.append(f'^{prefix}Sleeping 1s to honor Retry-After header$')
                 for expected_log, actual_log in zip(expected_logs, logs.output, strict=True):
