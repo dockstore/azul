@@ -149,9 +149,8 @@ class TestHttp(AzulUnitTestCase):
                                 if retries is None:
                                     client.request(method='GET', url=url)
                                 else:
-                                    retries = Retry(status=retries,
-                                                    raise_on_status=exception is not None)
-                                    client.request(method='GET', url=url, retries=retries)
+                                    retry = Retry(status=retries, raise_on_status=exception is not None)
+                                    client.request(method='GET', url=url, retries=retry)
 
                 self.assertEqual(requests, num_actual_requests)
 
