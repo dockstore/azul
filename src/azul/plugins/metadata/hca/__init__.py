@@ -172,7 +172,7 @@ class Plugin(MetadataPlugin[HCABundle]):
                             max_page_size=100),
             files=Sorting(field_name='fileName'),
             projects=Sorting(field_name='projectTitle',
-                             max_page_size=100),
+                             max_page_size=75),
             samples=Sorting(field_name='sampleId')
         )
 
