@@ -170,7 +170,7 @@ class TestHttp(AzulUnitTestCase):
                             f'^{prefix}… without a request body$'
                         ]
                     )
-                    if i < responses:
+                    if responses:
                         expected_logs.extend(
                             [
                                 rf'^{prefix}Got 503 response after \d.\d\d\ds from GET to {url}$',
