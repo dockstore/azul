@@ -1731,6 +1731,23 @@ dcp53_sources = mkdict(dcp52_sources, 518, mkdelta([
     mksrc('bigquery', 'datarepo-68e82765', 'hca_prod_f8aa201c4ff145a4890e840d63459ca2__20220119_dcp2_20250829_dcp53'),
 ]))
 
+dcp54_sources = mkdict(dcp53_sources, 524, mkdelta([
+    mksrc('bigquery', 'datarepo-f1ae4f66', 'hca_prod_032880e52b444bfb8eef25bb48e7453f__20250930_dcp2_20250930_dcp54'),
+    mksrc('bigquery', 'datarepo-ae2bf16b', 'hca_prod_16241d8231194bddbba55097c0591ba0__20250930_dcp2_20251001_dcp54'),
+    mksrc('bigquery', 'datarepo-17119788', 'hca_prod_2079bb2e676e4bbf8c68f9c6459edcbb__20240327_dcp2_20250930_dcp54'),
+    mksrc('bigquery', 'datarepo-261cfed5', 'hca_prod_4bcc16b57a4745bbb9c0be9d5336df2d__20240327_dcp2_20250930_dcp54'),
+    mksrc('bigquery', 'datarepo-ed4ae538', 'hca_prod_5eafb94b02d8423e81b83673da319ca0__20220117_dcp2_20250930_dcp54'),
+    mksrc('bigquery', 'datarepo-b06393f7', 'hca_prod_75dbbce90cde489c88a793e8f92914a3__20220117_dcp2_20250930_dcp54'),
+    mksrc('bigquery', 'datarepo-3e921113', 'hca_prod_84d1697fd4af42c29a5037fb5842c586__20250203_dcp2_20250930_dcp54'),
+    mksrc('bigquery', 'datarepo-fd40f5e4', 'hca_prod_87d52a86bdc7440cb84d170f7dc346d9__20220118_dcp2_20250930_dcp54'),
+    mksrc('bigquery', 'datarepo-11fe0d2a', 'hca_prod_8dadf21e0a444fa3aafc7633b2a9eaa4__20250930_dcp2_20250930_dcp54'),
+    mksrc('bigquery', 'datarepo-be15ad3c', 'hca_prod_9c20a245f2c043ae82c92232ec6b594f__20220212_dcp2_20250930_dcp54'),
+    mksrc('bigquery', 'datarepo-005330ae', 'hca_prod_9f7aa40170e34695951a30541a1434eb__20250203_dcp2_20250930_dcp54'),
+    mksrc('bigquery', 'datarepo-29e38f9e', 'hca_prod_a004b1501c364af69bbd070c06dbc17d__20220118_dcp2_20250930_dcp54'),
+    mksrc('bigquery', 'datarepo-6d20a90c', 'hca_prod_b32a9915c81b4cbcaf533a66b5da3c9a__20220118_dcp2_20250930_dcp54'),
+    mksrc('bigquery', 'datarepo-dcd21441', 'hca_prod_f77290ae0d7b4239b0fe3cf2c9e8858d__20250203_dcp2_20250930_dcp54'),
+]))
+
 lungmap_sources = mkdict({}, 3, mkdelta([
     mksrc('bigquery', 'datarepo-32f75497', 'lungmap_prod_00f056f273ff43ac97ff69ca10e38c89__20220308_20220308'),
     mksrc('bigquery', 'datarepo-7066459d', 'lungmap_prod_1bdcecde16be420888f478cd2133d11d__20220308_20220308'),
@@ -1842,6 +1859,7 @@ def env() -> Mapping[str, Optional[str]]:
                                        sources=mklist(sources))
             for atlas, catalog, sources in [
                 ('hca', 'dcp53', dcp53_sources),
+                ('hca', 'dcp54', dcp54_sources),
                 ('lungmap', 'lm9', lm9_sources)
             ] for suffix, internal in [
                 ('', False),
