@@ -593,7 +593,7 @@ class TDRClient(SAMClient):
         Much faster than listing the snapshots' names.
         """
         endpoint = self._repository_endpoint('snapshots', 'roleMap')
-        response = self._request('GET', endpoint)
+        response = self._request('GET', endpoint, headers={'Connection': 'close'})
         response = self._check_response(endpoint, response)
         return set(json_dict(response['roleMap']).keys())
 
