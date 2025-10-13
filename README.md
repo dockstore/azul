@@ -629,8 +629,9 @@ These steps are performed once per deployment (multiple times per project).
 5. Add an entry to *Authorized JavaScript origins* and enter the output from
    `python -m azul config.service_endpoint`
 
-6. Add an entry to *Authorized redirect URIs*. Append `/oauth2_redirect` to the
-    value of the previous field and enter the resulting value.
+6. Add an entry to *Authorized redirect URIs*. Append
+   `/swagger/oauth2-redirect.html` to the value of the previous field and enter
+   the resulting value.
    
 7. Click *Create*
 

@@ -20,6 +20,24 @@ reverted. This is all fairly informal and loosely defined. Hopefully we won't
 have too many entries in this file.
 
 
+#7468 Update Swagger to v5.29.4
+===============================
+
+Everyone
+--------
+
+In the Google Cloud Console under *APIs & Services* -> *Credentials*, locate the
+OAuth 2.0 clients belonging to your personal deployments and update each
+client's *Authorized redirect URIs* setting by replacing ``/oauth2_redirect``
+with ``/swagger/oauth2-redirect.html``. For a more details see section 3.2.2 of
+our README.
+
+Operator
+--------
+
+Follow the steps above for all shared deployments.
+
+
 #7305 Separate prefix from source specs
 =======================================
 

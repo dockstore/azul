@@ -24,7 +24,6 @@ from chalice import (
     Response,
     UnauthorizedError,
 )
-import chevron
 from furl import (
     furl,
 )
@@ -48,9 +47,6 @@ from azul.auth import (
 )
 from azul.collections import (
     OrderedSet,
-)
-from azul.csp import (
-    CSP,
 )
 from azul.drs import (
     AccessMethod,
@@ -125,7 +121,7 @@ spec = {
         # changes and reset the minor version to zero. Otherwise, increment only
         # the minor version for backwards compatible changes. A backwards
         # compatible change is one that does not require updates to clients.
-        'version': '14.3',
+        'version': '14.4',
         'description': fd(f'''
             # Overview
 
@@ -447,40 +443,6 @@ app = ServiceApp()
 configure_app_logging(app, log)
 
 globals().update(app.default_routes())
-
-
-@app.route(
-    '/oauth2_redirect',
-    enabled=config.google_oauth2_client_id is not None,
-    cache_control='no-store',
-    interactive=False,
-    spec={
-        'summary': 'Destination endpoint for Google OAuth 2.0 redirects',
-        'tags': ['Auxiliary'],
-        'responses': {
-            '200': {
-                'description': fd('''
-                    The response body is HTML page with a script that extracts
-                    the access token and redirects back to the Swagger UI.
-                ''')
-            }
-        }
-    }
-)
-def oauth2_redirect():
-    file_name = 'oauth2-redirect.html.template.mustache'
-    template = app.load_static_resource('swagger', file_name)
-    nonce = CSP.new_nonce()
-    html = chevron.render(template, {
-        'CSP_NONCE': json.dumps(nonce)
-    })
-    csp = CSP.for_azul(nonce)
-    return Response(status_code=200,
-                    headers={
-                        'Content-Type': 'text/html',
-                        'Content-Security-Policy': str(csp)
-                    },
-                    body=html)
 
 
 def validate_entity_type(entity_type: str):
