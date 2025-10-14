@@ -279,7 +279,8 @@ class Plugin(TDRPlugin[TDRHCABundle, TDRBundleFQID]):
         bundle.metadata[str(entity)] = content
 
     def _file_from_row(self, row: BigQueryRow) -> HCAFile:
-        return HCAFile.from_metadata(metadata=json.loads(any_str(row['content'])),
+        return HCAFile.from_metadata(catalog=self.catalog,
+                                     metadata=json.loads(any_str(row['content'])),
                                      descriptor=json.loads(any_str(row['descriptor'])),
                                      drs_uri=optional(any_str, row['file_id']))
 
