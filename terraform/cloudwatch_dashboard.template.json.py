@@ -7,13 +7,15 @@ from more_itertools import (
 )
 
 from azul import (
-    JSON,
     R,
     config,
     iif,
 )
 from azul.deployment import (
     aws,
+)
+from azul.types import (
+    JSON,
 )
 
 es_instance_count = (

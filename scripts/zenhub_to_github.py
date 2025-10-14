@@ -35,7 +35,6 @@ from more_itertools import (
 )
 
 from azul import (
-    JSON,
     cached_property,
     format_description as fd,
 )
@@ -50,6 +49,7 @@ from azul.logging import (
 )
 from azul.types import (
     AnyJSON,
+    JSON,
     JSONs,
     PrimitiveJSON,
     json_bool,

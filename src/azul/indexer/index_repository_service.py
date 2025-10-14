@@ -8,7 +8,6 @@ from typing import (
 
 from azul import (
     CatalogName,
-    JSON,
     cache,
 )
 from azul.indexer import (
@@ -18,6 +17,9 @@ from azul.indexer import (
 )
 from azul.plugins import (
     RepositoryPlugin,
+)
+from azul.types import (
+    JSON,
 )
 
 log = logging.getLogger(__name__)

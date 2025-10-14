@@ -19,7 +19,6 @@ from furl import (
 
 from azul import (
     CatalogName,
-    JSON,
     R,
     cached_property,
     config,
@@ -52,6 +51,9 @@ from azul.plugins import (
 from azul.service.storage_service import (
     StorageObjectNotFound,
     StorageService,
+)
+from azul.types import (
+    JSON,
 )
 
 if TYPE_CHECKING:

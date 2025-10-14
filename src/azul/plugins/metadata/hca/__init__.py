@@ -10,7 +10,6 @@ from attrs import (
 )
 
 from azul import (
-    JSON,
     R,
     config,
     iif,
@@ -65,6 +64,7 @@ from azul.service.manifest_service import (
     ManifestFormat,
 )
 from azul.types import (
+    JSON,
     MutableJSON,
     json_dict,
     json_dict_of_dicts,

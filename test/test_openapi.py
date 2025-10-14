@@ -7,7 +7,6 @@ from furl import (
 )
 
 from azul import (
-    JSON,
     RequirementError,
 )
 from azul.chalice import (
@@ -22,6 +21,9 @@ from azul.logging import (
 from azul.openapi import (
     params,
     schema,
+)
+from azul.types import (
+    JSON,
 )
 from azul_test_case import (
     AzulUnitTestCase,
