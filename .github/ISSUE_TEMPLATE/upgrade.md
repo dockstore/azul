@@ -2,7 +2,7 @@
 name: Upgrade software dependencies
 about: Issue template for the bi-weekly upgrade of Azul's software dependencies
 title: Upgrade software dependencies
-labels: -,operator,infra,debt
+labels: -,operator,infra
 type: Chore
 _start: 2023-11-27T09:00
 _period: 14 days
