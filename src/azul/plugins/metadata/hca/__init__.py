@@ -542,6 +542,8 @@ class HCAFile(File):
         if content_type.endswith(parameter_suffix):
             content_type = content_type.removesuffix(parameter_suffix)
         elif config.catalogs[catalog].atlas == 'lungmap':
+            # FIXME: Re-enable content-type validation for lungmap
+            #        https://github.com/DataBiosphere/azul/issues/7244
             pass
         else:
             assert ';' not in content_type, R(
