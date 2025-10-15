@@ -173,16 +173,12 @@ class MirrorController(ActionController[MirrorAction],
         plugin = self.repository_plugin(catalog)
         source = plugin.source_ref_cls.from_json(source_json)
         files = plugin.list_files(source, prefix)
-
-        deployment_is_stable = (config.deployment.is_stable
-                                and not config.deployment.is_unit_test
-                                and catalog not in config.integration_test_catalogs)
+        max_size = config.catalogs[catalog].mirror_limit
 
         def messages() -> Iterable[SQSMessage]:
             for file in files:
                 assert file.size is not None, R('File size unknown', file)
-                file_is_large = file.size > 1.5 * 1024 ** 3
-                if file_is_large and not deployment_is_stable:
+                if max_size is not None and file.size > max_size:
                     log.info('Not mirroring file to save cost: %r', file)
                 else:
                     log.debug('Queueing file %r', file)

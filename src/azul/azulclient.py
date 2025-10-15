@@ -389,14 +389,19 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
         return length == 0
 
     def remote_mirror(self, catalog: CatalogName, sources: Iterable[SourceRef]):
+        mirror_limit = config.catalogs[catalog].mirror_limit
+        if mirror_limit is not None and mirror_limit < 0:
+            log.info('Not mirroring any files in catalog %r because the file '
+                     'size limit is negative', catalog)
+        else:
 
-        def message(source: SourceRef):
-            log.info('Mirroring files in source %r from catalog %r',
-                     str(source.spec), catalog)
-            return self.mirror_source_message(catalog, source)
+            def message(source: SourceRef):
+                log.info('Mirroring files in source %r from catalog %r',
+                         str(source.spec), catalog)
+                return self.mirror_source_message(catalog, source)
 
-        messages = map(message, sources)
-        self.queue_mirror_messages(messages)
+            messages = map(message, sources)
+            self.queue_mirror_messages(messages)
 
     def _get_non_empty_fail_queues(self) -> set[str]:
         return {

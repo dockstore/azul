@@ -44,6 +44,7 @@ def env() -> Mapping[str, str | None]:
         #   'name': {
         #       'atlas': 'bar',
         #       'internal': True,
+        #       'mirror_limit': -1,
         #       'plugins': {
         #           plugin_type: {'name'=plugin_package},
         #           plugin_type: {'name'=plugin_package},
@@ -64,6 +65,11 @@ def env() -> Mapping[str, str | None]:
         # the purpose (like accessing a repository or transforming metadata) and
         # `plugin_package` denotes the concrete implementation of how to fulfill
         # that purpose.
+        #
+        # Files larger than `mirror_limit` will not be mirrored for that
+        # catalog. This property may be absent or null, in which case all files
+        # will be mirrored for that catalog, or negative, in which case no files
+        # will be mirrored for that catalog.
         #
         # The first catalog listed is the default catalog.
         #

@@ -1716,7 +1716,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
             catalogs = [
                 c.name
                 for c in config.catalogs.values()
-                if c.is_integration_test_catalog and c.atlas == 'hca'
+                if c.is_integration_test_catalog and c.mirror_limit >= 0
             ]
             sources_by_catalog = {
                 catalog: [self._select_source(catalog, public=True)]
@@ -1888,6 +1888,7 @@ class CanBundleScriptIntegrationTest(IntegrationTestCase):
         mock_catalog = config.Catalog(name='canned-it',
                                       atlas='hca',
                                       internal=True,
+                                      mirror_limit=None,
                                       plugins={
                                           'metadata': config.Catalog.Plugin(name='hca'),
                                           'repository': config.Catalog.Plugin(name='canned'),

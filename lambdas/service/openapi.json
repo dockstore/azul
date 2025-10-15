@@ -764,6 +764,10 @@
                                                     "internal": {
                                                         "type": "boolean"
                                                     },
+                                                    "mirror_limit": {
+                                                        "type": "integer",
+                                                        "format": "int64"
+                                                    },
                                                     "plugins": {
                                                         "type": "object",
                                                         "properties": {},

@@ -1851,12 +1851,13 @@ def env() -> Mapping[str, str | None]:
         'AZUL_CATALOGS': base64.b64encode(bz2.compress(json.dumps({
             f'{catalog}{suffix}': dict(atlas=atlas,
                                        internal=is_it,
+                                       mirror_limit=it_mirror_limit if is_it else mirror_limit,
                                        plugins=dict(metadata=dict(name='hca'),
                                                     repository=dict(name='tdr_hca')),
                                        sources=condense(sources))
-            for atlas, catalog, sources in [
-                ('hca', 'dcp54', dcp54_sources),
-                ('lungmap', 'lm9', lm9_sources)
+            for atlas, catalog, sources, mirror_limit, it_mirror_limit in [
+                ('hca', 'dcp54', dcp54_sources, None, 1.5 * 1024 ** 3),
+                ('lungmap', 'lm9', lm9_sources, -1, -1)
             ]
             for suffix, is_it in [
                 ('', False),

@@ -5,6 +5,7 @@ from unittest.mock import (
     patch,
 )
 
+import attrs
 from chalice.app import (
     SQSRecord,
 )
@@ -44,6 +45,7 @@ from azul.service.source_service import (
 )
 from azul.types import (
     JSON,
+    MutableJSONs,
 )
 from azul_test_case import (
     DCP2TestCase,
@@ -125,9 +127,12 @@ class TestMirrorController(DCP2TestCase,
     def _mirror_event(self, body: JSON) -> list[SQSRecord]:
         return [self._mock_sqs_record(body, fifo=True)]
 
-    def _test_remote_mirror(self):
+    def _remote_mirror(self) -> MutableJSONs:
         self.client.remote_mirror(self.catalog, [self.source])
-        source_message = one(self._read_queue(self.client.mirror_queue()))
+        return self._read_queue(self.client.mirror_queue())
+
+    def _test_remote_mirror(self):
+        source_message = one(self._remote_mirror())
         expected_message = dict(action='mirror_source',
                                 catalog=self.catalog,
                                 source=self.source.to_json())
@@ -197,3 +202,26 @@ class TestMirrorController(DCP2TestCase,
         self.assertEqual(200, response.status, response.data)
         schema = json.loads(response.data)
         jsonschema.validate(info, schema)
+
+    def test_files_not_mirrored(self):
+        self._create_mock_queues(config.mirror_queue_names)
+        catalog = config.catalogs[self.catalog]
+
+        def patch_max_file_size(size):
+            return patch.dict(config.catalogs, {
+                self.catalog: attrs.evolve(catalog, mirror_limit=size)
+            })
+
+        with self.subTest(mirror_limit=-1):
+            with patch_max_file_size(-1):
+                messages = self._remote_mirror()
+                self.assertEqual([], messages)
+
+        with self.subTest(mirror_limit=self._file.size):
+            too_big = attrs.evolve(self._file,
+                                   uuid='2873c8ef-8f76-4ccf-add7-26afe8c62873',
+                                   size=self._file.size + 1)
+            source_message = self._test_remote_mirror()
+            partition_message = self._test_mirror_source(source_message)
+            with patch_max_file_size(self._file.size):
+                self._test_mirror_partition(partition_message, [too_big, self._file])

@@ -215,13 +215,14 @@ def env() -> Mapping[str, str | None]:
         'AZUL_CATALOGS': json.dumps({
             f'{catalog}{suffix}': dict(atlas=atlas,
                                        internal=is_it,
+                                       mirror_limit=it_mirror_limit if is_it else mirror_limit,
                                        plugins=dict(metadata=dict(name='hca'),
                                                     repository=dict(name='tdr_hca')),
                                        sources=condense(sources))
-            for atlas, catalog, sources in [
-                ('hca', 'dcp3', dcp3_sources),
-                ('lungmap', 'lungmap', lungmap_sources),
-                ('lungmap', 'lm2', lm2_sources)
+            for atlas, catalog, sources, mirror_limit, it_mirror_limit, in [
+                ('hca', 'dcp3', dcp3_sources, int(1.5 * 1024 ** 3), int(1.5 * 1024 ** 3)),
+                ('lungmap', 'lungmap', lungmap_sources, -1, -1),
+                ('lungmap', 'lm2', lm2_sources, -1, -1)
             ]
             for suffix, is_it in [
                 ('', False),
