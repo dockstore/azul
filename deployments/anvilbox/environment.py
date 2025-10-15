@@ -14,22 +14,22 @@ type DatasetName = str
 type SourceSpec = str
 
 
-def bqsrc(google_project: str,
-          snapshot: str,
-          flags: int = 0,
-          ) -> tuple[DatasetName, SourceSpec | None]:
+def source(google_project: str,
+           snapshot: str,
+           flags: int = 0,
+           ) -> tuple[DatasetName, SourceSpec | None]:
     assert len(google_project) == 8, google_project
     google_project = 'datarepo-dev-' + google_project
     assert not snapshot.startswith('ANVIL_'), snapshot
     snapshot = 'ANVIL_' + snapshot
-    return mksrc('bigquery', google_project, snapshot, flags)
+    return _source('bigquery', google_project, snapshot, flags)
 
 
-def mksrc(source_type: Literal['bigquery', 'parquet'],
-          google_project,
-          snapshot,
-          flags: int = 0,
-          ) -> tuple[DatasetName, SourceSpec | None]:
+def _source(source_type: Literal['bigquery', 'parquet'],
+            google_project,
+            snapshot,
+            flags: int = 0,
+            ) -> tuple[DatasetName, SourceSpec | None]:
     dataset = '_'.join(snapshot.split('_')[1:-3])
     assert flags <= pop
     source = None if flags & pop else ':'.join([
@@ -42,32 +42,32 @@ def mksrc(source_type: Literal['bigquery', 'parquet'],
     return dataset, source
 
 
-def mkdelta(items: list[tuple[DatasetName, SourceSpec | None]]
-            ) -> dict[DatasetName, SourceSpec | None]:
+def delta(items: list[tuple[DatasetName, SourceSpec | None]]
+          ) -> dict[DatasetName, SourceSpec | None]:
     result = dict(items)
     assert len(items) == len(result), 'collisions detected'
     assert list(result.keys()) == sorted(result.keys()), 'input not sorted'
     return result
 
 
-def mklist(catalog: dict[DatasetName, SourceSpec | None]) -> list[SourceSpec]:
+def condense(catalog: dict[DatasetName, SourceSpec | None]) -> list[SourceSpec]:
     return list(filter(None, catalog.values()))
 
 
-def mkdict(previous_catalog: dict[DatasetName, SourceSpec | None],
-           num_expected: int,
-           delta: dict[DatasetName, SourceSpec | None],
-           ) -> dict[DatasetName, SourceSpec | None]:
+def union(previous_catalog: dict[DatasetName, SourceSpec | None],
+          num_expected: int,
+          delta: dict[DatasetName, SourceSpec | None],
+          ) -> dict[DatasetName, SourceSpec | None]:
     catalog = previous_catalog | delta
-    num_actual = len(mklist(catalog))
+    num_actual = len(condense(catalog))
     assert num_expected == num_actual, (num_expected, num_actual)
     return catalog
 
 
-anvil_sources = mkdict({}, 3, mkdelta([
-    bqsrc('e53e74aa', '1000G_2019_Dev_20230609_ANV5_202306121732'),
-    bqsrc('42c70e6a', 'CCDG_Sample_1_20230228_ANV5_202302281520'),
-    bqsrc('97ad270b', 'CMG_Sample_1_20230225_ANV5_202302281509')
+anvil_sources = union({}, 3, delta([
+    source('e53e74aa', '1000G_2019_Dev_20230609_ANV5_202306121732'),
+    source('42c70e6a', 'CCDG_Sample_1_20230228_ANV5_202302281520'),
+    source('97ad270b', 'CMG_Sample_1_20230225_ANV5_202302281509')
 ]))
 
 
