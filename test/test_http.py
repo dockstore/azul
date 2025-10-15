@@ -146,11 +146,12 @@ class TestHttp(AzulUnitTestCase):
                             assert restricted is client._timing_is_restricted
                         with self.assertRaises(exception) if exception else nullcontext():
                             with self.assertLogs(log) as logs:
+                                headers = {'Authorization': 'secret, should not be logged'}
                                 if retries is None:
-                                    client.request(method='GET', url=url)
+                                    client.request(method='GET', url=url, headers=headers)
                                 else:
                                     retry = Retry(status=retries, raise_on_status=exception is not None)
-                                    client.request(method='GET', url=url, retries=retry)
+                                    client.request(method='GET', url=url, retries=retry, headers=headers)
 
                 self.assertEqual(requests, num_actual_requests)
 
@@ -165,10 +166,15 @@ class TestHttp(AzulUnitTestCase):
                 for i in range(calls):
                     expected_logs.extend(
                         [
-                            f"^{prefix}Making GET request to '{url}'$",
-                            f'^{prefix}… without request headers$',
-                            f'^{prefix}… without a request body$'
-                        ]
+                            # The urlopen() call logs the method, URL and body
+                            fr"^{prefix}Making GET request to '{url}'$",
+                            fr'^{prefix}… without a request body$'
+                        ] + [
+                            # The headers are logged for the urlopen() call and
+                            # every retry so if we expect one call and three
+                            # requests, the headers will be logged three times.
+                            fr"^{prefix}… with request headers \[\('Authorization', 'REDACTED'\)\]$"
+                        ] * (requests // calls)
                     )
                     if responses:
                         expected_logs.extend(
