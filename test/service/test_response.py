@@ -2212,7 +2212,7 @@ class TestIndexResponse(IndexResponseTestCase):
             self.assertEqual(200, response.status_code)
             return response.json()
 
-        for nested_properties, expected_projects in [
+        cases = [
             (
                 dict(namespace='array_express', accession='E-AAAA-00'),
                 {'627cb0ba-b8a1-405a-b58f-0add82c3d635'}
@@ -2232,7 +2232,8 @@ class TestIndexResponse(IndexResponseTestCase):
                     '88ec040b-8705-4f77-8f41-f81e57632f7d'
                 }
             )
-        ]:
+        ]
+        for nested_properties, expected_projects in cases:
             with self.subTest(nested_properties=nested_properties):
                 response = request_accessions(nested_properties)
                 actual_projects = {
