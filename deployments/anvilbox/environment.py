@@ -119,7 +119,7 @@ def env() -> Mapping[str, str | None]:
                                        internal=is_it,
                                        plugins=dict(metadata=dict(name='anvil'),
                                                     repository=dict(name='tdr_anvil')),
-                                       sources=list(filter(None, sources.values())))
+                                       sources=condense(sources))
             for atlas, catalog, sources in [
                 ('anvil', 'anvil', anvil_sources),
             ]

@@ -230,7 +230,7 @@ def env() -> Mapping[str, str | None]:
                                        internal=is_it,
                                        plugins=dict(metadata=dict(name='hca'),
                                                     repository=dict(name='tdr_hca')),
-                                       sources=list(filter(None, sources.values())))
+                                       sources=condense(sources))
             for atlas, catalog, sources in [
                 ('hca', 'dcp3', dcp3_sources),
                 ('lungmap', 'lungmap', lungmap_sources),
