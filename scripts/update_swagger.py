@@ -25,6 +25,7 @@ repository_url = 'https://raw.githubusercontent.com/swagger-api/swagger-ui'
 tag = 'v5.28.1'
 files = [
     'index.html',
+    'index.css',
     'swagger-ui.css',
     'swagger-ui-bundle.js',
     'swagger-ui-standalone-preset.js',
