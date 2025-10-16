@@ -416,9 +416,6 @@ class SourceSpec(Parseable, metaclass=ABCMeta):
     have simple unstructured names may want to use :class:`SimpleSourceSpec`.
     """
 
-    # FIXME: Improve equality and interning semantics for source ref and spec
-    #        https://github.com/DataBiosphere/azul/issues/6778
-
 
 @attrs.frozen(kw_only=True)
 class SimpleSourceSpec(SourceSpec):
