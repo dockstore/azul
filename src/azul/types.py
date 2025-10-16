@@ -157,7 +157,7 @@ def json_items_are_dicts(vs: MutableJSON) -> TypeGuard[dict[str, MutableJSON]]:
     return True
 
 
-def json_sorted[S: PrimitiveJSON](vs: Iterable[S]) -> MutableJSONArray:
+def json_sorted(vs: Iterable[PrimitiveJSON]) -> MutableJSONArray:
     return sorted(vs, key=none_safe_key(none_last=True))
 
 
