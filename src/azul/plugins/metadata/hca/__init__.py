@@ -69,6 +69,7 @@ from azul.service.manifest_service import (
 )
 from azul.types import (
     MutableJSON,
+    any_str,
     json_dict,
     json_dict_of_dicts,
     json_int,
@@ -501,21 +502,18 @@ class HCAFile(File):
                    s3_etag=optional(json_str, hit.get('s3_etag')))
 
     @classmethod
-    def file_from_row(cls, row: BigQueryRow) -> HCAFile:
-        descriptor = json.loads(row['descriptor'])
+    def file_from_row(cls, row: BigQueryRow) -> Self:
+        descriptor = json.loads(any_str(row['descriptor']))
         # FIXME: Move validation of descriptor to the metadata API
         #        https://github.com/DataBiosphere/azul/issues/6299
         api.Entity.validate_described_by(descriptor)
-        return HCAFile.from_metadata(descriptor,
-                                     uuid=descriptor['file_id'],
-                                     name=row['file_name'],
-                                     drs_uri=cls._parse_drs_uri(row['file_id'], descriptor))
+        return cls.from_metadata(descriptor,
+                                 uuid=json_str(descriptor['file_id']),
+                                 name=any_str(row['file_name']),
+                                 drs_uri=cls._parse_drs_uri(optional(any_str, row['file_id']), descriptor))
 
     @classmethod
-    def _parse_drs_uri(cls,
-                       file_id: str | None,
-                       descriptor: JSON
-                       ) -> str | None:
+    def _parse_drs_uri(cls, file_id: str | None, descriptor: JSON) -> str | None:
         if file_id is None:
             try:
                 external_drs_uri = descriptor['drs_uri']
