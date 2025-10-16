@@ -547,11 +547,14 @@ class MetadataPlugin[BUNDLE: Bundle](Plugin[BUNDLE]):
         raise NotImplementedError
 
 
+# FIXME: Maybe remove the defaults after enabling mypy's disallow_any_generics
+#        https://github.com/DataBiosphere/azul/issues/7495
+
 @attrs.frozen(auto_attribs=True, kw_only=True)
-class RepositoryPlugin[BUNDLE: Bundle,
-                       SOURCE_SPEC: SourceSpec,
-                       SOURCE_REF: SourceRef,
-                       BUNDLE_FQID: SourcedBundleFQID](
+class RepositoryPlugin[BUNDLE: Bundle = Bundle[SourcedBundleFQID],
+                       SOURCE_SPEC: SourceSpec = SourceSpec,
+                       SOURCE_REF: SourceRef = SourceRef[SourceSpec],
+                       BUNDLE_FQID: SourcedBundleFQID = SourcedBundleFQID](
     Plugin[BUNDLE]
 ):
     catalog: CatalogName
