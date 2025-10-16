@@ -39,9 +39,6 @@ from azul.bigquery import (
 from azul.collections import (
     singleton,
 )
-from azul.drs import (
-    RegularDRSURI,
-)
 from azul.indexer import (
     BundleFQID,
 )
@@ -160,7 +157,7 @@ class TDRHCABundle(HCABundle[TDRBundleFQID], TDRBundle):
         if is_stitched:
             self.stitched.add(entity.entity_id)
         if entity.entity_type.endswith('_file'):
-            self._add_manifest_entry(entity, self.file_from_row(row))
+            self._add_manifest_entry(entity, HCAFile.file_from_row(row))
         content = row['content']
         self.metadata[str(entity)] = (json.loads(content)
                                       if isinstance(content, str)
@@ -182,17 +179,6 @@ class TDRHCABundle(HCABundle[TDRBundleFQID], TDRBundle):
         'project_id'
     )
 
-    @classmethod
-    def file_from_row(cls, row: BigQueryRow) -> HCAFile:
-        descriptor = json.loads(row['descriptor'])
-        # FIXME: Move validation of descriptor to the metadata API
-        #        https://github.com/DataBiosphere/azul/issues/6299
-        api.Entity.validate_described_by(descriptor)
-        return HCAFile.from_metadata(descriptor,
-                                     uuid=descriptor['file_id'],
-                                     name=row['file_name'],
-                                     drs_uri=cls._parse_drs_uri(row['file_id'], descriptor))
-
     def _add_manifest_entry(self,
                             entity: EntityReference,
                             file: HCAFile) -> None:
@@ -200,33 +186,6 @@ class TDRHCABundle(HCABundle[TDRBundleFQID], TDRBundle):
         file_json['content-type'] = file_json.pop('content_type')
         file_json['indexed'] = False
         self.manifest[str(entity)] = file_json
-
-    @classmethod
-    def _parse_drs_uri(cls,
-                       file_id: str | None,
-                       descriptor: JSON
-                       ) -> str | None:
-        if file_id is None:
-            try:
-                external_drs_uri = descriptor['drs_uri']
-            except KeyError:
-                assert False, R(
-                    '`file_id` is null and `drs_uri` is not set in file descriptor',
-                    descriptor)
-            else:
-                # FIXME: Support non-null DRS URIs in file descriptors
-                #        https://github.com/DataBiosphere/azul/issues/3631
-                if external_drs_uri is not None:
-                    log.warning('Non-null `drs_uri` in file descriptor (%s)', external_drs_uri)
-                    external_drs_uri = None
-                return external_drs_uri
-        else:
-            # This requirement prevent mismatches in the DRS domain, and ensures
-            # that changes to the column syntax don't go undetected.
-            parsed = RegularDRSURI.parse(file_id)
-            assert parsed.uri.netloc == config.tdr_service_url.netloc, R(
-                'Unexpected DRS URI location', parsed.uri)
-            return file_id
 
 
 class Plugin(TDRPlugin[TDRHCABundle, TDRBundleFQID]):
@@ -291,7 +250,7 @@ class Plugin(TDRPlugin[TDRHCABundle, TDRBundleFQID]):
             for entity_type, entity_cls in api.entity_types.items()
             if entity_type.endswith('_file')
         ))
-        return list(map(TDRHCABundle.file_from_row, rows))
+        return list(map(HCAFile.file_from_row, rows))
 
     def _query_unique_sorted(self,
                              query: str,

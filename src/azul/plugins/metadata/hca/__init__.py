@@ -1,3 +1,5 @@
+import json
+import logging
 from typing import (
     Iterable,
     Self,
@@ -14,8 +16,14 @@ from azul import (
     config,
     iif,
 )
+from azul.bigquery import (
+    BigQueryRow,
+)
 from azul.digests import (
     Digest,
+)
+from azul.drs import (
+    RegularDRSURI,
 )
 from azul.indexer.document import (
     Aggregate,
@@ -71,6 +79,8 @@ from azul.types import (
 from humancellatlas.data.metadata import (
     api,
 )
+
+log = logging.getLogger(__name__)
 
 
 class Plugin(MetadataPlugin[HCABundle]):
@@ -489,6 +499,44 @@ class HCAFile(File):
                    crc32c=json_str(hit['crc32c']),
                    sha1=optional(json_str, hit.get('sha1')),
                    s3_etag=optional(json_str, hit.get('s3_etag')))
+
+    @classmethod
+    def file_from_row(cls, row: BigQueryRow) -> HCAFile:
+        descriptor = json.loads(row['descriptor'])
+        # FIXME: Move validation of descriptor to the metadata API
+        #        https://github.com/DataBiosphere/azul/issues/6299
+        api.Entity.validate_described_by(descriptor)
+        return HCAFile.from_metadata(descriptor,
+                                     uuid=descriptor['file_id'],
+                                     name=row['file_name'],
+                                     drs_uri=cls._parse_drs_uri(row['file_id'], descriptor))
+
+    @classmethod
+    def _parse_drs_uri(cls,
+                       file_id: str | None,
+                       descriptor: JSON
+                       ) -> str | None:
+        if file_id is None:
+            try:
+                external_drs_uri = descriptor['drs_uri']
+            except KeyError:
+                assert False, R(
+                    '`file_id` is null and `drs_uri` is not set in file descriptor',
+                    descriptor)
+            else:
+                # FIXME: Support non-null DRS URIs in file descriptors
+                #        https://github.com/DataBiosphere/azul/issues/3631
+                if external_drs_uri is not None:
+                    log.warning('Non-null `drs_uri` in file descriptor (%s)', external_drs_uri)
+                    external_drs_uri = None
+                return external_drs_uri
+        else:
+            # This requirement prevent mismatches in the DRS domain, and ensures
+            # that changes to the column syntax don't go undetected.
+            parsed = RegularDRSURI.parse(file_id)
+            assert parsed.uri.netloc == config.tdr_service_url.netloc, R(
+                'Unexpected DRS URI location', parsed.uri)
+            return file_id
 
     @classmethod
     def from_metadata(cls,
