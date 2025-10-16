@@ -162,26 +162,46 @@ def json_sorted(vs: Iterable[PrimitiveJSON]) -> MutableJSONArray:
 
 
 def json_str(v: AnyMutableJSON | AnyJSON) -> str:
+    return any_str(v)
+
+
+def any_str(v: Any) -> str:
     assert isinstance(v, str), type(v)
     return v
 
 
 def json_int(v: AnyMutableJSON | AnyJSON) -> int:
+    return any_int(v)
+
+
+def any_int(v: Any) -> int:
     assert isinstance(v, int), type(v)
     return v
 
 
 def json_float(v: AnyMutableJSON | AnyJSON) -> float:
+    return any_float(v)
+
+
+def any_float(v: Any) -> float:
     assert isinstance(v, float), type(v)
     return v
 
 
 def json_bool(v: AnyMutableJSON | AnyJSON) -> bool:
+    return any_bool(v)
+
+
+def any_bool(v: Any) -> bool:
     assert isinstance(v, bool), type(v)
     return v
 
 
 def json_none(v: AnyMutableJSON | AnyJSON) -> None:
+    return any_none(v)
+
+
+def any_none(v: Any) -> None:
     assert v is None, type(v)
     return v
 
