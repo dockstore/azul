@@ -106,6 +106,8 @@ class Lambdas:
         return aws.lambda_
 
     def list_lambdas(self) -> list[Lambda]:
+        # Note that this method returns the $LATEST version, which is what
+        # Amazon calls the "unpublished" version.
         return [
             Lambda.from_response(function)
             for response in self._lambda.get_paginator('list_functions').paginate()
@@ -116,7 +118,7 @@ class Lambdas:
         paginator = self._lambda.get_paginator('list_functions')
         lambda_prefixes = [config.qualified_resource_name(lambda_infix) for lambda_infix in config.lambda_names()]
         assert all(lambda_prefixes)
-        for lambda_page in paginator.paginate(FunctionVersion='ALL', MaxItems=500):
+        for lambda_page in paginator.paginate(MaxItems=500):
             for lambda_name in [metadata['FunctionName'] for metadata in lambda_page['Functions']]:
                 if any(lambda_name.startswith(prefix) for prefix in lambda_prefixes):
                     self.manage_lambda(lambda_name, enabled)
@@ -138,7 +140,6 @@ class Lambdas:
                     log.info(f'Removed concurrency limit for {lambda_name}.')
                     self._lambda.delete_function_concurrency(FunctionName=lambda_name)
 
-                lambda_arn = lambda_settings['Configuration']['FunctionArn']
                 self._lambda.untag_resource(Resource=lambda_arn, TagKeys=[self.tag_name])
             else:
                 log.warning(f'{lambda_name} is already enabled.')
@@ -156,7 +157,7 @@ class Lambdas:
 
                 log.info(f'Setting concurrency limit for {lambda_name} to zero.')
                 new_tag = {self.tag_name: repr(concurrency_limit)}
-                self._lambda.tag_resource(Resource=lambda_settings['Configuration']['FunctionArn'], Tags=new_tag)
+                self._lambda.tag_resource(Resource=lambda_arn, Tags=new_tag)
                 self._lambda.put_function_concurrency(FunctionName=lambda_name, ReservedConcurrentExecutions=0)
             else:
                 log.warning(f'{lambda_name} is already disabled.')

@@ -669,6 +669,12 @@ class AzulChaliceApp(Chalice):
             else:
                 yield retry.bind(self, handler_name)
 
+    @property
+    def tf_function_resource_names(self) -> Iterator[str]:
+        yield self.unqualified_app_name
+        for handler_name in self.event_source_handlers:
+            yield f'{self.unqualified_app_name}_{handler_name}'
+
     def default_routes(self):
 
         @self.route(

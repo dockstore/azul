@@ -768,6 +768,8 @@ class Config:
             #        https://github.com/databiosphere/azul/issues/2964
             return self.qualified_resource_name(lambda_name, suffix='-' + handler_name)
 
+    active_function_alias_name = 'active'
+
     qualifier_re = re.compile(r'[a-z][a-z0-9]{1,16}')
 
     @classmethod

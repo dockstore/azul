@@ -763,10 +763,21 @@ emit_tf({
                 retry.tf_function_resource_name: {
                     'function_name': '${aws_lambda_function.%s.function_name}'
                                      % retry.tf_function_resource_name,
+                    'qualifier': '${aws_lambda_alias.%s.name}'
+                                 % retry.tf_function_resource_name,
                     'maximum_retry_attempts': retry.num_retries
                 }
                 for app in apps
                 for retry in app.chalice.retries
+            },
+            'aws_lambda_alias': {
+                resource_name: {
+                    'name': config.active_function_alias_name,
+                    'function_name': '${aws_lambda_function.%s.function_name}' % resource_name,
+                    'function_version': '${aws_lambda_function.%s.version}' % resource_name
+                }
+                for app in apps
+                for resource_name in app.chalice.tf_function_resource_names
             }
         }),
         *(

@@ -95,6 +95,9 @@ class ReindexDetector:
                                 'Namespace': 'AWS/Lambda',
                                 'MetricName': 'Invocations',
                                 'Dimensions': [{
+                                    # The 'FunctionName' dimension returns
+                                    # aggregate metrics for all versions and
+                                    # aliases of the function.
                                     'Name': 'FunctionName',
                                     'Value': lambda_.name
                                 }]
