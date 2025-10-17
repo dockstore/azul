@@ -652,15 +652,17 @@ class Chalice:
         # Sort in reverse so that keys that are prefixes of other keys go last
         rev_ref_map = sorted(ref_map.items(), reverse=True)
 
-        def patch_refs(v: AnyMutableJSON) -> AnyMutableJSON:
+        def patch_refs[T: AnyMutableJSON](v: T) -> T:
             if isinstance(v, dict):
-                return {k: patch_refs(v) for k, v in json_dict(v).items()}
+                return type(v)((k, patch_refs(v)) for k, v in json_dict(v).items())
             elif isinstance(v, list):
-                return list(map(patch_refs, v))
+                return type(v)(map(patch_refs, v))
             elif isinstance(v, str):
+                r: str = v
                 for old_ref, new_ref in rev_ref_map:
-                    v = v.replace(old_ref, new_ref)
-                return v
+                    r = r.replace(old_ref, new_ref)
+                assert isinstance(r, type(v))
+                return r
             else:
                 return v
 
