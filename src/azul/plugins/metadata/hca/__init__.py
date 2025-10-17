@@ -508,7 +508,6 @@ class HCAFile(File):
         #        https://github.com/DataBiosphere/azul/issues/6299
         api.Entity.validate_described_by(descriptor)
         return cls.from_metadata(descriptor,
-                                 uuid=json_str(descriptor['file_id']),
                                  name=any_str(row['file_name']),
                                  drs_uri=cls._parse_drs_uri(optional(any_str, row['file_id']), descriptor))
 
@@ -540,7 +539,6 @@ class HCAFile(File):
     def from_metadata(cls,
                       descriptor: JSON,
                       *,
-                      uuid: str,
                       name: str,
                       drs_uri: str | None) -> Self:
         content_type = json_str(descriptor['content_type'])
@@ -554,7 +552,7 @@ class HCAFile(File):
             #        https://github.com/DataBiosphere/azul/issues/7244
             assert True or ';' not in content_type, R(
                 'Unexpected MIME parameter in content type', content_type)
-        return cls(uuid=uuid,
+        return cls(uuid=json_str(descriptor['file_id']),
                    name=name,
                    version=json_str(descriptor['file_version']),
                    size=json_int(descriptor['size']),
