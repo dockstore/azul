@@ -297,7 +297,8 @@ class IntegrationTestCase(AzulTestCase, metaclass=ABCMeta):
     def _select_source(self,
                        catalog: CatalogName,
                        *,
-                       public: bool | None = None
+                       public: bool | None = None,
+                       mirror: bool = False,
                        ) -> tuple[SourceRef, SourceConfig] | None:
         """
         Choose an indexed source at random.
@@ -310,6 +311,11 @@ class IntegrationTestCase(AzulTestCase, metaclass=ABCMeta):
                        public sources. If false, choose a non-public source, or
                        return `None` if the catalog contains no non-public
                        sources.
+
+        :param mirror: If true, choose a source where the `no_mirror` flag is
+                       not present, or return `None` if the catalog contains no
+                       such source. If false, choose a source regardless of
+                       whether this flag is present.
         """
         plugin = self.repository_plugin(catalog)
         sources = plugin.sources
@@ -335,6 +341,8 @@ class IntegrationTestCase(AzulTestCase, metaclass=ABCMeta):
                 valid = source[0] in ma_sources
             else:
                 assert False, public
+            if mirror:
+                valid &= source[1].mirror
             return valid
 
         sources = dict(filter(_filter, sources.items()))
@@ -1722,7 +1730,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
                 if c.is_integration_test_catalog and c.mirror_limit >= 0
             ]
             sources_by_catalog = {
-                catalog: [self._select_source(catalog, public=True)]
+                catalog: [self._select_source(catalog, public=True, mirror=True)]
                 for catalog in catalogs
             }
 
@@ -1897,7 +1905,9 @@ class CanBundleScriptIntegrationTest(IntegrationTestCase):
                                           'repository': config.Catalog.Plugin(name='canned'),
                                       },
                                       sources={
-                                          'https://github.com/HumanCellAtlas/schema-test-data/tree/master/tests': {}
+                                          'https://github.com/HumanCellAtlas/schema-test-data/tree/master/tests': {
+                                              'mirror': False
+                                          },
                                       })
         with mock.patch.object(Config,
                                'catalogs',

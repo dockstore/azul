@@ -130,8 +130,9 @@ class TestMirrorController(DCP2TestCase,
     def _mirror_event(self, body: JSON) -> list[SQSRecord]:
         return [self._mock_sqs_record(body, fifo=True)]
 
-    def _remote_mirror(self) -> MutableJSONs:
-        self.client.remote_mirror(self.catalog, [(self.source, SourceConfig())])
+    def _remote_mirror(self, mirror_source_cfg: bool = True) -> MutableJSONs:
+        cfg = SourceConfig(mirror=mirror_source_cfg)
+        self.client.remote_mirror(self.catalog, [(self.source, cfg)])
         return self._read_queue(self.client.mirror_queue())
 
     def _test_remote_mirror(self):
@@ -208,6 +209,11 @@ class TestMirrorController(DCP2TestCase,
 
     def test_files_not_mirrored(self):
         self._create_mock_queues(config.mirror_queue_names)
+
+        with self.subTest(no_mirror=True):
+            messages = self._remote_mirror(mirror_source_cfg=False)
+            self.assertEqual([], messages)
+
         catalog = config.catalogs[self.catalog]
 
         def patch_max_file_size(size):

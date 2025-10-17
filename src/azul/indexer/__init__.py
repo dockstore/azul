@@ -412,7 +412,7 @@ class SourceConfig(SerializableAttrs):
     """
     Configuration on how to index or mirror a specific source.
     """
-    pass
+    mirror: bool
 
 
 @attrs.frozen(kw_only=True, order=True)

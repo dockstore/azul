@@ -401,9 +401,14 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
 
             def messages():
                 for source, cfg in sources:
-                    log.info('Mirroring files in source %r from catalog %r',
-                             str(source.spec), catalog)
-                    yield self.mirror_source_message(catalog, source)
+                    if cfg.mirror:
+                        log.info('Mirroring files in source %r from catalog %r',
+                                 str(source.spec), catalog)
+                        yield self.mirror_source_message(catalog, source)
+                    else:
+                        log.info('Not mirroring any files in source %r from catalog %r because '
+                                 'mirroring is explicitly disabled',
+                                 str(source.spec), catalog)
 
             self.queue_mirror_messages(messages())
 

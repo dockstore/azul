@@ -7,6 +7,7 @@ from typing import (
 )
 
 pop = 1  # remove snapshot
+no_mirror = 2  # do not mirror files from snapshot (redundant for managed access snapshots)
 
 type DatasetName = str
 type SourceSpec = str
@@ -20,7 +21,7 @@ def source(source_type: Literal['bigquery', 'parquet'],
            flags: int = 0,
            ) -> tuple[DatasetName, SourceItem | None]:
     _, env, project, _ = snapshot.split('_', 3)
-    assert flags <= pop
+    assert flags <= pop | no_mirror
     source = None if flags & pop else (
         ':'.join([
             'tdr',
@@ -29,7 +30,9 @@ def source(source_type: Literal['bigquery', 'parquet'],
             google_project,
             snapshot,
         ]),
-        {}
+        {
+            'mirror': not (flags & no_mirror),
+        }
     )
     return project, source
 
