@@ -148,21 +148,6 @@ class TDRHCABundle(HCABundle[TDRBundleFQID], TDRBundle):
     def canning_qualifier(cls) -> str:
         return super().canning_qualifier() + '.hca'
 
-    def add_entity(self,
-                   *,
-                   entity: EntityReference,
-                   row: BigQueryRow,
-                   is_stitched: bool
-                   ) -> None:
-        if is_stitched:
-            self.stitched.add(entity.entity_id)
-        if entity.entity_type.endswith('_file'):
-            self._add_manifest_entry(entity, HCAFile.file_from_row(row))
-        content = row['content']
-        self.metadata[str(entity)] = (json.loads(content)
-                                      if isinstance(content, str)
-                                      else content)
-
     metadata_columns: ClassVar[frozenset[str]] = singleton(
         'content'
     )
@@ -288,14 +273,28 @@ class Plugin(TDRPlugin[TDRHCABundle, TDRBundleFQID]):
                     for row in rows:
                         entity = EntityReference(entity_id=row[pk_column], entity_type=entity_type)
                         is_stitched = entity not in root_entities
-                        bundle.add_entity(entity=entity,
-                                          row=row,
-                                          is_stitched=is_stitched)
+                        self._add_entity(bundle, entity=entity, row=row, is_stitched=is_stitched)
                 else:
                     log.error('TDR worker failed to retrieve entities of type %r',
                               entity_type, exc_info=e)
                     raise e
         return bundle
+
+    def _add_entity(self,
+                    bundle: TDRHCABundle,
+                    *,
+                    entity: EntityReference,
+                    row: BigQueryRow,
+                    is_stitched: bool
+                    ) -> None:
+        if is_stitched:
+            bundle.stitched.add(entity.entity_id)
+        if entity.entity_type.endswith('_file'):
+            bundle._add_manifest_entry(entity, HCAFile.file_from_row(row))
+        content = row['content']
+        bundle.metadata[str(entity)] = (json.loads(content)
+                                        if isinstance(content, str)
+                                        else content)
 
     def _stitch_bundles(self,
                         root_bundle: TDRHCABundle
