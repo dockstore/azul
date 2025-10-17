@@ -210,7 +210,7 @@ class Plugin(RepositoryPlugin[
         staging_area = self.staging_area(source.spec.name)
         return [
             HCAFile.from_metadata(descriptor.content,
-                                  uuid=file_uuid,
+                                  uuid=descriptor.content['file_id'],
                                   name=descriptor.content['file_name'],
                                   drs_uri=None)
             for file_uuid, descriptor in staging_area.descriptors.items()
