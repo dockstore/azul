@@ -509,7 +509,7 @@ class HCAFile(File):
         api.Entity.validate_described_by(descriptor)
         return cls.from_metadata(descriptor,
                                  name=any_str(row['file_name']),
-                                 drs_uri=cls._parse_drs_uri(optional(any_str, row['file_id']), descriptor))
+                                 drs_uri=optional(any_str, row['file_id']))
 
     @classmethod
     def _parse_drs_uri(cls, file_id: str | None, descriptor: JSON) -> str | None:
@@ -540,7 +540,9 @@ class HCAFile(File):
                       descriptor: JSON,
                       *,
                       name: str,
-                      drs_uri: str | None) -> Self:
+                      drs_uri: str | None
+                      ) -> Self:
+        drs_uri = cls._parse_drs_uri(drs_uri, descriptor)
         content_type = json_str(descriptor['content_type'])
         # FIXME: Obsolete MIME parameter in file content types
         #        https://github.com/HumanCellAtlas/dcp2/issues/73
