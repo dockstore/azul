@@ -1,6 +1,6 @@
 {
     "entities": {},
-    "links": {},
+    "links": [],
     "orphans": {
         "non_schema_orphan_table/9687b86d-a2ae-a083-b910-a16bcbef1ba4": {
             "datarepo_row_id": "9687b86d-a2ae-a083-b910-a16bcbef1ba4",

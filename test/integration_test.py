@@ -1103,19 +1103,14 @@ class IndexingIntegrationTest(IntegrationTestCase):
     def _test_repository_files(self, catalog: CatalogName):
         with self.subTest('repository_files', catalog=catalog):
             outer_file, inner_file = self._get_one_inner_file(catalog)
-            source = self._source_spec(catalog, outer_file)
-            file_url = furl(inner_file['url'])
-            self.assertEqual(file_url.path.segments[0], 'repository')
-            # FIXME: Use _check_endpoint() instead
-            #        https://github.com/DataBiosphere/azul/issues/7373
-            file_url.path.segments.insert(0, 'fetch')
-            response = self._get_url_unchecked(GET, file_url)
-            if response.status == 404:
-                response = json.loads(response.data)
-                # Phantom files lack DRS URIs and cannot be downloaded
-                self.assertEqual('NotFoundError', response['Code'])
-                self.assertIn('no download is currently available', response['Message'])
-            else:
+            file_url = inner_file['url']
+            if file_url:
+                file_url = furl(file_url)
+                # FIXME: Use _check_endpoint() instead
+                #        https://github.com/DataBiosphere/azul/issues/7373
+                self.assertEqual(file_url.path.segments[0], 'repository')
+                file_url.path.segments.insert(0, 'fetch')
+                response = self._get_url_unchecked(GET, file_url)
                 self.assertEqual(200, response.status)
                 response = json.loads(response.data)
                 while response['Status'] != 302:
@@ -1124,7 +1119,12 @@ class IndexingIntegrationTest(IntegrationTestCase):
                     response = self._get_url_json(GET, furl(response['Location']))
                 self.assertNotIn('Retry-After', response)
                 response = self._get_url(GET, furl(response['Location']), stream=True)
+                source = self._source_spec(catalog, outer_file)
                 self._validate_file_response(response, source, inner_file)
+            else:
+                # Phantom files lack DRS URIs and cannot be downloaded
+                self.assertIsNone(file_url, inner_file)
+                self.assertEqual('lungmap', config.catalogs[catalog].atlas, inner_file)
 
     def _file_ext(self, file: JSON) -> str:
         # We believe that the file extension is a more reliable indicator than

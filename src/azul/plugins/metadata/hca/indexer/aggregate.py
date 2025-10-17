@@ -3,7 +3,6 @@ from operator import (
 )
 from typing import (
     Any,
-    cast,
 )
 
 from more_itertools import (
@@ -43,6 +42,9 @@ from azul.indexer.field import (
 )
 from azul.types import (
     JSON,
+    json_element_mappings,
+    json_int,
+    optional,
 )
 
 
@@ -50,15 +52,17 @@ class HCAAggregate(Aggregate):
 
     @cached_property
     def cell_count(self) -> int:
-        return sum(cs['total_estimated_cells']
-                   for cs in self.contents['cell_suspensions']
+        assert self.contents is not None, self
+        return sum(json_int(cs['total_estimated_cells'])
+                   for cs in json_element_mappings(self.contents['cell_suspensions'])
                    if cs['total_estimated_cells'] is not None)
 
     @cached_property
     def effective_cell_count(self) -> int:
+        assert self.contents is not None, self
         if self.entity.entity_type == 'projects':
-            project = cast(JSON, one(self.contents['projects']))
-            project_cells = project['estimated_cell_count']
+            project = one(json_element_mappings(self.contents['projects']))
+            project_cells = optional(json_int, project['estimated_cell_count'])
             if project_cells is None:
                 return self.cell_count
             else:
@@ -126,9 +130,13 @@ class CellSuspensionAggregator(GroupingAggregator):
     ])
 
     def _transform_entity(self, entity: JSON) -> JSON:
-        return entity | {
+        cell_count_fields = {
             field: (entity['document_id'], entity[field])
             for field in self.cell_count_fields
+        }
+        return {
+            **entity,
+            **cell_count_fields
         }
 
     def _group_keys(self, entity) -> tuple[Any, ...]:

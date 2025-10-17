@@ -363,20 +363,20 @@ dependencies listed in ``requirements.txt`` and ``requirements.dev.txt`` against
 the Package tool window, where the dependency indicates of an available version.
 When updating:
 
- * Update to the latest mature release (a release with a high patch number or
-   where the most recent patch release is at least a couple of months old) and go
-   backward if problems occur.
+- Update to the latest mature release (a release with a high patch number or
+  where the most recent patch release is at least a couple of months old) and go
+  backward if problems occur.
 
-  * Document each of these problems with a dedicated FIXME, with its respective
-    ticket & reference, when non-trivial code base changes are necessary due to
-    a package version upgrade.
+- Document each of these problems with a dedicated FIXME, with its respective
+  ticket & reference, when non-trivial code base changes are necessary due to a
+  package version upgrade.
 
-  * Reference the GitHub link in a comment beside the conflictive package.
+- Reference the GitHub link in a comment beside the conflictive package.
 
- * If updating a package causes a trivial change or a dismissable warning when
-   including a FIXME (e.g., deprecation warnings), it should be done on its own
-   commit, to easily identify the dependencies forcing the change and the given
-   resolution.
+- If updating a package causes a trivial change or a dismissable warning when
+  including a FIXME (e.g., deprecation warnings), it should be done on its own
+  commit, to easily identify the dependencies forcing the change and the given
+  resolution.
 
 Note, a way to display all available versions of a given package in a concise
 way, is to pretend to install a non-existing version from a terminal console
@@ -467,19 +467,27 @@ Updating the Swagger UI
 
 Operators should regularly check for available updates to the Swagger UI. The
 current version used by Azul is hardcoded in ``scripts/update_swagger.py``. The
-upstream source is located here:
-
-https://github.com/swagger-api/swagger-ui/tree/master/dist
+latest upstream version is available as the `latest release tag`_.
 
 Scheduled upgrade PR's should only include minor and hotfix updates to the
 Swagger UI. If a new major version is available, open a new issue instead. To
 perform the update, edit the ``tag`` variable in the ``update_swagger`` script
-and run it. If there are nontrivial changes to the ``swagger-initializer.js`` or
-``oauth2-redirect.html`` files, cancel the update and open a new issue instead.
-Otherwise, forward any changes to those two files to their respective mustache
-template files, and commit the changes to the script and all modified files in
-the ``swagger/`` directory. The commit message must include the new tag, as well
-as a link to the upstream source in the commit body, e.g.::
+and run it. The script copies the files from the `dist directory`_, but at the
+specified version, which may be different on the master `branch`, which the link
+points to.
+
+.. _latest release tag: https://github.com/swagger-api/swagger-ui/releases/latest
+
+.. _dist directory: https://github.com/swagger-api/swagger-ui/tree/master/dist
+
+If, after running the script, there are nontrivial changes to the
+``swagger-initializer.js`` or ``oauth2-redirect.html`` files, cancel the update
+and open a new issue instead. You may need to try updating to an older,
+intermediate version. Forward trivial changes to those two files to their
+respective Mustache template copies, and commit the changes to the script and
+all modified files in the ``swagger/`` directory. The commit message must
+include the new tag, as well as a link to the upstream source in the commit
+body, e.g.::
 
     Update Swagger UI to v<release version> (#issue-number)
 

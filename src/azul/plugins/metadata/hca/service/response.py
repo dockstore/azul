@@ -3,12 +3,14 @@ from itertools import (
     product,
 )
 import logging
+from operator import (
+    itemgetter,
+)
 from typing import (
     Callable,
     Mapping,
     Sequence,
     TypeVar,
-    TypedDict,
     cast,
 )
 
@@ -39,20 +41,30 @@ from azul.strings import (
 from azul.types import (
     AnyJSON,
     JSON,
+    JSONTypedDict,
     JSONs,
     MutableJSON,
     MutableJSONs,
+    json_bool,
+    json_element_mappings,
+    json_float,
+    json_int,
+    json_mapping,
+    json_sequence_of_optional_strings,
+    json_str,
+    json_untyped_dict,
+    optional,
 )
 
 log = logging.getLogger(__name__)
 
 
-class ValueAndUnit(TypedDict):
+class ValueAndUnit(JSONTypedDict):
     value: str
     unit: str
 
 
-class Term(TypedDict):
+class Term(JSONTypedDict):
     count: int
     term: str | ValueAndUnit | None
 
@@ -61,7 +73,7 @@ class ProjectTerm(Term):
     projectId: list[str]
 
 
-class Terms(TypedDict):
+class Terms(JSONTypedDict):
     terms: list[Term]
     total: int
     # FIXME: Remove type from termsFacets in /index responses
@@ -69,26 +81,30 @@ class Terms(TypedDict):
     type: str
 
 
-class FileTypeSummary(TypedDict):
+class FileTypeSummaryBase(JSONTypedDict):
     format: str
     count: int
     totalSize: float
+
+
+class FileTypeSummary(FileTypeSummaryBase):
     matrixCellCount: float
 
 
-class FileTypeSummaryForHit(FileTypeSummary):
-    fileSource: list[str | None]
-    isIntermediate: bool
-    contentDescription: list[str | None]
+class FileTypeSummaryForHit(FileTypeSummaryBase):
+    matrixCellCount: float | None
+    fileSource: Sequence[str | None]
+    isIntermediate: bool | None
+    contentDescription: Sequence[str | None]
 
 
-class OrganCellCountSummary(TypedDict):
-    organType: list[str | None]
+class OrganCellCountSummary(JSONTypedDict):
+    organType: Sequence[str | None]
     countOfDocsWithOrganType: int
     totalCellCountByOrgan: float
 
 
-class Hit(TypedDict):
+class Hit(JSONTypedDict):
     protocols: JSONs
     entryId: str
     sources: JSONs
@@ -108,16 +124,16 @@ class CompleteHit(Hit):
 
 
 class SummarizedHit(Hit):
-    fileTypeSummaries: list[FileTypeSummary]
+    fileTypeSummaries: list[FileTypeSummaryForHit]
 
 
-class SearchResponse(TypedDict):
+class SearchResponse(JSONTypedDict):
     hits: list[SummarizedHit | CompleteHit]
     pagination: ResponsePagination
     termFacets: dict[str, Terms]
 
 
-class SummaryResponse(TypedDict):
+class SummaryResponse(JSONTypedDict):
     projectCount: int
     specimenCount: int
     speciesCount: int
@@ -125,7 +141,7 @@ class SummaryResponse(TypedDict):
     totalFileSize: float
     donorCount: int
     labCount: int
-    organTypes: list[str]
+    organTypes: list[str | None]
     fileTypeSummaries: list[FileTypeSummary]
     cellCountSummaries: list[OrganCellCountSummary]
     projects: JSONs
@@ -160,10 +176,10 @@ class HCASummaryResponseStage(SummaryResponseStage):
             ]
         }
 
-    def process_response(self, response: JSON) -> SummaryResponse:
+    def process_response(self, response: JSON) -> MutableJSON:
         response = self.make_response(response)
         self._validate_response(response)
-        return response
+        return json_untyped_dict(response)
 
     def _validate_response(self, response: SummaryResponse):
         for total, summary_field in (
@@ -171,14 +187,14 @@ class HCASummaryResponseStage(SummaryResponseStage):
             (response['fileCount'], 'count')
         ):
             summaries = cast(JSONs, response['fileTypeSummaries'])
-            summary_total = sum(summary[summary_field] for summary in summaries)
+            summary_total = sum(map(itemgetter(summary_field), summaries))
             assert total == summary_total, (total, summary_total)
 
     def make_response(self, aggs: JSON) -> SummaryResponse:
         def agg_value(*path: str) -> AnyJSON:
-            agg = aggs
+            agg: AnyJSON = aggs
             for name in path:
-                agg = agg[name]
+                agg = json_mapping(agg)[name]
             return agg
 
         def agg_values(function: Callable[[JSON], T], *path: str) -> list[T]:
@@ -200,65 +216,69 @@ class HCASummaryResponseStage(SummaryResponseStage):
         }
 
         def file_type_summary(bucket: JSON) -> FileTypeSummary:
+            matrix_cell_count_bucket = json_mapping(bucket['matrix_cell_count_by_type'])
             return FileTypeSummary(
-                count=bucket['doc_count'],
-                totalSize=bucket['size_by_type']['value'],
-                matrixCellCount=bucket['matrix_cell_count_by_type']['value'],
-                format=bucket['key']
+                count=json_int(bucket['doc_count']),
+                totalSize=json_float(json_mapping(bucket['size_by_type'])['value']),
+                matrixCellCount=json_float(matrix_cell_count_bucket['value']),
+                format=json_str(bucket['key'])
             )
 
         def organ_cell_count_summary(bucket: JSON) -> OrganCellCountSummary:
             return OrganCellCountSummary(
-                organType=[bucket['key']],
-                countOfDocsWithOrganType=bucket['doc_count'],
-                totalCellCountByOrgan=bucket['cellCount']['value']
+                organType=[optional(json_str, bucket['key'])],
+                countOfDocsWithOrganType=json_int(bucket['doc_count']),
+                totalCellCountByOrgan=json_float(json_mapping(bucket['cellCount'])['value'])
             )
 
-        def organ_type(bucket: JSON) -> str:
-            return bucket['key']
+        def organ_type(bucket: JSON) -> str | None:
+            return optional(json_str, bucket['key'])
 
-        return SummaryResponse(projectCount=agg_value('project', 'doc_count'),
-                               specimenCount=agg_value('specimenCount', 'value'),
-                               speciesCount=agg_value('speciesCount', 'value'),
-                               fileCount=agg_value('fileFormat', 'doc_count'),
-                               totalFileSize=agg_value('totalFileSize', 'value'),
-                               donorCount=agg_value('donorCount', 'value'),
-                               labCount=agg_value('labCount', 'value'),
-                               organTypes=agg_values(organ_type, 'organTypes', 'buckets'),
-                               fileTypeSummaries=agg_values(file_type_summary,
-                                                            'fileFormat',
-                                                            'myTerms',
-                                                            'buckets'),
-                               cellCountSummaries=agg_values(organ_cell_count_summary,
-                                                             'cellCountSummaries',
-                                                             'buckets'),
-                               projects=[
-                                   {
-                                       'projects': {
-                                           'estimatedCellCount': (
-                                               cell_counts['project']['cellSuspension', project_present]
-                                               if cs_present else None
-                                           )
-                                       },
-                                       'cellSuspensions': {
-                                           'totalCells': (
-                                               cell_counts['cellSuspension']['project', cs_present]
-                                               if project_present else None
-                                           )
-                                       }
-                                   }
-                                   for project_present, cs_present in product(bools, bools)
-                                   if project_present or cs_present
-                               ])
+        return SummaryResponse(
+            projectCount=json_int(agg_value('project', 'doc_count')),
+            specimenCount=json_int(agg_value('specimenCount', 'value')),
+            speciesCount=json_int(agg_value('speciesCount', 'value')),
+            fileCount=json_int(agg_value('fileFormat', 'doc_count')),
+            totalFileSize=json_float(agg_value('totalFileSize', 'value')),
+            donorCount=json_int(agg_value('donorCount', 'value')),
+            labCount=json_int(agg_value('labCount', 'value')),
+            organTypes=agg_values(organ_type, 'organTypes', 'buckets'),
+            fileTypeSummaries=agg_values(file_type_summary,
+                                         'fileFormat',
+                                         'myTerms',
+                                         'buckets'),
+            cellCountSummaries=agg_values(organ_cell_count_summary,
+                                          'cellCountSummaries',
+                                          'buckets'),
+            projects=[
+                {
+                    'projects': {
+                        'estimatedCellCount': (
+                            cell_counts['project']['cellSuspension', project_present]
+                            if cs_present else None
+                        )
+                    },
+                    'cellSuspensions': {
+                        'totalCells': (
+                            cell_counts['cellSuspension']['project', cs_present]
+                            if project_present else None
+                        )
+                    }
+                }
+                for project_present, cs_present in product(bools, bools)
+                if project_present or cs_present
+            ]
+        )
 
 
 class HCASearchResponseStage(SearchResponseStage):
 
-    def process_response(self, response: ResponseTriple) -> SearchResponse:
+    def process_response(self, response: ResponseTriple) -> MutableJSON:
         hits, pagination, aggs = response
-        return SearchResponse(pagination=pagination,
-                              termFacets=self.make_facets(aggs),
-                              hits=self.make_hits(hits))
+        response = SearchResponse(pagination=pagination,
+                                  termFacets=self.make_facets(aggs),
+                                  hits=self.make_hits(hits))
+        return json_untyped_dict(response)
 
     def make_bundles(self, entry) -> MutableJSONs:
         return [
@@ -363,19 +383,19 @@ class HCASearchResponseStage(SearchResponseStage):
     #        https://github.com/DataBiosphere/azul/issues/2415
 
     def make_matrices_(self, matrices: JSONs) -> JSON:
-        files = []
+        files: list[JSON] = []
         if matrices:
-            for file in cast(JSONs, one(matrices)['file']):
+            for file in json_element_mappings(one(matrices)['file']):
                 translated_file = {
                     **self.make_translated_file(file),
-                    'strata': file['strata']
+                    'strata': json_str(file['strata'])
                 }
                 files.append(translated_file)
         return make_stratification_tree(files)
 
     def make_files(self, entry: JSON) -> JSONs:
         files = []
-        for _file in entry['contents']['files']:
+        for _file in json_element_mappings(json_mapping(entry['contents'])['files']):
             translated_file = self.make_translated_file(_file)
             files.append(translated_file)
         return files
@@ -393,9 +413,9 @@ class HCASearchResponseStage(SearchResponseStage):
             'version': file.get('version'),
             'matrixCellCount': file.get('matrix_cell_count'),
             'drs_uri': file.get('drs_uri'),
-            'azul_url': self._file_url(uuid=file['uuid'],
-                                       version=file['version'],
-                                       drs_uri=file['drs_uri'])
+            'azul_url': self._file_url(uuid=json_str(file['uuid']),
+                                       version=json_str(file['version']),
+                                       drs_uri=optional(json_str, file['drs_uri']))
         }
         # FIXME: https://github.com/DataBiosphere/azul/issues/6549
         #        Remove files.url
@@ -488,10 +508,10 @@ class HCASearchResponseStage(SearchResponseStage):
             for sample in entry['contents'].get(sample_entity_type, [])
         ]
 
-    def make_hits(self, hits: JSONs) -> MutableJSONs:
+    def make_hits(self, hits: JSONs) -> list[SummarizedHit | CompleteHit]:
         return list(map(self.make_hit, hits))
 
-    def make_hit(self, es_hit) -> MutableJSON:
+    def make_hit(self, es_hit) -> SummarizedHit | CompleteHit:
         hit = Hit(protocols=self.make_protocols(es_hit),
                   entryId=es_hit['entity_id'],
                   sources=self.make_sources(es_hit),
@@ -504,31 +524,33 @@ class HCASearchResponseStage(SearchResponseStage):
                   cellSuspensions=self.make_cell_suspensions(es_hit),
                   dates=self.make_dates(es_hit))
         if self.entity_type in ('files', 'bundles'):
-            hit = cast(CompleteHit, hit)
-            hit['bundles'] = self.make_bundles(es_hit)
-            hit['files'] = self.make_files(es_hit)
+            complete_hit = cast(CompleteHit, hit)
+            complete_hit['bundles'] = self.make_bundles(es_hit)
+            complete_hit['files'] = self.make_files(es_hit)
+            return complete_hit
         else:
-            hit = cast(SummarizedHit, hit)
+            summarized_hit = cast(SummarizedHit, hit)
 
             def file_type_summary(aggregate_file: JSON) -> FileTypeSummaryForHit:
+                content_description = aggregate_file['content_description']
                 summary = FileTypeSummaryForHit(
-                    count=aggregate_file['count'],
-                    fileSource=cast(list, aggregate_file['file_source']),
-                    totalSize=aggregate_file['size'],
-                    matrixCellCount=aggregate_file['matrix_cell_count'],
-                    format=aggregate_file['file_format'],
-                    isIntermediate=aggregate_file['is_intermediate'],
-                    contentDescription=cast(list, aggregate_file['content_description'])
+                    count=json_int(aggregate_file['count']),
+                    fileSource=json_sequence_of_optional_strings(aggregate_file['file_source']),
+                    totalSize=json_int(aggregate_file['size']),
+                    matrixCellCount=optional(json_int, aggregate_file['matrix_cell_count']),
+                    format=json_str(aggregate_file['file_format']),
+                    isIntermediate=optional(json_bool, aggregate_file['is_intermediate']),
+                    contentDescription=json_sequence_of_optional_strings(content_description)
                 )
                 assert isinstance(summary['format'], str), type(str)
                 assert summary['format']
                 return summary
 
-            hit['fileTypeSummaries'] = [
+            summarized_hit['fileTypeSummaries'] = [
                 file_type_summary(aggregate_file)
                 for aggregate_file in es_hit['contents']['files']
             ]
-        return hit
+            return summarized_hit
 
     def make_terms(self, agg) -> Terms:
         def choose_entry(_term):
@@ -576,7 +598,7 @@ class HCASearchResponseStage(SearchResponseStage):
                      #        https://github.com/DataBiosphere/azul/issues/2460
                      type='terms')
 
-    def make_facets(self, aggs: JSON) -> MutableJSON:
+    def make_facets(self, aggs: JSON) -> dict[str, Terms]:
         facets = {}
         for facet, agg in aggs.items():
             if facet != '_project_agg':  # Filter out project specific aggs

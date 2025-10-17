@@ -2,7 +2,7 @@
 name: Renew server and client VPN certificates 
 about: Issue template for the quarterly renewal of all VPN certificates
 title: Renew VPN server and client certificates 
-labels: -,infra,orange
+labels: -,infra
 type: Chore
 _start: 2025-08-01T09:00
 _period: 3 months

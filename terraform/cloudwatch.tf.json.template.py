@@ -33,9 +33,11 @@ emit_tf({
                         f'{config.project_root}/scripts/elasticsearch_nodes.py'
                     ],
                     'query': {},
-                    'depends_on': ([]
-                                   if config.share_es_domain else
-                                   ['aws_opensearch_domain.index'])
+                    'depends_on': (
+                        []
+                        if config.share_es_domain else
+                        ['aws_opensearch_domain.index']
+                    )
                 }
             }
         },

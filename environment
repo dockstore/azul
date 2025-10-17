@@ -258,6 +258,13 @@ _revenv() {
 	fi
 }
 
+_cwd_is_project_root() {
+	if [ "$PWD" != "$project_root" ]; then
+		echo "Current working directory must be the project root"
+		return 1
+	fi
+}
+
 _clone() {
 	if [[ -z "$1" || -z "$2" ]]; then
 		echo "Need two arguments: the name of the deployment to select in the"
@@ -268,9 +275,10 @@ _clone() {
 		echo "Run 'deactivate' first"
 		return 2
 	fi
-	if [ "$(basename "$PWD")" != azul ]; then
-		echo "The name of the current project directory must be 'azul'"
-		return 3
+	_cwd_is_project_root || return 3
+	if [ "$(basename "$project_root")" != azul ]; then
+		echo "The name of the project root directory must be 'azul'"
+		return 4
 	fi
 	deployment="$1"
 	branch="$2"
@@ -311,6 +319,7 @@ _clone() {
 }
 
 _update_clone() {
+	_cwd_is_project_root &&
 	rsync -rvlm \
 		-f '+ */' \
 		-f '+ environment.local.py' \

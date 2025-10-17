@@ -888,11 +888,6 @@ Commit title tags
   - ``r``: the commit represents a change that requires reindexing a deployment
     after that commit is deployed there.
 
-  - ``R``: the commit requires running ``make requirements`` after switching a
-    working copy to a branch that includes that commit
-
-  - ``M/N``: number of parts and ordinal of part in `Split commits`_
-
   - ``h``: the commit is a temporary hotfix. These commit should be reverted
      before the commit that provides a permanent fix is merged.
 
@@ -902,6 +897,9 @@ Commit title tags
 
   - ``A``: the commit modifies the Azul service API in a way that is likely to
     break existing clients (changing or removing functionality)
+
+  - ``R``: the commit requires running ``make requirements`` after switching a
+    working copy to a branch that includes that commit
 
   - ``p``: the commit only partially addresses the issues it references. A
     commit referencing more than one issue must not resolve some of those issues
@@ -913,6 +911,8 @@ Commit title tags
     ``p`` tag in such a title applies to all of them uniformly. Merge commits
     for promotions, backports, GitLab updates and hotfixes don't mention the
     ``p`` tag in their titles.
+
+  - ``M/N``: number of parts and ordinal of part in `Split commits`_
 
 * Tags must appear in a title in the order they are defined above, as in
   ``[u r R 1/2]``. This ensures that more consequential tags appear earlier.
