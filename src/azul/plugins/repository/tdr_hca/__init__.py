@@ -148,12 +148,6 @@ class TDRHCABundle(HCABundle[TDRBundleFQID], TDRBundle):
     def canning_qualifier(cls) -> str:
         return super().canning_qualifier() + '.hca'
 
-    data_columns: ClassVar[frozenset[str]] = frozenset({
-        'descriptor',
-        'JSON_EXTRACT_SCALAR(content, "$.file_core.file_name") AS file_name',
-        'file_id'
-    })
-
     # `links_id` is omitted for consistency since the other sets do not include
     # the primary key
     links_columns: ClassVar[frozenset[str]] = singleton(
@@ -215,7 +209,7 @@ class Plugin(TDRPlugin[TDRHCABundle, TDRBundleFQID]):
         assert prefix == prefix.lower(), prefix
         rows = self._run_sql(' UNION ALL '.join(
             f'''
-            SELECT {', '.join(TDRHCABundle.data_columns)}
+            SELECT {', '.join(self.data_columns)}
             FROM {backtick(self._full_table_name(source.spec, entity_type))}
             WHERE STARTS_WITH(LOWER(JSON_EXTRACT_SCALAR(descriptor, "$.sha256")),
                               {prefix!r})
@@ -364,6 +358,12 @@ class Plugin(TDRPlugin[TDRHCABundle, TDRBundleFQID]):
         'content'
     )
 
+    data_columns: ClassVar[frozenset[str]] = frozenset({
+        'descriptor',
+        'JSON_EXTRACT_SCALAR(content, "$.file_core.file_name") AS file_name',
+        'file_id'
+    })
+
     def _retrieve_entities(self,
                            source: TDRSourceSpec,
                            entity_type: EntityType,
@@ -385,7 +385,7 @@ class Plugin(TDRPlugin[TDRHCABundle, TDRBundleFQID]):
             pk_column,
             *self.metadata_columns,
             *iif(entity_type == 'links', TDRHCABundle.links_columns),
-            *iif(entity_type.endswith('_file'), TDRHCABundle.data_columns)
+            *iif(entity_type.endswith('_file'), self.data_columns)
         }
         table_name = backtick(self._full_table_name(source, entity_type))
         entity_id_type = one(set(map(type, entity_ids)))
