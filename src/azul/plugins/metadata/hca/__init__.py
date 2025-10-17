@@ -504,9 +504,6 @@ class HCAFile(File):
     @classmethod
     def file_from_row(cls, row: BigQueryRow) -> Self:
         descriptor = json.loads(any_str(row['descriptor']))
-        # FIXME: Move validation of descriptor to the metadata API
-        #        https://github.com/DataBiosphere/azul/issues/6299
-        api.Entity.validate_described_by(descriptor)
         return cls.from_metadata(descriptor,
                                  name=any_str(row['file_name']),
                                  drs_uri=optional(any_str, row['file_id']))
@@ -542,6 +539,9 @@ class HCAFile(File):
                       name: str,
                       drs_uri: str | None
                       ) -> Self:
+        # FIXME: Move validation of descriptor to the metadata API
+        #        https://github.com/DataBiosphere/azul/issues/6299
+        api.Entity.validate_described_by(descriptor)
         drs_uri = cls._parse_drs_uri(drs_uri, descriptor)
         content_type = json_str(descriptor['content_type'])
         # FIXME: Obsolete MIME parameter in file content types
