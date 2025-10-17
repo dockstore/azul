@@ -70,6 +70,8 @@ from azul.types import (
     JSONs,
     MutableJSON,
     MutableJSONs,
+    any_str,
+    optional,
 )
 from humancellatlas.data.metadata import (
     api,
@@ -211,7 +213,7 @@ class Plugin(TDRPlugin[TDRHCABundle, TDRBundleFQID]):
             for entity_type, entity_cls in api.entity_types.items()
             if entity_type.endswith('_file')
         ))
-        return list(map(HCAFile.file_from_row, rows))
+        return list(map(self._file_from_row, rows))
 
     def _query_unique_sorted(self,
                              query: str,
@@ -266,7 +268,7 @@ class Plugin(TDRPlugin[TDRHCABundle, TDRBundleFQID]):
         if is_stitched:
             bundle.stitched.add(entity.entity_id)
         if entity.entity_type.endswith('_file'):
-            file = HCAFile.file_from_row(row)
+            file = self._file_from_row(row)
             file_json = file.to_json()
             file_json['content-type'] = file_json.pop('content_type')
             file_json['indexed'] = False
@@ -275,6 +277,12 @@ class Plugin(TDRPlugin[TDRHCABundle, TDRBundleFQID]):
         bundle.metadata[str(entity)] = (json.loads(content)
                                         if isinstance(content, str)
                                         else content)
+
+    def _file_from_row(self, row: BigQueryRow) -> HCAFile:
+        descriptor = json.loads(any_str(row['descriptor']))
+        return HCAFile.from_metadata(descriptor,
+                                     name=any_str(row['file_name']),
+                                     drs_uri=optional(any_str, row['file_id']))
 
     def _stitch_bundles(self,
                         root_bundle: TDRHCABundle

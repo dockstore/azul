@@ -1,4 +1,3 @@
-import json
 import logging
 from typing import (
     Iterable,
@@ -15,9 +14,6 @@ from azul import (
     R,
     config,
     iif,
-)
-from azul.bigquery import (
-    BigQueryRow,
 )
 from azul.digests import (
     Digest,
@@ -69,7 +65,6 @@ from azul.service.manifest_service import (
 )
 from azul.types import (
     MutableJSON,
-    any_str,
     json_dict,
     json_dict_of_dicts,
     json_int,
@@ -500,13 +495,6 @@ class HCAFile(File):
                    crc32c=json_str(hit['crc32c']),
                    sha1=optional(json_str, hit.get('sha1')),
                    s3_etag=optional(json_str, hit.get('s3_etag')))
-
-    @classmethod
-    def file_from_row(cls, row: BigQueryRow) -> Self:
-        descriptor = json.loads(any_str(row['descriptor']))
-        return cls.from_metadata(descriptor,
-                                 name=any_str(row['file_name']),
-                                 drs_uri=optional(any_str, row['file_id']))
 
     @classmethod
     def _parse_drs_uri(cls, file_id: str | None, descriptor: JSON) -> str | None:
