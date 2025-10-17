@@ -148,10 +148,6 @@ class TDRHCABundle(HCABundle[TDRBundleFQID], TDRBundle):
     def canning_qualifier(cls) -> str:
         return super().canning_qualifier() + '.hca'
 
-    metadata_columns: ClassVar[frozenset[str]] = singleton(
-        'content'
-    )
-
     data_columns: ClassVar[frozenset[str]] = frozenset({
         'descriptor',
         'JSON_EXTRACT_SCALAR(content, "$.file_core.file_name") AS file_name',
@@ -364,6 +360,10 @@ class Plugin(TDRPlugin[TDRHCABundle, TDRBundleFQID]):
             links_json['content'] = json.loads(links_json['content'])
         return links
 
+    metadata_columns: ClassVar[frozenset[str]] = singleton(
+        'content'
+    )
+
     def _retrieve_entities(self,
                            source: TDRSourceSpec,
                            entity_type: EntityType,
@@ -383,7 +383,7 @@ class Plugin(TDRPlugin[TDRHCABundle, TDRBundleFQID]):
         version_column = 'version'
         columns = {
             pk_column,
-            *TDRHCABundle.metadata_columns,
+            *self.metadata_columns,
             *iif(entity_type == 'links', TDRHCABundle.links_columns),
             *iif(entity_type.endswith('_file'), TDRHCABundle.data_columns)
         }
