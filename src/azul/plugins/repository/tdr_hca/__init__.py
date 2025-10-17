@@ -164,14 +164,6 @@ class TDRHCABundle(HCABundle[TDRBundleFQID], TDRBundle):
         'project_id'
     )
 
-    def _add_manifest_entry(self,
-                            entity: EntityReference,
-                            file: HCAFile) -> None:
-        file_json = file.to_json()
-        file_json['content-type'] = file_json.pop('content_type')
-        file_json['indexed'] = False
-        self.manifest[str(entity)] = file_json
-
 
 class Plugin(TDRPlugin[TDRHCABundle, TDRBundleFQID]):
 
@@ -290,11 +282,20 @@ class Plugin(TDRPlugin[TDRHCABundle, TDRBundleFQID]):
         if is_stitched:
             bundle.stitched.add(entity.entity_id)
         if entity.entity_type.endswith('_file'):
-            bundle._add_manifest_entry(entity, HCAFile.file_from_row(row))
+            self._add_manifest_entry(bundle, entity, HCAFile.file_from_row(row))
         content = row['content']
         bundle.metadata[str(entity)] = (json.loads(content)
                                         if isinstance(content, str)
                                         else content)
+
+    def _add_manifest_entry(self,
+                            bundle: TDRHCABundle,
+                            entity: EntityReference,
+                            file: HCAFile) -> None:
+        file_json = file.to_json()
+        file_json['content-type'] = file_json.pop('content_type')
+        file_json['indexed'] = False
+        bundle.manifest[str(entity)] = file_json
 
     def _stitch_bundles(self,
                         root_bundle: TDRHCABundle
