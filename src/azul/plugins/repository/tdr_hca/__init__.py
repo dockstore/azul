@@ -274,9 +274,9 @@ class Plugin(TDRPlugin[TDRHCABundle, TDRBundleFQID]):
             file_json['indexed'] = False
             bundle.manifest[str(entity)] = file_json
         content = row['content']
-        bundle.metadata[str(entity)] = (json.loads(content)
-                                        if isinstance(content, str)
-                                        else content)
+        if isinstance(content, str):
+            content = json.loads(content)
+        bundle.metadata[str(entity)] = content
 
     def _file_from_row(self, row: BigQueryRow) -> HCAFile:
         descriptor = json.loads(any_str(row['descriptor']))
