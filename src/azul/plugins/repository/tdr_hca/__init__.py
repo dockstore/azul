@@ -148,12 +148,6 @@ class TDRHCABundle(HCABundle[TDRBundleFQID], TDRBundle):
     def canning_qualifier(cls) -> str:
         return super().canning_qualifier() + '.hca'
 
-    # `links_id` is omitted for consistency since the other sets do not include
-    # the primary key
-    links_columns: ClassVar[frozenset[str]] = singleton(
-        'project_id'
-    )
-
 
 class Plugin(TDRPlugin[TDRHCABundle, TDRBundleFQID]):
 
@@ -364,6 +358,13 @@ class Plugin(TDRPlugin[TDRHCABundle, TDRBundleFQID]):
         'file_id'
     })
 
+    # `links_id` is omitted for consistency since the other sets do not include
+    # the primary key
+    #
+    links_columns: ClassVar[frozenset[str]] = singleton(
+        'project_id'
+    )
+
     def _retrieve_entities(self,
                            source: TDRSourceSpec,
                            entity_type: EntityType,
@@ -384,7 +385,7 @@ class Plugin(TDRPlugin[TDRHCABundle, TDRBundleFQID]):
         columns = {
             pk_column,
             *self.metadata_columns,
-            *iif(entity_type == 'links', TDRHCABundle.links_columns),
+            *iif(entity_type == 'links', self.links_columns),
             *iif(entity_type.endswith('_file'), self.data_columns)
         }
         table_name = backtick(self._full_table_name(source, entity_type))
