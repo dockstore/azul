@@ -88,9 +88,9 @@ def env() -> Mapping[str, Optional[str]]:
         #                 ':', [ prefix ],
         #                 '/', partition prefix length ;
         #
-        # DSS sources = 'dss.data.humancellatlas.org/v1',
-        #               ':', [ prefix ],
-        #               '/', partition prefix length ;
+        # DSS source = 'dss.data.humancellatlas.org/v1',
+        #              ':', [ prefix ],
+        #              '/', partition prefix length ;
         #
         # The `prefix` is an optional string of hexadecimal digits constraining
         # the set of indexed subgraphs from the source. A subgraph will be
