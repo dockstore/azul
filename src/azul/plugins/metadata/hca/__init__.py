@@ -14,6 +14,7 @@ from azul import (
     R,
     config,
     iif,
+    json_mapping,
 )
 from azul.digests import (
     Digest,
@@ -522,9 +523,9 @@ class HCAFile(File):
 
     @classmethod
     def from_metadata(cls,
-                      descriptor: JSON,
                       *,
-                      name: str,
+                      metadata: JSON,
+                      descriptor: JSON,
                       drs_uri: str | None
                       ) -> Self:
         # FIXME: Move validation of descriptor to the metadata API
@@ -543,7 +544,7 @@ class HCAFile(File):
             assert True or ';' not in content_type, R(
                 'Unexpected MIME parameter in content type', content_type)
         return cls(uuid=json_str(descriptor['file_id']),
-                   name=name,
+                   name=json_str(json_mapping(metadata['file_core'])['file_name']),
                    version=json_str(descriptor['file_version']),
                    size=json_int(descriptor['size']),
                    content_type=content_type,

@@ -202,9 +202,10 @@ class Plugin(TDRPlugin[TDRHCABundle, TDRBundleFQID]):
         self._assert_source(source)
         self._assert_partition(source, prefix)
         assert prefix == prefix.lower(), prefix
+        columns = self.metadata_columns + self.data_columns
         rows = self._run_sql(' UNION ALL '.join(
             f'''
-            SELECT {', '.join(self.data_columns)}
+            SELECT {', '.join(columns)}
             FROM {backtick(self._full_table_name(source.spec, entity_type))}
             WHERE STARTS_WITH(LOWER(JSON_EXTRACT_SCALAR(descriptor, "$.sha256")),
                               {prefix!r})
@@ -278,9 +279,8 @@ class Plugin(TDRPlugin[TDRHCABundle, TDRBundleFQID]):
         bundle.metadata[str(entity)] = content
 
     def _file_from_row(self, row: BigQueryRow) -> HCAFile:
-        descriptor = json.loads(any_str(row['descriptor']))
-        return HCAFile.from_metadata(descriptor,
-                                     name=any_str(row['file_name']),
+        return HCAFile.from_metadata(metadata=json.loads(any_str(row['content'])),
+                                     descriptor=json.loads(any_str(row['descriptor'])),
                                      drs_uri=optional(any_str, row['file_id']))
 
     def _stitch_bundles(self,
@@ -357,11 +357,7 @@ class Plugin(TDRPlugin[TDRHCABundle, TDRBundleFQID]):
 
     metadata_columns = ('content',)
 
-    data_columns = (
-        'descriptor',
-        'JSON_EXTRACT_SCALAR(content, "$.file_core.file_name") AS file_name',
-        'file_id'
-    )
+    data_columns = ('descriptor', 'file_id')
 
     links_columns = ('project_id',)
 
