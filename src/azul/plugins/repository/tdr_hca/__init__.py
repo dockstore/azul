@@ -13,7 +13,6 @@ from operator import (
     itemgetter,
 )
 from typing import (
-    ClassVar,
     Iterable,
     Self,
     cast,
@@ -37,7 +36,7 @@ from azul.bigquery import (
     backtick,
 )
 from azul.collections import (
-    singleton,
+    OrderedSet,
 )
 from azul.indexer import (
     BundleFQID,
@@ -356,22 +355,15 @@ class Plugin(TDRPlugin[TDRHCABundle, TDRBundleFQID]):
             links_json['content'] = json.loads(links_json['content'])
         return links
 
-    metadata_columns: ClassVar[frozenset[str]] = singleton(
-        'content'
-    )
+    metadata_columns = ('content',)
 
-    data_columns: ClassVar[frozenset[str]] = frozenset({
+    data_columns = (
         'descriptor',
         'JSON_EXTRACT_SCALAR(content, "$.file_core.file_name") AS file_name',
         'file_id'
-    })
-
-    # `links_id` is omitted for consistency since the other sets do not include
-    # the primary key
-    #
-    links_columns: ClassVar[frozenset[str]] = singleton(
-        'project_id'
     )
+
+    links_columns = ('project_id',)
 
     def _retrieve_entities(self,
                            source: TDRSourceSpec,
@@ -390,12 +382,12 @@ class Plugin(TDRPlugin[TDRHCABundle, TDRBundleFQID]):
         """
         pk_column = entity_type + '_id'
         version_column = 'version'
-        columns = {
+        columns = OrderedSet([
             pk_column,
             *self.metadata_columns,
             *iif(entity_type == 'links', self.links_columns),
             *iif(entity_type.endswith('_file'), self.data_columns)
-        }
+        ])
         table_name = backtick(self._full_table_name(source, entity_type))
         entity_id_type = one(set(map(type, entity_ids)))
 
