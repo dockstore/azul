@@ -271,13 +271,14 @@ class TestTDRHCAPlugin(DCP2CannedBundleTestCase,
                                               content={})
                                          for links_id in links_ids
                                      ])
-        bundle_ids = self.plugin.list_bundles(source, prefix='42')
-        bundle_ids.sort(key=attrgetter('uuid'))
-        self.assertEqual(bundle_ids, [
+        expected_bundle_ids = [
             TDRBundleFQID(source=source, uuid='42-abc', version=current_version),
             TDRBundleFQID(source=source, uuid='42-def', version=current_version),
             TDRBundleFQID(source=source, uuid='42-ghi', version=current_version)
-        ])
+        ]
+        actual_bundle_ids = self.plugin.list_bundles(source, prefix='42')
+        actual_bundle_ids.sort(key=attrgetter('uuid'))
+        self.assertEqual(expected_bundle_ids, actual_bundle_ids)
 
     def test_fetch_bundle(self):
         fqid = self.bundle_fqid(uuid='1b6d8348-d6e9-406a-aa6a-7ee886e52bf9',
