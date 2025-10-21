@@ -2,6 +2,8 @@ import logging
 import sys
 import time
 from typing import (
+    Any,
+    ClassVar,
     Self,
 )
 
@@ -10,12 +12,14 @@ from furl import (
     furl,
 )
 import urllib3
+import urllib3.connection
 import urllib3.connectionpool
 import urllib3.exceptions
 import urllib3.request
 
 from azul import (
     R,
+    cache,
     cached_property,
     config,
     require,
@@ -72,15 +76,49 @@ class LoggingHttpClient(HttpClientDecorator):
         super().__init__(inner, headers)
         self._log = log
 
+        # As a request is being prepared by the various layers of urllib3,
+        # requests headers may being added, in addition to the ones supplied by
+        # the client. To ensure that all headers are logged, we'd therefore need
+        # to log them at the innermost layer. To get at that layer we need to
+        # dynamically subclass the connection pool class for each of the two
+        # schemes and make the pool manager use those subclasses when creating
+        # new pools. The dynamic subclasses inherit a static mixin that actually
+        # logs the headers. We need to use subclassing because we don't have any
+        # connection pool instances yet and the only place where we can stash
+        # the logger instance is in a class attribute. There is one subclass per
+        # scheme and logger instance, and since there is typically one logger
+        # instance per client module, the class duplication is manageable at two
+        # subclasses per client module. The alternative approach would have been
+        # to monkey patch the ``_new_pool`` factory method in the pool manager
+        # instance but I felt the subclassing approach is more transparent. The
+        # subclass name is prefixed with the logger name.
+        #
+        pool_manager = self.delegate(urllib3.PoolManager)
+        attribute_name = 'pool_classes_by_scheme'
+        # Use setattr to appease mypy, as the stubs don't declare the attribute.
+        attribute_value = getattr(pool_manager, attribute_name)
+        setattr(pool_manager, attribute_name, attribute_value | {
+            scheme: self._pool_cls(log, scheme)
+            for scheme in ['http', 'https']
+        })
+
+    @classmethod
+    @cache
+    def _pool_cls(cls, log: logging.Logger, scheme: str) -> type:
+        proto = scheme.upper()
+        return type(
+            f'{log.name}.Logging{proto}ConnectionPool',
+            (_LoggingConnectionPool, getattr(urllib3, f'{proto}ConnectionPool')),
+            {'_log': log}
+        )
+
     def urlopen(self, method, url, *args, body=None, **kwargs) -> urllib3.HTTPResponse:
         log = self._log
         log.info('Making %s request to %r', method, url)
-        if config.debug > 1:
-            log.debug('… with keyword args %r', kwargs)
         log.info(http_body_log_message('request', body))
-        start = time.time()
+        start = time.monotonic()
         response = super().urlopen(method, url, *args, body=body, **kwargs)
-        duration = time.time() - start
+        duration = time.monotonic() - start
         assert isinstance(response, urllib3.HTTPResponse), type(response)
         log.info('Got %s response after %.3fs from %s to %s',
                  response.status, duration, method, url)
@@ -93,6 +131,26 @@ class LoggingHttpClient(HttpClientDecorator):
 
     def log(self, message: str, *args):
         self._log.info(message, *args)
+
+
+class _LoggingConnectionPool(urllib3.connectionpool.HTTPConnectionPool):
+    _log: ClassVar[logging.Logger]
+
+    def _make_request(self, *args, **kwargs) -> Any:
+        log = self._log
+        headers = kwargs.get('headers')
+        if headers is None or len(headers) == 0:
+            log.info('… without request headers')
+        else:
+            # urllib3's HTTPHeaderDict.items() can yield multiple entries for
+            # the same key, or a key only different in case
+            headers = [
+                (k, 'REDACTED' if k.lower() == 'authorization' else v)
+                for k, v in headers.items()
+            ]
+            log.info('… with request headers %r', headers)
+        # The stubs for urllib3 v1.x don't declare any protected methods
+        return super()._make_request(*args, **kwargs)  # type: ignore[misc]
 
 
 class DisableCrossHostRedirectClient(HttpClientDecorator):
@@ -189,7 +247,7 @@ class _LimitedRetry(urllib3.Retry):
                    other=retries,
                    status_forcelist={500, 502, 503},
                    raise_on_status=True)
-        self.start = time.time()
+        self.start = time.monotonic()
         self.retries = retries
         self.timeout = timeout
         return self
@@ -202,7 +260,7 @@ class _LimitedRetry(urllib3.Retry):
         if super().is_exhausted():
             return True
         else:
-            elapsed = time.time() - self.start
+            elapsed = time.monotonic() - self.start
             return self.retries == 0 and elapsed > .01 or elapsed >= self.timeout
 
     def new(self, **kwargs) -> Self:
