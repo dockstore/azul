@@ -664,7 +664,10 @@ class TDRClient(SAMClient):
             except LimitedTimeoutException:
                 body = {'studyDescription': '[Description currently not available]'}
                 return duos_id, body
-            if response.status == 404:
+            if response.status == 401:
+                body = {'studyDescription': '[Description currently not accessible]'}
+                return duos_id, body
+            elif response.status == 404:
                 log.warning('No DUOS dataset registration with ID %r from %r',
                             duos_id, source.spec)
                 return None, None
