@@ -253,29 +253,17 @@ class ManifestTestCase(WebServiceTestCase,
     def setUp(self):
         super().setUp()
         self.addPatch(patch.object(PagedManifestGenerator, 'page_size', 1))
+        self.addPatch(patch.dict(os.environ,
+                                 azul_git_commit='9347432ab0da43c73409ac7fd3edfe29cf3ae678',
+                                 azul_git_dirty=str(False)))
         self._setup_indices()
-        self._setup_git_commit()
 
     def tearDown(self):
         self._teardown_indices()
-        self._teardown_git_commit()
         super().tearDown()
 
     def _filters(self, filters: FiltersJSON) -> Filters:
         return Filters(explicit=filters, source_ids={self.source.id})
-
-    def _setup_git_commit(self):
-        """
-        Set git variables required to derive the manifest object key
-        """
-        assert 'azul_git_commit' not in os.environ
-        assert 'azul_git_dirty' not in os.environ
-        os.environ['azul_git_commit'] = '9347432ab0da43c73409ac7fd3edfe29cf3ae678'
-        os.environ['azul_git_dirty'] = 'False'
-
-    def _teardown_git_commit(self):
-        os.environ.pop('azul_git_commit')
-        os.environ.pop('azul_git_dirty')
 
     @property
     def _service(self):

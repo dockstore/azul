@@ -168,7 +168,7 @@ class Config:
     See `environment` for documentation of these settings.
     """
 
-    @property
+    @cached_property
     def environ(self):
         return ChainMap(os.environ, self._outsourced_environ)
 
@@ -1264,10 +1264,20 @@ class Config:
 
     @property
     def _git_status_env(self) -> dict[str, str]:
-        return {'azul_git_' + k: str(v) for k, v in self.git_status.items()}
+        return {'azul_git_' + k: str(v) for k, v in self._git_status.items()}
 
     @property
     def git_status(self) -> GitStatus:
+        try:
+            return {
+                'commit': self.environ['azul_git_commit'],
+                'dirty': str_to_bool(self.environ['azul_git_dirty'])
+            }
+        except KeyError:
+            return self._git_status
+
+    @property
+    def _git_status(self) -> GitStatus:
         import git
         repo = git.Repo(self.project_root)
         return {
@@ -1276,31 +1286,24 @@ class Config:
         }
 
     @property
-    def lambda_git_status(self) -> GitStatus:
+    def _aws_account_name_env(self) -> dict[str, str]:
         return {
-            'commit': self.environ['azul_git_commit'],
-            'dirty': str_to_bool(self.environ['azul_git_dirty'])
-        }
-
-    @property
-    def _aws_account_name(self) -> dict[str, str]:
-        return {
-            'azul_aws_account_name': self.aws_account_name
+            'azul_aws_account_name': self._aws_account_name
         }
 
     @property
     def aws_account_name(self) -> str:
-        """
-        When in invoked in a Lambda context, this method will retrieve the AWS
-        account name from the Lambda environment, avoiding a round trip to IAM.
-        """
-        if self.is_in_lambda:
+        try:
             return self.environ['azul_aws_account_name']
-        else:
-            from azul.deployment import (
-                aws,
-            )
-            return aws.account_name
+        except KeyError:
+            return self._aws_account_name
+
+    @property
+    def _aws_account_name(self):
+        from azul.deployment import (
+            aws,
+        )
+        return aws.account_name
 
     @property
     def is_in_lambda(self) -> bool:
@@ -1309,14 +1312,14 @@ class Config:
     @property
     def lambda_env(self) -> dict[str, str]:
         """
-        A dictionary with the environment variables to be used by a deployed AWS
-        Lambda function or `chalice local`. Only includes those variables that
-        don't need to be outsourced.
+        A dictionary containing the environment variables to be used by a
+        deployed AWS Lambda function, `chalice local` or tests inheriting from
+        LocalAppTestCase. Only includes variables that are not outsourced.
         """
         return (
             self._lambda_env(outsource=False)
             | self._git_status_env
-            | self._aws_account_name
+            | self._aws_account_name_env
             | self._deployment_env
         )
 

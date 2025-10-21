@@ -203,6 +203,8 @@ string_types = str, bytes, bytearray
 
 max_log_arg_len = 1024 * 1024
 
+empty_bodies = ('', b'', bytearray())
+
 
 def http_body_log_message(kind: Literal['request', 'response'], body: Any) -> str:
     """
@@ -218,7 +220,7 @@ def http_body_log_message(kind: Literal['request', 'response'], body: Any) -> st
     debug = azul.config.debug
     max_len = max_log_arg_len if debug > 1 else 1024
     assert debug >= 0, debug
-    if body is None:
+    if body is None or body in empty_bodies:
         return f'… without a {kind} body'
     elif isinstance(body, string_types):
         if debug == 0:

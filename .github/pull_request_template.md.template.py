@@ -340,11 +340,15 @@ def emit(t: T, target_branch: str):
             }),
             {
                 'type': 'cli',
-                'content': f'Status of linked {t.issues} is *In progress*'
+                'content': f'Status of linked {t.issues} is ' + (
+                    '*In progress*'
+                    if t is not T.backport else
+                    '*Stable*'
+                )
             },
             iif(t not in (T.backport, T.upgrade), {
                 'type': 'cli',
-                'content': f'PR description links to connected {t.issues}'
+                'content': f'PR description links to linked {t.issues}'
             }),
             iif(t is T.promotion, {
                 'type': 'cli',
@@ -583,8 +587,14 @@ def emit(t: T, target_branch: str):
                 {
                     'type': 'cli',
                     'content': 'Ran `make requirements_update`',
-                    'alt': 'or this PR does not modify `requirements*.txt`, '
-                           '`common.mk`, `Makefile`, `Dockerfile` or `environment.boot`'
+                    'alt': 'or this PR does not modify ' + join_grammatically(list(map(bq, [
+                        'Dockerfile',
+                        'environment',
+                        'requirements*.txt',
+                        'common.mk',
+                        'Makefile',
+                        'environment.boot',
+                    ])), last_joiner=' or ')
                 },
                 {
                     'type': 'cli',
@@ -681,10 +691,10 @@ def emit(t: T, target_branch: str):
                 'type': 'cli',
                 'content': 'PR title is appropriate as title of merge commit'
             }),
-            iif(t is T.default, {
+            {
                 'type': 'cli',
                 'content': '`N reviews` label is accurate'
-            }),
+            },
             {
                 'type': 'cli',
                 'content': 'Status of PR is *Approved*'
@@ -952,8 +962,11 @@ def emit(t: T, target_branch: str):
                 [
                     {
                         'type': 'cli',
-                        'content': f'Status of linked {t.issues} is '
-                                   f'*{'Lower' if target_branch == 'develop' else 'Stable'}*'
+                        'content': f'Status of linked {t.issues} is ' + (
+                            '*Lower*' + iif(t is not T.upgrade, ', or *Triage*, if PR is partial')
+                            if target_branch == 'develop' and t is not T.backport else
+                            '*Stable*'
+                        )
                     }
                 ]
                 if t is not T.promotion else

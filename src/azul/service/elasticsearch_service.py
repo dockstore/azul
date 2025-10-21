@@ -17,7 +17,6 @@ from typing import (
     Generic,
     Self,
     TypeVar,
-    TypedDict,
 )
 
 import attr
@@ -72,6 +71,7 @@ from azul.service import (
 )
 from azul.types import (
     JSON,
+    JSONTypedDict,
     JSONs,
     MutableJSON,
     PrimitiveJSON,
@@ -505,7 +505,7 @@ class Pagination:
         return None
 
 
-class ResponsePagination(TypedDict):
+class ResponsePagination(JSONTypedDict):
     count: int
     total: int
     size: int

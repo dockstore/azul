@@ -2,7 +2,6 @@ from typing import (
     Iterable,
     Self,
     Sequence,
-    TYPE_CHECKING,
 )
 
 from attrs import (
@@ -62,6 +61,12 @@ from azul.service.manifest_service import (
 )
 from azul.types import (
     MutableJSON,
+    json_dict,
+    json_dict_of_dicts,
+    json_int,
+    json_list,
+    json_str,
+    optional,
 )
 from humancellatlas.data.metadata import (
     api,
@@ -86,15 +91,13 @@ class Plugin(MetadataPlugin[HCABundle]):
                      ) -> Iterable[BaseTransformer]:
         api_bundle = api.Bundle(uuid=bundle.uuid,
                                 version=bundle.version,
-                                manifest=bundle.manifest,
-                                metadata=bundle.metadata,
+                                manifest=json_dict_of_dicts(bundle.manifest),
+                                metadata=json_dict_of_dicts(bundle.metadata),
                                 links_json=bundle.links,
                                 stitched_entity_ids=bundle.stitched)
 
         def transformers():
             for transformer_cls in self.transformer_types():
-                if TYPE_CHECKING:  # work around https://youtrack.jetbrains.com/issue/PY-44728
-                    transformer_cls = BaseTransformer
                 yield transformer_cls(bundle=bundle, api_bundle=api_bundle, deleted=delete)
 
         return list(transformers())
@@ -105,7 +108,7 @@ class Plugin(MetadataPlugin[HCABundle]):
     def mapping(self, index_name: IndexName) -> MutableJSON:
         mapping = super().mapping(index_name)
         if index_name.doc_type in (DocumentType.contribution, DocumentType.aggregate):
-            mapping['properties']['contents'] = {
+            json_dict(mapping['properties'])['contents'] = {
                 'properties': {
                     'projects': {
                         'properties': {
@@ -119,7 +122,7 @@ class Plugin(MetadataPlugin[HCABundle]):
                     }
                 }
             }
-            mapping['dynamic_templates'][0:0] = [
+            json_list(mapping['dynamic_templates'])[0:0] = [
                 {
                     'donor_age_range': {
                         'path_match': 'contents.donors.organism_age_range',
@@ -169,7 +172,7 @@ class Plugin(MetadataPlugin[HCABundle]):
                             max_page_size=100),
             files=Sorting(field_name='fileName'),
             projects=Sorting(field_name='projectTitle',
-                             max_page_size=100),
+                             max_page_size=75),
             samples=Sorting(field_name='sampleId')
         )
 
@@ -476,16 +479,16 @@ class HCAFile(File):
 
     @classmethod
     def from_index(cls, hit: JSON) -> Self:
-        return cls(uuid=hit['uuid'],
-                   version=hit['version'],
-                   name=hit['name'],
-                   size=hit['size'],
-                   drs_uri=hit['drs_uri'],
-                   content_type=hit['content-type'],
-                   sha256=hit['sha256'],
-                   crc32c=hit['crc32c'],
-                   sha1=hit.get('sha1'),
-                   s3_etag=hit.get('s3_etag'))
+        return cls(uuid=json_str(hit['uuid']),
+                   version=json_str(hit['version']),
+                   name=json_str(hit['name']),
+                   size=json_int(hit['size']),
+                   drs_uri=optional(json_str, hit['drs_uri']),
+                   content_type=json_str(hit['content-type']),
+                   sha256=json_str(hit['sha256']),
+                   crc32c=json_str(hit['crc32c']),
+                   sha1=optional(json_str, hit.get('sha1')),
+                   s3_etag=optional(json_str, hit.get('s3_etag')))
 
     @classmethod
     def from_metadata(cls,
@@ -494,7 +497,7 @@ class HCAFile(File):
                       uuid: str,
                       name: str,
                       drs_uri: str | None) -> Self:
-        content_type = descriptor['content_type']
+        content_type = json_str(descriptor['content_type'])
         # FIXME: Obsolete MIME parameter in file content types
         #        https://github.com/HumanCellAtlas/dcp2/issues/73
         parameter_suffix = '; dcp-type=data'
@@ -507,13 +510,13 @@ class HCAFile(File):
                 'Unexpected MIME parameter in content type', content_type)
         return cls(uuid=uuid,
                    name=name,
-                   version=descriptor['file_version'],
-                   size=descriptor['size'],
+                   version=json_str(descriptor['file_version']),
+                   size=json_int(descriptor['size']),
                    content_type=content_type,
-                   sha256=descriptor['sha256'],
-                   crc32c=descriptor['crc32c'],
-                   sha1=descriptor.get('sha1'),
-                   s3_etag=descriptor.get('s3_etag'),
+                   sha256=json_str(descriptor['sha256']),
+                   crc32c=json_str(descriptor['crc32c']),
+                   sha1=optional(json_str, descriptor.get('sha1')),
+                   s3_etag=optional(json_str, descriptor.get('s3_etag')),
                    drs_uri=drs_uri)
 
     @property

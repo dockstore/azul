@@ -296,7 +296,7 @@ class MetadataPlugin[BUNDLE: Bundle](Plugin[BUNDLE]):
             }
         }
 
-    range_mapping = {
+    range_mapping: MutableJSON = {
         # A float (single precision IEEE-754) can represent all integers up to
         # 16,777,216. If we used float values for organism ages in seconds, we
         # would not be able to accurately represent an organism age of

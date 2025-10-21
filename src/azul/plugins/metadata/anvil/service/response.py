@@ -4,6 +4,7 @@ from functools import (
 from typing import (
     Mapping,
     Sequence,
+    cast,
 )
 
 from more_itertools import (
@@ -14,6 +15,7 @@ from azul import (
     cached_property,
 )
 from azul.json import (
+    copy_any_json,
     copy_json,
 )
 from azul.plugins import (
@@ -27,8 +29,19 @@ from azul.service.repository_service import (
     SummaryResponseStage,
 )
 from azul.types import (
+    AnyMutableJSON,
     JSON,
     MutableJSON,
+    MutableJSONArray,
+    MutableJSONs,
+    json_element_mappings,
+    json_float,
+    json_int,
+    json_item_sequences,
+    json_mapping,
+    json_str,
+    json_untyped_dict,
+    optional,
 )
 
 
@@ -57,17 +70,20 @@ class AnvilSummaryResponseStage(SummaryResponseStage):
             ]
         }
 
-    def process_response(self, response: JSON) -> JSON:
-        def doc_count(field):
-            return response[field]['doc_count']
+    def process_response(self, response: JSON) -> MutableJSON:
+        def doc_count(field: str) -> int:
+            return json_int(json_mapping(response[field])['doc_count'])
 
-        def bucket_count(field, bucket_key):
+        def bucket_count(field: str, bucket_key: str):
+            aggs = json_mapping(response[field])
+            agg = json_mapping(aggs['myTerms'])
+            buckets = json_element_mappings(agg['buckets'])
             return [
                 {
                     'count': bucket['doc_count'],
                     bucket_key: bucket['key']
                 }
-                for bucket in response[field]['myTerms']['buckets']
+                for bucket in buckets
             ]
 
         return {
@@ -81,7 +97,7 @@ class AnvilSummaryResponseStage(SummaryResponseStage):
             'donorSpecies': bucket_count('donors.organism_type', 'species'),
             'fileCount': doc_count('files.file_format'),
             'fileFormats': bucket_count('files.file_format', 'format'),
-            'totalFileSize': response['totalFileSize']['value'],
+            'totalFileSize': json_float(json_mapping(response['totalFileSize'])['value']),
         }
 
 
@@ -91,15 +107,18 @@ class AnvilSearchResponseStage(SearchResponseStage):
         hits, pagination, aggs = response
         return dict(
             hits=list(map(self._make_hit, hits)),
-            pagination=pagination,
-            termFacets=dict(zip(aggs.keys(), map(self._make_terms, aggs.values())))
+            pagination=json_untyped_dict(pagination),
+            termFacets=dict(zip(
+                aggs.keys(),
+                map(self._make_terms, map(json_mapping, aggs.values())))
+            )
         )
 
-    def _make_terms(self, agg: JSON) -> JSON:
+    def _make_terms(self, agg: JSON) -> MutableJSON:
         # FIXME: much of this is duplicated from
         #        azul.plugins.metadata.hca.service.response.SearchResponseFactory
         #        https://github.com/DataBiosphere/azul/issues/4135
-        def choose_entry(_term):
+        def choose_entry(_term) -> AnyMutableJSON:
             if 'key_as_string' in _term:
                 return _term['key_as_string']
             elif (term_key := _term['key']) is None:
@@ -111,48 +130,62 @@ class AnvilSearchResponseStage(SearchResponseStage):
             else:
                 return str(term_key)
 
-        terms = [
+        buckets = json_mapping(agg['myTerms'])['buckets']
+
+        terms: MutableJSONs = [
             {
                 'term': choose_entry(bucket),
-                'count': bucket['doc_count']
+                'count': json_int(bucket['doc_count'])
             }
-            for bucket in agg['myTerms']['buckets']
+            for bucket in json_element_mappings(buckets)
         ]
 
         # Add the untagged_count to the existing termObj for a None value,
         # or add a new one
-        untagged_count = agg['untagged']['doc_count']
+        untagged_count = json_int(json_mapping(agg['untagged'])['doc_count'])
         if untagged_count > 0:
             for term in terms:
                 if term['term'] is None:
-                    term['count'] += untagged_count
+                    term['count'] = json_int(term['count']) + untagged_count
                     break
             else:
                 terms.append({'term': None, 'count': untagged_count})
 
         return {
-            'terms': terms,
-            'total': 0 if len(agg['myTerms']['buckets']) == 0 else agg['doc_count'],
+            # Mypy doesn't allow MutableJSONs to be used in place of
+            # MutableJSONArray due to list invariance:
+            # (see https://mypy.readthedocs.io/en/stable/common_issues.html#invariance-vs-covariance)
+            # it is possible for the caller to modify the return value in a way
+            # that violates the type annotation for `terms`, e.g.
+            #
+            # x = self._make_terms(...); x['terms'].append('not a dict')
+            #
+            # The cast is always safe because the local variable `terms` goes
+            # out of scope immediately afterward, so no one ever holds onto a
+            # reference to `terms` that uses the MutableJSONs type annotation.
+            'terms': cast(MutableJSONArray, terms),
+            'total': 0 if len(terms) == 0 else json_int(agg['doc_count']),
             # FIXME: Remove type from termsFacets in /index responses
             #        https://github.com/DataBiosphere/azul/issues/2460
             'type': 'terms'
         }
 
     def _make_hit(self, es_hit: JSON) -> MutableJSON:
+        sources, bundles = es_hit['sources'], es_hit['bundles']
         return {
-            'entryId': es_hit['entity_id'],
+            'entryId': json_str(es_hit['entity_id']),
             # Note that there is a brittle coupling that must be maintained
             # between the `sources` and `bundles` field paths here and the
             # renamed fields in `Plugin.manifest_config`.
-            'sources': list(map(self._make_source, es_hit['sources'])),
-            'bundles': list(map(self._make_bundle, es_hit['bundles'])),
-            **self._make_contents(es_hit['contents'])
+            'sources': list(map(self._make_source, json_element_mappings(sources))),
+            'bundles': list(map(self._make_bundle, json_element_mappings(bundles))),
+            **self._make_contents(json_mapping(es_hit['contents']))
         }
 
     def _make_source(self, es_source: JSON) -> MutableJSON:
         return {
-            self._special_fields.source_spec: es_source['spec'],
-            self._special_fields.source_id: es_source['id']
+            self._special_fields.source_spec: json_str(es_source['spec']),
+            self._special_fields.source_id: json_str(es_source['id'])
         }
 
     @cached_property
@@ -161,18 +194,18 @@ class AnvilSearchResponseStage(SearchResponseStage):
 
     def _make_bundle(self, es_bundle: JSON) -> MutableJSON:
         return {
-            self._special_fields.bundle_uuid: es_bundle['uuid'],
-            self._special_fields.bundle_version: es_bundle['version']
+            self._special_fields.bundle_uuid: json_str(es_bundle['uuid']),
+            self._special_fields.bundle_version: json_str(es_bundle['version'])
         }
 
     def _make_contents(self, es_contents: JSON) -> MutableJSON:
         return {
             inner_entity_type: (
-                [self._pivotal_entity(inner_entity_type, one(inner_entities))]
+                [self._pivotal_entity(inner_entity_type, json_mapping(one(inner_entities)))]
                 if inner_entity_type == self.entity_type else
                 list(map(partial(self._non_pivotal_entity, inner_entity_type), inner_entities))
             )
-            for inner_entity_type, inner_entities in es_contents.items()
+            for inner_entity_type, inner_entities in json_item_sequences(es_contents)
         }
 
     def _pivotal_entity(self,
@@ -181,9 +214,9 @@ class AnvilSearchResponseStage(SearchResponseStage):
                         ) -> MutableJSON:
         inner_entity = copy_json(inner_entity)
         if inner_entity_type == 'files':
-            inner_entity['azul_url'] = self._file_url(uuid=inner_entity['uuid'],
-                                                      version=inner_entity['version'],
-                                                      drs_uri=inner_entity['drs_uri'])
+            inner_entity['azul_url'] = self._file_url(uuid=json_str(inner_entity['uuid']),
+                                                      version=json_str(inner_entity['version']),
+                                                      drs_uri=optional(json_str, inner_entity['drs_uri']))
             # FIXME: https://github.com/DataBiosphere/azul/issues/6549
             #        Remove files.url
             inner_entity['url'] = inner_entity['azul_url']
@@ -197,7 +230,7 @@ class AnvilSearchResponseStage(SearchResponseStage):
                             ) -> MutableJSON:
         fields = self._non_pivotal_fields_by_entity_type[inner_entity_type]
         return {
-            k: v
+            k: copy_any_json(v)
             for k, v in inner_entity.items()
             if k in fields
         }

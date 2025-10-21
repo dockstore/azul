@@ -485,7 +485,7 @@ def avro_pfb_schema(azul_avro_schema: Iterable[JSON]) -> JSON:
 def _inject_reference_handover_columns(field_types: FieldTypes) -> FieldTypes:
     return {
         entity_type: (
-            dict(fields, datarepo_row_id=null_str, datarepo_snapshot_id=null_str)
+            dict(fields, datarepo_row_id=null_str, source_datarepo_snapshot_id=null_str)
             if isinstance(fields, dict) and 'source_datarepo_row_ids' in fields
             else fields
         )
@@ -496,7 +496,7 @@ def _inject_reference_handover_columns(field_types: FieldTypes) -> FieldTypes:
 def _inject_reference_handover_values(entity: MutableJSON, doc: JSON):
     if 'source_datarepo_row_ids' in entity:
         entity['datarepo_row_id'] = entity['document_id']
-        entity['datarepo_snapshot_id'] = one(doc['sources'])['id']
+        entity['source_datarepo_snapshot_id'] = one(doc['sources'])['id']
 
 
 # FIXME: It's not obvious as to why these are union types. Explain or change.
@@ -570,7 +570,7 @@ def _entity_schema_recursive(field_types: FieldTypes,
                 'estimated_cell_count',
                 'total_estimated_cells',
                 'total_estimated_cells_redundant',
-                'datarepo_snapshot_id',
+                'source_datarepo_snapshot_id',
             )
             path_exceptions = (
                 ('projects', 'accessions'),

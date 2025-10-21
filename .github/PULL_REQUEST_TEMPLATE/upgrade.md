@@ -35,7 +35,7 @@ Linked issue: #0000
 ### Author (before every review)
 
 - [ ] Rebased PR branch on `develop`, squashed fixups from prior reviews
-- [ ] Ran `make requirements_update` <sub>or this PR does not modify `requirements*.txt`, `common.mk`, `Makefile`, `Dockerfile` or `environment.boot`</sub>
+- [ ] Ran `make requirements_update` <sub>or this PR does not modify `Dockerfile`, `environment`, `requirements*.txt`, `common.mk`, `Makefile` or `environment.boot`</sub>
 - [ ] Added `R` tag to commit title <sub>or this PR does not modify `requirements*.txt`</sub>
 - [ ] This PR is labeled `reqs` <sub>or does not modify `requirements*.txt`</sub>
 - [ ] `make integration_test` passes in personal deployment <sub>or this PR does not modify functionality that could affect the IT outcome</sub>
@@ -51,6 +51,7 @@ Linked issue: #0000
 - [ ] Labeled linked issue as `no demo`
 - [ ] A comment to this PR details the completed security design review
 - [ ] PR title is appropriate as title of merge commit
+- [ ] `N reviews` label is accurate
 - [ ] Status of PR is *Approved*
 - [ ] PR is assigned to only the operator
 

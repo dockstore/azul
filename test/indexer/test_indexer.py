@@ -61,7 +61,6 @@ from azul.indexer.document import (
     CataloguedEntityReference,
     Contribution,
     ContributionCoordinates,
-    DocumentSource,
     DocumentType,
     EntityReference,
     EntityType,
@@ -98,6 +97,7 @@ from azul.plugins.metadata.hca import (
 from azul.plugins.repository.dss import (
     DSSBundle,
     DSSBundleFQID,
+    DSSSourceRef,
 )
 from azul.threads import (
     Latch,
@@ -490,8 +490,8 @@ class TestDCP1IndexerWithIndexesSetUp(DCP1IndexerTestCase):
                                       entity_id='412898c5-5b9b-4907-b07c-e9b89666e204',
                                       catalog='test'),
             {
-                DocumentSource(id=source1.id, spec=source1.spec),
-                DocumentSource(id=source2.id, spec=source2.spec)
+                DSSSourceRef(id=source1.id, spec=source1.spec),
+                DSSSourceRef(id=source2.id, spec=source2.spec)
             }
         )
         self.assertEqual(expected, one(cm.exception.args))
