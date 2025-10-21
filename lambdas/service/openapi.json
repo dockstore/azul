@@ -27,6 +27,21 @@
         "/": {
             "get": {
                 "responses": {
+                    "400": {
+                        "description": "Bad request. The request was rejected due to malformed parameters."
+                    },
+                    "429": {
+                        "description": "Too many requests. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
+                    "500": {
+                        "description": "Internal server error. An internal server error occurred."
+                    },
+                    "502": {
+                        "description": "Bad gateway. The server received an invalid response from the upstream server."
+                    },
+                    "503": {
+                        "description": "Service unavailable. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
                     "504": {
                         "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
@@ -43,6 +58,21 @@
         "/swagger/index.html": {
             "get": {
                 "responses": {
+                    "400": {
+                        "description": "Bad request. The request was rejected due to malformed parameters."
+                    },
+                    "429": {
+                        "description": "Too many requests. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
+                    "500": {
+                        "description": "Internal server error. An internal server error occurred."
+                    },
+                    "502": {
+                        "description": "Bad gateway. The server received an invalid response from the upstream server."
+                    },
+                    "503": {
+                        "description": "Service unavailable. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
                     "504": {
                         "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
@@ -59,6 +89,21 @@
         "/swagger/swagger-initializer.js": {
             "get": {
                 "responses": {
+                    "400": {
+                        "description": "Bad request. The request was rejected due to malformed parameters."
+                    },
+                    "429": {
+                        "description": "Too many requests. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
+                    "500": {
+                        "description": "Internal server error. An internal server error occurred."
+                    },
+                    "502": {
+                        "description": "Bad gateway. The server received an invalid response from the upstream server."
+                    },
+                    "503": {
+                        "description": "Service unavailable. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
                     "504": {
                         "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
@@ -86,6 +131,21 @@
             ],
             "get": {
                 "responses": {
+                    "400": {
+                        "description": "Bad request. The request was rejected due to malformed parameters."
+                    },
+                    "429": {
+                        "description": "Too many requests. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
+                    "500": {
+                        "description": "Internal server error. An internal server error occurred."
+                    },
+                    "502": {
+                        "description": "Bad gateway. The server received an invalid response from the upstream server."
+                    },
+                    "503": {
+                        "description": "Service unavailable. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
                     "504": {
                         "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
@@ -105,6 +165,21 @@
         "/openapi.json": {
             "get": {
                 "responses": {
+                    "400": {
+                        "description": "Bad request. The request was rejected due to malformed parameters."
+                    },
+                    "429": {
+                        "description": "Too many requests. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
+                    "500": {
+                        "description": "Internal server error. An internal server error occurred."
+                    },
+                    "502": {
+                        "description": "Bad gateway. The server received an invalid response from the upstream server."
+                    },
+                    "503": {
+                        "description": "Service unavailable. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
                     "504": {
                         "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
@@ -168,6 +243,21 @@
         "/version": {
             "get": {
                 "responses": {
+                    "400": {
+                        "description": "Bad request. The request was rejected due to malformed parameters."
+                    },
+                    "429": {
+                        "description": "Too many requests. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
+                    "500": {
+                        "description": "Internal server error. An internal server error occurred."
+                    },
+                    "502": {
+                        "description": "Bad gateway. The server received an invalid response from the upstream server."
+                    },
+                    "503": {
+                        "description": "Service unavailable. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
                     "504": {
                         "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
@@ -213,6 +303,21 @@
         "/robots.txt": {
             "get": {
                 "responses": {
+                    "400": {
+                        "description": "Bad request. The request was rejected due to malformed parameters."
+                    },
+                    "429": {
+                        "description": "Too many requests. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
+                    "500": {
+                        "description": "Internal server error. An internal server error occurred."
+                    },
+                    "502": {
+                        "description": "Bad gateway. The server received an invalid response from the upstream server."
+                    },
+                    "503": {
+                        "description": "Service unavailable. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
                     "504": {
                         "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
@@ -229,6 +334,62 @@
         "/health": {
             "get": {
                 "responses": {
+                    "400": {
+                        "description": "Bad request. The request was rejected due to malformed parameters."
+                    },
+                    "429": {
+                        "description": "Too many requests. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
+                    "500": {
+                        "description": "Internal server error. An internal server error occurred."
+                    },
+                    "502": {
+                        "description": "Bad gateway. The server received an invalid response from the upstream server."
+                    },
+                    "503": {
+                        "description": "\nAt least one of the checked resources\nis not healthy.\n\nThe response consists of the following keys:\n\n* `other_lambdas` \nIndicates whether the companion REST API responds to HTTP requests.\n* `queues` \nReturns information about the SQS queues used by the indexer and the\nmirror.\n* `progress` \nThe number of Data Store bundles pending to be indexed and the number\nof index documents in need of updating.\n* `api_endpoints` \nIndicates whether important service API endpoints are operational.\n* `elasticsearch` \nIndicates whether the Elasticsearch cluster is responsive.\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`false`.\n\n\nAt least one of the nested `up` keys\nis `false`.\n",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "up": {
+                                            "type": "boolean",
+                                            "enum": [
+                                                false
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "up"
+                                    ],
+                                    "additionalProperties": {
+                                        "type": "object",
+                                        "properties": {
+                                            "up": {
+                                                "type": "boolean",
+                                                "enum": [
+                                                    false
+                                                ]
+                                            }
+                                        },
+                                        "required": [
+                                            "up"
+                                        ],
+                                        "additionalProperties": true
+                                    }
+                                },
+                                "example": {
+                                    "other_lambdas": {},
+                                    "queues": {},
+                                    "progress": {},
+                                    "api_endpoints": {},
+                                    "elasticsearch": {},
+                                    "up": false
+                                }
+                            }
+                        }
+                    },
                     "504": {
                         "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
@@ -275,9 +436,32 @@
                                 }
                             }
                         }
+                    }
+                },
+                "summary": "Complete health check",
+                "description": "\nHealth check of the service REST API and all\nresources it depends on. This may take long time to complete\nand exerts considerable load on the API. For that reason it\nshould not be requested frequently or by automated\nmonitoring facilities that would be better served by the\n[`/health/fast`](#operations-Auxiliary-get_health_fast) or\n[`/health/cached`](#operations-Auxiliary-get_health_cached)\nendpoints.\n",
+                "tags": [
+                    "Auxiliary"
+                ]
+            }
+        },
+        "/health/basic": {
+            "get": {
+                "responses": {
+                    "400": {
+                        "description": "Bad request. The request was rejected due to malformed parameters."
+                    },
+                    "429": {
+                        "description": "Too many requests. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
+                    "500": {
+                        "description": "Internal server error. An internal server error occurred."
+                    },
+                    "502": {
+                        "description": "Bad gateway. The server received an invalid response from the upstream server."
                     },
                     "503": {
-                        "description": "\nAt least one of the checked resources\nis not healthy.\n\nThe response consists of the following keys:\n\n* `other_lambdas` \nIndicates whether the companion REST API responds to HTTP requests.\n* `queues` \nReturns information about the SQS queues used by the indexer and the\nmirror.\n* `progress` \nThe number of Data Store bundles pending to be indexed and the number\nof index documents in need of updating.\n* `api_endpoints` \nIndicates whether important service API endpoints are operational.\n* `elasticsearch` \nIndicates whether the Elasticsearch cluster is responsive.\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`false`.\n\n\nAt least one of the nested `up` keys\nis `false`.\n",
+                        "description": "\nAt least one of the checked resources\nis not healthy.\n\nThe response consists of the following keys:\n\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`false`.\n\n",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -310,27 +494,11 @@
                                     }
                                 },
                                 "example": {
-                                    "other_lambdas": {},
-                                    "queues": {},
-                                    "progress": {},
-                                    "api_endpoints": {},
-                                    "elasticsearch": {},
                                     "up": false
                                 }
                             }
                         }
-                    }
-                },
-                "summary": "Complete health check",
-                "description": "\nHealth check of the service REST API and all\nresources it depends on. This may take long time to complete\nand exerts considerable load on the API. For that reason it\nshould not be requested frequently or by automated\nmonitoring facilities that would be better served by the\n[`/health/fast`](#operations-Auxiliary-get_health_fast) or\n[`/health/cached`](#operations-Auxiliary-get_health_cached)\nendpoints.\n",
-                "tags": [
-                    "Auxiliary"
-                ]
-            }
-        },
-        "/health/basic": {
-            "get": {
-                "responses": {
+                    },
                     "504": {
                         "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
@@ -372,9 +540,32 @@
                                 }
                             }
                         }
+                    }
+                },
+                "summary": "Basic health check",
+                "description": "\nHealth check of only the REST API itself, excluding other\nresources that it depends on. A 200 response indicates that\nthe service is reachable via HTTP(S) but nothing\nmore.\n",
+                "tags": [
+                    "Auxiliary"
+                ]
+            }
+        },
+        "/health/cached": {
+            "get": {
+                "responses": {
+                    "400": {
+                        "description": "Bad request. The request was rejected due to malformed parameters."
+                    },
+                    "429": {
+                        "description": "Too many requests. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
+                    "500": {
+                        "description": "Internal server error. An internal server error occurred."
+                    },
+                    "502": {
+                        "description": "Bad gateway. The server received an invalid response from the upstream server."
                     },
                     "503": {
-                        "description": "\nAt least one of the checked resources\nis not healthy.\n\nThe response consists of the following keys:\n\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`false`.\n\n",
+                        "description": "\nAt least one of the checked resources\nis not healthy.\n\nThe response consists of the following keys:\n\n* `elasticsearch` \nIndicates whether the Elasticsearch cluster is responsive.\n* `api_endpoints` \nIndicates whether important service API endpoints are operational.\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`false`.\n\n\nAt least one of the nested `up` keys\nis `false`.\n",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -407,22 +598,13 @@
                                     }
                                 },
                                 "example": {
+                                    "elasticsearch": {},
+                                    "api_endpoints": {},
                                     "up": false
                                 }
                             }
                         }
-                    }
-                },
-                "summary": "Basic health check",
-                "description": "\nHealth check of only the REST API itself, excluding other\nresources that it depends on. A 200 response indicates that\nthe service is reachable via HTTP(S) but nothing\nmore.\n",
-                "tags": [
-                    "Auxiliary"
-                ]
-            }
-        },
-        "/health/cached": {
-            "get": {
-                "responses": {
+                    },
                     "504": {
                         "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
@@ -463,47 +645,6 @@
                                     "elasticsearch": {},
                                     "api_endpoints": {},
                                     "up": true
-                                }
-                            }
-                        }
-                    },
-                    "503": {
-                        "description": "\nAt least one of the checked resources\nis not healthy.\n\nThe response consists of the following keys:\n\n* `elasticsearch` \nIndicates whether the Elasticsearch cluster is responsive.\n* `api_endpoints` \nIndicates whether important service API endpoints are operational.\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`false`.\n\n\nAt least one of the nested `up` keys\nis `false`.\n",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "up": {
-                                            "type": "boolean",
-                                            "enum": [
-                                                false
-                                            ]
-                                        }
-                                    },
-                                    "required": [
-                                        "up"
-                                    ],
-                                    "additionalProperties": {
-                                        "type": "object",
-                                        "properties": {
-                                            "up": {
-                                                "type": "boolean",
-                                                "enum": [
-                                                    false
-                                                ]
-                                            }
-                                        },
-                                        "required": [
-                                            "up"
-                                        ],
-                                        "additionalProperties": true
-                                    }
-                                },
-                                "example": {
-                                    "elasticsearch": {},
-                                    "api_endpoints": {},
-                                    "up": false
                                 }
                             }
                         }
@@ -519,6 +660,59 @@
         "/health/fast": {
             "get": {
                 "responses": {
+                    "400": {
+                        "description": "Bad request. The request was rejected due to malformed parameters."
+                    },
+                    "429": {
+                        "description": "Too many requests. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
+                    "500": {
+                        "description": "Internal server error. An internal server error occurred."
+                    },
+                    "502": {
+                        "description": "Bad gateway. The server received an invalid response from the upstream server."
+                    },
+                    "503": {
+                        "description": "\nAt least one of the checked resources\nis not healthy.\n\nThe response consists of the following keys:\n\n* `elasticsearch` \nIndicates whether the Elasticsearch cluster is responsive.\n* `api_endpoints` \nIndicates whether important service API endpoints are operational.\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`false`.\n\n\nAt least one of the nested `up` keys\nis `false`.\n",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "up": {
+                                            "type": "boolean",
+                                            "enum": [
+                                                false
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "up"
+                                    ],
+                                    "additionalProperties": {
+                                        "type": "object",
+                                        "properties": {
+                                            "up": {
+                                                "type": "boolean",
+                                                "enum": [
+                                                    false
+                                                ]
+                                            }
+                                        },
+                                        "required": [
+                                            "up"
+                                        ],
+                                        "additionalProperties": true
+                                    }
+                                },
+                                "example": {
+                                    "elasticsearch": {},
+                                    "api_endpoints": {},
+                                    "up": false
+                                }
+                            }
+                        }
+                    },
                     "504": {
                         "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
@@ -559,47 +753,6 @@
                                     "elasticsearch": {},
                                     "api_endpoints": {},
                                     "up": true
-                                }
-                            }
-                        }
-                    },
-                    "503": {
-                        "description": "\nAt least one of the checked resources\nis not healthy.\n\nThe response consists of the following keys:\n\n* `elasticsearch` \nIndicates whether the Elasticsearch cluster is responsive.\n* `api_endpoints` \nIndicates whether important service API endpoints are operational.\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`false`.\n\n\nAt least one of the nested `up` keys\nis `false`.\n",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "up": {
-                                            "type": "boolean",
-                                            "enum": [
-                                                false
-                                            ]
-                                        }
-                                    },
-                                    "required": [
-                                        "up"
-                                    ],
-                                    "additionalProperties": {
-                                        "type": "object",
-                                        "properties": {
-                                            "up": {
-                                                "type": "boolean",
-                                                "enum": [
-                                                    false
-                                                ]
-                                            }
-                                        },
-                                        "required": [
-                                            "up"
-                                        ],
-                                        "additionalProperties": true
-                                    }
-                                },
-                                "example": {
-                                    "elasticsearch": {},
-                                    "api_endpoints": {},
-                                    "up": false
                                 }
                             }
                         }
@@ -636,6 +789,62 @@
             ],
             "get": {
                 "responses": {
+                    "400": {
+                        "description": "Bad request. The request was rejected due to malformed parameters."
+                    },
+                    "429": {
+                        "description": "Too many requests. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
+                    "500": {
+                        "description": "Internal server error. An internal server error occurred."
+                    },
+                    "502": {
+                        "description": "Bad gateway. The server received an invalid response from the upstream server."
+                    },
+                    "503": {
+                        "description": "\nAt least one of the checked resources\nis not healthy.\n\nThe response consists of the following keys:\n\n* `other_lambdas` \nIndicates whether the companion REST API responds to HTTP requests.\n* `queues` \nReturns information about the SQS queues used by the indexer and the\nmirror.\n* `progress` \nThe number of Data Store bundles pending to be indexed and the number\nof index documents in need of updating.\n* `api_endpoints` \nIndicates whether important service API endpoints are operational.\n* `elasticsearch` \nIndicates whether the Elasticsearch cluster is responsive.\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`false`.\n\n\nAt least one of the nested `up` keys\nis `false`.\n",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "up": {
+                                            "type": "boolean",
+                                            "enum": [
+                                                false
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "up"
+                                    ],
+                                    "additionalProperties": {
+                                        "type": "object",
+                                        "properties": {
+                                            "up": {
+                                                "type": "boolean",
+                                                "enum": [
+                                                    false
+                                                ]
+                                            }
+                                        },
+                                        "required": [
+                                            "up"
+                                        ],
+                                        "additionalProperties": true
+                                    }
+                                },
+                                "example": {
+                                    "other_lambdas": {},
+                                    "queues": {},
+                                    "progress": {},
+                                    "api_endpoints": {},
+                                    "elasticsearch": {},
+                                    "up": false
+                                }
+                            }
+                        }
+                    },
                     "504": {
                         "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
@@ -682,50 +891,6 @@
                                 }
                             }
                         }
-                    },
-                    "503": {
-                        "description": "\nAt least one of the checked resources\nis not healthy.\n\nThe response consists of the following keys:\n\n* `other_lambdas` \nIndicates whether the companion REST API responds to HTTP requests.\n* `queues` \nReturns information about the SQS queues used by the indexer and the\nmirror.\n* `progress` \nThe number of Data Store bundles pending to be indexed and the number\nof index documents in need of updating.\n* `api_endpoints` \nIndicates whether important service API endpoints are operational.\n* `elasticsearch` \nIndicates whether the Elasticsearch cluster is responsive.\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`false`.\n\n\nAt least one of the nested `up` keys\nis `false`.\n",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "up": {
-                                            "type": "boolean",
-                                            "enum": [
-                                                false
-                                            ]
-                                        }
-                                    },
-                                    "required": [
-                                        "up"
-                                    ],
-                                    "additionalProperties": {
-                                        "type": "object",
-                                        "properties": {
-                                            "up": {
-                                                "type": "boolean",
-                                                "enum": [
-                                                    false
-                                                ]
-                                            }
-                                        },
-                                        "required": [
-                                            "up"
-                                        ],
-                                        "additionalProperties": true
-                                    }
-                                },
-                                "example": {
-                                    "other_lambdas": {},
-                                    "queues": {},
-                                    "progress": {},
-                                    "api_endpoints": {},
-                                    "elasticsearch": {},
-                                    "up": false
-                                }
-                            }
-                        }
                     }
                 },
                 "summary": "Selective health check",
@@ -738,6 +903,21 @@
         "/index/catalogs": {
             "get": {
                 "responses": {
+                    "400": {
+                        "description": "Bad request. The request was rejected due to malformed parameters."
+                    },
+                    "429": {
+                        "description": "Too many requests. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
+                    "500": {
+                        "description": "Internal server error. An internal server error occurred."
+                    },
+                    "502": {
+                        "description": "Bad gateway. The server received an invalid response from the upstream server."
+                    },
+                    "503": {
+                        "description": "Service unavailable. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
                     "504": {
                         "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
@@ -838,6 +1018,21 @@
         "/index/{entity_type}/{entity_id}": {
             "get": {
                 "responses": {
+                    "400": {
+                        "description": "Bad request. The request was rejected due to malformed parameters."
+                    },
+                    "429": {
+                        "description": "Too many requests. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
+                    "500": {
+                        "description": "Internal server error. An internal server error occurred."
+                    },
+                    "502": {
+                        "description": "Bad gateway. The server received an invalid response from the upstream server."
+                    },
+                    "503": {
+                        "description": "Service unavailable. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
                     "504": {
                         "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
@@ -973,6 +1168,21 @@
         "/index/{entity_type}": {
             "head": {
                 "responses": {
+                    "400": {
+                        "description": "Bad request. The request was rejected due to malformed parameters."
+                    },
+                    "429": {
+                        "description": "Too many requests. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
+                    "500": {
+                        "description": "Internal server error. An internal server error occurred."
+                    },
+                    "502": {
+                        "description": "Bad gateway. The server received an invalid response from the upstream server."
+                    },
+                    "503": {
+                        "description": "Service unavailable. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
                     "504": {
                         "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
@@ -2484,6 +2694,21 @@
             },
             "post": {
                 "responses": {
+                    "400": {
+                        "description": "Bad request. The request was rejected due to malformed parameters."
+                    },
+                    "429": {
+                        "description": "Too many requests. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
+                    "500": {
+                        "description": "Internal server error. An internal server error occurred."
+                    },
+                    "502": {
+                        "description": "Bad gateway. The server received an invalid response from the upstream server."
+                    },
+                    "503": {
+                        "description": "Service unavailable. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
                     "504": {
                         "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
@@ -4107,6 +4332,21 @@
             },
             "get": {
                 "responses": {
+                    "400": {
+                        "description": "Bad request. The request was rejected due to malformed parameters."
+                    },
+                    "429": {
+                        "description": "Too many requests. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
+                    "500": {
+                        "description": "Internal server error. An internal server error occurred."
+                    },
+                    "502": {
+                        "description": "Bad gateway. The server received an invalid response from the upstream server."
+                    },
+                    "503": {
+                        "description": "Service unavailable. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
                     "504": {
                         "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
@@ -5732,6 +5972,21 @@
         "/index/summary": {
             "head": {
                 "responses": {
+                    "400": {
+                        "description": "Bad request. The request was rejected due to malformed parameters."
+                    },
+                    "429": {
+                        "description": "Too many requests. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
+                    "500": {
+                        "description": "Internal server error. An internal server error occurred."
+                    },
+                    "502": {
+                        "description": "Bad gateway. The server received an invalid response from the upstream server."
+                    },
+                    "503": {
+                        "description": "Service unavailable. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
                     "504": {
                         "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
@@ -7088,6 +7343,21 @@
             },
             "get": {
                 "responses": {
+                    "400": {
+                        "description": "Bad request. The request was rejected due to malformed parameters."
+                    },
+                    "429": {
+                        "description": "Too many requests. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
+                    "500": {
+                        "description": "Internal server error. An internal server error occurred."
+                    },
+                    "502": {
+                        "description": "Bad gateway. The server received an invalid response from the upstream server."
+                    },
+                    "503": {
+                        "description": "Service unavailable. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
                     "504": {
                         "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
@@ -8518,6 +8788,21 @@
         "/manifest/files": {
             "put": {
                 "responses": {
+                    "400": {
+                        "description": "Bad request. The request was rejected due to malformed parameters."
+                    },
+                    "429": {
+                        "description": "Too many requests. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
+                    "500": {
+                        "description": "Internal server error. An internal server error occurred."
+                    },
+                    "502": {
+                        "description": "Bad gateway. The server received an invalid response from the upstream server."
+                    },
+                    "503": {
+                        "description": "Service unavailable. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
                     "504": {
                         "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
@@ -9931,6 +10216,21 @@
             ],
             "get": {
                 "responses": {
+                    "400": {
+                        "description": "Bad request. The request was rejected due to malformed parameters."
+                    },
+                    "429": {
+                        "description": "Too many requests. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
+                    "500": {
+                        "description": "Internal server error. An internal server error occurred."
+                    },
+                    "502": {
+                        "description": "Bad gateway. The server received an invalid response from the upstream server."
+                    },
+                    "503": {
+                        "description": "Service unavailable. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
                     "504": {
                         "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
@@ -9979,6 +10279,21 @@
         "/fetch/manifest/files": {
             "put": {
                 "responses": {
+                    "400": {
+                        "description": "Bad request. The request was rejected due to malformed parameters."
+                    },
+                    "429": {
+                        "description": "Too many requests. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
+                    "500": {
+                        "description": "Internal server error. An internal server error occurred."
+                    },
+                    "502": {
+                        "description": "Bad gateway. The server received an invalid response from the upstream server."
+                    },
+                    "503": {
+                        "description": "Service unavailable. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
                     "504": {
                         "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
@@ -11407,6 +11722,21 @@
             ],
             "get": {
                 "responses": {
+                    "400": {
+                        "description": "Bad request. The request was rejected due to malformed parameters."
+                    },
+                    "429": {
+                        "description": "Too many requests. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
+                    "500": {
+                        "description": "Internal server error. An internal server error occurred."
+                    },
+                    "502": {
+                        "description": "Bad gateway. The server received an invalid response from the upstream server."
+                    },
+                    "503": {
+                        "description": "Service unavailable. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
                     "504": {
                         "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
@@ -11467,6 +11797,21 @@
         "/repository/files/{file_uuid}": {
             "get": {
                 "responses": {
+                    "400": {
+                        "description": "Bad request. The request was rejected due to malformed parameters."
+                    },
+                    "429": {
+                        "description": "Too many requests. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
+                    "500": {
+                        "description": "Internal server error. An internal server error occurred."
+                    },
+                    "502": {
+                        "description": "Bad gateway. The server received an invalid response from the upstream server."
+                    },
+                    "503": {
+                        "description": "Service unavailable. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
                     "504": {
                         "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
@@ -11605,6 +11950,21 @@
         "/fetch/repository/files/{file_uuid}": {
             "get": {
                 "responses": {
+                    "400": {
+                        "description": "Bad request. The request was rejected due to malformed parameters."
+                    },
+                    "429": {
+                        "description": "Too many requests. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
+                    "500": {
+                        "description": "Internal server error. An internal server error occurred."
+                    },
+                    "502": {
+                        "description": "Bad gateway. The server received an invalid response from the upstream server."
+                    },
+                    "503": {
+                        "description": "Service unavailable. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
                     "504": {
                         "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
@@ -11731,6 +12091,21 @@
         "/repository/sources": {
             "get": {
                 "responses": {
+                    "400": {
+                        "description": "Bad request. The request was rejected due to malformed parameters."
+                    },
+                    "429": {
+                        "description": "Too many requests. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
+                    "500": {
+                        "description": "Internal server error. An internal server error occurred."
+                    },
+                    "502": {
+                        "description": "Bad gateway. The server received an invalid response from the upstream server."
+                    },
+                    "503": {
+                        "description": "Service unavailable. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
                     "504": {
                         "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },

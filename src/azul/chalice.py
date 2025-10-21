@@ -877,8 +877,30 @@ class AzulChaliceApp(Chalice):
         return locals()
 
     def default_specs(self):
+        retry_after = format_description('''
+            When handling this response, clients should wait the number of seconds
+            specified in the `Retry-After` header and then retry the request.
+        ''')
         return {
             'responses': {
+                '400': {
+                    'description': 'Bad request. The request was rejected due '
+                                   'to malformed parameters.'
+                },
+                '429': {
+                    'description': 'Too many requests. ' + retry_after
+                },
+                '500': {
+                    'description': 'Internal server error. An internal server '
+                                   'error occurred.'
+                },
+                '502': {
+                    'description': 'Bad gateway. The server received an '
+                                   'invalid response from the upstream server.'
+                },
+                '503': {
+                    'description': 'Service unavailable. ' + retry_after
+                },
                 '504': {
                     'description': 'Gateway timeout. The server did not '
                                    'respond in time. Please try again later.'
