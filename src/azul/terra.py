@@ -659,8 +659,6 @@ class TDRClient(SAMClient):
             return None, None
         else:
             url = self._duos_endpoint('dataset', 'registration', duos_id)
-            # FIXME: Fail on timeout instead of faking response
-            #        https://github.com/DataBiosphere/azul/issues/7230
             try:
                 response = self._request('GET', url)
             except LimitedTimeoutException:
