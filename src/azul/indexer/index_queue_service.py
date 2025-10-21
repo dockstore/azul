@@ -147,13 +147,15 @@ class IndexQueueService:
         for source_spec in sources:
             source_ref = plugin.resolve_source(source_spec)
             source_ref = plugin.partition_source_for_indexing(catalog, source_ref)
+            prefix = source_ref.prefix
+            assert prefix is not None, source_ref
 
             def message(partition_prefix: str) -> SQSMessage:
                 log.info('Remotely reindexing prefix %r of source_ref %r into catalog %r',
                          partition_prefix, str(source_ref.spec), catalog)
                 return self.index_partition_message(catalog, source_ref, partition_prefix)
 
-            messages = map(message, source_ref.spec.prefix.partition_prefixes())
+            messages = map(message, prefix.partition_prefixes())
             self.queue_notifications(messages)
 
     def remote_reindex_partition(self, message: JSON) -> None:

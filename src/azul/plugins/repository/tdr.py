@@ -130,7 +130,8 @@ class TDRPlugin[TDR_BUNDLE: TDRBundle,
         }
         return [
             TDRSourceRef(id=id,
-                         spec=configured_specs_by_name[name])
+                         spec=configured_specs_by_name[name],
+                         prefix=None)
             for name, id in snapshot_ids_by_name.items()
         ]
 
