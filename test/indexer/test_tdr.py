@@ -61,6 +61,9 @@ from azul.bigquery import (
 from azul.docker import (
     resolve_docker_image_for_launch,
 )
+from azul.indexer import (
+    Prefix,
+)
 from azul.logging import (
     configure_test_logging,
     get_test_logger,
@@ -270,7 +273,7 @@ class TestTDRHCAPlugin(DCP2CannedBundleTestCase,
     def _plugin_cls(cls) -> Type[tdr_hca.Plugin]:
         return tdr_hca.Plugin
 
-    def test_list_bundles(self):
+    def test_list_and_count_bundles(self):
         source = self.source
         current_version = '2001-01-01T00:00:00.100001Z'
         links_ids = ['42-abc', '42-def', '42-ghi', '86-xyz']
@@ -287,9 +290,53 @@ class TestTDRHCAPlugin(DCP2CannedBundleTestCase,
             TDRBundleFQID(source=source, uuid='42-def', version=current_version),
             TDRBundleFQID(source=source, uuid='42-ghi', version=current_version)
         ]
-        actual_bundle_ids = self.plugin.list_bundles(source, prefix='42')
-        actual_bundle_ids.sort(key=attrgetter('uuid'))
-        self.assertEqual(expected_bundle_ids, actual_bundle_ids)
+        with self.subTest('list_bundles'):
+            actual_bundle_ids = self.plugin.list_bundles(source, prefix='42')
+            actual_bundle_ids.sort(key=attrgetter('uuid'))
+            self.assertEqual(expected_bundle_ids, actual_bundle_ids)
+        with self.subTest('count_bundles_unpartitioned'):
+            unpartitioned_src = attr.evolve(source, prefix=None)
+            actual_bundle_count = self.plugin.count_bundles(unpartitioned_src)
+            self.assertEqual(len(links_ids), actual_bundle_count)
+        with self.subTest('count_bundles_partitioned'):
+            partitioned_src = attr.evolve(source, prefix=Prefix.parse('42/0'))
+            actual_bundle_count = self.plugin.count_bundles(partitioned_src)
+            self.assertEqual(len(expected_bundle_ids), actual_bundle_count)
+
+    def test_list_and_count_files(self):
+        source = self.source
+        self._make_mock_tdr_tables(source)
+        tables = self._load_canned_file_version(uuid=source.id,
+                                                version=None,
+                                                extension='tables.tdr')['tables']
+        all_files = [
+            row['descriptor']
+            for table_name, table_contents in tables.items()
+            if table_name.endswith('_file')
+            for row in table_contents['rows']
+        ]
+        prefix = '3'
+        partition_file_uuids = [
+            file['file_id']
+            for file in all_files
+            if file['sha256'].startswith(prefix)
+        ]
+        self.assertGreater(len(partition_file_uuids), 0, 'Empty prefix')
+        with mock.patch.object(tdr_hca.Plugin, '_assert_partition'):
+            with self.subTest('list_files'):
+                actual_file_uuids = [
+                    file.uuid
+                    for file in self.plugin.list_files(source, prefix=prefix)
+                ]
+                self.assertEqual(partition_file_uuids, actual_file_uuids)
+        with self.subTest('count_files_unpartitioned'):
+            unpartitioned_src = attr.evolve(source, prefix=None)
+            actual_file_count = self.plugin.count_files(unpartitioned_src)
+            self.assertEqual(len(all_files), actual_file_count)
+        with self.subTest('count_files_partitioned'):
+            partitioned_src = attr.evolve(source, prefix=Prefix.parse(f'{prefix}/0'))
+            actual_file_count = self.plugin.count_files(partitioned_src)
+            self.assertEqual(len(partition_file_uuids), actual_file_count)
 
     def test_fetch_bundle(self):
         fqid = self.bundle_fqid(uuid='1b6d8348-d6e9-406a-aa6a-7ee886e52bf9',
