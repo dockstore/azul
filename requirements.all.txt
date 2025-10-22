@@ -61,10 +61,10 @@ mccabe==0.7.0
 more-itertools==10.8.0
 moto==5.1.14
 msgpack==1.1.2
-mypy==1.17.1
+mypy==1.18.2
 mypy-boto3-apigateway==1.40.0
 mypy-boto3-cloudwatch==1.40.38
-mypy-boto3-dynamodb==1.40.44
+mypy-boto3-dynamodb==1.40.56
 mypy-boto3-ec2==1.40.55
 mypy-boto3-ecr==1.40.0
 mypy-boto3-es==1.40.55

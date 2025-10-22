@@ -55,6 +55,7 @@ from azul.deployment import (
     aws,
 )
 from azul.indexer import (
+    Prefix,
     SourceRef,
 )
 from azul.logging import (
@@ -416,7 +417,7 @@ class DSSTestCase(CatalogTestCase, metaclass=ABCMeta):
         cls._patch_source_cache()
         cls._patch_drs_domain()
 
-    source = DSSSourceRef.for_dss_source('https://fake_dss_instance/v1:/2')
+    source = DSSSourceRef.for_dss_source('https://fake_dss_instance/v1', '/2')
 
     @classmethod
     def _patch_source_cache(cls):
@@ -490,7 +491,8 @@ class TDRTestCase(CatalogTestCase, metaclass=ABCMeta):
 
 class DCP2TestCase(TDRTestCase):
     source = TDRSourceRef(id='d8c20944-739f-4e7d-9161-b720953432ce',
-                          spec=TDRSourceSpec.parse('tdr:bigquery:gcp:test_hca_project:hca_snapshot:/2'))
+                          spec=TDRSourceSpec.parse('tdr:bigquery:gcp:test_hca_project:hca_snapshot'),
+                          prefix=Prefix.parse('/2'))
 
     @classmethod
     def catalog_config(cls) -> dict[CatalogName, Config.Catalog]:
@@ -506,7 +508,8 @@ class DCP2TestCase(TDRTestCase):
 
 class AnvilTestCase(TDRTestCase):
     source = TDRSourceRef(id='6c87f0e1-509d-46a4-b845-7584df39263b',
-                          spec=TDRSourceSpec.parse('tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0'))
+                          spec=TDRSourceSpec.parse('tdr:bigquery:gcp:test_anvil_project:anvil_snapshot'),
+                          prefix=Prefix.parse('/0'))
 
     @classmethod
     def catalog_config(cls) -> dict[CatalogName, Config.Catalog]:

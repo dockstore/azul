@@ -64,6 +64,7 @@ class TestRequestBuilder(DCP1CannedBundleTestCase, WebServiceTestCase):
         def special_fields(self) -> SpecialFields:
             return SpecialFields(source_id='sourceId',
                                  source_spec='sourceSpec',
+                                 source_prefix='sourcePrefix',
                                  bundle_uuid='bundleUuid',
                                  bundle_version='bundleVersion',
                                  root_entity_id='projectId')

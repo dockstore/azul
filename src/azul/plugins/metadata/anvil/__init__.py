@@ -272,6 +272,7 @@ class Plugin(MetadataPlugin[AnvilBundle]):
     def special_fields(self) -> SpecialFields:
         return SpecialFields(source_id='source_id',
                              source_spec='source_spec',
+                             source_prefix='source_prefix',
                              bundle_uuid='bundle_uuid',
                              bundle_version='bundle_version',
                              root_entity_id='datasets.dataset_id')
