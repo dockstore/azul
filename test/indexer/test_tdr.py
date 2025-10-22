@@ -196,17 +196,17 @@ class TDRPluginTestCase(TDRTestCase,
         tables = self._load_canned_file_version(uuid=source.id,
                                                 version=None,
                                                 extension='tables.tdr')['tables']
-        for table_name, table_rows in tables.items():
+        for table_name, table_contents in tables.items():
             self._make_mock_entity_table(source.spec,
                                          table_name,
-                                         table_rows['rows'])
+                                         table_contents['rows'])
         return tables
 
     def _make_mock_entity_table(self,
                                 source: TDRSourceSpec,
                                 table_name: str,
                                 rows: JSONs) -> None:
-        schema = self._bq_schema(rows[0])
+        schema = self._bq_schema_from_row(rows[0])
         columns = {column.name for column in schema}
         json_type = reify(JSON)
 
@@ -232,7 +232,7 @@ class TDRPluginTestCase(TDRTestCase,
         self.addCleanup(bq.delete_table, table)
         bq.insert_rows(table=table, selected_fields=schema, rows=map(dump_row, rows))
 
-    def _bq_schema(self, row: BigQueryRow) -> list[bigquery.SchemaField]:
+    def _bq_schema_from_row(self, row: BigQueryRow) -> list[bigquery.SchemaField]:
 
         def field_type(key: str, value: AnyJSON) -> str:
             if key == 'version':
