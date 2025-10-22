@@ -3,12 +3,9 @@ from collections.abc import (
 )
 import json
 import os
-from typing import (
-    Optional,
-)
 
 
-def env() -> Mapping[str, Optional[str]]:
+def env() -> Mapping[str, str | None]:
     """
     Returns a dictionary that maps environment variable names to values. The
     values are either None or strings. String values can contain references to
@@ -76,42 +73,15 @@ def env() -> Mapping[str, Optional[str]]:
         # source = TDR source | canned source | DSS source;
         #
         # TDR source = 'tdr:', Google Cloud project name,
-        #              ':', TDR dataset or snapshot name,
-        #              ':', [ prefix ],
-        #              '/', partition prefix length ;
+        #              ':', TDR dataset or snapshot name
         #
         # canned source = 'https://github.com',
         #                 '/', owner,
         #                 '/', repo,
         #                 '/tree/', ref,
-        #                 ['/', path],
-        #                 ':', [ prefix ],
-        #                 '/', partition prefix length ;
+        #                 ['/', path]
         #
-        # DSS sources = 'dss.data.humancellatlas.org/v1',
-        #               ':', [ prefix ],
-        #               '/', partition prefix length ;
-        #
-        # The `prefix` is an optional string of hexadecimal digits constraining
-        # the set of indexed subgraphs from the source. A subgraph will be
-        # indexed if its UUID begins with the `prefix`. The default `prefix` is
-        # the empty string.
-        #
-        # The partition prefix length is an integer that is used to further
-        # partition the set of indexed subgraphs. Each partition is assigned a
-        # prefix of `partition prefix length` hexadecimal digits. A subgraph
-        # belongs to a partition if its UUID starts with the overall `prefix`
-        # followed by the partition's prefix. The number of partitions of a
-        # source is therefore `16 ** partition prefix length`. Partition
-        # prefixes that are too long result in many small or even empty
-        # partitions and waste some amount of resources. Partition prefixes that
-        # are too short result in few large partitions that could exceed the
-        # memory and running time limitations of the AWS Lambda function that
-        # processes them. If in doubt err on the side of too many small
-        # partitions.
-        #
-        # The `partition prefix length` plus the length of `prefix` must not
-        # exceed 8.
+        # DSS source = 'dss.data.humancellatlas.org/v1',
         #
         # `ref` can be a branch, tag, or commit SHA. If `ref` contains special
         # characters like `/`, '?` or `#` they must be URL-encoded.
@@ -268,7 +238,7 @@ def env() -> Mapping[str, Optional[str]]:
         # `make -C terraform update_schema`, and committing the resulting
         # changes.
         #
-        'azul_terraform_version': '1.12.2',
+        'azul_terraform_version': '1.13.4',
 
         # When building the Azul image on a FIPS mode enabled system (e.g.
         # GitLab), this variable should be set to `/proc/sys/crypto`, the path
@@ -300,7 +270,7 @@ def env() -> Mapping[str, Optional[str]]:
                 'url': 'https://hub.docker.com/_/python',
             },
             'pycharm': {
-                'ref': 'docker.io/ucscgi/azul-pycharm:2024.3.6-63',
+                'ref': 'docker.io/ucscgi/azul-pycharm:2025.2.3-64',
                 'url': 'https://hub.docker.com/repository/docker/ucscgi/azul-pycharm',
                 'is_custom': True
             },

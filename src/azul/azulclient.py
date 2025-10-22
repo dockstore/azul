@@ -140,7 +140,7 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
                 'transaction_id': str(uuid.uuid4()),
                 'bundle_fqid': bundle_fqid.to_json()
             }
-            for source in map(plugin.resolve_source, config.sources(catalog))
+            for source in map(plugin.resolve_source, plugin.sources)
             for bundle_fqid in service.list_bundles(catalog, source, prefix)
         ]
         self.index(catalog, notifications)

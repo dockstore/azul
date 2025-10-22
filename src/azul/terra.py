@@ -128,65 +128,36 @@ class TDRSourceSpec(SourceSpec):
     def parse(cls, spec: str) -> Self:
         """
         Construct an instance from its string representation, using the syntax
-        'tdr:{type}:{domain}:{subdomain}:{name}:{prefix}', where prefix is
-        either the empty string or '{common_prefix}/{partition_prefix}'.
+        'tdr:{type}:{domain}:{subdomain}:{name}'.
 
-        >>> s = TDRSourceSpec.parse('tdr:bigquery:gcp:foo:bar:/0')
+        >>> s = TDRSourceSpec.parse('tdr:bigquery:gcp:foo:bar')
         >>> s # doctest: +NORMALIZE_WHITESPACE
-        TDRSourceSpec(prefix=Prefix(common='', partition=0),
-                      type=<Type.bigquery: 'bigquery'>,
+        TDRSourceSpec(type=<Type.bigquery: 'bigquery'>,
                       domain=<Domain.gcp: 'gcp'>,
                       subdomain='foo',
                       name='bar')
 
         >>> str(s)
-        'tdr:bigquery:gcp:foo:bar:/0'
+        'tdr:bigquery:gcp:foo:bar'
 
-        >>> TDRSourceSpec.parse('tdr:spam:gcp:foo:bar:/0')
+        >>> TDRSourceSpec.parse('tdr:spam:gcp:foo:bar')
         Traceback (most recent call last):
         ...
         ValueError: 'spam' is not a valid TDRSourceSpec.Type
 
-        >>> TDRSourceSpec.parse('tdr:bigquery:eggs:foo:bar:/0')
+        >>> TDRSourceSpec.parse('tdr:bigquery:eggs:foo:bar')
         Traceback (most recent call last):
         ...
         ValueError: 'eggs' is not a valid TDRSourceSpec.Domain
-
-        If any :'s are missing, the last part will be interpreted as the prefix
-
-        >>> TDRSourceSpec.parse('tdr:bigquery:gcp:foo:bar')
-        Traceback (most recent call last):
-        ...
-        ValueError: ('Missing partition prefix length', 'bar')
-
-        >>> TDRSourceSpec.parse('tdr:bigquery:gcp:foo:bar:')
-        ... # doctest: +NORMALIZE_WHITESPACE
-        TDRSourceSpec(prefix=None,
-                      type=<Type.bigquery: 'bigquery'>,
-                      domain=<Domain.gcp: 'gcp'>,
-                      subdomain='foo',
-                      name='bar')
-
-        >>> TDRSourceSpec.parse('tdr:bigquery:gcp:foo:aaa')
-        Traceback (most recent call last):
-        ...
-        ValueError: ('Missing partition prefix length', 'aaa')
-
-        >>> TDRSourceSpec.parse('tdr:bigquery:gcp:foo:bar:n32/0')
-        Traceback (most recent call last):
-        ...
-        azul.uuids.InvalidUUIDPrefixError: 'n32' is not a valid UUID prefix.
         """
-        rest, prefix = cls._parse(spec)
         # BigQuery (and by extension the TDR) does not allow : or / in dataset names
-        service, type, domain, subdomain, name = rest.split(':')
+        service, type, domain, subdomain, name = spec.split(':')
         assert service == 'tdr', service
         type = cls.Type(type)
         reject(type == cls.Type.parquet, 'Parquet sources are not yet supported')
         domain = cls.Domain(domain)
         reject(domain == cls.Domain.azure, 'Azure sources are not yet supported')
-        self = cls(prefix=prefix,
-                   type=type,
+        self = cls(type=type,
                    domain=domain,
                    subdomain=subdomain,
                    name=name)
@@ -197,15 +168,7 @@ class TDRSourceSpec(SourceSpec):
         """
         The inverse of :meth:`parse`.
 
-        >>> s = 'tdr:bigquery:gcp:foo:bar:/0'
-        >>> s == str(TDRSourceSpec.parse(s))
-        True
-
-        >>> s = 'tdr:bigquery:gcp:foo:bar:22/0'
-        >>> s == str(TDRSourceSpec.parse(s))
-        True
-
-        >>> s = 'tdr:bigquery:gcp:foo:bar:22/2'
+        >>> s = 'tdr:bigquery:gcp:foo:bar'
         >>> s == str(TDRSourceSpec.parse(s))
         True
         """
@@ -215,7 +178,6 @@ class TDRSourceSpec(SourceSpec):
             self.domain.value,
             self.subdomain,
             self.name,
-            self._prefix_str
         ])
 
     def qualify_table(self, table_name: str) -> str:
@@ -487,6 +449,14 @@ class TDRClient(SAMClient):
     class _EmptySQLResult(Exception):
         pass
 
+    _retryable_exceptions = (
+        BadRequest,
+        Forbidden,
+        InternalServerError,
+        ServiceUnavailable,
+        _EmptySQLResult
+    )
+
     def run_sql(self, query: str) -> BigQueryRows:
         bigquery = self._bigquery(self.service_account_credentials.project_id)
         if log.isEnabledFor(logging.DEBUG):
@@ -508,13 +478,7 @@ class TDRClient(SAMClient):
                     job_info = self._job_info(job, result)
                     if not self._job_has_result(job_info):
                         raise self._EmptySQLResult
-                except (
-                    BadRequest,
-                    Forbidden,
-                    InternalServerError,
-                    ServiceUnavailable,
-                    self._EmptySQLResult
-                ) as e:
+                except self._retryable_exceptions as e:
                     if delay is None:
                         raise e
                     elif isinstance(e, Forbidden) and 'Exceeded rate limits' not in e.message:
@@ -695,14 +659,15 @@ class TDRClient(SAMClient):
             return None, None
         else:
             url = self._duos_endpoint('dataset', 'registration', duos_id)
-            # FIXME: Fail on timeout instead of faking response
-            #        https://github.com/DataBiosphere/azul/issues/7230
             try:
                 response = self._request('GET', url)
             except LimitedTimeoutException:
                 body = {'studyDescription': '[Description currently not available]'}
                 return duos_id, body
-            if response.status == 404:
+            if response.status == 401:
+                body = {'studyDescription': '[Description currently not accessible]'}
+                return duos_id, body
+            elif response.status == 404:
                 log.warning('No DUOS dataset registration with ID %r from %r',
                             duos_id, source.spec)
                 return None, None

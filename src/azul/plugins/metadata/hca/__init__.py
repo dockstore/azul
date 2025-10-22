@@ -1,3 +1,4 @@
+import logging
 from typing import (
     Iterable,
     Self,
@@ -13,9 +14,13 @@ from azul import (
     R,
     config,
     iif,
+    json_mapping,
 )
 from azul.digests import (
     Digest,
+)
+from azul.drs import (
+    RegularDRSURI,
 )
 from azul.indexer.document import (
     Aggregate,
@@ -71,6 +76,8 @@ from azul.types import (
 from humancellatlas.data.metadata import (
     api,
 )
+
+log = logging.getLogger(__name__)
 
 
 class Plugin(MetadataPlugin[HCABundle]):
@@ -295,6 +302,7 @@ class Plugin(MetadataPlugin[HCABundle]):
     def special_fields(self) -> SpecialFields:
         return SpecialFields(source_id='sourceId',
                              source_spec='sourceSpec',
+                             source_prefix='sourcePrefix',
                              bundle_uuid='bundleUuid',
                              bundle_version='bundleVersion',
                              root_entity_id='projectId')
@@ -491,12 +499,40 @@ class HCAFile(File):
                    s3_etag=optional(json_str, hit.get('s3_etag')))
 
     @classmethod
+    def _parse_drs_uri(cls, file_id: str | None, descriptor: JSON) -> str | None:
+        if file_id is None:
+            try:
+                external_drs_uri = descriptor['drs_uri']
+            except KeyError:
+                assert False, R(
+                    '`file_id` is null and `drs_uri` is not set in file descriptor',
+                    descriptor)
+            else:
+                # FIXME: Support non-null DRS URIs in file descriptors
+                #        https://github.com/DataBiosphere/azul/issues/3631
+                if external_drs_uri is not None:
+                    log.warning('Non-null `drs_uri` in file descriptor (%s)', external_drs_uri)
+                    external_drs_uri = None
+                return external_drs_uri
+        else:
+            # This requirement prevent mismatches in the DRS domain, and ensures
+            # that changes to the column syntax don't go undetected.
+            parsed = RegularDRSURI.parse(file_id)
+            assert parsed.uri.netloc == config.tdr_service_url.netloc, R(
+                'Unexpected DRS URI location', parsed.uri)
+            return file_id
+
+    @classmethod
     def from_metadata(cls,
-                      descriptor: JSON,
                       *,
-                      uuid: str,
-                      name: str,
-                      drs_uri: str | None) -> Self:
+                      metadata: JSON,
+                      descriptor: JSON,
+                      drs_uri: str | None
+                      ) -> Self:
+        # FIXME: Move validation of descriptor to the metadata API
+        #        https://github.com/DataBiosphere/azul/issues/6299
+        api.Entity.validate_described_by(descriptor)
+        drs_uri = cls._parse_drs_uri(drs_uri, descriptor)
         content_type = json_str(descriptor['content_type'])
         # FIXME: Obsolete MIME parameter in file content types
         #        https://github.com/HumanCellAtlas/dcp2/issues/73
@@ -508,8 +544,8 @@ class HCAFile(File):
             #        https://github.com/DataBiosphere/azul/issues/7244
             assert True or ';' not in content_type, R(
                 'Unexpected MIME parameter in content type', content_type)
-        return cls(uuid=uuid,
-                   name=name,
+        return cls(uuid=json_str(descriptor['file_id']),
+                   name=json_str(json_mapping(metadata['file_core'])['file_name']),
                    version=json_str(descriptor['file_version']),
                    size=json_int(descriptor['size']),
                    content_type=content_type,

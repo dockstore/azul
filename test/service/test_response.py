@@ -45,6 +45,7 @@ from azul.collections import (
 )
 from azul.indexer import (
     BundleFQID,
+    Prefix,
     SourcedBundleFQID,
 )
 from azul.indexer.document import (
@@ -199,159 +200,160 @@ class TestIndexResponse(IndexResponseTestCase):
         """
         hits = [
             {
-                "bundles": [
+                'bundles': [
                     {
-                        "bundleUuid": "aaa96233-bf27-44c7-82df-b4dc15ad4d9d",
-                        "bundleVersion": "2018-11-02T11:33:44.698028Z"
+                        'bundleUuid': 'aaa96233-bf27-44c7-82df-b4dc15ad4d9d',
+                        'bundleVersion': '2018-11-02T11:33:44.698028Z'
                     }
                 ],
-                "cellLines": [
+                'cellLines': [
 
                 ],
-                "cellSuspensions": [
+                'cellSuspensions': [
                     {
-                        "organ": ["pancreas"],
-                        "organPart": ["islet of Langerhans"],
-                        "selectedCellType": [None],
-                        "totalCells": 1,
-                        "totalCellsRedundant": 0,
+                        'organ': ['pancreas'],
+                        'organPart': ['islet of Langerhans'],
+                        'selectedCellType': [None],
+                        'totalCells': 1,
+                        'totalCellsRedundant': 0,
                     }
                 ],
-                "donorOrganisms": [
+                'donorOrganisms': [
                     {
-                        "biologicalSex": ["female"],
-                        "disease": ['normal'],
-                        "developmentStage": [None],
-                        "genusSpecies": ["Australopithecus"],
-                        "id": ["DID_scRSq06"],
-                        "donorCount": 1,
-                        "organismAge": [{"value": "38", "unit": "year"}],
-                        "organismAgeRange": [[1198368000.0, 1198368000.0]],
+                        'biologicalSex': ['female'],
+                        'disease': ['normal'],
+                        'developmentStage': [None],
+                        'genusSpecies': ['Australopithecus'],
+                        'id': ['DID_scRSq06'],
+                        'donorCount': 1,
+                        'organismAge': [{'value': '38', 'unit': 'year'}],
+                        'organismAgeRange': [[1198368000.0, 1198368000.0]],
                     }
                 ],
-                "entryId": "0c5ac7c0-817e-40d4-b1b1-34c3d5cfecdb",
-                "files": [
+                'entryId': '0c5ac7c0-817e-40d4-b1b1-34c3d5cfecdb',
+                'files': [
                     {
-                        "contentDescription": [None],
-                        "format": "fastq.gz",
-                        "matrixCellCount": None,
-                        "isIntermediate": None,
-                        "name": "SRR3562915_1.fastq.gz",
-                        "sha256": "77337cb51b2e584b5ae1b99db6c163b988cbc5b894dda2f5d22424978c3bfc7a",
-                        "size": 195142097,
-                        "fileSource": None,
+                        'contentDescription': [None],
+                        'format': 'fastq.gz',
+                        'matrixCellCount': None,
+                        'isIntermediate': None,
+                        'name': 'SRR3562915_1.fastq.gz',
+                        'sha256': '77337cb51b2e584b5ae1b99db6c163b988cbc5b894dda2f5d22424978c3bfc7a',
+                        'size': 195142097,
+                        'fileSource': None,
                         **{
                             field: f'{self.base_url}/repository/files/'
                                    f'7b07f99e-4a8a-4ad0-bd4f-db0d7a00c7bb'
                                    f'?catalog=test&version=2018-11-02T11%3A33%3A44.698028Z'
                             for field in ['azul_url', 'url']
                         },
-                        "drs_uri": f"drs://{self._drs_domain_name}/"
-                                   f"7b07f99e-4a8a-4ad0-bd4f-db0d7a00c7bb?version=2018-11-02T11%3A33%3A44.698028Z",
-                        "uuid": "7b07f99e-4a8a-4ad0-bd4f-db0d7a00c7bb",
-                        "version": "2018-11-02T11:33:44.698028Z"
+                        'drs_uri': f'drs://{self._drs_domain_name}/'
+                                   f'7b07f99e-4a8a-4ad0-bd4f-db0d7a00c7bb?version=2018-11-02T11%3A33%3A44.698028Z',
+                        'uuid': '7b07f99e-4a8a-4ad0-bd4f-db0d7a00c7bb',
+                        'version': '2018-11-02T11:33:44.698028Z'
                     }
                 ],
-                "organoids": [
+                'organoids': [
 
                 ],
-                "projects": [
+                'projects': [
                     {
-                        "laboratory": ["John Dear"],
-                        "projectId": ["e8642221-4c2c-4fd7-b926-a68bce363c88"],
-                        "projectShortname": ["Single of human pancreas"],
-                        "projectTitle": ["Single cell transcriptome patterns."],
-                        "bionetworkName": [None],
-                        "isTissueAtlasProject": [False],
-                        "tissueAtlas": [],
-                        "estimatedCellCount": None,
-                        "dataUseRestriction": [None],
-                        "duosId": [None],
+                        'laboratory': ['John Dear'],
+                        'projectId': ['e8642221-4c2c-4fd7-b926-a68bce363c88'],
+                        'projectShortname': ['Single of human pancreas'],
+                        'projectTitle': ['Single cell transcriptome patterns.'],
+                        'bionetworkName': [None],
+                        'isTissueAtlasProject': [False],
+                        'tissueAtlas': [],
+                        'estimatedCellCount': None,
+                        'dataUseRestriction': [None],
+                        'duosId': [None],
                     }
                 ],
-                "protocols": [
+                'protocols': [
                     {
-                        "libraryConstructionApproach": ["Smart-seq2"],
-                        "nucleicAcidSource": ["single cell"],
+                        'libraryConstructionApproach': ['Smart-seq2'],
+                        'nucleicAcidSource': ['single cell'],
                     },
                     {
-                        "instrumentManufacturerModel": ["Illumina NextSeq 500"],
-                        "pairedEnd": [True],
+                        'instrumentManufacturerModel': ['Illumina NextSeq 500'],
+                        'pairedEnd': [True],
                     }
                 ],
-                "samples": [
+                'samples': [
                     {
-                        "sampleEntityType": ["specimens"],
-                        "effectiveOrgan": ['pancreas'],
-                        "disease": ["normal"],
-                        "id": ["DID_scRSq06_pancreas"],
-                        "organ": ["pancreas"],
-                        "organPart": ["islet of Langerhans"],
-                        "preservationMethod": [None],
-                        "source": [
-                            "specimen_from_organism",
+                        'sampleEntityType': ['specimens'],
+                        'effectiveOrgan': ['pancreas'],
+                        'disease': ['normal'],
+                        'id': ['DID_scRSq06_pancreas'],
+                        'organ': ['pancreas'],
+                        'organPart': ['islet of Langerhans'],
+                        'preservationMethod': [None],
+                        'source': [
+                            'specimen_from_organism',
                         ],
                     }
                 ],
-                "sources": [{
-                    "sourceId": self.source.id,
-                    "sourceSpec": str(self.source.spec)
+                'sources': [{
+                    'sourceId': self.source.id,
+                    'sourcePrefix': str(self.source.prefix),
+                    'sourceSpec': str(self.source.spec)
                 }],
-                "specimens": [
+                'specimens': [
                     {
-                        "disease": ["normal"],
-                        "id": ["DID_scRSq06_pancreas"],
-                        "organ": ["pancreas"],
-                        "organPart": ["islet of Langerhans"],
-                        "preservationMethod": [None],
-                        "source": [
-                            "specimen_from_organism",
+                        'disease': ['normal'],
+                        'id': ['DID_scRSq06_pancreas'],
+                        'organ': ['pancreas'],
+                        'organPart': ['islet of Langerhans'],
+                        'preservationMethod': [None],
+                        'source': [
+                            'specimen_from_organism',
                         ],
                     }
                 ],
-                "dates": [
+                'dates': [
                     {
-                        "aggregateLastModifiedDate": None,
-                        "aggregateSubmissionDate": None,
-                        "aggregateUpdateDate": None,
-                        "lastModifiedDate": "2018-11-02T10:35:07.705000Z",
-                        "submissionDate": "2018-11-02T10:03:39.600000Z",
-                        "updateDate": "2018-11-02T10:35:07.705000Z",
+                        'aggregateLastModifiedDate': None,
+                        'aggregateSubmissionDate': None,
+                        'aggregateUpdateDate': None,
+                        'lastModifiedDate': '2018-11-02T10:35:07.705000Z',
+                        'submissionDate': '2018-11-02T10:03:39.600000Z',
+                        'updateDate': '2018-11-02T10:35:07.705000Z',
                     }
                 ]
             }
         ]
         responses = [
             {
-                "hits": hits,
-                "pagination": {
-                    "count": 2,
-                    "order": "desc",
-                    "pages": 1,
-                    "next": None,
-                    "previous": None,
-                    "size": 5,
-                    "sort": "entryId",
-                    "total": 2
+                'hits': hits,
+                'pagination': {
+                    'count': 2,
+                    'order': 'desc',
+                    'pages': 1,
+                    'next': None,
+                    'previous': None,
+                    'size': 5,
+                    'sort': 'entryId',
+                    'total': 2
                 },
-                "termFacets": {}
+                'termFacets': {}
             },
             {
-                "hits": hits,
-                "pagination": {
-                    "count": 2,
-                    "order": "desc",
-                    "pages": 1,
-                    "next": str(self.base_url.set(path='/index/files',
+                'hits': hits,
+                'pagination': {
+                    'count': 2,
+                    'order': 'desc',
+                    'pages': 1,
+                    'next': str(self.base_url.set(path='/index/files',
                                                   args=dict(size=5,
                                                             search_after='cbb998ce-ddaf-34fa-e163-d14b399c6b34',
                                                             search_after_uid='meta%2332'))),
-                    "previous": None,
-                    "size": 5,
-                    "sort": "entryId",
-                    "total": 2
+                    'previous': None,
+                    'size': 5,
+                    'sort': 'entryId',
+                    'total': 2
                 },
-                "termFacets": {}
+                'termFacets': {}
             }
         ]
         for n in 0, 1:
@@ -384,38 +386,38 @@ class TestIndexResponse(IndexResponseTestCase):
             self.assertNotIn('files', hit)
 
     canned_aggs = {
-        "organ": {
-            "doc_count": 21,
-            "untagged": {
-                "doc_count": 0
+        'organ': {
+            'doc_count': 21,
+            'untagged': {
+                'doc_count': 0
             },
-            "myTerms": {
-                "doc_count_error_upper_bound": 0,
-                "sum_other_doc_count": 0,
-                "buckets": [
+            'myTerms': {
+                'doc_count_error_upper_bound': 0,
+                'sum_other_doc_count': 0,
+                'buckets': [
                     {
-                        "key": "silver",
-                        "doc_count": 11
+                        'key': 'silver',
+                        'doc_count': 11
                     },
                     {
-                        "key": "teal",
-                        "doc_count": 10
+                        'key': 'teal',
+                        'doc_count': 10
                     }
                 ]
             }
         },
-        "disease": {
-            "doc_count": 21,
-            "untagged": {
-                "doc_count": 12
+        'disease': {
+            'doc_count': 21,
+            'untagged': {
+                'doc_count': 12
             },
-            "myTerms": {
-                "doc_count_error_upper_bound": 0,
-                "sum_other_doc_count": 0,
-                "buckets": [
+            'myTerms': {
+                'doc_count_error_upper_bound': 0,
+                'sum_other_doc_count': 0,
+                'buckets': [
                     {
-                        "key": "silver",
-                        "doc_count": 9
+                        'key': 'silver',
+                        'doc_count': 9
                     }
                 ]
             }
@@ -437,33 +439,33 @@ class TestIndexResponse(IndexResponseTestCase):
                                        file_url_func=self.file_url_func)
         facets = stage.make_facets(self.canned_aggs)
         expected_output = {
-            "organ": {
-                "terms": [
+            'organ': {
+                'terms': [
                     {
-                        "term": "silver",
-                        "count": 11
+                        'term': 'silver',
+                        'count': 11
                     },
                     {
-                        "term": "teal",
-                        "count": 10
+                        'term': 'teal',
+                        'count': 10
                     }
                 ],
-                "total": 21,
-                "type": "terms"
+                'total': 21,
+                'type': 'terms'
             },
-            "disease": {
-                "terms": [
+            'disease': {
+                'terms': [
                     {
-                        "term": "silver",
-                        "count": 9
+                        'term': 'silver',
+                        'count': 9
                     },
                     {
-                        "term": None,
-                        "count": 12
+                        'term': None,
+                        'count': 12
                     }
                 ],
-                "total": 21,
-                "type": "terms"
+                'total': 21,
+                'type': 'terms'
             }
         }
         self.assertElasticEqual(facets, expected_output)
@@ -483,220 +485,221 @@ class TestIndexResponse(IndexResponseTestCase):
         response = stage.process_response((hits, self.paginations[0], self.canned_aggs))
 
         expected_response = {
-            "hits": [
+            'hits': [
                 {
-                    "cellLines": [
+                    'cellLines': [
 
                     ],
-                    "cellSuspensions": [
+                    'cellSuspensions': [
                         {
-                            "organ": ["pancreas"],
-                            "organPart": ["islet of Langerhans"],
-                            "selectedCellType": [None],
-                            "totalCells": 1,
-                            "totalCellsRedundant": 0,
+                            'organ': ['pancreas'],
+                            'organPart': ['islet of Langerhans'],
+                            'selectedCellType': [None],
+                            'totalCells': 1,
+                            'totalCellsRedundant': 0,
                         }
                     ],
-                    "donorOrganisms": [
+                    'donorOrganisms': [
                         {
-                            "biologicalSex": ["female"],
-                            "disease": ['normal'],
-                            "developmentStage": [None],
-                            "genusSpecies": ["Australopithecus"],
-                            "id": ["DID_scRSq06"],
-                            "donorCount": 1,
-                            "organismAge": [{"value": "38", "unit": "year"}],
-                            "organismAgeRange": [[1198368000.0, 1198368000.0]],
+                            'biologicalSex': ['female'],
+                            'disease': ['normal'],
+                            'developmentStage': [None],
+                            'genusSpecies': ['Australopithecus'],
+                            'id': ['DID_scRSq06'],
+                            'donorCount': 1,
+                            'organismAge': [{'value': '38', 'unit': 'year'}],
+                            'organismAgeRange': [[1198368000.0, 1198368000.0]],
                         }
                     ],
-                    "entryId": "e8642221-4c2c-4fd7-b926-a68bce363c88",
-                    "fileTypeSummaries": [
+                    'entryId': 'e8642221-4c2c-4fd7-b926-a68bce363c88',
+                    'fileTypeSummaries': [
                         {
-                            "contentDescription": [None],
-                            "count": 2,
-                            "format": "fastq.gz",
-                            "matrixCellCount": None,
-                            "isIntermediate": None,
-                            "fileSource": [None],
-                            "totalSize": 385472253.0
+                            'contentDescription': [None],
+                            'count': 2,
+                            'format': 'fastq.gz',
+                            'matrixCellCount': None,
+                            'isIntermediate': None,
+                            'fileSource': [None],
+                            'totalSize': 385472253.0
                         }
                     ],
-                    "organoids": [
+                    'organoids': [
                     ],
-                    "projects": [
+                    'projects': [
                         {
-                            "contributors": [
+                            'contributors': [
                                 {
-                                    "contactName": "Matthew,,Green",
-                                    "correspondingContributor": False,
-                                    "email": "hewgreen@ebi.ac.uk",
-                                    "institution": "Farmers Trucks",
-                                    "laboratory": "John Dear",
-                                    "projectRole": "Human Cell Atlas wrangler"
+                                    'contactName': 'Matthew,,Green',
+                                    'correspondingContributor': False,
+                                    'email': 'hewgreen@ebi.ac.uk',
+                                    'institution': 'Farmers Trucks',
+                                    'laboratory': 'John Dear',
+                                    'projectRole': 'Human Cell Atlas wrangler'
                                 },
                                 {
-                                    "contactName": "Martin, Enge",
-                                    "correspondingContributor": None,
-                                    "email": "martin.enge@gmail.com",
-                                    "institution": "University",
-                                    "laboratory": None,
-                                    "projectRole": None
+                                    'contactName': 'Martin, Enge',
+                                    'correspondingContributor': None,
+                                    'email': 'martin.enge@gmail.com',
+                                    'institution': 'University',
+                                    'laboratory': None,
+                                    'projectRole': None
                                 },
                                 {
-                                    "contactName": "Laura,,Huerta",
-                                    "correspondingContributor": False,
-                                    "email": "lauhuema@ebi.ac.uk",
-                                    "institution": "Farmers Trucks",
-                                    "laboratory": "John Dear",
-                                    "projectRole": "external curator"
+                                    'contactName': 'Laura,,Huerta',
+                                    'correspondingContributor': False,
+                                    'email': 'lauhuema@ebi.ac.uk',
+                                    'institution': 'Farmers Trucks',
+                                    'laboratory': 'John Dear',
+                                    'projectRole': 'external curator'
                                 }
                             ],
-                            "laboratory": ["John Dear"],
-                            "projectDescription": "As organisms age, cells accumulate genetic and epigenetic changes "
-                                                  "that eventually lead to impaired organ function or catastrophic "
-                                                  "failure such as cancer. Here we describe a single-cell "
-                                                  "transcriptome analysis of 2544 human pancreas cells from donors, "
-                                                  "spanning six decades of life. We find that islet cells from older "
-                                                  "donors have increased levels of disorder as measured both by noise "
-                                                  "in the transcriptome and by the number of cells which display "
-                                                  "inappropriate hormone expression, revealing a transcriptional "
-                                                  "instability associated with aging. By analyzing the spectrum of "
-                                                  "somatic mutations in single cells from previously-healthy donors, "
-                                                  "we find a specific age-dependent mutational signature "
-                                                  "characterized by C to A and C to G transversions, indicators of "
-                                                  "oxidative stress, which is absent in single cells from human brain "
-                                                  "tissue or in a tumor cell line. Cells carrying a high load of such "
-                                                  "mutations also express higher levels of stress and senescence "
-                                                  "markers, including FOS, JUN, and the cytoplasmic superoxide "
-                                                  "dismutase SOD1, markers previously linked to pancreatic diseases "
-                                                  "with substantial age-dependent risk, such as type 2 diabetes "
-                                                  "mellitus and adenocarcinoma. Thus, our single-cell approach "
-                                                  "unveils gene expression changes and somatic mutations acquired in "
-                                                  "aging human tissue, and identifies molecular pathways induced by "
-                                                  "these genetic changes that could influence human disease. Also, "
-                                                  "our results demonstrate the feasibility of using single-cell "
-                                                  "RNA-seq data from primary cells to derive meaningful insights into "
-                                                  "the genetic processes that operate on aging human tissue and to "
-                                                  "determine which molecular mechanisms are coordinated with these "
-                                                  "processes. Examination of single cells from primary human pancreas "
-                                                  "tissue",
-                            "projectId": "e8642221-4c2c-4fd7-b926-a68bce363c88",
-                            "projectShortname": "Single of human pancreas",
-                            "projectTitle": "Single cell transcriptome patterns.",
-                            "publications": [
+                            'laboratory': ['John Dear'],
+                            'projectDescription': 'As organisms age, cells accumulate genetic and epigenetic changes '
+                                                  'that eventually lead to impaired organ function or catastrophic '
+                                                  'failure such as cancer. Here we describe a single-cell '
+                                                  'transcriptome analysis of 2544 human pancreas cells from donors, '
+                                                  'spanning six decades of life. We find that islet cells from older '
+                                                  'donors have increased levels of disorder as measured both by noise '
+                                                  'in the transcriptome and by the number of cells which display '
+                                                  'inappropriate hormone expression, revealing a transcriptional '
+                                                  'instability associated with aging. By analyzing the spectrum of '
+                                                  'somatic mutations in single cells from previously-healthy donors, '
+                                                  'we find a specific age-dependent mutational signature '
+                                                  'characterized by C to A and C to G transversions, indicators of '
+                                                  'oxidative stress, which is absent in single cells from human brain '
+                                                  'tissue or in a tumor cell line. Cells carrying a high load of such '
+                                                  'mutations also express higher levels of stress and senescence '
+                                                  'markers, including FOS, JUN, and the cytoplasmic superoxide '
+                                                  'dismutase SOD1, markers previously linked to pancreatic diseases '
+                                                  'with substantial age-dependent risk, such as type 2 diabetes '
+                                                  'mellitus and adenocarcinoma. Thus, our single-cell approach '
+                                                  'unveils gene expression changes and somatic mutations acquired in '
+                                                  'aging human tissue, and identifies molecular pathways induced by '
+                                                  'these genetic changes that could influence human disease. Also, '
+                                                  'our results demonstrate the feasibility of using single-cell '
+                                                  'RNA-seq data from primary cells to derive meaningful insights into '
+                                                  'the genetic processes that operate on aging human tissue and to '
+                                                  'determine which molecular mechanisms are coordinated with these '
+                                                  'processes. Examination of single cells from primary human pancreas '
+                                                  'tissue',
+                            'projectId': 'e8642221-4c2c-4fd7-b926-a68bce363c88',
+                            'projectShortname': 'Single of human pancreas',
+                            'projectTitle': 'Single cell transcriptome patterns.',
+                            'publications': [
                                 {
-                                    "doi": "10.1016/j.cell.2017.09.004",
-                                    "officialHcaPublication": None,
-                                    "publicationTitle": "Single-Cell Analysis of Human Pancreas Reveals "
-                                                        "Transcriptional Signatures of Aging and Somatic Mutation "
-                                                        "Patterns.",
-                                    "publicationUrl": "https://www.ncbi.nlm.nih.gov/pubmed/28965763"
+                                    'doi': '10.1016/j.cell.2017.09.004',
+                                    'officialHcaPublication': None,
+                                    'publicationTitle': 'Single-Cell Analysis of Human Pancreas Reveals '
+                                                        'Transcriptional Signatures of Aging and Somatic Mutation '
+                                                        'Patterns.',
+                                    'publicationUrl': 'https://www.ncbi.nlm.nih.gov/pubmed/28965763'
                                 }
                             ],
-                            "supplementaryLinks": [
+                            'supplementaryLinks': [
                                 'https://www.ebi.ac.uk/gxa/sc/experiments/E-GEOD-81547/Results'
                             ],
-                            "estimatedCellCount": None,
-                            "matrices": {},
-                            "contributedAnalyses": {},
-                            "bionetworkName": [None],
-                            "tissueAtlas": [],
-                            "isTissueAtlasProject": False,
-                            "accessions": [],
-                            "dataUseRestriction": None,
-                            "duosId": None,
+                            'estimatedCellCount': None,
+                            'matrices': {},
+                            'contributedAnalyses': {},
+                            'bionetworkName': [None],
+                            'tissueAtlas': [],
+                            'isTissueAtlasProject': False,
+                            'accessions': [],
+                            'dataUseRestriction': None,
+                            'duosId': None,
                         }
                     ],
-                    "protocols": [
+                    'protocols': [
                         {
-                            "libraryConstructionApproach": ["Smart-seq2"],
-                            "nucleicAcidSource": ["single cell"],
+                            'libraryConstructionApproach': ['Smart-seq2'],
+                            'nucleicAcidSource': ['single cell'],
                         },
                         {
-                            "instrumentManufacturerModel": ["Illumina NextSeq 500"],
-                            "pairedEnd": [True],
+                            'instrumentManufacturerModel': ['Illumina NextSeq 500'],
+                            'pairedEnd': [True],
                         }
                     ],
-                    "samples": [
+                    'samples': [
                         {
-                            "sampleEntityType": ["specimens"],
-                            "effectiveOrgan": ["pancreas"],
-                            "disease": ["normal"],
-                            "id": ["DID_scRSq06_pancreas"],
-                            "organ": ["pancreas"],
-                            "organPart": ["islet of Langerhans"],
-                            "preservationMethod": [None],
-                            "source": [
-                                "specimen_from_organism"
+                            'sampleEntityType': ['specimens'],
+                            'effectiveOrgan': ['pancreas'],
+                            'disease': ['normal'],
+                            'id': ['DID_scRSq06_pancreas'],
+                            'organ': ['pancreas'],
+                            'organPart': ['islet of Langerhans'],
+                            'preservationMethod': [None],
+                            'source': [
+                                'specimen_from_organism'
                             ],
                         }
                     ],
-                    "sources": [{
-                        "sourceId": self.source.id,
-                        "sourceSpec": str(self.source.spec)
+                    'sources': [{
+                        'sourceId': self.source.id,
+                        'sourcePrefix': str(self.source.prefix),
+                        'sourceSpec': str(self.source.spec)
                     }],
-                    "specimens": [
+                    'specimens': [
                         {
-                            "disease": ["normal"],
-                            "id": ["DID_scRSq06_pancreas"],
-                            "organ": ["pancreas"],
-                            "organPart": ["islet of Langerhans"],
-                            "preservationMethod": [None],
-                            "source": [
-                                "specimen_from_organism"
+                            'disease': ['normal'],
+                            'id': ['DID_scRSq06_pancreas'],
+                            'organ': ['pancreas'],
+                            'organPart': ['islet of Langerhans'],
+                            'preservationMethod': [None],
+                            'source': [
+                                'specimen_from_organism'
                             ],
                         }
                     ],
-                    "dates": [
+                    'dates': [
                         {
-                            "aggregateLastModifiedDate": "2018-11-02T10:35:07.705000Z",
-                            "aggregateSubmissionDate": "2018-11-02T10:02:12.133000Z",
-                            "aggregateUpdateDate": "2018-11-02T10:35:07.705000Z",
-                            "lastModifiedDate": "2018-11-02T10:07:39.499000Z",
-                            "submissionDate": "2018-11-02T10:02:12.133000Z",
-                            "updateDate": "2018-11-02T10:07:39.499000Z",
+                            'aggregateLastModifiedDate': '2018-11-02T10:35:07.705000Z',
+                            'aggregateSubmissionDate': '2018-11-02T10:02:12.133000Z',
+                            'aggregateUpdateDate': '2018-11-02T10:35:07.705000Z',
+                            'lastModifiedDate': '2018-11-02T10:07:39.499000Z',
+                            'submissionDate': '2018-11-02T10:02:12.133000Z',
+                            'updateDate': '2018-11-02T10:07:39.499000Z',
                         }
                     ]
                 }
             ],
-            "pagination": {
-                "count": 2,
-                "order": "desc",
-                "pages": 1,
-                "next": None,
-                "previous": None,
-                "size": 5,
-                "sort": "entryId",
-                "total": 2
+            'pagination': {
+                'count': 2,
+                'order': 'desc',
+                'pages': 1,
+                'next': None,
+                'previous': None,
+                'size': 5,
+                'sort': 'entryId',
+                'total': 2
             },
-            "termFacets": {
-                "disease": {
-                    "terms": [
+            'termFacets': {
+                'disease': {
+                    'terms': [
                         {
-                            "count": 9,
-                            "term": "silver"
+                            'count': 9,
+                            'term': 'silver'
                         },
                         {
-                            "count": 12,
-                            "term": None
+                            'count': 12,
+                            'term': None
                         }
                     ],
-                    "total": 21,
-                    "type": "terms"
+                    'total': 21,
+                    'type': 'terms'
                 },
-                "organ": {
-                    "terms": [
+                'organ': {
+                    'terms': [
                         {
-                            "count": 11,
-                            "term": "silver"
+                            'count': 11,
+                            'term': 'silver'
                         },
                         {
-                            "count": 10,
-                            "term": "teal"
+                            'count': 10,
+                            'term': 'teal'
                         }
                     ],
-                    "total": 21,
-                    "type": "terms"
+                    'total': 21,
+                    'type': 'terms'
                 }
             }
         }
@@ -718,212 +721,213 @@ class TestIndexResponse(IndexResponseTestCase):
         response = stage.process_response((hits, self.paginations[0], {}))
         expected_hits = [
             {
-                "cellLines": [
+                'cellLines': [
 
                 ],
-                "cellSuspensions": [
+                'cellSuspensions': [
                     {
-                        "organ": ["brain"],
-                        "organPart": ["amygdala"],
-                        "selectedCellType": [None],
-                        "totalCells": 10001,
-                        "totalCellsRedundant": 0,
+                        'organ': ['brain'],
+                        'organPart': ['amygdala'],
+                        'selectedCellType': [None],
+                        'totalCells': 10001,
+                        'totalCellsRedundant': 0,
                     }
                 ],
-                "donorOrganisms": [
+                'donorOrganisms': [
                     {
-                        "biologicalSex": ["male"],
-                        "disease": ['H syndrome'],
-                        "developmentStage": ["human adult stage"],
-                        "genusSpecies": ["Homo sapiens"],
-                        "id": ["donor_ID_1"],
-                        "donorCount": 1,
-                        "organismAge": [{"value": "20", "unit": "year"}],
-                        "organismAgeRange": [[630720000.0, 630720000.0]],
+                        'biologicalSex': ['male'],
+                        'disease': ['H syndrome'],
+                        'developmentStage': ['human adult stage'],
+                        'genusSpecies': ['Homo sapiens'],
+                        'id': ['donor_ID_1'],
+                        'donorCount': 1,
+                        'organismAge': [{'value': '20', 'unit': 'year'}],
+                        'organismAgeRange': [[630720000.0, 630720000.0]],
                     }
                 ],
-                "entryId": "627cb0ba-b8a1-405a-b58f-0add82c3d635",
-                "fileTypeSummaries": [
+                'entryId': '627cb0ba-b8a1-405a-b58f-0add82c3d635',
+                'fileTypeSummaries': [
                     {
-                        "contentDescription": [None],
-                        "count": 1,
-                        "format": "bai",
-                        "matrixCellCount": None,
-                        "isIntermediate": None,
-                        "fileSource": ['DCP/2 Analysis'],
-                        "totalSize": 2395616.0
+                        'contentDescription': [None],
+                        'count': 1,
+                        'format': 'bai',
+                        'matrixCellCount': None,
+                        'isIntermediate': None,
+                        'fileSource': ['DCP/2 Analysis'],
+                        'totalSize': 2395616.0
                     },
                     {
-                        "contentDescription": [None],
-                        "count": 1,
-                        "format": "bam",
-                        "matrixCellCount": None,
-                        "isIntermediate": None,
-                        "fileSource": ['DCP/2 Analysis'],
-                        "totalSize": 55840108
+                        'contentDescription': [None],
+                        'count': 1,
+                        'format': 'bam',
+                        'matrixCellCount': None,
+                        'isIntermediate': None,
+                        'fileSource': ['DCP/2 Analysis'],
+                        'totalSize': 55840108
                     },
                     {
-                        "contentDescription": [None],
-                        "count": 1,
-                        "format": "csv",
-                        "matrixCellCount": None,
-                        "isIntermediate": None,
-                        "fileSource": ['DCP/2 Analysis'],
-                        "totalSize": 665
+                        'contentDescription': [None],
+                        'count': 1,
+                        'format': 'csv',
+                        'matrixCellCount': None,
+                        'isIntermediate': None,
+                        'fileSource': ['DCP/2 Analysis'],
+                        'totalSize': 665
                     },
                     {
-                        "contentDescription": [None],
-                        "count": 1,
-                        "format": "unknown",
-                        "matrixCellCount": None,
-                        "isIntermediate": None,
-                        "fileSource": ['DCP/2 Analysis'],
-                        "totalSize": 2645006
+                        'contentDescription': [None],
+                        'count': 1,
+                        'format': 'unknown',
+                        'matrixCellCount': None,
+                        'isIntermediate': None,
+                        'fileSource': ['DCP/2 Analysis'],
+                        'totalSize': 2645006
                     },
                     {
-                        "contentDescription": [None],
-                        "count": 2,
-                        "format": "mtx",
-                        "matrixCellCount": None,
-                        "isIntermediate": None,
-                        "fileSource": ['DCP/2 Analysis'],
-                        "totalSize": 6561141
+                        'contentDescription': [None],
+                        'count': 2,
+                        'format': 'mtx',
+                        'matrixCellCount': None,
+                        'isIntermediate': None,
+                        'fileSource': ['DCP/2 Analysis'],
+                        'totalSize': 6561141
                     },
                     {
-                        "contentDescription": [None],
-                        "count": 3,
-                        "format": "fastq.gz",
-                        "matrixCellCount": None,
-                        "isIntermediate": None,
-                        "fileSource": [None],
-                        "totalSize": 44668092
+                        'contentDescription': [None],
+                        'count': 3,
+                        'format': 'fastq.gz',
+                        'matrixCellCount': None,
+                        'isIntermediate': None,
+                        'fileSource': [None],
+                        'totalSize': 44668092
                     },
                     {
-                        "contentDescription": [None],
-                        "count": 3,
-                        "format": "h5",
-                        "matrixCellCount": None,
-                        "isIntermediate": None,
-                        "fileSource": ['DCP/2 Analysis'],
-                        "totalSize": 5573714
+                        'contentDescription': [None],
+                        'count': 3,
+                        'format': 'h5',
+                        'matrixCellCount': None,
+                        'isIntermediate': None,
+                        'fileSource': ['DCP/2 Analysis'],
+                        'totalSize': 5573714
                     },
                     {
-                        "contentDescription": [None],
-                        "count": 4,
-                        "format": "tsv",
-                        "matrixCellCount": None,
-                        "isIntermediate": None,
-                        "fileSource": ['DCP/2 Analysis'],
-                        "totalSize": 15872628
+                        'contentDescription': [None],
+                        'count': 4,
+                        'format': 'tsv',
+                        'matrixCellCount': None,
+                        'isIntermediate': None,
+                        'fileSource': ['DCP/2 Analysis'],
+                        'totalSize': 15872628
                     }
                 ],
-                "organoids": [
+                'organoids': [
 
                 ],
-                "projects": [
+                'projects': [
                     {
-                        "contributors": [
+                        'contributors': [
                             {
-                                "contactName": "John,D,Doe. ",
-                                "correspondingContributor": False,
-                                "email": "dummy@email.com",
-                                "institution": "EMBL-EBI",
-                                "laboratory": "Department of Biology",
-                                "projectRole": "principal investigator"
+                                'contactName': 'John,D,Doe. ',
+                                'correspondingContributor': False,
+                                'email': 'dummy@email.com',
+                                'institution': 'EMBL-EBI',
+                                'laboratory': 'Department of Biology',
+                                'projectRole': 'principal investigator'
                             }
                         ],
-                        "laboratory": ["Department of Biology"],
-                        "projectDescription": "Contains a small file set from the dataset: 4k PBMCs from a "
-                                              "Healthy Donor, a Single Cell Gene Expression Dataset by Cell "
-                                              "Ranger 2.1.0. Peripheral blood mononuclear cells (PBMCs) were "
-                                              "taken from a healthy donor (same donor as pbmc8k). PBMCs are "
-                                              "primary cells with relatively small amounts of RNA (~1pg "
-                                              "RNA/cell). Data/Analysis can be found here "
-                                              "https://support.10xgenomics.com/single-cell-gene-expression/datasets"
-                                              "/2.1.0/pbmc4k and all data is licensed under the creative commons "
-                                              "attribution license (https://creativecommons.org/licenses/by/4.0/). "
-                                              "This test also contains extensive metadata for browser testing. "
-                                              "Metadata is fabricated.",
-                        "projectId": "627cb0ba-b8a1-405a-b58f-0add82c3d635",
-                        "projectShortname": "staging/10x/2019-02-14T18:29:38Z",
-                        "projectTitle": "10x 1 Run Integration Test",
-                        "publications": [
+                        'laboratory': ['Department of Biology'],
+                        'projectDescription': 'Contains a small file set from the dataset: 4k PBMCs from a '
+                                              'Healthy Donor, a Single Cell Gene Expression Dataset by Cell '
+                                              'Ranger 2.1.0. Peripheral blood mononuclear cells (PBMCs) were '
+                                              'taken from a healthy donor (same donor as pbmc8k). PBMCs are '
+                                              'primary cells with relatively small amounts of RNA (~1pg '
+                                              'RNA/cell). Data/Analysis can be found here '
+                                              'https://support.10xgenomics.com/single-cell-gene-expression/datasets'
+                                              '/2.1.0/pbmc4k and all data is licensed under the creative commons '
+                                              'attribution license (https://creativecommons.org/licenses/by/4.0/). '
+                                              'This test also contains extensive metadata for browser testing. '
+                                              'Metadata is fabricated.',
+                        'projectId': '627cb0ba-b8a1-405a-b58f-0add82c3d635',
+                        'projectShortname': 'staging/10x/2019-02-14T18:29:38Z',
+                        'projectTitle': '10x 1 Run Integration Test',
+                        'publications': [
                             {
-                                "doi": "10.1016/j.cell.2016.07.054",
-                                "officialHcaPublication": None,
-                                "publicationTitle": "A title of a publication goes here.",
-                                "publicationUrl": "https://europepmc.org"
+                                'doi': '10.1016/j.cell.2016.07.054',
+                                'officialHcaPublication': None,
+                                'publicationTitle': 'A title of a publication goes here.',
+                                'publicationUrl': 'https://europepmc.org'
                             }
                         ],
-                        "supplementaryLinks": [None],
-                        "estimatedCellCount": None,
-                        "matrices": {},
-                        "contributedAnalyses": {},
-                        "isTissueAtlasProject": False,
-                        "bionetworkName": [None],
-                        "tissueAtlas": [],
-                        "accessions": [
-                            {"namespace": "array_express", "accession": "E-AAAA-00"},
-                            {"namespace": "geo_series", "accession": "GSE00000"},
-                            {"namespace": "insdc_project", "accession": "SRP000000"},
-                            {"namespace": "insdc_project", "accession": "SRP000001"},
-                            {"namespace": "insdc_study", "accession": "PRJNA000000"},
+                        'supplementaryLinks': [None],
+                        'estimatedCellCount': None,
+                        'matrices': {},
+                        'contributedAnalyses': {},
+                        'isTissueAtlasProject': False,
+                        'bionetworkName': [None],
+                        'tissueAtlas': [],
+                        'accessions': [
+                            {'namespace': 'array_express', 'accession': 'E-AAAA-00'},
+                            {'namespace': 'geo_series', 'accession': 'GSE00000'},
+                            {'namespace': 'insdc_project', 'accession': 'SRP000000'},
+                            {'namespace': 'insdc_project', 'accession': 'SRP000001'},
+                            {'namespace': 'insdc_study', 'accession': 'PRJNA000000'},
                         ],
-                        "dataUseRestriction": None,
-                        "duosId": None,
+                        'dataUseRestriction': None,
+                        'duosId': None,
                     }
                 ],
-                "protocols": [
+                'protocols': [
                     {
-                        "workflow": ['cellranger_v1.0.2'],
+                        'workflow': ['cellranger_v1.0.2'],
                     },
                     {
-                        "libraryConstructionApproach": ["10X v2 sequencing"],
-                        "nucleicAcidSource": [None],
+                        'libraryConstructionApproach': ['10X v2 sequencing'],
+                        'nucleicAcidSource': [None],
                     },
                     {
-                        "instrumentManufacturerModel": ["Illumina HiSeq 2500"],
-                        "pairedEnd": [False],
+                        'instrumentManufacturerModel': ['Illumina HiSeq 2500'],
+                        'pairedEnd': [False],
                     }
                 ],
-                "samples": [
+                'samples': [
                     {
-                        "sampleEntityType": ["specimens"],
-                        "effectiveOrgan": ["brain"],
-                        "disease": ["H syndrome"],
-                        "id": ["specimen_ID_1"],
-                        "organ": ["brain"],
-                        "organPart": ["amygdala"],
-                        "preservationMethod": [None],
-                        "source": [
-                            "specimen_from_organism"
+                        'sampleEntityType': ['specimens'],
+                        'effectiveOrgan': ['brain'],
+                        'disease': ['H syndrome'],
+                        'id': ['specimen_ID_1'],
+                        'organ': ['brain'],
+                        'organPart': ['amygdala'],
+                        'preservationMethod': [None],
+                        'source': [
+                            'specimen_from_organism'
                         ],
                     }
                 ],
-                "sources": [{
-                    "sourceId": self.source.id,
-                    "sourceSpec": str(self.source.spec)
+                'sources': [{
+                    'sourceId': self.source.id,
+                    'sourcePrefix': str(self.source.prefix),
+                    'sourceSpec': str(self.source.spec)
                 }],
-                "specimens": [
+                'specimens': [
                     {
-                        "disease": ["H syndrome"],
-                        "id": ["specimen_ID_1"],
-                        "organ": ["brain"],
-                        "organPart": ["amygdala"],
-                        "preservationMethod": [None],
-                        "source": [
-                            "specimen_from_organism"
+                        'disease': ['H syndrome'],
+                        'id': ['specimen_ID_1'],
+                        'organ': ['brain'],
+                        'organPart': ['amygdala'],
+                        'preservationMethod': [None],
+                        'source': [
+                            'specimen_from_organism'
                         ],
                     }
                 ],
-                "dates": [
+                'dates': [
                     {
-                        "aggregateLastModifiedDate": "2019-02-14T19:19:57.464000Z",
-                        "aggregateSubmissionDate": "2019-02-14T18:29:42.531000Z",
-                        "aggregateUpdateDate": "2019-02-14T19:19:57.464000Z",
-                        "lastModifiedDate": "2019-02-14T18:29:48.555000Z",
-                        "submissionDate": "2019-02-14T18:29:42.531000Z",
-                        "updateDate": "2019-02-14T18:29:48.555000Z",
+                        'aggregateLastModifiedDate': '2019-02-14T19:19:57.464000Z',
+                        'aggregateSubmissionDate': '2019-02-14T18:29:42.531000Z',
+                        'aggregateUpdateDate': '2019-02-14T19:19:57.464000Z',
+                        'lastModifiedDate': '2019-02-14T18:29:48.555000Z',
+                        'submissionDate': '2019-02-14T18:29:42.531000Z',
+                        'updateDate': '2019-02-14T18:29:48.555000Z',
                     }
                 ]
             }
@@ -940,7 +944,7 @@ class TestIndexResponse(IndexResponseTestCase):
                                        file_url_func=self.file_url_func)
         response = stage.process_response((hits, self.paginations[0], {}))
         cell_suspension = one(response['hits'][0]['cellSuspensions'])
-        self.assertEqual(["Plasma cells"], cell_suspension['selectedCellType'])
+        self.assertEqual(['Plasma cells'], cell_suspension['selectedCellType'])
 
     def test_response_stage_projects_cell_line(self):
         """
@@ -1047,7 +1051,7 @@ class TestIndexResponse(IndexResponseTestCase):
         """
         Test response when using a filter with a None value
         """
-        test_data_values = [["normal"], [None], ["normal", None]]
+        test_data_values = [['normal'], [None], ['normal', None]]
         for test_data in test_data_values:
             with self.subTest(test_data=test_data):
                 params = self._params(size=10, filters={'specimenDisease': {'is': test_data}})
@@ -1192,27 +1196,27 @@ class TestIndexResponse(IndexResponseTestCase):
         test_hits = [
             [
                 {
-                    "biologicalSex": [
-                        "male",
-                        "female"
+                    'biologicalSex': [
+                        'male',
+                        'female'
                     ],
-                    "developmentStage": [None],
-                    "disease": ['normal'],
-                    "genusSpecies": [
-                        "Homo sapiens"
+                    'developmentStage': [None],
+                    'disease': ['normal'],
+                    'genusSpecies': [
+                        'Homo sapiens'
                     ],
-                    "id": [
-                        "HPSI0314i-hoik",
-                        "HPSI0214i-wibj",
-                        "HPSI0314i-sojd",
-                        "HPSI0214i-kucg"
+                    'id': [
+                        'HPSI0314i-hoik',
+                        'HPSI0214i-wibj',
+                        'HPSI0314i-sojd',
+                        'HPSI0214i-kucg'
                     ],
-                    "donorCount": 4,
-                    "organismAge": [
-                        {"value": "45-49", "unit": "year"},
-                        {"value": "65-69", "unit": "year"}
+                    'donorCount': 4,
+                    'organismAge': [
+                        {'value': '45-49', 'unit': 'year'},
+                        {'value': '65-69', 'unit': 'year'}
                     ],
-                    "organismAgeRange": [
+                    'organismAgeRange': [
                         [gte0, lte0],
                         [gte1, lte1]
                     ],
@@ -1220,27 +1224,27 @@ class TestIndexResponse(IndexResponseTestCase):
             ],
             [
                 {
-                    "biologicalSex": [
-                        "male",
-                        "female"
+                    'biologicalSex': [
+                        'male',
+                        'female'
                     ],
-                    "developmentStage": [None],
-                    "disease": ['normal'],
-                    "genusSpecies": [
-                        "Homo sapiens"
+                    'developmentStage': [None],
+                    'disease': ['normal'],
+                    'genusSpecies': [
+                        'Homo sapiens'
                     ],
-                    "id": [
-                        "HPSI0314i-hoik",
-                        "HPSI0214i-wibj",
-                        "HPSI0314i-sojd",
-                        "HPSI0214i-kucg"
+                    'id': [
+                        'HPSI0314i-hoik',
+                        'HPSI0214i-wibj',
+                        'HPSI0314i-sojd',
+                        'HPSI0214i-kucg'
                     ],
-                    "donorCount": 4,
-                    "organismAge": [
-                        {"value": "40-44", "unit": "year"},
-                        {"value": "55-59", "unit": "year"}
+                    'donorCount': 4,
+                    'organismAge': [
+                        {'value': '40-44', 'unit': 'year'},
+                        {'value': '55-59', 'unit': 'year'}
                     ],
-                    "organismAgeRange": [
+                    'organismAgeRange': [
                         [gte2, lte2],
                         [gte3, lte3]
                     ],
@@ -2212,7 +2216,7 @@ class TestIndexResponse(IndexResponseTestCase):
             self.assertEqual(200, response.status_code)
             return response.json()
 
-        for nested_properties, expected_projects in [
+        cases = [
             (
                 dict(namespace='array_express', accession='E-AAAA-00'),
                 {'627cb0ba-b8a1-405a-b58f-0add82c3d635'}
@@ -2232,7 +2236,8 @@ class TestIndexResponse(IndexResponseTestCase):
                     '88ec040b-8705-4f77-8f41-f81e57632f7d'
                 }
             )
-        ]:
+        ]
+        for nested_properties, expected_projects in cases:
             with self.subTest(nested_properties=nested_properties):
                 response = request_accessions(nested_properties)
                 actual_projects = {
@@ -3722,7 +3727,7 @@ class TestListCatalogsResponse(DCP1CannedBundleTestCase, LocalAppTestCase):
                         'repository': {
                             'name': 'dss',
                             'sources': [
-                                'https://fake_dss_instance/v1:/2'
+                                'https://fake_dss_instance/v1'
                             ],
                         }
                     }
@@ -3760,7 +3765,8 @@ class TestResponseWithDCP2Cans(DCP2CannedBundleTestCase, WebServiceTestCase):
         for hit in response_json['hits']:
             source = one(hit['sources'])
             source = TDRSourceRef(id=source[special_fields.source_id],
-                                  spec=TDRSourceSpec.parse(source[special_fields.source_spec]))
+                                  spec=TDRSourceSpec.parse(source[special_fields.source_spec]),
+                                  prefix=Prefix.parse(source[special_fields.source_prefix]))
             self.assertEqual(self.source, source)
 
     def get_file(self, entry_id: str) -> JSON:

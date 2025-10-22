@@ -289,7 +289,7 @@ class IntegrationTestCase(AzulTestCase, metaclass=ABCMeta):
             for spec in specs:
                 source_id = one(id for id, name in all_sources.items() if name == spec.name)
                 if source_id not in public_sources:
-                    ref = TDRSourceRef(id=source_id, spec=spec)
+                    ref = TDRSourceRef(id=source_id, spec=spec, prefix=None)
                     managed_access_sources[catalog].add(ref)
         return managed_access_sources
 
@@ -1253,7 +1253,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
             source = plugin.partition_source_for_indexing(catalog, source)
             # Some partitions may be empty, but we include them anyway to
             # ensure test coverage for handling multiple partitions per source
-            for prefix in source.spec.prefix.partition_prefixes():
+            for prefix in source.prefix.partition_prefixes():
                 partition = repository_service.list_bundles(catalog, source, prefix)
                 bundle_fqids.update(partition)
                 message = queue_service.index_partition_message(catalog, source, prefix)
@@ -1279,7 +1279,8 @@ class IndexingIntegrationTest(IntegrationTestCase):
         for hit in hits:
             source, bundle = one(hit['sources']), one(hit['bundles'])
             source = dict(id=source[special_fields.source_id],
-                          spec=source[special_fields.source_spec])
+                          spec=source[special_fields.source_spec],
+                          prefix=source[special_fields.source_prefix])
             source = self.repository_plugin(catalog).source_ref_cls.from_json(source)
             bundle_fqid = SourcedBundleFQID(uuid=bundle[special_fields.bundle_uuid],
                                             version=bundle[special_fields.bundle_version],
@@ -1883,7 +1884,7 @@ class CanBundleScriptIntegrationTest(IntegrationTestCase):
                                           'repository': config.Catalog.Plugin(name='canned'),
                                       },
                                       sources={
-                                          'https://github.com/HumanCellAtlas/schema-test-data/tree/master/tests:/0'
+                                          'https://github.com/HumanCellAtlas/schema-test-data/tree/master/tests'
                                       })
         with mock.patch.object(Config,
                                'catalogs',

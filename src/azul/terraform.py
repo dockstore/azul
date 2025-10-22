@@ -892,7 +892,18 @@ class Chalice:
                     'responseParameters': security_headers
                 } for response_type in ['4XX', '5XX']
             } | {
-                response_type: {
+                'INTEGRATION_FAILURE': {
+                    'statusCode': '502',
+                    'responseParameters': security_headers,
+                    'responseTemplates': {
+                        "application/json": json.dumps({
+                            'message': '502 Bad Gateway. The server was unable '
+                                       'to complete your request.'
+                        })
+                    }
+                },
+                'INTEGRATION_TIMEOUT': {
+                    'statusCode': '504',
                     'responseParameters': {
                         **security_headers,
                         'gatewayresponse.header.Retry-After': "'10'"
@@ -904,7 +915,7 @@ class Chalice:
                                        'header before retrying the request.'
                         })
                     }
-                } for response_type in ['INTEGRATION_TIMEOUT', 'INTEGRATION_FAILURE']
+                }
             }
         )
         locals[app_name] = json.dumps(openapi_spec)

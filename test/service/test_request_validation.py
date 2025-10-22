@@ -213,9 +213,15 @@ class RequestParameterValidationTest(DCP1CannedBundleTestCase,
 
     def test_bad_filters(self):
         url = self.base_url.set(path='/index/files', args=dict(catalog=self.catalog))
-        for filters, message in [
-            ('"', "The 'filters' parameter is not valid JSON"),
-            ('""', 'The `filters` parameter must be a dictionary'),
+        cases = [
+            (
+                '"',
+                "The 'filters' parameter is not valid JSON"
+            ),
+            (
+                '""',
+                'The `filters` parameter must be a dictionary'
+            ),
             (
                 '{"sampleDisease": ["H syndrome"]}',
                 'The `filters` parameter entry for `sampleDisease` must be a '
@@ -261,7 +267,8 @@ class RequestParameterValidationTest(DCP1CannedBundleTestCase,
                 "The value of the `is` relation in the `filters` parameter entry "
                 "for `accessions` has invalid properties `{'foo'}`"
             )
-        ]:
+        ]
+        for filters, message in cases:
             with self.subTest(filters=filters):
                 url.args.set('filters', filters)
                 self.assertBadRequest(url, message)

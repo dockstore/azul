@@ -6,33 +6,31 @@ from collections.abc import (
 import json
 from typing import (
     Literal,
-    Optional,
 )
 
 pop = 1  # remove snapshot
+
+type ProjectName = str
+type SourceSpec = str
 
 
 def bqsrc(google_project: str,
           snapshot: str,
           flags: int = 0,
-          /,
-          prefix: str = ''
-          ) -> tuple[str, str | None]:
+          ) -> tuple[ProjectName, SourceSpec | None]:
     assert len(google_project) == 8, google_project
     project = 'datarepo-' + google_project
     # Some snapshots start with AnVIL instead of ANVIL
     if not snapshot.upper().startswith('ANVIL_'):
         snapshot = 'ANVIL_' + snapshot
-    return mksrc('bigquery', project, snapshot, flags, prefix)
+    return mksrc('bigquery', project, snapshot, flags)
 
 
 def mksrc(source_type: Literal['bigquery', 'parquet'],
           google_project,
           snapshot,
           flags: int = 0,
-          /,
-          prefix: str = ''
-          ) -> tuple[str, str | None]:
+          ) -> tuple[ProjectName, SourceSpec | None]:
     project = '_'.join(snapshot.split('_')[1:-3])
     assert flags <= pop
     source = None if flags & pop else ':'.join([
@@ -41,26 +39,26 @@ def mksrc(source_type: Literal['bigquery', 'parquet'],
         'gcp',
         google_project,
         snapshot,
-        prefix
     ])
     return project, source
 
 
-def mkdelta(items: list[tuple[str, str]]) -> dict[str, str]:
+def mkdelta(items: list[tuple[ProjectName, SourceSpec | None]]
+            ) -> dict[ProjectName, SourceSpec | None]:
     result = dict(items)
     assert len(items) == len(result), 'collisions detected'
     assert list(result.keys()) == sorted(result.keys()), 'input not sorted'
     return result
 
 
-def mklist(catalog: dict[str, str]) -> list[str]:
+def mklist(catalog: dict[ProjectName, SourceSpec | None]) -> list[SourceSpec]:
     return list(filter(None, catalog.values()))
 
 
-def mkdict(previous_catalog: dict[str, str],
+def mkdict(previous_catalog: dict[ProjectName, SourceSpec | None],
            num_expected: int,
-           delta: dict[str, str]
-           ) -> dict[str, str]:
+           delta: dict[ProjectName, SourceSpec | None],
+           ) -> dict[ProjectName, SourceSpec | None]:
     catalog = previous_catalog | delta
     num_actual = len(mklist(catalog))
     assert num_expected == num_actual, (num_expected, num_actual)
@@ -1025,7 +1023,7 @@ anvil10_sources = mkdict(anvil9_sources, 283, mkdelta([
     bqsrc('f143f633', 'ccdg_broad_ai_ibd_daly_mcgovern_share_wes_20240104_ANV5_202503171541'),
 ]))
 
-anvil11_sources = mkdict(anvil10_sources, 371, mkdelta([
+anvil11_sources = mkdict(anvil10_sources, 369, mkdelta([
     bqsrc('afe52c93', 'CCDG_Broad_NP_Epilepsy_AUSALF_HMB_IRB_GSA_MD_20250718_ANV5_202508070436'),
     bqsrc('a0e71864', 'CCDG_Broad_NP_Epilepsy_AUSALF_HMB_IRB_WES_20250718_ANV5_202507300051'),
     bqsrc('d4e6fade', 'CCDG_Broad_NP_Epilepsy_AUSAUS_EPIL_BA_MDS_GSA_MD_20250718_ANV5_202508051209'),
@@ -1179,8 +1177,8 @@ anvil11_sources = mkdict(anvil10_sources, 371, mkdelta([
     bqsrc('bdc5f5a9', 'CCDG_Broad_Spalletta_HMB_NPU_MDS_WES_20250721_ANV5_202507301024'),
     bqsrc('2b98851b', 'CMG_Yale_GRU_20221020_ANV5_202507091800'),
     bqsrc('83ab11a0', 'CMH_GAFK_R5_20250801_ANV5_202508011248'),
-    bqsrc('3f7226ca', 'ENCORE_293T_20250925_ANV5_202509251455'),
-    bqsrc('b0e9efde', 'ENCORE_RS293_20250925_ANV5_202509251451'),
+    bqsrc('3f7226ca', 'ENCORE_293T_20250925_ANV5_202509251455', pop),
+    bqsrc('b0e9efde', 'ENCORE_RS293_20250925_ANV5_202509251451', pop),
     bqsrc('262cd5df', 'GREGOR_R03_GRU_20250612_ANV5_202506271443'),
     bqsrc('a50f51b8', 'GREGOR_R03_HMB_20250612_ANV5_202506271503'),
     bqsrc('fe5fb412', 'GTEx_v10_hg38_20241105_ANV5_202506201300'),
@@ -1197,7 +1195,7 @@ anvil11_sources = mkdict(anvil10_sources, 371, mkdelta([
 ]))
 
 
-def env() -> Mapping[str, Optional[str]]:
+def env() -> Mapping[str, str | None]:
     """
     Returns a dictionary that maps environment variable names to values. The
     values are either None or strings. String values can contain references to

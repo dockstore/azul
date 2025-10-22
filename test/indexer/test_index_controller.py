@@ -54,6 +54,9 @@ from azul.logging import (
     configure_test_logging,
     get_test_logger,
 )
+from azul.plugins import (
+    RepositoryPlugin,
+)
 from azul.plugins.repository.tdr import (
     TDRBundleFQID,
     TDRPlugin,
@@ -88,7 +91,7 @@ def setUpModule():
 @mock_aws
 class TestIndexController(DCP2IndexerTestCase, WorkQueueTestCase):
     source = DCP2TestCase.source.with_prefix(
-        attrs.evolve(DCP2TestCase.source.spec.prefix,
+        attrs.evolve(DCP2TestCase.source.prefix,
                      partition=0)
     )
 
@@ -127,10 +130,12 @@ class TestIndexController(DCP2IndexerTestCase, WorkQueueTestCase):
         ]
         self.assertRaises(BadRequestError, self.controller.contribute, event)
 
+    @patch.object(RepositoryPlugin, 'partition_source_for_indexing')
     @patch.object(TDRPlugin, 'resolve_source')
-    def test_remote_reindex(self, resolve_source):
+    def test_remote_reindex(self, resolve_source, partition_source):
         source = self.source
-        resolve_source.return_value = source
+        resolve_source.return_value = attrs.evolve(source, prefix=None)
+        partition_source.return_value = source
         plugin = self.index_repository_service.repository_plugin(self.catalog)
         plugin._assert_source(source)
         self._create_mock_queues(config.indexer_queue_names)
@@ -155,6 +160,7 @@ class TestIndexController(DCP2IndexerTestCase, WorkQueueTestCase):
         messages = one(self._read_queue(self.queue_service.notifications_queue()))
         expected_source = dict(id=source.id,
                                spec=str(source.spec),
+                               prefix=str(source.prefix),
                                type=source.cls_to_json())
         source = messages['bundle_fqid']['source']
         self.assertEqual(expected_source, source)

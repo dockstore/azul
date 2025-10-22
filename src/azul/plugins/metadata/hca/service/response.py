@@ -182,10 +182,10 @@ class HCASummaryResponseStage(SummaryResponseStage):
         return json_untyped_dict(response)
 
     def _validate_response(self, response: SummaryResponse):
-        for total, summary_field in (
+        for total, summary_field in [
             (response['totalFileSize'], 'totalSize'),
             (response['fileCount'], 'count')
-        ):
+        ]:
             summaries = cast(JSONs, response['fileTypeSummaries'])
             summary_total = sum(map(itemgetter(summary_field), summaries))
             assert total == summary_total, (total, summary_total)
@@ -293,7 +293,8 @@ class HCASearchResponseStage(SearchResponseStage):
         return [
             {
                 self._special_fields.source_id: s['id'],
-                self._special_fields.source_spec: s['spec']
+                self._special_fields.source_spec: s['spec'],
+                self._special_fields.source_prefix: s['prefix'],
             }
             for s in entry['sources']
         ]
