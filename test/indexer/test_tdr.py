@@ -199,14 +199,25 @@ class TDRPluginTestCase(TDRTestCase,
         for table_name, table_contents in tables.items():
             self._make_mock_entity_table(source.spec,
                                          table_name,
-                                         table_contents['rows'])
+                                         table_contents['rows'],
+                                         table_contents.get('schema'))
         return tables
 
     def _make_mock_entity_table(self,
                                 source: TDRSourceSpec,
                                 table_name: str,
-                                rows: JSONs) -> None:
-        schema = self._bq_schema_from_row(rows[0])
+                                rows: JSONs,
+                                canned_schema: JSON | None = None
+                                ) -> None:
+        if canned_schema is None:
+            assert len(rows) > 0, 'Empty tables require an explicit schema'
+            schema = self._bq_schema_from_row(rows[0])
+        else:
+            schema = [
+                bigquery.SchemaField(**column_schema)
+                for column_schema in canned_schema['columns']
+            ]
+
         columns = {column.name for column in schema}
         json_type = reify(JSON)
 
