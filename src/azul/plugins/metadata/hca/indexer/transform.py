@@ -491,12 +491,12 @@ class BaseTransformer(Transformer, metaclass=ABCMeta):
             agg_cls = OrganoidAggregator
         elif entity_type == 'projects':
             agg_cls = ProjectAggregator
-        elif entity_type in (
+        elif entity_type in {
             'analysis_protocols',
             'imaging_protocols',
             'library_preparation_protocols',
             'sequencing_protocols'
-        ):
+        }:
             agg_cls = ProtocolAggregator
         elif entity_type == 'sequencing_inputs':
             agg_cls = SequencingInputAggregator
@@ -1502,10 +1502,10 @@ class FileTransformer(PartitionedTransformer[api.File], ReplicaTransformer):
                 # Supplementary file matrices provide stratification values that
                 # need to be reflected by inner entities in the contribution.
                 if isinstance(file, api.SupplementaryFile) and file.is_matrix:
-                    if Submitter.category_for_file(file) in (
+                    if Submitter.category_for_file(file) in {
                         SubmitterCategory.internal,
                         SubmitterCategory.external
-                    ):
+                    }:
                         additional_contents = self.matrix_stratification_values(file)
                         for entity_type, values in additional_contents.items():
                             contents[entity_type].extend(json_element_mappings(values))

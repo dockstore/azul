@@ -13,7 +13,6 @@ from operator import (
     itemgetter,
 )
 from typing import (
-    ClassVar,
     Iterable,
     Self,
     cast,
@@ -37,10 +36,7 @@ from azul.bigquery import (
     backtick,
 )
 from azul.collections import (
-    singleton,
-)
-from azul.drs import (
-    RegularDRSURI,
+    OrderedSet,
 )
 from azul.indexer import (
     BundleFQID,
@@ -73,6 +69,8 @@ from azul.types import (
     JSONs,
     MutableJSON,
     MutableJSONs,
+    any_str,
+    optional,
 )
 from humancellatlas.data.metadata import (
     api,
@@ -151,83 +149,6 @@ class TDRHCABundle(HCABundle[TDRBundleFQID], TDRBundle):
     def canning_qualifier(cls) -> str:
         return super().canning_qualifier() + '.hca'
 
-    def add_entity(self,
-                   *,
-                   entity: EntityReference,
-                   row: BigQueryRow,
-                   is_stitched: bool
-                   ) -> None:
-        if is_stitched:
-            self.stitched.add(entity.entity_id)
-        if entity.entity_type.endswith('_file'):
-            self._add_manifest_entry(entity, self.file_from_row(row))
-        content = row['content']
-        self.metadata[str(entity)] = (json.loads(content)
-                                      if isinstance(content, str)
-                                      else content)
-
-    metadata_columns: ClassVar[frozenset[str]] = singleton(
-        'content'
-    )
-
-    data_columns: ClassVar[frozenset[str]] = frozenset({
-        'descriptor',
-        'JSON_EXTRACT_SCALAR(content, "$.file_core.file_name") AS file_name',
-        'file_id'
-    })
-
-    # `links_id` is omitted for consistency since the other sets do not include
-    # the primary key
-    links_columns: ClassVar[frozenset[str]] = singleton(
-        'project_id'
-    )
-
-    @classmethod
-    def file_from_row(cls, row: BigQueryRow) -> HCAFile:
-        descriptor = json.loads(row['descriptor'])
-        # FIXME: Move validation of descriptor to the metadata API
-        #        https://github.com/DataBiosphere/azul/issues/6299
-        api.Entity.validate_described_by(descriptor)
-        return HCAFile.from_metadata(descriptor,
-                                     uuid=descriptor['file_id'],
-                                     name=row['file_name'],
-                                     drs_uri=cls._parse_drs_uri(row['file_id'], descriptor))
-
-    def _add_manifest_entry(self,
-                            entity: EntityReference,
-                            file: HCAFile) -> None:
-        file_json = file.to_json()
-        file_json['content-type'] = file_json.pop('content_type')
-        file_json['indexed'] = False
-        self.manifest[str(entity)] = file_json
-
-    @classmethod
-    def _parse_drs_uri(cls,
-                       file_id: str | None,
-                       descriptor: JSON
-                       ) -> str | None:
-        if file_id is None:
-            try:
-                external_drs_uri = descriptor['drs_uri']
-            except KeyError:
-                assert False, R(
-                    '`file_id` is null and `drs_uri` is not set in file descriptor',
-                    descriptor)
-            else:
-                # FIXME: Support non-null DRS URIs in file descriptors
-                #        https://github.com/DataBiosphere/azul/issues/3631
-                if external_drs_uri is not None:
-                    log.warning('Non-null `drs_uri` in file descriptor (%s)', external_drs_uri)
-                    external_drs_uri = None
-                return external_drs_uri
-        else:
-            # This requirement prevent mismatches in the DRS domain, and ensures
-            # that changes to the column syntax don't go undetected.
-            parsed = RegularDRSURI.parse(file_id)
-            assert parsed.uri.netloc == config.tdr_service_url.netloc, R(
-                'Unexpected DRS URI location', parsed.uri)
-            return file_id
-
 
 class Plugin(TDRPlugin[TDRHCABundle, TDRBundleFQID]):
 
@@ -281,9 +202,10 @@ class Plugin(TDRPlugin[TDRHCABundle, TDRBundleFQID]):
         self._assert_source(source)
         self._assert_partition(source, prefix)
         assert prefix == prefix.lower(), prefix
+        columns = self.metadata_columns + self.data_columns
         rows = self._run_sql(' UNION ALL '.join(
             f'''
-            SELECT {', '.join(TDRHCABundle.data_columns)}
+            SELECT {', '.join(columns)}
             FROM {backtick(self._full_table_name(source.spec, entity_type))}
             WHERE STARTS_WITH(LOWER(JSON_EXTRACT_SCALAR(descriptor, "$.sha256")),
                               {prefix!r})
@@ -291,7 +213,7 @@ class Plugin(TDRPlugin[TDRHCABundle, TDRBundleFQID]):
             for entity_type, entity_cls in api.entity_types.items()
             if entity_type.endswith('_file')
         ))
-        return list(map(TDRHCABundle.file_from_row, rows))
+        return list(map(self._file_from_row, rows))
 
     def _query_unique_sorted(self,
                              query: str,
@@ -329,14 +251,37 @@ class Plugin(TDRPlugin[TDRHCABundle, TDRBundleFQID]):
                     for row in rows:
                         entity = EntityReference(entity_id=row[pk_column], entity_type=entity_type)
                         is_stitched = entity not in root_entities
-                        bundle.add_entity(entity=entity,
-                                          row=row,
-                                          is_stitched=is_stitched)
+                        self._add_entity(bundle, entity=entity, row=row, is_stitched=is_stitched)
                 else:
                     log.error('TDR worker failed to retrieve entities of type %r',
                               entity_type, exc_info=e)
                     raise e
         return bundle
+
+    def _add_entity(self,
+                    bundle: TDRHCABundle,
+                    *,
+                    entity: EntityReference,
+                    row: BigQueryRow,
+                    is_stitched: bool
+                    ) -> None:
+        if is_stitched:
+            bundle.stitched.add(entity.entity_id)
+        if entity.entity_type.endswith('_file'):
+            file = self._file_from_row(row)
+            file_json = file.to_json()
+            file_json['content-type'] = file_json.pop('content_type')
+            file_json['indexed'] = False
+            bundle.manifest[str(entity)] = file_json
+        content = row['content']
+        if isinstance(content, str):
+            content = json.loads(content)
+        bundle.metadata[str(entity)] = content
+
+    def _file_from_row(self, row: BigQueryRow) -> HCAFile:
+        return HCAFile.from_metadata(metadata=json.loads(any_str(row['content'])),
+                                     descriptor=json.loads(any_str(row['descriptor'])),
+                                     drs_uri=optional(any_str, row['file_id']))
 
     def _stitch_bundles(self,
                         root_bundle: TDRHCABundle
@@ -410,6 +355,12 @@ class Plugin(TDRPlugin[TDRHCABundle, TDRBundleFQID]):
             links_json['content'] = json.loads(links_json['content'])
         return links
 
+    metadata_columns = ('content',)
+
+    data_columns = ('descriptor', 'file_id')
+
+    links_columns = ('project_id',)
+
     def _retrieve_entities(self,
                            source: TDRSourceSpec,
                            entity_type: EntityType,
@@ -427,12 +378,12 @@ class Plugin(TDRPlugin[TDRHCABundle, TDRBundleFQID]):
         """
         pk_column = entity_type + '_id'
         version_column = 'version'
-        columns = {
+        columns = OrderedSet([
             pk_column,
-            *TDRHCABundle.metadata_columns,
-            *iif(entity_type == 'links', TDRHCABundle.links_columns),
-            *iif(entity_type.endswith('_file'), TDRHCABundle.data_columns)
-        }
+            *self.metadata_columns,
+            *iif(entity_type == 'links', self.links_columns),
+            *iif(entity_type.endswith('_file'), self.data_columns)
+        ])
         table_name = backtick(self._full_table_name(source, entity_type))
         entity_id_type = one(set(map(type, entity_ids)))
 
