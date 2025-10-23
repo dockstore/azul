@@ -158,7 +158,7 @@ class Plugin(TDRPlugin[TDRHCABundle, TDRBundleFQID]):
         query = f'''
         SELECT COUNT(*) AS count
         FROM {backtick(self._full_table_name(source.spec, 'links'))}
-        WHERE STARTS_WITH(LOWER(datarepo_row_id), {prefix!r})
+        WHERE STARTS_WITH(LOWER(links_id), {prefix!r})
         '''
         rows = self._run_sql(query)
         return one(rows)['count']

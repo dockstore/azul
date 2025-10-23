@@ -166,7 +166,7 @@ class TestAnvilIndexer(AnvilIndexerTestCase,
     def test_list_and_fetch_bundles(self):
         self._mock_normal_duos()
         source_ref = self.source
-        self._make_mock_tdr_tables(source_ref)
+        self._make_mock_tables(source_ref)
         canned_bundle_fqids = [
             self.primary_bundle(),
             self.supplementary_bundle(),
@@ -206,7 +206,7 @@ class TestAnvilIndexer(AnvilIndexerTestCase,
 
     def test_absent_duos_id(self):
         source_ref = self.source
-        self._make_mock_tdr_tables(source_ref)
+        self._make_mock_tables(source_ref)
         cases = {
             'Absent duosFirecloudGroup': [
                 {'name': self.source.spec.name}

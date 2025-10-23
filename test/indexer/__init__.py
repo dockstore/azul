@@ -9,9 +9,6 @@ from pathlib import (
 from typing import (
     ClassVar,
     Literal,
-    Optional,
-    Type,
-    Union,
     cast,
 )
 
@@ -83,7 +80,7 @@ class ForcedRefreshIndexService(IndexService):
 
     def _create_writer(self,
                        doc_type: DocumentType,
-                       catalog: Optional[CatalogName]
+                       catalog: CatalogName | None
                        ) -> IndexWriter:
         writer = super()._create_writer(doc_type, catalog)
         # With a single client thread, refresh=True is faster than
@@ -108,7 +105,7 @@ class CannedFileTestCase(AzulUnitTestCase):
     def _load_canned_file(cls,
                           bundle: BundleFQID,
                           extension: str
-                          ) -> Union[MutableJSONs, MutableJSON]:
+                          ) -> MutableJSON | MutableJSONs:
         def load(version):
             return cls._load_canned_file_version(uuid=bundle.uuid,
                                                  version=version,
@@ -123,9 +120,9 @@ class CannedFileTestCase(AzulUnitTestCase):
     def _load_canned_file_version(cls,
                                   *,
                                   uuid: str,
-                                  version: Optional[str],
+                                  version: str | None,
                                   extension: str
-                                  ) -> Union[MutableJSONs, MutableJSON]:
+                                  ) -> MutableJSON | MutableJSONs:
         suffix = '' if version is None else '.' + version
         file_name = f'{uuid}{suffix}.{extension}.json'
         with open(cls._data_path('indexer', file_name), 'r') as infile:
@@ -141,7 +138,7 @@ class CannedBundleTestCase[BUNDLE: Bundle](CannedFileTestCase):
 
     @classmethod
     @abstractmethod
-    def _bundle_cls(cls) -> Type[BUNDLE]:
+    def _bundle_cls(cls) -> type[BUNDLE]:
         raise NotImplementedError
 
     @classmethod
@@ -157,7 +154,7 @@ class CannedBundleTestCase[BUNDLE: Bundle](CannedFileTestCase):
 class DCP1CannedBundleTestCase(DCP1TestCase, CannedBundleTestCase[DSSBundle]):
 
     @classmethod
-    def _bundle_cls(cls) -> Type[DSSBundle]:
+    def _bundle_cls(cls) -> type[DSSBundle]:
         return DSSBundle
 
     @classmethod
@@ -170,7 +167,7 @@ class DCP1CannedBundleTestCase(DCP1TestCase, CannedBundleTestCase[DSSBundle]):
 class DCP2CannedBundleTestCase(DCP2TestCase, CannedBundleTestCase[TDRHCABundle]):
 
     @classmethod
-    def _bundle_cls(cls) -> Type[TDRHCABundle]:
+    def _bundle_cls(cls) -> type[TDRHCABundle]:
         return TDRHCABundle
 
     @classmethod
@@ -185,7 +182,7 @@ class AnvilCannedBundleTestCase(AnvilTestCase, CannedBundleTestCase[TDRAnvilBund
     version = '2022-06-01T00:00:00.000000Z'
 
     @classmethod
-    def _bundle_cls(cls) -> Type[TDRAnvilBundle]:
+    def _bundle_cls(cls) -> type[TDRAnvilBundle]:
         return TDRAnvilBundle
 
     @classmethod
