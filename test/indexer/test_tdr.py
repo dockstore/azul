@@ -195,7 +195,7 @@ class TDRPluginTestCase(TDRTestCase,
                                            ])
         cls._patch_tdr_client()
 
-    def _make_mock_tables(self, source: TDRSourceRef) -> JSON:
+    def _make_mock_tables(self, source: TDRSourceRef) -> None:
         tables = self._load_canned_file_version(uuid=source.id,
                                                 version=None,
                                                 extension='tables.tdr')['tables']
@@ -204,7 +204,6 @@ class TDRPluginTestCase(TDRTestCase,
                                   table_name,
                                   table_contents['rows'],
                                   table_contents.get('schema'))
-        return tables
 
     def _make_mock_table(self,
                          source: TDRSourceSpec,
