@@ -778,6 +778,23 @@ emit_tf({
                 }
                 for app in apps
                 for resource_name in app.chalice.tf_function_resource_names
+            },
+            'terraform_data': {
+                resource_name: {
+                    'triggers_replace': ['${aws_lambda_alias.%s.function_version}' % resource_name],
+                    'provisioner': {
+                        'local-exec': {
+                            'command': ' '.join([
+                                'python',
+                                f'{config.project_root}/scripts/delete_older_function_versions.py',
+                                '--function-name ${aws_lambda_alias.%s.function_name}' % resource_name,
+                                '--function-version ${aws_lambda_alias.%s.function_version}' % resource_name
+                            ])
+                        }
+                    }
+                }
+                for app in apps
+                for resource_name in app.chalice.tf_function_resource_names
             }
         }),
         *(

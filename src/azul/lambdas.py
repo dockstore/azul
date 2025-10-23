@@ -114,6 +114,32 @@ class Lambdas:
             for function in response['Functions']
         ]
 
+    def delete_older_function_versions(self,
+                                       function_name: str,
+                                       keep_version: int) -> None:
+        """
+        Delete all versions of a Lambda function prior to the specified one.
+
+        :param function_name: The fully qualified name of the function
+                              e.g. 'azul-service-dev'
+
+        :param keep_version: The version of the function to not delete.
+        """
+        paginator = self._lambda.get_paginator('list_versions_by_function')
+        versions = [
+            function['Version']
+            for page in paginator.paginate(FunctionName=function_name)
+            for function in page['Versions']
+            if (
+                function['Version'] != '$LATEST'  # The so-called "unpublished" version
+                and int(function['Version']) < keep_version
+            )
+        ]
+        for version in versions:
+            log.info('Deleting version %r of %r', version, function_name)
+            self._lambda.delete_function(FunctionName=function_name,
+                                         Qualifier=version)
+
     def manage_lambdas(self, enabled: bool):
         paginator = self._lambda.get_paginator('list_functions')
         lambda_prefixes = [config.qualified_resource_name(lambda_infix) for lambda_infix in config.lambda_names()]
