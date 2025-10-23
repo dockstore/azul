@@ -195,23 +195,23 @@ class TDRPluginTestCase(TDRTestCase,
                                            ])
         cls._patch_tdr_client()
 
-    def _make_mock_tdr_tables(self, source: TDRSourceRef) -> JSON:
+    def _make_mock_tables(self, source: TDRSourceRef) -> JSON:
         tables = self._load_canned_file_version(uuid=source.id,
                                                 version=None,
                                                 extension='tables.tdr')['tables']
         for table_name, table_contents in tables.items():
-            self._make_mock_entity_table(source.spec,
-                                         table_name,
-                                         table_contents['rows'],
-                                         table_contents.get('schema'))
+            self._make_mock_table(source.spec,
+                                  table_name,
+                                  table_contents['rows'],
+                                  table_contents.get('schema'))
         return tables
 
-    def _make_mock_entity_table(self,
-                                source: TDRSourceSpec,
-                                table_name: str,
-                                rows: JSONs,
-                                canned_schema: JSON | None = None
-                                ) -> None:
+    def _make_mock_table(self,
+                         source: TDRSourceSpec,
+                         table_name: str,
+                         rows: JSONs,
+                         canned_schema: JSON | None = None
+                         ) -> None:
         if canned_schema is None:
             assert len(rows) > 0, 'Empty tables require an explicit schema'
             schema = self._bq_schema_from_row(rows[0])
@@ -277,14 +277,14 @@ class TestTDRHCAPlugin(DCP2CannedBundleTestCase,
         source = self.source
         current_version = '2001-01-01T00:00:00.100001Z'
         links_ids = ['42-abc', '42-def', '42-ghi', '86-xyz']
-        self._make_mock_entity_table(source=source.spec,
-                                     table_name='links',
-                                     rows=[
-                                         dict(links_id=links_id,
-                                              version=current_version,
-                                              content={})
-                                         for links_id in links_ids
-                                     ])
+        self._make_mock_table(source=source.spec,
+                              table_name='links',
+                              rows=[
+                                  dict(links_id=links_id,
+                                       version=current_version,
+                                       content={})
+                                  for links_id in links_ids
+                              ])
         expected_bundle_ids = [
             TDRBundleFQID(source=source, uuid='42-abc', version=current_version),
             TDRBundleFQID(source=source, uuid='42-def', version=current_version),
@@ -305,7 +305,7 @@ class TestTDRHCAPlugin(DCP2CannedBundleTestCase,
 
     def test_list_and_count_files(self):
         source = self.source
-        self._make_mock_tdr_tables(source)
+        self._make_mock_tables(source)
         tables = self._load_canned_file_version(uuid=source.id,
                                                 version=None,
                                                 extension='tables.tdr')['tables']
@@ -399,7 +399,7 @@ class TestTDRHCAPlugin(DCP2CannedBundleTestCase,
                            *,
                            load_tables: bool):
         if load_tables:
-            self._make_mock_tdr_tables(test_bundle.fqid.source)
+            self._make_mock_tables(test_bundle.fqid.source)
         emulated_bundle = self.plugin.fetch_bundle(test_bundle.fqid)
 
         self.assertEqual(test_bundle.fqid, emulated_bundle.fqid)
