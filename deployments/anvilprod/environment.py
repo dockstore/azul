@@ -1025,7 +1025,7 @@ anvil10_sources = mkdict(anvil9_sources, 283, mkdelta([
     bqsrc('f143f633', 'ccdg_broad_ai_ibd_daly_mcgovern_share_wes_20240104_ANV5_202503171541'),
 ]))
 
-anvil11_sources = mkdict(anvil10_sources, 371, mkdelta([
+anvil11_sources = mkdict(anvil10_sources, 369, mkdelta([
     bqsrc('afe52c93', 'CCDG_Broad_NP_Epilepsy_AUSALF_HMB_IRB_GSA_MD_20250718_ANV5_202508070436'),
     bqsrc('a0e71864', 'CCDG_Broad_NP_Epilepsy_AUSALF_HMB_IRB_WES_20250718_ANV5_202507300051'),
     bqsrc('d4e6fade', 'CCDG_Broad_NP_Epilepsy_AUSAUS_EPIL_BA_MDS_GSA_MD_20250718_ANV5_202508051209'),
@@ -1179,8 +1179,8 @@ anvil11_sources = mkdict(anvil10_sources, 371, mkdelta([
     bqsrc('bdc5f5a9', 'CCDG_Broad_Spalletta_HMB_NPU_MDS_WES_20250721_ANV5_202507301024'),
     bqsrc('2b98851b', 'CMG_Yale_GRU_20221020_ANV5_202507091800'),
     bqsrc('83ab11a0', 'CMH_GAFK_R5_20250801_ANV5_202508011248'),
-    bqsrc('3f7226ca', 'ENCORE_293T_20250925_ANV5_202509251455'),
-    bqsrc('b0e9efde', 'ENCORE_RS293_20250925_ANV5_202509251451'),
+    bqsrc('3f7226ca', 'ENCORE_293T_20250925_ANV5_202509251455', pop),
+    bqsrc('b0e9efde', 'ENCORE_RS293_20250925_ANV5_202509251451', pop),
     bqsrc('262cd5df', 'GREGOR_R03_GRU_20250612_ANV5_202506271443'),
     bqsrc('a50f51b8', 'GREGOR_R03_HMB_20250612_ANV5_202506271503'),
     bqsrc('fe5fb412', 'GTEx_v10_hg38_20241105_ANV5_202506201300'),
