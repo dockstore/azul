@@ -268,7 +268,7 @@ def env() -> Mapping[str, Optional[str]]:
         # `make -C terraform update_schema`, and committing the resulting
         # changes.
         #
-        'azul_terraform_version': '1.12.2',
+        'azul_terraform_version': '1.13.4',
 
         # When building the Azul image on a FIPS mode enabled system (e.g.
         # GitLab), this variable should be set to `/proc/sys/crypto`, the path
@@ -300,7 +300,7 @@ def env() -> Mapping[str, Optional[str]]:
                 'url': 'https://hub.docker.com/_/python',
             },
             'pycharm': {
-                'ref': 'docker.io/ucscgi/azul-pycharm:2024.3.6-63',
+                'ref': 'docker.io/ucscgi/azul-pycharm:2025.2.3-64',
                 'url': 'https://hub.docker.com/repository/docker/ucscgi/azul-pycharm',
                 'is_custom': True
             },

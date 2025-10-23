@@ -899,7 +899,7 @@ class TestManifests(DCP1ManifestTestCase):
         with patch.object(manifest_service, 'datetime') as mock_datetime:
             mock_datetime.now.return_value = datetime(1985, 10, 25, 1, 21)
             for format in [ManifestFormat.compact]:
-                for filters, expected_name in [
+                cases = [
                     # For a single project, the content disposition file name should
                     # be the project name followed by the date and time
                     (
@@ -917,7 +917,8 @@ class TestManifests(DCP1ManifestTestCase):
                         {},
                         'hca-manifest-832a257c-5540-567b-bcb6-260d2e374508.4bc67e84-4873-591f-b524-a5fe4ec215eb'
                     )
-                ]:
+                ]
+                for filters, expected_name in cases:
                     with self.subTest(filters=filters, format=format):
                         manifest, num_partitions = self._get_manifest_object(format, filters)
                         self.assertFalse(manifest.was_cached)

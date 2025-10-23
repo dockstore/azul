@@ -487,6 +487,14 @@ class TDRClient(SAMClient):
     class _EmptySQLResult(Exception):
         pass
 
+    _retryable_exceptions = (
+        BadRequest,
+        Forbidden,
+        InternalServerError,
+        ServiceUnavailable,
+        _EmptySQLResult
+    )
+
     def run_sql(self, query: str) -> BigQueryRows:
         bigquery = self._bigquery(self.service_account_credentials.project_id)
         if log.isEnabledFor(logging.DEBUG):
@@ -508,13 +516,7 @@ class TDRClient(SAMClient):
                     job_info = self._job_info(job, result)
                     if not self._job_has_result(job_info):
                         raise self._EmptySQLResult
-                except (
-                    BadRequest,
-                    Forbidden,
-                    InternalServerError,
-                    ServiceUnavailable,
-                    self._EmptySQLResult
-                ) as e:
+                except self._retryable_exceptions as e:
                     if delay is None:
                         raise e
                     elif isinstance(e, Forbidden) and 'Exceeded rate limits' not in e.message:
