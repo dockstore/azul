@@ -362,7 +362,7 @@ def emit(t: T, target_branch: str):
                                  f'followed by ` {target_branch}`',
                     t.hotfix: f'PR title is `Hotfix {target_branch}: ` '
                               f'followed by title of linked issue',
-                    t.upgrade: 'PR title matches `Upgrade dependencies yyyy-mm-dd`',
+                    t.upgrade: 'PR title matches `Upgrade software dependencies yyyy-mm-dd`',
                     t.backport: 'PR title contains the 7-digit SHA1 of the backported commits'
                 }[t],
                 'alt': iif(t is t.default, "or comment in PR explains why they're different", None)
