@@ -1,0 +1,3824 @@
+{
+    "manifest": {
+        "analysis_file/be9b666c-9497-4c75-858c-978eabc37048": {
+            "uuid": "780846a0-dbc5-4bdc-ab3a-0da14b3ed551",
+            "name": "GSE180878_Li_Brugge_10XscRNAseq_GeneCellMatrix_RNAcounts_human.csv.gz",
+            "version": "2022-07-26T00:16:47.748000Z",
+            "drs_uri": "drs://data.terra.bio/v1_541cc0bb-c54f-4a7e-8cdd-1a70cbd2f20c_596c26ba-2c35-4396-8c7c-50c825eb4e75",
+            "size": 107958959,
+            "sha256": "649c45bd2f01b028c974c7e2a9604b9cf564d8afcf528eb299eaf3d7fe92bae3",
+            "crc32c": "943ab5ab",
+            "sha1": "0c762eed0904638933885f04df350e4ffd17f9af",
+            "s3_etag": "9ad75f2bde075e8b7d977b0cf3db96f2-2",
+            "content-type": "text/csv",
+            "indexed": false
+        }
+    },
+    "metadata": {
+        "library_preparation_protocol/090eef67-013e-4c09-a507-d595ef50ac02": {
+            "describedBy": "https://schema.humancellatlas.org/type/protocol/sequencing/6.3.1/library_preparation_protocol",
+            "schema_type": "protocol",
+            "protocol_core": {
+                "protocol_id": "library_protocol_1",
+                "protocol_name": "10x 3' v2 library preparation",
+                "protocol_description": "A total of 7,000-8,000 viable cells per sample were loaded for single cell capturing and cDNA library generation using the 10X Chromium 3\u2019 library construction kit v2 following the manufacturer\u2019s instructions (including 3 washes to minimize ambient RNA)."
+            },
+            "cell_barcode": {
+                "barcode_read": "Read 1",
+                "barcode_offset": 0,
+                "barcode_length": 16
+            },
+            "input_nucleic_acid_molecule": {
+                "text": "polyA RNA",
+                "ontology": "OBI:0000869",
+                "ontology_label": "polyA RNA"
+            },
+            "nucleic_acid_source": "single cell",
+            "library_construction_method": {
+                "text": "10x 3' V2 sequencing",
+                "ontology": "EFO:0009899",
+                "ontology_label": "10x 3' v2"
+            },
+            "library_construction_kit": {
+                "manufacturer": "10X Genomics"
+            },
+            "end_bias": "3 prime tag",
+            "primer": "poly-dT",
+            "strand": "first",
+            "umi_barcode": {
+                "barcode_read": "Read 1",
+                "barcode_offset": 16,
+                "barcode_length": 10
+            },
+            "provenance": {
+                "document_id": "090eef67-013e-4c09-a507-d595ef50ac02",
+                "submission_date": "2022-07-26T00:16:46.551Z",
+                "update_date": "2022-07-27T20:39:39.178Z",
+                "schema_major_version": 6,
+                "schema_minor_version": 3
+            }
+        },
+        "specimen_from_organism/10dfef3f-6932-41bf-8ad2-b76c70e8cbb3": {
+            "describedBy": "https://schema.humancellatlas.org/type/biomaterial/10.5.0/specimen_from_organism",
+            "schema_type": "biomaterial",
+            "biomaterial_core": {
+                "biomaterial_id": "SAMN20422998",
+                "biomaterial_name": "mammary tissue specimen",
+                "biomaterial_description": "mammary tissue,Mammary tissue,Prophylactic,BRCA1 (c. 5251C>T),25,Premenopausal,0,0,Black,No,No",
+                "ncbi_taxon_id": [
+                    9606
+                ],
+                "biosamples_accession": "SAMN20422998",
+                "insdc_sample_accession": "SRS9598105"
+            },
+            "genus_species": [
+                {
+                    "text": "Homo sapiens",
+                    "ontology_label": "Homo sapiens"
+                }
+            ],
+            "organ": {
+                "text": "breast",
+                "ontology": "UBERON:0000310",
+                "ontology_label": "breast"
+            },
+            "diseases": [
+                {
+                    "text": "normal",
+                    "ontology": "PATO:0000461",
+                    "ontology_label": "normal"
+                }
+            ],
+            "provenance": {
+                "document_id": "10dfef3f-6932-41bf-8ad2-b76c70e8cbb3",
+                "submission_date": "2022-07-26T00:16:46.135Z",
+                "update_date": "2022-08-23T17:15:17.722Z",
+                "schema_major_version": 10,
+                "schema_minor_version": 5
+            }
+        },
+        "specimen_from_organism/12574b13-e36d-43e8-95b4-083e8d23ac7b": {
+            "describedBy": "https://schema.humancellatlas.org/type/biomaterial/10.5.0/specimen_from_organism",
+            "schema_type": "biomaterial",
+            "biomaterial_core": {
+                "biomaterial_id": "SAMN20423002",
+                "biomaterial_name": "mammary tissue specimen",
+                "biomaterial_description": "mammary tissue,Mammary tissue,Reductive,WT,36,Premenopausal,2,0,Black,No,No",
+                "ncbi_taxon_id": [
+                    9606
+                ],
+                "biosamples_accession": "SAMN20423002",
+                "insdc_sample_accession": "SRS9598116"
+            },
+            "genus_species": [
+                {
+                    "text": "Homo sapiens",
+                    "ontology_label": "Homo sapiens"
+                }
+            ],
+            "organ": {
+                "text": "breast",
+                "ontology": "UBERON:0000310",
+                "ontology_label": "breast"
+            },
+            "diseases": [
+                {
+                    "text": "normal",
+                    "ontology": "PATO:0000461",
+                    "ontology_label": "normal"
+                }
+            ],
+            "provenance": {
+                "document_id": "12574b13-e36d-43e8-95b4-083e8d23ac7b",
+                "submission_date": "2022-07-26T00:16:46.290Z",
+                "update_date": "2022-08-23T17:15:17.831Z",
+                "schema_major_version": 10,
+                "schema_minor_version": 5
+            }
+        },
+        "specimen_from_organism/188469ce-7d7a-4054-8cf1-32a6ec8ec165": {
+            "describedBy": "https://schema.humancellatlas.org/type/biomaterial/10.5.0/specimen_from_organism",
+            "schema_type": "biomaterial",
+            "biomaterial_core": {
+                "biomaterial_id": "SAMN20422996",
+                "biomaterial_name": "mammary tissue specimen",
+                "biomaterial_description": "mammary tissue,Mammary tissue,Prophylactic,BRCA1 (c.5266dupC (p.GLn1756Profs*74)),52,Surgical menopause,1,1,Jewish,Yes,No",
+                "ncbi_taxon_id": [
+                    9606
+                ],
+                "biosamples_accession": "SAMN20422996",
+                "insdc_sample_accession": "SRS9598107"
+            },
+            "genus_species": [
+                {
+                    "text": "Homo sapiens",
+                    "ontology_label": "Homo sapiens"
+                }
+            ],
+            "organ": {
+                "text": "breast",
+                "ontology": "UBERON:0000310",
+                "ontology_label": "breast"
+            },
+            "diseases": [
+                {
+                    "text": "normal",
+                    "ontology": "PATO:0000461",
+                    "ontology_label": "normal"
+                }
+            ],
+            "provenance": {
+                "document_id": "188469ce-7d7a-4054-8cf1-32a6ec8ec165",
+                "submission_date": "2022-07-26T00:16:46.159Z",
+                "update_date": "2022-08-23T17:15:17.743Z",
+                "schema_major_version": 10,
+                "schema_minor_version": 5
+            }
+        },
+        "specimen_from_organism/1c516819-d0f4-482d-8fcd-04d5e31552af": {
+            "describedBy": "https://schema.humancellatlas.org/type/biomaterial/10.5.0/specimen_from_organism",
+            "schema_type": "biomaterial",
+            "biomaterial_core": {
+                "biomaterial_id": "SAMN20422995",
+                "biomaterial_name": "mammary tissue specimen",
+                "biomaterial_description": "mammary tissue,Mammary tissue,Prophylactic,BRCA1 (c.4035delA),53,Surgical menopause,2,1,White,Yes,Yes",
+                "ncbi_taxon_id": [
+                    9606
+                ],
+                "biosamples_accession": "SAMN20422995",
+                "insdc_sample_accession": "SRS9598108"
+            },
+            "genus_species": [
+                {
+                    "text": "Homo sapiens",
+                    "ontology_label": "Homo sapiens"
+                }
+            ],
+            "organ": {
+                "text": "breast",
+                "ontology": "UBERON:0000310",
+                "ontology_label": "breast"
+            },
+            "diseases": [
+                {
+                    "text": "normal",
+                    "ontology": "PATO:0000461",
+                    "ontology_label": "normal"
+                }
+            ],
+            "provenance": {
+                "document_id": "1c516819-d0f4-482d-8fcd-04d5e31552af",
+                "submission_date": "2022-07-26T00:16:46.172Z",
+                "update_date": "2022-08-23T17:15:17.751Z",
+                "schema_major_version": 10,
+                "schema_minor_version": 5
+            }
+        },
+        "specimen_from_organism/44d876d1-f4e3-426f-9027-144a492eb615": {
+            "describedBy": "https://schema.humancellatlas.org/type/biomaterial/10.5.0/specimen_from_organism",
+            "schema_type": "biomaterial",
+            "biomaterial_core": {
+                "biomaterial_id": "SAMN20423001",
+                "biomaterial_name": "mammary tissue specimen",
+                "biomaterial_description": "mammary tissue,Mammary tissue,Reductive,WT,39,Premenopausal,n/a,n/a,Jewish,No,No",
+                "ncbi_taxon_id": [
+                    9606
+                ],
+                "biosamples_accession": "SAMN20423001",
+                "insdc_sample_accession": "SRS9598118"
+            },
+            "genus_species": [
+                {
+                    "text": "Homo sapiens",
+                    "ontology_label": "Homo sapiens"
+                }
+            ],
+            "organ": {
+                "text": "breast",
+                "ontology": "UBERON:0000310",
+                "ontology_label": "breast"
+            },
+            "diseases": [
+                {
+                    "text": "normal",
+                    "ontology": "PATO:0000461",
+                    "ontology_label": "normal"
+                }
+            ],
+            "provenance": {
+                "document_id": "44d876d1-f4e3-426f-9027-144a492eb615",
+                "submission_date": "2022-07-26T00:16:46.302Z",
+                "update_date": "2022-08-23T17:15:17.841Z",
+                "schema_major_version": 10,
+                "schema_minor_version": 5
+            }
+        },
+        "specimen_from_organism/48a18b04-8b37-4db0-a88e-f756accc7a0e": {
+            "describedBy": "https://schema.humancellatlas.org/type/biomaterial/10.5.0/specimen_from_organism",
+            "schema_type": "biomaterial",
+            "biomaterial_core": {
+                "biomaterial_id": "SAMN20422997",
+                "biomaterial_name": "mammary tissue specimen",
+                "biomaterial_description": "mammary tissue,Mammary tissue,Prophylactic,BRCA1 (del exons 21-24),35,Premenopausal,2,2,White,No,No",
+                "ncbi_taxon_id": [
+                    9606
+                ],
+                "biosamples_accession": "SAMN20422997",
+                "insdc_sample_accession": "SRS9598106"
+            },
+            "genus_species": [
+                {
+                    "text": "Homo sapiens",
+                    "ontology_label": "Homo sapiens"
+                }
+            ],
+            "organ": {
+                "text": "breast",
+                "ontology": "UBERON:0000310",
+                "ontology_label": "breast"
+            },
+            "diseases": [
+                {
+                    "text": "normal",
+                    "ontology": "PATO:0000461",
+                    "ontology_label": "normal"
+                }
+            ],
+            "provenance": {
+                "document_id": "48a18b04-8b37-4db0-a88e-f756accc7a0e",
+                "submission_date": "2022-07-26T00:16:46.147Z",
+                "update_date": "2022-08-23T17:15:17.732Z",
+                "schema_major_version": 10,
+                "schema_minor_version": 5
+            }
+        },
+        "specimen_from_organism/5352646c-fffb-46b0-a9ef-8508af699458": {
+            "describedBy": "https://schema.humancellatlas.org/type/biomaterial/10.5.0/specimen_from_organism",
+            "schema_type": "biomaterial",
+            "biomaterial_core": {
+                "biomaterial_id": "SAMN20423003",
+                "biomaterial_name": "mammary tissue specimen",
+                "biomaterial_description": "mammary tissue,Mammary tissue,Prophylactic,BRCA2 (n/a),n/a,n/a,n/a,n/a,n/a,n/a,n/a",
+                "ncbi_taxon_id": [
+                    9606
+                ],
+                "biosamples_accession": "SAMN20423003",
+                "insdc_sample_accession": "SRS9598117"
+            },
+            "genus_species": [
+                {
+                    "text": "Homo sapiens",
+                    "ontology_label": "Homo sapiens"
+                }
+            ],
+            "organ": {
+                "text": "breast",
+                "ontology": "UBERON:0000310",
+                "ontology_label": "breast"
+            },
+            "diseases": [
+                {
+                    "text": "normal",
+                    "ontology": "PATO:0000461",
+                    "ontology_label": "normal"
+                }
+            ],
+            "provenance": {
+                "document_id": "5352646c-fffb-46b0-a9ef-8508af699458",
+                "submission_date": "2022-07-26T00:16:46.277Z",
+                "update_date": "2022-08-23T17:15:17.822Z",
+                "schema_major_version": 10,
+                "schema_minor_version": 5
+            }
+        },
+        "specimen_from_organism/67aee6a6-84fe-46cc-832d-44febe82a16a": {
+            "describedBy": "https://schema.humancellatlas.org/type/biomaterial/10.5.0/specimen_from_organism",
+            "schema_type": "biomaterial",
+            "biomaterial_core": {
+                "biomaterial_id": "SAMN20422993",
+                "biomaterial_name": "mammary tissue specimen",
+                "biomaterial_description": "mammary tissue,Mammary tissue,Prophylactic,BRCA1 (n/a_,n/a,n/a,n/a,n/a,n/a,n/a,n/a",
+                "ncbi_taxon_id": [
+                    9606
+                ],
+                "biosamples_accession": "SAMN20422993",
+                "insdc_sample_accession": "SRS9598110"
+            },
+            "genus_species": [
+                {
+                    "text": "Homo sapiens",
+                    "ontology_label": "Homo sapiens"
+                }
+            ],
+            "organ": {
+                "text": "breast",
+                "ontology": "UBERON:0000310",
+                "ontology_label": "breast"
+            },
+            "diseases": [
+                {
+                    "text": "normal",
+                    "ontology": "PATO:0000461",
+                    "ontology_label": "normal"
+                }
+            ],
+            "provenance": {
+                "document_id": "67aee6a6-84fe-46cc-832d-44febe82a16a",
+                "submission_date": "2022-07-26T00:16:46.203Z",
+                "update_date": "2022-08-23T17:15:17.770Z",
+                "schema_major_version": 10,
+                "schema_minor_version": 5
+            }
+        },
+        "specimen_from_organism/706204f2-6d2a-44c6-a482-0a2b1a702e01": {
+            "describedBy": "https://schema.humancellatlas.org/type/biomaterial/10.5.0/specimen_from_organism",
+            "schema_type": "biomaterial",
+            "biomaterial_core": {
+                "biomaterial_id": "SAMN20423004",
+                "biomaterial_name": "mammary tissue specimen",
+                "biomaterial_description": "mammary tissue,Mammary tissue,Prophylactic,BRCA2 (p.Q2899*),65,Surgical menopause,0,0,White,Yes,Yes",
+                "ncbi_taxon_id": [
+                    9606
+                ],
+                "biosamples_accession": "SAMN20423004",
+                "insdc_sample_accession": "SRS9598115"
+            },
+            "genus_species": [
+                {
+                    "text": "Homo sapiens",
+                    "ontology_label": "Homo sapiens"
+                }
+            ],
+            "organ": {
+                "text": "breast",
+                "ontology": "UBERON:0000310",
+                "ontology_label": "breast"
+            },
+            "diseases": [
+                {
+                    "text": "normal",
+                    "ontology": "PATO:0000461",
+                    "ontology_label": "normal"
+                }
+            ],
+            "provenance": {
+                "document_id": "706204f2-6d2a-44c6-a482-0a2b1a702e01",
+                "submission_date": "2022-07-26T00:16:46.265Z",
+                "update_date": "2022-08-23T17:15:17.813Z",
+                "schema_major_version": 10,
+                "schema_minor_version": 5
+            }
+        },
+        "specimen_from_organism/87ce69d7-c3f7-4d25-8218-f0d081695803": {
+            "describedBy": "https://schema.humancellatlas.org/type/biomaterial/10.5.0/specimen_from_organism",
+            "schema_type": "biomaterial",
+            "biomaterial_core": {
+                "biomaterial_id": "SAMN20422991",
+                "biomaterial_name": "mammary tissue specimen",
+                "biomaterial_description": "mammary tissue,Mammary tissue,Prophylactic,BRCA2 (c.5796_5797delTA),39,Surgical menopause,1,1,White,Yes,Yes",
+                "ncbi_taxon_id": [
+                    9606
+                ],
+                "biosamples_accession": "SAMN20422991",
+                "insdc_sample_accession": "SRS9598112"
+            },
+            "genus_species": [
+                {
+                    "text": "Homo sapiens",
+                    "ontology_label": "Homo sapiens"
+                }
+            ],
+            "organ": {
+                "text": "breast",
+                "ontology": "UBERON:0000310",
+                "ontology_label": "breast"
+            },
+            "diseases": [
+                {
+                    "text": "normal",
+                    "ontology": "PATO:0000461",
+                    "ontology_label": "normal"
+                }
+            ],
+            "provenance": {
+                "document_id": "87ce69d7-c3f7-4d25-8218-f0d081695803",
+                "submission_date": "2022-07-26T00:16:46.229Z",
+                "update_date": "2022-08-23T17:15:17.787Z",
+                "schema_major_version": 10,
+                "schema_minor_version": 5
+            }
+        },
+        "specimen_from_organism/95d2f089-ec1a-496e-8399-84ab980c7a2e": {
+            "describedBy": "https://schema.humancellatlas.org/type/biomaterial/10.5.0/specimen_from_organism",
+            "schema_type": "biomaterial",
+            "biomaterial_core": {
+                "biomaterial_id": "SAMN20422990",
+                "biomaterial_name": "mammary tissue specimen",
+                "biomaterial_description": "mammary tissue,Mammary tissue,Prophylactic,BRCA2 (c.715delA (p.Ser239Valfs*2)),50,Premenopausal,6,4,White,Yes,Yes",
+                "ncbi_taxon_id": [
+                    9606
+                ],
+                "biosamples_accession": "SAMN20422990",
+                "insdc_sample_accession": "SRS9598113"
+            },
+            "genus_species": [
+                {
+                    "text": "Homo sapiens",
+                    "ontology_label": "Homo sapiens"
+                }
+            ],
+            "organ": {
+                "text": "breast",
+                "ontology": "UBERON:0000310",
+                "ontology_label": "breast"
+            },
+            "diseases": [
+                {
+                    "text": "normal",
+                    "ontology": "PATO:0000461",
+                    "ontology_label": "normal"
+                }
+            ],
+            "provenance": {
+                "document_id": "95d2f089-ec1a-496e-8399-84ab980c7a2e",
+                "submission_date": "2022-07-26T00:16:46.241Z",
+                "update_date": "2022-08-23T17:15:17.794Z",
+                "schema_major_version": 10,
+                "schema_minor_version": 5
+            }
+        },
+        "specimen_from_organism/a0ed2c89-ddd9-4f38-a801-dcaf1f8809cb": {
+            "describedBy": "https://schema.humancellatlas.org/type/biomaterial/10.5.0/specimen_from_organism",
+            "schema_type": "biomaterial",
+            "biomaterial_core": {
+                "biomaterial_id": "SAMN20422992",
+                "biomaterial_name": "mammary tissue specimen",
+                "biomaterial_description": "mammary tissue,Mammary tissue,Prophylactic,BRCA2 (c.8487+3A>G),33,Premenopausal,1,0,White,Yes,Yes",
+                "ncbi_taxon_id": [
+                    9606
+                ],
+                "biosamples_accession": "SAMN20422992",
+                "insdc_sample_accession": "SRS9598111"
+            },
+            "genus_species": [
+                {
+                    "text": "Homo sapiens",
+                    "ontology_label": "Homo sapiens"
+                }
+            ],
+            "organ": {
+                "text": "breast",
+                "ontology": "UBERON:0000310",
+                "ontology_label": "breast"
+            },
+            "diseases": [
+                {
+                    "text": "normal",
+                    "ontology": "PATO:0000461",
+                    "ontology_label": "normal"
+                }
+            ],
+            "provenance": {
+                "document_id": "a0ed2c89-ddd9-4f38-a801-dcaf1f8809cb",
+                "submission_date": "2022-07-26T00:16:46.216Z",
+                "update_date": "2022-08-23T17:15:17.779Z",
+                "schema_major_version": 10,
+                "schema_minor_version": 5
+            }
+        },
+        "specimen_from_organism/a252e8e8-c833-49c6-8daa-930bef8bd105": {
+            "describedBy": "https://schema.humancellatlas.org/type/biomaterial/10.5.0/specimen_from_organism",
+            "schema_type": "biomaterial",
+            "biomaterial_core": {
+                "biomaterial_id": "SAMN20422999",
+                "biomaterial_name": "mammary tissue specimen",
+                "biomaterial_description": "mammary tissue,Mammary tissue,Reductive,RAD51C,31,Premenopausal,4,1,Black,No,No",
+                "ncbi_taxon_id": [
+                    9606
+                ],
+                "biosamples_accession": "SAMN20422999",
+                "insdc_sample_accession": "SRS9598104"
+            },
+            "genus_species": [
+                {
+                    "text": "Homo sapiens",
+                    "ontology_label": "Homo sapiens"
+                }
+            ],
+            "organ": {
+                "text": "breast",
+                "ontology": "UBERON:0000310",
+                "ontology_label": "breast"
+            },
+            "diseases": [
+                {
+                    "text": "normal",
+                    "ontology": "PATO:0000461",
+                    "ontology_label": "normal"
+                }
+            ],
+            "provenance": {
+                "document_id": "a252e8e8-c833-49c6-8daa-930bef8bd105",
+                "submission_date": "2022-07-26T00:16:46.123Z",
+                "update_date": "2022-08-23T17:15:17.714Z",
+                "schema_major_version": 10,
+                "schema_minor_version": 5
+            }
+        },
+        "specimen_from_organism/ceb55be8-123a-47f5-864e-30b9081a86db": {
+            "describedBy": "https://schema.humancellatlas.org/type/biomaterial/10.5.0/specimen_from_organism",
+            "schema_type": "biomaterial",
+            "biomaterial_core": {
+                "biomaterial_id": "SAMN20422994",
+                "biomaterial_name": "mammary tissue specimen",
+                "biomaterial_description": "mammary tissue,Mammary tissue,Prophylactic,BRCA1 (IVS10-2A>T),55,Surgical menopause,4,2,White,Yes,No",
+                "ncbi_taxon_id": [
+                    9606
+                ],
+                "biosamples_accession": "SAMN20422994",
+                "insdc_sample_accession": "SRS9598109"
+            },
+            "genus_species": [
+                {
+                    "text": "Homo sapiens",
+                    "ontology_label": "Homo sapiens"
+                }
+            ],
+            "organ": {
+                "text": "breast",
+                "ontology": "UBERON:0000310",
+                "ontology_label": "breast"
+            },
+            "diseases": [
+                {
+                    "text": "normal",
+                    "ontology": "PATO:0000461",
+                    "ontology_label": "normal"
+                }
+            ],
+            "provenance": {
+                "document_id": "ceb55be8-123a-47f5-864e-30b9081a86db",
+                "submission_date": "2022-07-26T00:16:46.189Z",
+                "update_date": "2022-08-23T17:15:17.760Z",
+                "schema_major_version": 10,
+                "schema_minor_version": 5
+            }
+        },
+        "specimen_from_organism/d8c6c2fa-51a4-4164-a7e5-ebcf565373dc": {
+            "describedBy": "https://schema.humancellatlas.org/type/biomaterial/10.5.0/specimen_from_organism",
+            "schema_type": "biomaterial",
+            "biomaterial_core": {
+                "biomaterial_id": "SAMN20423005",
+                "biomaterial_name": "mammary tissue specimen",
+                "biomaterial_description": "mammary tissue,Mammary tissue,Prophylactic,BRCA2 (c.8575delC (p.Gln2859Lysfs*4)),57,Surgical menopause,2,2,White,No,No",
+                "ncbi_taxon_id": [
+                    9606
+                ],
+                "biosamples_accession": "SAMN20423005",
+                "insdc_sample_accession": "SRS9598114"
+            },
+            "genus_species": [
+                {
+                    "text": "Homo sapiens",
+                    "ontology_label": "Homo sapiens"
+                }
+            ],
+            "organ": {
+                "text": "breast",
+                "ontology": "UBERON:0000310",
+                "ontology_label": "breast"
+            },
+            "diseases": [
+                {
+                    "text": "normal",
+                    "ontology": "PATO:0000461",
+                    "ontology_label": "normal"
+                }
+            ],
+            "provenance": {
+                "document_id": "d8c6c2fa-51a4-4164-a7e5-ebcf565373dc",
+                "submission_date": "2022-07-26T00:16:46.253Z",
+                "update_date": "2022-08-23T17:15:17.805Z",
+                "schema_major_version": 10,
+                "schema_minor_version": 5
+            }
+        },
+        "specimen_from_organism/f371f5fd-bb50-433d-8c96-ac9ee2e9cad5": {
+            "describedBy": "https://schema.humancellatlas.org/type/biomaterial/10.5.0/specimen_from_organism",
+            "schema_type": "biomaterial",
+            "biomaterial_core": {
+                "biomaterial_id": "SAMN20423000",
+                "biomaterial_name": "mammary tissue specimen",
+                "biomaterial_description": "mammary tissue,Mammary tissue,Reductive,WT,41,Premenopausal,1,1,White,No,No",
+                "ncbi_taxon_id": [
+                    9606
+                ],
+                "biosamples_accession": "SAMN20423000",
+                "insdc_sample_accession": "SRS9598103"
+            },
+            "genus_species": [
+                {
+                    "text": "Homo sapiens",
+                    "ontology_label": "Homo sapiens"
+                }
+            ],
+            "organ": {
+                "text": "breast",
+                "ontology": "UBERON:0000310",
+                "ontology_label": "breast"
+            },
+            "diseases": [
+                {
+                    "text": "normal",
+                    "ontology": "PATO:0000461",
+                    "ontology_label": "normal"
+                }
+            ],
+            "provenance": {
+                "document_id": "f371f5fd-bb50-433d-8c96-ac9ee2e9cad5",
+                "submission_date": "2022-07-26T00:16:46.111Z",
+                "update_date": "2022-08-23T17:15:17.705Z",
+                "schema_major_version": 10,
+                "schema_minor_version": 5
+            }
+        },
+        "cell_suspension/194914ee-3e84-4df3-befd-963b9e7dd873": {
+            "describedBy": "https://schema.humancellatlas.org/type/biomaterial/13.3.0/cell_suspension",
+            "schema_type": "biomaterial",
+            "biomaterial_core": {
+                "biomaterial_id": "SRX11559748",
+                "biomaterial_name": "GSM5474112",
+                "biomaterial_description": "cell suspension from mammary tissue for scRNAseq",
+                "ncbi_taxon_id": [
+                    9606
+                ],
+                "biosamples_accession": "SAMN20422994"
+            },
+            "genus_species": [
+                {
+                    "text": "Homo sapiens",
+                    "ontology": "NCBITaxon:9606",
+                    "ontology_label": "Homo sapiens"
+                }
+            ],
+            "estimated_cell_count": 7500,
+            "provenance": {
+                "document_id": "194914ee-3e84-4df3-befd-963b9e7dd873",
+                "submission_date": "2022-07-26T00:16:46.389Z",
+                "update_date": "2022-08-23T17:15:17.950Z",
+                "schema_major_version": 13,
+                "schema_minor_version": 3
+            }
+        },
+        "cell_suspension/287cbe05-3074-4f1b-9e2e-02c0a54cce73": {
+            "describedBy": "https://schema.humancellatlas.org/type/biomaterial/13.3.0/cell_suspension",
+            "schema_type": "biomaterial",
+            "biomaterial_core": {
+                "biomaterial_id": "SRX11559746",
+                "biomaterial_name": "GSM5474110",
+                "biomaterial_description": "cell suspension from mammary tissue for scRNAseq",
+                "ncbi_taxon_id": [
+                    9606
+                ],
+                "biosamples_accession": "SAMN20422996"
+            },
+            "genus_species": [
+                {
+                    "text": "Homo sapiens",
+                    "ontology": "NCBITaxon:9606",
+                    "ontology_label": "Homo sapiens"
+                }
+            ],
+            "estimated_cell_count": 7500,
+            "provenance": {
+                "document_id": "287cbe05-3074-4f1b-9e2e-02c0a54cce73",
+                "submission_date": "2022-07-26T00:16:46.363Z",
+                "update_date": "2022-08-23T17:15:17.919Z",
+                "schema_major_version": 13,
+                "schema_minor_version": 3
+            }
+        },
+        "cell_suspension/3fe887bd-7ddd-4139-9c2b-3f38d5e0a158": {
+            "describedBy": "https://schema.humancellatlas.org/type/biomaterial/13.3.0/cell_suspension",
+            "schema_type": "biomaterial",
+            "biomaterial_core": {
+                "biomaterial_id": "SRX11559754",
+                "biomaterial_name": "GSM5474118",
+                "biomaterial_description": "cell suspension from mammary tissue for scRNAseq",
+                "ncbi_taxon_id": [
+                    9606
+                ],
+                "biosamples_accession": "SAMN20423004"
+            },
+            "genus_species": [
+                {
+                    "text": "Homo sapiens",
+                    "ontology": "NCBITaxon:9606",
+                    "ontology_label": "Homo sapiens"
+                }
+            ],
+            "estimated_cell_count": 7500,
+            "provenance": {
+                "document_id": "3fe887bd-7ddd-4139-9c2b-3f38d5e0a158",
+                "submission_date": "2022-07-26T00:16:46.463Z",
+                "update_date": "2022-08-23T17:15:18.047Z",
+                "schema_major_version": 13,
+                "schema_minor_version": 3
+            }
+        },
+        "cell_suspension/57fdd10e-e5a6-4998-92e7-6fb0c905468b": {
+            "describedBy": "https://schema.humancellatlas.org/type/biomaterial/13.3.0/cell_suspension",
+            "schema_type": "biomaterial",
+            "biomaterial_core": {
+                "biomaterial_id": "SRX11559752",
+                "biomaterial_name": "GSM5474116",
+                "biomaterial_description": "cell suspension from mammary tissue for scRNAseq",
+                "ncbi_taxon_id": [
+                    9606
+                ],
+                "biosamples_accession": "SAMN20422990"
+            },
+            "genus_species": [
+                {
+                    "text": "Homo sapiens",
+                    "ontology": "NCBITaxon:9606",
+                    "ontology_label": "Homo sapiens"
+                }
+            ],
+            "estimated_cell_count": 7500,
+            "provenance": {
+                "document_id": "57fdd10e-e5a6-4998-92e7-6fb0c905468b",
+                "submission_date": "2022-07-26T00:16:46.437Z",
+                "update_date": "2022-08-23T17:15:18.017Z",
+                "schema_major_version": 13,
+                "schema_minor_version": 3
+            }
+        },
+        "cell_suspension/694af37a-0253-4cef-bf82-65f27d8b4eda": {
+            "describedBy": "https://schema.humancellatlas.org/type/biomaterial/13.3.0/cell_suspension",
+            "schema_type": "biomaterial",
+            "biomaterial_core": {
+                "biomaterial_id": "SRX11559751",
+                "biomaterial_name": "GSM5474115",
+                "biomaterial_description": "cell suspension from mammary tissue for scRNAseq",
+                "ncbi_taxon_id": [
+                    9606
+                ],
+                "biosamples_accession": "SAMN20422991"
+            },
+            "genus_species": [
+                {
+                    "text": "Homo sapiens",
+                    "ontology": "NCBITaxon:9606",
+                    "ontology_label": "Homo sapiens"
+                }
+            ],
+            "estimated_cell_count": 7500,
+            "provenance": {
+                "document_id": "694af37a-0253-4cef-bf82-65f27d8b4eda",
+                "submission_date": "2022-07-26T00:16:46.426Z",
+                "update_date": "2022-08-23T17:15:18.003Z",
+                "schema_major_version": 13,
+                "schema_minor_version": 3
+            }
+        },
+        "cell_suspension/86095244-35e6-4d38-9849-35a6403f2d21": {
+            "describedBy": "https://schema.humancellatlas.org/type/biomaterial/13.3.0/cell_suspension",
+            "schema_type": "biomaterial",
+            "biomaterial_core": {
+                "biomaterial_id": "SRX11559756",
+                "biomaterial_name": "GSM5474104",
+                "biomaterial_description": "cell suspension from mammary tissue for scRNAseq",
+                "ncbi_taxon_id": [
+                    9606
+                ],
+                "biosamples_accession": "SAMN20423002"
+            },
+            "genus_species": [
+                {
+                    "text": "Homo sapiens",
+                    "ontology": "NCBITaxon:9606",
+                    "ontology_label": "Homo sapiens"
+                }
+            ],
+            "estimated_cell_count": 7500,
+            "provenance": {
+                "document_id": "86095244-35e6-4d38-9849-35a6403f2d21",
+                "submission_date": "2022-07-26T00:16:46.487Z",
+                "update_date": "2022-08-23T17:15:18.093Z",
+                "schema_major_version": 13,
+                "schema_minor_version": 3
+            }
+        },
+        "cell_suspension/a81fb1dc-f3c2-4ed7-a75b-83634f07c351": {
+            "describedBy": "https://schema.humancellatlas.org/type/biomaterial/13.3.0/cell_suspension",
+            "schema_type": "biomaterial",
+            "biomaterial_core": {
+                "biomaterial_id": "SRX11559744",
+                "biomaterial_name": "GSM5474108",
+                "biomaterial_description": "cell suspension from mammary tissue for scRNAseq",
+                "ncbi_taxon_id": [
+                    9606
+                ],
+                "biosamples_accession": "SAMN20422998"
+            },
+            "genus_species": [
+                {
+                    "text": "Homo sapiens",
+                    "ontology": "NCBITaxon:9606",
+                    "ontology_label": "Homo sapiens"
+                }
+            ],
+            "estimated_cell_count": 7500,
+            "provenance": {
+                "document_id": "a81fb1dc-f3c2-4ed7-a75b-83634f07c351",
+                "submission_date": "2022-07-26T00:16:46.338Z",
+                "update_date": "2022-08-23T17:15:17.885Z",
+                "schema_major_version": 13,
+                "schema_minor_version": 3
+            }
+        },
+        "cell_suspension/ae418af2-0db6-402d-a8cf-e303be76aa9b": {
+            "describedBy": "https://schema.humancellatlas.org/type/biomaterial/13.3.0/cell_suspension",
+            "schema_type": "biomaterial",
+            "biomaterial_core": {
+                "biomaterial_id": "SRX11559743",
+                "biomaterial_name": "GSM5474107",
+                "biomaterial_description": "cell suspension from mammary tissue for scRNAseq",
+                "ncbi_taxon_id": [
+                    9606
+                ],
+                "biosamples_accession": "SAMN20422999"
+            },
+            "genus_species": [
+                {
+                    "text": "Homo sapiens",
+                    "ontology": "NCBITaxon:9606",
+                    "ontology_label": "Homo sapiens"
+                }
+            ],
+            "estimated_cell_count": 7500,
+            "provenance": {
+                "document_id": "ae418af2-0db6-402d-a8cf-e303be76aa9b",
+                "submission_date": "2022-07-26T00:16:46.326Z",
+                "update_date": "2022-08-23T17:15:17.870Z",
+                "schema_major_version": 13,
+                "schema_minor_version": 3
+            }
+        },
+        "cell_suspension/aec73517-4e8b-4120-b083-5f87a151c490": {
+            "describedBy": "https://schema.humancellatlas.org/type/biomaterial/13.3.0/cell_suspension",
+            "schema_type": "biomaterial",
+            "biomaterial_core": {
+                "biomaterial_id": "SRX11559749",
+                "biomaterial_name": "GSM5474113",
+                "biomaterial_description": "cell suspension from mammary tissue for scRNAseq",
+                "ncbi_taxon_id": [
+                    9606
+                ],
+                "biosamples_accession": "SAMN20422993"
+            },
+            "genus_species": [
+                {
+                    "text": "Homo sapiens",
+                    "ontology": "NCBITaxon:9606",
+                    "ontology_label": "Homo sapiens"
+                }
+            ],
+            "estimated_cell_count": 7500,
+            "provenance": {
+                "document_id": "aec73517-4e8b-4120-b083-5f87a151c490",
+                "submission_date": "2022-07-26T00:16:46.401Z",
+                "update_date": "2022-08-23T17:15:17.963Z",
+                "schema_major_version": 13,
+                "schema_minor_version": 3
+            }
+        },
+        "cell_suspension/b1ea2c38-e8b4-4155-879a-f1b977de52b9": {
+            "describedBy": "https://schema.humancellatlas.org/type/biomaterial/13.3.0/cell_suspension",
+            "schema_type": "biomaterial",
+            "biomaterial_core": {
+                "biomaterial_id": "SRX11559757",
+                "biomaterial_name": "GSM5474105",
+                "biomaterial_description": "cell suspension from mammary tissue for scRNAseq",
+                "ncbi_taxon_id": [
+                    9606
+                ],
+                "biosamples_accession": "SAMN20423001"
+            },
+            "genus_species": [
+                {
+                    "text": "Homo sapiens",
+                    "ontology": "NCBITaxon:9606",
+                    "ontology_label": "Homo sapiens"
+                }
+            ],
+            "estimated_cell_count": 7500,
+            "provenance": {
+                "document_id": "b1ea2c38-e8b4-4155-879a-f1b977de52b9",
+                "submission_date": "2022-07-26T00:16:46.501Z",
+                "update_date": "2022-08-23T17:15:18.113Z",
+                "schema_major_version": 13,
+                "schema_minor_version": 3
+            }
+        },
+        "cell_suspension/b6fe2669-4e44-4e93-9ac3-400a368aa024": {
+            "describedBy": "https://schema.humancellatlas.org/type/biomaterial/13.3.0/cell_suspension",
+            "schema_type": "biomaterial",
+            "biomaterial_core": {
+                "biomaterial_id": "SRX11559745",
+                "biomaterial_name": "GSM5474109",
+                "biomaterial_description": "cell suspension from mammary tissue for scRNAseq",
+                "ncbi_taxon_id": [
+                    9606
+                ],
+                "biosamples_accession": "SAMN20422997"
+            },
+            "genus_species": [
+                {
+                    "text": "Homo sapiens",
+                    "ontology": "NCBITaxon:9606",
+                    "ontology_label": "Homo sapiens"
+                }
+            ],
+            "estimated_cell_count": 7500,
+            "provenance": {
+                "document_id": "b6fe2669-4e44-4e93-9ac3-400a368aa024",
+                "submission_date": "2022-07-26T00:16:46.350Z",
+                "update_date": "2022-08-23T17:15:17.901Z",
+                "schema_major_version": 13,
+                "schema_minor_version": 3
+            }
+        },
+        "cell_suspension/b95f0aae-4c86-449d-b3e1-ba918a837ea8": {
+            "describedBy": "https://schema.humancellatlas.org/type/biomaterial/13.3.0/cell_suspension",
+            "schema_type": "biomaterial",
+            "biomaterial_core": {
+                "biomaterial_id": "SRX11559750",
+                "biomaterial_name": "GSM5474114",
+                "biomaterial_description": "cell suspension from mammary tissue for scRNAseq",
+                "ncbi_taxon_id": [
+                    9606
+                ],
+                "biosamples_accession": "SAMN20422992"
+            },
+            "genus_species": [
+                {
+                    "text": "Homo sapiens",
+                    "ontology": "NCBITaxon:9606",
+                    "ontology_label": "Homo sapiens"
+                }
+            ],
+            "estimated_cell_count": 7500,
+            "provenance": {
+                "document_id": "b95f0aae-4c86-449d-b3e1-ba918a837ea8",
+                "submission_date": "2022-07-26T00:16:46.414Z",
+                "update_date": "2022-08-23T17:15:17.988Z",
+                "schema_major_version": 13,
+                "schema_minor_version": 3
+            }
+        },
+        "cell_suspension/ce845e4e-69ff-4c83-b96b-8b1169140551": {
+            "describedBy": "https://schema.humancellatlas.org/type/biomaterial/13.3.0/cell_suspension",
+            "schema_type": "biomaterial",
+            "biomaterial_core": {
+                "biomaterial_id": "SRX11559755",
+                "biomaterial_name": "GSM5474119",
+                "biomaterial_description": "cell suspension from mammary tissue for scRNAseq",
+                "ncbi_taxon_id": [
+                    9606
+                ],
+                "biosamples_accession": "SAMN20423003"
+            },
+            "genus_species": [
+                {
+                    "text": "Homo sapiens",
+                    "ontology": "NCBITaxon:9606",
+                    "ontology_label": "Homo sapiens"
+                }
+            ],
+            "estimated_cell_count": 7500,
+            "provenance": {
+                "document_id": "ce845e4e-69ff-4c83-b96b-8b1169140551",
+                "submission_date": "2022-07-26T00:16:46.475Z",
+                "update_date": "2022-08-23T17:15:18.062Z",
+                "schema_major_version": 13,
+                "schema_minor_version": 3
+            }
+        },
+        "cell_suspension/d431a352-e6a1-4b28-8374-cfa08a4a549b": {
+            "describedBy": "https://schema.humancellatlas.org/type/biomaterial/13.3.0/cell_suspension",
+            "schema_type": "biomaterial",
+            "biomaterial_core": {
+                "biomaterial_id": "SRX11559747",
+                "biomaterial_name": "GSM5474111",
+                "biomaterial_description": "cell suspension from mammary tissue for scRNAseq",
+                "ncbi_taxon_id": [
+                    9606
+                ],
+                "biosamples_accession": "SAMN20422995"
+            },
+            "genus_species": [
+                {
+                    "text": "Homo sapiens",
+                    "ontology": "NCBITaxon:9606",
+                    "ontology_label": "Homo sapiens"
+                }
+            ],
+            "estimated_cell_count": 7500,
+            "provenance": {
+                "document_id": "d431a352-e6a1-4b28-8374-cfa08a4a549b",
+                "submission_date": "2022-07-26T00:16:46.376Z",
+                "update_date": "2022-08-23T17:15:17.935Z",
+                "schema_major_version": 13,
+                "schema_minor_version": 3
+            }
+        },
+        "cell_suspension/ee8e1d61-d43b-4acc-8f77-d1ea968938f9": {
+            "describedBy": "https://schema.humancellatlas.org/type/biomaterial/13.3.0/cell_suspension",
+            "schema_type": "biomaterial",
+            "biomaterial_core": {
+                "biomaterial_id": "SRX11559753",
+                "biomaterial_name": "GSM5474117",
+                "biomaterial_description": "cell suspension from mammary tissue for scRNAseq",
+                "ncbi_taxon_id": [
+                    9606
+                ],
+                "biosamples_accession": "SAMN20423005"
+            },
+            "genus_species": [
+                {
+                    "text": "Homo sapiens",
+                    "ontology": "NCBITaxon:9606",
+                    "ontology_label": "Homo sapiens"
+                }
+            ],
+            "estimated_cell_count": 7500,
+            "provenance": {
+                "document_id": "ee8e1d61-d43b-4acc-8f77-d1ea968938f9",
+                "submission_date": "2022-07-26T00:16:46.450Z",
+                "update_date": "2022-08-23T17:15:18.031Z",
+                "schema_major_version": 13,
+                "schema_minor_version": 3
+            }
+        },
+        "cell_suspension/fe3e7365-6847-416e-9dde-c9ae36f73513": {
+            "describedBy": "https://schema.humancellatlas.org/type/biomaterial/13.3.0/cell_suspension",
+            "schema_type": "biomaterial",
+            "biomaterial_core": {
+                "biomaterial_id": "SRX11559742",
+                "biomaterial_name": "GSM5474106",
+                "biomaterial_description": "cell suspension from mammary tissue for scRNAseq",
+                "ncbi_taxon_id": [
+                    9606
+                ],
+                "biosamples_accession": "SAMN20423000"
+            },
+            "genus_species": [
+                {
+                    "text": "Homo sapiens",
+                    "ontology": "NCBITaxon:9606",
+                    "ontology_label": "Homo sapiens"
+                }
+            ],
+            "estimated_cell_count": 7500,
+            "provenance": {
+                "document_id": "fe3e7365-6847-416e-9dde-c9ae36f73513",
+                "submission_date": "2022-07-26T00:16:46.315Z",
+                "update_date": "2022-08-23T17:15:17.852Z",
+                "schema_major_version": 13,
+                "schema_minor_version": 3
+            }
+        },
+        "process/09575418-0164-43a8-bb8e-18572b62564b": {
+            "process_core": {
+                "process_id": "process_id_18"
+            },
+            "schema_type": "process",
+            "describedBy": "https://schema.humancellatlas.org/type/process/9.2.0/process",
+            "provenance": {
+                "document_id": "09575418-0164-43a8-bb8e-18572b62564b",
+                "submission_date": "2022-07-26T00:16:48.088Z",
+                "update_date": "2022-07-27T20:39:38.873Z",
+                "schema_major_version": 9,
+                "schema_minor_version": 2
+            }
+        },
+        "process/0ec75821-a2cb-4ccb-b2d1-67535b78dc5b": {
+            "insdc_experiment": {
+                "insdc_experiment_accession": "SRX11559755"
+            },
+            "process_core": {
+                "process_id": "process_id_14"
+            },
+            "schema_type": "process",
+            "describedBy": "https://schema.humancellatlas.org/type/process/9.2.0/process",
+            "provenance": {
+                "document_id": "0ec75821-a2cb-4ccb-b2d1-67535b78dc5b",
+                "submission_date": "2022-07-26T00:16:48.044Z",
+                "update_date": "2022-07-27T20:39:38.858Z",
+                "schema_major_version": 9,
+                "schema_minor_version": 2
+            }
+        },
+        "process/192fe4e2-0f4d-4f7c-a5d0-5edfb64cbc36": {
+            "process_core": {
+                "process_id": "process_id_31"
+            },
+            "schema_type": "process",
+            "describedBy": "https://schema.humancellatlas.org/type/process/9.2.0/process",
+            "provenance": {
+                "document_id": "192fe4e2-0f4d-4f7c-a5d0-5edfb64cbc36",
+                "submission_date": "2022-07-26T00:16:48.237Z",
+                "update_date": "2022-07-27T20:39:38.925Z",
+                "schema_major_version": 9,
+                "schema_minor_version": 2
+            }
+        },
+        "process/1a7db1e0-a366-4b48-9a42-57fb05913c5d": {
+            "insdc_experiment": {
+                "insdc_experiment_accession": "SRX11559753"
+            },
+            "process_core": {
+                "process_id": "process_id_12"
+            },
+            "schema_type": "process",
+            "describedBy": "https://schema.humancellatlas.org/type/process/9.2.0/process",
+            "provenance": {
+                "document_id": "1a7db1e0-a366-4b48-9a42-57fb05913c5d",
+                "submission_date": "2022-07-26T00:16:48.021Z",
+                "update_date": "2022-07-27T20:39:38.848Z",
+                "schema_major_version": 9,
+                "schema_minor_version": 2
+            }
+        },
+        "process/1c2fea8d-91e8-4bf9-9fa4-fa942cee2caa": {
+            "insdc_experiment": {
+                "insdc_experiment_accession": "SRX11559754"
+            },
+            "process_core": {
+                "process_id": "process_id_13"
+            },
+            "schema_type": "process",
+            "describedBy": "https://schema.humancellatlas.org/type/process/9.2.0/process",
+            "provenance": {
+                "document_id": "1c2fea8d-91e8-4bf9-9fa4-fa942cee2caa",
+                "submission_date": "2022-07-26T00:16:48.033Z",
+                "update_date": "2022-07-27T20:39:38.851Z",
+                "schema_major_version": 9,
+                "schema_minor_version": 2
+            }
+        },
+        "process/2fd62ea5-9f16-41a3-8c24-732b48654d35": {
+            "process_core": {
+                "process_id": "process_id_17"
+            },
+            "schema_type": "process",
+            "describedBy": "https://schema.humancellatlas.org/type/process/9.2.0/process",
+            "provenance": {
+                "document_id": "2fd62ea5-9f16-41a3-8c24-732b48654d35",
+                "submission_date": "2022-07-26T00:16:48.076Z",
+                "update_date": "2022-07-27T20:39:38.869Z",
+                "schema_major_version": 9,
+                "schema_minor_version": 2
+            }
+        },
+        "process/3d97381b-844a-4990-9923-b05e110c5f8a": {
+            "insdc_experiment": {
+                "insdc_experiment_accession": "SRX11559752"
+            },
+            "process_core": {
+                "process_id": "process_id_11"
+            },
+            "schema_type": "process",
+            "describedBy": "https://schema.humancellatlas.org/type/process/9.2.0/process",
+            "provenance": {
+                "document_id": "3d97381b-844a-4990-9923-b05e110c5f8a",
+                "submission_date": "2022-07-26T00:16:48.009Z",
+                "update_date": "2022-07-27T20:39:38.845Z",
+                "schema_major_version": 9,
+                "schema_minor_version": 2
+            }
+        },
+        "process/4d5a4e0b-eed4-4e49-b5cb-aa3d6fe3efed": {
+            "insdc_experiment": {
+                "insdc_experiment_accession": "SRX11559756"
+            },
+            "process_core": {
+                "process_id": "process_id_15"
+            },
+            "schema_type": "process",
+            "describedBy": "https://schema.humancellatlas.org/type/process/9.2.0/process",
+            "provenance": {
+                "document_id": "4d5a4e0b-eed4-4e49-b5cb-aa3d6fe3efed",
+                "submission_date": "2022-07-26T00:16:48.054Z",
+                "update_date": "2022-07-27T20:39:38.863Z",
+                "schema_major_version": 9,
+                "schema_minor_version": 2
+            }
+        },
+        "process/57654bf2-186c-44da-86d5-0a4a889b102b": {
+            "process_core": {
+                "process_id": "process_id_25"
+            },
+            "schema_type": "process",
+            "describedBy": "https://schema.humancellatlas.org/type/process/9.2.0/process",
+            "provenance": {
+                "document_id": "57654bf2-186c-44da-86d5-0a4a889b102b",
+                "submission_date": "2022-07-26T00:16:48.166Z",
+                "update_date": "2022-07-27T20:39:38.901Z",
+                "schema_major_version": 9,
+                "schema_minor_version": 2
+            }
+        },
+        "process/57742b3f-28ec-452d-a66e-c005ee7f8a48": {
+            "process_core": {
+                "process_id": "process_id_21"
+            },
+            "schema_type": "process",
+            "describedBy": "https://schema.humancellatlas.org/type/process/9.2.0/process",
+            "provenance": {
+                "document_id": "57742b3f-28ec-452d-a66e-c005ee7f8a48",
+                "submission_date": "2022-07-26T00:16:48.122Z",
+                "update_date": "2022-07-27T20:39:38.885Z",
+                "schema_major_version": 9,
+                "schema_minor_version": 2
+            }
+        },
+        "process/5cfe9348-3043-4cbb-9cfb-c16dff11eb8b": {
+            "insdc_experiment": {
+                "insdc_experiment_accession": "SRX11559748"
+            },
+            "process_core": {
+                "process_id": "process_id_7"
+            },
+            "schema_type": "process",
+            "describedBy": "https://schema.humancellatlas.org/type/process/9.2.0/process",
+            "provenance": {
+                "document_id": "5cfe9348-3043-4cbb-9cfb-c16dff11eb8b",
+                "submission_date": "2022-07-26T00:16:47.845Z",
+                "update_date": "2022-07-27T20:39:38.831Z",
+                "schema_major_version": 9,
+                "schema_minor_version": 2
+            }
+        },
+        "process/65175117-d7a3-403f-a941-af4c262cd308": {
+            "process_core": {
+                "process_id": "process_id_28"
+            },
+            "schema_type": "process",
+            "describedBy": "https://schema.humancellatlas.org/type/process/9.2.0/process",
+            "provenance": {
+                "document_id": "65175117-d7a3-403f-a941-af4c262cd308",
+                "submission_date": "2022-07-26T00:16:48.201Z",
+                "update_date": "2022-07-27T20:39:38.913Z",
+                "schema_major_version": 9,
+                "schema_minor_version": 2
+            }
+        },
+        "process/6aa4a585-d4b2-4292-9d17-a7fd47df65a9": {
+            "insdc_experiment": {
+                "insdc_experiment_accession": "SRX11559745"
+            },
+            "process_core": {
+                "process_id": "process_id_4"
+            },
+            "schema_type": "process",
+            "describedBy": "https://schema.humancellatlas.org/type/process/9.2.0/process",
+            "provenance": {
+                "document_id": "6aa4a585-d4b2-4292-9d17-a7fd47df65a9",
+                "submission_date": "2022-07-26T00:16:47.811Z",
+                "update_date": "2022-07-27T20:39:38.820Z",
+                "schema_major_version": 9,
+                "schema_minor_version": 2
+            }
+        },
+        "process/6cbd9212-2126-4e67-a6fa-bc40ef709978": {
+            "insdc_experiment": {
+                "insdc_experiment_accession": "SRX11559746"
+            },
+            "process_core": {
+                "process_id": "process_id_5"
+            },
+            "schema_type": "process",
+            "describedBy": "https://schema.humancellatlas.org/type/process/9.2.0/process",
+            "provenance": {
+                "document_id": "6cbd9212-2126-4e67-a6fa-bc40ef709978",
+                "submission_date": "2022-07-26T00:16:47.823Z",
+                "update_date": "2022-07-27T20:39:38.824Z",
+                "schema_major_version": 9,
+                "schema_minor_version": 2
+            }
+        },
+        "process/74557ecd-1ea5-43fc-aaa0-56211e6e1351": {
+            "process_core": {
+                "process_id": "process_id_19"
+            },
+            "schema_type": "process",
+            "describedBy": "https://schema.humancellatlas.org/type/process/9.2.0/process",
+            "provenance": {
+                "document_id": "74557ecd-1ea5-43fc-aaa0-56211e6e1351",
+                "submission_date": "2022-07-26T00:16:48.099Z",
+                "update_date": "2022-07-27T20:39:38.877Z",
+                "schema_major_version": 9,
+                "schema_minor_version": 2
+            }
+        },
+        "process/74f78e4f-beb2-4857-bfe4-dbe6f7df5184": {
+            "process_core": {
+                "process_id": "process_id_22"
+            },
+            "schema_type": "process",
+            "describedBy": "https://schema.humancellatlas.org/type/process/9.2.0/process",
+            "provenance": {
+                "document_id": "74f78e4f-beb2-4857-bfe4-dbe6f7df5184",
+                "submission_date": "2022-07-26T00:16:48.134Z",
+                "update_date": "2022-07-27T20:39:38.889Z",
+                "schema_major_version": 9,
+                "schema_minor_version": 2
+            }
+        },
+        "process/7e616b4b-5e7f-4d72-a874-ce40690e4ebe": {
+            "insdc_experiment": {
+                "insdc_experiment_accession": "SRX11559742"
+            },
+            "process_core": {
+                "process_id": "process_id_1"
+            },
+            "schema_type": "process",
+            "describedBy": "https://schema.humancellatlas.org/type/process/9.2.0/process",
+            "provenance": {
+                "document_id": "7e616b4b-5e7f-4d72-a874-ce40690e4ebe",
+                "submission_date": "2022-07-26T00:16:47.777Z",
+                "update_date": "2022-07-27T20:39:38.809Z",
+                "schema_major_version": 9,
+                "schema_minor_version": 2
+            }
+        },
+        "process/80813718-58b1-4a2c-9ac6-1192c45a7ccb": {
+            "process_core": {
+                "process_id": "process_id_30"
+            },
+            "schema_type": "process",
+            "describedBy": "https://schema.humancellatlas.org/type/process/9.2.0/process",
+            "provenance": {
+                "document_id": "80813718-58b1-4a2c-9ac6-1192c45a7ccb",
+                "submission_date": "2022-07-26T00:16:48.224Z",
+                "update_date": "2022-07-27T20:39:38.921Z",
+                "schema_major_version": 9,
+                "schema_minor_version": 2
+            }
+        },
+        "process/8708c2d3-fe7b-4ccd-890b-483a02a2c8f8": {
+            "process_core": {
+                "process_id": "process_id_32"
+            },
+            "schema_type": "process",
+            "describedBy": "https://schema.humancellatlas.org/type/process/9.2.0/process",
+            "provenance": {
+                "document_id": "8708c2d3-fe7b-4ccd-890b-483a02a2c8f8",
+                "submission_date": "2022-07-26T00:16:48.250Z",
+                "update_date": "2022-07-27T20:39:38.929Z",
+                "schema_major_version": 9,
+                "schema_minor_version": 2
+            }
+        },
+        "process/8868992d-d27c-48f1-809d-df4735211dbd": {
+            "process_core": {
+                "process_id": "process_id_27"
+            },
+            "schema_type": "process",
+            "describedBy": "https://schema.humancellatlas.org/type/process/9.2.0/process",
+            "provenance": {
+                "document_id": "8868992d-d27c-48f1-809d-df4735211dbd",
+                "submission_date": "2022-07-26T00:16:48.189Z",
+                "update_date": "2022-07-27T20:39:38.909Z",
+                "schema_major_version": 9,
+                "schema_minor_version": 2
+            }
+        },
+        "process/a0296012-dfb0-4b7a-b5e2-d3910ee9c6b6": {
+            "insdc_experiment": {
+                "insdc_experiment_accession": "SRX11559757"
+            },
+            "process_core": {
+                "process_id": "process_id_16"
+            },
+            "schema_type": "process",
+            "describedBy": "https://schema.humancellatlas.org/type/process/9.2.0/process",
+            "provenance": {
+                "document_id": "a0296012-dfb0-4b7a-b5e2-d3910ee9c6b6",
+                "submission_date": "2022-07-26T00:16:48.065Z",
+                "update_date": "2022-07-27T20:39:38.866Z",
+                "schema_major_version": 9,
+                "schema_minor_version": 2
+            }
+        },
+        "process/a0ed34f1-774c-4302-a387-b4b9d3541688": {
+            "process_core": {
+                "process_id": "process_id_23"
+            },
+            "schema_type": "process",
+            "describedBy": "https://schema.humancellatlas.org/type/process/9.2.0/process",
+            "provenance": {
+                "document_id": "a0ed34f1-774c-4302-a387-b4b9d3541688",
+                "submission_date": "2022-07-26T00:16:48.144Z",
+                "update_date": "2022-07-27T20:39:38.893Z",
+                "schema_major_version": 9,
+                "schema_minor_version": 2
+            }
+        },
+        "process/a9c24c08-6cc1-4222-81ca-c920a344a4c5": {
+            "insdc_experiment": {
+                "insdc_experiment_accession": "SRX11559750"
+            },
+            "process_core": {
+                "process_id": "process_id_9"
+            },
+            "schema_type": "process",
+            "describedBy": "https://schema.humancellatlas.org/type/process/9.2.0/process",
+            "provenance": {
+                "document_id": "a9c24c08-6cc1-4222-81ca-c920a344a4c5",
+                "submission_date": "2022-07-26T00:16:47.940Z",
+                "update_date": "2022-07-27T20:39:38.838Z",
+                "schema_major_version": 9,
+                "schema_minor_version": 2
+            }
+        },
+        "process/b240e7ce-e0fb-4602-bc07-1a1b282eacb3": {
+            "insdc_experiment": {
+                "insdc_experiment_accession": "SRX11559749"
+            },
+            "process_core": {
+                "process_id": "process_id_8"
+            },
+            "schema_type": "process",
+            "describedBy": "https://schema.humancellatlas.org/type/process/9.2.0/process",
+            "provenance": {
+                "document_id": "b240e7ce-e0fb-4602-bc07-1a1b282eacb3",
+                "submission_date": "2022-07-26T00:16:47.860Z",
+                "update_date": "2022-07-27T20:39:38.834Z",
+                "schema_major_version": 9,
+                "schema_minor_version": 2
+            }
+        },
+        "process/b2b6a004-5c11-4711-b025-456127973d3a": {
+            "process_core": {
+                "process_id": "process_id_26"
+            },
+            "schema_type": "process",
+            "describedBy": "https://schema.humancellatlas.org/type/process/9.2.0/process",
+            "provenance": {
+                "document_id": "b2b6a004-5c11-4711-b025-456127973d3a",
+                "submission_date": "2022-07-26T00:16:48.178Z",
+                "update_date": "2022-07-27T20:39:38.905Z",
+                "schema_major_version": 9,
+                "schema_minor_version": 2
+            }
+        },
+        "process/b960bcc6-db67-4996-b75e-ef07b34b5108": {
+            "process_core": {
+                "process_id": "process_id_29"
+            },
+            "schema_type": "process",
+            "describedBy": "https://schema.humancellatlas.org/type/process/9.2.0/process",
+            "provenance": {
+                "document_id": "b960bcc6-db67-4996-b75e-ef07b34b5108",
+                "submission_date": "2022-07-26T00:16:48.212Z",
+                "update_date": "2022-07-27T20:39:38.917Z",
+                "schema_major_version": 9,
+                "schema_minor_version": 2
+            }
+        },
+        "process/bb9e93e0-ae58-43b7-8017-96c013ee2082": {
+            "process_core": {
+                "process_id": "process_id_20"
+            },
+            "schema_type": "process",
+            "describedBy": "https://schema.humancellatlas.org/type/process/9.2.0/process",
+            "provenance": {
+                "document_id": "bb9e93e0-ae58-43b7-8017-96c013ee2082",
+                "submission_date": "2022-07-26T00:16:48.111Z",
+                "update_date": "2022-07-27T20:39:38.881Z",
+                "schema_major_version": 9,
+                "schema_minor_version": 2
+            }
+        },
+        "process/bc8ef71a-de1d-4c19-b98f-b3cb7f0a7e0b": {
+            "insdc_experiment": {
+                "insdc_experiment_accession": "SRX11559751"
+            },
+            "process_core": {
+                "process_id": "process_id_10"
+            },
+            "schema_type": "process",
+            "describedBy": "https://schema.humancellatlas.org/type/process/9.2.0/process",
+            "provenance": {
+                "document_id": "bc8ef71a-de1d-4c19-b98f-b3cb7f0a7e0b",
+                "submission_date": "2022-07-26T00:16:47.982Z",
+                "update_date": "2022-07-27T20:39:38.842Z",
+                "schema_major_version": 9,
+                "schema_minor_version": 2
+            }
+        },
+        "process/c11d4100-2323-4834-89e8-c4ece13671c0": {
+            "insdc_experiment": {
+                "insdc_experiment_accession": "SRX11559744"
+            },
+            "process_core": {
+                "process_id": "process_id_3"
+            },
+            "schema_type": "process",
+            "describedBy": "https://schema.humancellatlas.org/type/process/9.2.0/process",
+            "provenance": {
+                "document_id": "c11d4100-2323-4834-89e8-c4ece13671c0",
+                "submission_date": "2022-07-26T00:16:47.799Z",
+                "update_date": "2022-07-27T20:39:38.816Z",
+                "schema_major_version": 9,
+                "schema_minor_version": 2
+            }
+        },
+        "process/d317b48f-f1a1-4759-a892-698d8a827615": {
+            "process_core": {
+                "process_id": "process_id_24"
+            },
+            "schema_type": "process",
+            "describedBy": "https://schema.humancellatlas.org/type/process/9.2.0/process",
+            "provenance": {
+                "document_id": "d317b48f-f1a1-4759-a892-698d8a827615",
+                "submission_date": "2022-07-26T00:16:48.155Z",
+                "update_date": "2022-07-27T20:39:38.897Z",
+                "schema_major_version": 9,
+                "schema_minor_version": 2
+            }
+        },
+        "process/d6c733af-c73d-479e-837d-4177d44f3189": {
+            "insdc_experiment": {
+                "insdc_experiment_accession": "SRX11559743"
+            },
+            "process_core": {
+                "process_id": "process_id_2"
+            },
+            "schema_type": "process",
+            "describedBy": "https://schema.humancellatlas.org/type/process/9.2.0/process",
+            "provenance": {
+                "document_id": "d6c733af-c73d-479e-837d-4177d44f3189",
+                "submission_date": "2022-07-26T00:16:47.788Z",
+                "update_date": "2022-07-27T20:39:38.813Z",
+                "schema_major_version": 9,
+                "schema_minor_version": 2
+            }
+        },
+        "process/f34d4883-429a-4260-9b1b-9c1e9844c80b": {
+            "process_core": {
+                "process_id": "process_id_33"
+            },
+            "schema_type": "process",
+            "describedBy": "https://schema.humancellatlas.org/type/process/9.2.0/process",
+            "provenance": {
+                "document_id": "f34d4883-429a-4260-9b1b-9c1e9844c80b",
+                "submission_date": "2022-07-26T00:16:48.593Z",
+                "update_date": "2022-08-23T17:25:02.846Z",
+                "schema_major_version": 9,
+                "schema_minor_version": 2
+            }
+        },
+        "process/f6917bfe-c01a-4644-a55a-52d177103b37": {
+            "insdc_experiment": {
+                "insdc_experiment_accession": "SRX11559747"
+            },
+            "process_core": {
+                "process_id": "process_id_6"
+            },
+            "schema_type": "process",
+            "describedBy": "https://schema.humancellatlas.org/type/process/9.2.0/process",
+            "provenance": {
+                "document_id": "f6917bfe-c01a-4644-a55a-52d177103b37",
+                "submission_date": "2022-07-26T00:16:47.834Z",
+                "update_date": "2022-07-27T20:39:38.827Z",
+                "schema_major_version": 9,
+                "schema_minor_version": 2
+            }
+        },
+        "donor_organism/185c2967-3195-49a2-8ad4-c44aa91b433e": {
+            "describedBy": "https://schema.humancellatlas.org/type/biomaterial/15.6.0/donor_organism",
+            "schema_type": "biomaterial",
+            "biomaterial_core": {
+                "biomaterial_id": "Individual_11",
+                "biomaterial_name": "mammary tissue donor",
+                "biomaterial_description": "mammary tissue donor with history of breast cancer",
+                "ncbi_taxon_id": [
+                    9606
+                ],
+                "genotype": "BRCA2 (c.8487+3A>G)"
+            },
+            "human_specific": {
+                "ethnicity": [
+                    {
+                        "text": "White",
+                        "ontology": "HANCESTRO:0005",
+                        "ontology_label": "European"
+                    }
+                ]
+            },
+            "genus_species": [
+                {
+                    "text": "Homo sapiens",
+                    "ontology": "NCBITaxon:9606",
+                    "ontology_label": "Homo sapiens"
+                }
+            ],
+            "sex": "female",
+            "is_living": "yes",
+            "organism_age": "33.0",
+            "organism_age_unit": {
+                "text": "year",
+                "ontology": "UO:0000036",
+                "ontology_label": "year"
+            },
+            "development_stage": {
+                "text": "human adult stage",
+                "ontology": "HsapDv:0000087",
+                "ontology_label": "human adult stage"
+            },
+            "diseases": [
+                {
+                    "text": "normal",
+                    "ontology": "PATO:0000461",
+                    "ontology_label": "normal"
+                }
+            ],
+            "medical_history": {
+                "treatment": "Chemotherapy and anti-HER2 therapy, neoadjuvant"
+            },
+            "provenance": {
+                "document_id": "185c2967-3195-49a2-8ad4-c44aa91b433e",
+                "submission_date": "2022-07-26T00:16:46.040Z",
+                "update_date": "2022-08-23T17:15:17.669Z",
+                "schema_major_version": 15,
+                "schema_minor_version": 6
+            }
+        },
+        "donor_organism/5863a7ac-cfdb-4c3e-a7a6-5eee912237df": {
+            "describedBy": "https://schema.humancellatlas.org/type/biomaterial/15.6.0/donor_organism",
+            "schema_type": "biomaterial",
+            "biomaterial_core": {
+                "biomaterial_id": "Individual_06",
+                "biomaterial_name": "mammary tissue donor",
+                "biomaterial_description": "mammary tissue donor",
+                "ncbi_taxon_id": [
+                    9606
+                ],
+                "genotype": "BRCA1 (del exons 21-24)"
+            },
+            "human_specific": {
+                "ethnicity": [
+                    {
+                        "text": "White",
+                        "ontology": "HANCESTRO:0005",
+                        "ontology_label": "European"
+                    }
+                ]
+            },
+            "genus_species": [
+                {
+                    "text": "Homo sapiens",
+                    "ontology": "NCBITaxon:9606",
+                    "ontology_label": "Homo sapiens"
+                }
+            ],
+            "sex": "female",
+            "is_living": "yes",
+            "organism_age": "35.0",
+            "organism_age_unit": {
+                "text": "year",
+                "ontology": "UO:0000036",
+                "ontology_label": "year"
+            },
+            "development_stage": {
+                "text": "human adult stage",
+                "ontology": "HsapDv:0000087",
+                "ontology_label": "human adult stage"
+            },
+            "diseases": [
+                {
+                    "text": "normal",
+                    "ontology": "PATO:0000461",
+                    "ontology_label": "normal"
+                }
+            ],
+            "provenance": {
+                "document_id": "5863a7ac-cfdb-4c3e-a7a6-5eee912237df",
+                "submission_date": "2022-07-26T00:16:45.976Z",
+                "update_date": "2022-08-23T17:15:17.640Z",
+                "schema_major_version": 15,
+                "schema_minor_version": 6
+            }
+        },
+        "donor_organism/58722446-c05b-43cd-8b70-a38df65e5790": {
+            "describedBy": "https://schema.humancellatlas.org/type/biomaterial/15.6.0/donor_organism",
+            "schema_type": "biomaterial",
+            "biomaterial_core": {
+                "biomaterial_id": "Individual_07",
+                "biomaterial_name": "mammary tissue donor",
+                "biomaterial_description": "mammary tissue donor with history of breast cancer",
+                "ncbi_taxon_id": [
+                    9606
+                ],
+                "genotype": "BRCA1 (c.5266dupC (p.GLn1756Profs*74))"
+            },
+            "human_specific": {
+                "ethnicity": [
+                    {
+                        "text": "Jewish",
+                        "ontology": "HANCESTRO:0324",
+                        "ontology_label": "Ashkenazi Jew"
+                    }
+                ]
+            },
+            "genus_species": [
+                {
+                    "text": "Homo sapiens",
+                    "ontology": "NCBITaxon:9606",
+                    "ontology_label": "Homo sapiens"
+                }
+            ],
+            "sex": "female",
+            "is_living": "yes",
+            "organism_age": "52.0",
+            "organism_age_unit": {
+                "text": "year",
+                "ontology": "UO:0000036",
+                "ontology_label": "year"
+            },
+            "development_stage": {
+                "text": "human adult stage",
+                "ontology": "HsapDv:0000087",
+                "ontology_label": "human adult stage"
+            },
+            "diseases": [
+                {
+                    "text": "normal",
+                    "ontology": "PATO:0000461",
+                    "ontology_label": "normal"
+                }
+            ],
+            "medical_history": {
+                "treatment": "Chemotherapy, for contralateral breast cancer > 1 year ago"
+            },
+            "provenance": {
+                "document_id": "58722446-c05b-43cd-8b70-a38df65e5790",
+                "submission_date": "2022-07-26T00:16:45.988Z",
+                "update_date": "2022-08-23T17:15:17.646Z",
+                "schema_major_version": 15,
+                "schema_minor_version": 6
+            }
+        },
+        "donor_organism/60d8f5ae-1b05-4819-b3c9-cbd5120003cb": {
+            "describedBy": "https://schema.humancellatlas.org/type/biomaterial/15.6.0/donor_organism",
+            "schema_type": "biomaterial",
+            "biomaterial_core": {
+                "biomaterial_id": "Individual_14",
+                "biomaterial_name": "mammary tissue donor",
+                "biomaterial_description": "mammary tissue donor",
+                "ncbi_taxon_id": [
+                    9606
+                ],
+                "genotype": "BRCA2 (c.8575delC (p.Gln2859Lysfs*4))"
+            },
+            "human_specific": {
+                "ethnicity": [
+                    {
+                        "text": "White",
+                        "ontology": "HANCESTRO:0005",
+                        "ontology_label": "European"
+                    }
+                ]
+            },
+            "genus_species": [
+                {
+                    "text": "Homo sapiens",
+                    "ontology": "NCBITaxon:9606",
+                    "ontology_label": "Homo sapiens"
+                }
+            ],
+            "sex": "female",
+            "is_living": "yes",
+            "organism_age": "57.0",
+            "organism_age_unit": {
+                "text": "year",
+                "ontology": "UO:0000036",
+                "ontology_label": "year"
+            },
+            "development_stage": {
+                "text": "human adult stage",
+                "ontology": "HsapDv:0000087",
+                "ontology_label": "human adult stage"
+            },
+            "diseases": [
+                {
+                    "text": "normal",
+                    "ontology": "PATO:0000461",
+                    "ontology_label": "normal"
+                }
+            ],
+            "medical_history": {
+                "treatment": "Chemotherapy + Avastin for prior ovarian cancer > 1 year ago"
+            },
+            "provenance": {
+                "document_id": "60d8f5ae-1b05-4819-b3c9-cbd5120003cb",
+                "submission_date": "2022-07-26T00:16:46.076Z",
+                "update_date": "2022-08-23T17:15:17.685Z",
+                "schema_major_version": 15,
+                "schema_minor_version": 6
+            }
+        },
+        "donor_organism/673222e2-9081-4058-a49c-8d2599a11d93": {
+            "describedBy": "https://schema.humancellatlas.org/type/biomaterial/15.6.0/donor_organism",
+            "schema_type": "biomaterial",
+            "biomaterial_core": {
+                "biomaterial_id": "Individual_01",
+                "biomaterial_name": "mammary tissue donor",
+                "biomaterial_description": "mammary tissue donor",
+                "ncbi_taxon_id": [
+                    9606
+                ],
+                "genotype": "WT"
+            },
+            "human_specific": {
+                "ethnicity": [
+                    {
+                        "text": "Black",
+                        "ontology": "HANCESTRO:0568",
+                        "ontology_label": "African American"
+                    }
+                ]
+            },
+            "genus_species": [
+                {
+                    "text": "Homo sapiens",
+                    "ontology": "NCBITaxon:9606",
+                    "ontology_label": "Homo sapiens"
+                }
+            ],
+            "sex": "female",
+            "is_living": "yes",
+            "organism_age": "36.0",
+            "organism_age_unit": {
+                "text": "year",
+                "ontology": "UO:0000036",
+                "ontology_label": "year"
+            },
+            "development_stage": {
+                "text": "human adult stage",
+                "ontology": "HsapDv:0000087",
+                "ontology_label": "human adult stage"
+            },
+            "diseases": [
+                {
+                    "text": "normal",
+                    "ontology": "PATO:0000461",
+                    "ontology_label": "normal"
+                }
+            ],
+            "provenance": {
+                "document_id": "673222e2-9081-4058-a49c-8d2599a11d93",
+                "submission_date": "2022-07-26T00:16:45.913Z",
+                "update_date": "2022-08-23T17:15:17.601Z",
+                "schema_major_version": 15,
+                "schema_minor_version": 6
+            }
+        },
+        "donor_organism/6fe2f7fa-22ce-468f-b279-9eb56855fda9": {
+            "describedBy": "https://schema.humancellatlas.org/type/biomaterial/15.6.0/donor_organism",
+            "schema_type": "biomaterial",
+            "biomaterial_core": {
+                "biomaterial_id": "Individual_12",
+                "biomaterial_name": "mammary tissue donor",
+                "biomaterial_description": "mammary tissue donor with history of breast cancer",
+                "ncbi_taxon_id": [
+                    9606
+                ],
+                "genotype": "BRCA2 (c.5796_5797delTA (p.His1932fs))"
+            },
+            "human_specific": {
+                "ethnicity": [
+                    {
+                        "text": "White",
+                        "ontology": "HANCESTRO:0005",
+                        "ontology_label": "European"
+                    }
+                ]
+            },
+            "genus_species": [
+                {
+                    "text": "Homo sapiens",
+                    "ontology": "NCBITaxon:9606",
+                    "ontology_label": "Homo sapiens"
+                }
+            ],
+            "sex": "female",
+            "is_living": "yes",
+            "organism_age": "39.0",
+            "organism_age_unit": {
+                "text": "year",
+                "ontology": "UO:0000036",
+                "ontology_label": "year"
+            },
+            "development_stage": {
+                "text": "human adult stage",
+                "ontology": "HsapDv:0000087",
+                "ontology_label": "human adult stage"
+            },
+            "diseases": [
+                {
+                    "text": "normal",
+                    "ontology": "PATO:0000461",
+                    "ontology_label": "normal"
+                }
+            ],
+            "medical_history": {
+                "treatment": "Chemotherapy, neoadjuvant"
+            },
+            "provenance": {
+                "document_id": "6fe2f7fa-22ce-468f-b279-9eb56855fda9",
+                "submission_date": "2022-07-26T00:16:46.052Z",
+                "update_date": "2022-08-23T17:15:17.675Z",
+                "schema_major_version": 15,
+                "schema_minor_version": 6
+            }
+        },
+        "donor_organism/79e2e6d6-6288-4dbf-a6bb-e2ac8affbf55": {
+            "describedBy": "https://schema.humancellatlas.org/type/biomaterial/15.6.0/donor_organism",
+            "schema_type": "biomaterial",
+            "biomaterial_core": {
+                "biomaterial_id": "Individual_09",
+                "biomaterial_name": "mammary tissue donor",
+                "biomaterial_description": "mammary tissue donor with history of breast cancer",
+                "ncbi_taxon_id": [
+                    9606
+                ],
+                "genotype": "BRCA1 (IVS10-2A>T)"
+            },
+            "human_specific": {
+                "ethnicity": [
+                    {
+                        "text": "White",
+                        "ontology": "HANCESTRO:0005",
+                        "ontology_label": "European"
+                    }
+                ]
+            },
+            "genus_species": [
+                {
+                    "text": "Homo sapiens",
+                    "ontology": "NCBITaxon:9606",
+                    "ontology_label": "Homo sapiens"
+                }
+            ],
+            "sex": "female",
+            "is_living": "yes",
+            "organism_age": "55.0",
+            "organism_age_unit": {
+                "text": "year",
+                "ontology": "UO:0000036",
+                "ontology_label": "year"
+            },
+            "development_stage": {
+                "text": "human adult stage",
+                "ontology": "HsapDv:0000087",
+                "ontology_label": "human adult stage"
+            },
+            "diseases": [
+                {
+                    "text": "normal",
+                    "ontology": "PATO:0000461",
+                    "ontology_label": "normal"
+                }
+            ],
+            "provenance": {
+                "document_id": "79e2e6d6-6288-4dbf-a6bb-e2ac8affbf55",
+                "submission_date": "2022-07-26T00:16:46.014Z",
+                "update_date": "2022-08-23T17:15:17.656Z",
+                "schema_major_version": 15,
+                "schema_minor_version": 6
+            }
+        },
+        "donor_organism/97b0ff34-8638-429b-81dd-d3dbcd9ada6b": {
+            "describedBy": "https://schema.humancellatlas.org/type/biomaterial/15.6.0/donor_organism",
+            "schema_type": "biomaterial",
+            "biomaterial_core": {
+                "biomaterial_id": "Individual_10",
+                "biomaterial_name": "mammary tissue donor",
+                "biomaterial_description": "mammary tissue donor",
+                "ncbi_taxon_id": [
+                    9606
+                ],
+                "genotype": "BRCA1 (n/a)"
+            },
+            "genus_species": [
+                {
+                    "text": "Homo sapiens",
+                    "ontology": "NCBITaxon:9606",
+                    "ontology_label": "Homo sapiens"
+                }
+            ],
+            "sex": "female",
+            "is_living": "yes",
+            "development_stage": {
+                "text": "human adult stage",
+                "ontology": "HsapDv:0000087",
+                "ontology_label": "human adult stage"
+            },
+            "diseases": [
+                {
+                    "text": "normal",
+                    "ontology": "PATO:0000461",
+                    "ontology_label": "normal"
+                }
+            ],
+            "medical_history": {
+                "treatment": "Chemotherapy, neoadjuvant"
+            },
+            "provenance": {
+                "document_id": "97b0ff34-8638-429b-81dd-d3dbcd9ada6b",
+                "submission_date": "2022-07-26T00:16:46.027Z",
+                "update_date": "2022-08-23T17:15:17.663Z",
+                "schema_major_version": 15,
+                "schema_minor_version": 6
+            }
+        },
+        "donor_organism/9f5003a1-1d1b-4370-a971-b41a0b9ee41b": {
+            "describedBy": "https://schema.humancellatlas.org/type/biomaterial/15.6.0/donor_organism",
+            "schema_type": "biomaterial",
+            "biomaterial_core": {
+                "biomaterial_id": "Individual_03",
+                "biomaterial_name": "mammary tissue donor",
+                "biomaterial_description": "mammary tissue donor",
+                "ncbi_taxon_id": [
+                    9606
+                ],
+                "genotype": "WT"
+            },
+            "human_specific": {
+                "ethnicity": [
+                    {
+                        "text": "White",
+                        "ontology": "HANCESTRO:0005",
+                        "ontology_label": "European"
+                    }
+                ]
+            },
+            "genus_species": [
+                {
+                    "text": "Homo sapiens",
+                    "ontology": "NCBITaxon:9606",
+                    "ontology_label": "Homo sapiens"
+                }
+            ],
+            "sex": "female",
+            "is_living": "yes",
+            "organism_age": "41.0",
+            "organism_age_unit": {
+                "text": "year",
+                "ontology": "UO:0000036",
+                "ontology_label": "year"
+            },
+            "development_stage": {
+                "text": "human adult stage",
+                "ontology": "HsapDv:0000087",
+                "ontology_label": "human adult stage"
+            },
+            "diseases": [
+                {
+                    "text": "normal",
+                    "ontology": "PATO:0000461",
+                    "ontology_label": "normal"
+                }
+            ],
+            "provenance": {
+                "document_id": "9f5003a1-1d1b-4370-a971-b41a0b9ee41b",
+                "submission_date": "2022-07-26T00:16:45.939Z",
+                "update_date": "2022-08-23T17:15:17.615Z",
+                "schema_major_version": 15,
+                "schema_minor_version": 6
+            }
+        },
+        "donor_organism/a62ce5eb-5eb9-498a-b919-f04cd7efaade": {
+            "describedBy": "https://schema.humancellatlas.org/type/biomaterial/15.6.0/donor_organism",
+            "schema_type": "biomaterial",
+            "biomaterial_core": {
+                "biomaterial_id": "Individual_02",
+                "biomaterial_name": "mammary tissue donor",
+                "biomaterial_description": "mammary tissue donor",
+                "ncbi_taxon_id": [
+                    9606
+                ],
+                "genotype": "WT"
+            },
+            "human_specific": {
+                "ethnicity": [
+                    {
+                        "text": "Jewish",
+                        "ontology": "HANCESTRO:0324",
+                        "ontology_label": "Ashkenazi Jew"
+                    }
+                ]
+            },
+            "genus_species": [
+                {
+                    "text": "Homo sapiens",
+                    "ontology": "NCBITaxon:9606",
+                    "ontology_label": "Homo sapiens"
+                }
+            ],
+            "sex": "female",
+            "is_living": "yes",
+            "organism_age": "39.0",
+            "organism_age_unit": {
+                "text": "year",
+                "ontology": "UO:0000036",
+                "ontology_label": "year"
+            },
+            "development_stage": {
+                "text": "human adult stage",
+                "ontology": "HsapDv:0000087",
+                "ontology_label": "human adult stage"
+            },
+            "diseases": [
+                {
+                    "text": "normal",
+                    "ontology": "PATO:0000461",
+                    "ontology_label": "normal"
+                }
+            ],
+            "provenance": {
+                "document_id": "a62ce5eb-5eb9-498a-b919-f04cd7efaade",
+                "submission_date": "2022-07-26T00:16:45.926Z",
+                "update_date": "2022-08-23T17:15:17.609Z",
+                "schema_major_version": 15,
+                "schema_minor_version": 6
+            }
+        },
+        "donor_organism/c5f67801-fb53-4b74-a301-32a4e466ae68": {
+            "describedBy": "https://schema.humancellatlas.org/type/biomaterial/15.6.0/donor_organism",
+            "schema_type": "biomaterial",
+            "biomaterial_core": {
+                "biomaterial_id": "Individual_04",
+                "biomaterial_name": "mammary tissue donor",
+                "biomaterial_description": "mammary tissue donor",
+                "ncbi_taxon_id": [
+                    9606
+                ],
+                "genotype": "RAD51C (n/a)"
+            },
+            "human_specific": {
+                "ethnicity": [
+                    {
+                        "text": "Black",
+                        "ontology": "HANCESTRO:0568",
+                        "ontology_label": "African American"
+                    }
+                ]
+            },
+            "genus_species": [
+                {
+                    "text": "Homo sapiens",
+                    "ontology": "NCBITaxon:9606",
+                    "ontology_label": "Homo sapiens"
+                }
+            ],
+            "sex": "female",
+            "is_living": "yes",
+            "organism_age": "31.0",
+            "organism_age_unit": {
+                "text": "year",
+                "ontology": "UO:0000036",
+                "ontology_label": "year"
+            },
+            "development_stage": {
+                "text": "human adult stage",
+                "ontology": "HsapDv:0000087",
+                "ontology_label": "human adult stage"
+            },
+            "diseases": [
+                {
+                    "text": "normal",
+                    "ontology": "PATO:0000461",
+                    "ontology_label": "normal"
+                }
+            ],
+            "provenance": {
+                "document_id": "c5f67801-fb53-4b74-a301-32a4e466ae68",
+                "submission_date": "2022-07-26T00:16:45.951Z",
+                "update_date": "2022-07-27T20:39:37.514Z",
+                "schema_major_version": 15,
+                "schema_minor_version": 6
+            }
+        },
+        "donor_organism/d65b83f1-e40d-4f9b-b54a-f146c8f2b082": {
+            "describedBy": "https://schema.humancellatlas.org/type/biomaterial/15.6.0/donor_organism",
+            "schema_type": "biomaterial",
+            "biomaterial_core": {
+                "biomaterial_id": "Individual_15",
+                "biomaterial_name": "mammary tissue donor",
+                "biomaterial_description": "mammary tissue donor with history of breast cancer",
+                "ncbi_taxon_id": [
+                    9606
+                ],
+                "genotype": "BRCA2 (p.Q2899*)"
+            },
+            "human_specific": {
+                "ethnicity": [
+                    {
+                        "text": "White",
+                        "ontology": "HANCESTRO:0005",
+                        "ontology_label": "European"
+                    }
+                ]
+            },
+            "genus_species": [
+                {
+                    "text": "Homo sapiens",
+                    "ontology": "NCBITaxon:9606",
+                    "ontology_label": "Homo sapiens"
+                }
+            ],
+            "sex": "female",
+            "is_living": "yes",
+            "organism_age": "65.0",
+            "organism_age_unit": {
+                "text": "year",
+                "ontology": "UO:0000036",
+                "ontology_label": "year"
+            },
+            "development_stage": {
+                "text": "human adult stage",
+                "ontology": "HsapDv:0000087",
+                "ontology_label": "human adult stage"
+            },
+            "diseases": [
+                {
+                    "text": "normal",
+                    "ontology": "PATO:0000461",
+                    "ontology_label": "normal"
+                }
+            ],
+            "provenance": {
+                "document_id": "d65b83f1-e40d-4f9b-b54a-f146c8f2b082",
+                "submission_date": "2022-07-26T00:16:46.087Z",
+                "update_date": "2022-08-23T17:15:17.693Z",
+                "schema_major_version": 15,
+                "schema_minor_version": 6
+            }
+        },
+        "donor_organism/d670a4b7-c84d-499a-a176-f08037eab064": {
+            "describedBy": "https://schema.humancellatlas.org/type/biomaterial/15.6.0/donor_organism",
+            "schema_type": "biomaterial",
+            "biomaterial_core": {
+                "biomaterial_id": "Individual_13",
+                "biomaterial_name": "mammary tissue donor",
+                "biomaterial_description": "mammary tissue donor with history of breast cancer",
+                "ncbi_taxon_id": [
+                    9606
+                ],
+                "genotype": "BRCA2 (c.715delA (p.Ser239Valfs*2))"
+            },
+            "human_specific": {
+                "ethnicity": [
+                    {
+                        "text": "White",
+                        "ontology": "HANCESTRO:0005",
+                        "ontology_label": "European"
+                    }
+                ]
+            },
+            "genus_species": [
+                {
+                    "text": "Homo sapiens",
+                    "ontology": "NCBITaxon:9606",
+                    "ontology_label": "Homo sapiens"
+                }
+            ],
+            "sex": "female",
+            "is_living": "yes",
+            "organism_age": "50.0",
+            "organism_age_unit": {
+                "text": "year",
+                "ontology": "UO:0000036",
+                "ontology_label": "year"
+            },
+            "development_stage": {
+                "text": "human adult stage",
+                "ontology": "HsapDv:0000087",
+                "ontology_label": "human adult stage"
+            },
+            "diseases": [
+                {
+                    "text": "normal",
+                    "ontology": "PATO:0000461",
+                    "ontology_label": "normal"
+                }
+            ],
+            "provenance": {
+                "document_id": "d670a4b7-c84d-499a-a176-f08037eab064",
+                "submission_date": "2022-07-26T00:16:46.064Z",
+                "update_date": "2022-08-23T17:15:17.680Z",
+                "schema_major_version": 15,
+                "schema_minor_version": 6
+            }
+        },
+        "donor_organism/ee0fa07e-fc56-4c7b-89fe-4f90dc68689d": {
+            "describedBy": "https://schema.humancellatlas.org/type/biomaterial/15.6.0/donor_organism",
+            "schema_type": "biomaterial",
+            "biomaterial_core": {
+                "biomaterial_id": "Individual_05",
+                "biomaterial_name": "mammary tissue donor",
+                "biomaterial_description": "mammary tissue donor",
+                "ncbi_taxon_id": [
+                    9606
+                ],
+                "genotype": "BRCA1 (c.5251C>T (p.Arg1751Ter))"
+            },
+            "human_specific": {
+                "ethnicity": [
+                    {
+                        "text": "Black",
+                        "ontology": "HANCESTRO:0568",
+                        "ontology_label": "African American"
+                    }
+                ]
+            },
+            "genus_species": [
+                {
+                    "text": "Homo sapiens",
+                    "ontology": "NCBITaxon:9606",
+                    "ontology_label": "Homo sapiens"
+                }
+            ],
+            "sex": "female",
+            "is_living": "yes",
+            "organism_age": "25.0",
+            "organism_age_unit": {
+                "text": "year",
+                "ontology": "UO:0000036",
+                "ontology_label": "year"
+            },
+            "development_stage": {
+                "text": "human adult stage",
+                "ontology": "HsapDv:0000087",
+                "ontology_label": "human adult stage"
+            },
+            "diseases": [
+                {
+                    "text": "normal",
+                    "ontology": "PATO:0000461",
+                    "ontology_label": "normal"
+                }
+            ],
+            "provenance": {
+                "document_id": "ee0fa07e-fc56-4c7b-89fe-4f90dc68689d",
+                "submission_date": "2022-07-26T00:16:45.964Z",
+                "update_date": "2022-07-27T20:39:37.518Z",
+                "schema_major_version": 15,
+                "schema_minor_version": 6
+            }
+        },
+        "donor_organism/f809f45d-87a4-415c-8b2f-f92db047b90c": {
+            "describedBy": "https://schema.humancellatlas.org/type/biomaterial/15.6.0/donor_organism",
+            "schema_type": "biomaterial",
+            "biomaterial_core": {
+                "biomaterial_id": "Individual_16",
+                "biomaterial_name": "mammary tissue donor",
+                "biomaterial_description": "mammary tissue donor",
+                "ncbi_taxon_id": [
+                    9606
+                ],
+                "genotype": "BRCA2 (n/a)"
+            },
+            "genus_species": [
+                {
+                    "text": "Homo sapiens",
+                    "ontology": "NCBITaxon:9606",
+                    "ontology_label": "Homo sapiens"
+                }
+            ],
+            "sex": "female",
+            "is_living": "yes",
+            "development_stage": {
+                "text": "human adult stage",
+                "ontology": "HsapDv:0000087",
+                "ontology_label": "human adult stage"
+            },
+            "diseases": [
+                {
+                    "text": "normal",
+                    "ontology": "PATO:0000461",
+                    "ontology_label": "normal"
+                }
+            ],
+            "provenance": {
+                "document_id": "f809f45d-87a4-415c-8b2f-f92db047b90c",
+                "submission_date": "2022-07-26T00:16:46.099Z",
+                "update_date": "2022-08-23T17:15:17.699Z",
+                "schema_major_version": 15,
+                "schema_minor_version": 6
+            }
+        },
+        "donor_organism/fa4b1000-4731-4552-a63e-69b1b59a76f7": {
+            "describedBy": "https://schema.humancellatlas.org/type/biomaterial/15.6.0/donor_organism",
+            "schema_type": "biomaterial",
+            "biomaterial_core": {
+                "biomaterial_id": "Individual_08",
+                "biomaterial_name": "mammary tissue donor",
+                "biomaterial_description": "mammary tissue donor with history of breast cancer",
+                "ncbi_taxon_id": [
+                    9606
+                ],
+                "genotype": "BRCA1 (c.4035delA ((p.Glu1346fs))"
+            },
+            "human_specific": {
+                "ethnicity": [
+                    {
+                        "text": "White",
+                        "ontology": "HANCESTRO:0005",
+                        "ontology_label": "European"
+                    }
+                ]
+            },
+            "genus_species": [
+                {
+                    "text": "Homo sapiens",
+                    "ontology": "NCBITaxon:9606",
+                    "ontology_label": "Homo sapiens"
+                }
+            ],
+            "sex": "female",
+            "is_living": "yes",
+            "organism_age": "53.0",
+            "organism_age_unit": {
+                "text": "year",
+                "ontology": "UO:0000036",
+                "ontology_label": "year"
+            },
+            "development_stage": {
+                "text": "human adult stage",
+                "ontology": "HsapDv:0000087",
+                "ontology_label": "human adult stage"
+            },
+            "diseases": [
+                {
+                    "text": "normal",
+                    "ontology": "PATO:0000461",
+                    "ontology_label": "normal"
+                }
+            ],
+            "provenance": {
+                "document_id": "fa4b1000-4731-4552-a63e-69b1b59a76f7",
+                "submission_date": "2022-07-26T00:16:46Z",
+                "update_date": "2022-08-23T17:15:17.651Z",
+                "schema_major_version": 15,
+                "schema_minor_version": 6
+            }
+        },
+        "collection_protocol/f5bf4e91-b9a2-484a-9ec9-7f165e13dcd5": {
+            "describedBy": "https://schema.humancellatlas.org/type/protocol/biomaterial_collection/9.2.0/collection_protocol",
+            "schema_type": "protocol",
+            "protocol_core": {
+                "protocol_id": "collection_protocol_1",
+                "protocol_name": "surgical resection",
+                "protocol_description": "Specimens were obtained from Brigham & Women\u2019s Hospital or Faulkner Hospital on the day of surgery, processed to single cells and analyzed by scRNA-seq on the same day"
+            },
+            "method": {
+                "text": "surgical resection",
+                "ontology": "EFO:0009744",
+                "ontology_label": "surgical resection"
+            },
+            "provenance": {
+                "document_id": "f5bf4e91-b9a2-484a-9ec9-7f165e13dcd5",
+                "submission_date": "2022-07-26T00:16:46.515Z",
+                "update_date": "2022-07-27T20:39:39.171Z",
+                "schema_major_version": 9,
+                "schema_minor_version": 2
+            }
+        },
+        "analysis_protocol/3809d420-b97a-4194-9ec9-d2a6c1c00519": {
+            "describedBy": "https://schema.humancellatlas.org/type/protocol/analysis/9.2.0/analysis_protocol",
+            "schema_type": "protocol",
+            "protocol_core": {
+                "protocol_id": "analysis_protocol_1",
+                "protocol_name": "Raw gene expression analysis",
+                "protocol_description": "Paired-end reads were processed and mapped to the GRCh38-3.0.0 human genome using Cell Ranger v3.0. Filtering eliminated genes detected in <20 cells, and discarded cells with (1) UMI counts < 1,000, (2) gene counts < 500 or > 8,000, and (3) mitochondrial gene ratio > 10%, resulting in the detection of 20,437 genes in 52,681 cells (see Table S5) across a total of 16 samples, with a median of approximately 3,000 cells from each sample. A median of 1,756 genes and 6,116 transcripts were captured per cell."
+            },
+            "type": {
+                "text": "data transformation",
+                "ontology": "OBI:0200000",
+                "ontology_label": "data transformation"
+            },
+            "computational_method": "Cell Ranger v3.0",
+            "matrix": {
+                "derivation_process": [
+                    "quantification"
+                ]
+            },
+            "provenance": {
+                "document_id": "3809d420-b97a-4194-9ec9-d2a6c1c00519",
+                "submission_date": "2022-07-26T00:16:46.575Z",
+                "update_date": "2022-07-27T20:39:39.180Z",
+                "schema_major_version": 9,
+                "schema_minor_version": 2
+            }
+        },
+        "analysis_file/be9b666c-9497-4c75-858c-978eabc37048": {
+            "describedBy": "https://schema.humancellatlas.org/type/file/6.4.0/analysis_file",
+            "schema_type": "file",
+            "file_core": {
+                "file_name": "GSE180878_Li_Brugge_10XscRNAseq_GeneCellMatrix_RNAcounts_human.csv.gz",
+                "format": "csv.gz",
+                "content_description": [
+                    {
+                        "text": "Raw gene expression matrix",
+                        "ontology": "data:3917",
+                        "ontology_label": "Count matrix"
+                    },
+                    {
+                        "text": "Gene list",
+                        "ontology": "data:1270",
+                        "ontology_label": "Feature table"
+                    }
+                ]
+            },
+            "provenance": {
+                "document_id": "be9b666c-9497-4c75-858c-978eabc37048",
+                "submission_date": "2022-07-26T00:16:47.748Z",
+                "update_date": "2022-07-27T20:39:39.423Z",
+                "schema_major_version": 6,
+                "schema_minor_version": 4
+            }
+        },
+        "project/9b876d31-0739-4e96-9846-f76e6a427279": {
+            "describedBy": "https://schema.humancellatlas.org/type/project/19.0.1/project",
+            "schema_type": "project",
+            "project_core": {
+                "project_short_name": "breastTranscriptomeAtlas",
+                "project_title": "A human breast atlas integrating single-cell proteomics and transcriptomics",
+                "project_description": "The breast is a dynamic organ whose response to physiological and pathophysiological conditions alters its disease susceptibility, yet the specific effects of these clinical variables on cell state remain poorly annotated. We present a unified, high-resolution breast atlas by integrating single-cell RNA-seq, mass cytometry, and cyclic immunofluorescence, encompassing a myriad of states. We define cell subtypes within the alveolar, hormone-sensing, and basal epithelial lineages, delineating associations of several subtypes with cancer risk factors, including age, parity, and BRCA2 germline mutation. Of particular interest is a subset of alveolar cells termed basal-luminal (BL) cells, which exhibit poor transcriptional lineage fidelity, accumulate with age, and carry a gene signature associated with basal-like breast cancer. We further utilize a medium-depletion approach to identify molecular factors regulating cell-subtype proportion in organoids. Together, these data are a rich resource to elucidate diverse mammary cell states. Overall design: A total of 16 breast samples were assayed (4 samples from reductive mammoplasties and 12 from prophylactic mastectomies)."
+            },
+            "contributors": [
+                {
+                    "name": "G Kenneth,,Gray",
+                    "institution": "Department of Cell Biology, Harvard Medical School (HMS), Boston, MA 02115, USA."
+                },
+                {
+                    "name": "Carman Man-Chung,,Li",
+                    "institution": "Department of Cell Biology, Harvard Medical School (HMS), Boston, MA 02115, USA."
+                },
+                {
+                    "name": "Jennifer M,,Rosenbluth",
+                    "institution": "Department of Cell Biology, Harvard Medical School (HMS), Boston, MA 02115, USA; Department of Medical Oncology, Dana-Farber Cancer Institute (DFCI), Boston, MA 02115, USA; Department of Medicine, University of California, San Francisco, San Francisco, CA 94143, USA."
+                },
+                {
+                    "name": "Laura M,,Selfors",
+                    "institution": "Department of Cell Biology, Harvard Medical School (HMS), Boston, MA 02115, USA."
+                },
+                {
+                    "name": "Nomeda,,Girnius",
+                    "institution": "Department of Cell Biology, Harvard Medical School (HMS), Boston, MA 02115, USA; The Laboratory of Systems Pharmacology (LSP), HMS, Boston, MA 02115, USA."
+                },
+                {
+                    "name": "Jia-Ren,,Lin",
+                    "institution": "The Laboratory of Systems Pharmacology (LSP), HMS, Boston, MA 02115, USA."
+                },
+                {
+                    "name": "Ron C J,,Schackmann",
+                    "institution": "Department of Cell Biology, Harvard Medical School (HMS), Boston, MA 02115, USA."
+                },
+                {
+                    "name": "Walter L,,Goh",
+                    "institution": "Department of Cell Biology, Harvard Medical School (HMS), Boston, MA 02115, USA."
+                },
+                {
+                    "name": "Kaitlin,,Moore",
+                    "institution": "Department of Cell Biology, Harvard Medical School (HMS), Boston, MA 02115, USA."
+                },
+                {
+                    "name": "Hana K,,Shapiro",
+                    "institution": "Department of Cell Biology, Harvard Medical School (HMS), Boston, MA 02115, USA."
+                },
+                {
+                    "name": "Shaolin,,Mei",
+                    "institution": "The Laboratory of Systems Pharmacology (LSP), HMS, Boston, MA 02115, USA."
+                },
+                {
+                    "name": "Kurt,,D'Andrea",
+                    "institution": "Department of Medicine, Division of Translation Medicine and Human Genetics, Perelman School of Medicine, University of Pennsylvania, Philadelphia, PA 19104, USA."
+                },
+                {
+                    "name": "Katherine L,,Nathanson",
+                    "institution": "Department of Medicine, Division of Translation Medicine and Human Genetics, Perelman School of Medicine, University of Pennsylvania, Philadelphia, PA 19104, USA."
+                },
+                {
+                    "name": "Peter K,,Sorger",
+                    "institution": "The Laboratory of Systems Pharmacology (LSP), HMS, Boston, MA 02115, USA."
+                },
+                {
+                    "name": "Sandro,,Santagata",
+                    "institution": "The Laboratory of Systems Pharmacology (LSP), HMS, Boston, MA 02115, USA; Department of Pathology, Brigham and Women's Hospital (BWH), Boston, MA 02115, USA."
+                },
+                {
+                    "name": "Aviv,,Regev",
+                    "institution": "Broad Institute of MIT and Harvard, Cambridge, MA 02142, USA."
+                },
+                {
+                    "name": "Judy E,,Garber",
+                    "institution": "Department of Medical Oncology, Dana-Farber Cancer Institute (DFCI), Boston, MA 02115, USA."
+                },
+                {
+                    "name": "Deborah A,,Dillon",
+                    "institution": "Department of Pathology, Brigham and Women's Hospital (BWH), Boston, MA 02115, USA."
+                },
+                {
+                    "name": "Joan S,,Brugge",
+                    "institution": "Department of Cell Biology, Harvard Medical School (HMS), Boston, MA 02115, USA",
+                    "email": "joan_brugge@hms.harvard.edu",
+                    "corresponding_contributor": true,
+                    "project_role": {
+                        "text": "experimental scientist",
+                        "ontology": "EFO:0009741",
+                        "ontology_label": "experimental scientist"
+                    }
+                },
+                {
+                    "name": "Rachel,,Schwartz",
+                    "institution": "Human Cell Atlas Data Coordination Platform",
+                    "email": "raschwar@ucsc.edu",
+                    "project_role": {
+                        "text": "data curator",
+                        "ontology": "EFO:0009737",
+                        "ontology_label": "data curator"
+                    }
+                }
+            ],
+            "publications": [
+                {
+                    "authors": [
+                        "Gray GK",
+                        "Li CM",
+                        "Rosenbluth JM",
+                        "Selfors LM",
+                        "Girnius N",
+                        "Lin JR",
+                        "Schackmann RCJ",
+                        "Goh WL",
+                        "Moore K",
+                        "Shapiro HK",
+                        "Mei S",
+                        "D'Andrea K",
+                        "Nathanson KL",
+                        "Sorger PK",
+                        "Santagata S",
+                        "Regev A",
+                        "Garber JE",
+                        "Dillon DA",
+                        "Brugge JS"
+                    ],
+                    "title": "A human breast atlas integrating single-cell proteomics and transcriptomics",
+                    "doi": "10.1016/j.devcel.2022.05.003",
+                    "pmid": 35617956,
+                    "url": "https://pubmed.ncbi.nlm.nih.gov/35617956/",
+                    "official_hca_publication": true
+                }
+            ],
+            "insdc_project_accessions": [
+                "SRP329970"
+            ],
+            "geo_series_accessions": [
+                "GSE180878"
+            ],
+            "insdc_study_accessions": [
+                "PRJNA749859"
+            ],
+            "funders": [
+                {
+                    "grant_id": "F31 CA228200",
+                    "organization": "National Cancer Institute (NCI)"
+                },
+                {
+                    "grant_id": "NA",
+                    "organization": "Susan G. Komen Postdoctoral Fellowship"
+                },
+                {
+                    "grant_id": "NA",
+                    "organization": "Croucher Postdoctoral Fellowship"
+                },
+                {
+                    "grant_id": "NA",
+                    "organization": "American Cancer Society"
+                },
+                {
+                    "grant_id": "NA",
+                    "organization": "Sidney Farber Scholars Program"
+                },
+                {
+                    "grant_id": "NA",
+                    "organization": "Terri Brodeur Breast Cancer Foundation"
+                },
+                {
+                    "grant_id": "NA",
+                    "organization": "Breast Cancer Alliance"
+                },
+                {
+                    "grant_id": "NA",
+                    "organization": "Clinical Scientist Development Award"
+                },
+                {
+                    "grant_id": "NA",
+                    "organization": "Doris Duke Charitable Foundation"
+                },
+                {
+                    "grant_id": "SAC180002",
+                    "organization": "Komen Scholar Award"
+                },
+                {
+                    "grant_id": "R35 CA242428",
+                    "organization": "National Cancer Institute (NCI)"
+                },
+                {
+                    "grant_id": "1P50CA168504",
+                    "organization": "National Cancer Institute (NCI)"
+                },
+                {
+                    "grant_id": "U54 CA225088",
+                    "organization": "National Cancer Institute (NCI)"
+                },
+                {
+                    "grant_id": "NA",
+                    "organization": "Ludwig Center at Harvard"
+                },
+                {
+                    "grant_id": "NA",
+                    "organization": "Ludwig Institute for Cancer Research"
+                },
+                {
+                    "grant_id": "NA",
+                    "organization": "Basser Center for BRCA"
+                },
+                {
+                    "grant_id": "NA",
+                    "organization": "Breast Cancer Research Foundation"
+                },
+                {
+                    "grant_id": "U54 CA225088",
+                    "organization": "National Cancer Institute (NCI)"
+                },
+                {
+                    "grant_id": "NA",
+                    "organization": "Gray Foundation Team Sciences Award"
+                },
+                {
+                    "grant_id": "NA",
+                    "organization": "Goldberg Family Research Fund"
+                },
+                {
+                    "grant_id": "NA",
+                    "organization": "Gray Foundation"
+                },
+                {
+                    "grant_id": "NA",
+                    "organization": "Anbinder Cancer Research Fund"
+                }
+            ],
+            "estimated_cell_count": 52682,
+            "hca_bionetworks": [
+                {
+                    "schema_version": "1.0.2",
+                    "hca_tissue_atlas": "Breast",
+                    "hca_tissue_atlas_version": "v1.0",
+                    "name": "Breast",
+                    "atlas_project": false
+                }
+            ],
+            "data_use_restriction": "NRES",
+            "provenance": {
+                "document_id": "9b876d31-0739-4e96-9846-f76e6a427279",
+                "submission_date": "2022-05-31T17:34:57.200Z",
+                "update_date": "2024-10-18T09:51:03.155Z",
+                "schema_major_version": 19,
+                "schema_minor_version": 0
+            }
+        },
+        "enrichment_protocol/34455725-aa8e-4bf6-b6b6-763d3aa695e4": {
+            "describedBy": "https://schema.humancellatlas.org/type/protocol/biomaterial_collection/3.1.0/enrichment_protocol",
+            "schema_type": "protocol",
+            "protocol_core": {
+                "protocol_id": "enrichment_protocol_1",
+                "protocol_name": "cell size selection",
+                "protocol_description": "For scRNA-seq, cells were treated for 5 minutes with TrypLE (Gibco 12605010), filtered through a 40 \u03bcm strainer, resuspended in PBS containing 0.04% BSA, counted manually under the microscope, and loaded onto the 10X Chromium platform immediately."
+            },
+            "method": {
+                "text": "cell size selection",
+                "ontology": "EFO:0009337",
+                "ontology_label": "cell size selection"
+            },
+            "maximum_size": 40,
+            "provenance": {
+                "document_id": "34455725-aa8e-4bf6-b6b6-763d3aa695e4",
+                "submission_date": "2022-07-26T00:16:46.540Z",
+                "update_date": "2022-07-27T20:39:39.177Z",
+                "schema_major_version": 3,
+                "schema_minor_version": 1
+            }
+        },
+        "dissociation_protocol/71df9d7e-c283-4379-9292-f497c56bb615": {
+            "describedBy": "https://schema.humancellatlas.org/type/protocol/biomaterial_collection/6.2.0/dissociation_protocol",
+            "schema_type": "protocol",
+            "protocol_core": {
+                "protocol_id": "dissociation_protocol_1",
+                "protocol_name": "mechanical dissociation",
+                "protocol_description": "Cells were then pelleted by centrifugation, further dissociated by sequentially pipetting with 10, 5, and 1-ml pipette tips, and recentrifuged. The resulting cell pellet was used directly to establish organoid culture as previously described (Rosenbluth et al., 2020) or further dissociated into single cells for scRNA-seq or CyTOF analysis."
+            },
+            "method": {
+                "text": "mechinical dissociation",
+                "ontology": "EFO:0009129",
+                "ontology_label": "mechinical dissociation"
+            },
+            "provenance": {
+                "document_id": "71df9d7e-c283-4379-9292-f497c56bb615",
+                "submission_date": "2022-07-26T00:16:46.527Z",
+                "update_date": "2022-07-27T20:39:39.175Z",
+                "schema_major_version": 6,
+                "schema_minor_version": 2
+            }
+        },
+        "sequencing_protocol/71ab4e5a-9475-49e6-b061-09f8854ebd09": {
+            "describedBy": "https://schema.humancellatlas.org/type/protocol/sequencing/10.1.0/sequencing_protocol",
+            "schema_type": "protocol",
+            "protocol_core": {
+                "protocol_id": "sequencing_protocol_1",
+                "protocol_name": "Illumina HiSeq X Ten sequencing",
+                "protocol_description": "Libraries were sequenced by Illumina HiSeq X Ten. Paired-end reads were processed and mapped to the GRCh38-3.0.0 human genome using Cell Ranger v3.0."
+            },
+            "instrument_manufacturer_model": {
+                "text": "Illumina HiSeq X Ten",
+                "ontology": "EFO:0008567",
+                "ontology_label": "Illumina HiSeq X"
+            },
+            "paired_end": false,
+            "method": {
+                "text": "tag based single cell RNA sequencing",
+                "ontology": "EFO:0008440",
+                "ontology_label": "tag based single cell RNA sequencing"
+            },
+            "10x": {
+                "fastq_method": "Cellranger mkfastq",
+                "fastq_method_version": "Cell Ranger v3.0"
+            },
+            "provenance": {
+                "document_id": "71ab4e5a-9475-49e6-b061-09f8854ebd09",
+                "submission_date": "2022-07-26T00:16:46.563Z",
+                "update_date": "2022-07-27T20:39:39.179Z",
+                "schema_major_version": 10,
+                "schema_minor_version": 1
+            }
+        }
+    },
+    "links": {
+        "links": [
+            {
+                "link_type": "process_link",
+                "process_id": "f34d4883-429a-4260-9b1b-9c1e9844c80b",
+                "process_type": "process",
+                "inputs": [
+                    {
+                        "input_type": "cell_suspension",
+                        "input_id": "fe3e7365-6847-416e-9dde-c9ae36f73513"
+                    },
+                    {
+                        "input_type": "cell_suspension",
+                        "input_id": "ae418af2-0db6-402d-a8cf-e303be76aa9b"
+                    },
+                    {
+                        "input_type": "cell_suspension",
+                        "input_id": "a81fb1dc-f3c2-4ed7-a75b-83634f07c351"
+                    },
+                    {
+                        "input_type": "cell_suspension",
+                        "input_id": "b6fe2669-4e44-4e93-9ac3-400a368aa024"
+                    },
+                    {
+                        "input_type": "cell_suspension",
+                        "input_id": "287cbe05-3074-4f1b-9e2e-02c0a54cce73"
+                    },
+                    {
+                        "input_type": "cell_suspension",
+                        "input_id": "d431a352-e6a1-4b28-8374-cfa08a4a549b"
+                    },
+                    {
+                        "input_type": "cell_suspension",
+                        "input_id": "194914ee-3e84-4df3-befd-963b9e7dd873"
+                    },
+                    {
+                        "input_type": "cell_suspension",
+                        "input_id": "aec73517-4e8b-4120-b083-5f87a151c490"
+                    },
+                    {
+                        "input_type": "cell_suspension",
+                        "input_id": "b95f0aae-4c86-449d-b3e1-ba918a837ea8"
+                    },
+                    {
+                        "input_type": "cell_suspension",
+                        "input_id": "694af37a-0253-4cef-bf82-65f27d8b4eda"
+                    },
+                    {
+                        "input_type": "cell_suspension",
+                        "input_id": "57fdd10e-e5a6-4998-92e7-6fb0c905468b"
+                    },
+                    {
+                        "input_type": "cell_suspension",
+                        "input_id": "ee8e1d61-d43b-4acc-8f77-d1ea968938f9"
+                    },
+                    {
+                        "input_type": "cell_suspension",
+                        "input_id": "3fe887bd-7ddd-4139-9c2b-3f38d5e0a158"
+                    },
+                    {
+                        "input_type": "cell_suspension",
+                        "input_id": "ce845e4e-69ff-4c83-b96b-8b1169140551"
+                    },
+                    {
+                        "input_type": "cell_suspension",
+                        "input_id": "86095244-35e6-4d38-9849-35a6403f2d21"
+                    },
+                    {
+                        "input_type": "cell_suspension",
+                        "input_id": "b1ea2c38-e8b4-4155-879a-f1b977de52b9"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "output_type": "analysis_file",
+                        "output_id": "be9b666c-9497-4c75-858c-978eabc37048"
+                    }
+                ],
+                "protocols": [
+                    {
+                        "protocol_type": "analysis_protocol",
+                        "protocol_id": "3809d420-b97a-4194-9ec9-d2a6c1c00519"
+                    },
+                    {
+                        "protocol_type": "library_preparation_protocol",
+                        "protocol_id": "090eef67-013e-4c09-a507-d595ef50ac02"
+                    },
+                    {
+                        "protocol_type": "sequencing_protocol",
+                        "protocol_id": "71ab4e5a-9475-49e6-b061-09f8854ebd09"
+                    }
+                ]
+            },
+            {
+                "link_type": "process_link",
+                "process_id": "2fd62ea5-9f16-41a3-8c24-732b48654d35",
+                "process_type": "process",
+                "inputs": [
+                    {
+                        "input_type": "specimen_from_organism",
+                        "input_id": "f371f5fd-bb50-433d-8c96-ac9ee2e9cad5"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "output_type": "cell_suspension",
+                        "output_id": "fe3e7365-6847-416e-9dde-c9ae36f73513"
+                    }
+                ],
+                "protocols": [
+                    {
+                        "protocol_type": "dissociation_protocol",
+                        "protocol_id": "71df9d7e-c283-4379-9292-f497c56bb615"
+                    },
+                    {
+                        "protocol_type": "enrichment_protocol",
+                        "protocol_id": "34455725-aa8e-4bf6-b6b6-763d3aa695e4"
+                    }
+                ]
+            },
+            {
+                "link_type": "process_link",
+                "process_id": "7e616b4b-5e7f-4d72-a874-ce40690e4ebe",
+                "process_type": "process",
+                "inputs": [
+                    {
+                        "input_type": "donor_organism",
+                        "input_id": "9f5003a1-1d1b-4370-a971-b41a0b9ee41b"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "output_type": "specimen_from_organism",
+                        "output_id": "f371f5fd-bb50-433d-8c96-ac9ee2e9cad5"
+                    }
+                ],
+                "protocols": [
+                    {
+                        "protocol_type": "collection_protocol",
+                        "protocol_id": "f5bf4e91-b9a2-484a-9ec9-7f165e13dcd5"
+                    }
+                ]
+            },
+            {
+                "link_type": "process_link",
+                "process_id": "09575418-0164-43a8-bb8e-18572b62564b",
+                "process_type": "process",
+                "inputs": [
+                    {
+                        "input_type": "specimen_from_organism",
+                        "input_id": "a252e8e8-c833-49c6-8daa-930bef8bd105"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "output_type": "cell_suspension",
+                        "output_id": "ae418af2-0db6-402d-a8cf-e303be76aa9b"
+                    }
+                ],
+                "protocols": [
+                    {
+                        "protocol_type": "dissociation_protocol",
+                        "protocol_id": "71df9d7e-c283-4379-9292-f497c56bb615"
+                    },
+                    {
+                        "protocol_type": "enrichment_protocol",
+                        "protocol_id": "34455725-aa8e-4bf6-b6b6-763d3aa695e4"
+                    }
+                ]
+            },
+            {
+                "link_type": "process_link",
+                "process_id": "d6c733af-c73d-479e-837d-4177d44f3189",
+                "process_type": "process",
+                "inputs": [
+                    {
+                        "input_type": "donor_organism",
+                        "input_id": "c5f67801-fb53-4b74-a301-32a4e466ae68"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "output_type": "specimen_from_organism",
+                        "output_id": "a252e8e8-c833-49c6-8daa-930bef8bd105"
+                    }
+                ],
+                "protocols": [
+                    {
+                        "protocol_type": "collection_protocol",
+                        "protocol_id": "f5bf4e91-b9a2-484a-9ec9-7f165e13dcd5"
+                    }
+                ]
+            },
+            {
+                "link_type": "process_link",
+                "process_id": "74557ecd-1ea5-43fc-aaa0-56211e6e1351",
+                "process_type": "process",
+                "inputs": [
+                    {
+                        "input_type": "specimen_from_organism",
+                        "input_id": "10dfef3f-6932-41bf-8ad2-b76c70e8cbb3"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "output_type": "cell_suspension",
+                        "output_id": "a81fb1dc-f3c2-4ed7-a75b-83634f07c351"
+                    }
+                ],
+                "protocols": [
+                    {
+                        "protocol_type": "dissociation_protocol",
+                        "protocol_id": "71df9d7e-c283-4379-9292-f497c56bb615"
+                    },
+                    {
+                        "protocol_type": "enrichment_protocol",
+                        "protocol_id": "34455725-aa8e-4bf6-b6b6-763d3aa695e4"
+                    }
+                ]
+            },
+            {
+                "link_type": "process_link",
+                "process_id": "c11d4100-2323-4834-89e8-c4ece13671c0",
+                "process_type": "process",
+                "inputs": [
+                    {
+                        "input_type": "donor_organism",
+                        "input_id": "ee0fa07e-fc56-4c7b-89fe-4f90dc68689d"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "output_type": "specimen_from_organism",
+                        "output_id": "10dfef3f-6932-41bf-8ad2-b76c70e8cbb3"
+                    }
+                ],
+                "protocols": [
+                    {
+                        "protocol_type": "collection_protocol",
+                        "protocol_id": "f5bf4e91-b9a2-484a-9ec9-7f165e13dcd5"
+                    }
+                ]
+            },
+            {
+                "link_type": "process_link",
+                "process_id": "bb9e93e0-ae58-43b7-8017-96c013ee2082",
+                "process_type": "process",
+                "inputs": [
+                    {
+                        "input_type": "specimen_from_organism",
+                        "input_id": "48a18b04-8b37-4db0-a88e-f756accc7a0e"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "output_type": "cell_suspension",
+                        "output_id": "b6fe2669-4e44-4e93-9ac3-400a368aa024"
+                    }
+                ],
+                "protocols": [
+                    {
+                        "protocol_type": "dissociation_protocol",
+                        "protocol_id": "71df9d7e-c283-4379-9292-f497c56bb615"
+                    },
+                    {
+                        "protocol_type": "enrichment_protocol",
+                        "protocol_id": "34455725-aa8e-4bf6-b6b6-763d3aa695e4"
+                    }
+                ]
+            },
+            {
+                "link_type": "process_link",
+                "process_id": "6aa4a585-d4b2-4292-9d17-a7fd47df65a9",
+                "process_type": "process",
+                "inputs": [
+                    {
+                        "input_type": "donor_organism",
+                        "input_id": "5863a7ac-cfdb-4c3e-a7a6-5eee912237df"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "output_type": "specimen_from_organism",
+                        "output_id": "48a18b04-8b37-4db0-a88e-f756accc7a0e"
+                    }
+                ],
+                "protocols": [
+                    {
+                        "protocol_type": "collection_protocol",
+                        "protocol_id": "f5bf4e91-b9a2-484a-9ec9-7f165e13dcd5"
+                    }
+                ]
+            },
+            {
+                "link_type": "process_link",
+                "process_id": "57742b3f-28ec-452d-a66e-c005ee7f8a48",
+                "process_type": "process",
+                "inputs": [
+                    {
+                        "input_type": "specimen_from_organism",
+                        "input_id": "188469ce-7d7a-4054-8cf1-32a6ec8ec165"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "output_type": "cell_suspension",
+                        "output_id": "287cbe05-3074-4f1b-9e2e-02c0a54cce73"
+                    }
+                ],
+                "protocols": [
+                    {
+                        "protocol_type": "dissociation_protocol",
+                        "protocol_id": "71df9d7e-c283-4379-9292-f497c56bb615"
+                    },
+                    {
+                        "protocol_type": "enrichment_protocol",
+                        "protocol_id": "34455725-aa8e-4bf6-b6b6-763d3aa695e4"
+                    }
+                ]
+            },
+            {
+                "link_type": "process_link",
+                "process_id": "6cbd9212-2126-4e67-a6fa-bc40ef709978",
+                "process_type": "process",
+                "inputs": [
+                    {
+                        "input_type": "donor_organism",
+                        "input_id": "58722446-c05b-43cd-8b70-a38df65e5790"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "output_type": "specimen_from_organism",
+                        "output_id": "188469ce-7d7a-4054-8cf1-32a6ec8ec165"
+                    }
+                ],
+                "protocols": [
+                    {
+                        "protocol_type": "collection_protocol",
+                        "protocol_id": "f5bf4e91-b9a2-484a-9ec9-7f165e13dcd5"
+                    }
+                ]
+            },
+            {
+                "link_type": "process_link",
+                "process_id": "74f78e4f-beb2-4857-bfe4-dbe6f7df5184",
+                "process_type": "process",
+                "inputs": [
+                    {
+                        "input_type": "specimen_from_organism",
+                        "input_id": "1c516819-d0f4-482d-8fcd-04d5e31552af"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "output_type": "cell_suspension",
+                        "output_id": "d431a352-e6a1-4b28-8374-cfa08a4a549b"
+                    }
+                ],
+                "protocols": [
+                    {
+                        "protocol_type": "dissociation_protocol",
+                        "protocol_id": "71df9d7e-c283-4379-9292-f497c56bb615"
+                    },
+                    {
+                        "protocol_type": "enrichment_protocol",
+                        "protocol_id": "34455725-aa8e-4bf6-b6b6-763d3aa695e4"
+                    }
+                ]
+            },
+            {
+                "link_type": "process_link",
+                "process_id": "f6917bfe-c01a-4644-a55a-52d177103b37",
+                "process_type": "process",
+                "inputs": [
+                    {
+                        "input_type": "donor_organism",
+                        "input_id": "fa4b1000-4731-4552-a63e-69b1b59a76f7"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "output_type": "specimen_from_organism",
+                        "output_id": "1c516819-d0f4-482d-8fcd-04d5e31552af"
+                    }
+                ],
+                "protocols": [
+                    {
+                        "protocol_type": "collection_protocol",
+                        "protocol_id": "f5bf4e91-b9a2-484a-9ec9-7f165e13dcd5"
+                    }
+                ]
+            },
+            {
+                "link_type": "process_link",
+                "process_id": "a0ed34f1-774c-4302-a387-b4b9d3541688",
+                "process_type": "process",
+                "inputs": [
+                    {
+                        "input_type": "specimen_from_organism",
+                        "input_id": "ceb55be8-123a-47f5-864e-30b9081a86db"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "output_type": "cell_suspension",
+                        "output_id": "194914ee-3e84-4df3-befd-963b9e7dd873"
+                    }
+                ],
+                "protocols": [
+                    {
+                        "protocol_type": "dissociation_protocol",
+                        "protocol_id": "71df9d7e-c283-4379-9292-f497c56bb615"
+                    },
+                    {
+                        "protocol_type": "enrichment_protocol",
+                        "protocol_id": "34455725-aa8e-4bf6-b6b6-763d3aa695e4"
+                    }
+                ]
+            },
+            {
+                "link_type": "process_link",
+                "process_id": "5cfe9348-3043-4cbb-9cfb-c16dff11eb8b",
+                "process_type": "process",
+                "inputs": [
+                    {
+                        "input_type": "donor_organism",
+                        "input_id": "79e2e6d6-6288-4dbf-a6bb-e2ac8affbf55"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "output_type": "specimen_from_organism",
+                        "output_id": "ceb55be8-123a-47f5-864e-30b9081a86db"
+                    }
+                ],
+                "protocols": [
+                    {
+                        "protocol_type": "collection_protocol",
+                        "protocol_id": "f5bf4e91-b9a2-484a-9ec9-7f165e13dcd5"
+                    }
+                ]
+            },
+            {
+                "link_type": "process_link",
+                "process_id": "d317b48f-f1a1-4759-a892-698d8a827615",
+                "process_type": "process",
+                "inputs": [
+                    {
+                        "input_type": "specimen_from_organism",
+                        "input_id": "67aee6a6-84fe-46cc-832d-44febe82a16a"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "output_type": "cell_suspension",
+                        "output_id": "aec73517-4e8b-4120-b083-5f87a151c490"
+                    }
+                ],
+                "protocols": [
+                    {
+                        "protocol_type": "dissociation_protocol",
+                        "protocol_id": "71df9d7e-c283-4379-9292-f497c56bb615"
+                    },
+                    {
+                        "protocol_type": "enrichment_protocol",
+                        "protocol_id": "34455725-aa8e-4bf6-b6b6-763d3aa695e4"
+                    }
+                ]
+            },
+            {
+                "link_type": "process_link",
+                "process_id": "b240e7ce-e0fb-4602-bc07-1a1b282eacb3",
+                "process_type": "process",
+                "inputs": [
+                    {
+                        "input_type": "donor_organism",
+                        "input_id": "97b0ff34-8638-429b-81dd-d3dbcd9ada6b"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "output_type": "specimen_from_organism",
+                        "output_id": "67aee6a6-84fe-46cc-832d-44febe82a16a"
+                    }
+                ],
+                "protocols": [
+                    {
+                        "protocol_type": "collection_protocol",
+                        "protocol_id": "f5bf4e91-b9a2-484a-9ec9-7f165e13dcd5"
+                    }
+                ]
+            },
+            {
+                "link_type": "process_link",
+                "process_id": "57654bf2-186c-44da-86d5-0a4a889b102b",
+                "process_type": "process",
+                "inputs": [
+                    {
+                        "input_type": "specimen_from_organism",
+                        "input_id": "a0ed2c89-ddd9-4f38-a801-dcaf1f8809cb"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "output_type": "cell_suspension",
+                        "output_id": "b95f0aae-4c86-449d-b3e1-ba918a837ea8"
+                    }
+                ],
+                "protocols": [
+                    {
+                        "protocol_type": "dissociation_protocol",
+                        "protocol_id": "71df9d7e-c283-4379-9292-f497c56bb615"
+                    },
+                    {
+                        "protocol_type": "enrichment_protocol",
+                        "protocol_id": "34455725-aa8e-4bf6-b6b6-763d3aa695e4"
+                    }
+                ]
+            },
+            {
+                "link_type": "process_link",
+                "process_id": "a9c24c08-6cc1-4222-81ca-c920a344a4c5",
+                "process_type": "process",
+                "inputs": [
+                    {
+                        "input_type": "donor_organism",
+                        "input_id": "185c2967-3195-49a2-8ad4-c44aa91b433e"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "output_type": "specimen_from_organism",
+                        "output_id": "a0ed2c89-ddd9-4f38-a801-dcaf1f8809cb"
+                    }
+                ],
+                "protocols": [
+                    {
+                        "protocol_type": "collection_protocol",
+                        "protocol_id": "f5bf4e91-b9a2-484a-9ec9-7f165e13dcd5"
+                    }
+                ]
+            },
+            {
+                "link_type": "process_link",
+                "process_id": "b2b6a004-5c11-4711-b025-456127973d3a",
+                "process_type": "process",
+                "inputs": [
+                    {
+                        "input_type": "specimen_from_organism",
+                        "input_id": "87ce69d7-c3f7-4d25-8218-f0d081695803"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "output_type": "cell_suspension",
+                        "output_id": "694af37a-0253-4cef-bf82-65f27d8b4eda"
+                    }
+                ],
+                "protocols": [
+                    {
+                        "protocol_type": "dissociation_protocol",
+                        "protocol_id": "71df9d7e-c283-4379-9292-f497c56bb615"
+                    },
+                    {
+                        "protocol_type": "enrichment_protocol",
+                        "protocol_id": "34455725-aa8e-4bf6-b6b6-763d3aa695e4"
+                    }
+                ]
+            },
+            {
+                "link_type": "process_link",
+                "process_id": "bc8ef71a-de1d-4c19-b98f-b3cb7f0a7e0b",
+                "process_type": "process",
+                "inputs": [
+                    {
+                        "input_type": "donor_organism",
+                        "input_id": "6fe2f7fa-22ce-468f-b279-9eb56855fda9"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "output_type": "specimen_from_organism",
+                        "output_id": "87ce69d7-c3f7-4d25-8218-f0d081695803"
+                    }
+                ],
+                "protocols": [
+                    {
+                        "protocol_type": "collection_protocol",
+                        "protocol_id": "f5bf4e91-b9a2-484a-9ec9-7f165e13dcd5"
+                    }
+                ]
+            },
+            {
+                "link_type": "process_link",
+                "process_id": "8868992d-d27c-48f1-809d-df4735211dbd",
+                "process_type": "process",
+                "inputs": [
+                    {
+                        "input_type": "specimen_from_organism",
+                        "input_id": "95d2f089-ec1a-496e-8399-84ab980c7a2e"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "output_type": "cell_suspension",
+                        "output_id": "57fdd10e-e5a6-4998-92e7-6fb0c905468b"
+                    }
+                ],
+                "protocols": [
+                    {
+                        "protocol_type": "dissociation_protocol",
+                        "protocol_id": "71df9d7e-c283-4379-9292-f497c56bb615"
+                    },
+                    {
+                        "protocol_type": "enrichment_protocol",
+                        "protocol_id": "34455725-aa8e-4bf6-b6b6-763d3aa695e4"
+                    }
+                ]
+            },
+            {
+                "link_type": "process_link",
+                "process_id": "3d97381b-844a-4990-9923-b05e110c5f8a",
+                "process_type": "process",
+                "inputs": [
+                    {
+                        "input_type": "donor_organism",
+                        "input_id": "d670a4b7-c84d-499a-a176-f08037eab064"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "output_type": "specimen_from_organism",
+                        "output_id": "95d2f089-ec1a-496e-8399-84ab980c7a2e"
+                    }
+                ],
+                "protocols": [
+                    {
+                        "protocol_type": "collection_protocol",
+                        "protocol_id": "f5bf4e91-b9a2-484a-9ec9-7f165e13dcd5"
+                    }
+                ]
+            },
+            {
+                "link_type": "process_link",
+                "process_id": "65175117-d7a3-403f-a941-af4c262cd308",
+                "process_type": "process",
+                "inputs": [
+                    {
+                        "input_type": "specimen_from_organism",
+                        "input_id": "d8c6c2fa-51a4-4164-a7e5-ebcf565373dc"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "output_type": "cell_suspension",
+                        "output_id": "ee8e1d61-d43b-4acc-8f77-d1ea968938f9"
+                    }
+                ],
+                "protocols": [
+                    {
+                        "protocol_type": "dissociation_protocol",
+                        "protocol_id": "71df9d7e-c283-4379-9292-f497c56bb615"
+                    },
+                    {
+                        "protocol_type": "enrichment_protocol",
+                        "protocol_id": "34455725-aa8e-4bf6-b6b6-763d3aa695e4"
+                    }
+                ]
+            },
+            {
+                "link_type": "process_link",
+                "process_id": "1a7db1e0-a366-4b48-9a42-57fb05913c5d",
+                "process_type": "process",
+                "inputs": [
+                    {
+                        "input_type": "donor_organism",
+                        "input_id": "60d8f5ae-1b05-4819-b3c9-cbd5120003cb"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "output_type": "specimen_from_organism",
+                        "output_id": "d8c6c2fa-51a4-4164-a7e5-ebcf565373dc"
+                    }
+                ],
+                "protocols": [
+                    {
+                        "protocol_type": "collection_protocol",
+                        "protocol_id": "f5bf4e91-b9a2-484a-9ec9-7f165e13dcd5"
+                    }
+                ]
+            },
+            {
+                "link_type": "process_link",
+                "process_id": "b960bcc6-db67-4996-b75e-ef07b34b5108",
+                "process_type": "process",
+                "inputs": [
+                    {
+                        "input_type": "specimen_from_organism",
+                        "input_id": "706204f2-6d2a-44c6-a482-0a2b1a702e01"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "output_type": "cell_suspension",
+                        "output_id": "3fe887bd-7ddd-4139-9c2b-3f38d5e0a158"
+                    }
+                ],
+                "protocols": [
+                    {
+                        "protocol_type": "dissociation_protocol",
+                        "protocol_id": "71df9d7e-c283-4379-9292-f497c56bb615"
+                    },
+                    {
+                        "protocol_type": "enrichment_protocol",
+                        "protocol_id": "34455725-aa8e-4bf6-b6b6-763d3aa695e4"
+                    }
+                ]
+            },
+            {
+                "link_type": "process_link",
+                "process_id": "1c2fea8d-91e8-4bf9-9fa4-fa942cee2caa",
+                "process_type": "process",
+                "inputs": [
+                    {
+                        "input_type": "donor_organism",
+                        "input_id": "d65b83f1-e40d-4f9b-b54a-f146c8f2b082"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "output_type": "specimen_from_organism",
+                        "output_id": "706204f2-6d2a-44c6-a482-0a2b1a702e01"
+                    }
+                ],
+                "protocols": [
+                    {
+                        "protocol_type": "collection_protocol",
+                        "protocol_id": "f5bf4e91-b9a2-484a-9ec9-7f165e13dcd5"
+                    }
+                ]
+            },
+            {
+                "link_type": "process_link",
+                "process_id": "80813718-58b1-4a2c-9ac6-1192c45a7ccb",
+                "process_type": "process",
+                "inputs": [
+                    {
+                        "input_type": "specimen_from_organism",
+                        "input_id": "5352646c-fffb-46b0-a9ef-8508af699458"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "output_type": "cell_suspension",
+                        "output_id": "ce845e4e-69ff-4c83-b96b-8b1169140551"
+                    }
+                ],
+                "protocols": [
+                    {
+                        "protocol_type": "dissociation_protocol",
+                        "protocol_id": "71df9d7e-c283-4379-9292-f497c56bb615"
+                    },
+                    {
+                        "protocol_type": "enrichment_protocol",
+                        "protocol_id": "34455725-aa8e-4bf6-b6b6-763d3aa695e4"
+                    }
+                ]
+            },
+            {
+                "link_type": "process_link",
+                "process_id": "0ec75821-a2cb-4ccb-b2d1-67535b78dc5b",
+                "process_type": "process",
+                "inputs": [
+                    {
+                        "input_type": "donor_organism",
+                        "input_id": "f809f45d-87a4-415c-8b2f-f92db047b90c"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "output_type": "specimen_from_organism",
+                        "output_id": "5352646c-fffb-46b0-a9ef-8508af699458"
+                    }
+                ],
+                "protocols": [
+                    {
+                        "protocol_type": "collection_protocol",
+                        "protocol_id": "f5bf4e91-b9a2-484a-9ec9-7f165e13dcd5"
+                    }
+                ]
+            },
+            {
+                "link_type": "process_link",
+                "process_id": "192fe4e2-0f4d-4f7c-a5d0-5edfb64cbc36",
+                "process_type": "process",
+                "inputs": [
+                    {
+                        "input_type": "specimen_from_organism",
+                        "input_id": "12574b13-e36d-43e8-95b4-083e8d23ac7b"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "output_type": "cell_suspension",
+                        "output_id": "86095244-35e6-4d38-9849-35a6403f2d21"
+                    }
+                ],
+                "protocols": [
+                    {
+                        "protocol_type": "dissociation_protocol",
+                        "protocol_id": "71df9d7e-c283-4379-9292-f497c56bb615"
+                    },
+                    {
+                        "protocol_type": "enrichment_protocol",
+                        "protocol_id": "34455725-aa8e-4bf6-b6b6-763d3aa695e4"
+                    }
+                ]
+            },
+            {
+                "link_type": "process_link",
+                "process_id": "4d5a4e0b-eed4-4e49-b5cb-aa3d6fe3efed",
+                "process_type": "process",
+                "inputs": [
+                    {
+                        "input_type": "donor_organism",
+                        "input_id": "673222e2-9081-4058-a49c-8d2599a11d93"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "output_type": "specimen_from_organism",
+                        "output_id": "12574b13-e36d-43e8-95b4-083e8d23ac7b"
+                    }
+                ],
+                "protocols": [
+                    {
+                        "protocol_type": "collection_protocol",
+                        "protocol_id": "f5bf4e91-b9a2-484a-9ec9-7f165e13dcd5"
+                    }
+                ]
+            },
+            {
+                "link_type": "process_link",
+                "process_id": "8708c2d3-fe7b-4ccd-890b-483a02a2c8f8",
+                "process_type": "process",
+                "inputs": [
+                    {
+                        "input_type": "specimen_from_organism",
+                        "input_id": "44d876d1-f4e3-426f-9027-144a492eb615"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "output_type": "cell_suspension",
+                        "output_id": "b1ea2c38-e8b4-4155-879a-f1b977de52b9"
+                    }
+                ],
+                "protocols": [
+                    {
+                        "protocol_type": "dissociation_protocol",
+                        "protocol_id": "71df9d7e-c283-4379-9292-f497c56bb615"
+                    },
+                    {
+                        "protocol_type": "enrichment_protocol",
+                        "protocol_id": "34455725-aa8e-4bf6-b6b6-763d3aa695e4"
+                    }
+                ]
+            },
+            {
+                "link_type": "process_link",
+                "process_id": "a0296012-dfb0-4b7a-b5e2-d3910ee9c6b6",
+                "process_type": "process",
+                "inputs": [
+                    {
+                        "input_type": "donor_organism",
+                        "input_id": "a62ce5eb-5eb9-498a-b919-f04cd7efaade"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "output_type": "specimen_from_organism",
+                        "output_id": "44d876d1-f4e3-426f-9027-144a492eb615"
+                    }
+                ],
+                "protocols": [
+                    {
+                        "protocol_type": "collection_protocol",
+                        "protocol_id": "f5bf4e91-b9a2-484a-9ec9-7f165e13dcd5"
+                    }
+                ]
+            }
+        ],
+        "schema_type": "links",
+        "describedBy": "https://schema.humancellatlas.org/system/3.0.0/links",
+        "schema_version": "3.0.0"
+    },
+    "stitched": []
+}
