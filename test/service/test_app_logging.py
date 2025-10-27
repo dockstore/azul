@@ -15,7 +15,6 @@ import requests
 
 from azul import (
     Config,
-    JSON,
 )
 from azul.chalice import (
     AzulChaliceApp,
@@ -23,6 +22,9 @@ from azul.chalice import (
 )
 from azul.logging import (
     configure_test_logging,
+)
+from azul.types import (
+    JSON,
 )
 from indexer import (
     DCP1CannedBundleTestCase,
