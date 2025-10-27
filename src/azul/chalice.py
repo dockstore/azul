@@ -723,7 +723,7 @@ class AzulChaliceApp(Chalice):
             file_name = 'swagger-initializer.js.template.mustache'
             template = self.load_static_resource('swagger', file_name)
             base_url = self.base_url
-            redirect_url = furl(base_url).add(path='oauth2_redirect')
+            redirect_url = furl(base_url).add(path='swagger/oauth2-redirect.html')
             openapi_spec = furl(base_url).add(path='openapi.json')
             body = chevron.render(template, {
                 'OPENAPI_SPEC': json.dumps(str(openapi_spec.path)),
