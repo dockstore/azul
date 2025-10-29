@@ -83,8 +83,19 @@ class TestMirrorController(DCP2TestCase,
         super().setUpClass()
         cls._patch_list_source_ids()
 
+    _file_contents = b'lorem ipsum dolor sit\n'
+
+    _file = HCAFile(uuid='405852c9-a0cc-4cd8-b9ff-7c6296223661',
+                    name='foo.txt',
+                    version=None,
+                    drs_uri='drs://fake-domain.lan/foo',
+                    size=len(_file_contents),
+                    content_type='text/plain',
+                    sha256=hashlib.sha256(_file_contents).hexdigest())
+
     def test_mirroring(self):
         self._create_mock_queues(config.mirror_queue_names)
+        file = self._file
         with self.subTest('remote_mirror'):
             source_message = self._test_remote_mirror()
 
@@ -92,7 +103,7 @@ class TestMirrorController(DCP2TestCase,
                 partition_message = self._test_mirror_source(source_message)
 
                 with self.subTest('mirror_partition'):
-                    file, file_message = self._test_mirror_partition(partition_message)
+                    file_message = self._test_mirror_partition(partition_message, [file])
 
                     with self.subTest('mirror_file', corrupted=False, exists=False):
                         self._test_mirror_file(file, file_message)
@@ -106,8 +117,6 @@ class TestMirrorController(DCP2TestCase,
 
                     with self.subTest('mirror_file', corrupted=False, exists=True):
                         self._test_reuploaded_file(file_message)
-
-    _file_contents = b'lorem ipsum dolor sit\n'
 
     @property
     def mirror_controller(self) -> MirrorController:
@@ -140,25 +149,18 @@ class TestMirrorController(DCP2TestCase,
         self.assertEqual(list(self.source.prefix.partition_prefixes()), partitions)
         return partition_message
 
-    def _test_mirror_partition(self, partition_message):
+    def _test_mirror_partition(self, partition_message, files: list[HCAFile]):
         event = self._mirror_event(partition_message)
-        file = HCAFile(uuid='405852c9-a0cc-4cd8-b9ff-7c6296223661',
-                       name='foo.txt',
-                       version=None,
-                       drs_uri='drs://fake-domain.lan/foo',
-                       size=len(self._file_contents),
-                       content_type='text/plain',
-                       sha256=hashlib.sha256(self._file_contents).hexdigest())
         plugin_cls = type(self.client.repository_plugin(self.catalog))
-        with patch.object(plugin_cls, 'list_files', return_value=[file]):
+        with patch.object(plugin_cls, 'list_files', return_value=files):
             self.mirror_controller.mirror(event)
         file_message = one(self._read_queue(self.client.mirror_queue()))
         expected_message = dict(action='mirror_file',
                                 catalog=self.catalog,
                                 source=self.source.to_json(),
-                                file=file.to_json())
+                                file=self._file.to_json())
         self.assertEqual(expected_message, file_message)
-        return file, file_message
+        return file_message
 
     def _test_mirror_file(self, file, file_message):
         event = self._mirror_event(file_message)
