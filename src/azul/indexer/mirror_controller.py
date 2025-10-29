@@ -174,10 +174,19 @@ class MirrorController(ActionController[MirrorAction],
         source = plugin.source_ref_cls.from_json(source_json)
         files = plugin.list_files(source, prefix)
 
+        deployment_is_stable = (config.deployment.is_stable
+                                and not config.deployment.is_unit_test
+                                and catalog not in config.integration_test_catalogs)
+
         def messages() -> Iterable[SQSMessage]:
             for file in files:
-                log.debug('Queueing file %r', file)
-                yield self.mirror_file_message(catalog, source, file)
+                assert file.size is not None, R('File size unknown', file)
+                file_is_large = file.size > 1.5 * 1024 ** 3
+                if file_is_large and not deployment_is_stable:
+                    log.info('Not mirroring file to save cost: %r', file)
+                else:
+                    log.debug('Queueing file %r', file)
+                    yield self.mirror_file_message(catalog, source, file)
 
         self.client.queue_mirror_messages(messages())
         log.info('Queued %d files in partition %r of source %r in catalog %r',
@@ -189,16 +198,8 @@ class MirrorController(ActionController[MirrorAction],
                     ):
         file = self.load_file(catalog, file_json)
         assert file.size is not None, R('File size unknown', file)
-
-        file_is_large = file.size > 1.5 * 1024 ** 3
-        deployment_is_stable = (config.deployment.is_stable
-                                and not config.deployment.is_unit_test
-                                and catalog not in config.integration_test_catalogs)
-
         service = self.service(catalog)
-        if file_is_large and not deployment_is_stable:
-            log.info('Not mirroring file to save cost: %r', file)
-        elif service.info_exists(file):
+        if service.info_exists(file):
             log.info('File is already mirrored, skipping upload: %r', file)
         elif service.file_exists(file):
             assert False, R('File object is already present', file)
