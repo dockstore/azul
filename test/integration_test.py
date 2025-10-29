@@ -311,8 +311,11 @@ class IntegrationTestCase(AzulTestCase, metaclass=ABCMeta):
                        sources.
         """
         plugin = self.repository_plugin(catalog)
-        sources = set(plugin.sources)
-        if public is not None:
+        sources = plugin.sources
+
+        if public is None:
+            ma_sources = set()
+        else:
             ma_sources = {
                 source.spec
                 # This would raise a KeyError during the can bundle script test
@@ -321,12 +324,20 @@ class IntegrationTestCase(AzulTestCase, metaclass=ABCMeta):
                 for source in self.managed_access_sources_by_catalog[catalog]
             }
             self.assertIsSubset(ma_sources, sources)
-            if public is True:
-                sources -= ma_sources
+
+        def _filter(source: SourceSpec) -> bool:
+            if public is None:
+                valid = True
+            elif public is True:
+                valid = source not in ma_sources
             elif public is False:
-                sources &= ma_sources
+                valid = source in ma_sources
             else:
                 assert False, public
+            return valid
+
+        sources = set(filter(_filter, sources))
+
         if len(sources) == 0:
             assert public is False, 'An IT catalog must contain at least one public source'
             return None
