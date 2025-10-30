@@ -1,8 +1,12 @@
 import logging
 import os
+import re
 import sys
 
 import docker
+from more_itertools import (
+    one,
+)
 
 from azul.logging import (
     configure_script_logging,
@@ -26,24 +30,36 @@ the argument doesn't map to a host path, print the argument.
 
 def resolve_container_path(container_path):
     container_path = os.path.realpath(container_path)
-    proc_cgroup = '/proc/self/cgroup'
+    mountinfo_path = '/proc/self/mountinfo'
     try:
-        with open(proc_cgroup) as f:
-            log.info('Found %s', proc_cgroup)
-            # Entries in /proc/self/cgroup look like this (note the nesting):
-            # 11:name=systemd:/docker/82c1bd2…23b5bcf/docker/6547bce…60ca5a7
-            prefix, container_id = next(f).strip().split(':')[2].split('/')[-2:]
+        with open(mountinfo_path) as f:
+            log.info('Trying to extract ID of current container from %s', mountinfo_path)
+            # Entries of interest in /proc/self/mountinfo look as follows:
+            # 752 744 259:2 /docker/containers/dc61d9…/…
+            # dc61d9… is the container ID
+            container_ids = set()
+            for line in f:
+                assert line.endswith('\n'), line
+                parts = line[:-1].split(' ')
+                assert len(parts) > 9, line
+                root = parts[3]
+                for prefix in ('/var/lib/docker/containers/', '/docker/containers/'):
+                    if root.startswith(prefix):
+                        log.info('Extracting container ID from %s', root)
+                        id = root[len(prefix):].split('/')[0]
+                        assert re.fullmatch(r'[0-9a-f]{64}', id), id
+                        container_ids.add(id)
     except FileNotFoundError:
-        log.info('Did not find %s', proc_cgroup)
+        log.info('Did not find %s', mountinfo_path)
     else:
-        if prefix == 'docker':
-            api = docker.client.from_env().api
-            for mount in api.inspect_container(container_id)['Mounts']:
-                if container_path.startswith(mount['Destination']):
-                    tail = os.path.relpath(container_path, mount['Destination'])
-                    host_path = os.path.normpath(os.path.join(mount['Source'], tail))
-                    log.info('Resolved %s to %s', container_path, host_path)
-                    return host_path
+        api = docker.client.from_env().api
+        container_id = one(container_ids)
+        for mount in api.inspect_container(container_id)['Mounts']:
+            if container_path.startswith(mount['Destination']):
+                tail = os.path.relpath(container_path, mount['Destination'])
+                host_path = os.path.normpath(os.path.join(mount['Source'], tail))
+                log.info('Resolved %s to %s', container_path, host_path)
+                return host_path
     log.error('Failed to resolve container path %s', container_path)
     return None
 
