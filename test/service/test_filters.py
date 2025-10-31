@@ -32,6 +32,7 @@ class TestFilterReification(AzulTestCase):
     special_fields = SpecialFields(
         source_id='sourceId',
         source_spec=MagicMock(),
+        source_prefix=MagicMock(),
         bundle_uuid=MagicMock(),
         bundle_version=MagicMock(),
         root_entity_id=MagicMock()

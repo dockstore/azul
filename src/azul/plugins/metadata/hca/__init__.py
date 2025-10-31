@@ -10,7 +10,7 @@ from attrs import (
 )
 
 from azul import (
-    JSON,
+    CatalogName,
     R,
     config,
     iif,
@@ -65,6 +65,7 @@ from azul.service.manifest_service import (
     ManifestFormat,
 )
 from azul.types import (
+    JSON,
     MutableJSON,
     json_dict,
     json_dict_of_dicts,
@@ -302,6 +303,7 @@ class Plugin(MetadataPlugin[HCABundle]):
     def special_fields(self) -> SpecialFields:
         return SpecialFields(source_id='sourceId',
                              source_spec='sourceSpec',
+                             source_prefix='sourcePrefix',
                              bundle_uuid='bundleUuid',
                              bundle_version='bundleVersion',
                              root_entity_id='projectId')
@@ -524,6 +526,7 @@ class HCAFile(File):
     @classmethod
     def from_metadata(cls,
                       *,
+                      catalog: CatalogName,
                       metadata: JSON,
                       descriptor: JSON,
                       drs_uri: str | None
@@ -538,10 +541,12 @@ class HCAFile(File):
         parameter_suffix = '; dcp-type=data'
         if content_type.endswith(parameter_suffix):
             content_type = content_type.removesuffix(parameter_suffix)
-        else:
-            # FIXME: Re-enable assertion, potentially in a weakened form
+        elif config.catalogs[catalog].atlas == 'lungmap':
+            # FIXME: Re-enable content-type validation for lungmap
             #        https://github.com/DataBiosphere/azul/issues/7244
-            assert True or ';' not in content_type, R(
+            pass
+        else:
+            assert ';' not in content_type, R(
                 'Unexpected MIME parameter in content type', content_type)
         return cls(uuid=json_str(descriptor['file_id']),
                    name=json_str(json_mapping(metadata['file_core'])['file_name']),

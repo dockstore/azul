@@ -145,4 +145,4 @@ class TestPagination(DCP1CannedBundleTestCase, DocumentCloningTestCase):
         self.assertEqual(expected_lengths, page_lengths)
         self.assertEqual(index_size, sum(page_lengths))
         values = list(chain.from_iterable(page.values for page in pages))
-        self.assertEqual(values, list(sorted(unique(values), reverse=reverse)))
+        self.assertEqual(values, sorted(unique(values), reverse=reverse))

@@ -15,7 +15,6 @@ import requests
 
 from azul import (
     Config,
-    JSON,
 )
 from azul.chalice import (
     AzulChaliceApp,
@@ -23,6 +22,9 @@ from azul.chalice import (
 )
 from azul.logging import (
     configure_test_logging,
+)
+from azul.types import (
+    JSON,
 )
 from indexer import (
     DCP1CannedBundleTestCase,
@@ -151,7 +153,7 @@ class TestServiceAppLogging(DCP1CannedBundleTestCase, WebServiceTestCase):
                 elif debug == 1:
                     expected_log = f'… with a response body starting in {body[:prefix_len]}'
                 elif debug > 1:
-                    expected_log = f'… with a response body of length 9118 being {body}'
+                    expected_log = f'… with a response body of length 9137 being {body}'
                 else:
                     assert False
                 self.assertEqual(expected_log, body_log_message)

@@ -114,7 +114,7 @@ class AnvilIndexerTestCase(AnvilCannedBundleTestCase, IndexerTestCase):
 
     @classmethod
     def supplementary_bundle(cls) -> TDRAnvilBundleFQID:
-        return cls.bundle_fqid(uuid='c2711e94-9966-a0ef-88be-88caf3e8a29b',
+        return cls.bundle_fqid(uuid='595c469e-604d-ab34-af39-f5b9f5d61818',
                                table_name=BundleType.supplementary.value)
 
     @classmethod
@@ -124,7 +124,7 @@ class AnvilIndexerTestCase(AnvilCannedBundleTestCase, IndexerTestCase):
 
     @classmethod
     def replica_bundle(cls) -> TDRAnvilBundleFQID:
-        return cls.bundle_fqid(uuid='6b35f59c-d33d-abf7-9ba0-c7b3a0ca82f3',
+        return cls.bundle_fqid(uuid='f4b39881-d519-ab6f-99a0-7cc5089caee6',
                                table_name='non_schema_orphan_table')
 
 
@@ -166,7 +166,7 @@ class TestAnvilIndexer(AnvilIndexerTestCase,
     def test_list_and_fetch_bundles(self):
         self._mock_normal_duos()
         source_ref = self.source
-        self._make_mock_tdr_tables(source_ref)
+        self._make_mock_tables(source_ref)
         canned_bundle_fqids = [
             self.primary_bundle(),
             self.supplementary_bundle(),
@@ -175,19 +175,19 @@ class TestAnvilIndexer(AnvilIndexerTestCase,
         ]
         expected_bundle_fqids = sorted(canned_bundle_fqids + [
             # Replica bundles for the AnVIL schema tables, which we don't can
-            self.bundle_fqid(uuid='9461293c-447c-a75f-a9ee-a544b106cba3',
+            self.bundle_fqid(uuid='59337757-a45e-af00-9238-34997372f696',
                              table_name='anvil_activity'),
-            self.bundle_fqid(uuid='115cedcf-2b4b-a8ab-ae6f-178e2362dc60',
+            self.bundle_fqid(uuid='1df1df09-3e18-adfa-80e2-515e71a5d3e7',
                              table_name='anvil_alignmentactivity'),
-            self.bundle_fqid(uuid='9998900d-4481-aeb5-8a0f-4e485d26412d',
+            self.bundle_fqid(uuid='a70d523a-da59-aabe-8a4b-bae394df4253',
                              table_name='anvil_assayactivity'),
-            self.bundle_fqid(uuid='50eaf222-be04-af62-aac4-a21dad96a734',
+            self.bundle_fqid(uuid='0ad2c320-4383-a5b4-87c4-cbc66527837f',
                              table_name='anvil_diagnosis'),
-            self.bundle_fqid(uuid='a3ef24e4-5739-a2ee-ba59-4a2dc24c0bfe',
+            self.bundle_fqid(uuid='dfd8ff3d-de2c-a44d-bebe-f540f62a92da',
                              table_name='anvil_donor'),
-            self.bundle_fqid(uuid='eeaae015-86da-a018-bc4c-2aec42aa88a2',
+            self.bundle_fqid(uuid='4ca2319c-abe0-a583-b7a5-d3c8ad2114a0',
                              table_name='anvil_sequencingactivity'),
-            self.bundle_fqid(uuid='6aec5e41-3a08-a86e-9f29-07092145ebdb',
+            self.bundle_fqid(uuid='b47b0e77-7e5a-ab0e-917b-a7096bb7297a',
                              table_name='anvil_variantcallingactivity')
         ])
         plugin = self.plugin
@@ -206,7 +206,7 @@ class TestAnvilIndexer(AnvilIndexerTestCase,
 
     def test_absent_duos_id(self):
         source_ref = self.source
-        self._make_mock_tdr_tables(source_ref)
+        self._make_mock_tables(source_ref)
         cases = {
             'Absent duosFirecloudGroup': [
                 {'name': self.source.spec.name}

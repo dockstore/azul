@@ -2233,6 +2233,70 @@
                     }
                 }
             ]
+        },
+        "reference_file": {
+            "schema": {
+                "columns": [
+                    {
+                        "name": "reference_file_id",
+                        "field_type": "STRING",
+                        "mode": "NULLABLE"
+                    },
+                    {
+                        "name": "version",
+                        "field_type": "TIMESTAMP",
+                        "mode": "NULLABLE"
+                    },
+                    {
+                        "name": "content",
+                        "field_type": "STRING",
+                        "mode": "NULLABLE"
+                    },
+                    {
+                        "name": "file_id",
+                        "field_type": "STRING",
+                        "mode": "NULLABLE"
+                    },
+                    {
+                        "name": "descriptor",
+                        "field_type": "STRING",
+                        "mode": "NULLABLE"
+                    }
+                ]
+            },
+            "rows": []
+        },
+        "image_file": {
+            "schema": {
+                "columns": [
+                    {
+                        "name": "image_file_id",
+                        "field_type": "STRING",
+                        "mode": "NULLABLE"
+                    },
+                    {
+                        "name": "version",
+                        "field_type": "TIMESTAMP",
+                        "mode": "NULLABLE"
+                    },
+                    {
+                        "name": "content",
+                        "field_type": "STRING",
+                        "mode": "NULLABLE"
+                    },
+                    {
+                        "name": "file_id",
+                        "field_type": "STRING",
+                        "mode": "NULLABLE"
+                    },
+                    {
+                        "name": "descriptor",
+                        "field_type": "STRING",
+                        "mode": "NULLABLE"
+                    }
+                ]
+            },
+            "rows": []
         }
     }
 }

@@ -333,7 +333,7 @@ class TestDCP1Indexer(DCP1IndexerTestCase):
                             self.assertIs(doc_type, DocumentType.replica)
 
                     for pair in docs_by_entity.values():
-                        self.assertEqual(list(sorted(doc.coordinates.deleted for doc in pair)), [False, True])
+                        self.assertEqual(sorted(doc.coordinates.deleted for doc in pair), [False, True])
                 finally:
                     self._purge_indices()
 
@@ -490,8 +490,8 @@ class TestDCP1IndexerWithIndexesSetUp(DCP1IndexerTestCase):
                                       entity_id='412898c5-5b9b-4907-b07c-e9b89666e204',
                                       catalog='test'),
             {
-                DSSSourceRef(id=source1.id, spec=source1.spec),
-                DSSSourceRef(id=source2.id, spec=source2.spec)
+                DSSSourceRef(id=source1.id, spec=source1.spec, prefix=source1.prefix),
+                DSSSourceRef(id=source2.id, spec=source2.spec, prefix=source2.prefix),
             }
         )
         self.assertEqual(expected, one(cm.exception.args))

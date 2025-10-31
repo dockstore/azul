@@ -289,7 +289,7 @@ class IntegrationTestCase(AzulTestCase, metaclass=ABCMeta):
             for spec in specs:
                 source_id = one(id for id, name in all_sources.items() if name == spec.name)
                 if source_id not in public_sources:
-                    ref = TDRSourceRef(id=source_id, spec=spec)
+                    ref = TDRSourceRef(id=source_id, spec=spec, prefix=None)
                     managed_access_sources[catalog].add(ref)
         return managed_access_sources
 
@@ -452,8 +452,6 @@ class IndexingIntegrationTest(IntegrationTestCase):
                 with self._service_account_credentials:
                     fqids = self._get_indexed_bundles(catalog)
                 indexed_sources = {fqid.source for fqid in fqids}
-                # FIXME: Improve equality and interning semantics for source ref and spec
-                #        https://github.com/DataBiosphere/azul/issues/6778
                 ma_source_ids = {s.id for s in self.managed_access_sources_by_catalog[catalog]}
                 public_source = one(s for s in indexed_sources if s.id not in ma_source_ids)
                 ma_source = only(s for s in indexed_sources if s.id in ma_source_ids)
@@ -1253,7 +1251,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
             source = plugin.partition_source_for_indexing(catalog, source)
             # Some partitions may be empty, but we include them anyway to
             # ensure test coverage for handling multiple partitions per source
-            for prefix in source.spec.prefix.partition_prefixes():
+            for prefix in source.prefix.partition_prefixes():
                 partition = repository_service.list_bundles(catalog, source, prefix)
                 bundle_fqids.update(partition)
                 message = queue_service.index_partition_message(catalog, source, prefix)
@@ -1279,7 +1277,8 @@ class IndexingIntegrationTest(IntegrationTestCase):
         for hit in hits:
             source, bundle = one(hit['sources']), one(hit['bundles'])
             source = dict(id=source[special_fields.source_id],
-                          spec=source[special_fields.source_spec])
+                          spec=source[special_fields.source_spec],
+                          prefix=source[special_fields.source_prefix])
             source = self.repository_plugin(catalog).source_ref_cls.from_json(source)
             bundle_fqid = SourcedBundleFQID(uuid=bundle[special_fields.bundle_uuid],
                                             version=bundle[special_fields.bundle_version],
@@ -1883,7 +1882,7 @@ class CanBundleScriptIntegrationTest(IntegrationTestCase):
                                           'repository': config.Catalog.Plugin(name='canned'),
                                       },
                                       sources={
-                                          'https://github.com/HumanCellAtlas/schema-test-data/tree/master/tests:/0'
+                                          'https://github.com/HumanCellAtlas/schema-test-data/tree/master/tests'
                                       })
         with mock.patch.object(Config,
                                'catalogs',
@@ -1989,41 +1988,37 @@ class ResponseHeadersTest(AzulTestCase):
             '/swagger/swagger-initializer.js': short_cache,
             '/swagger/swagger-ui.css': long_cache,
             '/openapi.json': short_cache,
-            '/oauth2_redirect': no_cache,
             '/health/basic': no_cache
         }
         for endpoint in (config.service_endpoint, config.indexer_endpoint):
             for path, cache_control in test_cases.items():
                 with self.subTest(endpoint=endpoint, path=path):
-                    if path == '/oauth2_redirect' and endpoint == config.indexer_endpoint:
-                        pass  # no oauth2 endpoint on indexer Lambda
-                    else:
-                        response = requests.get(str(endpoint / path))
-                        response.raise_for_status()
-                        actual_csp = response.headers['Content-Security-Policy']
-                        parsed_csp = CSP.parse(actual_csp)
-                        parsed_csp.validate()
-                        nonce = parsed_csp.nonce()
-                        # We only expect a CSP nonce for specific endpoints.
-                        self.assertIs(nonce is None, path != '/oauth2_redirect')
-                        expected_headers = {
-                            # The fact that most headers are hard-coded in
-                            # security_headers() gives us license to use that
-                            # method here to compose the expected value, even
-                            # though it constitutes code under test. There is
-                            # not much that can break in that method, and even
-                            # if one of the literals in it had an error, that
-                            # error would likely be repeated in a literal here.
-                            **AzulChaliceApp.security_headers(),
-                            'Cache-Control': cache_control,
-                            # The random nonce in the actual CSP makes it hard
-                            # to compose an expected value for it. Instead, we
-                            # parse and validate the actual CSP, then serialize
-                            # it again and interpolate the result into the
-                            # expected value.
-                            'Content-Security-Policy': str(parsed_csp)
-                        }
-                        self.assertIsSubset(expected_headers.items(), response.headers.items())
+                    response = requests.get(str(endpoint / path))
+                    response.raise_for_status()
+                    actual_csp = response.headers['Content-Security-Policy']
+                    parsed_csp = CSP.parse(actual_csp)
+                    parsed_csp.validate()
+                    nonce = parsed_csp.nonce()
+                    # Currently, we don't expect a CSP nonce in our endpoints.
+                    self.assertIs(nonce, None)
+                    expected_headers = {
+                        # The fact that most headers are hard-coded in
+                        # security_headers() gives us license to use that
+                        # method here to compose the expected value, even
+                        # though it constitutes code under test. There is
+                        # not much that can break in that method, and even
+                        # if one of the literals in it had an error, that
+                        # error would likely be repeated in a literal here.
+                        **AzulChaliceApp.security_headers(),
+                        'Cache-Control': cache_control,
+                        # The random nonce in the actual CSP makes it hard
+                        # to compose an expected value for it. Instead, we
+                        # parse and validate the actual CSP, then serialize
+                        # it again and interpolate the result into the
+                        # expected value.
+                        'Content-Security-Policy': str(parsed_csp)
+                    }
+                    self.assertIsSubset(expected_headers.items(), response.headers.items())
 
     def test_default_4xx_response_headers(self):
         for endpoint in (config.service_endpoint, config.indexer_endpoint):

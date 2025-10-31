@@ -123,7 +123,7 @@ class TestMirrorController(DCP2TestCase,
                                   catalog=self.catalog,
                                   source=self.source.to_json()),
                              message)
-        self.assertEqual(list(self.source.spec.prefix.partition_prefixes()), partitions)
+        self.assertEqual(list(self.source.prefix.partition_prefixes()), partitions)
         return partition_message
 
     def _test_mirror_partition(self, partition_message):

@@ -152,24 +152,24 @@ class TDRHCABundle(HCABundle[TDRBundleFQID], TDRBundle):
 
 class Plugin(TDRPlugin[TDRHCABundle, TDRBundleFQID]):
 
-    def count_bundles(self, source: TDRSourceSpec) -> int:
+    def count_bundles(self, source: TDRSourceRef) -> int:
         prefix = '' if source.prefix is None else source.prefix.common
         assert prefix == prefix.lower(), source
         query = f'''
         SELECT COUNT(*) AS count
-        FROM {backtick(self._full_table_name(source, 'links'))}
-        WHERE STARTS_WITH(LOWER(datarepo_row_id), {prefix!r})
+        FROM {backtick(self._full_table_name(source.spec, 'links'))}
+        WHERE STARTS_WITH(LOWER(links_id), {prefix!r})
         '''
         rows = self._run_sql(query)
         return one(rows)['count']
 
-    def count_files(self, source: TDRSourceSpec) -> int:
+    def count_files(self, source: TDRSourceRef) -> int:
         prefix = '' if source.prefix is None else source.prefix.common
         assert prefix == prefix.lower(), source
         query = ' UNION ALL '.join(
             f'''
             SELECT COUNT(*) AS count
-            FROM {backtick(self._full_table_name(source, entity_type))}
+            FROM {backtick(self._full_table_name(source.spec, entity_type))}
             WHERE STARTS_WITH(LOWER(JSON_EXTRACT_SCALAR(descriptor, "$.sha256")),
                               {prefix!r})
             '''
@@ -279,7 +279,8 @@ class Plugin(TDRPlugin[TDRHCABundle, TDRBundleFQID]):
         bundle.metadata[str(entity)] = content
 
     def _file_from_row(self, row: BigQueryRow) -> HCAFile:
-        return HCAFile.from_metadata(metadata=json.loads(any_str(row['content'])),
+        return HCAFile.from_metadata(catalog=self.catalog,
+                                     metadata=json.loads(any_str(row['content'])),
                                      descriptor=json.loads(any_str(row['descriptor'])),
                                      drs_uri=optional(any_str, row['file_id']))
 

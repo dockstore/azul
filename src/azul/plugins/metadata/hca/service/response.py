@@ -293,7 +293,8 @@ class HCASearchResponseStage(SearchResponseStage):
         return [
             {
                 self._special_fields.source_id: s['id'],
-                self._special_fields.source_spec: s['spec']
+                self._special_fields.source_spec: s['spec'],
+                self._special_fields.source_prefix: s['prefix'],
             }
             for s in entry['sources']
         ]

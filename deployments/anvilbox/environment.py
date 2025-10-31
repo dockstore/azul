@@ -4,34 +4,32 @@ from collections.abc import (
 import json
 from typing import (
     Literal,
-    Optional,
 )
 
 is_sandbox = True
 
 pop = 1  # remove snapshot
 
+type ProjectName = str
+type SourceSpec = str
+
 
 def bqsrc(google_project: str,
           snapshot: str,
           flags: int = 0,
-          /,
-          prefix: str = ''
-          ) -> tuple[str, str | None]:
+          ) -> tuple[ProjectName, SourceSpec | None]:
     assert len(google_project) == 8, google_project
     project = 'datarepo-dev-' + google_project
     assert not snapshot.startswith('ANVIL_'), snapshot
     snapshot = 'ANVIL_' + snapshot
-    return mksrc('bigquery', project, snapshot, flags, prefix)
+    return mksrc('bigquery', project, snapshot, flags)
 
 
 def mksrc(source_type: Literal['bigquery', 'parquet'],
           google_project,
           snapshot,
           flags: int = 0,
-          /,
-          prefix: str = ''
-          ) -> tuple[str, str | None]:
+          ) -> tuple[ProjectName, SourceSpec | None]:
     project = '_'.join(snapshot.split('_')[1:-3])
     assert flags <= pop
     source = None if flags & pop else ':'.join([
@@ -40,26 +38,26 @@ def mksrc(source_type: Literal['bigquery', 'parquet'],
         'gcp',
         google_project,
         snapshot,
-        prefix
     ])
     return project, source
 
 
-def mkdelta(items: list[tuple[str, str]]) -> dict[str, str]:
+def mkdelta(items: list[tuple[ProjectName, SourceSpec | None]]
+            ) -> dict[ProjectName, SourceSpec | None]:
     result = dict(items)
     assert len(items) == len(result), 'collisions detected'
     assert list(result.keys()) == sorted(result.keys()), 'input not sorted'
     return result
 
 
-def mklist(catalog: dict[str, str]) -> list[str]:
+def mklist(catalog: dict[ProjectName, SourceSpec | None]) -> list[SourceSpec]:
     return list(filter(None, catalog.values()))
 
 
-def mkdict(previous_catalog: dict[str, str],
+def mkdict(previous_catalog: dict[ProjectName, SourceSpec | None],
            num_expected: int,
-           delta: dict[str, str]
-           ) -> dict[str, str]:
+           delta: dict[ProjectName, SourceSpec | None],
+           ) -> dict[ProjectName, SourceSpec | None]:
     catalog = previous_catalog | delta
     num_actual = len(mklist(catalog))
     assert num_expected == num_actual, (num_expected, num_actual)
@@ -73,7 +71,7 @@ anvil_sources = mkdict({}, 3, mkdelta([
 ]))
 
 
-def env() -> Mapping[str, Optional[str]]:
+def env() -> Mapping[str, str | None]:
     """
     Returns a dictionary that maps environment variable names to values. The
     values are either None or strings. String values can contain references to

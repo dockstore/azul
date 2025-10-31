@@ -96,12 +96,11 @@ class TerraValidator:
         ref = plugin.resolve_source(source_spec)
         log.info('TDR client is authorized for API access to %s.', source_spec)
         if config.deployment.is_main:
-            if source_spec.prefix is not None:
-                require(source_spec.prefix.common == '', source_spec)
+            assert ref.prefix is None, ref
             self.tdr.check_bigquery_access(source_spec)
         else:
             ref = plugin.partition_source_for_indexing(catalog, ref)
-            subgraph_count = plugin.count_bundles(ref.spec)
+            subgraph_count = plugin.count_bundles(ref)
             require(subgraph_count > 0, 'Common prefix is too long', ref.spec)
             require(subgraph_count <= 512, 'Common prefix is too short', ref.spec)
 

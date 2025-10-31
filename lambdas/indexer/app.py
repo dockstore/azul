@@ -6,7 +6,6 @@ from typing import (
 import chalice
 
 from azul import (
-    JSON,
     cached_property,
     config,
 )
@@ -39,6 +38,7 @@ from azul.openapi import (
     format_description as fd,
 )
 from azul.types import (
+    JSON,
     not_none,
 )
 

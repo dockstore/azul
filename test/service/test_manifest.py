@@ -1276,9 +1276,9 @@ class AnvilManifestTestCase(ManifestTestCase, AnvilCannedBundleTestCase):
     def bundles(cls) -> list[SourcedBundleFQID]:
         return [
             cls.bundle_fqid(uuid='2370f948-2783-aeb6-afea-e022897f4dcf'),
-            cls.bundle_fqid(uuid='c2711e94-9966-a0ef-88be-88caf3e8a29b'),
+            cls.bundle_fqid(uuid='595c469e-604d-ab34-af39-f5b9f5d61818'),
             cls.bundle_fqid(uuid='826dea02-e274-affe-aabc-eb3db63ad068'),
-            cls.bundle_fqid(uuid='6b35f59c-d33d-abf7-9ba0-c7b3a0ca82f3')
+            cls.bundle_fqid(uuid='f4b39881-d519-ab6f-99a0-7cc5089caee6'),
         ]
 
     source_id_filters: FiltersJSON = {
@@ -1317,7 +1317,7 @@ class AnvilManifestTestCase(ManifestTestCase, AnvilCannedBundleTestCase):
                     expect_relations = (
                         enable_relations
                         and expect_orphans
-                        and not self.source.spec.prefix.common
+                        and not self.source.prefix.common
                     )
                     expected_manifest = self._expected_pfb_manifest(expect_orphans, expect_relations)
                     expected_schema, expected_entities = expected_manifest
@@ -1373,7 +1373,7 @@ class TestAnvilManifests(AnvilManifestTestCase):
         expected = [
             (
                 'bundles.bundle_uuid',
-                'c2711e94-9966-a0ef-88be-88caf3e8a29b',
+                '595c469e-604d-ab34-af39-f5b9f5d61818',
                 '826dea02-e274-affe-aabc-eb3db63ad068',
                 '826dea02-e274-affe-aabc-eb3db63ad068'
             ),
@@ -1391,9 +1391,9 @@ class TestAnvilManifests(AnvilManifestTestCase):
             ),
             (
                 'sources.source_spec',
-                'tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0',
-                'tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0',
-                'tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0'
+                'tdr:bigquery:gcp:test_anvil_project:anvil_snapshot',
+                'tdr:bigquery:gcp:test_anvil_project:anvil_snapshot',
+                'tdr:bigquery:gcp:test_anvil_project:anvil_snapshot'
             ),
             (
                 'datasets.document_id',
@@ -1824,13 +1824,16 @@ class TestVerbatimJSONLManifestPartitioningBySource(DCP1ManifestTestCase):
     sources_by_bundle_uuid = {
         '3ac62c33-93e1-56b4-b857-59497f5d942d':
             DSSSourceRef(id='706cc417-9ed1-4c09-8341-0df38e374423',
-                         spec=SimpleSourceSpec.parse('eggs:/1')),
+                         spec=SimpleSourceSpec.parse('eggs'),
+                         prefix=Prefix.parse('/1')),
         '97f0cc83-f0ac-417a-8a29-221c77debde8':
             DSSSourceRef(id='d0024443-bddf-4d3e-b4c8-6a3a1b23e8cf',
-                         spec=SimpleSourceSpec.parse('bacon:/2')),
+                         spec=SimpleSourceSpec.parse('bacon'),
+                         prefix=Prefix.parse('/2')),
         '4b03c1ce-9df1-5cd5-a8e4-48a2fe095081':
             DSSSourceRef(id='22213a35-5c8e-4bad-bcb9-d4b7740c7165',
-                         spec=SimpleSourceSpec.parse('sausage:/3')),
+                         spec=SimpleSourceSpec.parse('sausage'),
+                         prefix=Prefix.parse('/3')),
     }
 
     @classmethod

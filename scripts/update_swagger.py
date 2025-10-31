@@ -22,15 +22,17 @@ log = logging.getLogger(__name__)
 http = http_client(log)
 
 repository_url = 'https://raw.githubusercontent.com/swagger-api/swagger-ui'
-tag = 'v5.28.1'
+tag = 'v5.29.5'
 files = [
     'index.html',
+    'index.css',
     'swagger-ui.css',
     'swagger-ui-bundle.js',
     'swagger-ui-standalone-preset.js',
+    'oauth2-redirect.js',
+    'oauth2-redirect.html',
     # We don't directly serve these files, but we maintain verbatim copies from
     # the upstream distribution for reference.
-    'oauth2-redirect.html',
     'swagger-initializer.js'
 ]
 

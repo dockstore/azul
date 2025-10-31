@@ -16,7 +16,7 @@ Linked issue: #0000
 - [ ] Name of PR branch matches `upgrades/yyyy-mm-dd`
 - [ ] PR is linked to the upgrade issue it resolves
 - [ ] Status of linked issue is *In progress*
-- [ ] PR title matches `Upgrade dependencies yyyy-mm-dd`
+- [ ] PR title matches `Upgrade software dependencies yyyy-mm-dd`
 - [ ] PR title references the linked issue
 
 

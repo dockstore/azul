@@ -4,7 +4,6 @@ from typing import (
 )
 
 from azul import (
-    JSON,
     format_description as fd,
     mutable_furl,
 )
@@ -15,6 +14,9 @@ from azul.openapi import (
     params,
     responses,
     schema,
+)
+from azul.types import (
+    JSON,
 )
 
 
