@@ -6,7 +6,7 @@ blessed==1.22.0
 boto3==1.40.57
 boto3-stubs-lite==1.40.57
 botocore==1.40.57
-botocore-stubs==1.40.62
+botocore-stubs==1.40.63
 cachetools==6.2.1
 certifi==2025.10.5
 cffi==2.0.0
@@ -32,7 +32,7 @@ gitpython==3.1.45
 google-api-core==2.26.0
 google-api-python-client==2.185.0
 google-auth==2.41.1
-google-auth-httplib2==0.2.0
+google-auth-httplib2==0.2.1
 google-cloud-bigquery==3.13.0
 google-cloud-bigquery-reservation==1.21.0
 google-cloud-core==2.5.0
@@ -62,14 +62,14 @@ more-itertools==10.8.0
 moto==5.1.15
 msgpack==1.1.2
 mypy==1.18.2
-mypy-boto3-apigateway==1.40.0
-mypy-boto3-cloudwatch==1.40.38
+mypy-boto3-apigateway==1.40.63
+mypy-boto3-cloudwatch==1.40.63
 mypy-boto3-dynamodb==1.40.56
 mypy-boto3-ec2==1.40.61
 mypy-boto3-ecr==1.40.58
 mypy-boto3-es==1.40.55
 mypy-boto3-iam==1.40.60
-mypy-boto3-kms==1.40.54
+mypy-boto3-kms==1.40.63
 mypy-boto3-lambda==1.40.61
 mypy-boto3-s3==1.40.61
 mypy-boto3-secretsmanager==1.40.60
@@ -78,7 +78,7 @@ mypy-boto3-sns==1.40.57
 mypy-boto3-sqs==1.40.61
 mypy-boto3-ssm==1.40.54
 mypy-boto3-stepfunctions==1.40.60
-mypy-boto3-sts==1.40.0
+mypy-boto3-sts==1.40.63
 mypy_extensions==1.1.0
 openapi-schema-validator==0.6.3
 openapi-spec-validator==0.7.2
