@@ -1196,6 +1196,50 @@ anvil11_sources = mkdict(anvil10_sources, 369, mkdelta([
     bqsrc('61b6b42b', 'ccdg_broad_np_epilepsy_zafagn_ds_epi_como_mds_wes_20221026_ANV5_202409302116', pop),
 ]))
 
+anvil12_sources = mkdict(anvil11_sources, 375, mkdelta([
+    bqsrc('48204a7f', 'CCDG_Broad_CVD_EOCAD_PartnersBiobank_HMB_WES_20230621_ANV5_202510141553'),
+    bqsrc('50aed057', 'CCDG_Broad_NP_Epilepsy_AUSAUS_EP_BA_CN_ID_MDS_GSA_MD_20251016_ANV5_202510161935'),
+    bqsrc('25e5ec27', 'CCDG_Broad_NP_Epilepsy_USAMON_GRU_WES_20250721_ANV5_202510141558'),
+    bqsrc('3d1cf398', 'CCDG_WashU_CVD_EOCAD_METSIM_WGS_20250730_ANV5_202508041327'),
+    bqsrc('3042ea91', 'CMG_Broad_Blood_Fleming_WES_DS_BFD_MDS_20251014_ANV5_202510142034'),
+    bqsrc('c79b622f', 'CMG_Broad_Blood_Gazda_WES_20251008_ANV5_202510141855'),
+    bqsrc('f872d5f2', 'CMG_Broad_Brain_Sherr_WES_DS_Neurology_MDS_20251014_ANV5_202510142044'),
+    bqsrc('0e1c6379', 'CMG_Broad_Genitourinary_Hirschhorn_WES_20251008_ANV5_202510141904'),
+    bqsrc('3a6db9a2', 'CMG_Broad_LymphDisease_Fajgenbaum_WES_20251014_ANV5_202510142054'),
+    bqsrc('d3bb1ac4', 'CMG_Broad_Muscle_Beggs_WES_20251008_ANV5_202510141913'),
+    bqsrc('67952a24', 'CMG_Broad_Muscle_Kang_WES_20251008_ANV5_202510141923'),
+    bqsrc('209916cd', 'CMG_Broad_Orphan_VCGS_White_WES_20251008_ANV5_202510141931'),
+    bqsrc('abdbf318', 'CMH_GAFK_10X_Genomics_20240304_ANV5_202409251809', pop),
+    bqsrc('7c44dbc8', 'CMH_GAFK_ES_20240301_ANV5_202502201925', pop),
+    bqsrc('e4a5f270', 'CMH_GAFK_GS_linked_read_20221107_ANV5_202409251830', pop),
+    bqsrc('97f2fa00', 'CMH_GAFK_GS_long_read_20240301_ANV5_202502201932', pop),
+    bqsrc('456a8996', 'CMH_GAFK_IlluminaGSA_20240311_ANV5_202502201937', pop),
+    bqsrc('9263e232', 'CMH_GAFK_IsoSeq_20240113_ANV5_202502201941', pop),
+    bqsrc('aa13412e', 'CMH_GAFK_MGI_20240304_ANV5_202409251952', pop),
+    bqsrc('ef718b6b', 'CMH_GAFK_PacBio_methyl_tagged_20240311_ANV5_202502201945', pop),
+    bqsrc('94f58e6c', 'CMH_GAFK_SCATAC_20221107_ANV5_202402290954', pop),
+    bqsrc('5447de30', 'CMH_GAFK_WGBS_20230327_ANV5_202402062120', pop),
+    bqsrc('de339830', 'CMH_GAFK_WGS_20240113_ANV5_202502201948', pop),
+    bqsrc('ba97c05c', 'CMH_GAFK_scRNA_20221107_ANV5_202402291004', pop),
+    bqsrc('cb38d767', 'Complex_Chromosomal_Changes_R1_20251015_ANV5_202510151904'),
+    bqsrc('88c9e80c', 'ENCORE_293T_20251014_ANV5_202510142019'),
+    bqsrc('f23886ab', 'ENCORE_RS293_20251014_ANV5_202510141942'),
+    bqsrc('4096189d', 'GREGOR_R04_GRU_20250917_ANV5_202509221559'),
+    bqsrc('f71485a8', 'GREGOR_R04_HMB_20250910_ANV5_202509221540'),
+    bqsrc('3b09455f', 'GREGoR_R01_GRU_20240208_ANV5_202510101245'),
+    bqsrc('25d953fe', 'GTEx_public_data_20240117_ANV5_202510101251'),
+    bqsrc('193dc871', 'GTEx_v10_hg38_20241105_ANV5_202510141951'),
+    bqsrc('b7446d70', 'HPRC_20240401_ANV5_202510141559'),
+    bqsrc('33f117db', 'IGVF_GRU_PUB_R1_20251015_ANV5_202510151322'),
+    bqsrc('ad1d9ffd', 'IGVF_HMB_MDS_R1_20251028_ANV5_202510281333'),
+    bqsrc('ca277df1', 'IGVF_HMB_R1_20251015_ANV5_202510151330'),
+    bqsrc('38655702', 'IGVF_Mouse_R1_20251015_ANV5_202510151337'),
+    bqsrc('0570db33', 'MAS_ISO_seq_20240113_ANV5_202510141607'),
+    bqsrc('5614f9b2', 'NIMH_Broad_ConvergentNeuro_McCarroll_Eggan_CIRM_GRU_VillageData_20230109_ANV5_202510141609'),
+    bqsrc('a314d3c7', 'OurHealth_GRU_R1_20251015_ANV5_202510151901'),
+    bqsrc('12211c34', 'T2T_20230714_ANV5_202510101315'),
+]))
+
 
 def env() -> Mapping[str, str | None]:
     """
@@ -1249,6 +1293,7 @@ def env() -> Mapping[str, str | None]:
                                        sources=list(filter(None, sources.values())))
             for atlas, catalog, sources in [
                 ('anvil', 'anvil11', anvil11_sources),
+                ('anvil', 'anvil12', anvil12_sources),
             ]
             for suffix, internal in [
                 ('', False),
