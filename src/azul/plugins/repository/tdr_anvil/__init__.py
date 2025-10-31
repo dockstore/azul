@@ -260,30 +260,30 @@ class Plugin(TDRPlugin[TDRAnvilBundle, TDRAnvilBundleFQID]):
                               self.batch_uuid_version,
                               self.bundle_uuid_version)
 
-    def count_files(self, source: TDRSourceSpec) -> int:
+    def count_files(self, source: TDRSourceRef) -> int:
         prefix = '' if source.prefix is None else source.prefix.common
         assert prefix == prefix.lower(), source
         query = f'''
         SELECT COUNT(*) AS count
-        FROM {backtick(self._full_table_name(source, 'anvil_file'))}
+        FROM {backtick(self._full_table_name(source.spec, 'anvil_file'))}
         WHERE STARTS_WITH(LOWER(file_md5sum), {prefix!r})
         '''
         return one(self._run_sql(query))['count']
 
-    def count_bundles(self, source: TDRSourceSpec) -> int:
+    def count_bundles(self, source: TDRSourceRef) -> int:
         prefix = '' if source.prefix is None else source.prefix.common
         assert prefix == prefix.lower(), source
         primary_count = one(self._run_sql(f'''
             SELECT COUNT(*) AS count
-            FROM {backtick(self._full_table_name(source, BundleType.primary.value))}
+            FROM {backtick(self._full_table_name(source.spec, BundleType.primary.value))}
             WHERE STARTS_WITH(LOWER(datarepo_row_id), {prefix!r})
         '''))['count']
         duos_count = 0 if config.duos_service_url is None else one(self._run_sql(f'''
             SELECT COUNT(*) AS count
-            FROM {backtick(self._full_table_name(source, BundleType.duos.value))}
+            FROM {backtick(self._full_table_name(source.spec, BundleType.duos.value))}
             WHERE STARTS_WITH(LOWER(datarepo_row_id), {prefix!r})
         '''))['count']
-        sizes_by_table = self._batch_tables(source, prefix)
+        sizes_by_table = self._batch_tables(source.spec, prefix)
         batched_count = sum(batch_size for (_, batch_size) in sizes_by_table.values())
         return primary_count + duos_count + batched_count
 

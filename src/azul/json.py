@@ -413,7 +413,7 @@ class StaticRegisteredPolymorphicSerializable(PolymorphicSerializable):
     unique, regardless of the module the subclass is defined in.
     """
 
-    _registry: dict[str, type[Self]] = {}
+    _registry: ClassVar[dict[str, type['StaticRegisteredPolymorphicSerializable']]] = {}
 
     @classmethod
     def cls_to_json(cls) -> AnyJSON:
@@ -422,12 +422,14 @@ class StaticRegisteredPolymorphicSerializable(PolymorphicSerializable):
 
     @classmethod
     def cls_from_json(cls, json: AnyJSON) -> type[Self]:
-        return cls._registry[json_str(json)]
+        subcls = cls._registry[json_str(json)]
+        assert issubclass(subcls, cls)
+        return subcls
 
-    def __init_subclass__(cls):
+    def __init_subclass__(subcls):
         super().__init_subclass__()
         try:
-            other_cls = cls._registry[cls.__name__]
+            other_cls = subcls._registry[subcls.__name__]
         except KeyError:
             pass
         else:
@@ -439,9 +441,9 @@ class StaticRegisteredPolymorphicSerializable(PolymorphicSerializable):
             # reference the same containing module, so we assume that two
             # classes of the same name from the same module indicate that attrs
             # is involved and does not constitute a collision.
-            assert other_cls.__module__ == cls.__module__, R(
-                'Class name collision', cls, other_cls)
-        cls._registry[cls.__name__] = cls
+            assert other_cls.__module__ == subcls.__module__, R(
+                'Class name collision', subcls, other_cls)
+        subcls._registry[subcls.__name__] = subcls
 
 
 class DynamicPolymorphicSerializable(PolymorphicSerializable):

@@ -153,6 +153,7 @@ class SpecialFields:
     accessible: ClassVar[FieldName] = 'accessible'
     source_id: FieldName
     source_spec: FieldName
+    source_prefix: FieldName
     bundle_uuid: FieldName
     bundle_version: FieldName
     root_entity_id: FieldName
@@ -547,11 +548,14 @@ class MetadataPlugin[BUNDLE: Bundle](Plugin[BUNDLE]):
         raise NotImplementedError
 
 
+# FIXME: Maybe remove the defaults after enabling mypy's disallow_any_generics
+#        https://github.com/DataBiosphere/azul/issues/7495
+
 @attrs.frozen(auto_attribs=True, kw_only=True)
-class RepositoryPlugin[BUNDLE: Bundle,
-                       SOURCE_SPEC: SourceSpec,
-                       SOURCE_REF: SourceRef,
-                       BUNDLE_FQID: SourcedBundleFQID](
+class RepositoryPlugin[BUNDLE: Bundle = Bundle[SourcedBundleFQID],
+                       SOURCE_SPEC: SourceSpec = SourceSpec,
+                       SOURCE_REF: SourceRef = SourceRef[SourceSpec],
+                       BUNDLE_FQID: SourcedBundleFQID = SourcedBundleFQID](
     Plugin[BUNDLE]
 ):
     catalog: CatalogName
@@ -578,18 +582,7 @@ class RepositoryPlugin[BUNDLE: Bundle,
         """
         Assert that the given source is present in the plugin configuration.
         """
-        assert source.spec.prefix is not None, source
-        for configured_spec in self.sources:
-            if configured_spec == source.spec:
-                break
-            # Most configured sources lack an explicit prefix
-            elif configured_spec.eq_ignoring_prefix(source.spec):
-                assert configured_spec.prefix is None, (configured_spec, source)
-                break
-            else:
-                continue
-        else:
-            assert False, (self.sources, source)
+        assert source.spec in self.sources, (source, self.sources)
 
     def _assert_partition(self, source: SOURCE_REF, prefix: str):
         """
@@ -597,7 +590,8 @@ class RepositoryPlugin[BUNDLE: Bundle,
         source's configured prefix.
         """
         validate_uuid_prefix(prefix)
-        assert prefix in source.spec.prefix, (source.spec, prefix)
+        assert source.prefix is not None, source
+        assert prefix in source.prefix, (source, prefix)
 
     @abstractmethod
     def list_sources(self,
@@ -660,7 +654,7 @@ class RepositoryPlugin[BUNDLE: Bundle,
         spec_cls = ref_cls.spec_cls()
         assert isinstance(spec, spec_cls), spec
         id = self._lookup_source_id(spec)
-        return ref_cls(id=id, spec=spec)
+        return ref_cls(id=id, spec=spec, prefix=None)
 
     @abstractmethod
     def _lookup_source_id(self, spec: SOURCE_SPEC) -> str:
@@ -671,7 +665,7 @@ class RepositoryPlugin[BUNDLE: Bundle,
         raise NotImplementedError
 
     @abstractmethod
-    def count_bundles(self, source: SOURCE_SPEC) -> int:
+    def count_bundles(self, source: SOURCE_REF) -> int:
         """
         The total number of subgraphs in the given source. The source's prefix
         may be None, indicating that the source hasn't been partitioned yet and
@@ -680,7 +674,7 @@ class RepositoryPlugin[BUNDLE: Bundle,
         raise NotImplementedError
 
     @abstractmethod
-    def count_files(self, source: SOURCE_SPEC) -> int:
+    def count_files(self, source: SOURCE_REF) -> int:
         """
         The total number of files in the given source. The source's prefix
         may be None, indicating that the source hasn't been partitioned yet and
@@ -715,11 +709,11 @@ class RepositoryPlugin[BUNDLE: Bundle,
     def _partition_source(self,
                           catalog: CatalogName,
                           source: SOURCE_REF,
-                          counter: Callable[[SOURCE_SPEC], int],
+                          counter: Callable[[SOURCE_REF], int],
                           partition_size: int
                           ) -> SOURCE_REF:
-        if source.spec.prefix is None:
-            count = counter(source.spec)
+        if source.prefix is None:
+            count = counter(source)
             is_main = config.deployment.is_main
             is_it = catalog in config.integration_test_catalogs
             # We use the "lesser" heuristic during IT to keep the cost and

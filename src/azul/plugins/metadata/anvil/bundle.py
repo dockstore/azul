@@ -1,6 +1,9 @@
 from abc import (
     ABCMeta,
 )
+from functools import (
+    total_ordering,
+)
 from itertools import (
     chain,
 )
@@ -55,6 +58,7 @@ def ref_set_field():
     )
 
 
+@total_ordering
 @attrs.frozen(kw_only=True, order=False)
 class Link[REF: (EntityReference, KeyReference)](SerializableAttrs):
     inputs: frozenset[REF] = ref_set_field()

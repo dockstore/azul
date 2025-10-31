@@ -1,13 +1,13 @@
 import requests
 
-from azul import (
-    JSON,
-)
 from azul.logging import (
     configure_test_logging,
 )
 from azul.plugins.repository.tdr_anvil import (
     TDRAnvilBundleFQID,
+)
+from azul.types import (
+    JSON,
 )
 from indexer.test_anvil import (
     AnvilIndexerTestCase,
@@ -48,7 +48,8 @@ class TestAnvilResponse(AnvilIndexerTestCase, WebServiceTestCase):
                         'entryId': '1509ef40-d1ba-440d-b298-16b7c173dcd4',
                         'sources': [
                             {
-                                'source_spec': 'tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0',
+                                'source_prefix': '/0',
+                                'source_spec': 'tdr:bigquery:gcp:test_anvil_project:anvil_snapshot',
                                 'source_id': '6c87f0e1-509d-46a4-b845-7584df39263b'
                             }
                         ],
@@ -118,7 +119,8 @@ class TestAnvilResponse(AnvilIndexerTestCase, WebServiceTestCase):
                         'entryId': '816e364e-1193-4e5b-a91a-14e4b009157c',
                         'sources': [
                             {
-                                'source_spec': 'tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0',
+                                'source_prefix': '/0',
+                                'source_spec': 'tdr:bigquery:gcp:test_anvil_project:anvil_snapshot',
                                 'source_id': '6c87f0e1-509d-46a4-b845-7584df39263b'
                             }
                         ],
@@ -315,7 +317,8 @@ class TestAnvilResponse(AnvilIndexerTestCase, WebServiceTestCase):
                         'entryId': '826dea02-e274-4ffe-aabc-eb3db63ad068',
                         'sources': [
                             {
-                                'source_spec': 'tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0',
+                                'source_prefix': '/0',
+                                'source_spec': 'tdr:bigquery:gcp:test_anvil_project:anvil_snapshot',
                                 'source_id': '6c87f0e1-509d-46a4-b845-7584df39263b'
                             }
                         ],
@@ -532,8 +535,9 @@ class TestAnvilResponse(AnvilIndexerTestCase, WebServiceTestCase):
                         'files': [],
                         'sources': [
                             {
+                                'source_prefix': '/0',
                                 'source_id': '6c87f0e1-509d-46a4-b845-7584df39263b',
-                                'source_spec': 'tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0'
+                                'source_spec': 'tdr:bigquery:gcp:test_anvil_project:anvil_snapshot'
                             }
                         ]
                     },
@@ -605,8 +609,9 @@ class TestAnvilResponse(AnvilIndexerTestCase, WebServiceTestCase):
                         ],
                         'sources': [
                             {
+                                'source_prefix': '/0',
                                 'source_id': '6c87f0e1-509d-46a4-b845-7584df39263b',
-                                'source_spec': 'tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0'
+                                'source_spec': 'tdr:bigquery:gcp:test_anvil_project:anvil_snapshot'
                             }
                         ]
                     }
@@ -773,7 +778,8 @@ class TestAnvilResponse(AnvilIndexerTestCase, WebServiceTestCase):
                         'entryId': '2370f948-2783-4eb6-afea-e022897f4dcf',
                         'sources': [
                             {
-                                'source_spec': 'tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0',
+                                'source_prefix': '/0',
+                                'source_spec': 'tdr:bigquery:gcp:test_anvil_project:anvil_snapshot',
                                 'source_id': '6c87f0e1-509d-46a4-b845-7584df39263b'
                             }
                         ],
@@ -989,7 +995,8 @@ class TestAnvilResponse(AnvilIndexerTestCase, WebServiceTestCase):
                         'entryId': 'bfd991f2-2797-4083-972a-da7c6d7f1b2e',
                         'sources': [
                             {
-                                'source_spec': 'tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0',
+                                'source_prefix': '/0',
+                                'source_spec': 'tdr:bigquery:gcp:test_anvil_project:anvil_snapshot',
                                 'source_id': '6c87f0e1-509d-46a4-b845-7584df39263b'
                             }
                         ],
@@ -1194,7 +1201,8 @@ class TestAnvilResponse(AnvilIndexerTestCase, WebServiceTestCase):
                         'entryId': '15b76f9c-6b46-433f-851d-34e89f1b9ba6',
                         'sources': [
                             {
-                                'source_spec': 'tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0',
+                                'source_prefix': '/0',
+                                'source_spec': 'tdr:bigquery:gcp:test_anvil_project:anvil_snapshot',
                                 'source_id': '6c87f0e1-509d-46a4-b845-7584df39263b'
                             }
                         ],
@@ -1276,7 +1284,8 @@ class TestAnvilResponse(AnvilIndexerTestCase, WebServiceTestCase):
                         'entryId': '3b17377b-16b1-431c-9967-e5d01fc5923f',
                         'sources': [
                             {
-                                'source_spec': 'tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0',
+                                'source_prefix': '/0',
+                                'source_spec': 'tdr:bigquery:gcp:test_anvil_project:anvil_snapshot',
                                 'source_id': '6c87f0e1-509d-46a4-b845-7584df39263b'
                             }
                         ],

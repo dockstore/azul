@@ -13,14 +13,14 @@ import requests
 from app_test_case import (
     LocalAppTestCase,
 )
-from azul import (
-    JSON,
-)
 from azul.deployment import (
     aws,
 )
 from azul.hmac import (
     SignatureHelper,
+)
+from azul.types import (
+    JSON,
 )
 from azul_test_case import (
     DCP1TestCase,
