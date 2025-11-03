@@ -1857,7 +1857,8 @@ def env() -> Mapping[str, str | None]:
             for atlas, catalog, sources in [
                 ('hca', 'dcp54', dcp54_sources),
                 ('lungmap', 'lm9', lm9_sources)
-            ] for suffix, internal in [
+            ]
+            for suffix, internal in [
                 ('', False),
                 ('-it', True)
             ]
