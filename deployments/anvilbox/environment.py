@@ -116,14 +116,14 @@ def env() -> Mapping[str, str | None]:
 
         'AZUL_CATALOGS': json.dumps({
             f'{catalog}{suffix}': dict(atlas=atlas,
-                                       internal=internal,
+                                       internal=is_it,
                                        plugins=dict(metadata=dict(name='anvil'),
                                                     repository=dict(name='tdr_anvil')),
                                        sources=list(filter(None, sources.values())))
             for atlas, catalog, sources in [
                 ('anvil', 'anvil', anvil_sources),
             ]
-            for suffix, internal in [
+            for suffix, is_it in [
                 ('', False),
                 ('-it', True)
             ]

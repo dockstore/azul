@@ -1288,7 +1288,7 @@ def env() -> Mapping[str, str | None]:
 
         'AZUL_CATALOGS': base64.b64encode(bz2.compress(json.dumps({
             f'{catalog}{suffix}': dict(atlas=atlas,
-                                       internal=internal,
+                                       internal=is_it,
                                        plugins=dict(metadata=dict(name='anvil'),
                                                     repository=dict(name='tdr_anvil')),
                                        sources=list(filter(None, sources.values())))
@@ -1296,7 +1296,7 @@ def env() -> Mapping[str, str | None]:
                 ('anvil', 'anvil11', anvil11_sources),
                 ('anvil', 'anvil12', anvil12_sources),
             ]
-            for suffix, internal in [
+            for suffix, is_it in [
                 ('', False),
                 ('-it', True)
             ]

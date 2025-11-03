@@ -214,7 +214,7 @@ def env() -> Mapping[str, str | None]:
 
         'AZUL_CATALOGS': json.dumps({
             f'{catalog}{suffix}': dict(atlas=atlas,
-                                       internal=internal,
+                                       internal=is_it,
                                        plugins=dict(metadata=dict(name='hca'),
                                                     repository=dict(name='tdr_hca')),
                                        sources=list(filter(None, sources.values())))
@@ -223,7 +223,7 @@ def env() -> Mapping[str, str | None]:
                 ('lungmap', 'lungmap', lungmap_sources),
                 ('lungmap', 'lm2', lm2_sources)
             ]
-            for suffix, internal in [
+            for suffix, is_it in [
                 ('', False),
                 ('-it', True)
             ]
