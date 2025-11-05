@@ -983,20 +983,6 @@ class Chalice:
                                    'to complete your request.'
                     })
                 }
-            },
-            'INTEGRATION_TIMEOUT': {
-                'statusCode': '504',
-                'responseParameters': {
-                    **security_headers,
-                    'gatewayresponse.header.Retry-After': "'10'"
-                },
-                'responseTemplates': {
-                    "application/json": json.dumps({
-                        'message': '504 Gateway Timeout. Wait the number of '
-                                   'seconds specified in the `Retry-After` '
-                                   'header before retrying the request.'
-                    })
-                }
             }
         }
         gateway_responses = error_responses | default_responses

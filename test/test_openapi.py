@@ -104,7 +104,7 @@ class TestAppSpecs(AzulUnitTestCase):
                     responses = spec.pop('responses')
                     response = responses.pop('504')
                     description = response.pop('description')
-                    self.assertIn('Request timed out', description)
+                    self.assertIn('Gateway timeout', description)
                     self.assertEqual(({}, {}), (response, responses))
         return actual_spec
 

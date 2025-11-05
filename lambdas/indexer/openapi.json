@@ -2,7 +2,7 @@
     "openapi": "3.0.1",
     "info": {
         "title": "azul-indexer-dev",
-        "version": "3.3",
+        "version": "3.4",
         "description": "\nThis is the internal API for Azul's indexer component.\n\n\n## Contact us\n\nFor technical support please file an issue at\n[GitHub](https://github.com/DataBiosphere/azul/issues) or email\n`azul-group@ucsc.edu`. To report a security concern or misconduct please email\n`azul-group@ucsc.edu`.\n"
     },
     "paths": {
@@ -10,7 +10,7 @@
             "get": {
                 "responses": {
                     "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                        "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
                     "301": {
                         "description": "A redirect to the Swagger UI"
@@ -26,7 +26,7 @@
             "get": {
                 "responses": {
                     "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                        "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
                     "200": {
                         "description": "The response body is an HTML page containing the Swagger UI"
@@ -42,7 +42,7 @@
             "get": {
                 "responses": {
                     "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                        "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
                     "200": {
                         "description": "The response body is JavaScript used internally by the Swagger UI"
@@ -69,7 +69,7 @@
             "get": {
                 "responses": {
                     "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                        "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
                     "200": {
                         "description": "The response body is the contents of the requested file"
@@ -88,7 +88,7 @@
             "get": {
                 "responses": {
                     "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                        "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
                     "200": {
                         "description": "200 response",
@@ -151,7 +151,7 @@
             "get": {
                 "responses": {
                     "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                        "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
                     "200": {
                         "description": "Version endpoint is reachable.",
@@ -196,7 +196,7 @@
             "get": {
                 "responses": {
                     "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                        "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
                     "200": {
                         "description": "\nThe robots.txt resource according to\n[RFC9309](https://datatracker.ietf.org/doc/html/rfc9309)\n"
@@ -212,7 +212,7 @@
             "get": {
                 "responses": {
                     "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                        "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
                     "200": {
                         "description": "\nThe checked resources\nare healthy.\n\nThe response consists of the following keys:\n\n* `other_lambdas` \nIndicates whether the companion REST API responds to HTTP requests.\n* `queues` \nReturns information about the SQS queues used by the indexer and the\nmirror.\n* `progress` \nThe number of Data Store bundles pending to be indexed and the number\nof index documents in need of updating.\n* `api_endpoints` \nIndicates whether important service API endpoints are operational.\n* `elasticsearch` \nIndicates whether the Elasticsearch cluster is responsive.\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`true`.\n\n\nAll of the nested `up` keys\nare `true`.\n",
@@ -314,7 +314,7 @@
             "get": {
                 "responses": {
                     "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                        "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
                     "200": {
                         "description": "\nThe checked resources\nare healthy.\n\nThe response consists of the following keys:\n\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`true`.\n\n",
@@ -406,7 +406,7 @@
             "get": {
                 "responses": {
                     "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                        "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
                     "200": {
                         "description": "\nThe checked resources\nare healthy.\n\nThe response consists of the following keys:\n\n* `elasticsearch` \nIndicates whether the Elasticsearch cluster is responsive.\n* `queues` \nReturns information about the SQS queues used by the indexer and the\nmirror.\n* `progress` \nThe number of Data Store bundles pending to be indexed and the number\nof index documents in need of updating.\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`true`.\n\n\nAll of the nested `up` keys\nare `true`.\n",
@@ -504,7 +504,7 @@
             "get": {
                 "responses": {
                     "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                        "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
                     "200": {
                         "description": "\nThe checked resources\nare healthy.\n\nThe response consists of the following keys:\n\n* `elasticsearch` \nIndicates whether the Elasticsearch cluster is responsive.\n* `queues` \nReturns information about the SQS queues used by the indexer and the\nmirror.\n* `progress` \nThe number of Data Store bundles pending to be indexed and the number\nof index documents in need of updating.\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`true`.\n\n\nAll of the nested `up` keys\nare `true`.\n",
@@ -623,7 +623,7 @@
             "get": {
                 "responses": {
                     "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                        "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
                     "200": {
                         "description": "\nThe checked resources\nare healthy.\n\nThe response consists of the following keys:\n\n* `other_lambdas` \nIndicates whether the companion REST API responds to HTTP requests.\n* `queues` \nReturns information about the SQS queues used by the indexer and the\nmirror.\n* `progress` \nThe number of Data Store bundles pending to be indexed and the number\nof index documents in need of updating.\n* `api_endpoints` \nIndicates whether important service API endpoints are operational.\n* `elasticsearch` \nIndicates whether the Elasticsearch cluster is responsive.\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`true`.\n\n\nAll of the nested `up` keys\nare `true`.\n",
@@ -725,7 +725,7 @@
             "post": {
                 "responses": {
                     "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                        "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
                     "200": {
                         "description": "Notification was successfully queued for processing"
@@ -834,7 +834,7 @@
             "get": {
                 "responses": {
                     "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                        "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
                     "200": {
                         "description": "Contents of the schema",

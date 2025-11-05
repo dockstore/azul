@@ -880,11 +880,8 @@ class AzulChaliceApp(Chalice):
         return {
             'responses': {
                 '504': {
-                    'description': format_description('''
-                        Request timed out. When handling this response, clients
-                        should wait the number of seconds specified in the
-                        `Retry-After` header and then retry the request.
-                    ''')
+                    'description': 'Gateway timeout. The server did not '
+                                   'respond in time. Please try again later.'
                 }
             }
         }

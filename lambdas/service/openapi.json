@@ -28,7 +28,7 @@
             "get": {
                 "responses": {
                     "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                        "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
                     "301": {
                         "description": "A redirect to the Swagger UI"
@@ -44,7 +44,7 @@
             "get": {
                 "responses": {
                     "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                        "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
                     "200": {
                         "description": "The response body is an HTML page containing the Swagger UI"
@@ -60,7 +60,7 @@
             "get": {
                 "responses": {
                     "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                        "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
                     "200": {
                         "description": "The response body is JavaScript used internally by the Swagger UI"
@@ -87,7 +87,7 @@
             "get": {
                 "responses": {
                     "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                        "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
                     "200": {
                         "description": "The response body is the contents of the requested file"
@@ -106,7 +106,7 @@
             "get": {
                 "responses": {
                     "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                        "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
                     "200": {
                         "description": "200 response",
@@ -169,7 +169,7 @@
             "get": {
                 "responses": {
                     "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                        "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
                     "200": {
                         "description": "Version endpoint is reachable.",
@@ -214,7 +214,7 @@
             "get": {
                 "responses": {
                     "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                        "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
                     "200": {
                         "description": "\nThe robots.txt resource according to\n[RFC9309](https://datatracker.ietf.org/doc/html/rfc9309)\n"
@@ -230,7 +230,7 @@
             "get": {
                 "responses": {
                     "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                        "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
                     "200": {
                         "description": "\nThe checked resources\nare healthy.\n\nThe response consists of the following keys:\n\n* `other_lambdas` \nIndicates whether the companion REST API responds to HTTP requests.\n* `queues` \nReturns information about the SQS queues used by the indexer and the\nmirror.\n* `progress` \nThe number of Data Store bundles pending to be indexed and the number\nof index documents in need of updating.\n* `api_endpoints` \nIndicates whether important service API endpoints are operational.\n* `elasticsearch` \nIndicates whether the Elasticsearch cluster is responsive.\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`true`.\n\n\nAll of the nested `up` keys\nare `true`.\n",
@@ -332,7 +332,7 @@
             "get": {
                 "responses": {
                     "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                        "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
                     "200": {
                         "description": "\nThe checked resources\nare healthy.\n\nThe response consists of the following keys:\n\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`true`.\n\n",
@@ -424,7 +424,7 @@
             "get": {
                 "responses": {
                     "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                        "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
                     "200": {
                         "description": "\nThe checked resources\nare healthy.\n\nThe response consists of the following keys:\n\n* `elasticsearch` \nIndicates whether the Elasticsearch cluster is responsive.\n* `api_endpoints` \nIndicates whether important service API endpoints are operational.\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`true`.\n\n\nAll of the nested `up` keys\nare `true`.\n",
@@ -520,7 +520,7 @@
             "get": {
                 "responses": {
                     "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                        "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
                     "200": {
                         "description": "\nThe checked resources\nare healthy.\n\nThe response consists of the following keys:\n\n* `elasticsearch` \nIndicates whether the Elasticsearch cluster is responsive.\n* `api_endpoints` \nIndicates whether important service API endpoints are operational.\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`true`.\n\n\nAll of the nested `up` keys\nare `true`.\n",
@@ -637,7 +637,7 @@
             "get": {
                 "responses": {
                     "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                        "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
                     "200": {
                         "description": "\nThe checked resources\nare healthy.\n\nThe response consists of the following keys:\n\n* `other_lambdas` \nIndicates whether the companion REST API responds to HTTP requests.\n* `queues` \nReturns information about the SQS queues used by the indexer and the\nmirror.\n* `progress` \nThe number of Data Store bundles pending to be indexed and the number\nof index documents in need of updating.\n* `api_endpoints` \nIndicates whether important service API endpoints are operational.\n* `elasticsearch` \nIndicates whether the Elasticsearch cluster is responsive.\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`true`.\n\n\nAll of the nested `up` keys\nare `true`.\n",
@@ -739,7 +739,7 @@
             "get": {
                 "responses": {
                     "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                        "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
                     "200": {
                         "description": "\nThe name of the default catalog and a list of all available\ncatalogs. For each catalog, the response includes the name\nof the atlas the catalog belongs to, a flag indicating\nwhether the catalog is for internal use only as well as the\nnames and types of plugins currently active for the catalog.\nFor some plugins, the response includes additional\nconfiguration properties, such as the sources used by the\nrepository plugin to populate the catalog or the set of\navailable [indices][1].\n\n[1]: #operations-Index-get_index__entity_type_\n",
@@ -839,7 +839,7 @@
             "get": {
                 "responses": {
                     "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                        "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
                     "200": {
                         "description": "\nThis response describes a single entity. To search the index\nfor multiple entities, see the [corresponding search\nendpoint](#operations-Index-get_index__entity_type_).\n\nThe properties that are common to all entity types are\nlisted in the schema below; however, additional properties\nmay be present for certain entity types. With the exception\nof the entity's unique identifier, all properties are\narrays, even in cases where only one value is present.\n\nThe structures of the objects within these arrays are not\nperfectly consistent, since they may represent either\nsingleton entities or aggregations depending on context.\n\nFor example, any biomaterial that yields a cell suspension\nwhich yields a sequence file will be considered a \"sample\".\nTherefore, the `samples` field is polymorphic, and each\nsample may be either a specimen, an organoid, or a cell line\n(the field `sampleEntityType` can be used to discriminate\nbetween these cases).\n",
@@ -974,7 +974,7 @@
             "head": {
                 "responses": {
                     "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                        "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
                     "200": {
                         "description": "\nThe HEAD method can be used to test whether an index is\noperational, or to check the validity of query parameters\nfor the [GET method](#operations-Index-get_index__entity_type_).\n"
@@ -2485,7 +2485,7 @@
             "post": {
                 "responses": {
                     "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                        "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
                     "200": {
                         "description": "\nPaginated list of entities that meet the search criteria\n(\"hits\"). The structure of these hits is documented under\nthe [corresponding endpoint for a specific\nentity](#operations-Index-get_index__entity_type___entity_id_).\n\nThe `pagination` section describes the total number of hits\nand total number of pages, as well as user-supplied search\nparameters for page size and sorting behavior. It also\nprovides links for navigating forwards and backwards between\npages of results.\n\nThe `termFacets` section tabulates the occurrence of unique\nvalues within nested fields of the `hits` section across all\nentities meeting the filter criteria (this includes entities\nnot listed on the current page, meaning that this section\nwill be invariable across all pages from the same search).\nNot every nested field is tabulated, but the set of\ntabulated fields is consistent between entity types.\n",
@@ -4108,7 +4108,7 @@
             "get": {
                 "responses": {
                     "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                        "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
                     "200": {
                         "description": "\nPaginated list of entities that meet the search criteria\n(\"hits\"). The structure of these hits is documented under\nthe [corresponding endpoint for a specific\nentity](#operations-Index-get_index__entity_type___entity_id_).\n\nThe `pagination` section describes the total number of hits\nand total number of pages, as well as user-supplied search\nparameters for page size and sorting behavior. It also\nprovides links for navigating forwards and backwards between\npages of results.\n\nThe `termFacets` section tabulates the occurrence of unique\nvalues within nested fields of the `hits` section across all\nentities meeting the filter criteria (this includes entities\nnot listed on the current page, meaning that this section\nwill be invariable across all pages from the same search).\nNot every nested field is tabulated, but the set of\ntabulated fields is consistent between entity types.\n",
@@ -5733,7 +5733,7 @@
             "head": {
                 "responses": {
                     "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                        "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
                     "200": {
                         "description": "\nThe HEAD method can be used to test whether an index is\noperational, or to check the validity of query parameters\nfor the [GET method](#operations-Index-get_index_summary).\n"
@@ -7089,7 +7089,7 @@
             "get": {
                 "responses": {
                     "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                        "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
                     "200": {
                         "description": "\nCounts the total number and total size in bytes of assorted\nentities, subject to the provided filters.\n\n`fileTypeSummaries` provides the count and total size in\nbytes of files grouped by their format, e.g. \"fastq\" or\n\"matrix.\" `fileCount` and `totalFileSize` compile these\nfigures across all file formats. Likewise,\n`cellCountSummaries` counts cells and their associated\ndocuments grouped by organ type, with `organTypes` listing\nall referenced organs.\n\nTotal counts of unique entities are also provided for other\nentity types such as projects and tissue donors. These\nvalues are not grouped/aggregated.\n",
@@ -8519,7 +8519,7 @@
             "put": {
                 "responses": {
                     "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                        "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
                     "301": {
                         "description": "\nA redirect indicating that the manifest preparation job\nhas started. Wait for\nthe recommended number of seconds (see `Retry-After`\nheader) and then follow the redirect to check the status\nof that job.\n",
@@ -9932,7 +9932,7 @@
             "get": {
                 "responses": {
                     "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                        "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
                     "301": {
                         "description": "\nA redirect indicating that the manifest preparation job\nis running. Wait for\nthe recommended number of seconds (see `Retry-After`\nheader) and then follow the redirect to check the status\nof the job again.\n",
@@ -9980,7 +9980,7 @@
             "put": {
                 "responses": {
                     "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                        "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
                     "200": {
                         "description": "\nWhen handling this response, clients should wait the\nnumber of seconds given in the `Retry-After` property of\nthe response body and then make another XHR request to\nthe URL specified in the `Location` property.\n\nFor a detailed description of these properties see the\ndocumentation for the respective response headers\ndocumented under \n[PUT /manifest/files][1].\n\n[1]: #operations-Manifests-put_manifest_files\n\n\nNote: For a 200 status code response whose body has the\n`Status` property set to 302, the `Location` property\nmay reference the [GET /manifest/files/{token}][2]\nendpoint and that endpoint may return yet another\nredirect, this time a genuine (not emulated) 302 status\nredirect to the actual location of the manifest.\n\n[2]: #operations-Manifests-get_manifest_files\n\nNote: A 200 status response with a `Status` property of\n302 in its body additionally contains a `CommandLine`\nproperty that lists, for a number of commonly used\nshells, a command line suitable for downloading the\nmanifest.\n",
@@ -11408,7 +11408,7 @@
             "get": {
                 "responses": {
                     "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                        "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
                     "200": {
                         "description": "\nWhen handling this response, clients should wait the\nnumber of seconds given in the `Retry-After` property of\nthe response body and then make another XHR request to\nthe URL specified in the `Location` property.\n\nFor a detailed description of these properties see the\ndocumentation for the respective response headers\ndocumented under \n[GET /manifest/files/{token}][1].\n\n[1]: #operations-Manifests-get_manifest_files\n\n\nNote: For a 200 status code response whose body has the\n`Status` property set to 302, the `Location` property\nmay reference the [GET /manifest/files/{token}][2]\nendpoint and that endpoint may return yet another\nredirect, this time a genuine (not emulated) 302 status\nredirect to the actual location of the manifest.\n\n[2]: #operations-Manifests-get_manifest_files\n\nNote: A 200 status response with a `Status` property of\n302 in its body additionally contains a `CommandLine`\nproperty that lists, for a number of commonly used\nshells, a command line suitable for downloading the\nmanifest.\n",
@@ -11468,7 +11468,7 @@
             "get": {
                 "responses": {
                     "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                        "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
                     "301": {
                         "description": "\nA URL to the given file is still being prepared. Retry by\nwaiting the number of seconds specified in the `Retry-After`\nheader of the response and the requesting the URL specified\nin the `Location` header.\n",
@@ -11606,7 +11606,7 @@
             "get": {
                 "responses": {
                     "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                        "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
                     "200": {
                         "description": "\nEmulates the response code and headers of\n/repository/files/{file_uuid} while bypassing the default\nuser agent behavior. Note that the status code of a\nsuccessful response will be 200 while the `Status` field of\nits body will be 302.\n\nThe response described here is intended to be processed by\nclient-side Javascript such that the emulated headers can be\nhandled in Javascript rather than relying on the native\nimplementation by the web browser.\n",
@@ -11732,7 +11732,7 @@
             "get": {
                 "responses": {
                     "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                        "description": "Gateway timeout. The server did not respond in time. Please try again later."
                     },
                     "200": {
                         "description": "\nList the sources the currently authenticated user is\nauthorized to access in the underlying data repository.\n",
