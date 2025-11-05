@@ -965,6 +965,15 @@ class Chalice:
             for response_type in ['4XX', '5XX']
         }
         error_responses: MutableJSON = {
+            **{
+                response_type: {
+                    'statusCode': '429',
+                    'responseParameters': {
+                        **security_headers,
+                        'gatewayresponse.header.Retry-After': "'30'"
+                    }
+                } for response_type in ['QUOTA_EXCEEDED', 'THROTTLED']
+            },
             'INTEGRATION_FAILURE': {
                 'statusCode': '502',
                 'responseParameters': security_headers,
