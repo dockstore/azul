@@ -153,6 +153,7 @@ class AzulChaliceApp(Chalice):
         # Middleware is invoked in order of registration
         self.register_middleware(self._logging_middleware, 'http')
         self.register_middleware(self._security_headers_middleware, 'http')
+        self.register_middleware(self._retry_503, 'http')
         self.register_middleware(self._api_gateway_context_middleware, 'http')
         self.register_middleware(self._authentication_middleware, 'http')
 
@@ -256,6 +257,15 @@ class AzulChaliceApp(Chalice):
         # `chalice local`, which is useful, so we disable caching in that case.
         cache_control = 'no-store' if self.is_running_locally else cache_control
         response.headers['Cache-Control'] = cache_control
+        return response
+
+    def _retry_503(self, event, get_response):
+        """
+        Add a retry-after header to 503 responses
+        """
+        response = get_response(event)
+        if response.status_code == 503:
+            response.headers.setdefault('Retry-After', '30')
         return response
 
     def _http_cache_for(self, seconds: int):
