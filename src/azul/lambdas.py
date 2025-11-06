@@ -143,8 +143,8 @@ class Lambdas:
     def manage_lambdas(self, enabled: bool):
         paginator = self._lambda.get_paginator('list_functions')
         prefixes = [
-            config.qualified_resource_name(infix)
-            for infix in config.app_names()
+            config.qualified_resource_name(app_name)
+            for app_name in config.app_names()
         ]
         assert all(prefixes)
         for response in paginator.paginate(MaxItems=500):
