@@ -114,9 +114,7 @@ class LambdaFunctions:
             for function in response['Functions']
         ]
 
-    def delete_older_function_versions(self,
-                                       function_name: str,
-                                       keep_version: int) -> None:
+    def delete_older_versions(self, function_name: str, keep_version: int) -> None:
         """
         Delete all versions of a Lambda function prior to the specified one.
 

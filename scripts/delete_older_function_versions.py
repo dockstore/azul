@@ -40,8 +40,7 @@ def main(argv: list[str]):
     log.info('Deleting function %r versions older than %r',
              args.function_name, args.function_version)
     functions = LambdaFunctions()
-    functions.delete_older_function_versions(args.function_name,
-                                             args.function_version)
+    functions.delete_older_versions(args.function_name, args.function_version)
 
 
 if __name__ == '__main__':
