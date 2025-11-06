@@ -33,7 +33,7 @@ log = logging.getLogger(__name__)
 
 
 @attr.s(auto_attribs=True, kw_only=True, frozen=True)
-class Lambda:
+class LambdaFunction:
     name: str
     role: str
     slot_location: Optional[str]
@@ -105,11 +105,11 @@ class Lambdas:
     def _lambda(self):
         return aws.lambda_
 
-    def list_lambdas(self) -> list[Lambda]:
+    def list_lambdas(self) -> list[LambdaFunction]:
         # Note that this method returns the $LATEST version, which is what
         # Amazon also refers to as the "unpublished" version.
         return [
-            Lambda.from_response(function)
+            LambdaFunction.from_response(function)
             for response in self._lambda.get_paginator('list_functions').paginate()
             for function in response['Functions']
         ]
