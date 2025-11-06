@@ -6,7 +6,7 @@ docker==7.1.0
 flake8==7.3.0
 gevent==25.9.1
 git+https://github.com/DataBiosphere/azul-chalice@1.32.0+17#egg=chalice
-git+https://github.com/DataBiosphere/azul-requirements-parser@v0.13.0+2#egg=requirements-parser
+git+https://github.com/DataBiosphere/azul-requirements-parser@v0.13.0+3#egg=requirements-parser
 gitpython==3.1.45
 google-api-python-client==2.185.0
 google-cloud-bigquery-reservation==1.21.0
