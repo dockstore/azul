@@ -142,12 +142,16 @@ class Lambdas:
 
     def manage_lambdas(self, enabled: bool):
         paginator = self._lambda.get_paginator('list_functions')
-        lambda_prefixes = [config.qualified_resource_name(lambda_infix) for lambda_infix in config.lambda_names()]
-        assert all(lambda_prefixes)
-        for lambda_page in paginator.paginate(MaxItems=500):
-            for lambda_name in [metadata['FunctionName'] for metadata in lambda_page['Functions']]:
-                if any(lambda_name.startswith(prefix) for prefix in lambda_prefixes):
-                    self.manage_lambda(lambda_name, enabled)
+        prefixes = [
+            config.qualified_resource_name(infix)
+            for infix in config.lambda_names()
+        ]
+        assert all(prefixes)
+        for response in paginator.paginate(MaxItems=500):
+            for function in response['Functions']:
+                function_name = function['FunctionName']
+                if any(function_name.startswith(prefix) for prefix in prefixes):
+                    self.manage_lambda(function_name, enabled)
 
     def manage_lambda(self, lambda_name: str, enable: bool):
         lambda_settings = self._lambda.get_function(FunctionName=lambda_name)
