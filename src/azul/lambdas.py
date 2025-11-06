@@ -45,12 +45,12 @@ class LambdaFunction:
             try:
                 # FIXME: Eliminate hardcoded separator
                 #        https://github.com/databiosphere/azul/issues/2964
-                resource_name, _ = unqualify(self.name, suffix='-' + handler_name)
+                app_name, _ = unqualify(self.name, suffix='-' + handler_name)
             except AssertionError as e:
                 if not R.caused(e):
                     raise
             else:
-                if resource_name == 'indexer':
+                if app_name == 'indexer':
                     return True
         return False
 
