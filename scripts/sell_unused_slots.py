@@ -73,7 +73,7 @@ class ReindexDetector:
         return [
             lambda_
             for lambda_ in functions.list_lambdas()
-            if lambda_.is_contribution_lambda
+            if lambda_.contributes
         ]
 
     def _lambda_invocation_counts(self) -> dict[LambdaFunction, int]:

@@ -39,7 +39,7 @@ class LambdaFunction:
     slot_location: Optional[str]
 
     @property
-    def is_contribution_lambda(self) -> bool:
+    def contributes(self) -> bool:
         unqualify = config.unqualified_resource_name
         for handler_name in self._contribution_handler_names():
             try:
@@ -92,7 +92,7 @@ class LambdaFunction:
 
     def __attrs_post_init__(self):
         if self.slot_location is None:
-            assert not self.is_contribution_lambda, self
+            assert not self.contributes, self
         else:
             allowed_locations = config.tdr_allowed_source_locations
             assert self.slot_location in allowed_locations, self.slot_location
