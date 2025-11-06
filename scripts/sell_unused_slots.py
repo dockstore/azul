@@ -69,9 +69,10 @@ class ReindexDetector:
         """
         Search Lambda functions for the names of contribution Lambdas.
         """
+        functions = LambdaFunctions()
         return [
             lambda_
-            for lambda_ in LambdaFunctions().list_lambdas()
+            for lambda_ in functions.list_lambdas()
             if lambda_.is_contribution_lambda
         ]
 
