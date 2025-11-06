@@ -97,16 +97,16 @@ emit_tf({
                 *(
                     {
                         'aws_cloudwatch_log_metric_filter': {
-                            f'{lambda_}cachehealth': {
-                                'name': config.qualified_resource_name(f'{lambda_}cachehealth', suffix='.filter'),
+                            f'{app_name}cachehealth': {
+                                'name': config.qualified_resource_name(f'{app_name}cachehealth', suffix='.filter'),
                                 'pattern': '',
                                 'log_group_name': (
                                     '/aws/lambda/'
-                                    + config.qualified_resource_name(lambda_)
-                                    + f'-{lambda_}cachehealth'
+                                    + config.qualified_resource_name(app_name)
+                                    + f'-{app_name}cachehealth'
                                 ),
                                 'metric_transformation': {
-                                    'name': config.qualified_resource_name(f'{lambda_}cachehealth'),
+                                    'name': config.qualified_resource_name(f'{app_name}cachehealth'),
                                     'namespace': 'LogMetrics',
                                     'value': 1,
                                     'default_value': 0,
@@ -114,7 +114,7 @@ emit_tf({
                             }
                         }
                     }
-                    for lambda_ in config.app_names()
+                    for app_name in config.app_names()
                 ),
                 *(
                     {
