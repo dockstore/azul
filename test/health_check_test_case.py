@@ -225,9 +225,9 @@ class HealthCheckTestCase(LocalAppTestCase,
 
     def _other_lambda_names(self) -> list[str]:
         return [
-            lambda_name
-            for lambda_name in config.app_names()
-            if lambda_name != self.lambda_name()
+            app_name
+            for app_name in config.app_names()
+            if app_name != self.lambda_name()
         ]
 
     def _expected_other_lambdas(self, *, up: bool) -> MutableJSON:
