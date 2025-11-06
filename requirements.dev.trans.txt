@@ -1,5 +1,5 @@
 blessed==1.23.0
-botocore-stubs==1.40.66
+botocore-stubs==1.40.67
 click==8.3.0
 colorama==0.4.6
 docutils==0.19
