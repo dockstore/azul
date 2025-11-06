@@ -43,7 +43,7 @@ def main():
     }
 
     lambda_name = Path.cwd().name
-    assert lambda_name in config.lambda_names(), lambda_name
+    assert lambda_name in config.app_names(), lambda_name
 
     # To create a normalized OpenAPI document, we patch any
     # deployment-specific variables that affect the document.

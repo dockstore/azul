@@ -743,7 +743,7 @@ class Config:
         else:
             return self.service_endpoint
 
-    def lambda_names(self) -> list[str]:
+    def app_names(self) -> list[str]:
         return ['indexer', 'service']
 
     @property

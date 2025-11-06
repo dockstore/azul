@@ -92,7 +92,7 @@ emit_tf({
                             }
                         }
                     }
-                    for lambda_ in config.lambda_names()
+                    for lambda_ in config.app_names()
                 ),
                 *(
                     {
@@ -114,7 +114,7 @@ emit_tf({
                             }
                         }
                     }
-                    for lambda_ in config.lambda_names()
+                    for lambda_ in config.app_names()
                 ),
                 *(
                     {
@@ -154,7 +154,7 @@ emit_tf({
                             }
                         }
                     }
-                    for lambda_ in config.lambda_names()
+                    for lambda_ in config.app_names()
                 ),
                 {
                     'aws_cloudwatch_metric_alarm': {
@@ -254,7 +254,7 @@ emit_tf({
                                 'ok_actions': ['${data.aws_sns_topic.monitoring.arn}'],
                                 'treat_missing_data': 'notBreaching',
                             }
-                            for lambda_name in config.lambda_names()
+                            for lambda_name in config.app_names()
                             for metric_alarm in load_app_module(lambda_name).app.metric_alarms
                         },
                         'waf_rate_blocked': {

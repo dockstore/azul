@@ -201,7 +201,7 @@ class Health:
         """
         response = {
             lambda_name: self._lambda(lambda_name)
-            for lambda_name in config.lambda_names()
+            for lambda_name in config.app_names()
             if lambda_name != self.lambda_name
         }
         return {

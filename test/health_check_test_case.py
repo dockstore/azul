@@ -226,7 +226,7 @@ class HealthCheckTestCase(LocalAppTestCase,
     def _other_lambda_names(self) -> list[str]:
         return [
             lambda_name
-            for lambda_name in config.lambda_names()
+            for lambda_name in config.app_names()
             if lambda_name != self.lambda_name()
         ]
 

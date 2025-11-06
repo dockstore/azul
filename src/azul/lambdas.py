@@ -144,7 +144,7 @@ class Lambdas:
         paginator = self._lambda.get_paginator('list_functions')
         prefixes = [
             config.qualified_resource_name(infix)
-            for infix in config.lambda_names()
+            for infix in config.app_names()
         ]
         assert all(prefixes)
         for response in paginator.paginate(MaxItems=500):
@@ -194,7 +194,7 @@ class Lambdas:
 
     def reset_lambda_roles(self):
         client = self._lambda
-        lambda_names = set(config.lambda_names())
+        lambda_names = set(config.app_names())
 
         for lambda_ in self.list_lambdas():
             for lambda_name in lambda_names:
