@@ -71,9 +71,9 @@ class ReindexDetector:
         """
         functions = LambdaFunctions()
         return [
-            lambda_
-            for lambda_ in functions.list_lambdas()
-            if lambda_.contributes
+            function
+            for function in functions.list_lambdas()
+            if function.contributes
         ]
 
     def _lambda_invocation_counts(self) -> dict[LambdaFunction, int]:
