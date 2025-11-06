@@ -196,24 +196,24 @@ class LambdaFunctions:
         client = self._lambda
         app_names = set(config.app_names())
 
-        for lambda_ in self.list_functions():
+        for function in self.list_functions():
             for lambda_name in app_names:
-                if lambda_.name.startswith(config.qualified_resource_name(lambda_name)):
+                if function.name.startswith(config.qualified_resource_name(lambda_name)):
                     other_lambda_name = one(app_names - {lambda_name})
-                    temporary_role = lambda_.role.replace(
+                    temporary_role = function.role.replace(
                         config.qualified_resource_name(lambda_name),
                         config.qualified_resource_name(other_lambda_name)
                     )
-                    log.info('Temporarily updating %r to role %r', lambda_.name, temporary_role)
-                    client.update_function_configuration(FunctionName=lambda_.name,
+                    log.info('Temporarily updating %r to role %r', function.name, temporary_role)
+                    client.update_function_configuration(FunctionName=function.name,
                                                          Role=temporary_role)
-                    log.info('Updating %r to role %r', lambda_.name, lambda_.role)
+                    log.info('Updating %r to role %r', function.name, function.role)
                     while True:
                         try:
-                            client.update_function_configuration(FunctionName=lambda_.name,
-                                                                 Role=lambda_.role)
+                            client.update_function_configuration(FunctionName=function.name,
+                                                                 Role=function.role)
                         except client.exceptions.ResourceConflictException:
-                            log.info('Function %r is being updated. Retrying ...', lambda_.name)
+                            log.info('Function %r is being updated. Retrying ...', function.name)
                             time.sleep(1)
                         else:
                             break
