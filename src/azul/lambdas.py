@@ -197,10 +197,10 @@ class LambdaFunctions:
         for function in self.list_functions():
             for app_name in app_names:
                 if function.name.startswith(config.qualified_resource_name(app_name)):
-                    other_lambda_name = one(app_names - {app_name})
+                    other_app_name = one(app_names - {app_name})
                     temporary_role = function.role.replace(
                         config.qualified_resource_name(app_name),
-                        config.qualified_resource_name(other_lambda_name)
+                        config.qualified_resource_name(other_app_name)
                     )
                     log.info('Temporarily updating %r to role %r', function.name, temporary_role)
                     client.update_function_configuration(FunctionName=function.name,
