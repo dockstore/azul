@@ -586,10 +586,10 @@ class Queues:
             self._handle_futures(futures)
 
     def _manage_lambda(self, function_name: str, enable: bool):
-        self._lambdas.manage_lambda(function_name, enable)
+        self._functions.manage_lambda(function_name, enable)
 
     @cached_property
-    def _lambdas(self) -> LambdaFunctions:
+    def _functions(self) -> LambdaFunctions:
         return LambdaFunctions()
 
     def _handle_futures(self, futures: Iterable[Future]):
