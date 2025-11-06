@@ -153,9 +153,9 @@ class LambdaFunctions:
 
     def manage_function(self, function_name: str, enable: bool):
         function = self._lambda.get_function(FunctionName=function_name)
+        assert function_name == function['Configuration']['FunctionName']
         function_arn = function['Configuration']['FunctionArn']
         tags = self._lambda.list_tags(Resource=function_arn)['Tags']
-        function_name = function['Configuration']['FunctionName']
         if enable:
             if self.tag_name in tags.keys():
                 original_concurrency_limit = ast.literal_eval(tags[self.tag_name])
