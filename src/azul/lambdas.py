@@ -40,7 +40,7 @@ class LambdaFunction:
 
     @property
     def is_contribution_lambda(self) -> bool:
-        for lambda_name in self._contribution_lambda_names():
+        for lambda_name in self._contribution_handler_names():
             try:
                 # FIXME: Eliminate hardcoded separator
                 #        https://github.com/databiosphere/azul/issues/2964
@@ -56,7 +56,7 @@ class LambdaFunction:
 
     @classmethod
     @cache
-    def _contribution_lambda_names(cls) -> frozenset[str]:
+    def _contribution_handler_names(cls) -> frozenset[str]:
         indexer = load_app_module('indexer')
         notification_queue_names = {
             config.notifications_queue.derive(retry=retry).unqual_name
