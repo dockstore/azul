@@ -28,7 +28,7 @@ from azul.deployment import (
 )
 from azul.lambdas import (
     LambdaFunction,
-    Lambdas,
+    LambdaFunctions,
 )
 from azul.logging import (
     configure_script_logging,
@@ -71,7 +71,7 @@ class ReindexDetector:
         """
         return [
             lambda_
-            for lambda_ in Lambdas().list_lambdas()
+            for lambda_ in LambdaFunctions().list_lambdas()
             if lambda_.is_contribution_lambda
         ]
 

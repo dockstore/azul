@@ -60,7 +60,7 @@ from azul.json import (
     Serializable,
 )
 from azul.lambdas import (
-    Lambdas,
+    LambdaFunctions,
 )
 from azul.modules import (
     load_app_module,
@@ -589,8 +589,8 @@ class Queues:
         self._lambdas.manage_lambda(function_name, enable)
 
     @cached_property
-    def _lambdas(self) -> Lambdas:
-        return Lambdas()
+    def _lambdas(self) -> LambdaFunctions:
+        return LambdaFunctions()
 
     def _handle_futures(self, futures: Iterable[Future]):
         errors = []

@@ -1,10 +1,10 @@
 from azul.lambdas import (
-    Lambdas,
+    LambdaFunctions,
 )
 
 
 def main():
-    Lambdas().reset_lambda_roles()
+    LambdaFunctions().reset_lambda_roles()
 
 
 if __name__ == '__main__':

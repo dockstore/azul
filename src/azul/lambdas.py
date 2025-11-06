@@ -98,7 +98,7 @@ class LambdaFunction:
             assert self.slot_location in allowed_locations, self.slot_location
 
 
-class Lambdas:
+class LambdaFunctions:
     tag_name = 'azul-original-concurrency-limit'
 
     @property

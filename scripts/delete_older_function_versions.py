@@ -13,7 +13,7 @@ from azul.args import (
     AzulArgumentHelpFormatter,
 )
 from azul.lambdas import (
-    Lambdas,
+    LambdaFunctions,
 )
 from azul.logging import (
     configure_script_logging,
@@ -39,8 +39,8 @@ def main(argv: list[str]):
     args = parser.parse_args(argv)
     log.info('Deleting function %r versions older than %r',
              args.function_name, args.function_version)
-    Lambdas().delete_older_function_versions(args.function_name,
-                                             args.function_version)
+    LambdaFunctions().delete_older_function_versions(args.function_name,
+                                                     args.function_version)
 
 
 if __name__ == '__main__':
