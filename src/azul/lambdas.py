@@ -153,8 +153,8 @@ class LambdaFunctions:
 
     def manage_function(self, function_name: str, enable: bool):
         function = self._lambda.get_function(FunctionName=function_name)
-        lambda_arn = function['Configuration']['FunctionArn']
-        lambda_tags = self._lambda.list_tags(Resource=lambda_arn)['Tags']
+        function_arn = function['Configuration']['FunctionArn']
+        lambda_tags = self._lambda.list_tags(Resource=function_arn)['Tags']
         function_name = function['Configuration']['FunctionName']
         if enable:
             if self.tag_name in lambda_tags.keys():
@@ -168,7 +168,7 @@ class LambdaFunctions:
                     log.info(f'Removed concurrency limit for {function_name}.')
                     self._lambda.delete_function_concurrency(FunctionName=function_name)
 
-                self._lambda.untag_resource(Resource=lambda_arn, TagKeys=[self.tag_name])
+                self._lambda.untag_resource(Resource=function_arn, TagKeys=[self.tag_name])
             else:
                 log.warning(f'{function_name} is already enabled.')
         else:
@@ -185,7 +185,7 @@ class LambdaFunctions:
 
                 log.info(f'Setting concurrency limit for {function_name} to zero.')
                 new_tag = {self.tag_name: repr(concurrency_limit)}
-                self._lambda.tag_resource(Resource=lambda_arn, Tags=new_tag)
+                self._lambda.tag_resource(Resource=function_arn, Tags=new_tag)
                 self._lambda.put_function_concurrency(FunctionName=function_name, ReservedConcurrentExecutions=0)
             else:
                 log.warning(f'{function_name} is already disabled.')
