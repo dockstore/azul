@@ -151,9 +151,9 @@ class LambdaFunctions:
             for function in response['Functions']:
                 function_name = function['FunctionName']
                 if any(function_name.startswith(prefix) for prefix in prefixes):
-                    self.manage_lambda(function_name, enabled)
+                    self.manage_function(function_name, enabled)
 
-    def manage_lambda(self, lambda_name: str, enable: bool):
+    def manage_function(self, lambda_name: str, enable: bool):
         lambda_settings = self._lambda.get_function(FunctionName=lambda_name)
         lambda_arn = lambda_settings['Configuration']['FunctionArn']
         lambda_tags = self._lambda.list_tags(Resource=lambda_arn)['Tags']
@@ -197,11 +197,11 @@ class LambdaFunctions:
         app_names = set(config.app_names())
 
         for function in self.list_functions():
-            for lambda_name in app_names:
-                if function.name.startswith(config.qualified_resource_name(lambda_name)):
-                    other_lambda_name = one(app_names - {lambda_name})
+            for app_name in app_names:
+                if function.name.startswith(config.qualified_resource_name(app_name)):
+                    other_lambda_name = one(app_names - {app_name})
                     temporary_role = function.role.replace(
-                        config.qualified_resource_name(lambda_name),
+                        config.qualified_resource_name(app_name),
                         config.qualified_resource_name(other_lambda_name)
                     )
                     log.info('Temporarily updating %r to role %r', function.name, temporary_role)
