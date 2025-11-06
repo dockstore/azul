@@ -254,8 +254,8 @@ emit_tf({
                                 'ok_actions': ['${data.aws_sns_topic.monitoring.arn}'],
                                 'treat_missing_data': 'notBreaching',
                             }
-                            for lambda_name in config.app_names()
-                            for metric_alarm in load_app_module(lambda_name).app.metric_alarms
+                            for app_name in config.app_names()
+                            for metric_alarm in load_app_module(app_name).app.metric_alarms
                         },
                         'waf_rate_blocked': {
                             'alarm_name': config.qualified_resource_name('waf_rate_blocked'),
