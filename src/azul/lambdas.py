@@ -188,6 +188,11 @@ class LambdaFunctions:
                 self._lambda.put_function_concurrency(FunctionName=function_name, ReservedConcurrentExecutions=0)
 
     def reset_lambda_roles(self):
+        """
+        Attempt to fix KMSAccessDeniedException when invoking a function.
+
+        See Troubleshooting section in README.md for details.
+        """
         client = self._lambda
         app_names = set(config.app_names())
 

@@ -1,3 +1,8 @@
+"""
+Attempt to fix KMSAccessDeniedException when invoking a function.
+
+See Troubleshooting section in README.md for details.
+"""
 from azul.lambdas import (
     LambdaFunctions,
 )
