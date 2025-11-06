@@ -40,12 +40,12 @@ class LambdaFunction:
 
     @property
     def is_contribution_lambda(self) -> bool:
-        for lambda_name in self._contribution_handler_names():
+        for handler_name in self._contribution_handler_names():
             try:
                 # FIXME: Eliminate hardcoded separator
                 #        https://github.com/databiosphere/azul/issues/2964
                 resource_name, _ = config.unqualified_resource_name(self.name,
-                                                                    suffix='-' + lambda_name)
+                                                                    suffix='-' + handler_name)
             except AssertionError as e:
                 if not R.caused(e):
                     raise
