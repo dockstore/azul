@@ -119,8 +119,8 @@ emit_tf({
                 *(
                     {
                         'aws_cloudwatch_metric_alarm': {
-                            f'{lambda_}cachehealth': {
-                                'alarm_name': config.qualified_resource_name(f'{lambda_}cachehealth', suffix='.alarm'),
+                            f'{app_name}cachehealth': {
+                                'alarm_name': config.qualified_resource_name(f'{app_name}cachehealth', suffix='.alarm'),
                                 # CloudWatch uses an unconfigurable "evaluation range" when missing
                                 # data is involved. In practice this means that an alarm on the
                                 # absence of logs with an evaluation window of ten minutes would
@@ -133,7 +133,7 @@ emit_tf({
                                         'metric': {
                                             'namespace': 'LogMetrics',
                                             'metric_name': '${aws_cloudwatch_log_metric_filter.'
-                                                           '%scachehealth.metric_transformation[0].name}' % lambda_,
+                                                           '%scachehealth.metric_transformation[0].name}' % app_name,
                                             'stat': 'Sum',
                                             'period': 10 * 60,
                                         }
@@ -154,7 +154,7 @@ emit_tf({
                             }
                         }
                     }
-                    for lambda_ in config.app_names()
+                    for app_name in config.app_names()
                 ),
                 {
                     'aws_cloudwatch_metric_alarm': {
