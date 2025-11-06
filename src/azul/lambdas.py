@@ -72,11 +72,11 @@ class Lambda:
                 resource_name, _, _ = config.unqualified_resource_name_and_suffix(queue)
                 return resource_name in notification_queue_names
 
-        return frozenset((
+        return frozenset(
             handler.name
             for handler in vars(indexer).values()
             if has_notification_queue(handler)
-        ))
+        )
 
     @classmethod
     def from_response(cls, response: 'FunctionConfigurationTypeDef') -> Self:
