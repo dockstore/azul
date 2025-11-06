@@ -194,12 +194,12 @@ class Lambdas:
 
     def reset_lambda_roles(self):
         client = self._lambda
-        lambda_names = set(config.app_names())
+        app_names = set(config.app_names())
 
         for lambda_ in self.list_lambdas():
-            for lambda_name in lambda_names:
+            for lambda_name in app_names:
                 if lambda_.name.startswith(config.qualified_resource_name(lambda_name)):
-                    other_lambda_name = one(lambda_names - {lambda_name})
+                    other_lambda_name = one(app_names - {lambda_name})
                     temporary_role = lambda_.role.replace(
                         config.qualified_resource_name(lambda_name),
                         config.qualified_resource_name(other_lambda_name)
