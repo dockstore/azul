@@ -159,36 +159,33 @@ class LambdaFunctions:
         if enable:
             if self.tag_name in tags.keys():
                 original_concurrency_limit = ast.literal_eval(tags[self.tag_name])
-
                 if original_concurrency_limit is not None:
-                    log.info(f'Setting concurrency limit for {function_name} back to {original_concurrency_limit}.')
+                    log.info('Setting concurrency limit on %r back to %r.',
+                             function_name, original_concurrency_limit)
                     self._lambda.put_function_concurrency(FunctionName=function_name,
                                                           ReservedConcurrentExecutions=original_concurrency_limit)
                 else:
-                    log.info(f'Removed concurrency limit for {function_name}.')
+                    log.info('Removed concurrency limit on %r.', function_name)
                     self._lambda.delete_function_concurrency(FunctionName=function_name)
 
                 self._lambda.untag_resource(Resource=function_arn, TagKeys=[self.tag_name])
             else:
-                log.warning(f'{function_name} is already enabled.')
+                log.warning('Function %r is already enabled.', function_name)
         else:
             if self.tag_name not in tags.keys():
                 try:
                     concurrency = function['Concurrency']
                 except KeyError:
-                    # If a lambda doesn't have a limit for concurrency
-                    # executions, Lambda.Client.get_function()
-                    # doesn't return a response with the key, `Concurrency`.
+                    # Function doesn't have a concurrency limit
                     concurrency_limit = None
                 else:
                     concurrency_limit = concurrency['ReservedConcurrentExecutions']
-
-                log.info(f'Setting concurrency limit for {function_name} to zero.')
+                log.info('Setting concurrency limit on %r to zero.', function_name)
                 new_tag = {self.tag_name: repr(concurrency_limit)}
                 self._lambda.tag_resource(Resource=function_arn, Tags=new_tag)
                 self._lambda.put_function_concurrency(FunctionName=function_name, ReservedConcurrentExecutions=0)
             else:
-                log.warning(f'{function_name} is already disabled.')
+                log.warning('Function %r is already disabled.', function_name)
 
     def reset_lambda_roles(self):
         client = self._lambda
