@@ -107,7 +107,7 @@ class Lambdas:
 
     def list_lambdas(self) -> list[Lambda]:
         # Note that this method returns the $LATEST version, which is what
-        # Amazon calls the "unpublished" version.
+        # Amazon also refers to as the "unpublished" version.
         return [
             Lambda.from_response(function)
             for response in self._lambda.get_paginator('list_functions').paginate()
