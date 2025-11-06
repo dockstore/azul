@@ -172,7 +172,9 @@ class LambdaFunctions:
             else:
                 log.warning('Function %r is already enabled.', function_name)
         else:
-            if self.tag_name not in tags.keys():
+            if self.tag_name in tags.keys():
+                log.warning('Function %r is already disabled.', function_name)
+            else:
                 try:
                     concurrency = function['Concurrency']
                 except KeyError:
@@ -184,8 +186,6 @@ class LambdaFunctions:
                 new_tag = {self.tag_name: repr(concurrency_limit)}
                 self._lambda.tag_resource(Resource=function_arn, Tags=new_tag)
                 self._lambda.put_function_concurrency(FunctionName=function_name, ReservedConcurrentExecutions=0)
-            else:
-                log.warning('Function %r is already disabled.', function_name)
 
     def reset_lambda_roles(self):
         client = self._lambda
