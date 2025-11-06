@@ -4,7 +4,8 @@ from azul.lambdas import (
 
 
 def main():
-    LambdaFunctions().reset_lambda_roles()
+    functions = LambdaFunctions()
+    functions.reset_lambda_roles()
 
 
 if __name__ == '__main__':
