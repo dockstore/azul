@@ -200,9 +200,9 @@ class Health:
         Indicates whether the companion REST API responds to HTTP requests.
         """
         response = {
-            lambda_name: self._lambda(lambda_name)
-            for lambda_name in config.app_names()
-            if lambda_name != self.lambda_name
+            app_name: self._lambda(app_name)
+            for app_name in config.app_names()
+            if app_name != self.lambda_name
         }
         return {
             'up': all(json_bool(v['up']) for v in response.values()),
