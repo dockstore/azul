@@ -154,11 +154,11 @@ class LambdaFunctions:
     def manage_function(self, function_name: str, enable: bool):
         function = self._lambda.get_function(FunctionName=function_name)
         function_arn = function['Configuration']['FunctionArn']
-        lambda_tags = self._lambda.list_tags(Resource=function_arn)['Tags']
+        tags = self._lambda.list_tags(Resource=function_arn)['Tags']
         function_name = function['Configuration']['FunctionName']
         if enable:
-            if self.tag_name in lambda_tags.keys():
-                original_concurrency_limit = ast.literal_eval(lambda_tags[self.tag_name])
+            if self.tag_name in tags.keys():
+                original_concurrency_limit = ast.literal_eval(tags[self.tag_name])
 
                 if original_concurrency_limit is not None:
                     log.info(f'Setting concurrency limit for {function_name} back to {original_concurrency_limit}.')
@@ -172,7 +172,7 @@ class LambdaFunctions:
             else:
                 log.warning(f'{function_name} is already enabled.')
         else:
-            if self.tag_name not in lambda_tags.keys():
+            if self.tag_name not in tags.keys():
                 try:
                     concurrency = function['Concurrency']
                 except KeyError:
