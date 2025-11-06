@@ -105,7 +105,7 @@ class LambdaFunctions:
     def _lambda(self):
         return aws.lambda_
 
-    def list_lambdas(self) -> list[LambdaFunction]:
+    def list_functions(self) -> list[LambdaFunction]:
         # Note that this method returns the $LATEST version, which is what
         # Amazon also refers to as the "unpublished" version.
         return [
@@ -196,7 +196,7 @@ class LambdaFunctions:
         client = self._lambda
         app_names = set(config.app_names())
 
-        for lambda_ in self.list_lambdas():
+        for lambda_ in self.list_functions():
             for lambda_name in app_names:
                 if lambda_.name.startswith(config.qualified_resource_name(lambda_name)):
                     other_lambda_name = one(app_names - {lambda_name})

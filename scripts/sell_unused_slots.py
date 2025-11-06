@@ -72,7 +72,7 @@ class ReindexDetector:
         functions = LambdaFunctions()
         return [
             function
-            for function in functions.list_lambdas()
+            for function in functions.list_functions()
             if function.contributes
         ]
 
