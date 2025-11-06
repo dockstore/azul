@@ -72,12 +72,12 @@ emit_tf({
                 *(
                     {
                         'aws_cloudwatch_metric_alarm': {
-                            f'{lambda_}_5xx': {
-                                'alarm_name': config.qualified_resource_name(lambda_ + '_5xx'),
+                            f'{app_name}_5xx': {
+                                'alarm_name': config.qualified_resource_name(app_name + '_5xx'),
                                 'namespace': 'AWS/ApiGateway',
                                 'metric_name': '5XXError',
                                 'dimensions': {
-                                    'ApiName': config.qualified_resource_name(lambda_),
+                                    'ApiName': config.qualified_resource_name(app_name),
                                     'Stage': config.deployment_stage,
                                 },
                                 'statistic': 'Sum',
@@ -92,7 +92,7 @@ emit_tf({
                             }
                         }
                     }
-                    for lambda_ in config.app_names()
+                    for app_name in config.app_names()
                 ),
                 *(
                     {
