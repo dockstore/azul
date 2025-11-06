@@ -57,7 +57,6 @@ class LambdaFunction:
     @classmethod
     @cache
     def _contribution_handler_names(cls) -> frozenset[str]:
-        indexer = load_app_module('indexer')
         notification_queue_names = {
             config.notifications_queue.derive(retry=retry).unqual_name
             for retry in (False, True)
@@ -72,6 +71,7 @@ class LambdaFunction:
                 resource_name, _, _ = config.unqualified_resource_name_and_suffix(queue)
                 return resource_name in notification_queue_names
 
+        indexer = load_app_module('indexer')
         return frozenset(
             handler.name
             for handler in vars(indexer).values()
