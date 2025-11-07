@@ -80,7 +80,9 @@ def main(args):
                         nargs='+',
                         help='Limit mirroring to a subset of the configured sources. '
                              'Supports shell-style wildcards to match multiple sources per argument. '
-                             'All sources must be public.')
+                             'All sources must be public. If no values are passed, this argument will be set from the '
+                             'environment variable ``azul_current_sources``. If that variable is unset, all sources in '
+                             'the selected catalog will be used.')
     parser.add_argument('--mirror',
                         action='store_true',
                         help='Mirror files in the specified catalog and sources')

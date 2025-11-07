@@ -67,13 +67,17 @@ parser.add_argument('--catalogs',
                         config.catalogs[config.current_catalog].name
                     ],
                     choices=config.catalogs,
-                    help='Limit reindexing to a subset of the configured catalogs.')
+                    help='Limit reindexing to a subset of the configured catalogs. If no values are passed, this '
+                         'argument will be set from the environment variable ``azul_current_catalog``. If that '
+                         'variable is unset, all non-IT catalogs will be used.')
 parser.add_argument('--sources',
                     default=config.current_sources,
                     nargs='+',
                     help='Limit reindexing to a subset of the configured sources. '
                          'Supports shell-style wildcards to match multiple sources per argument. '
-                         'Must be * for local reindexing i.e., if --local is given.')
+                         'Must be * for local reindexing i.e., if --local is given. If no values are passed, this '
+                         'argument will be set from the environment variable ``azul_current_sources``. If that '
+                         'variable is unset, all sources in the selected catalogs will be used.')
 parser.add_argument('--delete',
                     default=False,
                     action='store_true',
