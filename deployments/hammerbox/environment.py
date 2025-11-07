@@ -1025,7 +1025,7 @@ anvil10_sources = mkdict(anvil9_sources, 283, mkdelta([
     bqsrc('f143f633', 'ccdg_broad_ai_ibd_daly_mcgovern_share_wes_20240104_ANV5_202503171541'),
 ]))
 
-anvil11_sources = mkdict(anvil10_sources, 369, mkdelta([
+anvil11_sources = mkdict(anvil10_sources, 367, mkdelta([
     bqsrc('afe52c93', 'CCDG_Broad_NP_Epilepsy_AUSALF_HMB_IRB_GSA_MD_20250718_ANV5_202508070436'),
     bqsrc('a0e71864', 'CCDG_Broad_NP_Epilepsy_AUSALF_HMB_IRB_WES_20250718_ANV5_202507300051'),
     bqsrc('d4e6fade', 'CCDG_Broad_NP_Epilepsy_AUSAUS_EPIL_BA_MDS_GSA_MD_20250718_ANV5_202508051209'),
@@ -1177,6 +1177,8 @@ anvil11_sources = mkdict(anvil10_sources, 369, mkdelta([
     # Supersedes snapshot ccdg_broad_np_epilepsy_zafagn_ds_epi_como_mds_wes… popped below
     bqsrc('4b531498', 'CCDG_Broad_NP_Epilepsy_ZAFAGN_DS_EPI_COMO_MDS_WES_20250721_ANV5_202507301017'),
     bqsrc('bdc5f5a9', 'CCDG_Broad_Spalletta_HMB_NPU_MDS_WES_20250721_ANV5_202507301024'),
+    bqsrc('0a21cbfd', 'CMG_BaylorHopkins_HMB_IRB_NPU_WES_20221020_ANV5_202402290528', pop),
+    bqsrc('d321333c', 'CMG_BaylorHopkins_HMB_NPU_WES_20230525_ANV5_202402290537', pop),
     bqsrc('2b98851b', 'CMG_Yale_GRU_20221020_ANV5_202507091800'),
     bqsrc('83ab11a0', 'CMH_GAFK_R5_20250801_ANV5_202508011248'),
     bqsrc('3f7226ca', 'ENCORE_293T_20250925_ANV5_202509251455', pop),
@@ -1196,7 +1198,7 @@ anvil11_sources = mkdict(anvil10_sources, 369, mkdelta([
     bqsrc('61b6b42b', 'ccdg_broad_np_epilepsy_zafagn_ds_epi_como_mds_wes_20221026_ANV5_202409302116', pop),
 ]))
 
-anvil12_sources = mkdict(anvil11_sources, 375, mkdelta([
+anvil12_sources = mkdict(anvil11_sources, 373, mkdelta([
     bqsrc('48204a7f', 'CCDG_Broad_CVD_EOCAD_PartnersBiobank_HMB_WES_20230621_ANV5_202510141553'),
     bqsrc('50aed057', 'CCDG_Broad_NP_Epilepsy_AUSAUS_EP_BA_CN_ID_MDS_GSA_MD_20251016_ANV5_202510161935'),
     bqsrc('25e5ec27', 'CCDG_Broad_NP_Epilepsy_USAMON_GRU_WES_20250721_ANV5_202510141558'),
