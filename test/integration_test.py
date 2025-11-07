@@ -459,23 +459,24 @@ class IndexingIntegrationTest(IntegrationTestCase):
             log.warning('Will skip indexing due to overriding IT flag.')
 
         catalogs: list[Catalog] = []
-        for catalog in config.integration_test_catalogs:
+        for catalog in config.integration_test_catalogs.values():
             if index:
-                public_source, _ = self._select_source(catalog, public=True)
-                ma_source = self._select_source(catalog, public=False)
+                public_source, _ = self._select_source(catalog.name, public=True)
+                ma_source = self._select_source(catalog.name, public=False)
                 if ma_source is not None:
                     ma_source = ma_source[0]
                 sources = alist(public_source, ma_source)
-                notifications, fqids = self._prepare_notifications(catalog, sources)
+                notifications, fqids = self._prepare_notifications(catalog.name, sources)
             else:
                 with self._service_account_credentials:
-                    fqids = self._get_indexed_bundles(catalog)
+                    fqids = self._get_indexed_bundles(catalog.name)
                 indexed_sources = {fqid.source for fqid in fqids}
-                ma_source_ids = {s.id for s in self.managed_access_sources_by_catalog[catalog]}
+                ma_sources = self.managed_access_sources_by_catalog[catalog.name]
+                ma_source_ids = {s.id for s in ma_sources}
                 public_source = one(s for s in indexed_sources if s.id not in ma_source_ids)
                 ma_source = only(s for s in indexed_sources if s.id in ma_source_ids)
                 notifications = []
-            catalogs.append(Catalog(name=catalog,
+            catalogs.append(Catalog(name=catalog.name,
                                     bundles=fqids,
                                     notifications=notifications,
                                     public_source=public_source,
