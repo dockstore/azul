@@ -1,5 +1,5 @@
 blessed==1.23.0
-botocore-stubs==1.40.67
+botocore-stubs==1.40.68
 click==8.3.0
 colorama==0.4.6
 docutils==0.19
@@ -37,7 +37,7 @@ mypy_extensions==1.1.0
 openapi-schema-validator==0.6.3
 pathable==0.4.4
 pathspec==0.12.1
-py-partiql-parser==0.6.1
+py-partiql-parser==0.6.3
 pycodestyle==2.14.0
 pyflakes==3.4.0
 pyjwt==2.10.1
