@@ -217,6 +217,14 @@ class UUIDPartition(metaclass=UUIDPartitionMeta):
         sub-partitions. The length of the return value will always be the
         smallest a power of two that is greater than ``num_divisions`.
 
+        >>> UUIDPartition.root.divide(0)
+        Traceback (most recent call last):
+        ...
+        AssertionError: R('Number of divisions must be 1 or more')
+
+        >>> UUIDPartition.root.divide(1) == [UUIDPartition.root]
+        True
+
         >>> sorted(UUIDPartition.root.divide(3))
         ... # doctest: +NORMALIZE_WHITESPACE
         [UUIDPartition(prefix_length=2, prefix=0),
@@ -224,6 +232,7 @@ class UUIDPartition(metaclass=UUIDPartitionMeta):
         UUIDPartition(prefix_length=2, prefix=2),
         UUIDPartition(prefix_length=2, prefix=3)]
         """
+        assert num_divisions > 0, R('Number of divisions must be 1 or more')
         prefix_length = math.ceil(math.log2(num_divisions))
         num_divisions = 2 ** prefix_length
         cls = type(self)
