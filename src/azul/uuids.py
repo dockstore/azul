@@ -150,10 +150,21 @@ class UUIDPartition(metaclass=UUIDPartitionMeta):
     space use a prefix of the hexadecimal representation of UUIDs. This class
     uses the binary representation and is therefore more granular.
     """
+    #: The number of high-order bits of the binary representation of a UUID that
+    #: have to be equal to the prefix for a UUID to be part of this partion.
+    #:
     prefix_length: int
+
+    #: The prefix. Only the `prefix_length` low-order bits are compared. The
+    #: remaining high-order bits have to be 0.
+    #:
     prefix: int
 
-    root: ClassVar[Self]  # see metaclass above
+    #: The partition that includes all UUIDs. Since this attribute holds an
+    #: instance of this class, we can't initialize it here, but have to do so in
+    #: the metaclass constructor.
+    #:
+    root: ClassVar[Self]
 
     # This stub is only needed to aid PyCharm's type inference. Without this,
     # a constructor invocation that doesn't refer to the class explicitly, but

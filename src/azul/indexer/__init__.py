@@ -583,6 +583,7 @@ class BundlePartition(UUIDPartition):
     """
 
     #: 512 caused timeouts writing contributions, even in the retry Lambda
+    #:
     max_partition_size: ClassVar[int] = 256
 
     def divisions(self, num_entities: int) -> int:
