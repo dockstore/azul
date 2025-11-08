@@ -13,8 +13,7 @@ from uuid import (
 import attr
 
 from azul import (
-    reject,
-    require,
+    R,
 )
 from azul.types import (
     JSON,
@@ -94,12 +93,12 @@ def validate_uuid_prefix(uuid_prefix: str) -> None:
     >>> validate_uuid_prefix('8f538f5-')
     Traceback (most recent call last):
     ...
-    azul.RequirementError: UUID prefix ends with an invalid character: 8f538f5-
+    AssertionError: R('UUID prefix ends with an invalid character', '8f538f5-')
 
     >>> validate_uuid_prefix('8f538f-')
     Traceback (most recent call last):
     ...
-    azul.RequirementError: UUID prefix ends with an invalid character: 8f538f-
+    AssertionError: R('UUID prefix ends with an invalid character', '8f538f-')
 
     >>> validate_uuid_prefix('8f538f53a')
     Traceback (most recent call last):
@@ -107,8 +106,8 @@ def validate_uuid_prefix(uuid_prefix: str) -> None:
     azul.uuids.InvalidUUIDPrefixError: '8f538f53a' is not a valid UUID prefix.
     """
     valid_uuid_str = '26a8fccd-bbd2-4342-9c19-6ed7c9bb9278'
-    reject(uuid_prefix.endswith('-'),
-           f'UUID prefix ends with an invalid character: {uuid_prefix}')
+    assert not uuid_prefix.endswith('-'), R(
+        'UUID prefix ends with an invalid character', uuid_prefix)
     try:
         validate_uuid(uuid_prefix + valid_uuid_str[len(uuid_prefix):])
     except InvalidUUIDError:
@@ -166,8 +165,26 @@ class UUIDPartition(metaclass=UUIDPartitionMeta):
     def __init__(self, *, prefix_length: int, prefix: int) -> None: ...
 
     def __attrs_post_init__(self):
-        reject(self.prefix_length == 0 and self.prefix != 0)
-        require(0 <= self.prefix < 2 ** self.prefix_length)
+        """
+        >>> UUIDPartition(prefix_length=0, prefix=1)
+        ... # doctest: +NORMALIZE_WHITESPACE
+        Traceback (most recent call last):
+        ...
+        AssertionError: R('If prefix length is 0, the prefix must be, too',
+        UUIDPartition(prefix_length=0, prefix=1))
+
+        >>> UUIDPartition(prefix_length=1, prefix=3)
+        ... # doctest: +NORMALIZE_WHITESPACE
+        Traceback (most recent call last):
+        ...
+        AssertionError: R('Prefix has extra high-order bits set',
+        UUIDPartition(prefix_length=1, prefix=3))
+
+        """
+        assert self.prefix_length != 0 or self.prefix == 0, R(
+            'If prefix length is 0, the prefix must be, too', self)
+        assert 0 <= self.prefix < 2 ** self.prefix_length, R(
+            'Prefix has extra high-order bits set', self)
 
     @classmethod
     def from_json(cls, json: JSON) -> Self:
@@ -202,9 +219,9 @@ class UUIDPartition(metaclass=UUIDPartitionMeta):
 
         >>> sorted(UUIDPartition.root.divide(3))
         ... # doctest: +NORMALIZE_WHITESPACE
-        [UUIDPartition(prefix_length=2, prefix=0),\
-        UUIDPartition(prefix_length=2, prefix=1),\
-        UUIDPartition(prefix_length=2, prefix=2),\
+        [UUIDPartition(prefix_length=2, prefix=0),
+        UUIDPartition(prefix_length=2, prefix=1),
+        UUIDPartition(prefix_length=2, prefix=2),
         UUIDPartition(prefix_length=2, prefix=3)]
         """
         prefix_length = math.ceil(math.log2(num_divisions))
