@@ -225,9 +225,21 @@ pep8: check_python
 # the build is already running in a container and the container below will be a
 # sibling of the current container.
 
+# Using --attach only for stdout causes stderr to remain detached, thereby
+# suppressing error output like stack traces. In order to address security
+# vulnerabilities that had remained open for a long time we resorted to simply
+# removing the affected dependencies from the image unless they were needed for
+# our use case of the image: formatting Python source code. When the PyCharm
+# process in the container launched from the image attempts to use these
+# dependencies, an exception is raised. Fortunately this occurs in another
+# thread, not affecting the main thread in which the code is being formatted.
+# When diagnosing problems with the actual formatting, removing the --attach
+# flag will reveal all output, potentially aiding in the diagnosis.
+
 .PHONY: format
 format: check_venv check_docker
 	docker run \
+	    --attach stdout \
 	    --rm \
 	    --volume $$(python scripts/resolve_container_path.py $(project_root)):/home/developer/azul \
 	    --workdir /home/developer/azul \

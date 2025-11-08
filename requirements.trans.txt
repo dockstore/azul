@@ -4,7 +4,7 @@ cffi==2.0.0
 charset-normalizer==3.4.4
 cryptography==46.0.3
 events==0.5
-google-cloud-core==2.4.3
+google-cloud-core==2.5.0
 google-crc32c==1.7.1
 google-resumable-media==2.7.2
 googleapis-common-protos==1.71.0
