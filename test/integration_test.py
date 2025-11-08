@@ -149,6 +149,7 @@ from azul.oauth2 import (
     OAuth2Client,
 )
 from azul.plugins import (
+    File,
     MetadataPlugin,
     RepositoryPlugin,
 )
@@ -461,7 +462,14 @@ class IndexingIntegrationTest(IntegrationTestCase):
         catalogs: list[Catalog] = []
         for catalog in config.integration_test_catalogs.values():
             if index:
-                public_source, _ = self._select_source(catalog.name, public=True)
+                public_source, _ = self._select_source(
+                    catalog.name,
+                    public=True,
+                    # If test_mirroring is run for the catalog, ensure that the
+                    # source is not flagged as no_mirror so that we can test
+                    # downloading a mirrored file
+                    mirror=config.enable_mirroring and catalog.mirror_limit >= 0
+                )
                 ma_source = self._select_source(catalog.name, public=False)
                 if ma_source is not None:
                     ma_source = ma_source[0]
@@ -502,6 +510,9 @@ class IndexingIntegrationTest(IntegrationTestCase):
                                       public_source=catalog.public_source,
                                       ma_source=catalog.ma_source)
 
+        if config.enable_mirroring:
+            self._test_mirroring(delete=delete)
+
         if index and delete:
             # FIXME: Test delete notifications
             #        https://github.com/DataBiosphere/azul/issues/3548
@@ -513,9 +524,6 @@ class IndexingIntegrationTest(IntegrationTestCase):
             log.warning('Will skip deletions due to overriding IT flag')
 
         self._test_other_endpoints()
-
-        if config.enable_mirroring:
-            self._test_mirroring(delete=delete)
 
     def _reset_indexer(self):
         # While it's OK to erase the integration test catalog, the queues are
@@ -736,6 +744,24 @@ class IndexingIntegrationTest(IntegrationTestCase):
             elif response.status == status:
                 urls.append(furl(response.headers['Location']))
         return urls
+
+    def _get_one_mirrorable_file(self,
+                                 catalog: CatalogName
+                                 ) -> tuple[File, SourceRef, JSON]:
+        plugin = self.repository_plugin(catalog)
+        with self._public_service_account_credentials:
+            # This depends on the indexing test choosing a public source that
+            # is not flagged as no_mirror
+            outer_file, inner_file = self._get_one_inner_file(catalog)
+        file_digest = lookup(inner_file, 'sha256', 'file_md5sum')
+        source = one(outer_file['sources'])
+        # In principle, we could use the entire digest here, but Prefix only
+        # allows up to 8 chars because it can be used with UUIDs
+        prefix = Prefix(common=file_digest[:8], partition=0)
+        source = self._source_from_response(catalog, source)
+        files = plugin.list_files(source.with_prefix(prefix), prefix=prefix.common)
+        file = one(file for file in files if file.digest.value == file_digest)
+        return file, source, inner_file
 
     def _get_one_inner_file(self, catalog: CatalogName) -> tuple[JSON, JSON]:
         outer_file = self._get_one_outer_file(catalog)
@@ -1734,11 +1760,27 @@ class IndexingIntegrationTest(IntegrationTestCase):
             self._assert_queues_empty([config.mirror_queue.name,
                                        config.mirror_queue.to_fail.name])
             _delete()
-            for catalog, sources in sources_by_catalog.items():
-                for _ in range(2):
-                    mirror_service.remote_mirror(catalog, sources)
-                    self.azul_client.wait_for_mirroring()
-                    self._assert_queues_empty([config.mirror_queue.to_fail.name])
+
+            indexed_files: dict[File, tuple[SourceRef, JSON]] = {}
+            with self.subTest('remote_mirror'):
+                for catalog, sources in sources_by_catalog.items():
+                    repository_file, source, file_response = self._get_one_mirrorable_file(catalog)
+                    indexed_files[repository_file] = source, file_response
+                    for _ in range(2):
+                        mirror_service.remote_mirror(catalog, sources)
+                        mirror_service.mirror_file(catalog, source, repository_file)
+                        self.azul_client.wait_for_mirroring()
+                        self._assert_queues_empty([config.mirror_queue.to_fail.name])
+
+                with self.subTest('mirror_repository_files'):
+                    for repository_file, (source, file_response) in indexed_files.items():
+                        digest = repository_file.digest
+                        expected_url = furl(scheme='https', host='s3.amazonaws.com', path=[
+                            aws.mirror_bucket, '_it', 'file', f'{digest.value}.{digest.type}',
+                        ])
+                        actual_url = self._test_file_download(source.spec, file_response)
+                        actual_url.set(args=None)
+                        self.assertEqual(expected_url, actual_url)
             _delete()
 
 

@@ -154,6 +154,12 @@ class BaseMirrorService:
 
             self._queue_messages(messages())
 
+    def mirror_file(self, catalog: CatalogName, source: SourceRef, file: File):
+        self._queue_messages([MirrorFileAction(catalog=catalog,
+                                               source=source,
+                                               prefix='',
+                                               file=file)])
+
     def _mirror_queue(self):
         name = config.mirror_queue.name
         return aws.sqs_queue(name)
