@@ -1736,7 +1736,7 @@ class SingletonTransformer(BaseTransformer, metaclass=ABCMeta):
             if (
                 (file.is_matrix or isinstance(file, api.AnalysisFile))
                 and not self._is_intermediate_matrix(file)
-                and Submitter.category_for_file(file) == SubmitterCategory.external
+                and Submitter.category_for_file(file) != SubmitterCategory.internal
             )
         ]
 

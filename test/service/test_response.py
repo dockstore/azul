@@ -3752,7 +3752,9 @@ class TestResponseWithDCP2Cans(DCP2CannedBundleTestCase, WebServiceTestCase):
     def bundles(cls) -> list[SourcedBundleFQID]:
         return [
             cls.bundle_fqid(uuid='1b6d8348-d6e9-406a-aa6a-7ee886e52bf9',
-                            version='2019-09-24T09:35:06.958773Z')
+                            version='2019-09-24T09:35:06.958773Z'),
+            cls.bundle_fqid(uuid='f34d4883-429a-4260-9b1b-9c1e9844c80b',
+                            version='2022-08-23T17:25:02.565000Z')
         ]
 
     def test_tdr_sources(self):
@@ -3792,3 +3794,46 @@ class TestResponseWithDCP2Cans(DCP2CannedBundleTestCase, WebServiceTestCase):
             file = self.get_file('c343a47d-683f-571d-99c4-1331841b4e63')
             self.assertIsNone(file['url'])
             self.assertIsNone(file['drs_uri'])
+
+    def test_contributed_analyses_matrix(self):
+        self.maxDiff = None
+        project_id = '9b876d31-0739-4e96-9846-f76e6a427279'
+        url = self.base_url.set(path=('index', 'projects', project_id))
+        response = requests.get(str(url))
+        response.raise_for_status()
+        response_json = response.json()
+        project = one(response_json['projects'])
+        file_url = str(self.base_url.set(
+            path='/repository/files/780846a0-dbc5-4bdc-ab3a-0da14b3ed551',
+            args=dict(
+                catalog='test',
+                version='2022-07-26T00:16:47.748000Z'
+            )
+        ))
+        expected_file = {
+            'contentDescription': ['Count matrix', 'Feature table'],
+            'format': 'csv.gz',
+            'isIntermediate': False,
+            'name': 'GSE180878_Li_Brugge_10XscRNAseq_GeneCellMatrix_RNAcounts_human.csv.gz',
+            'sha256': '649c45bd2f01b028c974c7e2a9604b9cf564d8afcf528eb299eaf3d7fe92bae3',
+            'size': 107958959,
+            'fileSource': None,
+            'uuid': '780846a0-dbc5-4bdc-ab3a-0da14b3ed551',
+            'version': '2022-07-26T00:16:47.748000Z',
+            'matrixCellCount': None,
+            'drs_uri': 'drs://data.terra.bio/v1'
+                       '_541cc0bb-c54f-4a7e-8cdd-1a70cbd2f20c'
+                       '_596c26ba-2c35-4396-8c7c-50c825eb4e75',
+            'azul_url': file_url,
+            'url': file_url,
+        }
+        expected_tree = {
+            'genusSpecies': {'Homo sapiens': {
+                'developmentStage': {'human adult stage': {
+                    'organ': {'breast': {
+                        'libraryConstructionApproach': {"10x 3' v2": [expected_file]}
+                    }}
+                }}
+            }}
+        }
+        self.assertEqual(expected_tree, project['contributedAnalyses'])
