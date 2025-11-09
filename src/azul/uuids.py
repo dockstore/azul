@@ -5,6 +5,7 @@ import math
 from typing import (
     ClassVar,
     Self,
+    dataclass_transform,
 )
 from uuid import (
     UUID,
@@ -136,6 +137,7 @@ def change_version(uuid: str, old_version: int, new_version: int) -> str:
     return uuid
 
 
+@dataclass_transform(frozen_default=True, kw_only_default=True)
 class UUIDPartitionMeta(type):
 
     def __init__(cls, *args, **kwargs):
@@ -165,15 +167,6 @@ class UUIDPartition(metaclass=UUIDPartitionMeta):
     #: the metaclass constructor.
     #:
     root: ClassVar[Self]
-
-    # This stub is only needed to aid PyCharm's type inference. Without this,
-    # a constructor invocation that doesn't refer to the class explicitly, but
-    # through a variable will cause a warning. I suspect a bug in PyCharm:
-    #
-    # https://youtrack.jetbrains.com/issue/PY-44728
-    #
-    # noinspection PyDataclass
-    def __init__(self, *, prefix_length: int, prefix: int) -> None: ...
 
     def __attrs_post_init__(self):
         """
