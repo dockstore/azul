@@ -203,7 +203,7 @@ class UUIDPartition(metaclass=UUIDPartitionMeta):
 
     def contains(self, member: UUID) -> bool:
         """
-        >>> p = UUIDPartition(prefix_length=7, prefix=0b0111_1111)
+        >>> p = UUIDPartition(prefix_length=7, prefix=0b1111_111)
         >>> p.contains(UUID('fdd4524e-14c4-41d7-9071-6cadab09d75c'))
         False
         >>> p.contains(UUID('fed4524e-14c4-41d7-9071-6cadab09d75c'))
