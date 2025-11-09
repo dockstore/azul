@@ -580,7 +580,16 @@ class Bundle[BUNDLE_FQID: BundleFQID](SerializableAttrs, metaclass=ABCMeta):
 class BundlePartition(UUIDPartition):
     """
     A binary partitioning of the UUIDs of outer entities in a bundle.
+
+    >>> BundlePartition.root
+    BundlePartition(prefix_length=0, prefix=0, group=4)
     """
+
+    #: We use the fifth group because the first group may not produce a random
+    #: distribution of the entities in some types of bundles. For example, all
+    #: entity UUIDs in an AnVIL replica bundle share a specifc batch prefix.
+    #:
+    group: int = 4
 
     #: 512 caused timeouts writing contributions, even in the retry Lambda
     #:
