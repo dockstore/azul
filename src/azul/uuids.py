@@ -3,6 +3,7 @@ from hashlib import (
 )
 import math
 from typing import (
+    Any,
     ClassVar,
     Self,
     dataclass_transform,
@@ -11,7 +12,9 @@ from uuid import (
     UUID,
 )
 
-import attr
+from attrs import (
+    frozen,
+)
 
 from azul import (
     R,
@@ -137,12 +140,28 @@ def change_version(uuid: str, old_version: int, new_version: int) -> str:
     return uuid
 
 
-@dataclass_transform(frozen_default=True, kw_only_default=True)
+@dataclass_transform(frozen_default=True,
+                     kw_only_default=True,
+                     order_default=True)
 class UUIDPartitionMeta(type):
 
-    def __init__(cls, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        attr.s(frozen=True, kw_only=True, auto_attribs=True)(cls)
+    def __init__(cls, name: str, bases: tuple[type, ...], members: dict[str, Any]):
+        super().__init__(name, bases, members)
+
+        # We can't use slots=True for two reasons:
+        #
+        # 1) slots=True causes attrs to duplicate the class (the instance of
+        #    this metaclass), which then causes this method to be invoked twice,
+        #    the second time feeding an already decorated class back to attrs.
+        #    This could be addressed by overriding __new__ instead of __init__.
+        #
+        # 2) We would like to be able to use @cached_property on methods of
+        #    instances, and @cached_property does not work with slotted classes.
+        #
+        # The assert below ensures that attrs does not duplicate the class, and
+        # instead only augments it.
+        #
+        assert cls is frozen(kw_only=True, slots=False, order=True)(cls)
         cls.root = cls(prefix_length=0, prefix=0)
 
 
