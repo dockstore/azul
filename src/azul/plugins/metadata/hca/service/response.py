@@ -418,9 +418,6 @@ class HCASearchResponseStage(SearchResponseStage):
                                        version=json_str(file['version']),
                                        drs_uri=optional(json_str, file['drs_uri']))
         }
-        # FIXME: https://github.com/DataBiosphere/azul/issues/6549
-        #        Remove files.url
-        translated_file['url'] = translated_file['azul_url']
         return translated_file
 
     def make_specimen(self, specimen) -> MutableJSON:
