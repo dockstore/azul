@@ -51,6 +51,7 @@ from azul.types import (
     json_element_dicts,
     json_item_dicts,
     json_item_mappings,
+    json_list_of_dicts,
     json_mapping,
     json_str,
     not_none,
@@ -784,24 +785,43 @@ class Chalice:
             resource['source_code_hash'] = '${filebase64sha256("%s")}' % package_zip
             resource['filename'] = package_zip
 
-        # Replace any references to unqualified function ARNs emitted by Chalice
-        # with references to the alias.
+        # Replace any references to unqualified function ARNs in the OpenAPI
+        # spec emitted by Chalice with references to the alias.
         #
-        def function_to_alias[T: AnyMutableJSON](v: T) -> T:
+        def functions_to_aliases[T: AnyMutableJSON](v: T) -> T:
             if isinstance(v, dict):
-                return type(v)((k, function_to_alias(v)) for k, v in v.items())
+                return type(v)((k, functions_to_aliases(v)) for k, v in v.items())
             elif isinstance(v, list):
-                return type(v)(map(function_to_alias, v))
-            elif isinstance(v, str) and v.endswith(('.arn}', '.invoke_arn}')):
-                r = v.replace('${aws_lambda_function', '${aws_lambda_alias')
+                return type(v)(map(functions_to_aliases, v))
+            elif isinstance(v, str) and v.endswith('.invoke_arn}'):
+                r = function_to_alias(v)
                 assert isinstance(r, type(v))
                 return r
             else:
                 return v
 
+        def function_to_alias(v: str) -> str:
+            return v.replace('${aws_lambda_function', '${aws_lambda_alias')
+
         openapi_spec = json_dict(json.loads(json_str(locals[app_name])))
-        openapi_spec = function_to_alias(openapi_spec)
-        resources = function_to_alias(resources)
+        openapi_spec = functions_to_aliases(openapi_spec)
+
+        # Replace any references to unqualified function ARNs in the resources
+        # emitted by Chalice with references to the alias.
+        #
+        for _, r in json_item_dicts(resources.get('aws_lambda_permission', {})):
+            alias = function_to_alias(json_str(r['function_name']))
+            assert alias.endswith('.arn}'), alias
+            r['qualifier'] = alias.replace('.arn', '.name')
+        for _, r in json_item_dicts(resources.get('aws_cloudwatch_event_target', {})):
+            r['arn'] = function_to_alias(json_str(r['arn']))
+        for _, r in json_item_dicts(resources.get('aws_lambda_event_source_mapping', {})):
+            r['function_name'] = function_to_alias(json_str(r['function_name']))
+        for _, r in json_item_dicts(resources.get('aws_s3_bucket_notification', {})):
+            for lf in json_list_of_dicts(r['lambda_function']):
+                lf['lambda_function_arn'] = function_to_alias(
+                    json_str(lf['lambda_function_arn'])
+                )
 
         # Pre-create a CloudWatch log group for every Lambda function so that
         # we can set the log retention explicitly.
