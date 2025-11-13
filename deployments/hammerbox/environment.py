@@ -1197,7 +1197,7 @@ anvil11_sources = mkdict(anvil10_sources, 367, mkdelta([
     bqsrc('61b6b42b', 'ccdg_broad_np_epilepsy_zafagn_ds_epi_como_mds_wes_20221026_ANV5_202409302116', pop),
 ]))
 
-anvil12_sources = mkdict(anvil11_sources, 372, mkdelta([
+anvil12_sources = mkdict(anvil11_sources, 373, mkdelta([
     bqsrc('48204a7f', 'CCDG_Broad_CVD_EOCAD_PartnersBiobank_HMB_WES_20230621_ANV5_202510141553'),
     bqsrc('50aed057', 'CCDG_Broad_NP_Epilepsy_AUSAUS_EP_BA_CN_ID_MDS_GSA_MD_20251016_ANV5_202510161935'),
     bqsrc('25e5ec27', 'CCDG_Broad_NP_Epilepsy_USAMON_GRU_WES_20250721_ANV5_202510141558'),
@@ -1222,6 +1222,7 @@ anvil12_sources = mkdict(anvil11_sources, 372, mkdelta([
     bqsrc('5447de30', 'CMH_GAFK_WGBS_20230327_ANV5_202402062120', pop),
     bqsrc('de339830', 'CMH_GAFK_WGS_20240113_ANV5_202502201948', pop),
     bqsrc('ba97c05c', 'CMH_GAFK_scRNA_20221107_ANV5_202402291004', pop),
+    bqsrc('3e69f21f', 'Complex_Chromosomal_Changes_R1_20251110_ANV5_202511101946'),
     bqsrc('76ceb22a', 'ENCORE_293T_20251112_ANV5_202511121451'),
     bqsrc('3b16bd9c', 'ENCORE_RS293_20251112_ANV5_202511121422'),
     bqsrc('4096189d', 'GREGOR_R04_GRU_20250917_ANV5_202509221559'),
