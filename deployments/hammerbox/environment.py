@@ -1197,7 +1197,7 @@ anvil11_sources = mkdict(anvil10_sources, 367, mkdelta([
     bqsrc('61b6b42b', 'ccdg_broad_np_epilepsy_zafagn_ds_epi_como_mds_wes_20221026_ANV5_202409302116', pop),
 ]))
 
-anvil12_sources = mkdict(anvil11_sources, 369, mkdelta([
+anvil12_sources = mkdict(anvil11_sources, 372, mkdelta([
     bqsrc('48204a7f', 'CCDG_Broad_CVD_EOCAD_PartnersBiobank_HMB_WES_20230621_ANV5_202510141553'),
     bqsrc('50aed057', 'CCDG_Broad_NP_Epilepsy_AUSAUS_EP_BA_CN_ID_MDS_GSA_MD_20251016_ANV5_202510161935'),
     bqsrc('25e5ec27', 'CCDG_Broad_NP_Epilepsy_USAMON_GRU_WES_20250721_ANV5_202510141558'),
@@ -1222,14 +1222,18 @@ anvil12_sources = mkdict(anvil11_sources, 369, mkdelta([
     bqsrc('5447de30', 'CMH_GAFK_WGBS_20230327_ANV5_202402062120', pop),
     bqsrc('de339830', 'CMH_GAFK_WGS_20240113_ANV5_202502201948', pop),
     bqsrc('ba97c05c', 'CMH_GAFK_scRNA_20221107_ANV5_202402291004', pop),
+    bqsrc('76ceb22a', 'ENCORE_293T_20251112_ANV5_202511121451'),
+    bqsrc('3b16bd9c', 'ENCORE_RS293_20251112_ANV5_202511121422'),
     bqsrc('4096189d', 'GREGOR_R04_GRU_20250917_ANV5_202509221559'),
     bqsrc('f71485a8', 'GREGOR_R04_HMB_20250910_ANV5_202509221540'),
     bqsrc('3b09455f', 'GREGoR_R01_GRU_20240208_ANV5_202510101245'),
     bqsrc('25d953fe', 'GTEx_public_data_20240117_ANV5_202510101251'),
     bqsrc('193dc871', 'GTEx_v10_hg38_20241105_ANV5_202510141951'),
+    bqsrc('3dddda4d', 'HPRC_20240401_ANV5_202511121431'),
     bqsrc('33f117db', 'IGVF_GRU_PUB_R1_20251015_ANV5_202510151322'),
     bqsrc('ad1d9ffd', 'IGVF_HMB_MDS_R1_20251028_ANV5_202510281333'),
     bqsrc('ca277df1', 'IGVF_HMB_R1_20251015_ANV5_202510151330'),
+    bqsrc('7c901939', 'IGVF_Mouse_R1_20251112_ANV5_202511121500'),
     bqsrc('0570db33', 'MAS_ISO_seq_20240113_ANV5_202510141607'),
     bqsrc('5614f9b2', 'NIMH_Broad_ConvergentNeuro_McCarroll_Eggan_CIRM_GRU_VillageData_20230109_ANV5_202510141609'),
     bqsrc('a314d3c7', 'OurHealth_GRU_R1_20251015_ANV5_202510151901'),
