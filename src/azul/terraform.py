@@ -823,7 +823,8 @@ class Chalice:
             # scope of certain IAM permissions for Gitlab and, more importantly,
             # the deployment stage so these resources are segregated by deployment.
             for _, resource in json_item_dicts(resources[resource_type]):
-                function_name, _, suffix = json_str(resource[property_name]).partition('-')
+                unqualified = json_str(resource[property_name])
+                function_name, _, suffix = unqualified.partition('-')
                 assert suffix == 'event', suffix
                 assert function_name, function_name
                 resource[property_name] = config.qualified_resource_name(function_name)
