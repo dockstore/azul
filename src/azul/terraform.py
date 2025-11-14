@@ -969,7 +969,7 @@ class Chalice:
         # created.
         #
         for resource_name, resource in resource_items('aws_lambda_permission'):
-            assert 'lifecycle' not in resource, resource
+            assert 'lifecycle' not in resource, (resource_name, resource)
             resource['lifecycle'] = {'create_before_destroy': True}
 
         return {
