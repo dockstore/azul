@@ -801,6 +801,9 @@ class Chalice:
         openapi_spec = function_to_alias(openapi_spec)
         resources = function_to_alias(resources)
 
+        # Pre-create a CloudWatch log group for every Lambda function so that
+        # we can set the log retention explicitly.
+        #
         assert 'aws_cloudwatch_log_group' not in resources
         functions = json_item_dicts(resources['aws_lambda_function'])
         resources['aws_cloudwatch_log_group'] = {
