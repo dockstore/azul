@@ -57,23 +57,29 @@ class deep_dict_merge[K, V](dict):
     Recursively merge the given dictionaries. If more than one dictionary
     contains a given key, and all values associated with this key are themselves
     dictionaries, then the value present in the result is the recursive merging
-    of those nested dictionaries.
+    of those nested dictionaries. If none of the values for a given key are
+    dictionaries, either an exception is raised, or if `override` is true, the
+    value from the last dictionary is used. If some, but not all, of the values
+    for a given key are dictionaries, an exception is raised.
+
+    >>> deep_dict_merge()
+    {}
 
     >>> deep_dict_merge({0: 1}, {1: 0})
     {0: 1, 1: 0}
+
+    >>> deep_dict_merge({0: {'a': 1}}, {0: {'b': 2}})
+    {0: {'a': 1, 'b': 2}}
 
     To merge all dictionaries in an iterable, use this form:
 
     >>> deep_dict_merge.from_iterable([{0: 1}, {1: 0}])
     {0: 1, 1: 0}
 
-    >>> deep_dict_merge({0: {'a': 1}}, {0: {'b': 2}})
-    {0: {'a': 1, 'b': 2}}
-
-    Key collisions where either value is not a dictionary raise an exception,
-    unless the values compare equal to each other, in which case the entries
-    from *earlier* dictionaries takes precedence. This behavior is the opposite
-    of `dict_merge`, where later entries take precedence.
+    Without `override`, key collisions where none of the values are dictionaries
+    raise an exception, unless the values compare equal to each other, in which
+    case the entries from *earlier* dictionaries takes precedence. This behavior
+    is the opposite of `dict_merge`, where later entries take precedence.
 
     >>> deep_dict_merge({0: 1}, {0: 2})
     Traceback (most recent call last):
@@ -87,17 +93,33 @@ class deep_dict_merge[K, V](dict):
     >>> id(d[0]) == id(l1)
     True
 
-    >>> deep_dict_merge()
-    {}
+    With `override`, key collisions where none of the values are dictionaries
+    result in the value from the last dictionary taking precedence.
+
+    >>> deep_dict_merge({0: 1}, {0: 2}, override=True)
+    {0: 2}
+
+    Key collisions where the values are a mix of dictionary and non-dictionary
+    always raise an exception regardless if `override` is used or not.
+
+    >>> deep_dict_merge.from_iterable([{0: 1}, {0: {2: 3}}], override=True)
+    Traceback (most recent call last):
+    ...
+    ValueError: ('Cannot merge dict with non-dict', 1, {2: 3})
     """
 
-    def __init__(self, *maps: Mapping[K, V]):
+    def __init__(self, *maps: Mapping[K, V], override: bool = False):
         super().__init__()
+        self.override = override
         self.merge(maps)
 
     @classmethod
-    def from_iterable(cls, maps: Iterable[Mapping[K, V]], /) -> Self:
+    def from_iterable(cls, maps: Iterable[Mapping[K, V]],
+                      /,
+                      *,
+                      override: bool = False) -> Self:
         self = cls()
+        self.override = override
         self.merge(maps)
         return self
 
@@ -107,9 +129,14 @@ class deep_dict_merge[K, V](dict):
                 v1 = self.setdefault(k, v2)
                 if v1 != v2:
                     if isinstance(v1, Mapping) and isinstance(v2, Mapping):
-                        self[k] = type(self)(v1, v2)
+                        self[k] = type(self)(v1, v2, override=self.override)
+                    elif not isinstance(v1, Mapping) and not isinstance(v2, Mapping):
+                        if self.override:
+                            self[k] = v2
+                        else:
+                            raise ValueError(f'{v1!r} != {v2!r}')
                     else:
-                        raise ValueError(f'{v1!r} != {v2!r}')
+                        raise ValueError('Cannot merge dict with non-dict', v1, v2)
 
 
 def explode_dict[K, V](d: Mapping[K, Union[V, list[V], set[V], tuple[V]]]
