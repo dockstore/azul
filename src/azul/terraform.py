@@ -894,7 +894,7 @@ class Chalice:
             permissions_by_function = defaultdict(set)
             permissions = resources['aws_lambda_permission']
             for permission_name, permission in json_item_dicts(permissions):
-                alias = alias_ref(permission['function_name'])
+                alias = alias_ref(json_str(permission['function_name']))
                 permissions_by_function[alias].add(permission_name)
             permissions_by_function = dict(permissions_by_function)
             for resource_name, notification in resource_items(resource_type):
@@ -902,7 +902,9 @@ class Chalice:
                 notification['depends_on'] = [
                     f'aws_lambda_permission.{permission_name}'
                     for function in json_element_dicts(notification['lambda_function'])
-                    for permission_name in permissions_by_function[function['lambda_function_arn']]
+                    for permission_name in permissions_by_function[json_str(
+                        function['lambda_function_arn']
+                    )]
                 ]
         else:
             assert resource_type not in resources
