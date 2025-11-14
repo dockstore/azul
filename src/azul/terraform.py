@@ -834,12 +834,11 @@ class Chalice:
         # (https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucketnamingrules.html),
         # so replacing the periods with underscores results in valid resource
         # names while retaining the correlation with bucket names.
-        try:
-            bucket_notifications = resources['aws_s3_bucket_notification']
-        except KeyError:
-            pass
-        else:
-            resources['aws_s3_bucket_notification'] = {
+        #
+        resource_type = 'aws_s3_bucket_notification'
+        if config.enable_log_forwarding and app_name == 'indexer':
+            bucket_notifications = resources[resource_type]
+            resources[resource_type] = {
                 key.replace('.', '_'): value
                 for key, value in json_item_dicts(bucket_notifications)
             }
@@ -850,13 +849,16 @@ class Chalice:
             for permission_name, permission in json_item_dicts(permissions):
                 function_ref = permission['function_name']
                 permissions_by_function[function_ref].add(permission_name)
-            for _, notification in json_item_dicts(resources['aws_s3_bucket_notification']):
+            permissions_by_function = dict(permissions_by_function)
+            for _, notification in json_item_dicts(resources[resource_type]):
                 assert 'depends_on' not in notification, notification
                 notification['depends_on'] = [
                     f'aws_lambda_permission.{permission_name}'
                     for function in json_element_dicts(notification['lambda_function'])
                     for permission_name in permissions_by_function[function['lambda_function_arn']]
                 ]
+        else:
+            assert resource_type not in resources
 
         # The fix for https://github.com/aws/chalice/issues/1237 introduced the
         # create_before_destroy hack and it may have helped but has far-ranging
