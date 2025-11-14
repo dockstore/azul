@@ -814,7 +814,7 @@ class Chalice:
             for resource_name, resource in functions
         }
 
-        for resource_type, argument in [
+        for resource_type, property_name in [
             ('aws_cloudwatch_event_rule', 'name'),
             ('aws_cloudwatch_event_target', 'target_id')
         ]:
@@ -823,10 +823,10 @@ class Chalice:
             # scope of certain IAM permissions for Gitlab and, more importantly,
             # the deployment stage so these resources are segregated by deployment.
             for _, resource in json_item_dicts(resources[resource_type]):
-                function_name, _, suffix = json_str(resource[argument]).partition('-')
+                function_name, _, suffix = json_str(resource[property_name]).partition('-')
                 assert suffix == 'event', suffix
                 assert function_name, function_name
-                resource[argument] = config.qualified_resource_name(function_name)
+                resource[property_name] = config.qualified_resource_name(function_name)
 
         # Chalice-generated S3 bucket notifications include the bucket name in
         # the resource name, resulting in an invalid resource name when the
