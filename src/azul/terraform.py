@@ -957,7 +957,8 @@ class Chalice:
         if app_name == 'indexer':
             event_source_mappings = resources['aws_lambda_event_source_mapping']
             for _, resource in json_item_dicts(event_source_mappings):
-                _, _, resource_name = json_str(resource['event_source_arn']).rpartition(':')
+                arn = json_str(resource['event_source_arn'])
+                _, _, resource_name = arn.rpartition(':')
                 suffix = '.fifo' if resource_name.endswith('.fifo') else ''
                 sqs_name, _ = config.unqualified_resource_name(resource_name, suffix)
                 resource['event_source_arn'] = f'${{aws_sqs_queue.{sqs_name}.arn}}'
