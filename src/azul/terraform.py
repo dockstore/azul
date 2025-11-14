@@ -743,6 +743,9 @@ class Chalice:
         data = json_dict(tf_config['data'])
         locals = json_dict(tf_config['locals'])
 
+        def resource_items(resource_type: str) -> Iterable[tuple[str, MutableJSON]]:
+            return json_item_dicts(resources[resource_type])
+
         # null_data_source has been deprecated and locals should be used instead.
         # However, the data sources defined underneath it aren't actually used
         # anywhere so we can just delete the entry.
@@ -757,8 +760,7 @@ class Chalice:
                 '${aws_vpc_endpoint.%s.id}' % app_name
             ]
 
-        functions = json_item_dicts(resources['aws_lambda_function'])
-        for resource_name, resource in functions:
+        for resource_name, resource in resource_items('aws_lambda_function'):
             assert 'layers' not in resource
             resource['layers'] = ['${aws_lambda_layer_version.dependencies.arn}']
             # Publishing a new Lambda function version each time lets us perform
@@ -805,13 +807,12 @@ class Chalice:
         # we can set the log retention explicitly.
         #
         assert 'aws_cloudwatch_log_group' not in resources
-        functions = json_item_dicts(resources['aws_lambda_function'])
         resources['aws_cloudwatch_log_group'] = {
             f'{resource_name}_lambda': {
                 'name': f'/aws/lambda/{resource['function_name']}',
                 'retention_in_days': config.audit_log_retention_days
             }
-            for resource_name, resource in functions
+            for resource_name, resource in resource_items('aws_lambda_function')
         }
 
         for resource_type, property_name in [
@@ -822,7 +823,7 @@ class Chalice:
             # need them to be prefixed with `azul-` to allow for limiting the
             # scope of certain IAM permissions for Gitlab and, more importantly,
             # the deployment stage so these resources are segregated by deployment.
-            for _, resource in json_item_dicts(resources[resource_type]):
+            for resource_name, resource in resource_items(resource_type):
                 unqualified = json_str(resource[property_name])
                 function_name, _, suffix = unqualified.partition('-')
                 assert suffix == 'event', suffix
@@ -851,7 +852,7 @@ class Chalice:
                 function_ref = permission['function_name']
                 permissions_by_function[function_ref].add(permission_name)
             permissions_by_function = dict(permissions_by_function)
-            for _, notification in json_item_dicts(resources[resource_type]):
+            for resource_name, notification in resource_items(resource_type):
                 assert 'depends_on' not in notification, notification
                 notification['depends_on'] = [
                     f'aws_lambda_permission.{permission_name}'
@@ -956,7 +957,7 @@ class Chalice:
         #
         if app_name == 'indexer':
             event_source_mappings = resources['aws_lambda_event_source_mapping']
-            for _, resource in json_item_dicts(event_source_mappings):
+            for resource_name, resource in json_item_dicts(event_source_mappings):
                 arn = json_str(resource['event_source_arn'])
                 _, _, resource_name = arn.rpartition(':')
                 suffix = '.fifo' if resource_name.endswith('.fifo') else ''
@@ -967,7 +968,7 @@ class Chalice:
         # deleted until after the permissions for the new aliases have been
         # created.
         #
-        for name, resource in json_item_dicts(resources['aws_lambda_permission']):
+        for name, resource in resource_items('aws_lambda_permission'):
             assert 'lifecycle' not in resource, resource
             resource['lifecycle'] = {'create_before_destroy': True}
 
