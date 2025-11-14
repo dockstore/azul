@@ -968,7 +968,7 @@ class Chalice:
         # deleted until after the permissions for the new aliases have been
         # created.
         #
-        for name, resource in resource_items('aws_lambda_permission'):
+        for resource_name, resource in resource_items('aws_lambda_permission'):
             assert 'lifecycle' not in resource, resource
             resource['lifecycle'] = {'create_before_destroy': True}
 
