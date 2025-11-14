@@ -51,7 +51,6 @@ from azul.types import (
     json_element_dicts,
     json_item_dicts,
     json_item_mappings,
-    json_list_of_dicts,
     json_mapping,
     json_str,
     not_none,
@@ -788,40 +787,66 @@ class Chalice:
         # Replace any references to unqualified function ARNs in the OpenAPI
         # spec emitted by Chalice with references to the alias.
         #
-        def functions_to_aliases[T: AnyMutableJSON](v: T) -> T:
+        def alias_ref(v: str) -> str:
+            return v.replace('${aws_lambda_function', '${aws_lambda_alias')
+
+        def alias_invoke_arns[T: AnyMutableJSON](v: T) -> T:
             if isinstance(v, dict):
-                return type(v)((k, functions_to_aliases(v)) for k, v in v.items())
+                return type(v)((k, alias_invoke_arns(v)) for k, v in v.items())
             elif isinstance(v, list):
-                return type(v)(map(functions_to_aliases, v))
+                return type(v)(map(alias_invoke_arns, v))
             elif isinstance(v, str) and v.endswith('.invoke_arn}'):
-                r = function_to_alias(v)
+                r = alias_ref(v)
                 assert isinstance(r, type(v))
                 return r
             else:
                 return v
 
-        def function_to_alias(v: str) -> str:
-            return v.replace('${aws_lambda_function', '${aws_lambda_alias')
-
         openapi_spec = json_dict(json.loads(json_str(locals[app_name])))
-        openapi_spec = functions_to_aliases(openapi_spec)
+        openapi_spec = alias_invoke_arns(openapi_spec)
 
         # Replace any references to unqualified function ARNs in the resources
         # emitted by Chalice with references to the alias.
         #
-        for _, r in json_item_dicts(resources.get('aws_lambda_permission', {})):
-            alias = function_to_alias(json_str(r['function_name']))
+        # There are two ways for a aws_lambda_permission resource to reference a
+        # Lambda function alias: as a suffix, by appending the alias name to the
+        # function ARN in the `function_name` property, or by setting the
+        # `qualifier` property of the aws_lambda_permission resource to the
+        # alias name. Unfortunately, the suffix reference is silently converted
+        # to the `qualifier` property and Terraform treats this conversion as
+        # drift, resulting in perpetually non-empty plans. To avoid the drift,
+        # we use the second method directly.
+        #
+        for resource_name, resource in resource_items('aws_lambda_permission'):
+            alias = alias_ref(json_str(resource['function_name']))
             assert alias.endswith('.arn}'), alias
-            r['qualifier'] = alias.replace('.arn', '.name')
-        for _, r in json_item_dicts(resources.get('aws_cloudwatch_event_target', {})):
-            r['arn'] = function_to_alias(json_str(r['arn']))
-        for _, r in json_item_dicts(resources.get('aws_lambda_event_source_mapping', {})):
-            r['function_name'] = function_to_alias(json_str(r['function_name']))
-        for _, r in json_item_dicts(resources.get('aws_s3_bucket_notification', {})):
-            for lf in json_list_of_dicts(r['lambda_function']):
-                lf['lambda_function_arn'] = function_to_alias(
-                    json_str(lf['lambda_function_arn'])
-                )
+            assert 'qualifier' not in resource
+            resource['qualifier'] = alias.replace('.arn', '.name')
+
+        # Patch any remaining resources with properties holding function ARNs
+        # with the ARN of the corresponding alias.
+        #
+        def alias_property(property_name: str, resource: MutableJSON):
+            alias = alias_ref(json_str(resource[property_name]))
+            resource[property_name] = alias
+
+        for resource_name, resource in resource_items('aws_cloudwatch_event_target'):
+            alias_property('arn', resource)
+
+        resource_type = 'aws_lambda_event_source_mapping'
+        if app_name == 'indexer':
+            for resource_name, resource in resource_items(resource_type):
+                alias_property('function_name', resource)
+        else:
+            assert resource_type not in resources
+
+        resource_type = 'aws_s3_bucket_notification'
+        if config.enable_log_forwarding and app_name == 'indexer':
+            for resource_name, resource in resource_items(resource_type):
+                for notified_function in json_element_dicts(resource['lambda_function']):
+                    alias_property('lambda_function_arn', notified_function)
+        else:
+            assert resource_type not in resources
 
         # Pre-create a CloudWatch log group for every Lambda function so that
         # we can set the log retention explicitly.
@@ -869,8 +894,8 @@ class Chalice:
             permissions_by_function = defaultdict(set)
             permissions = resources['aws_lambda_permission']
             for permission_name, permission in json_item_dicts(permissions):
-                function_ref = permission['function_name']
-                permissions_by_function[function_ref].add(permission_name)
+                alias = alias_ref(permission['function_name'])
+                permissions_by_function[alias].add(permission_name)
             permissions_by_function = dict(permissions_by_function)
             for resource_name, notification in resource_items(resource_type):
                 assert 'depends_on' not in notification, notification
