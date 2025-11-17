@@ -42,7 +42,7 @@ Linked issue: #0000
 - [ ] PR is not a draft
 - [ ] PR is awaiting requested review from system administrator
 - [ ] Status of PR is *Review requested*
-- [ ] PR is assigned to only the system administrator
+- [ ] PR is assigned to only the system administrator and the author
 
 
 ### System administrator (after approval)
@@ -53,7 +53,7 @@ Linked issue: #0000
 - [ ] PR title is appropriate as title of merge commit
 - [ ] `N reviews` label is accurate
 - [ ] Status of PR is *Approved*
-- [ ] PR is assigned to only the operator
+- [ ] PR is assigned to only the operator and the author
 
 
 ### Operator
@@ -72,14 +72,14 @@ Linked issue: #0000
 - [ ] Ran `_select anvildev.gitlab && python scripts/create_gitlab_snapshot.py --no-restart` (see [operator manual](../blob/develop/OPERATOR.rst#backup-gitlab-volumes) for details) <sub>or this PR is not labeled `backup:gitlab`</sub>
 - [ ] Ran `_select anvildev.gitlab && CI_COMMIT_REF_NAME=develop make -C terraform/gitlab apply` <sub>or this PR is not labeled `deploy:gitlab`</sub>
 - [ ] Checked the items in the next section <sub>or this PR is labeled `deploy:gitlab`</sub>
-- [ ] PR is assigned to only the system administrator <sub>or this PR is not labeled `deploy:gitlab`</sub>
+- [ ] PR is assigned to only the system administrator and the author <sub>or this PR is not labeled `deploy:gitlab`</sub>
 
 
 ### System administrator (post-deploy of `.gitlab` component)
 
 - [ ] Background migrations for [`dev.gitlab`](https://gitlab.dev.singlecell.gi.ucsc.edu/admin/background_migrations) are complete <sub>or this PR is not labeled `deploy:gitlab`</sub>
 - [ ] Background migrations for [`anvildev.gitlab`](https://gitlab.anvil.gi.ucsc.edu/admin/background_migrations) are complete <sub>or this PR is not labeled `deploy:gitlab`</sub>
-- [ ] PR is assigned to only the operator
+- [ ] PR is assigned to only the operator and the author
 
 
 ### Operator (deploy runner image)
@@ -122,6 +122,7 @@ Linked issue: #0000
 - [ ] Ran `_select dev.shared && make -C terraform/shared apply` <sub>or this PR is not labeled `deploy:shared`</sub>
 - [ ] Ran `_select anvildev.shared && make -C terraform/shared apply` <sub>or this PR is not labeled `deploy:shared`</sub>
 - [ ] Deleted PR branch from GitHub
+- [ ] PR is assigned to only the operator
 - [ ] Deleted PR branch from GitLab `dev`
 - [ ] Deleted PR branch from GitLab `anvildev`
 - [ ] Status of linked issue is *Lower*

@@ -38,7 +38,7 @@ Linked issue: #0000
 - [ ] PR is not a draft
 - [ ] PR is awaiting requested review from system administrator
 - [ ] Status of PR is *Review requested*
-- [ ] PR is assigned to only the system administrator
+- [ ] PR is assigned to only the system administrator and the author
 
 
 ### System administrator (after approval)
@@ -49,7 +49,7 @@ Linked issue: #0000
 - [ ] PR title is appropriate as title of merge commit
 - [ ] `N reviews` label is accurate
 - [ ] Status of PR is *Approved*
-- [ ] PR is assigned to only the operator
+- [ ] PR is assigned to only the operator and the author
 
 
 ### Operator
@@ -80,6 +80,7 @@ Linked issue: #0000
 - [ ] Build passes on GitLab `prod`
 - [ ] Reviewed build logs for anomalies on GitLab `prod`
 - [ ] Deleted PR branch from GitHub
+- [ ] PR is assigned to only the operator
 - [ ] Status of linked issue is *Stable*
 
 
