@@ -42,7 +42,7 @@ Linked issue: #0000
 - [ ] PR is not a draft
 - [ ] PR is awaiting requested review from system administrator
 - [ ] Status of PR is *Review requested*
-- [ ] PR is assigned to only the system administrator
+- [ ] PR is assigned to only the system administrator and the author
 
 
 ### System administrator (after approval)
@@ -51,7 +51,7 @@ Linked issue: #0000
 - [ ] Decided if PR can be labeled `no sandbox`
 - [ ] `N reviews` label is accurate
 - [ ] Status of PR is *Approved*
-- [ ] PR is assigned to only the operator
+- [ ] PR is assigned to only the operator and the author
 
 
 ### Operator
@@ -65,13 +65,13 @@ Linked issue: #0000
 - [ ] Ran `_select anvilprod.gitlab && python scripts/create_gitlab_snapshot.py --no-restart` (see [operator manual](../blob/develop/OPERATOR.rst#backup-gitlab-volumes) for details) <sub>or this PR is not labeled `backup:gitlab`</sub>
 - [ ] Ran `_select anvilprod.gitlab && CI_COMMIT_REF_NAME=anvilprod make -C terraform/gitlab apply` <sub>or this PR is not labeled `deploy:gitlab`</sub>
 - [ ] Checked the items in the next section <sub>or this PR is labeled `deploy:gitlab`</sub>
-- [ ] PR is assigned to only the system administrator <sub>or this PR is not labeled `deploy:gitlab`</sub>
+- [ ] PR is assigned to only the system administrator and the author <sub>or this PR is not labeled `deploy:gitlab`</sub>
 
 
 ### System administrator (post-deploy of `.gitlab` component)
 
 - [ ] Background migrations for [`anvilprod.gitlab`](https://gitlab.explore.anvilproject.org/admin/background_migrations) are complete <sub>or this PR is not labeled `deploy:gitlab`</sub>
-- [ ] PR is assigned to only the operator
+- [ ] PR is assigned to only the operator and the author
 
 
 ### Operator (deploy runner image)
@@ -104,6 +104,7 @@ Linked issue: #0000
 - [ ] Reviewed build logs for anomalies on GitLab `anvilprod`
 - [ ] Ran `_select anvilprod.shared && make -C terraform/shared apply` <sub>or this PR is not labeled `deploy:shared`</sub>
 - [ ] Deleted PR branch from GitHub
+- [ ] PR is assigned to only the operator
 - [ ] Deleted PR branch from GitLab `anvilprod`
 - [ ] Status of linked issue is *Stable*
 - [ ] Status of promoted<sup>1</sup> PRs is *Merged stable*
