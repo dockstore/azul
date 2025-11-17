@@ -26,50 +26,50 @@
     "paths": {
         "/": {
             "get": {
+                "responses": {
+                    "504": {
+                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                    },
+                    "301": {
+                        "description": "A redirect to the Swagger UI"
+                    }
+                },
                 "summary": "Redirect to the Swagger UI for interactive use of this REST API",
                 "tags": [
                     "Auxiliary"
-                ],
-                "responses": {
-                    "301": {
-                        "description": "A redirect to the Swagger UI"
-                    },
-                    "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
-                    }
-                }
+                ]
             }
         },
         "/swagger/index.html": {
             "get": {
+                "responses": {
+                    "504": {
+                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                    },
+                    "200": {
+                        "description": "The response body is an HTML page containing the Swagger UI"
+                    }
+                },
                 "summary": "The Swagger UI for interactive use of this REST API",
                 "tags": [
                     "Auxiliary"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "The response body is an HTML page containing the Swagger UI"
-                    },
-                    "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
-                    }
-                }
+                ]
             }
         },
         "/swagger/swagger-initializer.js": {
             "get": {
+                "responses": {
+                    "504": {
+                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                    },
+                    "200": {
+                        "description": "The response body is JavaScript used internally by the Swagger UI"
+                    }
+                },
                 "summary": "Used internally by the Swagger UI",
                 "tags": [
                     "Auxiliary"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "The response body is JavaScript used internally by the Swagger UI"
-                    },
-                    "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
-                    }
-                }
+                ]
             }
         },
         "/swagger/{file}": {
@@ -85,28 +85,29 @@
                 }
             ],
             "get": {
-                "summary": "Static files needed for the Swagger UI",
-                "tags": [
-                    "Auxiliary"
-                ],
                 "responses": {
+                    "504": {
+                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                    },
                     "200": {
                         "description": "The response body is the contents of the requested file"
                     },
                     "404": {
                         "description": "The requested file does not exist"
-                    },
-                    "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
                     }
-                }
+                },
+                "summary": "Static files needed for the Swagger UI",
+                "tags": [
+                    "Auxiliary"
+                ]
             }
         },
         "/openapi.json": {
             "get": {
-                "summary": "Return OpenAPI specifications for this REST API",
-                "description": "\nThis endpoint returns the [OpenAPI specifications]'\n(https://github.com/OAI/OpenAPI-Specification) for this REST\nAPI. These are the specifications used to generate the page\nyou are visiting now.\n",
                 "responses": {
+                    "504": {
+                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                    },
                     "200": {
                         "description": "200 response",
                         "content": {
@@ -155,11 +156,10 @@
                                 }
                             }
                         }
-                    },
-                    "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
                     }
                 },
+                "summary": "Return OpenAPI specifications for this REST API",
+                "description": "\nThis endpoint returns the [OpenAPI specifications]'\n(https://github.com/OAI/OpenAPI-Specification) for this REST\nAPI. These are the specifications used to generate the page\nyou are visiting now.\n",
                 "tags": [
                     "Auxiliary"
                 ]
@@ -167,11 +167,10 @@
         },
         "/version": {
             "get": {
-                "summary": "Describe current version of this REST API",
-                "tags": [
-                    "Auxiliary"
-                ],
                 "responses": {
+                    "504": {
+                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                    },
                     "200": {
                         "description": "Version endpoint is reachable.",
                         "content": {
@@ -203,34 +202,36 @@
                                 }
                             }
                         }
-                    },
-                    "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
                     }
-                }
+                },
+                "summary": "Describe current version of this REST API",
+                "tags": [
+                    "Auxiliary"
+                ]
             }
         },
         "/robots.txt": {
             "get": {
+                "responses": {
+                    "504": {
+                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                    },
+                    "200": {
+                        "description": "\nThe robots.txt resource according to\n[RFC9309](https://datatracker.ietf.org/doc/html/rfc9309)\n"
+                    }
+                },
                 "summary": "Robots Exclusion Protocol",
                 "tags": [
                     "Auxiliary"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "\nThe robots.txt resource according to\n[RFC9309](https://datatracker.ietf.org/doc/html/rfc9309)\n"
-                    },
-                    "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
-                    }
-                }
+                ]
             }
         },
         "/health": {
             "get": {
-                "summary": "Complete health check",
-                "description": "\nHealth check of the service REST API and all\nresources it depends on. This may take long time to complete\nand exerts considerable load on the API. For that reason it\nshould not be requested frequently or by automated\nmonitoring facilities that would be better served by the\n[`/health/fast`](#operations-Auxiliary-get_health_fast) or\n[`/health/cached`](#operations-Auxiliary-get_health_cached)\nendpoints.\n",
                 "responses": {
+                    "504": {
+                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                    },
                     "200": {
                         "description": "\nThe checked resources\nare healthy.\n\nThe response consists of the following keys:\n\n* `other_lambdas` \nIndicates whether the companion REST API responds to HTTP requests.\n* `queues` \nReturns information about the SQS queues used by the indexer and the\nmirror.\n* `progress` \nThe number of Data Store bundles pending to be indexed and the number\nof index documents in need of updating.\n* `api_endpoints` \nIndicates whether important service API endpoints are operational.\n* `elasticsearch` \nIndicates whether the Elasticsearch cluster is responsive.\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`true`.\n\n\nAll of the nested `up` keys\nare `true`.\n",
                         "content": {
@@ -318,11 +319,10 @@
                                 }
                             }
                         }
-                    },
-                    "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
                     }
                 },
+                "summary": "Complete health check",
+                "description": "\nHealth check of the service REST API and all\nresources it depends on. This may take long time to complete\nand exerts considerable load on the API. For that reason it\nshould not be requested frequently or by automated\nmonitoring facilities that would be better served by the\n[`/health/fast`](#operations-Auxiliary-get_health_fast) or\n[`/health/cached`](#operations-Auxiliary-get_health_cached)\nendpoints.\n",
                 "tags": [
                     "Auxiliary"
                 ]
@@ -330,9 +330,10 @@
         },
         "/health/basic": {
             "get": {
-                "summary": "Basic health check",
-                "description": "\nHealth check of only the REST API itself, excluding other\nresources that it depends on. A 200 response indicates that\nthe service is reachable via HTTP(S) but nothing\nmore.\n",
                 "responses": {
+                    "504": {
+                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                    },
                     "200": {
                         "description": "\nThe checked resources\nare healthy.\n\nThe response consists of the following keys:\n\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`true`.\n\n",
                         "content": {
@@ -410,11 +411,10 @@
                                 }
                             }
                         }
-                    },
-                    "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
                     }
                 },
+                "summary": "Basic health check",
+                "description": "\nHealth check of only the REST API itself, excluding other\nresources that it depends on. A 200 response indicates that\nthe service is reachable via HTTP(S) but nothing\nmore.\n",
                 "tags": [
                     "Auxiliary"
                 ]
@@ -422,9 +422,10 @@
         },
         "/health/cached": {
             "get": {
-                "summary": "Cached health check for continuous monitoring",
-                "description": "\nReturn a cached copy of the\n[`/health/fast`](#operations-Auxiliary-get_health_fast)\nresponse. This endpoint is optimized for continuously\nrunning, distributed health monitors such as Route 53 health\nchecks. The cache ensures that the service is not\noverloaded by these types of health monitors. The cache is\nupdated every minute.\n",
                 "responses": {
+                    "504": {
+                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                    },
                     "200": {
                         "description": "\nThe checked resources\nare healthy.\n\nThe response consists of the following keys:\n\n* `elasticsearch` \nIndicates whether the Elasticsearch cluster is responsive.\n* `api_endpoints` \nIndicates whether important service API endpoints are operational.\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`true`.\n\n\nAll of the nested `up` keys\nare `true`.\n",
                         "content": {
@@ -506,11 +507,10 @@
                                 }
                             }
                         }
-                    },
-                    "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
                     }
                 },
+                "summary": "Cached health check for continuous monitoring",
+                "description": "\nReturn a cached copy of the\n[`/health/fast`](#operations-Auxiliary-get_health_fast)\nresponse. This endpoint is optimized for continuously\nrunning, distributed health monitors such as Route 53 health\nchecks. The cache ensures that the service is not\noverloaded by these types of health monitors. The cache is\nupdated every minute.\n",
                 "tags": [
                     "Auxiliary"
                 ]
@@ -518,9 +518,10 @@
         },
         "/health/fast": {
             "get": {
-                "summary": "Fast health check",
-                "description": "\nPerformance-optimized health check of the REST API and other\ncritical resources tht it depends on. This endpoint can be\nrequested more frequently than\n[`/health`](#operations-Auxiliary-get_health) but\nperiodically scheduled, automated requests should be made to\n[`/health/cached`](#operations-Auxiliary-get_health_cached).\n",
                 "responses": {
+                    "504": {
+                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                    },
                     "200": {
                         "description": "\nThe checked resources\nare healthy.\n\nThe response consists of the following keys:\n\n* `elasticsearch` \nIndicates whether the Elasticsearch cluster is responsive.\n* `api_endpoints` \nIndicates whether important service API endpoints are operational.\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`true`.\n\n\nAll of the nested `up` keys\nare `true`.\n",
                         "content": {
@@ -602,11 +603,10 @@
                                 }
                             }
                         }
-                    },
-                    "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
                     }
                 },
+                "summary": "Fast health check",
+                "description": "\nPerformance-optimized health check of the REST API and other\ncritical resources tht it depends on. This endpoint can be\nrequested more frequently than\n[`/health`](#operations-Auxiliary-get_health) but\nperiodically scheduled, automated requests should be made to\n[`/health/cached`](#operations-Auxiliary-get_health_cached).\n",
                 "tags": [
                     "Auxiliary"
                 ]
@@ -635,9 +635,10 @@
                 }
             ],
             "get": {
-                "summary": "Selective health check",
-                "description": "\nThis endpoint allows clients to request a health check on a\nspecific set of resources. Each resource is identified by a\n*key*, the same key under which the resource appears in a\n[`/health`](#operations-Auxiliary-get_health) response.\n",
                 "responses": {
+                    "504": {
+                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                    },
                     "200": {
                         "description": "\nThe checked resources\nare healthy.\n\nThe response consists of the following keys:\n\n* `other_lambdas` \nIndicates whether the companion REST API responds to HTTP requests.\n* `queues` \nReturns information about the SQS queues used by the indexer and the\nmirror.\n* `progress` \nThe number of Data Store bundles pending to be indexed and the number\nof index documents in need of updating.\n* `api_endpoints` \nIndicates whether important service API endpoints are operational.\n* `elasticsearch` \nIndicates whether the Elasticsearch cluster is responsive.\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`true`.\n\n\nAll of the nested `up` keys\nare `true`.\n",
                         "content": {
@@ -725,11 +726,10 @@
                                 }
                             }
                         }
-                    },
-                    "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
                     }
                 },
+                "summary": "Selective health check",
+                "description": "\nThis endpoint allows clients to request a health check on a\nspecific set of resources. Each resource is identified by a\n*key*, the same key under which the resource appears in a\n[`/health`](#operations-Auxiliary-get_health) response.\n",
                 "tags": [
                     "Auxiliary"
                 ]
@@ -737,11 +737,10 @@
         },
         "/index/catalogs": {
             "get": {
-                "summary": "List all available catalogs.",
-                "tags": [
-                    "Index"
-                ],
                 "responses": {
+                    "504": {
+                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                    },
                     "200": {
                         "description": "\nThe name of the default catalog and a list of all available\ncatalogs. For each catalog, the response includes the name\nof the atlas the catalog belongs to, a flag indicating\nwhether the catalog is for internal use only as well as the\nnames and types of plugins currently active for the catalog.\nFor some plugins, the response includes additional\nconfiguration properties, such as the sources used by the\nrepository plugin to populate the catalog or the set of\navailable [indices][1].\n\n[1]: #operations-Index-get_index__entity_type_\n",
                         "content": {
@@ -828,53 +827,20 @@
                                 }
                             }
                         }
-                    },
-                    "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
                     }
-                }
+                },
+                "summary": "List all available catalogs.",
+                "tags": [
+                    "Index"
+                ]
             }
         },
         "/index/{entity_type}/{entity_id}": {
             "get": {
-                "summary": "Detailed information on a particular entity.",
-                "tags": [
-                    "Index"
-                ],
-                "parameters": [
-                    {
-                        "name": "catalog",
-                        "in": "query",
-                        "required": false,
-                        "schema": {
-                            "type": "string",
-                            "enum": [
-                                "dcp2"
-                            ],
-                            "default": "dcp2"
-                        },
-                        "description": "The name of the catalog to query."
-                    },
-                    {
-                        "name": "entity_type",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "The type of the desired entity"
-                    },
-                    {
-                        "name": "entity_id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "The UUID of the desired entity"
-                    }
-                ],
                 "responses": {
+                    "504": {
+                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                    },
                     "200": {
                         "description": "\nThis response describes a single entity. To search the index\nfor multiple entities, see the [corresponding search\nendpoint](#operations-Index-get_index__entity_type_).\n\nThe properties that are common to all entity types are\nlisted in the schema below; however, additional properties\nmay be present for certain entity types. With the exception\nof the entity's unique identifier, all properties are\narrays, even in cases where only one value is present.\n\nThe structures of the objects within these arrays are not\nperfectly consistent, since they may represent either\nsingleton entities or aggregations depending on context.\n\nFor example, any biomaterial that yields a cell suspension\nwhich yields a sequence file will be considered a \"sample\".\nTherefore, the `samples` field is polymorphic, and each\nsample may be either a specimen, an organoid, or a cell line\n(the field `sampleEntityType` can be used to discriminate\nbetween these cases).\n",
                         "content": {
@@ -963,27 +929,61 @@
                                 }
                             }
                         }
-                    },
-                    "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
                     }
-                }
+                },
+                "summary": "Detailed information on a particular entity.",
+                "tags": [
+                    "Index"
+                ],
+                "parameters": [
+                    {
+                        "name": "catalog",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "dcp2"
+                            ],
+                            "default": "dcp2"
+                        },
+                        "description": "The name of the catalog to query."
+                    },
+                    {
+                        "name": "entity_type",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The type of the desired entity"
+                    },
+                    {
+                        "name": "entity_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "The UUID of the desired entity"
+                    }
+                ]
             }
         },
         "/index/{entity_type}": {
             "head": {
+                "responses": {
+                    "504": {
+                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                    },
+                    "200": {
+                        "description": "\nThe HEAD method can be used to test whether an index is\noperational, or to check the validity of query parameters\nfor the [GET method](#operations-Index-get_index__entity_type_).\n"
+                    }
+                },
                 "summary": "Perform a query without returning its result.",
                 "tags": [
                     "Index"
                 ],
-                "responses": {
-                    "200": {
-                        "description": "\nThe HEAD method can be used to test whether an index is\noperational, or to check the validity of query parameters\nfor the [GET method](#operations-Index-get_index__entity_type_).\n"
-                    },
-                    "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
-                    }
-                },
                 "parameters": [
                     {
                         "name": "catalog",
@@ -2483,6 +2483,124 @@
                 ]
             },
             "post": {
+                "responses": {
+                    "504": {
+                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                    },
+                    "200": {
+                        "description": "\nPaginated list of entities that meet the search criteria\n(\"hits\"). The structure of these hits is documented under\nthe [corresponding endpoint for a specific\nentity](#operations-Index-get_index__entity_type___entity_id_).\n\nThe `pagination` section describes the total number of hits\nand total number of pages, as well as user-supplied search\nparameters for page size and sorting behavior. It also\nprovides links for navigating forwards and backwards between\npages of results.\n\nThe `termFacets` section tabulates the occurrence of unique\nvalues within nested fields of the `hits` section across all\nentities meeting the filter criteria (this includes entities\nnot listed on the current page, meaning that this section\nwill be invariable across all pages from the same search).\nNot every nested field is tabulated, but the set of\ntabulated fields is consistent between entity types.\n",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "hits": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "protocols": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "object",
+                                                            "properties": {},
+                                                            "additionalProperties": true
+                                                        }
+                                                    },
+                                                    "entryId": {
+                                                        "type": "string"
+                                                    },
+                                                    "sources": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "object",
+                                                            "properties": {},
+                                                            "additionalProperties": true
+                                                        }
+                                                    },
+                                                    "samples": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "object",
+                                                            "properties": {},
+                                                            "additionalProperties": true
+                                                        }
+                                                    },
+                                                    "specimens": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "object",
+                                                            "properties": {},
+                                                            "additionalProperties": true
+                                                        }
+                                                    },
+                                                    "cellLines": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "object",
+                                                            "properties": {},
+                                                            "additionalProperties": true
+                                                        }
+                                                    },
+                                                    "donorOrganisms": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "object",
+                                                            "properties": {},
+                                                            "additionalProperties": true
+                                                        }
+                                                    },
+                                                    "organoids": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "cellSuspensions": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "object",
+                                                            "properties": {},
+                                                            "additionalProperties": true
+                                                        }
+                                                    }
+                                                },
+                                                "required": [
+                                                    "protocols",
+                                                    "entryId",
+                                                    "sources",
+                                                    "samples",
+                                                    "specimens",
+                                                    "cellLines",
+                                                    "donorOrganisms",
+                                                    "organoids",
+                                                    "cellSuspensions"
+                                                ],
+                                                "additionalProperties": true
+                                            }
+                                        },
+                                        "pagination": {
+                                            "type": "object",
+                                            "properties": {},
+                                            "additionalProperties": true
+                                        },
+                                        "termFacets": {
+                                            "type": "object",
+                                            "properties": {},
+                                            "additionalProperties": true
+                                        }
+                                    },
+                                    "required": [
+                                        "hits",
+                                        "pagination",
+                                        "termFacets"
+                                    ],
+                                    "additionalProperties": false
+                                }
+                            }
+                        }
+                    }
+                },
                 "summary": "\nSearch an index for entities of interest\n, with filters provided in the request body.\n",
                 "deprecated": true,
                 "description": "\nAny of the query parameters documented below can alternatively be passed\nas a property of a JSON object in the body of the request. This can be\nuseful in case the value of the `filters` query parameter causes the URL\nto exceed the maximum length of 8192 characters, resulting in a 413\nRequest Entity Too Large response.\n\nThe request `GET /index/files?filters={\u2026}`, for example, is equivalent to  `POST /index/files`\nwith the body `{\"filters\": \"{\u2026}\"}` in which any double quotes or\nbackslash characters inside `\u2026` are escaped with another backslash. That\nescaping is the requisite procedure for embedding one JSON structure\ninside another.\n\n\nNote that the Swagger UI can't currently be used to pass a body.\n\nPlease also note that this endpoint should be considered beta and\nmay change or disappear in the future. That is the reason for the\ndeprecation.\n",
@@ -3985,8 +4103,13 @@
                         "description": "\nUse the `next` and `previous` properties of the\n`pagination` response element to navigate between pages.\n",
                         "deprecated": true
                     }
-                ],
+                ]
+            },
+            "get": {
                 "responses": {
+                    "504": {
+                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                    },
                     "200": {
                         "description": "\nPaginated list of entities that meet the search criteria\n(\"hits\"). The structure of these hits is documented under\nthe [corresponding endpoint for a specific\nentity](#operations-Index-get_index__entity_type___entity_id_).\n\nThe `pagination` section describes the total number of hits\nand total number of pages, as well as user-supplied search\nparameters for page size and sorting behavior. It also\nprovides links for navigating forwards and backwards between\npages of results.\n\nThe `termFacets` section tabulates the occurrence of unique\nvalues within nested fields of the `hits` section across all\nentities meeting the filter criteria (this includes entities\nnot listed on the current page, meaning that this section\nwill be invariable across all pages from the same search).\nNot every nested field is tabulated, but the set of\ntabulated fields is consistent between entity types.\n",
                         "content": {
@@ -4099,13 +4222,8 @@
                                 }
                             }
                         }
-                    },
-                    "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
                     }
-                }
-            },
-            "get": {
+                },
                 "summary": "\nSearch an index for entities of interest\n.\n",
                 "deprecated": false,
                 "description": "",
@@ -5608,141 +5726,23 @@
                         "description": "\nUse the `next` and `previous` properties of the\n`pagination` response element to navigate between pages.\n",
                         "deprecated": true
                     }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "\nPaginated list of entities that meet the search criteria\n(\"hits\"). The structure of these hits is documented under\nthe [corresponding endpoint for a specific\nentity](#operations-Index-get_index__entity_type___entity_id_).\n\nThe `pagination` section describes the total number of hits\nand total number of pages, as well as user-supplied search\nparameters for page size and sorting behavior. It also\nprovides links for navigating forwards and backwards between\npages of results.\n\nThe `termFacets` section tabulates the occurrence of unique\nvalues within nested fields of the `hits` section across all\nentities meeting the filter criteria (this includes entities\nnot listed on the current page, meaning that this section\nwill be invariable across all pages from the same search).\nNot every nested field is tabulated, but the set of\ntabulated fields is consistent between entity types.\n",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "hits": {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "object",
-                                                "properties": {
-                                                    "protocols": {
-                                                        "type": "array",
-                                                        "items": {
-                                                            "type": "object",
-                                                            "properties": {},
-                                                            "additionalProperties": true
-                                                        }
-                                                    },
-                                                    "entryId": {
-                                                        "type": "string"
-                                                    },
-                                                    "sources": {
-                                                        "type": "array",
-                                                        "items": {
-                                                            "type": "object",
-                                                            "properties": {},
-                                                            "additionalProperties": true
-                                                        }
-                                                    },
-                                                    "samples": {
-                                                        "type": "array",
-                                                        "items": {
-                                                            "type": "object",
-                                                            "properties": {},
-                                                            "additionalProperties": true
-                                                        }
-                                                    },
-                                                    "specimens": {
-                                                        "type": "array",
-                                                        "items": {
-                                                            "type": "object",
-                                                            "properties": {},
-                                                            "additionalProperties": true
-                                                        }
-                                                    },
-                                                    "cellLines": {
-                                                        "type": "array",
-                                                        "items": {
-                                                            "type": "object",
-                                                            "properties": {},
-                                                            "additionalProperties": true
-                                                        }
-                                                    },
-                                                    "donorOrganisms": {
-                                                        "type": "array",
-                                                        "items": {
-                                                            "type": "object",
-                                                            "properties": {},
-                                                            "additionalProperties": true
-                                                        }
-                                                    },
-                                                    "organoids": {
-                                                        "type": "array",
-                                                        "items": {
-                                                            "type": "string"
-                                                        }
-                                                    },
-                                                    "cellSuspensions": {
-                                                        "type": "array",
-                                                        "items": {
-                                                            "type": "object",
-                                                            "properties": {},
-                                                            "additionalProperties": true
-                                                        }
-                                                    }
-                                                },
-                                                "required": [
-                                                    "protocols",
-                                                    "entryId",
-                                                    "sources",
-                                                    "samples",
-                                                    "specimens",
-                                                    "cellLines",
-                                                    "donorOrganisms",
-                                                    "organoids",
-                                                    "cellSuspensions"
-                                                ],
-                                                "additionalProperties": true
-                                            }
-                                        },
-                                        "pagination": {
-                                            "type": "object",
-                                            "properties": {},
-                                            "additionalProperties": true
-                                        },
-                                        "termFacets": {
-                                            "type": "object",
-                                            "properties": {},
-                                            "additionalProperties": true
-                                        }
-                                    },
-                                    "required": [
-                                        "hits",
-                                        "pagination",
-                                        "termFacets"
-                                    ],
-                                    "additionalProperties": false
-                                }
-                            }
-                        }
-                    },
-                    "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
-                    }
-                }
+                ]
             }
         },
         "/index/summary": {
             "head": {
+                "responses": {
+                    "504": {
+                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                    },
+                    "200": {
+                        "description": "\nThe HEAD method can be used to test whether an index is\noperational, or to check the validity of query parameters\nfor the [GET method](#operations-Index-get_index_summary).\n"
+                    }
+                },
                 "summary": "Perform a query without returning its result.",
                 "tags": [
                     "Index"
                 ],
-                "responses": {
-                    "200": {
-                        "description": "\nThe HEAD method can be used to test whether an index is\noperational, or to check the validity of query parameters\nfor the [GET method](#operations-Index-get_index_summary).\n"
-                    },
-                    "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
-                    }
-                },
                 "parameters": [
                     {
                         "name": "catalog",
@@ -7087,8 +7087,10 @@
                 ]
             },
             "get": {
-                "summary": "Statistics on the data present across all entities.",
                 "responses": {
+                    "504": {
+                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                    },
                     "200": {
                         "description": "\nCounts the total number and total size in bytes of assorted\nentities, subject to the provided filters.\n\n`fileTypeSummaries` provides the count and total size in\nbytes of files grouped by their format, e.g. \"fastq\" or\n\"matrix.\" `fileCount` and `totalFileSize` compile these\nfigures across all file formats. Likewise,\n`cellCountSummaries` counts cells and their associated\ndocuments grouped by organ type, with `organTypes` listing\nall referenced organs.\n\nTotal counts of unique entities are also provided for other\nentity types such as projects and tissue donors. These\nvalues are not grouped/aggregated.\n",
                         "content": {
@@ -7163,11 +7165,9 @@
                                 }
                             }
                         }
-                    },
-                    "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
                     }
                 },
+                "summary": "Statistics on the data present across all entities.",
                 "tags": [
                     "Index"
                 ],
@@ -8517,6 +8517,41 @@
         },
         "/manifest/files": {
             "put": {
+                "responses": {
+                    "504": {
+                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                    },
+                    "301": {
+                        "description": "\nA redirect indicating that the manifest preparation job\nhas started. Wait for\nthe recommended number of seconds (see `Retry-After`\nheader) and then follow the redirect to check the status\nof that job.\n",
+                        "headers": {
+                            "Location": {
+                                "description": "\nThe URL of the manifest preparation job at\nthe [`GET\n                                /manifest/files/{token}`][2] endpoint.\n\n                                [2]: #operations-Manifests-get_fetch_manifest_files_token\n",
+                                "schema": {
+                                    "type": "string",
+                                    "format": "url"
+                                }
+                            },
+                            "Retry-After": {
+                                "description": "\nThe recommended number of seconds to wait before\nrequesting the URL specified in the `Location`\nheader\n",
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "302": {
+                        "description": "\nA redirect indicating that the manifest preparation job\nis already done. Immediately\nfollow the redirect to obtain the manifest contents.\n\nThe response body contains, for a number of commonly\nused shells, a command line suitable for downloading the\nmanifest.\n",
+                        "headers": {
+                            "Location": {
+                                "description": "The URL of the manifest.\n                               Clients should not make any assumptions about\n                               any parts of the returned domain, except that\n                               the scheme will be `https`.\n",
+                                "schema": {
+                                    "type": "string",
+                                    "format": "url"
+                                }
+                            }
+                        }
+                    }
+                },
                 "tags": [
                     "Manifests"
                 ],
@@ -9879,42 +9914,7 @@
                         },
                         "description": "\nThe desired format of the output.\n\n- `compact` (the default) for a compact,\n  tab-separated manifest\n\n- `terra.pfb` for a manifest in the [PFB\n  format][2]. This format is mainly used for exporting data to\n  Terra.\n\n- `curl` for a [curl configuration\n  file][3] manifest. This manifest can be used with the curl\n  program to download all the files listed in the manifest.\n\n- `verbatim.jsonl` for a verbatim\n  manifest in [JSONL][4] format. Each line contains an\n  unaltered metadata entity from the underlying repository.\n\n- `verbatim.pfb` for a verbatim\n  manifest in the [PFB format][2]. This format is mainly\n  used for exporting data to Terra.\n\n[1]: https://software.broadinstitute.org/firecloud/documentation/article?id=10954\n\n[2]: https://github.com/uc-cdis/pypfb\n\n[3]: https://curl.haxx.se/docs/manpage.html#-K\n\n[4]: https://jsonlines.org/\n"
                     }
-                ],
-                "responses": {
-                    "301": {
-                        "description": "\nA redirect indicating that the manifest preparation job\nhas started. Wait for\nthe recommended number of seconds (see `Retry-After`\nheader) and then follow the redirect to check the status\nof that job.\n",
-                        "headers": {
-                            "Location": {
-                                "description": "\nThe URL of the manifest preparation job at\nthe [`GET\n                                /manifest/files/{token}`][2] endpoint.\n\n                                [2]: #operations-Manifests-get_fetch_manifest_files_token\n",
-                                "schema": {
-                                    "type": "string",
-                                    "format": "url"
-                                }
-                            },
-                            "Retry-After": {
-                                "description": "\nThe recommended number of seconds to wait before\nrequesting the URL specified in the `Location`\nheader\n",
-                                "schema": {
-                                    "type": "string"
-                                }
-                            }
-                        }
-                    },
-                    "302": {
-                        "description": "\nA redirect indicating that the manifest preparation job\nis already done. Immediately\nfollow the redirect to obtain the manifest contents.\n\nThe response body contains, for a number of commonly\nused shells, a command line suitable for downloading the\nmanifest.\n",
-                        "headers": {
-                            "Location": {
-                                "description": "The URL of the manifest.\n                               Clients should not make any assumptions about\n                               any parts of the returned domain, except that\n                               the scheme will be `https`.\n",
-                                "schema": {
-                                    "type": "string",
-                                    "format": "url"
-                                }
-                            }
-                        }
-                    },
-                    "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
-                    }
-                }
+                ]
             }
         },
         "/manifest/files/{token}": {
@@ -9930,13 +9930,10 @@
                 }
             ],
             "get": {
-                "tags": [
-                    "Manifests"
-                ],
-                "summary": "Determine status of a manifest preparation job",
-                "description": "\nCheck on the status of an ongoing manifest preparation job,\nreturning either\n\n- a 301 redirect to this endpoint if the manifest job is still\n  running\n\n- a 302 redirect to the URL of the completed manifest.\n\nThis endpoint is not suitable for interactive use via the\nSwagger UI. Please use [GET /fetch/manifest/files/{token}][1]\ninstead.\n\n[1]: #operations-Manifests-get_fetch_manifest_files\n",
-                "parameters": [],
                 "responses": {
+                    "504": {
+                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                    },
                     "301": {
                         "description": "\nA redirect indicating that the manifest preparation job\nis running. Wait for\nthe recommended number of seconds (see `Retry-After`\nheader) and then follow the redirect to check the status\nof the job again.\n",
                         "headers": {
@@ -9969,15 +9966,68 @@
                     },
                     "410": {
                         "description": "\nThe manifest preparation job has expired. Request a\nnew preparation using the `PUT /manifest/files`\nendpoint.\n"
-                    },
-                    "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
                     }
-                }
+                },
+                "tags": [
+                    "Manifests"
+                ],
+                "summary": "Determine status of a manifest preparation job",
+                "description": "\nCheck on the status of an ongoing manifest preparation job,\nreturning either\n\n- a 301 redirect to this endpoint if the manifest job is still\n  running\n\n- a 302 redirect to the URL of the completed manifest.\n\nThis endpoint is not suitable for interactive use via the\nSwagger UI. Please use [GET /fetch/manifest/files/{token}][1]\ninstead.\n\n[1]: #operations-Manifests-get_fetch_manifest_files\n",
+                "parameters": []
             }
         },
         "/fetch/manifest/files": {
             "put": {
+                "responses": {
+                    "504": {
+                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                    },
+                    "200": {
+                        "description": "\nWhen handling this response, clients should wait the\nnumber of seconds given in the `Retry-After` property of\nthe response body and then make another XHR request to\nthe URL specified in the `Location` property.\n\nFor a detailed description of these properties see the\ndocumentation for the respective response headers\ndocumented under \n[PUT /manifest/files][1].\n\n[1]: #operations-Manifests-put_manifest_files\n\n\nNote: For a 200 status code response whose body has the\n`Status` property set to 302, the `Location` property\nmay reference the [GET /manifest/files/{token}][2]\nendpoint and that endpoint may return yet another\nredirect, this time a genuine (not emulated) 302 status\nredirect to the actual location of the manifest.\n\n[2]: #operations-Manifests-get_manifest_files\n\nNote: A 200 status response with a `Status` property of\n302 in its body additionally contains a `CommandLine`\nproperty that lists, for a number of commonly used\nshells, a command line suitable for downloading the\nmanifest.\n",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "Status": {
+                                            "type": "integer",
+                                            "format": "int64"
+                                        },
+                                        "Location": {
+                                            "type": "string",
+                                            "format": "url"
+                                        },
+                                        "Retry-After": {
+                                            "type": "integer",
+                                            "format": "int64"
+                                        },
+                                        "CommandLine": {
+                                            "type": "object",
+                                            "properties": {
+                                                "cmd.exe": {
+                                                    "type": "string"
+                                                },
+                                                "bash": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "cmd.exe",
+                                                "bash"
+                                            ],
+                                            "additionalProperties": false
+                                        }
+                                    },
+                                    "required": [
+                                        "Status",
+                                        "Location"
+                                    ],
+                                    "additionalProperties": false
+                                }
+                            }
+                        }
+                    }
+                },
                 "tags": [
                     "Manifests"
                 ],
@@ -11340,57 +11390,7 @@
                         },
                         "description": "\nThe desired format of the output.\n\n- `compact` (the default) for a compact,\n  tab-separated manifest\n\n- `terra.pfb` for a manifest in the [PFB\n  format][2]. This format is mainly used for exporting data to\n  Terra.\n\n- `curl` for a [curl configuration\n  file][3] manifest. This manifest can be used with the curl\n  program to download all the files listed in the manifest.\n\n- `verbatim.jsonl` for a verbatim\n  manifest in [JSONL][4] format. Each line contains an\n  unaltered metadata entity from the underlying repository.\n\n- `verbatim.pfb` for a verbatim\n  manifest in the [PFB format][2]. This format is mainly\n  used for exporting data to Terra.\n\n[1]: https://software.broadinstitute.org/firecloud/documentation/article?id=10954\n\n[2]: https://github.com/uc-cdis/pypfb\n\n[3]: https://curl.haxx.se/docs/manpage.html#-K\n\n[4]: https://jsonlines.org/\n"
                     }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "\nWhen handling this response, clients should wait the\nnumber of seconds given in the `Retry-After` property of\nthe response body and then make another XHR request to\nthe URL specified in the `Location` property.\n\nFor a detailed description of these properties see the\ndocumentation for the respective response headers\ndocumented under \n[PUT /manifest/files][1].\n\n[1]: #operations-Manifests-put_manifest_files\n\n\nNote: For a 200 status code response whose body has the\n`Status` property set to 302, the `Location` property\nmay reference the [GET /manifest/files/{token}][2]\nendpoint and that endpoint may return yet another\nredirect, this time a genuine (not emulated) 302 status\nredirect to the actual location of the manifest.\n\n[2]: #operations-Manifests-get_manifest_files\n\nNote: A 200 status response with a `Status` property of\n302 in its body additionally contains a `CommandLine`\nproperty that lists, for a number of commonly used\nshells, a command line suitable for downloading the\nmanifest.\n",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "Status": {
-                                            "type": "integer",
-                                            "format": "int64"
-                                        },
-                                        "Location": {
-                                            "type": "string",
-                                            "format": "url"
-                                        },
-                                        "Retry-After": {
-                                            "type": "integer",
-                                            "format": "int64"
-                                        },
-                                        "CommandLine": {
-                                            "type": "object",
-                                            "properties": {
-                                                "cmd.exe": {
-                                                    "type": "string"
-                                                },
-                                                "bash": {
-                                                    "type": "string"
-                                                }
-                                            },
-                                            "required": [
-                                                "cmd.exe",
-                                                "bash"
-                                            ],
-                                            "additionalProperties": false
-                                        }
-                                    },
-                                    "required": [
-                                        "Status",
-                                        "Location"
-                                    ],
-                                    "additionalProperties": false
-                                }
-                            }
-                        }
-                    },
-                    "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
-                    }
-                }
+                ]
             }
         },
         "/fetch/manifest/files/{token}": {
@@ -11406,13 +11406,10 @@
                 }
             ],
             "get": {
-                "tags": [
-                    "Manifests"
-                ],
-                "summary": "Determine status of a manifest preparation job via XHR",
-                "description": "\nCheck on the status of an ongoing manifest preparation job,\nreturning a 200 status response whose JSON body emulates the\nHTTP headers that would be found in a response to an equivalent\nrequest to the [GET /manifest/files/{token}][1] endpoint.\n\nWhenever client-side JavaScript code is used in a web\napplication to request the preparation of a manifest from Azul,\nthis endpoint should be used instead of [GET\n/manifest/files/{token}][1]. This way, the client can use XHR to\nmake the request, retaining full control over the handling of\nredirects and enabling the client to bypass certain limitations\non the native handling of redirects in web browsers. For\nexample, most browsers ignore the `Retry-After` header in\nredirect responses, causing them to prematurely exhaust the\nupper limit on the number of consecutive redirects, before the\nmanifest generation job is done.\n\n[1]: #operations-Manifests-get_manifest_files\n",
-                "parameters": [],
                 "responses": {
+                    "504": {
+                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                    },
                     "200": {
                         "description": "\nWhen handling this response, clients should wait the\nnumber of seconds given in the `Retry-After` property of\nthe response body and then make another XHR request to\nthe URL specified in the `Location` property.\n\nFor a detailed description of these properties see the\ndocumentation for the respective response headers\ndocumented under \n[GET /manifest/files/{token}][1].\n\n[1]: #operations-Manifests-get_manifest_files\n\n\nNote: For a 200 status code response whose body has the\n`Status` property set to 302, the `Location` property\nmay reference the [GET /manifest/files/{token}][2]\nendpoint and that endpoint may return yet another\nredirect, this time a genuine (not emulated) 302 status\nredirect to the actual location of the manifest.\n\n[2]: #operations-Manifests-get_manifest_files\n\nNote: A 200 status response with a `Status` property of\n302 in its body additionally contains a `CommandLine`\nproperty that lists, for a number of commonly used\nshells, a command line suitable for downloading the\nmanifest.\n",
                         "content": {
@@ -11457,15 +11454,58 @@
                                 }
                             }
                         }
-                    },
-                    "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
                     }
-                }
+                },
+                "tags": [
+                    "Manifests"
+                ],
+                "summary": "Determine status of a manifest preparation job via XHR",
+                "description": "\nCheck on the status of an ongoing manifest preparation job,\nreturning a 200 status response whose JSON body emulates the\nHTTP headers that would be found in a response to an equivalent\nrequest to the [GET /manifest/files/{token}][1] endpoint.\n\nWhenever client-side JavaScript code is used in a web\napplication to request the preparation of a manifest from Azul,\nthis endpoint should be used instead of [GET\n/manifest/files/{token}][1]. This way, the client can use XHR to\nmake the request, retaining full control over the handling of\nredirects and enabling the client to bypass certain limitations\non the native handling of redirects in web browsers. For\nexample, most browsers ignore the `Retry-After` header in\nredirect responses, causing them to prematurely exhaust the\nupper limit on the number of consecutive redirects, before the\nmanifest generation job is done.\n\n[1]: #operations-Manifests-get_manifest_files\n",
+                "parameters": []
             }
         },
         "/repository/files/{file_uuid}": {
             "get": {
+                "responses": {
+                    "504": {
+                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                    },
+                    "301": {
+                        "description": "\nA URL to the given file is still being prepared. Retry by\nwaiting the number of seconds specified in the `Retry-After`\nheader of the response and the requesting the URL specified\nin the `Location` header.\n",
+                        "headers": {
+                            "Location": {
+                                "schema": {
+                                    "type": "string"
+                                },
+                                "description": "\nA URL pointing back at this endpoint, potentially with\ndifferent or additional request parameters.\n"
+                            },
+                            "Retry-After": {
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int64"
+                                },
+                                "description": "\nRecommended number of seconds to wait before requesting\nthe URL specified in the `Location` header. The response\nmay carry this header even if server-side waiting was\nrequested via `wait=1`.\n"
+                            }
+                        }
+                    },
+                    "302": {
+                        "description": "\nThe file can be downloaded from the URL returned in the\n`Location` header.\n",
+                        "headers": {
+                            "Location": {
+                                "schema": {
+                                    "type": "string"
+                                },
+                                "description": "\nA URL that will yield the actual content of the file.\n"
+                            },
+                            "Content-Disposition": {
+                                "schema": {
+                                    "type": "string"
+                                },
+                                "description": "\nSet to a value that makes user agents download the file\ninstead of rendering it, suggesting a meaningful name\nfor the downloaded file stored on the user's file\nsystem. The suggested file name is taken  from the\n`fileName` request parameter or, if absent, from\nmetadata describing the file. It generally does not\ncorrelate with the path component of the URL returned in\nthe `Location` header.\n"
+                            }
+                        }
+                    }
+                },
                 "tags": [
                     "Repository"
                 ],
@@ -11559,51 +11599,40 @@
                     }
                 ],
                 "summary": "Redirect to a URL for downloading a given data file from the underlying repository",
-                "description": "\nThis endpoint is not suitable for interactive use via the Swagger\nUI. Please use the [/fetch endpoint][1] instead.\n\n[1]: #operations-Repository-get_fetch_repository_files__file_uuid_\n",
-                "responses": {
-                    "301": {
-                        "description": "\nA URL to the given file is still being prepared. Retry by\nwaiting the number of seconds specified in the `Retry-After`\nheader of the response and the requesting the URL specified\nin the `Location` header.\n",
-                        "headers": {
-                            "Location": {
-                                "schema": {
-                                    "type": "string"
-                                },
-                                "description": "\nA URL pointing back at this endpoint, potentially with\ndifferent or additional request parameters.\n"
-                            },
-                            "Retry-After": {
-                                "schema": {
-                                    "type": "integer",
-                                    "format": "int64"
-                                },
-                                "description": "\nRecommended number of seconds to wait before requesting\nthe URL specified in the `Location` header. The response\nmay carry this header even if server-side waiting was\nrequested via `wait=1`.\n"
-                            }
-                        }
-                    },
-                    "302": {
-                        "description": "\nThe file can be downloaded from the URL returned in the\n`Location` header.\n",
-                        "headers": {
-                            "Location": {
-                                "schema": {
-                                    "type": "string"
-                                },
-                                "description": "\nA URL that will yield the actual content of the file.\n"
-                            },
-                            "Content-Disposition": {
-                                "schema": {
-                                    "type": "string"
-                                },
-                                "description": "\nSet to a value that makes user agents download the file\ninstead of rendering it, suggesting a meaningful name\nfor the downloaded file stored on the user's file\nsystem. The suggested file name is taken  from the\n`fileName` request parameter or, if absent, from\nmetadata describing the file. It generally does not\ncorrelate with the path component of the URL returned in\nthe `Location` header.\n"
-                            }
-                        }
-                    },
-                    "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
-                    }
-                }
+                "description": "\nThis endpoint is not suitable for interactive use via the Swagger\nUI. Please use the [/fetch endpoint][1] instead.\n\n[1]: #operations-Repository-get_fetch_repository_files__file_uuid_\n"
             }
         },
         "/fetch/repository/files/{file_uuid}": {
             "get": {
+                "responses": {
+                    "504": {
+                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                    },
+                    "200": {
+                        "description": "\nEmulates the response code and headers of\n/repository/files/{file_uuid} while bypassing the default\nuser agent behavior. Note that the status code of a\nsuccessful response will be 200 while the `Status` field of\nits body will be 302.\n\nThe response described here is intended to be processed by\nclient-side Javascript such that the emulated headers can be\nhandled in Javascript rather than relying on the native\nimplementation by the web browser.\n",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "Status": {
+                                            "type": "integer",
+                                            "format": "int64"
+                                        },
+                                        "Location": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "Status",
+                                        "Location"
+                                    ],
+                                    "additionalProperties": false
+                                }
+                            }
+                        }
+                    }
+                },
                 "tags": [
                     "Repository"
                 ],
@@ -11696,60 +11725,15 @@
                         "description": "Reserved. Do not pass explicitly."
                     }
                 ],
-                "summary": "Request a URL for downloading a given data file",
-                "responses": {
-                    "200": {
-                        "description": "\nEmulates the response code and headers of\n/repository/files/{file_uuid} while bypassing the default\nuser agent behavior. Note that the status code of a\nsuccessful response will be 200 while the `Status` field of\nits body will be 302.\n\nThe response described here is intended to be processed by\nclient-side Javascript such that the emulated headers can be\nhandled in Javascript rather than relying on the native\nimplementation by the web browser.\n",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "Status": {
-                                            "type": "integer",
-                                            "format": "int64"
-                                        },
-                                        "Location": {
-                                            "type": "string"
-                                        }
-                                    },
-                                    "required": [
-                                        "Status",
-                                        "Location"
-                                    ],
-                                    "additionalProperties": false
-                                }
-                            }
-                        }
-                    },
-                    "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
-                    }
-                }
+                "summary": "Request a URL for downloading a given data file"
             }
         },
         "/repository/sources": {
             "get": {
-                "summary": "List available data sources",
-                "tags": [
-                    "Repository"
-                ],
-                "parameters": [
-                    {
-                        "name": "catalog",
-                        "in": "query",
-                        "required": false,
-                        "schema": {
-                            "type": "string",
-                            "enum": [
-                                "dcp2"
-                            ],
-                            "default": "dcp2"
-                        },
-                        "description": "The name of the catalog to query."
-                    }
-                ],
                 "responses": {
+                    "504": {
+                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                    },
                     "200": {
                         "description": "\nList the sources the currently authenticated user is\nauthorized to access in the underlying data repository.\n",
                         "content": {
@@ -11784,11 +11768,27 @@
                                 }
                             }
                         }
-                    },
-                    "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
                     }
-                }
+                },
+                "summary": "List available data sources",
+                "tags": [
+                    "Repository"
+                ],
+                "parameters": [
+                    {
+                        "name": "catalog",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "dcp2"
+                            ],
+                            "default": "dcp2"
+                        },
+                        "description": "The name of the catalog to query."
+                    }
+                ]
             }
         }
     },

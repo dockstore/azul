@@ -323,7 +323,7 @@ class AzulChaliceApp(Chalice):
             if not interactive:
                 require(bool(methods), 'Must list methods with interactive=False')
                 self.non_interactive_routes.update((path, method) for method in methods)
-            spec = deep_dict_merge(spec, self.default_specs())
+            spec = deep_dict_merge(self.default_specs(), spec)
             chalice_decorator = super().route(path, methods=methods, **kwargs)
 
             def decorator(view_func):
