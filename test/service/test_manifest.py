@@ -135,6 +135,7 @@ from indexer import (
 )
 from service import (
     DocumentCloningTestCase,
+    MirrorTestCase,
     StorageServiceTestCase,
     WebServiceTestCase,
 )
@@ -340,7 +341,10 @@ class DCP1ManifestTestCase(ManifestTestCase, DCP1CannedBundleTestCase):
     pass
 
 
-class TestManifests(DCP1ManifestTestCase):
+class TestManifests(DCP1ManifestTestCase, MirrorTestCase):
+
+    def _mirror_uri(self, sha256: str):
+        return f's3://{self.mirror_bucket}/file/{sha256}.sha256'
 
     def run(self,
             result: Optional[unittest.result.TestResult] = None
@@ -499,6 +503,10 @@ class TestManifests(DCP1ManifestTestCase):
                             '2018-09-14T12:33:47.012715Z'),
              self._file_url('f2b6c6f0-8d25-4aae-b255-1974cc110cfe',
                             '2018-09-14T12:33:43.720332Z')),
+
+            ('file_mirror_uri',
+             self._mirror_uri('2f6866c4ede92123f90dd15fb180fac56e33309b8fd3f4f52f263ed2f8af2f16'),
+             self._mirror_uri('3125f2f86092798b85be93fbc66f4e733e9aec0929b558589c06929627115582')),
 
             ('cell_suspension.provenance.document_id',
              '',

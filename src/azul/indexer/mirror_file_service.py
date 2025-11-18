@@ -164,6 +164,16 @@ class BaseMirrorFileService:
             bucket = aws.mirror_bucket
         return StorageService(bucket)
 
+    def get_mirror_uri(self, file: File) -> str:
+        """
+        Speculative S3 URI of the given file. No check is performed to see if
+        the file is currently mirrored, so there is no guarantee that requests
+        to the URI will succeed.
+        """
+        return str(furl(scheme='s3',
+                        netloc=self._storage.bucket_name,
+                        path=self.mirror_object_key(file)))
+
     def get_mirror_url(self, file: File) -> str:
         return self._storage.get_presigned_url(key=self.mirror_object_key(file),
                                                file_name=file.name,
