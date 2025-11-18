@@ -12,28 +12,28 @@ is_sandbox = True
 
 pop = 1  # remove snapshot
 
-type ProjectName = str
+type DatasetName = str
 type SourceSpec = str
 
 
 def bqsrc(google_project: str,
           snapshot: str,
           flags: int = 0,
-          ) -> tuple[ProjectName, SourceSpec | None]:
+          ) -> tuple[DatasetName, SourceSpec | None]:
     assert len(google_project) == 8, google_project
-    project = 'datarepo-' + google_project
+    google_project = 'datarepo-' + google_project
     # Some snapshots start with AnVIL instead of ANVIL
     if not snapshot.upper().startswith('ANVIL_'):
         snapshot = 'ANVIL_' + snapshot
-    return mksrc('bigquery', project, snapshot, flags)
+    return mksrc('bigquery', google_project, snapshot, flags)
 
 
 def mksrc(source_type: Literal['bigquery', 'parquet'],
           google_project,
           snapshot,
           flags: int = 0,
-          ) -> tuple[ProjectName, SourceSpec | None]:
-    project = '_'.join(snapshot.split('_')[1:-3])
+          ) -> tuple[DatasetName, SourceSpec | None]:
+    dataset = '_'.join(snapshot.split('_')[1:-3])
     assert flags <= pop
     source = None if flags & pop else ':'.join([
         'tdr',
@@ -42,25 +42,25 @@ def mksrc(source_type: Literal['bigquery', 'parquet'],
         google_project,
         snapshot,
     ])
-    return project, source
+    return dataset, source
 
 
-def mkdelta(items: list[tuple[ProjectName, SourceSpec | None]]
-            ) -> dict[ProjectName, SourceSpec | None]:
+def mkdelta(items: list[tuple[DatasetName, SourceSpec | None]]
+            ) -> dict[DatasetName, SourceSpec | None]:
     result = dict(items)
     assert len(items) == len(result), 'collisions detected'
     assert list(result.keys()) == sorted(result.keys()), 'input not sorted'
     return result
 
 
-def mklist(catalog: dict[ProjectName, SourceSpec | None]) -> list[SourceSpec]:
+def mklist(catalog: dict[DatasetName, SourceSpec | None]) -> list[SourceSpec]:
     return list(filter(None, catalog.values()))
 
 
-def mkdict(previous_catalog: dict[ProjectName, SourceSpec | None],
+def mkdict(previous_catalog: dict[DatasetName, SourceSpec | None],
            num_expected: int,
-           delta: dict[ProjectName, SourceSpec | None],
-           ) -> dict[ProjectName, SourceSpec | None]:
+           delta: dict[DatasetName, SourceSpec | None],
+           ) -> dict[DatasetName, SourceSpec | None]:
     catalog = previous_catalog | delta
     num_actual = len(mklist(catalog))
     assert num_expected == num_actual, (num_expected, num_actual)

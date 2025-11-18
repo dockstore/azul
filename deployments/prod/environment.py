@@ -10,7 +10,7 @@ from typing import (
 
 pop = 1  # remove snapshot
 
-type ProjectName = str
+type DatasetName = str
 type SourceSpec = str
 
 
@@ -18,7 +18,7 @@ def mksrc(source_type: Literal['bigquery', 'parquet'],
           google_project,
           snapshot,
           flags: int = 0,
-          ) -> tuple[ProjectName, SourceSpec | None]:
+          ) -> tuple[DatasetName, SourceSpec | None]:
     _, env, project, _ = snapshot.split('_', 3)
     assert flags <= pop
     source = None if flags & pop else ':'.join([
@@ -31,22 +31,22 @@ def mksrc(source_type: Literal['bigquery', 'parquet'],
     return project, source
 
 
-def mkdelta(items: list[tuple[ProjectName, SourceSpec | None]]
-            ) -> dict[ProjectName, SourceSpec | None]:
+def mkdelta(items: list[tuple[DatasetName, SourceSpec | None]]
+            ) -> dict[DatasetName, SourceSpec | None]:
     result = dict(items)
     assert len(items) == len(result), 'collisions detected'
     assert list(result.keys()) == sorted(result.keys()), 'input not sorted'
     return result
 
 
-def mklist(catalog: dict[ProjectName, SourceSpec | None]) -> list[SourceSpec]:
+def mklist(catalog: dict[DatasetName, SourceSpec | None]) -> list[SourceSpec]:
     return list(filter(None, catalog.values()))
 
 
-def mkdict(previous_catalog: dict[ProjectName, SourceSpec | None],
+def mkdict(previous_catalog: dict[DatasetName, SourceSpec | None],
            num_expected: int,
-           delta: dict[ProjectName, SourceSpec | None],
-           ) -> dict[ProjectName, SourceSpec | None]:
+           delta: dict[DatasetName, SourceSpec | None],
+           ) -> dict[DatasetName, SourceSpec | None]:
     catalog = previous_catalog | delta
     num_actual = len(mklist(catalog))
     assert num_expected == num_actual, (num_expected, num_actual)
