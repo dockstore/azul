@@ -1671,7 +1671,8 @@ class CompactManifestGenerator(PagedManifestGenerator):
                     entities = self._get_entities(field_path, doc)
                     if field_path == ('contents', 'files'):
                         file = copy_json(one(entities))
-                        file['file_url'] = self._azul_file_url(file)
+                        if 'file_url' in column_mapping:
+                            file['file_url'] = self._azul_file_url(file)
                         entities = [file]
                     self._extract_fields(field_path=field_path,
                                          entities=entities,
@@ -1684,7 +1685,8 @@ class CompactManifestGenerator(PagedManifestGenerator):
                             for related_file in file['related_files']:
                                 related_row = {}
                                 file.update(related_file)
-                                file['file_url'] = self._azul_file_url(file)
+                                if 'file_url' in column_mapping:
+                                    file['file_url'] = self._azul_file_url(file)
                                 self._extract_fields(field_path=field_path,
                                                      entities=[file],
                                                      column_mapping=column_mapping,
