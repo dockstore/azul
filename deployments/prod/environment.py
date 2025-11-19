@@ -1745,10 +1745,7 @@ dcp54_sources = mkdict(dcp53_sources, 521, mkdelta([
     mksrc('bigquery', 'datarepo-dcd21441', 'hca_prod_f77290ae0d7b4239b0fe3cf2c9e8858d__20250203_dcp2_20250930_dcp54'),
 ]))
 
-dcp55_sources = mkdict(dcp54_sources, 526, mkdelta([
-    mksrc('bigquery', 'datarepo-5cffc4da', 'hca_prod_2079bb2e676e4bbf8c68f9c6459edcbb__20240327_dcp2_20251104_dcp55'),
-    mksrc('bigquery', 'datarepo-03f25c54', 'hca_prod_4bcc16b57a4745bbb9c0be9d5336df2d__20240327_dcp2_20251104_dcp55'),
-    mksrc('bigquery', 'datarepo-b42d0841', 'hca_prod_9c20a245f2c043ae82c92232ec6b594f__20220212_dcp2_20251104_dcp55'),
+dcp55_sources = mkdict(dcp54_sources, 523, mkdelta([
     mksrc('bigquery', 'datarepo-d840670b', 'hca_prod_b10cd3143e7144379a1677028d243e81__20251104_dcp2_20251104_dcp55'),
     mksrc('bigquery', 'datarepo-bb0a7bc5', 'hca_prod_c7a342eb777e447995ce468f5bbcd893__20251104_dcp2_20251104_dcp55'),
 ]))
