@@ -761,13 +761,8 @@ class IndexingIntegrationTest(IntegrationTestCase):
         return one(hits)
 
     def _source_spec(self, catalog: CatalogName, entity: JSON) -> SourceSpec:
-        if config.is_hca_enabled(catalog):
-            field = 'sourceSpec'
-        elif config.is_anvil_enabled(catalog):
-            field = 'source_spec'
-        else:
-            assert False, catalog
-        return TDRSourceSpec.parse(one(entity['sources'])[field])
+        source = self._source_from_response(catalog, one(entity['sources']))
+        return source.spec
 
     def _file_size_facet(self, catalog: CatalogName) -> str:
         if config.is_hca_enabled(catalog):
@@ -1271,6 +1266,13 @@ class IndexingIntegrationTest(IntegrationTestCase):
         notifications.extend(duplicate_bundles)
         return notifications, bundle_fqids
 
+    def _source_from_response(self, catalog: CatalogName, source_json: JSON) -> SourceRef:
+        special_fields = self.metadata_plugin(catalog).special_fields
+        source = dict(id=source_json[special_fields.source_id],
+                      spec=source_json[special_fields.source_spec],
+                      prefix=source_json[special_fields.source_prefix])
+        return self.repository_plugin(catalog).source_ref_cls.from_json(source)
+
     def _get_indexed_bundles(self,
                              catalog: CatalogName,
                              filters: JSON | None = None
@@ -1280,10 +1282,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
         special_fields = self.metadata_plugin(catalog).special_fields
         for hit in hits:
             source, bundle = one(hit['sources']), one(hit['bundles'])
-            source = dict(id=source[special_fields.source_id],
-                          spec=source[special_fields.source_spec],
-                          prefix=source[special_fields.source_prefix])
-            source = self.repository_plugin(catalog).source_ref_cls.from_json(source)
+            source = self._source_from_response(catalog, source)
             bundle_fqid = SourcedBundleFQID(uuid=bundle[special_fields.bundle_uuid],
                                             version=bundle[special_fields.bundle_version],
                                             source=source)
