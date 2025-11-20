@@ -13,6 +13,7 @@ from azul.auth import (
     Authentication,
 )
 from azul.chalice import (
+    AppController,
     BadGatewayError,
     ServiceUnavailableError,
 )
@@ -22,9 +23,6 @@ from azul.http import (
 )
 from azul.service import (
     Filters,
-)
-from azul.service.app_controller import (
-    ServiceAppController,
 )
 from azul.service.source_service import (
     SourceService,
@@ -36,7 +34,7 @@ from azul.types import (
 log = logging.getLogger(__name__)
 
 
-class SourceController(ServiceAppController):
+class SourceController(AppController):
 
     @cached_property
     def _source_service(self) -> SourceService:
@@ -84,6 +82,9 @@ class SourceController(ServiceAppController):
             raise TooManyRequestsError(*e.args)
         else:
             return source_ids
+
+    def _list_public_source_ids(self, catalog: CatalogName) -> set[str]:
+        return self._list_source_ids(catalog, authentication=None)
 
     def get_filters(self,
                     catalog: CatalogName,

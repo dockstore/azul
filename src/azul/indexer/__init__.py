@@ -407,6 +407,14 @@ class Prefix(Parseable):
 Prefix.of_everything = Prefix.parse('/0')
 
 
+@attrs.frozen(kw_only=True)
+class SourceConfig(SerializableAttrs):
+    """
+    Configuration on how to index or mirror a specific source.
+    """
+    mirror: bool
+
+
 @attrs.frozen(kw_only=True, order=True)
 class SourceSpec(Parseable, metaclass=ABCMeta):
     """

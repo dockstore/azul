@@ -5,6 +5,7 @@ from unittest.mock import (
     patch,
 )
 
+import attrs
 from chalice.app import (
     SQSRecord,
 )
@@ -23,6 +24,9 @@ from azul import (
 from azul.http import (
     http_client,
 )
+from azul.indexer import (
+    SourceConfig,
+)
 from azul.indexer.mirror_controller import (
     MirrorController,
 )
@@ -39,8 +43,12 @@ from azul.logging import (
 from azul.plugins.metadata.hca import (
     HCAFile,
 )
+from azul.service.source_service import (
+    SourceService,
+)
 from azul.types import (
     JSON,
+    MutableJSONs,
 )
 from azul_test_case import (
     DCP2TestCase,
@@ -69,8 +77,30 @@ class TestMirrorController(DCP2TestCase,
     def app_name(cls) -> str:
         return 'indexer'
 
+    @classmethod
+    def _patch_list_source_ids(cls):
+        cls.addClassPatch(patch.object(SourceService,
+                                       'list_source_ids',
+                                       return_value={cls.source.id}))
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls._patch_list_source_ids()
+
+    _file_contents = b'lorem ipsum dolor sit\n'
+
+    _file = HCAFile(uuid='405852c9-a0cc-4cd8-b9ff-7c6296223661',
+                    name='foo.txt',
+                    version=None,
+                    drs_uri='drs://fake-domain.lan/foo',
+                    size=len(_file_contents),
+                    content_type='text/plain',
+                    sha256=hashlib.sha256(_file_contents).hexdigest())
+
     def test_mirroring(self):
         self._create_mock_queues(config.mirror_queue_names)
+        file = self._file
         with self.subTest('remote_mirror'):
             source_message = self._test_remote_mirror()
 
@@ -78,7 +108,7 @@ class TestMirrorController(DCP2TestCase,
                 partition_message = self._test_mirror_source(source_message)
 
                 with self.subTest('mirror_partition'):
-                    file, file_message = self._test_mirror_partition(partition_message)
+                    file_message = self._test_mirror_partition(partition_message, [file])
 
                     with self.subTest('mirror_file', corrupted=False, exists=False):
                         self._test_mirror_file(file, file_message)
@@ -93,8 +123,6 @@ class TestMirrorController(DCP2TestCase,
                     with self.subTest('mirror_file', corrupted=False, exists=True):
                         self._test_reuploaded_file(file_message)
 
-    _file_contents = b'lorem ipsum dolor sit\n'
-
     @property
     def mirror_controller(self) -> MirrorController:
         return self.app_module.app.mirror_controller
@@ -102,9 +130,13 @@ class TestMirrorController(DCP2TestCase,
     def _mirror_event(self, body: JSON) -> list[SQSRecord]:
         return [self._mock_sqs_record(body, fifo=True)]
 
+    def _remote_mirror(self, mirror_source_cfg: bool = True) -> MutableJSONs:
+        cfg = SourceConfig(mirror=mirror_source_cfg)
+        self.client.remote_mirror(self.catalog, [(self.source, cfg)])
+        return self._read_queue(self.client.mirror_queue())
+
     def _test_remote_mirror(self):
-        self.client.remote_mirror(self.catalog, [self.source])
-        source_message = one(self._read_queue(self.client.mirror_queue()))
+        source_message = one(self._remote_mirror())
         expected_message = dict(action='mirror_source',
                                 catalog=self.catalog,
                                 source=self.source.to_json())
@@ -126,25 +158,18 @@ class TestMirrorController(DCP2TestCase,
         self.assertEqual(list(self.source.prefix.partition_prefixes()), partitions)
         return partition_message
 
-    def _test_mirror_partition(self, partition_message):
+    def _test_mirror_partition(self, partition_message, files: list[HCAFile]):
         event = self._mirror_event(partition_message)
-        file = HCAFile(uuid='405852c9-a0cc-4cd8-b9ff-7c6296223661',
-                       name='foo.txt',
-                       version=None,
-                       drs_uri='drs://fake-domain.lan/foo',
-                       size=len(self._file_contents),
-                       content_type='text/plain',
-                       sha256=hashlib.sha256(self._file_contents).hexdigest())
         plugin_cls = type(self.client.repository_plugin(self.catalog))
-        with patch.object(plugin_cls, 'list_files', return_value=[file]):
+        with patch.object(plugin_cls, 'list_files', return_value=files):
             self.mirror_controller.mirror(event)
         file_message = one(self._read_queue(self.client.mirror_queue()))
         expected_message = dict(action='mirror_file',
                                 catalog=self.catalog,
                                 source=self.source.to_json(),
-                                file=file.to_json())
+                                file=self._file.to_json())
         self.assertEqual(expected_message, file_message)
-        return file, file_message
+        return file_message
 
     def _test_mirror_file(self, file, file_message):
         event = self._mirror_event(file_message)
@@ -181,3 +206,31 @@ class TestMirrorController(DCP2TestCase,
         self.assertEqual(200, response.status, response.data)
         schema = json.loads(response.data)
         jsonschema.validate(info, schema)
+
+    def test_files_not_mirrored(self):
+        self._create_mock_queues(config.mirror_queue_names)
+
+        with self.subTest(no_mirror=True):
+            messages = self._remote_mirror(mirror_source_cfg=False)
+            self.assertEqual([], messages)
+
+        catalog = config.catalogs[self.catalog]
+
+        def patch_max_file_size(size):
+            return patch.dict(config.catalogs, {
+                self.catalog: attrs.evolve(catalog, mirror_limit=size)
+            })
+
+        with self.subTest(mirror_limit=-1):
+            with patch_max_file_size(-1):
+                messages = self._remote_mirror()
+                self.assertEqual([], messages)
+
+        with self.subTest(mirror_limit=self._file.size):
+            too_big = attrs.evolve(self._file,
+                                   uuid='2873c8ef-8f76-4ccf-add7-26afe8c62873',
+                                   size=self._file.size + 1)
+            source_message = self._test_remote_mirror()
+            partition_message = self._test_mirror_source(source_message)
+            with patch_max_file_size(self._file.size):
+                self._test_mirror_partition(partition_message, [too_big, self._file])

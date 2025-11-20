@@ -56,6 +56,7 @@ from azul.service import (
 )
 from azul.service.app_controller import (
     Mandatory,
+    ServiceAppController,
     validate_catalog,
     validate_params,
 )
@@ -81,7 +82,7 @@ from azul.uuids import (
 log = logging.getLogger(__name__)
 
 
-class RepositoryController(SourceController):
+class RepositoryController(ServiceAppController, SourceController):
 
     @cached_property
     def service(self) -> RepositoryService:
