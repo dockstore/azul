@@ -131,12 +131,16 @@ class BaseMirrorService:
     def _queues(self) -> Queues:
         return Queues()
 
+    @classmethod
+    def do_not_mirror(cls, catalog: CatalogName, file_size: int = 0) -> bool:
+        max_size = config.catalogs[catalog].mirror_limit
+        return max_size is not None and file_size > max_size
+
     def mirror_sources(self,
                        catalog: CatalogName,
                        sources: Iterable[tuple[SourceRef, SourceConfig]]
                        ):
-        mirror_limit = config.catalogs[catalog].mirror_limit
-        if mirror_limit is not None and mirror_limit < 0:
+        if self.do_not_mirror(catalog):
             log.info('Not mirroring any files in catalog %r because the file '
                      'size limit is negative', catalog)
         else:
@@ -238,10 +242,9 @@ class MirrorService(BaseMirrorService):
     def _(self, a: MirrorPartitionAction) -> Iterable[MirrorAction]:
         plugin = self._repository_plugin(a.catalog)
         files = plugin.list_files(a.source, a.prefix)
-        max_size = config.catalogs[a.catalog].mirror_limit
         for file in files:
             assert file.size is not None, R('File size unknown', file)
-            if max_size is not None and file.size > max_size:
+            if self.do_not_mirror(a.catalog, file.size):
                 log.info('Not mirroring file to save cost: %r', file)
             else:
                 log.debug('Queueing file %r', file)
