@@ -11,7 +11,6 @@ from concurrent.futures.thread import (
 )
 from contextlib import (
     contextmanager,
-    nullcontext,
 )
 import csv
 import gzip
@@ -599,12 +598,11 @@ class IndexingIntegrationTest(IntegrationTestCase):
                         responses.append(response)
                         return response
 
-                    is_anvil = config.is_anvil_enabled(catalog)
                     with (
                         mock.patch.object(self, '_get_url', new=get_url),
                         # Include MA files to reduce the chances of an empty
                         # manifest due to files not matching the filter
-                        self._service_account_credentials if is_anvil else nullcontext()
+                        self._service_account_credentials
                     ):
                         # Make multiple identical concurrent requests to test
                         # the idempotence of manifest generation, and its
