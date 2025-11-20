@@ -1032,7 +1032,8 @@ anvil10_sources = union(anvil9_sources, 283, delta([
     source('f143f633', 'ccdg_broad_ai_ibd_daly_mcgovern_share_wes_20240104_ANV5_202503171541'),
 ]))
 
-anvil11_sources = union(anvil10_sources, 367, delta([
+anvil11_sources = union(anvil10_sources, 366, delta([
+    source('f954ce44', 'African_American_Seq_HGV_20230727_ANV5_202409251735', pop),
     source('afe52c93', 'CCDG_Broad_NP_Epilepsy_AUSALF_HMB_IRB_GSA_MD_20250718_ANV5_202508070436'),
     source('a0e71864', 'CCDG_Broad_NP_Epilepsy_AUSALF_HMB_IRB_WES_20250718_ANV5_202507300051'),
     source('d4e6fade', 'CCDG_Broad_NP_Epilepsy_AUSAUS_EPIL_BA_MDS_GSA_MD_20250718_ANV5_202508051209'),
@@ -1204,7 +1205,7 @@ anvil11_sources = union(anvil10_sources, 367, delta([
     source('61b6b42b', 'ccdg_broad_np_epilepsy_zafagn_ds_epi_como_mds_wes_20221026_ANV5_202409302116', pop),
 ]))
 
-anvil12_sources = union(anvil11_sources, 373, delta([
+anvil12_sources = union(anvil11_sources, 372, delta([
     source('48204a7f', 'CCDG_Broad_CVD_EOCAD_PartnersBiobank_HMB_WES_20230621_ANV5_202510141553'),
     source('50aed057', 'CCDG_Broad_NP_Epilepsy_AUSAUS_EP_BA_CN_ID_MDS_GSA_MD_20251016_ANV5_202510161935'),
     source('25e5ec27', 'CCDG_Broad_NP_Epilepsy_USAMON_GRU_WES_20250721_ANV5_202510141558'),
