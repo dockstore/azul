@@ -20,6 +20,24 @@ reverted. This is all fairly informal and loosely defined. Hopefully we won't
 have too many entries in this file.
 
 
+#7571 Add new snapshot to dcp3 on HCA dev
+=========================================
+
+Operator
+--------
+
+Perform a targeted reindex of snapshot
+``datarepo-dev-b46086a9.hca_dev_51f02950ee254f4b8d0759aa99bb3498__20210827_20230215``
+is ``sandbox`` and ``dev``.
+
+Everyone
+--------
+
+In your HCA personal deployments' ``environment.py`` files, add the new snapshot
+to the sources for catalog ``dcp3``, bringing the total number of sources to
+105. Then perform a targeted reindex of that snapshot.
+
+
 #7066 Configure mirroring per catalog and source
 ================================================
 
