@@ -1,4 +1,4 @@
 azul_python_version=3.13.9
 azul_python_image=docker.io/library/python@sha256:5a0c1232f2ef1cdac24046356921efbfcef0bfd7739f49027a54698c1207d893
-azul_docker_version=28.5.1
+azul_docker_version=28.5.2
 azul_terraform_version=1.13.5
