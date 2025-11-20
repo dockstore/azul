@@ -1165,7 +1165,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
             # FIXME: Two AnVIL snapshots with null in anvil_file.file_size column
             #        https://github.com/DataBiosphere/azul/issues/7243
             if file_size is None:
-                file_size = 1
+                file_size = 0
             self.assertEqual(1 if file_size > 0 else 0, len(content.read(1)))
 
     def _validate_file_response(self,
