@@ -1754,6 +1754,11 @@ dcp54_sources = union(dcp53_sources, 521, delta([
     source('bigquery', 'datarepo-dcd21441', 'hca_prod_f77290ae0d7b4239b0fe3cf2c9e8858d__20250203_dcp2_20250930_dcp54'),
 ]))
 
+dcp55_sources = union(dcp54_sources, 523, delta([
+    source('bigquery', 'datarepo-d840670b', 'hca_prod_b10cd3143e7144379a1677028d243e81__20251104_dcp2_20251104_dcp55'),
+    source('bigquery', 'datarepo-bb0a7bc5', 'hca_prod_c7a342eb777e447995ce468f5bbcd893__20251104_dcp2_20251104_dcp55'),
+]))
+
 lungmap_sources = union({}, 3, delta([
     source('bigquery', 'datarepo-32f75497', 'lungmap_prod_00f056f273ff43ac97ff69ca10e38c89__20220308_20220308'),
     source('bigquery', 'datarepo-7066459d', 'lungmap_prod_1bdcecde16be420888f478cd2133d11d__20220308_20220308'),
@@ -1866,6 +1871,7 @@ def env() -> Mapping[str, str | None]:
                                        sources=condense(sources))
             for atlas, catalog, sources, mirror_limit, it_mirror_limit in [
                 ('hca', 'dcp54', dcp54_sources, None, 1.5 * 1024 ** 3),
+                ('hca', 'dcp55', dcp55_sources, None, 1.5 * 1024 ** 3),
                 ('lungmap', 'lm9', lm9_sources, -1, -1)
             ]
             for suffix, is_it in [
