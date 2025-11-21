@@ -13,6 +13,7 @@ from azul import (
 )
 from azul.args import (
     AzulArgumentHelpFormatter,
+    get_sources,
 )
 from azul.azulclient import (
     AzulClient,
@@ -75,7 +76,6 @@ def main(args):
                         default=config.default_catalog,
                         help='The name of the catalog to mirror.')
     parser.add_argument('--sources',
-                        default=config.current_sources,
                         nargs='+',
                         help='Limit mirroring to a subset of the configured sources. '
                              'Supports shell-style wildcards to match multiple sources per argument. '
@@ -99,7 +99,7 @@ def main(args):
     if args.purge:
         azul.queues.purge_mirror()
     if args.mirror:
-        mirror_catalog(azul, args.catalog, set(args.sources), args.wait)
+        mirror_catalog(azul, args.catalog, get_sources(args.sources), args.wait)
 
 
 if __name__ == '__main__':
