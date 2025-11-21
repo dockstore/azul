@@ -95,7 +95,7 @@ class deep_dict_merge[K, V](dict):
        >>> deep_dict_merge({0: 1}, {0: 2})
        Traceback (most recent call last):
        ...
-       ValueError: 1 != 2
+       ValueError: ('Conflicting values', 1, 2)
 
        >>> deep_dict_merge({0: 1}, {0: 2}, override=True)
        {0: 2}
@@ -106,7 +106,7 @@ class deep_dict_merge[K, V](dict):
        >>> deep_dict_merge({0: 1}, {0: {2: 3}})
        Traceback (most recent call last):
        ...
-       ValueError: ('Cannot merge dict with non-dict', 1, {2: 3})
+       ValueError: ('Can only merge mappings', 1, {2: 3})
 
     To merge all mappings in an iterable, use this form:
 
@@ -143,9 +143,9 @@ class deep_dict_merge[K, V](dict):
                             if self.override:
                                 self[k] = v2
                             else:
-                                raise ValueError(f'{v1!r} != {v2!r}')
+                                raise ValueError('Conflicting values', v1, v2)
                         case _:
-                            raise ValueError('Cannot merge dict with non-dict', v1, v2)
+                            raise ValueError('Can only merge mappings', v1, v2)
 
 
 def explode_dict[K, V](d: Mapping[K, Union[V, list[V], set[V], tuple[V]]]
