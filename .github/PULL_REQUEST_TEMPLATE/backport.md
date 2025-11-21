@@ -27,7 +27,7 @@ This is the PR template for backport PRs against `develop`.
 - [ ] PR is not a draft
 - [ ] PR is awaiting requested review from system administrator
 - [ ] Status of PR is *Review requested*
-- [ ] PR is assigned to only the system administrator
+- [ ] PR is assigned to only the system administrator and the author
 
 
 ### System administrator (after approval)
@@ -37,7 +37,7 @@ This is the PR template for backport PRs against `develop`.
 - [ ] PR title is appropriate as title of merge commit
 - [ ] `N reviews` label is accurate
 - [ ] Status of PR is *Approved*
-- [ ] PR is assigned to only the operator
+- [ ] PR is assigned to only the operator and the author
 
 
 ### Operator
@@ -82,6 +82,7 @@ This is the PR template for backport PRs against `develop`.
 - [ ] Build passes on GitLab `anvildev`
 - [ ] Reviewed build logs for anomalies on GitLab `anvildev`
 - [ ] Deleted PR branch from GitHub
+- [ ] PR is assigned to only the operator
 - [ ] Deleted PR branch from GitLab `dev`
 - [ ] Deleted PR branch from GitLab `anvildev`
 - [ ] Status of linked issue is *Stable*

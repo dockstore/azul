@@ -1,20 +1,27 @@
 from hashlib import (
     sha1,
 )
+from itertools import (
+    accumulate,
+)
 import math
 from typing import (
+    Any,
     ClassVar,
     Self,
+    dataclass_transform,
 )
 from uuid import (
     UUID,
 )
 
-import attr
+from attrs import (
+    frozen,
+)
 
 from azul import (
-    reject,
-    require,
+    R,
+    cached_property,
 )
 from azul.types import (
     JSON,
@@ -94,12 +101,12 @@ def validate_uuid_prefix(uuid_prefix: str) -> None:
     >>> validate_uuid_prefix('8f538f5-')
     Traceback (most recent call last):
     ...
-    azul.RequirementError: UUID prefix ends with an invalid character: 8f538f5-
+    AssertionError: R('UUID prefix ends with an invalid character', '8f538f5-')
 
     >>> validate_uuid_prefix('8f538f-')
     Traceback (most recent call last):
     ...
-    azul.RequirementError: UUID prefix ends with an invalid character: 8f538f-
+    AssertionError: R('UUID prefix ends with an invalid character', '8f538f-')
 
     >>> validate_uuid_prefix('8f538f53a')
     Traceback (most recent call last):
@@ -107,8 +114,8 @@ def validate_uuid_prefix(uuid_prefix: str) -> None:
     azul.uuids.InvalidUUIDPrefixError: '8f538f53a' is not a valid UUID prefix.
     """
     valid_uuid_str = '26a8fccd-bbd2-4342-9c19-6ed7c9bb9278'
-    reject(uuid_prefix.endswith('-'),
-           f'UUID prefix ends with an invalid character: {uuid_prefix}')
+    assert not uuid_prefix.endswith('-'), R(
+        'UUID prefix ends with an invalid character', uuid_prefix)
     try:
         validate_uuid(uuid_prefix + valid_uuid_str[len(uuid_prefix):])
     except InvalidUUIDError:
@@ -137,11 +144,28 @@ def change_version(uuid: str, old_version: int, new_version: int) -> str:
     return uuid
 
 
+@dataclass_transform(frozen_default=True,
+                     kw_only_default=True,
+                     order_default=True)
 class UUIDPartitionMeta(type):
 
-    def __init__(cls, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        attr.s(frozen=True, kw_only=True, auto_attribs=True)(cls)
+    def __init__(cls, name: str, bases: tuple[type, ...], members: dict[str, Any]):
+        super().__init__(name, bases, members)
+
+        # We can't use slots=True for two reasons:
+        #
+        # 1) slots=True causes attrs to duplicate the class (the instance of
+        #    this metaclass), which then causes this method to be invoked twice,
+        #    the second time feeding an already decorated class back to attrs.
+        #    This could be addressed by overriding __new__ instead of __init__.
+        #
+        # 2) We would like to be able to use @cached_property on methods of
+        #    instances, and @cached_property does not work with slotted classes.
+        #
+        # The assert below ensures that attrs does not duplicate the class, and
+        # instead only augments it.
+        #
+        assert cls is frozen(kw_only=True, slots=False, order=True)(cls)
         cls.root = cls(prefix_length=0, prefix=0)
 
 
@@ -151,48 +175,139 @@ class UUIDPartition(metaclass=UUIDPartitionMeta):
     space use a prefix of the hexadecimal representation of UUIDs. This class
     uses the binary representation and is therefore more granular.
     """
+    #: The number of high-order bits of the binary representation of a UUID that
+    #: have to be equal to the prefix for a UUID to be part of this partion.
+    #:
     prefix_length: int
+
+    #: The prefix. Only the `prefix_length` low-order bits are compared. The
+    #: remaining high-order bits have to be 0.
+    #:
     prefix: int
 
-    root: ClassVar[Self]  # see metaclass above
+    #: The canonical string representation of UUIDs has five groups of
+    #: hexadecimal digits separated by dash. The first group is eight digits
+    #: long, the last group twelve and the three groups in between are four
+    #: digits long. The first and the last group are best suited for a random
+    #: distribution of v4 v5 UUIDs across partitions. By default, UUID
+    #: partitions use the first group.
+    #:
+    group: int = 0
 
-    # This stub is only needed to aid PyCharm's type inference. Without this,
-    # a constructor invocation that doesn't refer to the class explicitly, but
-    # through a variable will cause a warning. I suspect a bug in PyCharm:
-    #
-    # https://youtrack.jetbrains.com/issue/PY-44728
-    #
-    # noinspection PyDataclass
-    def __init__(self, *, prefix_length: int, prefix: int) -> None: ...
+    #: The partition that includes all UUIDs. Since this attribute holds an
+    #: instance of this class, we can't initialize it here, but have to do so in
+    #: the metaclass constructor.
+    #:
+    root: ClassVar[Self]
+
+    #: The width of each group in bits.
+    #:
+    group_lengths: ClassVar[tuple[int, ...]]
+    group_lengths = tuple(4 * n for n in [8, 4, 4, 4, 12])
+
+    #: For each group, the number of bits to right-shift the binary, 128-bit-
+    #: wide representation of a UUID in order to have the bits of that group
+    #: become the low-order bits.
+    #:
+    group_shifts: ClassVar[tuple[int, ...]]
+    group_shifts = tuple(accumulate(group_lengths[:-1], initial=0))
 
     def __attrs_post_init__(self):
-        reject(self.prefix_length == 0 and self.prefix != 0)
-        require(0 <= self.prefix < 2 ** self.prefix_length)
+        """
+        >>> UUIDPartition(prefix_length=0, prefix=1)
+        ... # doctest: +NORMALIZE_WHITESPACE
+        Traceback (most recent call last):
+        ...
+        AssertionError: R('If prefix length is 0, the prefix must be, too',
+        UUIDPartition(prefix_length=0, prefix=1, group=0))
+
+        >>> UUIDPartition(prefix_length=1, prefix=3)
+        ... # doctest: +NORMALIZE_WHITESPACE
+        Traceback (most recent call last):
+        ...
+        AssertionError: R('Prefix has extra high-order bits set',
+        UUIDPartition(prefix_length=1, prefix=3, group=0))
+
+        >>> UUIDPartition(prefix_length=1, prefix=0, group=5)
+        ... # doctest: +NORMALIZE_WHITESPACE
+        Traceback (most recent call last):
+        ...
+        AssertionError: R('Invalid group',
+        UUIDPartition(prefix_length=1, prefix=0, group=5))
+
+        >>> UUIDPartition(prefix_length=1, prefix=0, group=-1)
+        ... # doctest: +NORMALIZE_WHITESPACE
+        Traceback (most recent call last):
+        ...
+        AssertionError: R('Invalid group',
+        UUIDPartition(prefix_length=1, prefix=0, group=-1))
+
+        >>> UUIDPartition(prefix_length=49, prefix=0, group=4)
+        Traceback (most recent call last):
+        ...
+        AssertionError: R('Length of prefix exceeds that of group', 49, 48)
+
+        >>> UUIDPartition(prefix_length=17, prefix=0, group=1)
+        Traceback (most recent call last):
+        ...
+        AssertionError: R('Length of prefix exceeds that of group', 17, 16)
+        """
+        assert self.prefix_length != 0 or self.prefix == 0, R(
+            'If prefix length is 0, the prefix must be, too', self)
+        assert 0 <= self.group < len(self.group_shifts), R(
+            'Invalid group', self)
+        group_length = self.group_lengths[self.group]
+        assert self.prefix_length <= group_length, R(
+            'Length of prefix exceeds that of group', self.prefix_length, group_length)
+        assert 0 <= self.prefix < 2 ** self.prefix_length, R(
+            'Prefix has extra high-order bits set', self)
 
     @classmethod
     def from_json(cls, json: JSON) -> Self:
         return cls(prefix_length=json_int(json['prefix_length']),
-                   prefix=json_int(json['prefix']))
+                   prefix=json_int(json['prefix']),
+                   group=json_int(json['group']))
 
     def to_json(self) -> MutableJSON:
         return {
             'prefix_length': self.prefix_length,
-            'prefix': self.prefix
+            'prefix': self.prefix,
+            'group': self.group
         }
 
     def contains(self, member: UUID) -> bool:
         """
-        >>> p = UUIDPartition(prefix_length=7, prefix=0b0111_1111)
+        >>> p = UUIDPartition(prefix_length=7, prefix=0b1111_111)
         >>> p.contains(UUID('fdd4524e-14c4-41d7-9071-6cadab09d75c'))
         False
         >>> p.contains(UUID('fed4524e-14c4-41d7-9071-6cadab09d75c'))
         True
         >>> p.contains(UUID('ffd4524e-14c4-41d7-9071-6cadab09d75c'))
         True
+
+        >>> p = UUIDPartition(prefix_length=5, prefix=0b0110_0, group=4)
+        >>> p.contains(UUID('fdd4524e-14c4-41d7-9071-66adab09d75c'))
+        True
+        >>> p.contains(UUID('fdd4524e-14c4-41d7-9071-67adab09d75c'))
+        True
+        >>> p.contains(UUID('fdd4524e-14c4-41d7-9071-68adab09d75c'))
+        False
+
+        >>> p = UUIDPartition(prefix_length=48, prefix=0x68adab09d75c, group=4)
+        >>> p.contains(UUID('fdd4524e-14c4-41d7-9071-68adab09d75c'))
+        True
+        >>> p.contains(UUID('fdd4524e-14c4-41d7-9071-68adab09d75d'))
+        False
         """
-        # UUIDs are 128 bit integers
-        shift = 128 - self.prefix_length
-        return member.int >> shift == self.prefix
+        mask, shift = self._mask_and_shift
+        return (member.int & mask) >> shift == self.prefix
+
+    @cached_property
+    def _mask_and_shift(self) -> tuple[int, int]:
+        group_shift = self.group_shifts[self.group]
+        shift = 128 - self.prefix_length - group_shift
+        mask = (1 << (128 - group_shift)) - 1
+        return mask, shift
 
     def divide(self, num_divisions: int) -> list[Self]:
         """
@@ -200,19 +315,34 @@ class UUIDPartition(metaclass=UUIDPartitionMeta):
         sub-partitions. The length of the return value will always be the
         smallest a power of two that is greater than ``num_divisions`.
 
+        >>> UUIDPartition.root.divide(0)
+        Traceback (most recent call last):
+        ...
+        AssertionError: R('Number of divisions must be 1 or more')
+
+        >>> UUIDPartition.root.divide(1) == [UUIDPartition.root]
+        True
+
         >>> sorted(UUIDPartition.root.divide(3))
         ... # doctest: +NORMALIZE_WHITESPACE
-        [UUIDPartition(prefix_length=2, prefix=0),\
-        UUIDPartition(prefix_length=2, prefix=1),\
-        UUIDPartition(prefix_length=2, prefix=2),\
-        UUIDPartition(prefix_length=2, prefix=3)]
+        [UUIDPartition(prefix_length=2, prefix=0, group=0),
+        UUIDPartition(prefix_length=2, prefix=1, group=0),
+        UUIDPartition(prefix_length=2, prefix=2, group=0),
+        UUIDPartition(prefix_length=2, prefix=3, group=0)]
+
+        >>> UUIDPartition(prefix_length=2, prefix=0, group=4).divide(2)
+        ... # doctest: +NORMALIZE_WHITESPACE
+        [UUIDPartition(prefix_length=3, prefix=0, group=4),
+        UUIDPartition(prefix_length=3, prefix=1, group=4)]
         """
+        assert num_divisions > 0, R('Number of divisions must be 1 or more')
         prefix_length = math.ceil(math.log2(num_divisions))
         num_divisions = 2 ** prefix_length
         cls = type(self)
         return [
             cls(prefix_length=self.prefix_length + prefix_length,
-                prefix=(self.prefix << prefix_length) + prefix)
+                prefix=(self.prefix << prefix_length) + prefix,
+                group=self.group)
             for prefix in range(num_divisions)
         ]
 
@@ -224,19 +354,19 @@ class UUIDPartition(metaclass=UUIDPartitionMeta):
         returned by this function.
 
         >>> str(UUIDPartition.root)
-        '-'
+        '-@0'
 
                                                       0b1111_1110 == 0xfe
                                                       0b1111_1111 == 0xff
-        >>> str(UUIDPartition(prefix_length=7, prefix=0b1111_111))
-        'fe-ff'
+        >>> str(UUIDPartition(prefix_length=7, prefix=0b1111_111, group=4))
+        'fe-ff@4'
 
         Leading zeroes in the high and low end of the range:
 
                                                       0b0000_1110 == 0x0e
                                                       0b0000_1111 == 0x0f
-        >>> str(UUIDPartition(prefix_length=7, prefix=0b0000_111))
-        '0e-0f'
+        >>> str(UUIDPartition(prefix_length=7, prefix=0b0000_111, group=4))
+        '0e-0f@4'
 
         A partition twice as big (a binary prefix that's one bit shorter):
 
@@ -244,8 +374,8 @@ class UUIDPartition(metaclass=UUIDPartitionMeta):
                                                       0b0000_1101 = 0x0d
                                                       0b0000_1110 = 0x0e
                                                       0b0000_1111 = 0x0f
-        >>> str(UUIDPartition(prefix_length=6, prefix=0b0000_11))
-        '0c-0f'
+        >>> str(UUIDPartition(prefix_length=6, prefix=0b0000_11, group=4))
+        '0c-0f@4'
         """
         shift = 4 - self.prefix_length % 4  # shift to align at nibble boundary
         all_ones = (1 << shift) - 1
@@ -257,7 +387,7 @@ class UUIDPartition(metaclass=UUIDPartitionMeta):
         def hex(i):
             return format(i, f'0{hex_len}x')[:hex_len]
 
-        return '-'.join(map(hex, (lo, hi)))
+        return f'{hex(lo)}-{hex(hi)}@{self.group}'
 
 
 def uuid5_for_bytes(namespace: UUID, name: bytes) -> UUID:

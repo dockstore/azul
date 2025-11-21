@@ -1024,15 +1024,26 @@ Squashing previous fixups
 Assigning PRs
 -------------
 
-* The author of a PR may request reviews from anyone at any time. Once the
-  author considers a PR ready to land (be merged into the base branch), the
-  author rebases the branch, assigns the PR to the reviewer, the *primary
-  reviewer* and requests a review from that person. Note that assigning a PR
-  and requesting a review are different actions on the Github UI.
+* PRs remain assigned to the author from the time they are opened, up until they
+  are successfully merged and deployed.
 
-* If a PR is assigned to someone (typically the primary reviewer), only the
-  assignee may push to the PR branch. If a PR is assigned to no one, only the
-  author may push to the PR branch.
+* The author of a PR may request reviews from anyone at any time. To do so, the
+  author rebases the branch, assigns the PR to the reviewer (either a peer or
+  the system administrator, while leaving themselves assigned) and requests a
+  review from that person. Note that assigning a PR and requesting a review are
+  different actions in the Github UI.
+
+* Once the system administrator approves the PR, they remove their assignment,
+  assign the PR to the operator instead, all while the author remains assigned.
+
+* If a PR is assigned to someone other than the author, e.g., a reviewer or the
+  operator, only that person may push to the PR branch, even if the PR is also
+  still assigned to the author. The author may push to the PR branch if and only
+  if they are the sole assignee.
+
+The above changes in a PR's assignment during its lifetime are described in more
+detail by checklist items in the PR's description.
+
 
 Rewriting history
 -----------------
