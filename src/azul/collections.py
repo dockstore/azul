@@ -55,13 +55,13 @@ def dict_merge(dicts: Iterable[Mapping]) -> dict:
 # noinspection PyPep8Naming
 class deep_dict_merge[K, V](dict):
     """
-    Recursively merge the given dictionaries. If more than one dictionary
-    contains a given key, and all values associated with this key are themselves
-    dictionaries, then the value present in the result is the recursive merging
-    of those nested dictionaries. If none of the values for a given key are
-    dictionaries, either an exception is raised, or if `override` is true, the
-    value from the last dictionary is used. If some, but not all, of the values
-    for a given key are dictionaries, an exception is raised.
+    Recursively merge the given mappings into a single dictionary. If more than
+    one mapping contains a given key, and all values associated with this key
+    are themselves mappings, then the value present in the result is the
+    recursive merging of those nested mappings. If none of the values for a
+    given key are mappings, either an exception is raised, or if `override` is
+    true, the value from the last mapping is used.mapping some, but not all, of
+    the values for a given key are mappings, an exception is raised.
 
     >>> deep_dict_merge()
     {}
@@ -72,12 +72,12 @@ class deep_dict_merge[K, V](dict):
     >>> deep_dict_merge({0: {'a': 1}}, {0: {'b': 2}})
     {0: {'a': 1, 'b': 2}}
 
-    To merge all dictionaries in an iterable, use this form:
+    To merge all mappings in an iterable, use this form:
 
     >>> deep_dict_merge.from_iterable([{0: 1}, {1: 0}])
     {0: 1, 1: 0}
 
-    Without `override`, key collisions where none of the values are dictionaries
+    Without `override`, key collisions where none of the values are mappings
     raise an exception, unless the values compare equal to each other, in which
     case the entries from *earlier* dictionaries takes precedence. This behavior
     is the opposite of `dict_merge`, where later entries take precedence.
@@ -94,13 +94,13 @@ class deep_dict_merge[K, V](dict):
     >>> id(d[0]) == id(l1)
     True
 
-    With `override`, key collisions where none of the values are dictionaries
+    With `override`, key collisions where none of the values are mappings
     result in the value from the last dictionary taking precedence.
 
     >>> deep_dict_merge({0: 1}, {0: 2}, override=True)
     {0: 2}
 
-    Key collisions where the values are a mix of dictionary and non-dictionary
+    Key collisions where the values are a mix of mapping and non-mapping
     always raise an exception regardless if `override` is used or not.
 
     >>> deep_dict_merge.from_iterable([{0: 1}, {0: {2: 3}}], override=True)
