@@ -580,17 +580,20 @@ class Bundle[BUNDLE_FQID: BundleFQID](SerializableAttrs, metaclass=ABCMeta):
 class BundlePartition(UUIDPartition):
     """
     A binary partitioning of the UUIDs of outer entities in a bundle.
+
+    >>> BundlePartition.root
+    BundlePartition(prefix_length=0, prefix=0, group=4)
     """
 
+    #: We use the fifth group because the first group may not produce a random
+    #: distribution of the entities in some types of bundles. For example, all
+    #: entity UUIDs in an AnVIL replica bundle share a specifc batch prefix.
+    #:
+    group: int = 4
+
     #: 512 caused timeouts writing contributions, even in the retry Lambda
+    #:
     max_partition_size: ClassVar[int] = 256
 
     def divisions(self, num_entities: int) -> int:
         return math.ceil(num_entities / self.max_partition_size)
-
-    def __attrs_post_init__(self):
-        super().__attrs_post_init__()
-        # Most bits in a v4 or v5 UUID are pseudo-random, including the leading
-        # 32 bits but those are followed by a couple of deterministic ones.
-        # For simplicity, we'll limit ourselves to 2 ** 32 leaf partitions.
-        assert self.prefix_length <= 32, R('Too many partitions', self.prefix_length)

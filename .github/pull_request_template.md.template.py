@@ -623,7 +623,7 @@ def emit(t: T, target_branch: str):
                 },
                 {
                     'type': 'cli',
-                    'content': 'PR is assigned to only the peer'
+                    'content': 'PR is assigned to only the peer and the author'
                 },
                 {
                     'type': 'h2',
@@ -631,7 +631,8 @@ def emit(t: T, target_branch: str):
                 },
                 {
                     'type': 'p',
-                    'content': 'Note that when requesting changes, the PR must be assigned back to the author.'
+                    'content': 'Note that after requesting changes, the PR '
+                               'must be assigned to only the author.'
                 },
                 {
                     'type': 'cli',
@@ -652,7 +653,7 @@ def emit(t: T, target_branch: str):
             },
             {
                 'type': 'cli',
-                'content': 'PR is assigned to only the system administrator'
+                'content': 'PR is assigned to only the system administrator and the author'
             },
             {
                 'type': 'h2',
@@ -701,7 +702,7 @@ def emit(t: T, target_branch: str):
             },
             {
                 'type': 'cli',
-                'content': 'PR is assigned to only the operator'
+                'content': 'PR is assigned to only the operator and the author'
             },
             {
                 'type': 'h2',
@@ -774,7 +775,7 @@ def emit(t: T, target_branch: str):
                 },
                 {
                     'type': 'cli',
-                    'content': 'PR is assigned to only the system administrator',
+                    'content': 'PR is assigned to only the system administrator and the author',
                     'alt': 'or this PR is not labeled `deploy:gitlab`'
                 },
                 {
@@ -793,7 +794,7 @@ def emit(t: T, target_branch: str):
                 ],
                 {
                     'type': 'cli',
-                    'content': 'PR is assigned to only the operator',
+                    'content': 'PR is assigned to only the operator and the author',
                 },
             ]),
             {
@@ -949,6 +950,10 @@ def emit(t: T, target_branch: str):
             {
                 'type': 'cli',
                 'content': 'Deleted PR branch from GitHub'
+            },
+            {
+                'type': 'cli',
+                'content': 'PR is assigned to only the operator'
             },
             *(
                 {
