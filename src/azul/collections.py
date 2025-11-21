@@ -118,8 +118,7 @@ class deep_dict_merge[K, V](dict):
                       /,
                       *,
                       override: bool = False) -> Self:
-        self = cls()
-        self.override = override
+        self = cls(override=override)
         self._merge(maps)
         return self
 
