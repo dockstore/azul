@@ -213,11 +213,13 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
                          globs: AbstractSet[str] = frozenset('*')
                          ) -> dict[CatalogName, dict[SourceSpec, SourceConfig]]:
         result = {}
-        matched_globs = set()
+        matched_globs: set[str] = set()
         for catalog in catalogs:
             raw_specs = config.sources(catalog)
             specs = dict(self.repository_plugin(catalog).sources)
-            if '*' not in globs:
+            if '*' in globs:
+                matched_globs.update(globs)
+            else:
                 matching_raw_specs: set[str] = set()
                 for glob in globs:
                     _matching_raw_specs = fnmatch.filter(raw_specs, glob)
