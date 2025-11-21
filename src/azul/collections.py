@@ -111,7 +111,7 @@ class deep_dict_merge[K, V](dict):
     def __init__(self, *maps: Mapping[K, V], override: bool = False):
         super().__init__()
         self.override = override
-        self.merge(maps)
+        self._merge(maps)
 
     @classmethod
     def from_iterable(cls, maps: Iterable[Mapping[K, V]],
@@ -120,10 +120,10 @@ class deep_dict_merge[K, V](dict):
                       override: bool = False) -> Self:
         self = cls()
         self.override = override
-        self.merge(maps)
+        self._merge(maps)
         return self
 
-    def merge(self, maps: Iterable[Mapping[K, V]]):
+    def _merge(self, maps: Iterable[Mapping[K, V]]):
         for m in maps:
             for k, v2 in m.items():
                 v1 = self.setdefault(k, v2)
