@@ -27,6 +27,7 @@ from typing import (
     Self,
     TypeVar,
     Union,
+    cast,
     overload,
 )
 
@@ -127,15 +128,17 @@ class deep_dict_merge[K, V](dict):
             for k, v2 in m.items():
                 v1 = self.setdefault(k, v2)
                 if v1 != v2:
-                    if isinstance(v1, Mapping) and isinstance(v2, Mapping):
-                        self[k] = type(self)(v1, v2, override=self.override)
-                    elif not isinstance(v1, Mapping) and not isinstance(v2, Mapping):
-                        if self.override:
-                            self[k] = v2
-                        else:
-                            raise ValueError(f'{v1!r} != {v2!r}')
-                    else:
-                        raise ValueError('Cannot merge dict with non-dict', v1, v2)
+                    match isinstance(v1, Mapping), isinstance(v2, Mapping):
+                        case True, True:
+                            # Cast is safe, mypy just isn't smart enough to infer that
+                            self[k] = type(self)(v1, cast(Mapping, v2), override=self.override)
+                        case False, False:
+                            if self.override:
+                                self[k] = v2
+                            else:
+                                raise ValueError(f'{v1!r} != {v2!r}')
+                        case _:
+                            raise ValueError('Cannot merge dict with non-dict', v1, v2)
 
 
 def explode_dict[K, V](d: Mapping[K, Union[V, list[V], set[V], tuple[V]]]
