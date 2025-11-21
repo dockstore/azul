@@ -72,11 +72,6 @@ class deep_dict_merge[K, V](dict):
     >>> deep_dict_merge({0: {'a': 1}}, {0: {'b': 2}})
     {0: {'a': 1, 'b': 2}}
 
-    To merge all mappings in an iterable, use this form:
-
-    >>> deep_dict_merge.from_iterable([{0: 1}, {1: 0}])
-    {0: 1, 1: 0}
-
     Without `override`, key collisions where none of the values are mappings
     raise an exception, unless the values compare equal to each other, in which
     case the entries from *earlier* dictionaries takes precedence. This behavior
@@ -103,10 +98,18 @@ class deep_dict_merge[K, V](dict):
     Key collisions where the values are a mix of mapping and non-mapping
     always raise an exception regardless if `override` is used or not.
 
-    >>> deep_dict_merge.from_iterable([{0: 1}, {0: {2: 3}}], override=True)
+    >>> deep_dict_merge({0: 1}, {0: {2: 3}}, override=True)
     Traceback (most recent call last):
     ...
     ValueError: ('Cannot merge dict with non-dict', 1, {2: 3})
+
+    To merge all mappings in an iterable, use this form:
+
+    >>> deep_dict_merge.from_iterable([{0: 1}, {1: 0}])
+    {0: 1, 1: 0}
+
+    >>> deep_dict_merge.from_iterable([{0: 1}, {0: 2}], override=True)
+    {0: 2}
     """
 
     def __init__(self, *maps: Mapping[K, V], override: bool = False):
