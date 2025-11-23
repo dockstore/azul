@@ -7,7 +7,6 @@ from typing import (
 import attr
 from chalice import (
     BadRequestError as BRE,
-    BadRequestError,
     NotFoundError,
 )
 
@@ -38,7 +37,7 @@ class ServiceAppController(AppController):
             return parse_filters(filters)
         except AssertionError as e:
             if R.caused(e):
-                raise R.propagate(e, BadRequestError)
+                raise R.propagate(e, BRE)
             else:
                 raise
 
