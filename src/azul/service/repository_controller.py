@@ -68,9 +68,6 @@ from azul.service.repository_service import (
     EntityNotFoundError,
     RepositoryService,
 )
-from azul.service.source_controller import (
-    SourceController,
-)
 from azul.types import (
     JSON,
     is_optional,
@@ -82,7 +79,7 @@ from azul.uuids import (
 log = logging.getLogger(__name__)
 
 
-class RepositoryController(ServiceAppController, SourceController):
+class RepositoryController(ServiceAppController):
 
     @cached_property
     def service(self) -> RepositoryService:

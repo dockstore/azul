@@ -21,9 +21,6 @@ from azul.http import (
     LimitedTimeoutException,
     TooManyRequestsException,
 )
-from azul.service import (
-    Filters,
-)
 from azul.service.source_service import (
     SourceService,
 )
@@ -85,11 +82,3 @@ class SourceController(AppController):
 
     def _list_public_source_ids(self, catalog: CatalogName) -> set[str]:
         return self._list_source_ids(catalog, authentication=None)
-
-    def get_filters(self,
-                    catalog: CatalogName,
-                    authentication: Authentication | None,
-                    filters: str | None = None
-                    ) -> Filters:
-        return Filters(explicit=self._parse_filters(filters),
-                       source_ids=self._list_source_ids(catalog, authentication))
