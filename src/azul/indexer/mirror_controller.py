@@ -42,7 +42,7 @@ from azul.indexer import (
 from azul.indexer.action_controller import (
     ActionController,
 )
-from azul.indexer.mirror_service import (
+from azul.indexer.mirror_file_service import (
     FilePart,
     MirrorService,
 )

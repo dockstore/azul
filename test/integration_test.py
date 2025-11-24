@@ -133,7 +133,7 @@ from azul.indexer.index_service import (
     IndexExistsAndDiffersException,
     IndexService,
 )
-from azul.indexer.mirror_service import (
+from azul.indexer.mirror_file_service import (
     BaseMirrorService,
 )
 from azul.json_freeze import (
