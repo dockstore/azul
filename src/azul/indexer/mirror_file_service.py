@@ -150,7 +150,7 @@ class MirrorFileDownload(RepositoryFileDownload):
 
 
 @attrs.frozen(kw_only=True, slots=False)
-class BaseMirrorService:
+class BaseMirrorFileService:
     catalog: CatalogName
 
     @cached_property
@@ -243,7 +243,7 @@ class SchemaUrlFunc(Protocol):
 
 
 @attrs.frozen(kw_only=True, slots=False)
-class MirrorService(BaseMirrorService, HasCachedHttpClient):
+class MirrorFileService(BaseMirrorFileService, HasCachedHttpClient):
     schema_url_func: SchemaUrlFunc
 
     # We don't store the mirrored files' actual content type(s) in S3's

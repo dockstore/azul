@@ -44,7 +44,7 @@ from azul.indexer.action_controller import (
 )
 from azul.indexer.mirror_file_service import (
     FilePart,
-    MirrorService,
+    MirrorFileService,
 )
 from azul.plugins import (
     File,
@@ -83,9 +83,9 @@ class MirrorController(ActionController[MirrorAction],
         return True
 
     @cache
-    def service(self, catalog: CatalogName) -> MirrorService:
+    def service(self, catalog: CatalogName) -> MirrorFileService:
         schema_url_func = partial(self.schema_url, facility='mirror')
-        return MirrorService(catalog=catalog, schema_url_func=schema_url_func)
+        return MirrorFileService(catalog=catalog, schema_url_func=schema_url_func)
 
     def repository_plugin(self, catalog: CatalogName) -> RepositoryPlugin:
         return self.client.repository_plugin(catalog)

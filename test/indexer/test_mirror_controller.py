@@ -31,7 +31,7 @@ from azul.indexer.mirror_controller import (
     MirrorController,
 )
 from azul.indexer.mirror_file_service import (
-    MirrorService,
+    MirrorFileService,
 )
 from azul.json import (
     copy_json,
@@ -173,7 +173,7 @@ class TestMirrorController(DCP2TestCase,
 
     def _test_mirror_file(self, file, file_message):
         event = self._mirror_event(file_message)
-        with patch.object(MirrorService, '_download', return_value=self._file_contents):
+        with patch.object(MirrorFileService, '_download', return_value=self._file_contents):
             self.mirror_controller.mirror(event)
         service = self.mirror_controller.service(self.catalog)
         response = self._s3.get_object(Bucket=self.mirror_bucket,
@@ -184,14 +184,14 @@ class TestMirrorController(DCP2TestCase,
     def _test_corrupted_download(self, file_message):
         event = self._mirror_event(file_message)
         corrupted_contents = self._file_contents[:-1] + b'Q'
-        with patch.object(MirrorService, '_download', return_value=corrupted_contents):
+        with patch.object(MirrorFileService, '_download', return_value=corrupted_contents):
             with self.assertRaises(AssertionError) as e:
                 self.mirror_controller.mirror(event)
             self.assertTrue(R.caused(e.exception))
 
     def _test_reuploaded_file(self, file_message):
         event = self._mirror_event(file_message)
-        with patch.object(MirrorService, '_download', return_value=self._file_contents):
+        with patch.object(MirrorFileService, '_download', return_value=self._file_contents):
             with self.assertRaises(AssertionError) as e:
                 self.mirror_controller.mirror(event)
         self.assertTrue(R.caused(e.exception))
