@@ -8,9 +8,6 @@ from concurrent.futures import (
     Future,
     ThreadPoolExecutor,
 )
-from enum import (
-    auto,
-)
 import fnmatch
 from functools import (
     partial,
@@ -65,12 +62,14 @@ from azul.indexer.index_repository_service import (
 from azul.indexer.index_service import (
     IndexService,
 )
+from azul.indexer.mirror_service import (
+    MirrorAction,
+)
 from azul.plugins import (
     MetadataPlugin,
     RepositoryPlugin,
 )
 from azul.queues import (
-    Action,
     Queues,
     SQSFifoMessage,
     SQSMessage,
@@ -81,14 +80,6 @@ from azul.types import (
 )
 
 log = logging.getLogger(__name__)
-
-
-class MirrorAction(Action):
-    mirror_source = auto()
-    mirror_partition = auto()
-    mirror_file = auto()
-    mirror_part = auto()
-    finalize_file = auto()
 
 
 @attrs.frozen(kw_only=True)

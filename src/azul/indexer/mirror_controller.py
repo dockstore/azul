@@ -22,7 +22,6 @@ from azul import (
 )
 from azul.azulclient import (
     AzulClient,
-    MirrorAction,
 )
 from azul.chalice import (
     LambdaMetric,
@@ -45,6 +44,9 @@ from azul.indexer.action_controller import (
 from azul.indexer.mirror_file_service import (
     FilePart,
     MirrorFileService,
+)
+from azul.indexer.mirror_service import (
+    MirrorAction,
 )
 from azul.plugins import (
     File,
