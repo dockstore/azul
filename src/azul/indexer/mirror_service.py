@@ -212,7 +212,7 @@ class MirrorService:
                      catalog: CatalogName,
                      file_json: JSON
                      ):
-        file = self.load_file(catalog, file_json)
+        file = self._load_file(catalog, file_json)
         assert file.size is not None, R('File size unknown', file)
         service = self._service(catalog)
         if service.info_exists(file):
@@ -254,7 +254,7 @@ class MirrorService:
                           etags: Iterable[str],
                           hasher_data: str
                           ):
-        file = self.load_file(catalog, file_json)
+        file = self._load_file(catalog, file_json)
         part = FilePart.from_json(part_json)
         hasher = hasher_from_str(hasher_data)
         log.info('Uploading part #%d of file %r', part.index, file)
@@ -286,7 +286,7 @@ class MirrorService:
                        etags: Sequence[str],
                        hasher_data: str
                        ):
-        file = self.load_file(catalog, file_json)
+        file = self._load_file(catalog, file_json)
         assert len(etags) > 0
         hasher = hasher_from_str(hasher_data)
         service = self._service(catalog)
@@ -296,7 +296,7 @@ class MirrorService:
                                       hasher=hasher)
         log.info('Successfully mirrored file via multi-part upload: %r', file)
 
-    def load_file(self, catalog: CatalogName, file: JSON) -> File:
+    def _load_file(self, catalog: CatalogName, file: JSON) -> File:
         return self._metadata_plugin(catalog).file_class.from_json(file)
 
     def mirror_source_message(self,
