@@ -145,11 +145,11 @@ class MirrorService:
                                    list(json_element_strings(message['etags'])),
                                    json_str(message['hasher']))
         elif action is MirrorAction.finalize_file:
-            self.finalize_file(json_str(message['catalog']),
-                               json_mapping(message['file']),
-                               json_str(message['upload_id']),
-                               list(json_element_strings(message['etags'])),
-                               json_str(message['hasher']))
+            self._finalize_file(json_str(message['catalog']),
+                                json_mapping(message['file']),
+                                json_str(message['upload_id']),
+                                list(json_element_strings(message['etags'])),
+                                json_str(message['hasher']))
         else:
             assert False, action
 
@@ -279,13 +279,13 @@ class MirrorService:
                                                hasher)
         self._queue_messages([message])
 
-    def finalize_file(self,
-                      catalog: CatalogName,
-                      file_json: JSON,
-                      upload_id: str,
-                      etags: Sequence[str],
-                      hasher_data: str
-                      ):
+    def _finalize_file(self,
+                       catalog: CatalogName,
+                       file_json: JSON,
+                       upload_id: str,
+                       etags: Sequence[str],
+                       hasher_data: str
+                       ):
         file = self.load_file(catalog, file_json)
         assert len(etags) > 0
         hasher = hasher_from_str(hasher_data)
