@@ -965,6 +965,15 @@ class Chalice:
             for response_type in ['4XX', '5XX']
         }
         error_responses: MutableJSON = {
+            **{
+                response_type: {
+                    'statusCode': '429',
+                    'responseParameters': {
+                        **security_headers,
+                        'gatewayresponse.header.Retry-After': "'30'"
+                    }
+                } for response_type in ['QUOTA_EXCEEDED', 'THROTTLED']
+            },
             'INTEGRATION_FAILURE': {
                 'statusCode': '502',
                 'responseParameters': security_headers,
@@ -972,20 +981,6 @@ class Chalice:
                     "application/json": json.dumps({
                         'message': '502 Bad Gateway. The server was unable '
                                    'to complete your request.'
-                    })
-                }
-            },
-            'INTEGRATION_TIMEOUT': {
-                'statusCode': '504',
-                'responseParameters': {
-                    **security_headers,
-                    'gatewayresponse.header.Retry-After': "'10'"
-                },
-                'responseTemplates': {
-                    "application/json": json.dumps({
-                        'message': '504 Gateway Timeout. Wait the number of '
-                                   'seconds specified in the `Retry-After` '
-                                   'header before retrying the request.'
                     })
                 }
             }

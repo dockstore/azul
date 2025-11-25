@@ -2,56 +2,101 @@
     "openapi": "3.0.1",
     "info": {
         "title": "azul-indexer-dev",
-        "version": "3.3",
+        "version": "3.4",
         "description": "\nThis is the internal API for Azul's indexer component.\n\n\n## Contact us\n\nFor technical support please file an issue at\n[GitHub](https://github.com/DataBiosphere/azul/issues) or email\n`azul-group@ucsc.edu`. To report a security concern or misconduct please email\n`azul-group@ucsc.edu`.\n"
     },
     "paths": {
         "/": {
             "get": {
+                "responses": {
+                    "400": {
+                        "description": "Bad request. The request was rejected due to malformed parameters."
+                    },
+                    "429": {
+                        "description": "Too many requests. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
+                    "500": {
+                        "description": "Internal server error. An internal server error occurred."
+                    },
+                    "502": {
+                        "description": "Bad gateway. The server received an invalid response from the upstream server."
+                    },
+                    "503": {
+                        "description": "Service unavailable. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
+                    "504": {
+                        "description": "Gateway timeout. The server did not respond in time. Please try again later."
+                    },
+                    "301": {
+                        "description": "A redirect to the Swagger UI"
+                    }
+                },
                 "summary": "Redirect to the Swagger UI for interactive use of this REST API",
                 "tags": [
                     "Auxiliary"
-                ],
-                "responses": {
-                    "301": {
-                        "description": "A redirect to the Swagger UI"
-                    },
-                    "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
-                    }
-                }
+                ]
             }
         },
         "/swagger/index.html": {
             "get": {
+                "responses": {
+                    "400": {
+                        "description": "Bad request. The request was rejected due to malformed parameters."
+                    },
+                    "429": {
+                        "description": "Too many requests. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
+                    "500": {
+                        "description": "Internal server error. An internal server error occurred."
+                    },
+                    "502": {
+                        "description": "Bad gateway. The server received an invalid response from the upstream server."
+                    },
+                    "503": {
+                        "description": "Service unavailable. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
+                    "504": {
+                        "description": "Gateway timeout. The server did not respond in time. Please try again later."
+                    },
+                    "200": {
+                        "description": "The response body is an HTML page containing the Swagger UI"
+                    }
+                },
                 "summary": "The Swagger UI for interactive use of this REST API",
                 "tags": [
                     "Auxiliary"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "The response body is an HTML page containing the Swagger UI"
-                    },
-                    "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
-                    }
-                }
+                ]
             }
         },
         "/swagger/swagger-initializer.js": {
             "get": {
+                "responses": {
+                    "400": {
+                        "description": "Bad request. The request was rejected due to malformed parameters."
+                    },
+                    "429": {
+                        "description": "Too many requests. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
+                    "500": {
+                        "description": "Internal server error. An internal server error occurred."
+                    },
+                    "502": {
+                        "description": "Bad gateway. The server received an invalid response from the upstream server."
+                    },
+                    "503": {
+                        "description": "Service unavailable. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
+                    "504": {
+                        "description": "Gateway timeout. The server did not respond in time. Please try again later."
+                    },
+                    "200": {
+                        "description": "The response body is JavaScript used internally by the Swagger UI"
+                    }
+                },
                 "summary": "Used internally by the Swagger UI",
                 "tags": [
                     "Auxiliary"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "The response body is JavaScript used internally by the Swagger UI"
-                    },
-                    "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
-                    }
-                }
+                ]
             }
         },
         "/swagger/{file}": {
@@ -67,28 +112,59 @@
                 }
             ],
             "get": {
-                "summary": "Static files needed for the Swagger UI",
-                "tags": [
-                    "Auxiliary"
-                ],
                 "responses": {
+                    "400": {
+                        "description": "Bad request. The request was rejected due to malformed parameters."
+                    },
+                    "429": {
+                        "description": "Too many requests. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
+                    "500": {
+                        "description": "Internal server error. An internal server error occurred."
+                    },
+                    "502": {
+                        "description": "Bad gateway. The server received an invalid response from the upstream server."
+                    },
+                    "503": {
+                        "description": "Service unavailable. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
+                    "504": {
+                        "description": "Gateway timeout. The server did not respond in time. Please try again later."
+                    },
                     "200": {
                         "description": "The response body is the contents of the requested file"
                     },
                     "404": {
                         "description": "The requested file does not exist"
-                    },
-                    "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
                     }
-                }
+                },
+                "summary": "Static files needed for the Swagger UI",
+                "tags": [
+                    "Auxiliary"
+                ]
             }
         },
         "/openapi.json": {
             "get": {
-                "summary": "Return OpenAPI specifications for this REST API",
-                "description": "\nThis endpoint returns the [OpenAPI specifications]'\n(https://github.com/OAI/OpenAPI-Specification) for this REST\nAPI. These are the specifications used to generate the page\nyou are visiting now.\n",
                 "responses": {
+                    "400": {
+                        "description": "Bad request. The request was rejected due to malformed parameters."
+                    },
+                    "429": {
+                        "description": "Too many requests. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
+                    "500": {
+                        "description": "Internal server error. An internal server error occurred."
+                    },
+                    "502": {
+                        "description": "Bad gateway. The server received an invalid response from the upstream server."
+                    },
+                    "503": {
+                        "description": "Service unavailable. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
+                    "504": {
+                        "description": "Gateway timeout. The server did not respond in time. Please try again later."
+                    },
                     "200": {
                         "description": "200 response",
                         "content": {
@@ -137,11 +213,10 @@
                                 }
                             }
                         }
-                    },
-                    "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
                     }
                 },
+                "summary": "Return OpenAPI specifications for this REST API",
+                "description": "\nThis endpoint returns the [OpenAPI specifications]'\n(https://github.com/OAI/OpenAPI-Specification) for this REST\nAPI. These are the specifications used to generate the page\nyou are visiting now.\n",
                 "tags": [
                     "Auxiliary"
                 ]
@@ -149,11 +224,25 @@
         },
         "/version": {
             "get": {
-                "summary": "Describe current version of this REST API",
-                "tags": [
-                    "Auxiliary"
-                ],
                 "responses": {
+                    "400": {
+                        "description": "Bad request. The request was rejected due to malformed parameters."
+                    },
+                    "429": {
+                        "description": "Too many requests. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
+                    "500": {
+                        "description": "Internal server error. An internal server error occurred."
+                    },
+                    "502": {
+                        "description": "Bad gateway. The server received an invalid response from the upstream server."
+                    },
+                    "503": {
+                        "description": "Service unavailable. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
+                    "504": {
+                        "description": "Gateway timeout. The server did not respond in time. Please try again later."
+                    },
                     "200": {
                         "description": "Version endpoint is reachable.",
                         "content": {
@@ -185,77 +274,59 @@
                                 }
                             }
                         }
-                    },
-                    "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
                     }
-                }
+                },
+                "summary": "Describe current version of this REST API",
+                "tags": [
+                    "Auxiliary"
+                ]
             }
         },
         "/robots.txt": {
             "get": {
+                "responses": {
+                    "400": {
+                        "description": "Bad request. The request was rejected due to malformed parameters."
+                    },
+                    "429": {
+                        "description": "Too many requests. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
+                    "500": {
+                        "description": "Internal server error. An internal server error occurred."
+                    },
+                    "502": {
+                        "description": "Bad gateway. The server received an invalid response from the upstream server."
+                    },
+                    "503": {
+                        "description": "Service unavailable. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
+                    "504": {
+                        "description": "Gateway timeout. The server did not respond in time. Please try again later."
+                    },
+                    "200": {
+                        "description": "\nThe robots.txt resource according to\n[RFC9309](https://datatracker.ietf.org/doc/html/rfc9309)\n"
+                    }
+                },
                 "summary": "Robots Exclusion Protocol",
                 "tags": [
                     "Auxiliary"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "\nThe robots.txt resource according to\n[RFC9309](https://datatracker.ietf.org/doc/html/rfc9309)\n"
-                    },
-                    "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
-                    }
-                }
+                ]
             }
         },
         "/health": {
             "get": {
-                "summary": "Complete health check",
-                "description": "\nHealth check of the indexer REST API and all\nresources it depends on. This may take long time to complete\nand exerts considerable load on the API. For that reason it\nshould not be requested frequently or by automated\nmonitoring facilities that would be better served by the\n[`/health/fast`](#operations-Auxiliary-get_health_fast) or\n[`/health/cached`](#operations-Auxiliary-get_health_cached)\nendpoints.\n",
                 "responses": {
-                    "200": {
-                        "description": "\nThe checked resources\nare healthy.\n\nThe response consists of the following keys:\n\n* `other_lambdas` \nIndicates whether the companion REST API responds to HTTP requests.\n* `queues` \nReturns information about the SQS queues used by the indexer and the\nmirror.\n* `progress` \nThe number of Data Store bundles pending to be indexed and the number\nof index documents in need of updating.\n* `api_endpoints` \nIndicates whether important service API endpoints are operational.\n* `elasticsearch` \nIndicates whether the Elasticsearch cluster is responsive.\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`true`.\n\n\nAll of the nested `up` keys\nare `true`.\n",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "up": {
-                                            "type": "boolean",
-                                            "enum": [
-                                                true
-                                            ]
-                                        }
-                                    },
-                                    "required": [
-                                        "up"
-                                    ],
-                                    "additionalProperties": {
-                                        "type": "object",
-                                        "properties": {
-                                            "up": {
-                                                "type": "boolean",
-                                                "enum": [
-                                                    true
-                                                ]
-                                            }
-                                        },
-                                        "required": [
-                                            "up"
-                                        ],
-                                        "additionalProperties": true
-                                    }
-                                },
-                                "example": {
-                                    "other_lambdas": {},
-                                    "queues": {},
-                                    "progress": {},
-                                    "api_endpoints": {},
-                                    "elasticsearch": {},
-                                    "up": true
-                                }
-                            }
-                        }
+                    "400": {
+                        "description": "Bad request. The request was rejected due to malformed parameters."
+                    },
+                    "429": {
+                        "description": "Too many requests. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
+                    "500": {
+                        "description": "Internal server error. An internal server error occurred."
+                    },
+                    "502": {
+                        "description": "Bad gateway. The server received an invalid response from the upstream server."
                     },
                     "503": {
                         "description": "\nAt least one of the checked resources\nis not healthy.\n\nThe response consists of the following keys:\n\n* `other_lambdas` \nIndicates whether the companion REST API responds to HTTP requests.\n* `queues` \nReturns information about the SQS queues used by the indexer and the\nmirror.\n* `progress` \nThe number of Data Store bundles pending to be indexed and the number\nof index documents in need of updating.\n* `api_endpoints` \nIndicates whether important service API endpoints are operational.\n* `elasticsearch` \nIndicates whether the Elasticsearch cluster is responsive.\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`false`.\n\n\nAt least one of the nested `up` keys\nis `false`.\n",
@@ -302,21 +373,10 @@
                         }
                     },
                     "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
-                    }
-                },
-                "tags": [
-                    "Auxiliary"
-                ]
-            }
-        },
-        "/health/basic": {
-            "get": {
-                "summary": "Basic health check",
-                "description": "\nHealth check of only the REST API itself, excluding other\nresources that it depends on. A 200 response indicates that\nthe indexer is reachable via HTTP(S) but nothing\nmore.\n",
-                "responses": {
+                        "description": "Gateway timeout. The server did not respond in time. Please try again later."
+                    },
                     "200": {
-                        "description": "\nThe checked resources\nare healthy.\n\nThe response consists of the following keys:\n\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`true`.\n\n",
+                        "description": "\nThe checked resources\nare healthy.\n\nThe response consists of the following keys:\n\n* `other_lambdas` \nIndicates whether the companion REST API responds to HTTP requests.\n* `queues` \nReturns information about the SQS queues used by the indexer and the\nmirror.\n* `progress` \nThe number of Data Store bundles pending to be indexed and the number\nof index documents in need of updating.\n* `api_endpoints` \nIndicates whether important service API endpoints are operational.\n* `elasticsearch` \nIndicates whether the Elasticsearch cluster is responsive.\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`true`.\n\n\nAll of the nested `up` keys\nare `true`.\n",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -349,10 +409,38 @@
                                     }
                                 },
                                 "example": {
+                                    "other_lambdas": {},
+                                    "queues": {},
+                                    "progress": {},
+                                    "api_endpoints": {},
+                                    "elasticsearch": {},
                                     "up": true
                                 }
                             }
                         }
+                    }
+                },
+                "summary": "Complete health check",
+                "description": "\nHealth check of the indexer REST API and all\nresources it depends on. This may take long time to complete\nand exerts considerable load on the API. For that reason it\nshould not be requested frequently or by automated\nmonitoring facilities that would be better served by the\n[`/health/fast`](#operations-Auxiliary-get_health_fast) or\n[`/health/cached`](#operations-Auxiliary-get_health_cached)\nendpoints.\n",
+                "tags": [
+                    "Auxiliary"
+                ]
+            }
+        },
+        "/health/basic": {
+            "get": {
+                "responses": {
+                    "400": {
+                        "description": "Bad request. The request was rejected due to malformed parameters."
+                    },
+                    "429": {
+                        "description": "Too many requests. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
+                    "500": {
+                        "description": "Internal server error. An internal server error occurred."
+                    },
+                    "502": {
+                        "description": "Bad gateway. The server received an invalid response from the upstream server."
                     },
                     "503": {
                         "description": "\nAt least one of the checked resources\nis not healthy.\n\nThe response consists of the following keys:\n\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`false`.\n\n",
@@ -394,9 +482,50 @@
                         }
                     },
                     "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                        "description": "Gateway timeout. The server did not respond in time. Please try again later."
+                    },
+                    "200": {
+                        "description": "\nThe checked resources\nare healthy.\n\nThe response consists of the following keys:\n\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`true`.\n\n",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "up": {
+                                            "type": "boolean",
+                                            "enum": [
+                                                true
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "up"
+                                    ],
+                                    "additionalProperties": {
+                                        "type": "object",
+                                        "properties": {
+                                            "up": {
+                                                "type": "boolean",
+                                                "enum": [
+                                                    true
+                                                ]
+                                            }
+                                        },
+                                        "required": [
+                                            "up"
+                                        ],
+                                        "additionalProperties": true
+                                    }
+                                },
+                                "example": {
+                                    "up": true
+                                }
+                            }
+                        }
                     }
                 },
+                "summary": "Basic health check",
+                "description": "\nHealth check of only the REST API itself, excluding other\nresources that it depends on. A 200 response indicates that\nthe indexer is reachable via HTTP(S) but nothing\nmore.\n",
                 "tags": [
                     "Auxiliary"
                 ]
@@ -404,50 +533,18 @@
         },
         "/health/cached": {
             "get": {
-                "summary": "Cached health check for continuous monitoring",
-                "description": "\nReturn a cached copy of the\n[`/health/fast`](#operations-Auxiliary-get_health_fast)\nresponse. This endpoint is optimized for continuously\nrunning, distributed health monitors such as Route 53 health\nchecks. The cache ensures that the indexer is not\noverloaded by these types of health monitors. The cache is\nupdated every minute.\n",
                 "responses": {
-                    "200": {
-                        "description": "\nThe checked resources\nare healthy.\n\nThe response consists of the following keys:\n\n* `elasticsearch` \nIndicates whether the Elasticsearch cluster is responsive.\n* `queues` \nReturns information about the SQS queues used by the indexer and the\nmirror.\n* `progress` \nThe number of Data Store bundles pending to be indexed and the number\nof index documents in need of updating.\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`true`.\n\n\nAll of the nested `up` keys\nare `true`.\n",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "up": {
-                                            "type": "boolean",
-                                            "enum": [
-                                                true
-                                            ]
-                                        }
-                                    },
-                                    "required": [
-                                        "up"
-                                    ],
-                                    "additionalProperties": {
-                                        "type": "object",
-                                        "properties": {
-                                            "up": {
-                                                "type": "boolean",
-                                                "enum": [
-                                                    true
-                                                ]
-                                            }
-                                        },
-                                        "required": [
-                                            "up"
-                                        ],
-                                        "additionalProperties": true
-                                    }
-                                },
-                                "example": {
-                                    "elasticsearch": {},
-                                    "queues": {},
-                                    "progress": {},
-                                    "up": true
-                                }
-                            }
-                        }
+                    "400": {
+                        "description": "Bad request. The request was rejected due to malformed parameters."
+                    },
+                    "429": {
+                        "description": "Too many requests. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
+                    "500": {
+                        "description": "Internal server error. An internal server error occurred."
+                    },
+                    "502": {
+                        "description": "Bad gateway. The server received an invalid response from the upstream server."
                     },
                     "503": {
                         "description": "\nAt least one of the checked resources\nis not healthy.\n\nThe response consists of the following keys:\n\n* `elasticsearch` \nIndicates whether the Elasticsearch cluster is responsive.\n* `queues` \nReturns information about the SQS queues used by the indexer and the\nmirror.\n* `progress` \nThe number of Data Store bundles pending to be indexed and the number\nof index documents in need of updating.\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`false`.\n\n\nAt least one of the nested `up` keys\nis `false`.\n",
@@ -492,9 +589,53 @@
                         }
                     },
                     "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                        "description": "Gateway timeout. The server did not respond in time. Please try again later."
+                    },
+                    "200": {
+                        "description": "\nThe checked resources\nare healthy.\n\nThe response consists of the following keys:\n\n* `elasticsearch` \nIndicates whether the Elasticsearch cluster is responsive.\n* `queues` \nReturns information about the SQS queues used by the indexer and the\nmirror.\n* `progress` \nThe number of Data Store bundles pending to be indexed and the number\nof index documents in need of updating.\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`true`.\n\n\nAll of the nested `up` keys\nare `true`.\n",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "up": {
+                                            "type": "boolean",
+                                            "enum": [
+                                                true
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "up"
+                                    ],
+                                    "additionalProperties": {
+                                        "type": "object",
+                                        "properties": {
+                                            "up": {
+                                                "type": "boolean",
+                                                "enum": [
+                                                    true
+                                                ]
+                                            }
+                                        },
+                                        "required": [
+                                            "up"
+                                        ],
+                                        "additionalProperties": true
+                                    }
+                                },
+                                "example": {
+                                    "elasticsearch": {},
+                                    "queues": {},
+                                    "progress": {},
+                                    "up": true
+                                }
+                            }
+                        }
                     }
                 },
+                "summary": "Cached health check for continuous monitoring",
+                "description": "\nReturn a cached copy of the\n[`/health/fast`](#operations-Auxiliary-get_health_fast)\nresponse. This endpoint is optimized for continuously\nrunning, distributed health monitors such as Route 53 health\nchecks. The cache ensures that the indexer is not\noverloaded by these types of health monitors. The cache is\nupdated every minute.\n",
                 "tags": [
                     "Auxiliary"
                 ]
@@ -502,50 +643,18 @@
         },
         "/health/fast": {
             "get": {
-                "summary": "Fast health check",
-                "description": "\nPerformance-optimized health check of the REST API and other\ncritical resources tht it depends on. This endpoint can be\nrequested more frequently than\n[`/health`](#operations-Auxiliary-get_health) but\nperiodically scheduled, automated requests should be made to\n[`/health/cached`](#operations-Auxiliary-get_health_cached).\n",
                 "responses": {
-                    "200": {
-                        "description": "\nThe checked resources\nare healthy.\n\nThe response consists of the following keys:\n\n* `elasticsearch` \nIndicates whether the Elasticsearch cluster is responsive.\n* `queues` \nReturns information about the SQS queues used by the indexer and the\nmirror.\n* `progress` \nThe number of Data Store bundles pending to be indexed and the number\nof index documents in need of updating.\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`true`.\n\n\nAll of the nested `up` keys\nare `true`.\n",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "up": {
-                                            "type": "boolean",
-                                            "enum": [
-                                                true
-                                            ]
-                                        }
-                                    },
-                                    "required": [
-                                        "up"
-                                    ],
-                                    "additionalProperties": {
-                                        "type": "object",
-                                        "properties": {
-                                            "up": {
-                                                "type": "boolean",
-                                                "enum": [
-                                                    true
-                                                ]
-                                            }
-                                        },
-                                        "required": [
-                                            "up"
-                                        ],
-                                        "additionalProperties": true
-                                    }
-                                },
-                                "example": {
-                                    "elasticsearch": {},
-                                    "queues": {},
-                                    "progress": {},
-                                    "up": true
-                                }
-                            }
-                        }
+                    "400": {
+                        "description": "Bad request. The request was rejected due to malformed parameters."
+                    },
+                    "429": {
+                        "description": "Too many requests. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
+                    "500": {
+                        "description": "Internal server error. An internal server error occurred."
+                    },
+                    "502": {
+                        "description": "Bad gateway. The server received an invalid response from the upstream server."
                     },
                     "503": {
                         "description": "\nAt least one of the checked resources\nis not healthy.\n\nThe response consists of the following keys:\n\n* `elasticsearch` \nIndicates whether the Elasticsearch cluster is responsive.\n* `queues` \nReturns information about the SQS queues used by the indexer and the\nmirror.\n* `progress` \nThe number of Data Store bundles pending to be indexed and the number\nof index documents in need of updating.\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`false`.\n\n\nAt least one of the nested `up` keys\nis `false`.\n",
@@ -590,9 +699,53 @@
                         }
                     },
                     "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                        "description": "Gateway timeout. The server did not respond in time. Please try again later."
+                    },
+                    "200": {
+                        "description": "\nThe checked resources\nare healthy.\n\nThe response consists of the following keys:\n\n* `elasticsearch` \nIndicates whether the Elasticsearch cluster is responsive.\n* `queues` \nReturns information about the SQS queues used by the indexer and the\nmirror.\n* `progress` \nThe number of Data Store bundles pending to be indexed and the number\nof index documents in need of updating.\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`true`.\n\n\nAll of the nested `up` keys\nare `true`.\n",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "up": {
+                                            "type": "boolean",
+                                            "enum": [
+                                                true
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "up"
+                                    ],
+                                    "additionalProperties": {
+                                        "type": "object",
+                                        "properties": {
+                                            "up": {
+                                                "type": "boolean",
+                                                "enum": [
+                                                    true
+                                                ]
+                                            }
+                                        },
+                                        "required": [
+                                            "up"
+                                        ],
+                                        "additionalProperties": true
+                                    }
+                                },
+                                "example": {
+                                    "elasticsearch": {},
+                                    "queues": {},
+                                    "progress": {},
+                                    "up": true
+                                }
+                            }
+                        }
                     }
                 },
+                "summary": "Fast health check",
+                "description": "\nPerformance-optimized health check of the REST API and other\ncritical resources tht it depends on. This endpoint can be\nrequested more frequently than\n[`/health`](#operations-Auxiliary-get_health) but\nperiodically scheduled, automated requests should be made to\n[`/health/cached`](#operations-Auxiliary-get_health_cached).\n",
                 "tags": [
                     "Auxiliary"
                 ]
@@ -621,52 +774,18 @@
                 }
             ],
             "get": {
-                "summary": "Selective health check",
-                "description": "\nThis endpoint allows clients to request a health check on a\nspecific set of resources. Each resource is identified by a\n*key*, the same key under which the resource appears in a\n[`/health`](#operations-Auxiliary-get_health) response.\n",
                 "responses": {
-                    "200": {
-                        "description": "\nThe checked resources\nare healthy.\n\nThe response consists of the following keys:\n\n* `other_lambdas` \nIndicates whether the companion REST API responds to HTTP requests.\n* `queues` \nReturns information about the SQS queues used by the indexer and the\nmirror.\n* `progress` \nThe number of Data Store bundles pending to be indexed and the number\nof index documents in need of updating.\n* `api_endpoints` \nIndicates whether important service API endpoints are operational.\n* `elasticsearch` \nIndicates whether the Elasticsearch cluster is responsive.\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`true`.\n\n\nAll of the nested `up` keys\nare `true`.\n",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "up": {
-                                            "type": "boolean",
-                                            "enum": [
-                                                true
-                                            ]
-                                        }
-                                    },
-                                    "required": [
-                                        "up"
-                                    ],
-                                    "additionalProperties": {
-                                        "type": "object",
-                                        "properties": {
-                                            "up": {
-                                                "type": "boolean",
-                                                "enum": [
-                                                    true
-                                                ]
-                                            }
-                                        },
-                                        "required": [
-                                            "up"
-                                        ],
-                                        "additionalProperties": true
-                                    }
-                                },
-                                "example": {
-                                    "other_lambdas": {},
-                                    "queues": {},
-                                    "progress": {},
-                                    "api_endpoints": {},
-                                    "elasticsearch": {},
-                                    "up": true
-                                }
-                            }
-                        }
+                    "400": {
+                        "description": "Bad request. The request was rejected due to malformed parameters."
+                    },
+                    "429": {
+                        "description": "Too many requests. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
+                    "500": {
+                        "description": "Internal server error. An internal server error occurred."
+                    },
+                    "502": {
+                        "description": "Bad gateway. The server received an invalid response from the upstream server."
                     },
                     "503": {
                         "description": "\nAt least one of the checked resources\nis not healthy.\n\nThe response consists of the following keys:\n\n* `other_lambdas` \nIndicates whether the companion REST API responds to HTTP requests.\n* `queues` \nReturns information about the SQS queues used by the indexer and the\nmirror.\n* `progress` \nThe number of Data Store bundles pending to be indexed and the number\nof index documents in need of updating.\n* `api_endpoints` \nIndicates whether important service API endpoints are operational.\n* `elasticsearch` \nIndicates whether the Elasticsearch cluster is responsive.\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`false`.\n\n\nAt least one of the nested `up` keys\nis `false`.\n",
@@ -713,9 +832,55 @@
                         }
                     },
                     "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
+                        "description": "Gateway timeout. The server did not respond in time. Please try again later."
+                    },
+                    "200": {
+                        "description": "\nThe checked resources\nare healthy.\n\nThe response consists of the following keys:\n\n* `other_lambdas` \nIndicates whether the companion REST API responds to HTTP requests.\n* `queues` \nReturns information about the SQS queues used by the indexer and the\nmirror.\n* `progress` \nThe number of Data Store bundles pending to be indexed and the number\nof index documents in need of updating.\n* `api_endpoints` \nIndicates whether important service API endpoints are operational.\n* `elasticsearch` \nIndicates whether the Elasticsearch cluster is responsive.\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`true`.\n\n\nAll of the nested `up` keys\nare `true`.\n",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "up": {
+                                            "type": "boolean",
+                                            "enum": [
+                                                true
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "up"
+                                    ],
+                                    "additionalProperties": {
+                                        "type": "object",
+                                        "properties": {
+                                            "up": {
+                                                "type": "boolean",
+                                                "enum": [
+                                                    true
+                                                ]
+                                            }
+                                        },
+                                        "required": [
+                                            "up"
+                                        ],
+                                        "additionalProperties": true
+                                    }
+                                },
+                                "example": {
+                                    "other_lambdas": {},
+                                    "queues": {},
+                                    "progress": {},
+                                    "api_endpoints": {},
+                                    "elasticsearch": {},
+                                    "up": true
+                                }
+                            }
+                        }
                     }
                 },
+                "summary": "Selective health check",
+                "description": "\nThis endpoint allows clients to request a health check on a\nspecific set of resources. Each resource is identified by a\n*key*, the same key under which the resource appears in a\n[`/health`](#operations-Auxiliary-get_health) response.\n",
                 "tags": [
                     "Auxiliary"
                 ]
@@ -723,6 +888,32 @@
         },
         "/{catalog}/{action}": {
             "post": {
+                "responses": {
+                    "400": {
+                        "description": "Request was rejected due to malformed parameters"
+                    },
+                    "429": {
+                        "description": "Too many requests. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
+                    "500": {
+                        "description": "Internal server error. An internal server error occurred."
+                    },
+                    "502": {
+                        "description": "Bad gateway. The server received an invalid response from the upstream server."
+                    },
+                    "503": {
+                        "description": "Service unavailable. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
+                    "504": {
+                        "description": "Gateway timeout. The server did not respond in time. Please try again later."
+                    },
+                    "200": {
+                        "description": "Notification was successfully queued for processing"
+                    },
+                    "401": {
+                        "description": "Request lacked a valid HMAC header"
+                    }
+                },
                 "tags": [
                     "Indexing"
                 ],
@@ -813,25 +1004,58 @@
                         },
                         "description": "HMAC authentication signature."
                     }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Notification was successfully queued for processing"
-                    },
-                    "400": {
-                        "description": "Request was rejected due to malformed parameters"
-                    },
-                    "401": {
-                        "description": "Request lacked a valid HMAC header"
-                    },
-                    "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
-                    }
-                }
+                ]
             }
         },
         "/schemas/{facility}/{schema_name}/{version_and_extension}": {
             "get": {
+                "responses": {
+                    "400": {
+                        "description": "Bad request. The request was rejected due to malformed parameters."
+                    },
+                    "429": {
+                        "description": "Too many requests. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
+                    "500": {
+                        "description": "Internal server error. An internal server error occurred."
+                    },
+                    "502": {
+                        "description": "Bad gateway. The server received an invalid response from the upstream server."
+                    },
+                    "503": {
+                        "description": "Service unavailable. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
+                    "504": {
+                        "description": "Gateway timeout. The server did not respond in time. Please try again later."
+                    },
+                    "200": {
+                        "description": "Contents of the schema",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "schema": {
+                                            "type": "string"
+                                        },
+                                        "id": {
+                                            "type": "string"
+                                        },
+                                        "type": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "schema",
+                                        "id",
+                                        "type"
+                                    ],
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    }
+                },
                 "summary": "Retrieve JSON schemas",
                 "tags": [
                     "Auxiliary"
@@ -863,39 +1087,7 @@
                         }
                     }
                 ],
-                "description": "\n[JSON Schemas](https://json-schema.org/docs) for various Azul facilities.\n",
-                "responses": {
-                    "200": {
-                        "description": "Contents of the schema",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "schema": {
-                                            "type": "string"
-                                        },
-                                        "id": {
-                                            "type": "string"
-                                        },
-                                        "type": {
-                                            "type": "string"
-                                        }
-                                    },
-                                    "required": [
-                                        "schema",
-                                        "id",
-                                        "type"
-                                    ],
-                                    "additionalProperties": true
-                                }
-                            }
-                        }
-                    },
-                    "504": {
-                        "description": "\nRequest timed out. When handling this response, clients\nshould wait the number of seconds specified in the\n`Retry-After` header and then retry the request.\n"
-                    }
-                }
+                "description": "\n[JSON Schemas](https://json-schema.org/docs) for various Azul facilities.\n"
             }
         }
     },
