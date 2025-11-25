@@ -131,9 +131,9 @@ class MirrorService:
             self._mirror_source(json_str(message['catalog']),
                                 json_mapping(message['source']))
         elif action is MirrorAction.mirror_partition:
-            self.mirror_partition(json_str(message['catalog']),
-                                  json_mapping(message['source']),
-                                  json_str(message['prefix']))
+            self._mirror_partition(json_str(message['catalog']),
+                                   json_mapping(message['source']),
+                                   json_str(message['prefix']))
         elif action is MirrorAction.mirror_file:
             self.mirror_file(json_str(message['catalog']),
                              json_mapping(message['file']))
@@ -185,11 +185,11 @@ class MirrorService:
     def _list_public_source_ids(self, catalog: CatalogName) -> set[str]:
         return self._source_service.list_source_ids(catalog, authentication=None)
 
-    def mirror_partition(self,
-                         catalog: CatalogName,
-                         source_json: JSON,
-                         prefix: str
-                         ):
+    def _mirror_partition(self,
+                          catalog: CatalogName,
+                          source_json: JSON,
+                          prefix: str
+                          ):
         plugin = self._repository_plugin(catalog)
         source = plugin.source_ref_cls.from_json(source_json)
         files = plugin.list_files(source, prefix)
