@@ -106,7 +106,7 @@ class MirrorService:
                     if cfg.mirror:
                         log.info('Mirroring files in source %r from catalog %r',
                                  str(source.spec), catalog)
-                        yield self.mirror_source_message(catalog, source)
+                        yield self._mirror_source_message(catalog, source)
                     else:
                         log.info('Not mirroring any files in source %r from catalog %r because '
                                  'mirroring is explicitly disabled',
@@ -299,10 +299,10 @@ class MirrorService:
     def _load_file(self, catalog: CatalogName, file: JSON) -> File:
         return self._metadata_plugin(catalog).file_class.from_json(file)
 
-    def mirror_source_message(self,
-                              catalog: CatalogName,
-                              source: SourceRef
-                              ) -> SQSFifoMessage:
+    def _mirror_source_message(self,
+                               catalog: CatalogName,
+                               source: SourceRef
+                               ) -> SQSFifoMessage:
         return SQSFifoMessage(
             body={
                 'action': MirrorAction.mirror_source.to_json(),
