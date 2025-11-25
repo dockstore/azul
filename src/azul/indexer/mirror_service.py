@@ -68,7 +68,7 @@ class MirrorAction(Action):
 
 @attrs.frozen(kw_only=True, slots=False)
 class MirrorService:
-    schema_url_func: SchemaUrlFunc
+    _schema_url_func: SchemaUrlFunc
 
     @cached_property
     def queues(self) -> Queues:
@@ -76,7 +76,8 @@ class MirrorService:
 
     @cache
     def service(self, catalog: CatalogName) -> MirrorFileService:
-        return MirrorFileService(catalog=catalog, schema_url_func=self.schema_url_func)
+        return MirrorFileService(catalog=catalog,
+                                 schema_url_func=self._schema_url_func)
 
     @cache
     def repository_plugin(self, catalog: CatalogName) -> RepositoryPlugin:
