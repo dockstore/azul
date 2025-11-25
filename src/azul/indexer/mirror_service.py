@@ -80,7 +80,7 @@ class MirrorService:
                                  schema_url_func=self._schema_url_func)
 
     @cache
-    def repository_plugin(self, catalog: CatalogName) -> RepositoryPlugin:
+    def _repository_plugin(self, catalog: CatalogName) -> RepositoryPlugin:
         return RepositoryPlugin.load(catalog).create(catalog)
 
     @cache
@@ -154,7 +154,7 @@ class MirrorService:
             assert False, action
 
     def mirror_source(self, catalog: CatalogName, source_json: JSON):
-        plugin = self.repository_plugin(catalog)
+        plugin = self._repository_plugin(catalog)
         source = plugin.source_ref_cls.from_json(source_json)
         assert source.id in self._list_public_source_ids(catalog), R(
             'Cannot mirror non-public source', source)
@@ -190,7 +190,7 @@ class MirrorService:
                          source_json: JSON,
                          prefix: str
                          ):
-        plugin = self.repository_plugin(catalog)
+        plugin = self._repository_plugin(catalog)
         source = plugin.source_ref_cls.from_json(source_json)
         files = plugin.list_files(source, prefix)
         max_size = config.catalogs[catalog].mirror_limit
