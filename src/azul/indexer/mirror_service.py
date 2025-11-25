@@ -128,8 +128,8 @@ class MirrorService:
 
     def mirror(self, action: MirrorAction, message: JSON):
         if action is MirrorAction.mirror_source:
-            self.mirror_source(json_str(message['catalog']),
-                               json_mapping(message['source']))
+            self._mirror_source(json_str(message['catalog']),
+                                json_mapping(message['source']))
         elif action is MirrorAction.mirror_partition:
             self.mirror_partition(json_str(message['catalog']),
                                   json_mapping(message['source']),
@@ -153,7 +153,7 @@ class MirrorService:
         else:
             assert False, action
 
-    def mirror_source(self, catalog: CatalogName, source_json: JSON):
+    def _mirror_source(self, catalog: CatalogName, source_json: JSON):
         plugin = self._repository_plugin(catalog)
         source = plugin.source_ref_cls.from_json(source_json)
         assert source.id in self._list_public_source_ids(catalog), R(
