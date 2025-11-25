@@ -16,9 +16,6 @@ from azul import (
     config,
     iif,
 )
-from azul.azulclient import (
-    AzulClient,
-)
 from azul.deployment import (
     aws,
 )
@@ -58,10 +55,6 @@ class WorkQueueTestCase(SqsTestCase):
     @cached_property
     def queues(self) -> Queues:
         return Queues(delete=True)
-
-    @cached_property
-    def client(self) -> AzulClient:
-        return AzulClient()
 
     @cached_property
     def random(self) -> Random:
