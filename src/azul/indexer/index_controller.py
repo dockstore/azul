@@ -20,9 +20,6 @@ from azul import (
     cached_property,
     config,
 )
-from azul.azulclient import (
-    AzulClient,
-)
 from azul.chalice import (
     LambdaMetric,
 )
@@ -61,10 +58,6 @@ class IndexController(ActionController[IndexAction]):
     @cached_property
     def index_queue_service(self) -> IndexQueueService:
         return IndexQueueService()
-
-    @cached_property
-    def client(self) -> AzulClient:
-        return AzulClient()
 
     @property
     def actions_are_fifo(self) -> bool:
