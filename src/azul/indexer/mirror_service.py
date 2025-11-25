@@ -177,7 +177,7 @@ class MirrorService:
 
         def message(partition: str) -> SQSMessage:
             log.debug('Queueing partition %r', partition)
-            return self.mirror_partition_message(catalog, source, partition)
+            return self._mirror_partition_message(catalog, source, partition)
 
         messages = map(message, prefix.partition_prefixes())
         self._queue_messages(messages)
@@ -202,7 +202,7 @@ class MirrorService:
                     log.info('Not mirroring file to save cost: %r', file)
                 else:
                     log.debug('Queueing file %r', file)
-                    yield self.mirror_file_message(catalog, source, file)
+                    yield self._mirror_file_message(catalog, source, file)
 
         self._queue_messages(messages())
         log.info('Queued %d files in partition %r of source %r in catalog %r',
@@ -238,12 +238,12 @@ class MirrorService:
                 next_part = first_part.next(file)
                 assert next_part is not None
                 log.info('Queueing part #%d of file %r', next_part.index, file)
-                message = self.mirror_part_message(catalog,
-                                                   file,
-                                                   next_part,
-                                                   upload_id,
-                                                   [etag],
-                                                   hasher)
+                message = self._mirror_part_message(catalog,
+                                                    file,
+                                                    next_part,
+                                                    upload_id,
+                                                    [etag],
+                                                    hasher)
                 self._queue_messages([message])
 
     def _mirror_file_part(self,
@@ -264,19 +264,19 @@ class MirrorService:
         next_part = part.next(file)
         if next_part is None:
             log.info('File fully uploaded in %d parts: %r', len(etags), file)
-            message = self.finalize_file_message(catalog,
-                                                 file,
-                                                 upload_id,
-                                                 etags,
-                                                 hasher)
+            message = self._finalize_file_message(catalog,
+                                                  file,
+                                                  upload_id,
+                                                  etags,
+                                                  hasher)
         else:
             log.info('Queueing part #%d of file %r', next_part.index, file)
-            message = self.mirror_part_message(catalog,
-                                               file,
-                                               next_part,
-                                               upload_id,
-                                               etags,
-                                               hasher)
+            message = self._mirror_part_message(catalog,
+                                                file,
+                                                next_part,
+                                                upload_id,
+                                                etags,
+                                                hasher)
         self._queue_messages([message])
 
     def _finalize_file(self,
@@ -312,11 +312,11 @@ class MirrorService:
             group_id=source.id
         )
 
-    def mirror_partition_message(self,
-                                 catalog: CatalogName,
-                                 source: SourceRef,
-                                 prefix: str
-                                 ) -> SQSFifoMessage:
+    def _mirror_partition_message(self,
+                                  catalog: CatalogName,
+                                  source: SourceRef,
+                                  prefix: str
+                                  ) -> SQSFifoMessage:
         return SQSFifoMessage(
             body={
                 'action': MirrorAction.mirror_partition.to_json(),
@@ -327,11 +327,11 @@ class MirrorService:
             group_id=f'{source.id}:{prefix}'
         )
 
-    def mirror_file_message(self,
-                            catalog: CatalogName,
-                            source: SourceRef,
-                            file: File,
-                            ) -> SQSFifoMessage:
+    def _mirror_file_message(self,
+                             catalog: CatalogName,
+                             source: SourceRef,
+                             file: File,
+                             ) -> SQSFifoMessage:
         return SQSFifoMessage(
             body={
                 'action': MirrorAction.mirror_file.to_json(),
@@ -342,14 +342,14 @@ class MirrorService:
             group_id=file.digest.value
         )
 
-    def mirror_part_message(self,
-                            catalog: CatalogName,
-                            file: File,
-                            part: FilePart,
-                            upload_id: str,
-                            etags: Sequence[str],
-                            hasher: Hasher
-                            ) -> SQSFifoMessage:
+    def _mirror_part_message(self,
+                             catalog: CatalogName,
+                             file: File,
+                             part: FilePart,
+                             upload_id: str,
+                             etags: Sequence[str],
+                             hasher: Hasher
+                             ) -> SQSFifoMessage:
         return SQSFifoMessage(
             body={
                 'catalog': catalog,
@@ -363,13 +363,13 @@ class MirrorService:
             group_id=file.digest.value
         )
 
-    def finalize_file_message(self,
-                              catalog: CatalogName,
-                              file: File,
-                              upload_id: str,
-                              etags: Sequence[str],
-                              hasher: Hasher
-                              ) -> SQSFifoMessage:
+    def _finalize_file_message(self,
+                               catalog: CatalogName,
+                               file: File,
+                               upload_id: str,
+                               etags: Sequence[str],
+                               hasher: Hasher
+                               ) -> SQSFifoMessage:
         return SQSFifoMessage(
             body={
                 'catalog': catalog,
