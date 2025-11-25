@@ -144,7 +144,7 @@ class TestMirrorController(DCP2TestCase,
     def _remote_mirror(self, mirror_source_cfg: bool = True) -> MutableJSONs:
         cfg = SourceConfig(mirror=mirror_source_cfg)
         self.service.remote_mirror(self.catalog, [(self.source, cfg)])
-        return self._read_queue(self.service.mirror_queue())
+        return self._read_queue(self.service._mirror_queue())
 
     def _test_remote_mirror(self):
         source_message = one(self._remote_mirror())
@@ -157,7 +157,7 @@ class TestMirrorController(DCP2TestCase,
     def _test_mirror_source(self, source_message):
         event = self._mirror_event(source_message)
         self.mirror_controller.mirror(event)
-        partition_messages = self._read_queue(self.service.mirror_queue())
+        partition_messages = self._read_queue(self.service._mirror_queue())
         partition_message = copy_json(partition_messages[0])
         partitions = []
         for message in partition_messages:
@@ -174,7 +174,7 @@ class TestMirrorController(DCP2TestCase,
         plugin_cls = type(self.service._repository_plugin(self.catalog))
         with patch.object(plugin_cls, 'list_files', return_value=files):
             self.mirror_controller.mirror(event)
-        file_message = one(self._read_queue(self.service.mirror_queue()))
+        file_message = one(self._read_queue(self.service._mirror_queue()))
         expected_message = dict(action='mirror_file',
                                 catalog=self.catalog,
                                 source=self.source.to_json(),

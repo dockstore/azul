@@ -114,7 +114,7 @@ class MirrorService:
 
             self.queue_mirror_messages(messages())
 
-    def mirror_queue(self):
+    def _mirror_queue(self):
         name = config.mirror_queue.name
         return aws.sqs_queue(name)
 
@@ -122,7 +122,7 @@ class MirrorService:
         rate_limit = float(aws.sqs_fifo_rate_limit)
         if config.is_in_lambda:
             rate_limit /= config.mirroring_concurrency
-        return self._queues.send_messages(self.mirror_queue(),
+        return self._queues.send_messages(self._mirror_queue(),
                                           messages,
                                           rate_limit=rate_limit)
 
