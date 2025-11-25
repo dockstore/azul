@@ -36,7 +36,6 @@ from azul.indexer.mirror_file_service import (
 )
 from azul.plugins import (
     File,
-    MetadataPlugin,
     RepositoryPlugin,
 )
 from azul.queues import (
@@ -247,8 +246,7 @@ class MirrorService(BaseMirrorService):
             assert False, action
 
     def _mirror_source(self, catalog: CatalogName, source_json: JSON):
-        plugin = self._repository_plugin(catalog)
-        source = plugin.source_ref_cls.from_json(source_json)
+        source: SourceRef = SourceRef.from_json(source_json)
         assert source.id in self._list_public_source_ids(catalog), R(
             'Cannot mirror non-public source', source)
         # The desired partition size depends on the maximum number of messages
@@ -262,6 +260,7 @@ class MirrorService(BaseMirrorService):
             / config.mirroring_concurrency  # number of concurrent invocations
             / 2  # safety margin
         )
+        plugin = self._repository_plugin(catalog)
         source = plugin.partition_source_for_mirroring(catalog, source, partition_size)
         prefix = source.prefix
         assert prefix is not None, source
@@ -283,8 +282,8 @@ class MirrorService(BaseMirrorService):
                           source_json: JSON,
                           prefix: str
                           ):
+        source: SourceRef = SourceRef.from_json(source_json)
         plugin = self._repository_plugin(catalog)
-        source = plugin.source_ref_cls.from_json(source_json)
         files = plugin.list_files(source, prefix)
         max_size = config.catalogs[catalog].mirror_limit
 
