@@ -84,7 +84,7 @@ class MirrorService:
         return RepositoryPlugin.load(catalog).create(catalog)
 
     @cache
-    def metadata_plugin(self, catalog: CatalogName) -> MetadataPlugin:
+    def _metadata_plugin(self, catalog: CatalogName) -> MetadataPlugin:
         return MetadataPlugin.load(catalog).create()
 
     @cached_property
@@ -297,7 +297,7 @@ class MirrorService:
         log.info('Successfully mirrored file via multi-part upload: %r', file)
 
     def load_file(self, catalog: CatalogName, file: JSON) -> File:
-        return self.metadata_plugin(catalog).file_class.from_json(file)
+        return self._metadata_plugin(catalog).file_class.from_json(file)
 
     def mirror_source_message(self,
                               catalog: CatalogName,
