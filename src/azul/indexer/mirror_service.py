@@ -71,7 +71,7 @@ class MirrorService:
     _schema_url_func: SchemaUrlFunc
 
     @cached_property
-    def queues(self) -> Queues:
+    def _queues(self) -> Queues:
         return Queues()
 
     @cache
@@ -122,9 +122,9 @@ class MirrorService:
         rate_limit = float(aws.sqs_fifo_rate_limit)
         if config.is_in_lambda:
             rate_limit /= config.mirroring_concurrency
-        return self.queues.send_messages(self.mirror_queue(),
-                                         messages,
-                                         rate_limit=rate_limit)
+        return self._queues.send_messages(self.mirror_queue(),
+                                          messages,
+                                          rate_limit=rate_limit)
 
     def mirror(self, action: MirrorAction, message: JSON):
         if action is MirrorAction.mirror_source:
