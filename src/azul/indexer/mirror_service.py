@@ -67,6 +67,9 @@ class MirrorAction(Action):
 
 
 class BaseMirrorService:
+    """
+    Service for queuing mirroring work, e.g., sending action messages.
+    """
 
     @cached_property
     def _queues(self) -> Queues:
@@ -193,6 +196,10 @@ class BaseMirrorService:
 
 @attrs.frozen(kw_only=True, slots=False)
 class MirrorService(BaseMirrorService):
+    """
+    Service that carries out mirroring work.
+    """
+
     _schema_url_func: SchemaUrlFunc
 
     @cache

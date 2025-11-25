@@ -151,6 +151,10 @@ class MirrorFileDownload(RepositoryFileDownload):
 
 @attrs.frozen(kw_only=True, slots=False)
 class BaseMirrorFileService:
+    """
+    Service for reading mirrored files, plus some test support. The most
+    prominent reader of mirrored files is the service app.
+    """
     catalog: CatalogName
 
     @cached_property
@@ -244,6 +248,13 @@ class SchemaUrlFunc(Protocol):
 
 @attrs.frozen(kw_only=True, slots=False)
 class MirrorFileService(BaseMirrorFileService, HasCachedHttpClient):
+    """
+    Service for writing mirrored files. Requires a mechanism to compose schema
+    URLs. This function is currently offered by the indexer app, so another way
+    to view this service class is as an encapsulation of the mirroring work done
+    by the indexer app.
+    """
+
     schema_url_func: SchemaUrlFunc
 
     # We don't store the mirrored files' actual content type(s) in S3's
