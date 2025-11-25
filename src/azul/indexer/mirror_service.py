@@ -66,30 +66,11 @@ class MirrorAction(Action):
     finalize_file = auto()
 
 
-@attrs.frozen(kw_only=True, slots=False)
-class MirrorService:
-    _schema_url_func: SchemaUrlFunc
+class BaseMirrorService:
 
     @cached_property
     def _queues(self) -> Queues:
         return Queues()
-
-    @cache
-    def _service(self, catalog: CatalogName) -> MirrorFileService:
-        return MirrorFileService(catalog=catalog,
-                                 schema_url_func=self._schema_url_func)
-
-    @cache
-    def _repository_plugin(self, catalog: CatalogName) -> RepositoryPlugin:
-        return RepositoryPlugin.load(catalog).create(catalog)
-
-    @cache
-    def _metadata_plugin(self, catalog: CatalogName) -> MetadataPlugin:
-        return MetadataPlugin.load(catalog).create()
-
-    @cached_property
-    def _source_service(self) -> SourceService:
-        return SourceService()
 
     def remote_mirror(self,
                       catalog: CatalogName,
@@ -125,6 +106,111 @@ class MirrorService:
         return self._queues.send_messages(self._mirror_queue(),
                                           messages,
                                           rate_limit=rate_limit)
+
+    def _mirror_source_message(self,
+                               catalog: CatalogName,
+                               source: SourceRef
+                               ) -> SQSFifoMessage:
+        return SQSFifoMessage(
+            body={
+                'action': MirrorAction.mirror_source.to_json(),
+                'catalog': catalog,
+                'source': source.to_json(),
+            },
+            group_id=source.id
+        )
+
+    def _mirror_partition_message(self,
+                                  catalog: CatalogName,
+                                  source: SourceRef,
+                                  prefix: str
+                                  ) -> SQSFifoMessage:
+        return SQSFifoMessage(
+            body={
+                'action': MirrorAction.mirror_partition.to_json(),
+                'catalog': catalog,
+                'source': source.to_json(),
+                'prefix': prefix
+            },
+            group_id=f'{source.id}:{prefix}'
+        )
+
+    def _mirror_file_message(self,
+                             catalog: CatalogName,
+                             source: SourceRef,
+                             file: File,
+                             ) -> SQSFifoMessage:
+        return SQSFifoMessage(
+            body={
+                'action': MirrorAction.mirror_file.to_json(),
+                'catalog': catalog,
+                'source': source.to_json(),
+                'file': file.to_json()
+            },
+            group_id=file.digest.value
+        )
+
+    def _mirror_part_message(self,
+                             catalog: CatalogName,
+                             file: File,
+                             part: FilePart,
+                             upload_id: str,
+                             etags: Sequence[str],
+                             hasher: Hasher
+                             ) -> SQSFifoMessage:
+        return SQSFifoMessage(
+            body={
+                'catalog': catalog,
+                'file': file.to_json(),
+                'upload_id': upload_id,
+                'action': MirrorAction.mirror_part.to_json(),
+                'part': part.to_json(),
+                'etags': etags,
+                'hasher': hasher_to_str(hasher)
+            },
+            group_id=file.digest.value
+        )
+
+    def _finalize_file_message(self,
+                               catalog: CatalogName,
+                               file: File,
+                               upload_id: str,
+                               etags: Sequence[str],
+                               hasher: Hasher
+                               ) -> SQSFifoMessage:
+        return SQSFifoMessage(
+            body={
+                'catalog': catalog,
+                'file': file.to_json(),
+                'upload_id': upload_id,
+                'action': MirrorAction.finalize_file.to_json(),
+                'etags': etags,
+                'hasher': hasher_to_str(hasher)
+            },
+            group_id=file.digest.value
+        )
+
+
+@attrs.frozen(kw_only=True, slots=False)
+class MirrorService(BaseMirrorService):
+    _schema_url_func: SchemaUrlFunc
+
+    @cache
+    def _service(self, catalog: CatalogName) -> MirrorFileService:
+        return MirrorFileService(catalog=catalog,
+                                 schema_url_func=self._schema_url_func)
+
+    @cache
+    def _repository_plugin(self, catalog: CatalogName) -> RepositoryPlugin:
+        return RepositoryPlugin.load(catalog).create(catalog)
+
+    @cache
+    def _metadata_plugin(self, catalog: CatalogName) -> MetadataPlugin:
+        return MetadataPlugin.load(catalog).create()
+
+    @cached_property
+    def _source_service(self) -> SourceService:
+        return SourceService()
 
     def mirror(self, action: MirrorAction, message: JSON):
         if action is MirrorAction.mirror_source:
@@ -298,86 +384,3 @@ class MirrorService:
 
     def _load_file(self, catalog: CatalogName, file: JSON) -> File:
         return self._metadata_plugin(catalog).file_class.from_json(file)
-
-    def _mirror_source_message(self,
-                               catalog: CatalogName,
-                               source: SourceRef
-                               ) -> SQSFifoMessage:
-        return SQSFifoMessage(
-            body={
-                'action': MirrorAction.mirror_source.to_json(),
-                'catalog': catalog,
-                'source': source.to_json(),
-            },
-            group_id=source.id
-        )
-
-    def _mirror_partition_message(self,
-                                  catalog: CatalogName,
-                                  source: SourceRef,
-                                  prefix: str
-                                  ) -> SQSFifoMessage:
-        return SQSFifoMessage(
-            body={
-                'action': MirrorAction.mirror_partition.to_json(),
-                'catalog': catalog,
-                'source': source.to_json(),
-                'prefix': prefix
-            },
-            group_id=f'{source.id}:{prefix}'
-        )
-
-    def _mirror_file_message(self,
-                             catalog: CatalogName,
-                             source: SourceRef,
-                             file: File,
-                             ) -> SQSFifoMessage:
-        return SQSFifoMessage(
-            body={
-                'action': MirrorAction.mirror_file.to_json(),
-                'catalog': catalog,
-                'source': source.to_json(),
-                'file': file.to_json()
-            },
-            group_id=file.digest.value
-        )
-
-    def _mirror_part_message(self,
-                             catalog: CatalogName,
-                             file: File,
-                             part: FilePart,
-                             upload_id: str,
-                             etags: Sequence[str],
-                             hasher: Hasher
-                             ) -> SQSFifoMessage:
-        return SQSFifoMessage(
-            body={
-                'catalog': catalog,
-                'file': file.to_json(),
-                'upload_id': upload_id,
-                'action': MirrorAction.mirror_part.to_json(),
-                'part': part.to_json(),
-                'etags': etags,
-                'hasher': hasher_to_str(hasher)
-            },
-            group_id=file.digest.value
-        )
-
-    def _finalize_file_message(self,
-                               catalog: CatalogName,
-                               file: File,
-                               upload_id: str,
-                               etags: Sequence[str],
-                               hasher: Hasher
-                               ) -> SQSFifoMessage:
-        return SQSFifoMessage(
-            body={
-                'catalog': catalog,
-                'file': file.to_json(),
-                'upload_id': upload_id,
-                'action': MirrorAction.finalize_file.to_json(),
-                'etags': etags,
-                'hasher': hasher_to_str(hasher)
-            },
-            group_id=file.digest.value
-        )
