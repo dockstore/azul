@@ -33,7 +33,7 @@ from azul import (
     config,
 )
 from azul.attrs import (
-    SerializableAttrs,
+    DiscriminatingPolymorphicSerializableAttrs,
 )
 from azul.chalice import (
     Authentication,
@@ -63,6 +63,9 @@ from azul.indexer.document import (
 from azul.indexer.transform import (
     ReplicaTransformer,
     Transformer,
+)
+from azul.json import (
+    DynamicPolymorphicSerializable,
 )
 from azul.types import (
     JSON,
@@ -801,7 +804,9 @@ class RepositoryPlugin[BUNDLE: Bundle = Bundle[SourcedBundleFQID],
 
 
 @attrs.frozen(auto_attribs=True, kw_only=True)
-class File(SerializableAttrs, metaclass=ABCMeta):
+class File(DiscriminatingPolymorphicSerializableAttrs,
+           DynamicPolymorphicSerializable,
+           metaclass=ABCMeta):
     """
     A reference to a data file in the repository.
     """
@@ -845,6 +850,10 @@ class File(SerializableAttrs, metaclass=ABCMeta):
     @abstractmethod
     def digest(self) -> Digest:
         raise NotImplementedError
+
+    @classmethod
+    def discriminator(cls) -> str:
+        return 'type'
 
 
 @attrs.define(auto_attribs=True, kw_only=True)

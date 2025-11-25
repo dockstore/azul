@@ -210,10 +210,6 @@ class MirrorService(BaseMirrorService):
     def _repository_plugin(self, catalog: CatalogName) -> RepositoryPlugin:
         return RepositoryPlugin.load(catalog).create(catalog)
 
-    @cache
-    def _metadata_plugin(self, catalog: CatalogName) -> MetadataPlugin:
-        return MetadataPlugin.load(catalog).create()
-
     @cached_property
     def _source_service(self) -> SourceService:
         return SourceService()
@@ -304,7 +300,7 @@ class MirrorService(BaseMirrorService):
                      catalog: CatalogName,
                      file_json: JSON
                      ):
-        file = self._load_file(catalog, file_json)
+        file = File.from_json(file_json)
         assert file.size is not None, R('File size unknown', file)
         service = self._file_service(catalog)
         if service.info_exists(file):
@@ -346,7 +342,7 @@ class MirrorService(BaseMirrorService):
                           etags: Iterable[str],
                           hasher_data: str
                           ):
-        file = self._load_file(catalog, file_json)
+        file = File.from_json(file_json)
         part = FilePart.from_json(part_json)
         hasher = hasher_from_str(hasher_data)
         log.info('Uploading part #%d of file %r', part.index, file)
@@ -378,7 +374,7 @@ class MirrorService(BaseMirrorService):
                        etags: Sequence[str],
                        hasher_data: str
                        ):
-        file = self._load_file(catalog, file_json)
+        file = File.from_json(file_json)
         assert len(etags) > 0
         hasher = hasher_from_str(hasher_data)
         service = self._file_service(catalog)
@@ -387,6 +383,3 @@ class MirrorService(BaseMirrorService):
                                       etags=etags,
                                       hasher=hasher)
         log.info('Successfully mirrored file via multi-part upload: %r', file)
-
-    def _load_file(self, catalog: CatalogName, file: JSON) -> File:
-        return self._metadata_plugin(catalog).file_class.from_json(file)

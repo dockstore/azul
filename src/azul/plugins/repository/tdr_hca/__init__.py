@@ -270,6 +270,7 @@ class Plugin(TDRPlugin[TDRHCABundle, TDRBundleFQID]):
         if entity.entity_type.endswith('_file'):
             file = self._file_from_row(row)
             file_json = file.to_json()
+            file_json.pop(file.discriminator())
             file_json['content-type'] = file_json.pop('content_type')
             file_json['indexed'] = False
             bundle.manifest[str(entity)] = file_json
