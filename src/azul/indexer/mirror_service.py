@@ -135,8 +135,8 @@ class MirrorService:
                                    json_mapping(message['source']),
                                    json_str(message['prefix']))
         elif action is MirrorAction.mirror_file:
-            self.mirror_file(json_str(message['catalog']),
-                             json_mapping(message['file']))
+            self._mirror_file(json_str(message['catalog']),
+                              json_mapping(message['file']))
         elif action is MirrorAction.mirror_part:
             self.mirror_file_part(json_str(message['catalog']),
                                   json_mapping(message['file']),
@@ -208,10 +208,10 @@ class MirrorService:
         log.info('Queued %d files in partition %r of source %r in catalog %r',
                  len(files), prefix, str(source), catalog)
 
-    def mirror_file(self,
-                    catalog: CatalogName,
-                    file_json: JSON
-                    ):
+    def _mirror_file(self,
+                     catalog: CatalogName,
+                     file_json: JSON
+                     ):
         file = self.load_file(catalog, file_json)
         assert file.size is not None, R('File size unknown', file)
         service = self._service(catalog)
