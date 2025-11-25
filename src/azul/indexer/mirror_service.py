@@ -75,7 +75,7 @@ class MirrorService:
         return Queues()
 
     @cache
-    def service(self, catalog: CatalogName) -> MirrorFileService:
+    def _service(self, catalog: CatalogName) -> MirrorFileService:
         return MirrorFileService(catalog=catalog,
                                  schema_url_func=self._schema_url_func)
 
@@ -214,7 +214,7 @@ class MirrorService:
                     ):
         file = self.load_file(catalog, file_json)
         assert file.size is not None, R('File size unknown', file)
-        service = self.service(catalog)
+        service = self._service(catalog)
         if service.info_exists(file):
             log.info('File is already mirrored, skipping upload: %r', file)
         elif service.file_exists(file):
@@ -258,7 +258,7 @@ class MirrorService:
         part = FilePart.from_json(part_json)
         hasher = hasher_from_str(hasher_data)
         log.info('Uploading part #%d of file %r', part.index, file)
-        service = self.service(catalog)
+        service = self._service(catalog)
         etag = service.mirror_file_part(file, part, upload_id, hasher)
         etags = [*etags, etag]
         next_part = part.next(file)
@@ -289,7 +289,7 @@ class MirrorService:
         file = self.load_file(catalog, file_json)
         assert len(etags) > 0
         hasher = hasher_from_str(hasher_data)
-        service = self.service(catalog)
+        service = self._service(catalog)
         service.finish_mirroring_file(file=file,
                                       upload_id=upload_id,
                                       etags=etags,

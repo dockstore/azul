@@ -136,7 +136,7 @@ class TestMirrorController(DCP2TestCase,
 
     @property
     def file_service(self) -> MirrorFileService:
-        return self.service.service(self.catalog)
+        return self.service._service(self.catalog)
 
     def _mirror_event(self, body: JSON) -> list[SQSRecord]:
         return [self._mock_sqs_record(body, fifo=True)]
