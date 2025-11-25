@@ -112,13 +112,13 @@ class MirrorService:
                                  'mirroring is explicitly disabled',
                                  str(source.spec), catalog)
 
-            self.queue_mirror_messages(messages())
+            self._queue_messages(messages())
 
     def _mirror_queue(self):
         name = config.mirror_queue.name
         return aws.sqs_queue(name)
 
-    def queue_mirror_messages(self, messages: Iterable[SQSMessage]) -> int:
+    def _queue_messages(self, messages: Iterable[SQSMessage]) -> int:
         rate_limit = float(aws.sqs_fifo_rate_limit)
         if config.is_in_lambda:
             rate_limit /= config.mirroring_concurrency
@@ -180,7 +180,7 @@ class MirrorService:
             return self.mirror_partition_message(catalog, source, partition)
 
         messages = map(message, prefix.partition_prefixes())
-        self.queue_mirror_messages(messages)
+        self._queue_messages(messages)
 
     def _list_public_source_ids(self, catalog: CatalogName) -> set[str]:
         return self._source_service.list_source_ids(catalog, authentication=None)
@@ -204,7 +204,7 @@ class MirrorService:
                     log.debug('Queueing file %r', file)
                     yield self.mirror_file_message(catalog, source, file)
 
-        self.queue_mirror_messages(messages())
+        self._queue_messages(messages())
         log.info('Queued %d files in partition %r of source %r in catalog %r',
                  len(files), prefix, str(source), catalog)
 
@@ -244,7 +244,7 @@ class MirrorService:
                                                    upload_id,
                                                    [etag],
                                                    hasher)
-                self.queue_mirror_messages([message])
+                self._queue_messages([message])
 
     def mirror_file_part(self,
                          catalog: CatalogName,
@@ -277,7 +277,7 @@ class MirrorService:
                                                upload_id,
                                                etags,
                                                hasher)
-        self.queue_mirror_messages([message])
+        self._queue_messages([message])
 
     def finalize_file(self,
                       catalog: CatalogName,
