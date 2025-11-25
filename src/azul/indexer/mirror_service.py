@@ -138,12 +138,12 @@ class MirrorService:
             self._mirror_file(json_str(message['catalog']),
                               json_mapping(message['file']))
         elif action is MirrorAction.mirror_part:
-            self.mirror_file_part(json_str(message['catalog']),
-                                  json_mapping(message['file']),
-                                  json_mapping(message['part']),
-                                  json_str(message['upload_id']),
-                                  list(json_element_strings(message['etags'])),
-                                  json_str(message['hasher']))
+            self._mirror_file_part(json_str(message['catalog']),
+                                   json_mapping(message['file']),
+                                   json_mapping(message['part']),
+                                   json_str(message['upload_id']),
+                                   list(json_element_strings(message['etags'])),
+                                   json_str(message['hasher']))
         elif action is MirrorAction.finalize_file:
             self.finalize_file(json_str(message['catalog']),
                                json_mapping(message['file']),
@@ -246,14 +246,14 @@ class MirrorService:
                                                    hasher)
                 self._queue_messages([message])
 
-    def mirror_file_part(self,
-                         catalog: CatalogName,
-                         file_json: JSON,
-                         part_json: JSON,
-                         upload_id: str,
-                         etags: Iterable[str],
-                         hasher_data: str
-                         ):
+    def _mirror_file_part(self,
+                          catalog: CatalogName,
+                          file_json: JSON,
+                          part_json: JSON,
+                          upload_id: str,
+                          etags: Iterable[str],
+                          hasher_data: str
+                          ):
         file = self.load_file(catalog, file_json)
         part = FilePart.from_json(part_json)
         hasher = hasher_from_str(hasher_data)
