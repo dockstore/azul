@@ -16,9 +16,6 @@ from azul import (
     cached_property,
     config,
 )
-from azul.azulclient import (
-    AzulClient,
-)
 from azul.deployment import (
     aws,
 )
@@ -29,6 +26,7 @@ from azul.digests import (
     hasher_to_str,
 )
 from azul.indexer import (
+    SourceConfig,
     SourceRef,
 )
 from azul.indexer.mirror_file_service import (
@@ -38,10 +36,12 @@ from azul.indexer.mirror_file_service import (
 )
 from azul.plugins import (
     File,
+    MetadataPlugin,
     RepositoryPlugin,
 )
 from azul.queues import (
     Action,
+    Queues,
     SQSFifoMessage,
     SQSMessage,
 )
@@ -71,19 +71,59 @@ class MirrorService:
     schema_url_func: SchemaUrlFunc
 
     @cached_property
-    def client(self) -> AzulClient:
-        return AzulClient()
+    def queues(self) -> Queues:
+        return Queues()
 
     @cache
     def service(self, catalog: CatalogName) -> MirrorFileService:
         return MirrorFileService(catalog=catalog, schema_url_func=self.schema_url_func)
 
+    @cache
     def repository_plugin(self, catalog: CatalogName) -> RepositoryPlugin:
-        return self.client.repository_plugin(catalog)
+        return RepositoryPlugin.load(catalog).create(catalog)
+
+    @cache
+    def metadata_plugin(self, catalog: CatalogName) -> MetadataPlugin:
+        return MetadataPlugin.load(catalog).create()
 
     @cached_property
     def _source_service(self) -> SourceService:
         return SourceService()
+
+    def remote_mirror(self,
+                      catalog: CatalogName,
+                      sources: Iterable[tuple[SourceRef, SourceConfig]]
+                      ):
+        mirror_limit = config.catalogs[catalog].mirror_limit
+        if mirror_limit is not None and mirror_limit < 0:
+            log.info('Not mirroring any files in catalog %r because the file '
+                     'size limit is negative', catalog)
+        else:
+
+            def messages():
+                for source, cfg in sources:
+                    if cfg.mirror:
+                        log.info('Mirroring files in source %r from catalog %r',
+                                 str(source.spec), catalog)
+                        yield self.mirror_source_message(catalog, source)
+                    else:
+                        log.info('Not mirroring any files in source %r from catalog %r because '
+                                 'mirroring is explicitly disabled',
+                                 str(source.spec), catalog)
+
+            self.queue_mirror_messages(messages())
+
+    def mirror_queue(self):
+        name = config.mirror_queue.name
+        return aws.sqs_queue(name)
+
+    def queue_mirror_messages(self, messages: Iterable[SQSMessage]) -> int:
+        rate_limit = float(aws.sqs_fifo_rate_limit)
+        if config.is_in_lambda:
+            rate_limit /= config.mirroring_concurrency
+        return self.queues.send_messages(self.mirror_queue(),
+                                         messages,
+                                         rate_limit=rate_limit)
 
     def mirror(self, action: MirrorAction, message: JSON):
         if action is MirrorAction.mirror_source:
@@ -123,7 +163,7 @@ class MirrorService:
         # handling a mirror_source message.
         partition_size = int(
             aws.sqs_fifo_rate_limit  # max. # of SendMessage calls per second
-            * self.client.queues.batch_size  # number of messages per call
+            * Queues.batch_size  # number of messages per call
             * config.mirror_lambda_timeout  # max. duration of the invocation
             / config.mirroring_concurrency  # number of concurrent invocations
             / 2  # safety margin
@@ -139,7 +179,7 @@ class MirrorService:
             return self.mirror_partition_message(catalog, source, partition)
 
         messages = map(message, prefix.partition_prefixes())
-        self.client.queue_mirror_messages(messages)
+        self.queue_mirror_messages(messages)
 
     def _list_public_source_ids(self, catalog: CatalogName) -> set[str]:
         return self._source_service.list_source_ids(catalog, authentication=None)
@@ -163,7 +203,7 @@ class MirrorService:
                     log.debug('Queueing file %r', file)
                     yield self.mirror_file_message(catalog, source, file)
 
-        self.client.queue_mirror_messages(messages())
+        self.queue_mirror_messages(messages())
         log.info('Queued %d files in partition %r of source %r in catalog %r',
                  len(files), prefix, str(source), catalog)
 
@@ -203,7 +243,7 @@ class MirrorService:
                                                    upload_id,
                                                    [etag],
                                                    hasher)
-                self.client.queue_mirror_messages([message])
+                self.queue_mirror_messages([message])
 
     def mirror_file_part(self,
                          catalog: CatalogName,
@@ -236,7 +276,7 @@ class MirrorService:
                                                upload_id,
                                                etags,
                                                hasher)
-        self.client.queue_mirror_messages([message])
+        self.queue_mirror_messages([message])
 
     def finalize_file(self,
                       catalog: CatalogName,
@@ -256,7 +296,20 @@ class MirrorService:
         log.info('Successfully mirrored file via multi-part upload: %r', file)
 
     def load_file(self, catalog: CatalogName, file: JSON) -> File:
-        return self.client.metadata_plugin(catalog).file_class.from_json(file)
+        return self.metadata_plugin(catalog).file_class.from_json(file)
+
+    def mirror_source_message(self,
+                              catalog: CatalogName,
+                              source: SourceRef
+                              ) -> SQSFifoMessage:
+        return SQSFifoMessage(
+            body={
+                'action': MirrorAction.mirror_source.to_json(),
+                'catalog': catalog,
+                'source': source.to_json(),
+            },
+            group_id=source.id
+        )
 
     def mirror_partition_message(self,
                                  catalog: CatalogName,

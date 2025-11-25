@@ -33,6 +33,9 @@ from azul.indexer.mirror_controller import (
 from azul.indexer.mirror_file_service import (
     MirrorFileService,
 )
+from azul.indexer.mirror_service import (
+    MirrorService,
+)
 from azul.json import (
     copy_json,
 )
@@ -113,7 +116,7 @@ class TestMirrorController(DCP2TestCase,
                     with self.subTest('mirror_file', corrupted=False, exists=False):
                         self._test_mirror_file(file, file_message)
 
-                    service = self.mirror_controller.service(self.catalog)
+                    service = self.file_service
                     self._s3.delete_object(Bucket=self.mirror_bucket,
                                            Key=service.info_object_key(file))
 
@@ -127,13 +130,21 @@ class TestMirrorController(DCP2TestCase,
     def mirror_controller(self) -> MirrorController:
         return self.app_module.app.mirror_controller
 
+    @property
+    def service(self) -> MirrorService:
+        return self.mirror_controller.service
+
+    @property
+    def file_service(self) -> MirrorFileService:
+        return self.service.service(self.catalog)
+
     def _mirror_event(self, body: JSON) -> list[SQSRecord]:
         return [self._mock_sqs_record(body, fifo=True)]
 
     def _remote_mirror(self, mirror_source_cfg: bool = True) -> MutableJSONs:
         cfg = SourceConfig(mirror=mirror_source_cfg)
-        self.client.remote_mirror(self.catalog, [(self.source, cfg)])
-        return self._read_queue(self.client.mirror_queue())
+        self.service.remote_mirror(self.catalog, [(self.source, cfg)])
+        return self._read_queue(self.service.mirror_queue())
 
     def _test_remote_mirror(self):
         source_message = one(self._remote_mirror())
@@ -146,7 +157,7 @@ class TestMirrorController(DCP2TestCase,
     def _test_mirror_source(self, source_message):
         event = self._mirror_event(source_message)
         self.mirror_controller.mirror(event)
-        partition_messages = self._read_queue(self.client.mirror_queue())
+        partition_messages = self._read_queue(self.service.mirror_queue())
         partition_message = copy_json(partition_messages[0])
         partitions = []
         for message in partition_messages:
@@ -163,7 +174,7 @@ class TestMirrorController(DCP2TestCase,
         plugin_cls = type(self.client.repository_plugin(self.catalog))
         with patch.object(plugin_cls, 'list_files', return_value=files):
             self.mirror_controller.mirror(event)
-        file_message = one(self._read_queue(self.client.mirror_queue()))
+        file_message = one(self._read_queue(self.service.mirror_queue()))
         expected_message = dict(action='mirror_file',
                                 catalog=self.catalog,
                                 source=self.source.to_json(),
@@ -175,7 +186,7 @@ class TestMirrorController(DCP2TestCase,
         event = self._mirror_event(file_message)
         with patch.object(MirrorFileService, '_download', return_value=self._file_contents):
             self.mirror_controller.mirror(event)
-        service = self.mirror_controller.service(self.catalog)
+        service = self.file_service
         response = self._s3.get_object(Bucket=self.mirror_bucket,
                                        Key=service.mirror_object_key(file))
         mirrored_file_contents = response['Body'].read()
@@ -200,7 +211,7 @@ class TestMirrorController(DCP2TestCase,
     def test_info_schema(self):
         client = http_client(log)
         file = MagicMock(content_type='text/plain')
-        service = self.mirror_controller.service(self.catalog)
+        service = self.file_service
         info = service.info_object(file)
         response = client.request('GET', info['$schema'])
         self.assertEqual(200, response.status, response.data)
