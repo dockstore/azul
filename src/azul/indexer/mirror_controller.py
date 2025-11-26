@@ -57,6 +57,9 @@ from azul.queues import (
 from azul.schemas import (
     SchemaController,
 )
+from azul.service.source_controller import (
+    SourceController,
+)
 from azul.types import (
     JSON,
     json_element_strings,
@@ -67,7 +70,9 @@ from azul.types import (
 log = logging.getLogger(__name__)
 
 
-class MirrorController(ActionController[MirrorAction], SchemaController):
+class MirrorController(ActionController[MirrorAction],
+                       SchemaController,
+                       SourceController):
 
     @cached_property
     def client(self) -> AzulClient:
@@ -101,6 +106,7 @@ class MirrorController(ActionController[MirrorAction], SchemaController):
         return super().handlers() | locals()
 
     def mirror(self, event: Iterable[SQSRecord]):
+        assert config.enable_mirroring, R('Mirroring is disabled')
         self._handle_events(event, self._mirror)
 
     def _mirror(self, action: MirrorAction, message: JSON):
@@ -133,6 +139,8 @@ class MirrorController(ActionController[MirrorAction], SchemaController):
     def mirror_source(self, catalog: CatalogName, source_json: JSON):
         plugin = self.repository_plugin(catalog)
         source = plugin.source_ref_cls.from_json(source_json)
+        assert source.id in self._list_public_source_ids(catalog), R(
+            'Cannot mirror non-public source', source)
         # The desired partition size depends on the maximum number of messages
         # we can send in one Lambda invocation, because queueing the individual
         # mirror_file messages turns out to dominate the running time of
@@ -165,11 +173,16 @@ class MirrorController(ActionController[MirrorAction], SchemaController):
         plugin = self.repository_plugin(catalog)
         source = plugin.source_ref_cls.from_json(source_json)
         files = plugin.list_files(source, prefix)
+        max_size = config.catalogs[catalog].mirror_limit
 
         def messages() -> Iterable[SQSMessage]:
             for file in files:
-                log.debug('Queueing file %r', file)
-                yield self.mirror_file_message(catalog, source, file)
+                assert file.size is not None, R('File size unknown', file)
+                if max_size is not None and file.size > max_size:
+                    log.info('Not mirroring file to save cost: %r', file)
+                else:
+                    log.debug('Queueing file %r', file)
+                    yield self.mirror_file_message(catalog, source, file)
 
         self.client.queue_mirror_messages(messages())
         log.info('Queued %d files in partition %r of source %r in catalog %r',
@@ -181,16 +194,8 @@ class MirrorController(ActionController[MirrorAction], SchemaController):
                     ):
         file = self.load_file(catalog, file_json)
         assert file.size is not None, R('File size unknown', file)
-
-        file_is_large = file.size > 1.5 * 1024 ** 3
-        deployment_is_stable = (config.deployment.is_stable
-                                and not config.deployment.is_unit_test
-                                and catalog not in config.integration_test_catalogs)
-
         service = self.service(catalog)
-        if file_is_large and not deployment_is_stable:
-            log.info('Not mirroring file to save cost: %r', file)
-        elif service.info_exists(file):
+        if service.info_exists(file):
             log.info('File is already mirrored, skipping upload: %r', file)
         elif service.file_exists(file):
             assert False, R('File object is already present', file)

@@ -9,65 +9,74 @@ from typing import (
 is_sandbox = True
 
 pop = 1  # remove snapshot
+no_mirror = 2  # do not mirror files from snapshot (redundant for managed access snapshots)
 
-type ProjectName = str
+type DatasetName = str
 type SourceSpec = str
+type SourceConfig = dict[str, str | int | float | bool | None]
+type SourceItem = tuple[SourceSpec, SourceConfig]
 
 
-def bqsrc(google_project: str,
-          snapshot: str,
-          flags: int = 0,
-          ) -> tuple[ProjectName, SourceSpec | None]:
+def source(google_project: str,
+           snapshot: str,
+           flags: int = 0,
+           ) -> tuple[DatasetName, SourceItem | None]:
     assert len(google_project) == 8, google_project
-    project = 'datarepo-dev-' + google_project
+    google_project = 'datarepo-dev-' + google_project
     assert not snapshot.startswith('ANVIL_'), snapshot
     snapshot = 'ANVIL_' + snapshot
-    return mksrc('bigquery', project, snapshot, flags)
+    return _source('bigquery', google_project, snapshot, flags)
 
 
-def mksrc(source_type: Literal['bigquery', 'parquet'],
-          google_project,
-          snapshot,
-          flags: int = 0,
-          ) -> tuple[ProjectName, SourceSpec | None]:
-    project = '_'.join(snapshot.split('_')[1:-3])
-    assert flags <= pop
-    source = None if flags & pop else ':'.join([
-        'tdr',
-        source_type,
-        'gcp',
-        google_project,
-        snapshot,
-    ])
-    return project, source
+def _source(source_type: Literal['bigquery', 'parquet'],
+            google_project,
+            snapshot,
+            flags: int = 0,
+            ) -> tuple[DatasetName, SourceItem | None]:
+    dataset = '_'.join(snapshot.split('_')[1:-3])
+    assert flags <= pop | no_mirror
+    source = None if flags & pop else (
+        ':'.join([
+            'tdr',
+            source_type,
+            'gcp',
+            google_project,
+            snapshot,
+        ]),
+        {
+            'mirror': not (flags & no_mirror),
+        }
+    )
+    return dataset, source
 
 
-def mkdelta(items: list[tuple[ProjectName, SourceSpec | None]]
-            ) -> dict[ProjectName, SourceSpec | None]:
+def delta(items: list[tuple[DatasetName, SourceItem | None]]
+          ) -> dict[DatasetName, SourceItem | None]:
     result = dict(items)
     assert len(items) == len(result), 'collisions detected'
     assert list(result.keys()) == sorted(result.keys()), 'input not sorted'
     return result
 
 
-def mklist(catalog: dict[ProjectName, SourceSpec | None]) -> list[SourceSpec]:
-    return list(filter(None, catalog.values()))
+def condense(catalog: dict[DatasetName, SourceItem | None]
+             ) -> dict[SourceSpec, SourceConfig]:
+    return dict(filter(None, catalog.values()))
 
 
-def mkdict(previous_catalog: dict[ProjectName, SourceSpec | None],
-           num_expected: int,
-           delta: dict[ProjectName, SourceSpec | None],
-           ) -> dict[ProjectName, SourceSpec | None]:
+def union(previous_catalog: dict[DatasetName, SourceItem | None],
+          num_expected: int,
+          delta: dict[DatasetName, SourceItem | None],
+          ) -> dict[DatasetName, SourceItem | None]:
     catalog = previous_catalog | delta
-    num_actual = len(mklist(catalog))
+    num_actual = len(condense(catalog))
     assert num_expected == num_actual, (num_expected, num_actual)
     return catalog
 
 
-anvil_sources = mkdict({}, 3, mkdelta([
-    bqsrc('e53e74aa', '1000G_2019_Dev_20230609_ANV5_202306121732'),
-    bqsrc('42c70e6a', 'CCDG_Sample_1_20230228_ANV5_202302281520'),
-    bqsrc('97ad270b', 'CMG_Sample_1_20230225_ANV5_202302281509')
+anvil_sources = union({}, 3, delta([
+    source('e53e74aa', '1000G_2019_Dev_20230609_ANV5_202306121732'),
+    source('42c70e6a', 'CCDG_Sample_1_20230228_ANV5_202302281520'),
+    source('97ad270b', 'CMG_Sample_1_20230225_ANV5_202302281509')
 ]))
 
 
@@ -116,14 +125,14 @@ def env() -> Mapping[str, str | None]:
 
         'AZUL_CATALOGS': json.dumps({
             f'{catalog}{suffix}': dict(atlas=atlas,
-                                       internal=internal,
+                                       internal=is_it,
                                        plugins=dict(metadata=dict(name='anvil'),
                                                     repository=dict(name='tdr_anvil')),
-                                       sources=list(filter(None, sources.values())))
+                                       sources=condense(sources))
             for atlas, catalog, sources in [
                 ('anvil', 'anvil', anvil_sources),
             ]
-            for suffix, internal in [
+            for suffix, is_it in [
                 ('', False),
                 ('-it', True)
             ]

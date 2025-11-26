@@ -130,6 +130,17 @@ policy = {
                         for bucket in alist(aws.mirror_bucket, config.mirror_bucket)
                         for resource in [bucket, f'{bucket}/*']
                     ]
+                },
+                {
+                    'Effect': 'Allow',
+                    'Action': [
+                        'dynamodb:GetItem',
+                        'dynamodb:PutItem',
+                    ],
+                    'Resource': [
+                        f'arn:aws:dynamodb:{aws.region_name}:{aws.account}:table/'
+                        f'{config.dynamo_sources_cache_table_name}'
+                    ]
                 }
             ] if config.enable_mirroring else []
         ),

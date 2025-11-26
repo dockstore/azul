@@ -32,6 +32,7 @@ class CatalogController(ServiceAppController):
             additionalProperties=schema.object(
                 atlas=str,
                 internal=bool,
+                mirror_limit=schema.optional(int),
                 plugins=schema.object(
                     additionalProperties=schema.object(
                         name=str,
