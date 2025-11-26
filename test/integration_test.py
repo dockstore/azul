@@ -11,7 +11,6 @@ from concurrent.futures.thread import (
 )
 from contextlib import (
     contextmanager,
-    nullcontext,
 )
 import csv
 import gzip
@@ -599,13 +598,8 @@ class IndexingIntegrationTest(IntegrationTestCase):
                         responses.append(response)
                         return response
 
-                    is_anvil = config.is_anvil_enabled(catalog)
-                    with (
-                        mock.patch.object(self, '_get_url', new=get_url),
-                        # Include MA files to reduce the chances of an empty
-                        # manifest due to files not matching the filter
-                        self._service_account_credentials if is_anvil else nullcontext()
-                    ):
+                    with mock.patch.object(self, '_get_url', new=get_url):
+
                         # Make multiple identical concurrent requests to test
                         # the idempotence of manifest generation, and its
                         # resilience against DOS attacks.
@@ -672,12 +666,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
         supported_formats = self._manifest_formats(catalog)
         for format in [ManifestFormat.compact, ManifestFormat.curl]:
             if format in supported_formats:
-                with (
-                    self.subTest('manifest_tagging_race', catalog=catalog, format=format),
-                    # Include MA files in manifest to reduce our chances of
-                    # an empty manifest due to files not matching the filter
-                    self._service_account_credentials
-                ):
+                with self.subTest('manifest_tagging_race', catalog=catalog, format=format):
                     filters = self._manifest_filters(catalog)
                     manifest_url = config.service_endpoint.set(path='/manifest/files',
                                                                args=dict(catalog=catalog,
@@ -1164,10 +1153,6 @@ class IndexingIntegrationTest(IntegrationTestCase):
                 self._validate_fastq_content(buf)
         else:
             file_size = lookup(file, 'file_size', 'size')
-            # FIXME: Two AnVIL snapshots with null in anvil_file.file_size column
-            #        https://github.com/DataBiosphere/azul/issues/7243
-            if file_size is None:
-                file_size = 1
             self.assertEqual(1 if file_size > 0 else 0, len(content.read(1)))
 
     def _validate_file_response(self,
