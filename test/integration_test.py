@@ -1123,7 +1123,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
     def _test_repository_files(self, catalog: CatalogName):
         with self.subTest('repository_files', catalog=catalog):
             outer_file, inner_file = self._get_one_inner_file(catalog)
-            file_url = inner_file['url']
+            file_url = inner_file['azul_url']
             if file_url:
                 file_url = furl(file_url)
                 # FIXME: Use _check_endpoint() instead
@@ -1220,7 +1220,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
                                             path=drs.dos_object_url_path(file_uuid),
                                             args=dict(catalog=catalog))
             json_data = json.loads(response)['data_object']
-            file_url = first(json_data['urls'])['url']
+            file_url = first(json_data['urls'])['azul_url']
             while True:
                 with self._get_url(method=GET,
                                    url=file_url,
@@ -1553,7 +1553,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
                 }
             })
         managed_access_file_urls = {
-            one(file['files'])['url']
+            one(file['files'])['azul_url']
             for file in files
         }
         file_url = furl(self.random.choice(sorted(managed_access_file_urls)))
