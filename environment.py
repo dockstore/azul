@@ -44,15 +44,16 @@ def env() -> Mapping[str, str | None]:
         #   'name': {
         #       'atlas': 'bar',
         #       'internal': True,
+        #       'mirror_limit': -1,
         #       'plugins': {
         #           plugin_type: {'name'=plugin_package},
         #           plugin_type: {'name'=plugin_package},
         #           ...
         #       }
-        #       'sources': [
-        #                   source,
-        #                   ...
-        #       ]
+        #       'sources': {
+        #           source: {}
+        #           ...
+        #       }
         #   },
         #   ...
         # }
@@ -64,6 +65,11 @@ def env() -> Mapping[str, str | None]:
         # the purpose (like accessing a repository or transforming metadata) and
         # `plugin_package` denotes the concrete implementation of how to fulfill
         # that purpose.
+        #
+        # Files larger than `mirror_limit` will not be mirrored for that
+        # catalog. This property may be absent or null, in which case all files
+        # will be mirrored for that catalog, or negative, in which case no files
+        # will be mirrored for that catalog.
         #
         # The first catalog listed is the default catalog.
         #
@@ -210,7 +216,7 @@ def env() -> Mapping[str, str | None]:
         # `gitlab` components, as well as building and pushing the executor
         # image (see terraform/gitlab/runner/Dockerfile for how).
         #
-        'azul_docker_version': '28.5.1',
+        'azul_docker_version': '28.5.2',
 
         # The version of Python used throughout the system.
         #
@@ -238,7 +244,7 @@ def env() -> Mapping[str, str | None]:
         # `make -C terraform update_schema`, and committing the resulting
         # changes.
         #
-        'azul_terraform_version': '1.13.4',
+        'azul_terraform_version': '1.13.5',
 
         # When building the Azul image on a FIPS mode enabled system (e.g.
         # GitLab), this variable should be set to `/proc/sys/crypto`, the path
@@ -270,32 +276,32 @@ def env() -> Mapping[str, str | None]:
                 'url': 'https://hub.docker.com/_/python',
             },
             'pycharm': {
-                'ref': 'docker.io/ucscgi/azul-pycharm:2025.2.4-67',
+                'ref': 'docker.io/ucscgi/azul-pycharm:2025.2.4-68',
                 'url': 'https://hub.docker.com/repository/docker/ucscgi/azul-pycharm',
                 'is_custom': True
             },
             'opensearch': {
-                'ref': 'docker.io/opensearchproject/opensearch:2.19.3',
+                'ref': 'docker.io/opensearchproject/opensearch:2.19.4',
                 'url': 'https://hub.docker.com/r/opensearchproject/opensearch',
                 'is_custom': False
             },
             'bigquery_emulator': {
-                'ref': 'docker.io/ucscgi/azul-bigquery-emulator:0.4.4-47',
+                'ref': 'docker.io/ucscgi/azul-bigquery-emulator:0.4.4-48',
                 'url': 'https://hub.docker.com/repository/docker/ucscgi/azul-bigquery-emulator',
                 'is_custom': True
             },
             # Updating any of the four images below additionally requires
             # redeploying the `gitlab` TF component.
             'clamav': {
-                'ref': 'docker.io/clamav/clamav:1.5.1-8',
+                'ref': 'docker.io/clamav/clamav:1.5.1-10',
                 'url': 'https://hub.docker.com/r/clamav/clamav'
             },
             'gitlab': {
-                'ref': 'docker.io/gitlab/gitlab-ce:18.5.1-ce.0',
+                'ref': 'docker.io/gitlab/gitlab-ce:18.6.0-ce.0',
                 'url': 'https://hub.docker.com/r/gitlab/gitlab-ce'
             },
             'gitlab_runner': {
-                'ref': 'docker.io/gitlab/gitlab-runner:ubuntu-v18.5.0',
+                'ref': 'docker.io/gitlab/gitlab-runner:ubuntu-v18.6.0',
                 'url': 'https://hub.docker.com/r/gitlab/gitlab-runner'
             },
             'dind': {

@@ -20,6 +20,52 @@ reverted. This is all fairly informal and loosely defined. Hopefully we won't
 have too many entries in this file.
 
 
+#7571 Add new snapshot to dcp3 on HCA dev
+=========================================
+
+Operator
+--------
+
+Perform a targeted reindex of snapshot
+``datarepo-dev-b46086a9.hca_dev_51f02950ee254f4b8d0759aa99bb3498__20210827_20230215``
+is ``sandbox`` and ``dev``.
+
+Everyone
+--------
+
+In your HCA personal deployments' ``environment.py`` files, add the new snapshot
+to the sources for catalog ``dcp3``, bringing the total number of sources to
+105. Then perform a targeted reindex of that snapshot.
+
+
+#7066 Configure mirroring per catalog and source
+================================================
+
+In your personal deployments' ``environment.py`` file(s):
+
+1. Rename the loop variable ``internal`` to ``is_it``.
+
+2. Set the value of the ``pop`` flag to ``1``.
+
+3. Rename to type alias ``ProjectName`` to ``DatasetName``.
+
+4. In AnVIL deployments, rename the local variable ``project`` in the functions
+   ``mksrc`` and ``mkdelta`` to ``google_project`` and ``dataset`` respectively.
+
+5. Rename the following functions: ``bqsrc`` (AnVIL deployments only),
+   ``mksrc``, ``mkdelta``, ``mklist``, and ``mkdict``.
+
+6. Update the type annotations for those functions.
+
+7. Update the definitions of ``source`` and ``condense``.
+
+8. Insert the ``mirror_limit`` property in the definition of
+   ``AZUL_CATALOGS``.
+
+As always, use the sandbox deployment's ``environment.py`` as a model when
+upgrading personal deployments.
+
+
 #7468 Update Swagger to v5.29.4
 ===============================
 

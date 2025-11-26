@@ -37,6 +37,7 @@ from furl import (
 from azul import (
     R,
     cached_property,
+    config,
 )
 from azul.collections import (
     LookupDefault,
@@ -102,6 +103,8 @@ class ManifestEntry:
 
 
 valid_schema_domains = ['schema.humancellatlas.org']
+if not config.deployment.is_stable:
+    valid_schema_domains.append('schema.staging.data.humancellatlas.org')
 
 
 @dataclass(init=False)

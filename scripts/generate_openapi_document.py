@@ -37,6 +37,7 @@ def main():
         'dcp2': config.Catalog(name='dcp2',
                                atlas='hca',
                                internal=False,
+                               mirror_limit=None,
                                plugins=dict(metadata=config.Catalog.Plugin(name='hca'),
                                             repository=config.Catalog.Plugin(name='tdr_hca')),
                                sources=set())
