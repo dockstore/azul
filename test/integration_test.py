@@ -126,9 +126,6 @@ from azul.indexer.document import (
     EntityReference,
     EntityType,
 )
-from azul.indexer.index_queue_service import (
-    IndexAction,
-)
 from azul.indexer.index_service import (
     IndexExistsAndDiffersException,
     IndexService,
@@ -1268,7 +1265,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
         # some notifications may end up being sent three or more times.
         num_duplicates = len(bundle_fqids) // 2
         duplicate_bundles = [
-            queue_service.index_bundle_message(IndexAction.add, catalog, bundle.to_json())
+            queue_service.index_bundle_message(catalog, bundle.to_json())
             for bundle in self.random.choices(sorted(bundle_fqids), k=num_duplicates)
         ]
         notifications.extend(duplicate_bundles)

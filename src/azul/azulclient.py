@@ -132,7 +132,7 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
         missing = []
         indexed = 0
         total = 0
-        path = (catalog, 'delete' if delete else 'add')
+        path = (catalog, 'bundles')
         indexer_url = config.indexer_endpoint.set(path=path)
 
         def attempt(notification: JSON,
@@ -144,7 +144,9 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
             # We want to send the request with urllib3 directly but HMAC
             # signing is only available for Requests, so we need to prepare a
             # request, sign it and then unpack it again before calling urllib3.
-            request = requests.Request('POST', str(indexer_url), json=notification)
+            request = requests.Request(method='DELETE' if delete else 'POST',
+                                       url=str(indexer_url),
+                                       json=notification)
             request = request.prepare()
             self.sign(request)
             try:

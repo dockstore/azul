@@ -41,7 +41,6 @@ from azul.indexer.index_controller import (
     IndexController,
 )
 from azul.indexer.index_queue_service import (
-    IndexAction,
     IndexQueueService,
 )
 from azul.indexer.index_repository_service import (
@@ -194,10 +193,7 @@ class TestIndexController(DCP2IndexerTestCase, WorkQueueTestCase):
 
         # Synthesize initial notifications
         messages = [
-            self.queue_service.index_bundle_message(IndexAction.add,
-                                                    self.catalog,
-                                                    fqid.to_json()
-                                                    ).body
+            self.queue_service.index_bundle_message(self.catalog, fqid.to_json()).body
             for fqid in fqids
         ]
 

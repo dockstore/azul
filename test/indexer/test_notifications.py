@@ -127,8 +127,8 @@ class TestValidNotificationRequests(LocalAppTestCase,
               ) -> requests.Response:
         with patch.object(aws, 'get_hmac_key_and_id') as get_hmac_key_and_id:
             get_hmac_key_and_id.return_value = b'good key', 'the id'
-            url = self.base_url.set(path=(self.catalog, 'delete' if delete else 'add'))
-            request = requests.Request(method='POST', url=str(url), json=body)
+            url = self.base_url.set(path=(self.catalog, 'bundles'))
+            request = requests.Request(method='DELETE' if delete else 'POST', url=str(url), json=body)
             hmac_support = SignatureHelper()
             if valid_auth:
                 return hmac_support.sign_and_send(request)

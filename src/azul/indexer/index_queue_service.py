@@ -113,11 +113,13 @@ class IndexQueueService:
         return self.queues.send_messages(queue, messages)
 
     def index_bundle_message(self,
-                             action: IndexAction,
                              catalog: CatalogName,
                              bundle_fqid: JSON,
                              bundle_partition: BundlePartition = BundlePartition.root,
+                             *,
+                             delete: bool = False
                              ) -> SQSMessage:
+        action = IndexAction.delete if delete else IndexAction.add
         return SQSMessage(
             body={
                 'action': action.to_json(),
@@ -173,7 +175,7 @@ class IndexQueueService:
                      '%i bundles remain in prefix %r of source %r in catalog %r',
                      len(bundle_fqids), prefix, str(source.spec), catalog)
         messages = (
-            self.index_bundle_message(IndexAction.add, catalog, bundle_fqid.to_json())
+            self.index_bundle_message(catalog, bundle_fqid.to_json())
             for bundle_fqid in bundle_fqids
         )
         num_messages = self.queue_notifications(messages)
@@ -236,15 +238,14 @@ class IndexQueueService:
                                                bundle_partition,
                                                delete=delete)
         if isinstance(results, list):
-            action = IndexAction.delete if delete else IndexAction.add
             for bundle_partition in results:
                 assert isinstance(bundle_partition, BundlePartition)
                 # There's a good chance that the partition will also fail in
                 # the non-retry Lambda function so we'll go straight to retry.
-                message = self.index_bundle_message(action,
-                                                    catalog,
+                message = self.index_bundle_message(catalog,
                                                     bundle_fqid,
-                                                    bundle_partition)
+                                                    bundle_partition,
+                                                    delete=delete)
                 self.queue_notification(message, retry=True)
             return [], []
         elif isinstance(results, tuple):
