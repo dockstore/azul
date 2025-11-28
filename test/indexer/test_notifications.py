@@ -30,9 +30,7 @@ from sqs_test_case import (
 )
 
 
-class TestValidNotificationRequests(LocalAppTestCase,
-                                    DCP1TestCase,
-                                    SqsTestCase):
+class TestIndexerApp(LocalAppTestCase, DCP1TestCase, SqsTestCase):
 
     @classmethod
     def app_name(cls) -> str:
