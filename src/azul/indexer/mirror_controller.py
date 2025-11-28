@@ -40,6 +40,10 @@ class MirrorController(ActionController[MirrorAction], SchemaController):
     def actions_are_fifo(self) -> bool:
         return True
 
+    @property
+    def action_cls(self) -> type[MirrorAction]:
+        return MirrorAction
+
     @cached_property
     def service(self) -> MirrorService:
         schema_url_func = partial(self.schema_url, facility='mirror')

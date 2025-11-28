@@ -63,6 +63,10 @@ class IndexController(ActionController[IndexAction]):
     def actions_are_fifo(self) -> bool:
         return False
 
+    @property
+    def action_cls(self) -> type[IndexAction]:
+        return IndexAction
+
     def handlers(self) -> dict[str, Any]:
         @self.app.route(
             '/{catalog}/bundles',

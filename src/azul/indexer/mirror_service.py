@@ -1,10 +1,13 @@
-from enum import (
-    auto,
+from abc import (
+    ABCMeta,
+    abstractmethod,
+)
+from functools import (
+    singledispatchmethod,
 )
 import logging
 from typing import (
     Iterable,
-    Sequence,
 )
 
 import attrs
@@ -15,6 +18,10 @@ from azul import (
     cache,
     cached_property,
     config,
+    json_mapping,
+)
+from azul.attrs import (
+    serializable,
 )
 from azul.deployment import (
     aws,
@@ -22,8 +29,11 @@ from azul.deployment import (
 from azul.digests import (
     Hasher,
     get_resumable_hasher,
-    hasher_from_str,
-    hasher_to_str,
+    hasher_from_json,
+    hasher_to_json,
+)
+from azul.functions import (
+    compose,
 )
 from azul.indexer import (
     SourceConfig,
@@ -42,27 +52,74 @@ from azul.queues import (
     Action,
     Queues,
     SQSFifoMessage,
-    SQSMessage,
 )
 from azul.service.source_service import (
     SourceService,
 )
 from azul.types import (
-    JSON,
     json_element_strings,
-    json_mapping,
-    json_str,
 )
 
 log = logging.getLogger(__name__)
 
 
-class MirrorAction(Action):
-    mirror_source = auto()
-    mirror_partition = auto()
-    mirror_file = auto()
-    mirror_part = auto()
-    finalize_file = auto()
+@attrs.frozen(kw_only=True)
+class MirrorAction(Action, metaclass=ABCMeta):
+    catalog: CatalogName
+
+    @property
+    @abstractmethod
+    def group_id(self) -> str:
+        raise NotImplementedError
+
+    def to_sqs(self) -> SQSFifoMessage:
+        return SQSFifoMessage(body=json_mapping(self.to_json()),
+                              group_id=self.group_id)
+
+
+@attrs.frozen(kw_only=True)
+class MirrorSourceAction(MirrorAction):
+    source: SourceRef
+
+    @property
+    def group_id(self):
+        return self.source.id
+
+
+@attrs.frozen(kw_only=True)
+class MirrorPartitionAction(MirrorSourceAction):
+    prefix: str
+
+    @property
+    def group_id(self):
+        return super().group_id + ':' + self.prefix
+
+
+@attrs.frozen(kw_only=True)
+class MirrorFileAction(MirrorPartitionAction):
+    file: File
+
+    @property
+    def group_id(self):
+        return self.file.digest.value
+
+
+@attrs.frozen(kw_only=True)
+class MultiPartUploadAction(MirrorFileAction):
+    upload_id: str
+    etags: list[str] = serializable(from_json=compose(list, json_element_strings),
+                                    to_json=list)
+    hasher: Hasher = serializable(from_json=hasher_from_json,
+                                  to_json=hasher_to_json)
+
+
+@attrs.frozen(kw_only=True)
+class MirrorPartAction(MultiPartUploadAction):
+    part: FilePart
+
+
+class FinalizeFileAction(MultiPartUploadAction):
+    pass
 
 
 class BaseMirrorService:
@@ -89,7 +146,7 @@ class BaseMirrorService:
                     if cfg.mirror:
                         log.info('Mirroring files in source %r from catalog %r',
                                  str(source.spec), catalog)
-                        yield self._mirror_source_message(catalog, source)
+                        yield MirrorSourceAction(catalog=catalog, source=source)
                     else:
                         log.info('Not mirroring any files in source %r from catalog %r because '
                                  'mirroring is explicitly disabled',
@@ -101,96 +158,13 @@ class BaseMirrorService:
         name = config.mirror_queue.name
         return aws.sqs_queue(name)
 
-    def _queue_messages(self, messages: Iterable[SQSMessage]) -> int:
+    def _queue_messages(self, messages: Iterable[MirrorAction]) -> int:
         rate_limit = float(aws.sqs_fifo_rate_limit)
         if config.is_in_lambda:
             rate_limit /= config.mirroring_concurrency
         return self._queues.send_messages(self._mirror_queue(),
-                                          messages,
+                                          map(MirrorAction.to_sqs, messages),
                                           rate_limit=rate_limit)
-
-    def _mirror_source_message(self,
-                               catalog: CatalogName,
-                               source: SourceRef
-                               ) -> SQSFifoMessage:
-        return SQSFifoMessage(
-            body={
-                'action': MirrorAction.mirror_source.to_json(),
-                'catalog': catalog,
-                'source': source.to_json(),
-            },
-            group_id=source.id
-        )
-
-    def _mirror_partition_message(self,
-                                  catalog: CatalogName,
-                                  source: SourceRef,
-                                  prefix: str
-                                  ) -> SQSFifoMessage:
-        return SQSFifoMessage(
-            body={
-                'action': MirrorAction.mirror_partition.to_json(),
-                'catalog': catalog,
-                'source': source.to_json(),
-                'prefix': prefix
-            },
-            group_id=f'{source.id}:{prefix}'
-        )
-
-    def _mirror_file_message(self,
-                             catalog: CatalogName,
-                             source: SourceRef,
-                             file: File,
-                             ) -> SQSFifoMessage:
-        return SQSFifoMessage(
-            body={
-                'action': MirrorAction.mirror_file.to_json(),
-                'catalog': catalog,
-                'source': source.to_json(),
-                'file': file.to_json()
-            },
-            group_id=file.digest.value
-        )
-
-    def _mirror_part_message(self,
-                             catalog: CatalogName,
-                             file: File,
-                             part: FilePart,
-                             upload_id: str,
-                             etags: Sequence[str],
-                             hasher: Hasher
-                             ) -> SQSFifoMessage:
-        return SQSFifoMessage(
-            body={
-                'catalog': catalog,
-                'file': file.to_json(),
-                'upload_id': upload_id,
-                'action': MirrorAction.mirror_part.to_json(),
-                'part': part.to_json(),
-                'etags': etags,
-                'hasher': hasher_to_str(hasher)
-            },
-            group_id=file.digest.value
-        )
-
-    def _finalize_file_message(self,
-                               catalog: CatalogName,
-                               file: File,
-                               upload_id: str,
-                               etags: Sequence[str],
-                               hasher: Hasher
-                               ) -> SQSFifoMessage:
-        return SQSFifoMessage(
-            body={
-                'catalog': catalog,
-                'file': file.to_json(),
-                'upload_id': upload_id,
-                'action': MirrorAction.finalize_file.to_json(),
-                'etags': etags,
-                'hasher': hasher_to_str(hasher)
-            },
-            group_id=file.digest.value
-        )
 
 
 @attrs.frozen(kw_only=True, slots=False)
@@ -214,37 +188,17 @@ class MirrorService(BaseMirrorService):
     def _source_service(self) -> SourceService:
         return SourceService()
 
-    def mirror(self, action: MirrorAction, message: JSON):
-        if action is MirrorAction.mirror_source:
-            self._mirror_source(json_str(message['catalog']),
-                                json_mapping(message['source']))
-        elif action is MirrorAction.mirror_partition:
-            self._mirror_partition(json_str(message['catalog']),
-                                   json_mapping(message['source']),
-                                   json_str(message['prefix']))
-        elif action is MirrorAction.mirror_file:
-            self._mirror_file(json_str(message['catalog']),
-                              json_mapping(message['file']))
-        elif action is MirrorAction.mirror_part:
-            self._mirror_file_part(json_str(message['catalog']),
-                                   json_mapping(message['file']),
-                                   json_mapping(message['part']),
-                                   json_str(message['upload_id']),
-                                   list(json_element_strings(message['etags'])),
-                                   json_str(message['hasher']))
-        elif action is MirrorAction.finalize_file:
-            self._finalize_file(json_str(message['catalog']),
-                                json_mapping(message['file']),
-                                json_str(message['upload_id']),
-                                list(json_element_strings(message['etags'])),
-                                json_str(message['hasher']))
-        else:
-            assert False, action
+    def mirror(self, action: MirrorAction):
+        self._queue_messages(self._mirror(action))
 
-    def _mirror_source(self, catalog: CatalogName, source_json: JSON):
-        source: SourceRef = SourceRef.from_json(source_json)
-        assert source.id in self._list_public_source_ids(catalog), R(
-            'Cannot mirror non-public source', source)
+    @singledispatchmethod
+    def _mirror(self, a: MirrorAction):
+        raise NotImplementedError
+
+    @_mirror.register
+    def _(self, a: MirrorSourceAction) -> Iterable[MirrorAction]:
+        assert a.source.id in self._list_public_source_ids(a.catalog), R(
+            'Cannot mirror non-public source', a.source)
         # The desired partition size depends on the maximum number of messages
         # we can send in one Lambda invocation, because queueing the individual
         # mirror_file messages turns out to dominate the running time of
@@ -256,130 +210,112 @@ class MirrorService(BaseMirrorService):
             / config.mirroring_concurrency  # number of concurrent invocations
             / 2  # safety margin
         )
-        plugin = self._repository_plugin(catalog)
-        source = plugin.partition_source_for_mirroring(catalog, source, partition_size)
-        prefix = source.prefix
-        assert prefix is not None, source
+        plugin = self._repository_plugin(a.catalog)
+        partitioned_source = plugin.partition_source_for_mirroring(a.catalog,
+                                                                   a.source,
+                                                                   partition_size)
+        prefix = partitioned_source.prefix
+        assert prefix is not None, partitioned_source
         log.info('Queueing %d partitions of source %r in catalog %r',
-                 prefix.num_partitions, str(source.spec), catalog)
+                 prefix.num_partitions, str(partitioned_source.spec), a.catalog)
 
-        def message(partition: str) -> SQSMessage:
+        for partition in prefix.partition_prefixes():
             log.debug('Queueing partition %r', partition)
-            return self._mirror_partition_message(catalog, source, partition)
-
-        messages = map(message, prefix.partition_prefixes())
-        self._queue_messages(messages)
+            yield MirrorPartitionAction(catalog=a.catalog,
+                                        source=partitioned_source,
+                                        prefix=partition)
 
     def _list_public_source_ids(self, catalog: CatalogName) -> set[str]:
         return self._source_service.list_source_ids(catalog, authentication=None)
 
-    def _mirror_partition(self,
-                          catalog: CatalogName,
-                          source_json: JSON,
-                          prefix: str
-                          ):
-        source: SourceRef = SourceRef.from_json(source_json)
-        plugin = self._repository_plugin(catalog)
-        files = plugin.list_files(source, prefix)
-        max_size = config.catalogs[catalog].mirror_limit
-
-        def messages() -> Iterable[SQSMessage]:
-            for file in files:
-                assert file.size is not None, R('File size unknown', file)
-                if max_size is not None and file.size > max_size:
-                    log.info('Not mirroring file to save cost: %r', file)
-                else:
-                    log.debug('Queueing file %r', file)
-                    yield self._mirror_file_message(catalog, source, file)
-
-        self._queue_messages(messages())
+    @_mirror.register
+    def _(self, a: MirrorPartitionAction) -> Iterable[MirrorAction]:
+        plugin = self._repository_plugin(a.catalog)
+        files = plugin.list_files(a.source, a.prefix)
+        max_size = config.catalogs[a.catalog].mirror_limit
+        for file in files:
+            assert file.size is not None, R('File size unknown', file)
+            if max_size is not None and file.size > max_size:
+                log.info('Not mirroring file to save cost: %r', file)
+            else:
+                log.debug('Queueing file %r', file)
+                yield MirrorFileAction(catalog=a.catalog,
+                                       source=a.source,
+                                       prefix=a.prefix,
+                                       file=file)
         log.info('Queued %d files in partition %r of source %r in catalog %r',
-                 len(files), prefix, str(source), catalog)
+                 len(files), a.prefix, str(a.source), a.catalog)
 
-    def _mirror_file(self,
-                     catalog: CatalogName,
-                     file_json: JSON
-                     ):
-        file = File.from_json(file_json)
-        assert file.size is not None, R('File size unknown', file)
-        service = self._file_service(catalog)
-        if service.info_exists(file):
-            log.info('File is already mirrored, skipping upload: %r', file)
-        elif service.file_exists(file):
-            assert False, R('File object is already present', file)
+    @_mirror.register
+    def _(self, a: MirrorFileAction) -> Iterable[MirrorAction]:
+        assert a.file.size is not None, R('File size unknown', a.file)
+        service = self._file_service(a.catalog)
+        if service.info_exists(a.file):
+            log.info('File is already mirrored, skipping upload: %r', a.file)
+        elif service.file_exists(a.file):
+            assert False, R('File object is already present', a.file)
         else:
             part_size = FilePart.default_size
-            if file.size <= part_size:
-                log.info('Mirroring file via standard upload: %r', file)
-                service.mirror_file(file)
-                log.info('Successfully mirrored file via standard upload: %r', file)
+            if a.file.size <= part_size:
+                log.info('Mirroring file via standard upload: %r', a.file)
+                service.mirror_file(a.file)
+                log.info('Successfully mirrored file via standard upload: %r', a.file)
             else:
-                log.info('Mirroring file via multi-part upload: %r', file)
-                hasher = get_resumable_hasher(file.digest.type)
-                upload_id = service.begin_mirroring_file(file)
-                first_part = FilePart.first(file, part_size)
-                log.info('Uploading part #%d of file %r', first_part.index, file)
-                etag = service.mirror_file_part(file,
-                                                first_part,
-                                                upload_id,
-                                                hasher)
-                next_part = first_part.next(file)
+                log.info('Mirroring file via multi-part upload: %r', a.file)
+                hasher = get_resumable_hasher(a.file.digest.type)
+                upload_id = service.begin_mirroring_file(a.file)
+                first_part = FilePart.first(a.file, part_size)
+                log.info('Uploading part #%d of file %r', first_part.index, a.file)
+                etag = service.mirror_file_part(a.file, first_part, upload_id, hasher)
+                next_part = first_part.next(a.file)
                 assert next_part is not None
-                log.info('Queueing part #%d of file %r', next_part.index, file)
-                message = self._mirror_part_message(catalog,
-                                                    file,
-                                                    next_part,
-                                                    upload_id,
-                                                    [etag],
-                                                    hasher)
-                self._queue_messages([message])
+                log.info('Queueing part #%d of file %r', next_part.index, a.file)
+                yield MirrorPartAction(catalog=a.catalog,
+                                       source=a.source,
+                                       prefix=a.prefix,
+                                       file=a.file,
+                                       part=next_part,
+                                       upload_id=upload_id,
+                                       etags=[etag],
+                                       hasher=hasher)
 
-    def _mirror_file_part(self,
-                          catalog: CatalogName,
-                          file_json: JSON,
-                          part_json: JSON,
-                          upload_id: str,
-                          etags: Iterable[str],
-                          hasher_data: str
-                          ):
-        file = File.from_json(file_json)
-        part = FilePart.from_json(part_json)
-        hasher = hasher_from_str(hasher_data)
-        log.info('Uploading part #%d of file %r', part.index, file)
-        service = self._file_service(catalog)
-        etag = service.mirror_file_part(file, part, upload_id, hasher)
-        etags = [*etags, etag]
-        next_part = part.next(file)
+    @_mirror.register
+    def _(self, a: MirrorPartAction) -> Iterable[MirrorAction]:
+        log.info('Uploading part #%d of file %r', a.part.index, a.file)
+        service = self._file_service(a.catalog)
+        # Hashers are mutable so we need to make a copy
+        hasher = a.hasher.copy()
+        etag = service.mirror_file_part(a.file, a.part, a.upload_id, hasher)
+        # Same here: lists are mutable so a copy needs to be made
+        etags = [*a.etags, etag]
+        next_part = a.part.next(a.file)
         if next_part is None:
-            log.info('File fully uploaded in %d parts: %r', len(etags), file)
-            message = self._finalize_file_message(catalog,
-                                                  file,
-                                                  upload_id,
-                                                  etags,
-                                                  hasher)
+            log.info('File fully uploaded in %d parts: %r', len(etags), a.file)
+            yield FinalizeFileAction(catalog=a.catalog,
+                                     source=a.source,
+                                     prefix=a.prefix,
+                                     file=a.file,
+                                     upload_id=a.upload_id,
+                                     etags=etags,
+                                     hasher=hasher)
         else:
-            log.info('Queueing part #%d of file %r', next_part.index, file)
-            message = self._mirror_part_message(catalog,
-                                                file,
-                                                next_part,
-                                                upload_id,
-                                                etags,
-                                                hasher)
-        self._queue_messages([message])
+            log.info('Queueing part #%d of file %r', next_part.index, a.file)
+            yield MirrorPartAction(catalog=a.catalog,
+                                   source=a.source,
+                                   prefix=a.prefix,
+                                   file=a.file,
+                                   part=next_part,
+                                   upload_id=a.upload_id,
+                                   etags=etags,
+                                   hasher=hasher)
 
-    def _finalize_file(self,
-                       catalog: CatalogName,
-                       file_json: JSON,
-                       upload_id: str,
-                       etags: Sequence[str],
-                       hasher_data: str
-                       ):
-        file = File.from_json(file_json)
-        assert len(etags) > 0
-        hasher = hasher_from_str(hasher_data)
-        service = self._file_service(catalog)
-        service.finish_mirroring_file(file=file,
-                                      upload_id=upload_id,
-                                      etags=etags,
-                                      hasher=hasher)
-        log.info('Successfully mirrored file via multi-part upload: %r', file)
+    @_mirror.register
+    def _(self, a: FinalizeFileAction) -> Iterable[MirrorAction]:
+        assert len(a.etags) > 0
+        service = self._file_service(a.catalog)
+        service.finish_mirroring_file(file=a.file,
+                                      upload_id=a.upload_id,
+                                      etags=a.etags,
+                                      hasher=a.hasher)
+        log.info('Successfully mirrored file via multi-part upload: %r', a.file)
+        return ()

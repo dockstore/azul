@@ -15,9 +15,6 @@ from unittest.mock import (
 )
 
 import attrs
-from chalice.app import (
-    BadRequestError,
-)
 from more_itertools import (
     one,
 )
@@ -127,7 +124,7 @@ class TestIndexController(DCP2IndexerTestCase, WorkQueueTestCase):
                                        notification='bar',
                                        catalog=self.catalog))
         ]
-        self.assertRaises(BadRequestError, self.controller.contribute, event)
+        self.assertRaises(KeyError, self.controller.contribute, event)
 
     @patch.object(RepositoryPlugin, 'partition_source_for_indexing')
     @patch.object(TDRPlugin, 'resolve_source')
@@ -140,7 +137,7 @@ class TestIndexController(DCP2IndexerTestCase, WorkQueueTestCase):
         self._create_mock_queues(config.indexer_queue_names)
         self.queue_service.remote_reindex(self.catalog, [source.spec])
         messages = one(self._read_queue(self.queue_service.notifications_queue()))
-        expected_notification = dict(action='reindex',
+        expected_notification = dict(action='IndexPartitionAction',
                                      catalog=self.catalog,
                                      source=source.to_json(),
                                      prefix='')

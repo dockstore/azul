@@ -148,7 +148,7 @@ class TestMirrorController(DCP2TestCase,
 
     def _test_remote_mirror(self):
         source_message = one(self._remote_mirror())
-        expected_message = dict(action='mirror_source',
+        expected_message = dict(action='MirrorSourceAction',
                                 catalog=self.catalog,
                                 source=self.source.to_json())
         self.assertEqual(expected_message, source_message)
@@ -162,7 +162,7 @@ class TestMirrorController(DCP2TestCase,
         partitions = []
         for message in partition_messages:
             partitions.append(message.pop('prefix'))
-            self.assertEqual(dict(action='mirror_partition',
+            self.assertEqual(dict(action='MirrorPartitionAction',
                                   catalog=self.catalog,
                                   source=self.source.to_json()),
                              message)
@@ -175,9 +175,10 @@ class TestMirrorController(DCP2TestCase,
         with patch.object(plugin_cls, 'list_files', return_value=files):
             self.mirror_controller.mirror(event)
         file_message = one(self._read_queue(self.service._mirror_queue()))
-        expected_message = dict(action='mirror_file',
+        expected_message = dict(action='MirrorFileAction',
                                 catalog=self.catalog,
                                 source=self.source.to_json(),
+                                prefix='00',
                                 file=self._file.to_json())
         self.assertEqual(expected_message, file_message)
         return file_message

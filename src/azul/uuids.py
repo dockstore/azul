@@ -22,9 +22,13 @@ from attrs import (
 from azul import (
     R,
     cached_property,
+    json_mapping,
+)
+from azul.json import (
+    Serializable,
 )
 from azul.types import (
-    JSON,
+    AnyJSON,
     MutableJSON,
     json_int,
 )
@@ -169,7 +173,7 @@ class UUIDPartitionMeta(type):
         cls.root = cls(prefix_length=0, prefix=0)
 
 
-class UUIDPartition(metaclass=UUIDPartitionMeta):
+class UUIDPartition(Serializable, metaclass=UUIDPartitionMeta):
     """
     A binary partitioning of the UUID space. Most partitionings of the UUID
     space use a prefix of the hexadecimal representation of UUIDs. This class
@@ -263,10 +267,11 @@ class UUIDPartition(metaclass=UUIDPartitionMeta):
             'Prefix has extra high-order bits set', self)
 
     @classmethod
-    def from_json(cls, json: JSON) -> Self:
-        return cls(prefix_length=json_int(json['prefix_length']),
-                   prefix=json_int(json['prefix']),
-                   group=json_int(json['group']))
+    def from_json(cls, json: AnyJSON) -> Self:
+        m = json_mapping(json)
+        return cls(prefix_length=json_int(m['prefix_length']),
+                   prefix=json_int(m['prefix']),
+                   group=json_int(m['group']))
 
     def to_json(self) -> MutableJSON:
         return {
