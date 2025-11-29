@@ -57,54 +57,52 @@ class TestIndexerApp(LocalAppTestCase, DCP1TestCase, SqsTestCase):
     @mock_aws
     def test_invalid_notifications(self):
         bodies = {
-            'Missing body': {},
-            'Missing bundle uuid':
-                {
-                    'bundle_fqid': {
-                        'version': '2018-03-28T13:55:26.044Z'
-                    }
-                },
-            'bundle uuid is None':
-                {
-                    'bundle_fqid': {
-                        'uuid': None,
-                        'version': '2018-03-28T13:55:26.044Z'
-                    }
-                },
-            'Missing bundle_version':
-                {
-                    'bundle_fqid': {
-                        'uuid': 'bb2365b9-5a5b-436f-92e3-4fc6d86a9efd'
-                    }
-                },
-            'bundle version is None':
-                {
-                    'bundle_fqid': {
-                        'uuid': 'bb2365b9-5a5b-436f-92e3-4fc6d86a9efd',
-                        'version': None
-                    }
-                },
-            'Malformed bundle uuid value':
-                {
-                    'bundle_fqid': {
-                        'uuid': f'}}{str(uuid4())}{{',
-                        'version': '2019-12-31T00:00:00.000Z'
-                    }
-                },
-            'Malformed bundle version':
-                {
-                    'bundle_fqid': {
-                        'uuid': str(uuid4()),
-                        'version': ''
-                    }
+            'Missing notification entry: bundle_fqid': {},
+            'Missing notification entry: bundle_fqid.uuid': {
+                'bundle_fqid': {
+                    'version': '2018-03-28T13:55:26.044Z'
                 }
+            },
+            "Invalid type: uuid: <class 'NoneType'> (should be str)": {
+                'bundle_fqid': {
+                    'uuid': None,
+                    'version': '2018-03-28T13:55:26.044Z'
+                }
+            },
+            'Missing notification entry: bundle_fqid.version': {
+                'bundle_fqid': {
+                    'uuid': 'bb2365b9-5a5b-436f-92e3-4fc6d86a9efd'
+                }
+            },
+            "Invalid type: version: <class 'NoneType'> (should be str)": {
+                'bundle_fqid': {
+                    'uuid': 'bb2365b9-5a5b-436f-92e3-4fc6d86a9efd',
+                    'version': None
+                }
+            },
+            'Invalid syntax: }9fccaed8-cdbc-445e-a3a0-6edc11f4b73f{ (should be a UUID)': {
+                'bundle_fqid': {
+                    'uuid': '}9fccaed8-cdbc-445e-a3a0-6edc11f4b73f{',
+                    'version': '2019-12-31T00:00:00.000Z'
+                }
+            },
+            'Invalid syntax: bundle_version can not be empty': {
+                'bundle_fqid': {
+                    'uuid': str(uuid4()),
+                    'version': ''
+                }
+            }
         }
         for delete in False, True:
-            with self.subTest(delete=delete):
-                for test, body in bodies.items():
-                    with self.subTest(test):
-                        response = self._test(body, delete=delete, valid_auth=True)
-                        self.assertEqual(400, response.status_code)
+            for expected_message, body in bodies.items():
+                with self.subTest(delete=delete, expected_message=expected_message):
+                    response = self._test(body, delete=delete, valid_auth=True)
+                    expected_response = {
+                        'Code': 'BadRequestError',
+                        'Message': expected_message
+                    }
+                    self.assertEqual(400, response.status_code)
+                    self.assertEqual(expected_response, response.json())
 
     @mock_aws
     def test_invalid_auth_for_notification_request(self):
