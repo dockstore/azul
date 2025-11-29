@@ -428,11 +428,11 @@ class TestIndexerApp(LocalAppTestCase, DCP1TestCase, SqsTestCase):
                     self.assertEqual(expected_response, response.json())
 
     def _test(self, body: JSON, *, delete: bool, valid_hmac_key: bool) -> Response:
+        url = self.base_url.set(path=(self.catalog, 'bundles'))
+        method = 'DELETE' if delete else 'POST'
+        request = Request(method=method, url=str(url), json=body)
         with patch.object(aws, 'get_hmac_key_and_id') as get_hmac_key_and_id:
             get_hmac_key_and_id.return_value = b'good key', 'the id'
-            url = self.base_url.set(path=(self.catalog, 'bundles'))
-            method = 'DELETE' if delete else 'POST'
-            request = Request(method=method, url=str(url), json=body)
             hmac_support = SignatureHelper()
             if valid_hmac_key:
                 return hmac_support.sign_and_send(request)
