@@ -219,7 +219,7 @@ class IndexController(ActionController[IndexAction]):
             service.queue_notification(message, retry=False)
             return chalice.app.Response(body='', status_code=http.HTTPStatus.ACCEPTED)
         else:
-            raise UnauthorizedError()
+            raise UnauthorizedError('Expecting HMAC authentication')
 
     def _validate_notification(self, notification):
         try:

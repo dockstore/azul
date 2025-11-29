@@ -438,7 +438,7 @@ class TestIndexerApp(LocalAppTestCase, DCP1TestCase, SqsTestCase):
                 self.assertEqual(401, response.status_code)
                 expected_response = {
                     'Code': 'UnauthorizedError',
-                    'Message': ''
+                    'Message': 'Expecting HMAC authentication'
                 }
                 self.assertEqual(expected_response, response.json())
 
