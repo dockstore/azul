@@ -402,7 +402,7 @@ class TestIndexerApp(LocalAppTestCase, DCP1TestCase, SqsTestCase):
                     self.assertEqual(expected_response, response.json())
 
     @mock_aws
-    def test_invalid_auth_for_notification_request(self):
+    def test_unauthorized_notification(self):
         self._create_mock_notifications_queue()
         body = {
             'bundle_fqid': {
