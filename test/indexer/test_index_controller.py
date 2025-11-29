@@ -347,7 +347,7 @@ class TestIndexerApp(LocalAppTestCase, DCP1TestCase, SqsTestCase):
         }
         for delete in False, True:
             with self.subTest(delete=delete):
-                response = self._test(body, delete=delete, valid_auth=True)
+                response = self._test(body, delete=delete, valid_hmac_key=True)
                 self.assertEqual(202, response.status_code)
                 self.assertEqual('', response.text)
 
@@ -393,7 +393,7 @@ class TestIndexerApp(LocalAppTestCase, DCP1TestCase, SqsTestCase):
         for delete in False, True:
             for expected_message, body in bodies.items():
                 with self.subTest(delete=delete, expected_message=expected_message):
-                    response = self._test(body, delete=delete, valid_auth=True)
+                    response = self._test(body, delete=delete, valid_hmac_key=True)
                     expected_response = {
                         'Code': 'BadRequestError',
                         'Message': expected_message
@@ -412,14 +412,14 @@ class TestIndexerApp(LocalAppTestCase, DCP1TestCase, SqsTestCase):
         }
         for delete in False, True:
             with self.subTest(delete=delete):
-                response = self._test(body, delete=delete, valid_auth=False)
+                response = self._test(body, delete=delete, valid_hmac_key=False)
                 self.assertEqual(401, response.status_code)
 
     def test_invalid_catalog(self):
         for delete in False, True:
             with self.subTest(delete=delete):
                 with patch.object(self, 'catalog', '-'):
-                    response = self._test({}, delete=delete, valid_auth=True)
+                    response = self._test({}, delete=delete, valid_hmac_key=True)
                     expected_response = {
                         'Code': 'BadRequestError',
                         'Message': "('Catalog name is invalid', '-')"
@@ -427,14 +427,14 @@ class TestIndexerApp(LocalAppTestCase, DCP1TestCase, SqsTestCase):
                     self.assertEqual(400, response.status_code)
                     self.assertEqual(expected_response, response.json())
 
-    def _test(self, body: JSON, *, delete: bool, valid_auth: bool) -> Response:
+    def _test(self, body: JSON, *, delete: bool, valid_hmac_key: bool) -> Response:
         with patch.object(aws, 'get_hmac_key_and_id') as get_hmac_key_and_id:
             get_hmac_key_and_id.return_value = b'good key', 'the id'
             url = self.base_url.set(path=(self.catalog, 'bundles'))
             method = 'DELETE' if delete else 'POST'
             request = Request(method=method, url=str(url), json=body)
             hmac_support = SignatureHelper()
-            if valid_auth:
+            if valid_hmac_key:
                 return hmac_support.sign_and_send(request)
             else:
                 with patch.object(hmac_support, 'resolve_private_key') as p:
