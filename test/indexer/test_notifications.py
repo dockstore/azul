@@ -8,7 +8,10 @@ from uuid import (
 from moto import (
     mock_aws,
 )
-import requests
+from requests import (
+    Request,
+    Response,
+)
 
 from app_test_case import (
     LocalAppTestCase,
@@ -122,11 +125,11 @@ class TestIndexerApp(LocalAppTestCase, DCP1TestCase, SqsTestCase):
               delete: bool,
               *,
               valid_auth: bool
-              ) -> requests.Response:
+              ) -> Response:
         with patch.object(aws, 'get_hmac_key_and_id') as get_hmac_key_and_id:
             get_hmac_key_and_id.return_value = b'good key', 'the id'
             url = self.base_url.set(path=(self.catalog, 'bundles'))
-            request = requests.Request(method='DELETE' if delete else 'POST', url=str(url), json=body)
+            request = Request(method='DELETE' if delete else 'POST', url=str(url), json=body)
             hmac_support = SignatureHelper()
             if valid_auth:
                 return hmac_support.sign_and_send(request)
