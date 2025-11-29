@@ -30,6 +30,7 @@ from opensearchpy import (
 from requests import (
     Request,
     Response,
+    Session,
 )
 
 from app_test_case import (
@@ -427,10 +428,22 @@ class TestIndexerApp(LocalAppTestCase, DCP1TestCase, SqsTestCase):
                     self.assertEqual(400, response.status_code)
                     self.assertEqual(expected_response, response.json())
 
+    def test_invalid_auth(self):
+        for delete in False, True:
+            with self.subTest(delete=delete):
+                request = self._prepare_request({}, delete=delete)
+                request.headers['Authorization'] = 'Bearer foo'
+                with Session() as session:
+                    response = session.send(request.prepare())
+                self.assertEqual(401, response.status_code)
+                expected_response = {
+                    'Code': 'UnauthorizedError',
+                    'Message': ''
+                }
+                self.assertEqual(expected_response, response.json())
+
     def _test(self, body: JSON, *, delete: bool, valid_hmac_key: bool) -> Response:
-        url = self.base_url.set(path=(self.catalog, 'bundles'))
-        method = 'DELETE' if delete else 'POST'
-        request = Request(method=method, url=str(url), json=body)
+        request = self._prepare_request(body, delete)
         with patch.object(aws, 'get_hmac_key_and_id') as get_hmac_key_and_id:
             get_hmac_key_and_id.return_value = b'good key', 'the id'
             hmac_support = SignatureHelper()
@@ -440,3 +453,9 @@ class TestIndexerApp(LocalAppTestCase, DCP1TestCase, SqsTestCase):
                 with patch.object(hmac_support, 'resolve_private_key') as p:
                     p.return_value = b'bad key'
                     return hmac_support.sign_and_send(request)
+
+    def _prepare_request(self, body: JSON, delete: bool) -> Request:
+        url = self.base_url.set(path=(self.catalog, 'bundles'))
+        method = 'DELETE' if delete else 'POST'
+        request = Request(method=method, url=str(url), json=body)
+        return request
