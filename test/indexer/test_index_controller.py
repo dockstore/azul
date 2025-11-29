@@ -415,6 +415,18 @@ class TestIndexerApp(LocalAppTestCase, DCP1TestCase, SqsTestCase):
                 response = self._test(body, delete=delete, valid_auth=False)
                 self.assertEqual(401, response.status_code)
 
+    def test_invalid_catalog(self):
+        for delete in False, True:
+            with self.subTest(delete=delete):
+                with patch.object(self, 'catalog', '-'):
+                    response = self._test({}, delete=delete, valid_auth=True)
+                    expected_response = {
+                        'Code': 'BadRequestError',
+                        'Message': "('Catalog name is invalid', '-')"
+                    }
+                    self.assertEqual(400, response.status_code)
+                    self.assertEqual(expected_response, response.json())
+
     def _test(self, body: JSON, *, delete: bool, valid_auth: bool) -> Response:
         with patch.object(aws, 'get_hmac_key_and_id') as get_hmac_key_and_id:
             get_hmac_key_and_id.return_value = b'good key', 'the id'
