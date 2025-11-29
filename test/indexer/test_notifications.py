@@ -100,7 +100,7 @@ class TestIndexerApp(LocalAppTestCase, DCP1TestCase, SqsTestCase):
                 }
         }
         for delete in False, True:
-            with self.subTest(endpoint=delete):
+            with self.subTest(delete=delete):
                 for test, body in bodies.items():
                     with self.subTest(test):
                         response = self._test(body, delete, valid_auth=True)
@@ -129,7 +129,8 @@ class TestIndexerApp(LocalAppTestCase, DCP1TestCase, SqsTestCase):
         with patch.object(aws, 'get_hmac_key_and_id') as get_hmac_key_and_id:
             get_hmac_key_and_id.return_value = b'good key', 'the id'
             url = self.base_url.set(path=(self.catalog, 'bundles'))
-            request = Request(method='DELETE' if delete else 'POST', url=str(url), json=body)
+            method = 'DELETE' if delete else 'POST'
+            request = Request(method=method, url=str(url), json=body)
             hmac_support = SignatureHelper()
             if valid_auth:
                 return hmac_support.sign_and_send(request)
