@@ -79,13 +79,13 @@
             }
         }
     },
-    "docker.io/clamav/clamav:1.5.1-10": {
-        "digest": "sha256:47618ad348bfd75877ed52b2c6ed88f624e1c5cd07cab7dc61211c3e53c85ee3",
-        "mirror_digest": "sha256:e04a38d6ca146f67093159e9b123cfaab272921e6d6b1d9abc03777f5af2ac47",
+    "docker.io/clamav/clamav:1.5.1-11": {
+        "digest": "sha256:81f82a940199afab561e2532848aa9c5b023e3ba46902a99854d5ce5cd49f16c",
+        "mirror_digest": "sha256:25b6175a7da295b18e94a652951eaf32c6157b28073886981b46b4d4922f570f",
         "parts": {
             "linux/amd64": {
-                "digest": "sha256:f22b23c0a0667d27447011280ac78eb0ba87a24131974b8f0c35589c073a51e4",
-                "id": "sha256:6aab67e876f99247ae967ea4e08093a42de07d3fcfddb9371d97690b299fadfe",
+                "digest": "sha256:9c7ddcfc91169063c52ddb771c653ef48f9428d5b0cb3d29a7421617616f8db5",
+                "id": "sha256:c89423cd35e105dd8ad2f58db56860eba25a281bd583c174f36f63289b7f3b32",
                 "platform": "linux/amd64"
             }
         }
