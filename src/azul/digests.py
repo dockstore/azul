@@ -10,6 +10,10 @@ import resumablehash
 from azul import (
     R,
 )
+from azul.types import (
+    AnyJSON,
+    json_str,
+)
 
 type Hasher = resumablehash.md5 | resumablehash.sha256
 
@@ -27,6 +31,14 @@ def hasher_to_str(hasher: Hasher) -> str:
 
 def hasher_from_str(s: str) -> Hasher:
     return pickle.loads(base64.b64decode(s))
+
+
+def hasher_to_json(hasher: Hasher) -> AnyJSON:
+    return hasher_to_str(hasher)
+
+
+def hasher_from_json(json: AnyJSON) -> Hasher:
+    return hasher_from_str(json_str(json))
 
 
 @attrs.frozen(kw_only=True)

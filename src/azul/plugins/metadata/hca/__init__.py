@@ -562,3 +562,10 @@ class HCAFile(File):
     @property
     def digest(self) -> Digest:
         return Digest(value=self.sha256, type='sha256')
+
+    def to_manifest_entry(self) -> JSON:
+        entry = self.to_json()
+        entry.pop(self.discriminator())
+        entry['content-type'] = entry.pop('content_type')
+        entry['indexed'] = False
+        return entry

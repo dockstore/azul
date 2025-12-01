@@ -59,7 +59,8 @@ def mirror_catalog(azul: AzulClient,
         assert False, R(
             'Cannot mirror managed-access source', e.args[0])
 
-    azul.remote_mirror(catalog, source_refs.items())
+    azul.mirror_service.remote_mirror(catalog, source_refs.items())
+
     if wait:
         azul.wait_for_mirroring()
         assert azul.is_queue_empty(fail_queue), R(

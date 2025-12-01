@@ -126,15 +126,12 @@ from azul.indexer.document import (
     EntityReference,
     EntityType,
 )
-from azul.indexer.index_queue_service import (
-    IndexAction,
-)
 from azul.indexer.index_service import (
     IndexExistsAndDiffersException,
     IndexService,
 )
-from azul.indexer.mirror_service import (
-    BaseMirrorService,
+from azul.indexer.mirror_file_service import (
+    BaseMirrorFileService,
 )
 from azul.json_freeze import (
     freeze,
@@ -1268,7 +1265,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
         # some notifications may end up being sent three or more times.
         num_duplicates = len(bundle_fqids) // 2
         duplicate_bundles = [
-            queue_service.index_bundle_message(IndexAction.add, catalog, bundle.to_json())
+            queue_service.index_bundle_message(catalog, bundle.to_json())
             for bundle in self.random.choices(sorted(bundle_fqids), k=num_duplicates)
         ]
         notifications.extend(duplicate_bundles)
@@ -1725,14 +1722,14 @@ class IndexingIntegrationTest(IntegrationTestCase):
                     # since each IT catalog currently uses the same mirror
                     # prefix and bucket
                     for catalog in catalogs:
-                        BaseMirrorService(catalog=catalog).delete_it_files()
+                        BaseMirrorFileService(catalog=catalog).delete_it_files()
 
             self._assert_queues_empty([config.mirror_queue.name,
                                        config.mirror_queue.to_fail.name])
             _delete()
             for _ in range(2):
                 for catalog, sources in sources_by_catalog.items():
-                    self.azul_client.remote_mirror(catalog, sources)
+                    self.azul_client.mirror_service.remote_mirror(catalog, sources)
                 self.azul_client.wait_for_mirroring()
                 self._assert_queues_empty([config.mirror_queue.to_fail.name])
             _delete()

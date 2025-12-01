@@ -8,9 +8,6 @@ from concurrent.futures import (
     Future,
     ThreadPoolExecutor,
 )
-from enum import (
-    auto,
-)
 import fnmatch
 from functools import (
     partial,
@@ -39,9 +36,6 @@ from azul import (
     cached_property,
     config,
 )
-from azul.deployment import (
-    aws,
-)
 from azul.es import (
     ESClientFactory,
 )
@@ -53,7 +47,6 @@ from azul.http import (
 )
 from azul.indexer import (
     SourceConfig,
-    SourceRef,
     SourceSpec,
 )
 from azul.indexer.index_queue_service import (
@@ -65,15 +58,15 @@ from azul.indexer.index_repository_service import (
 from azul.indexer.index_service import (
     IndexService,
 )
+from azul.indexer.mirror_service import (
+    BaseMirrorService,
+)
 from azul.plugins import (
     MetadataPlugin,
     RepositoryPlugin,
 )
 from azul.queues import (
-    Action,
     Queues,
-    SQSFifoMessage,
-    SQSMessage,
 )
 from azul.types import (
     JSON,
@@ -81,14 +74,6 @@ from azul.types import (
 )
 
 log = logging.getLogger(__name__)
-
-
-class MirrorAction(Action):
-    mirror_source = auto()
-    mirror_partition = auto()
-    mirror_file = auto()
-    mirror_part = auto()
-    finalize_file = auto()
 
 
 @attrs.frozen(kw_only=True)
@@ -117,18 +102,9 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
     def metadata_plugin(self, catalog: CatalogName) -> MetadataPlugin:
         return self.index_service.metadata_plugin(catalog)
 
-    def mirror_source_message(self,
-                              catalog: CatalogName,
-                              source: SourceRef
-                              ) -> SQSFifoMessage:
-        return SQSFifoMessage(
-            body={
-                'action': MirrorAction.mirror_source.to_json(),
-                'catalog': catalog,
-                'source': source.to_json(),
-            },
-            group_id=source.id
-        )
+    @cached_property
+    def mirror_service(self) -> BaseMirrorService:
+        return BaseMirrorService()
 
     def local_reindex(self, catalog: CatalogName, prefix: str) -> int:
         service = self.index_repository_service
@@ -156,7 +132,7 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
         missing = []
         indexed = 0
         total = 0
-        path = (catalog, 'delete' if delete else 'add')
+        path = (catalog, 'bundles')
         indexer_url = config.indexer_endpoint.set(path=path)
 
         def attempt(notification: JSON,
@@ -168,7 +144,9 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
             # We want to send the request with urllib3 directly but HMAC
             # signing is only available for Requests, so we need to prepare a
             # request, sign it and then unpack it again before calling urllib3.
-            request = requests.Request('POST', str(indexer_url), json=notification)
+            request = requests.Request(method='DELETE' if delete else 'POST',
+                                       url=str(indexer_url),
+                                       json=notification)
             request = request.prepare()
             self.sign(request)
             try:
@@ -256,18 +234,6 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
         assert any(result.values()), R(
             'No valid sources specified for any catalog')
         return result
-
-    def mirror_queue(self):
-        name = config.mirror_queue.name
-        return aws.sqs_queue(name)
-
-    def queue_mirror_messages(self, messages: Iterable[SQSMessage]) -> int:
-        rate_limit = float(aws.sqs_fifo_rate_limit)
-        if config.is_in_lambda:
-            rate_limit /= config.mirroring_concurrency
-        return self.queues.send_messages(self.mirror_queue(),
-                                         messages,
-                                         rate_limit=rate_limit)
 
     def delete_all_indices(self, catalog: CatalogName):
         self.index_service.delete_indices(catalog)
@@ -388,29 +354,6 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
         queues = self.queues.get_queues([queue_name])
         length, _ = self.queues.get_queue_lengths(queues)
         return length == 0
-
-    def remote_mirror(self,
-                      catalog: CatalogName,
-                      sources: Iterable[tuple[SourceRef, SourceConfig]]
-                      ):
-        mirror_limit = config.catalogs[catalog].mirror_limit
-        if mirror_limit is not None and mirror_limit < 0:
-            log.info('Not mirroring any files in catalog %r because the file '
-                     'size limit is negative', catalog)
-        else:
-
-            def messages():
-                for source, cfg in sources:
-                    if cfg.mirror:
-                        log.info('Mirroring files in source %r from catalog %r',
-                                 str(source.spec), catalog)
-                        yield self.mirror_source_message(catalog, source)
-                    else:
-                        log.info('Not mirroring any files in source %r from catalog %r because '
-                                 'mirroring is explicitly disabled',
-                                 str(source.spec), catalog)
-
-            self.queue_mirror_messages(messages())
 
     def _get_non_empty_fail_queues(self) -> set[str]:
         return {

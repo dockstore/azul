@@ -886,7 +886,7 @@
                 ]
             }
         },
-        "/{catalog}/{action}": {
+        "/{catalog}/bundles": {
             "post": {
                 "responses": {
                     "400": {
@@ -918,7 +918,7 @@
                     "Indexing"
                 ],
                 "summary": "Notify the indexer to perform an action on a bundle",
-                "description": "\nQueue a bundle for addition to or deletion from the index.\n\nThe request must be authenticated using HMAC via the ``signature``\nheader. Each Azul deployment has its own unique HMAC key. The HMAC\ncomponents are the request method, request path, and the SHA256\ndigest of the request body.\n\nA valid HMAC header proves that the client is in possession of the\nsecret HMAC key and that the request wasn't tampered with while\ntravelling between client and service, even though the latter is not\nstrictly necessary considering that TLS is used to encrypt the\nentire exchange. Internal clients can obtain the secret key from the\nenvironment they are running in, and that they share with the\nservice. External clients must have been given the secret key. The\nnow-defunct DSS was such an external client. The Azul indexer\nprovided the HMAC secret to DSS when it registered with DSS to be\nnotified about bundle additions/deletions. These days only internal\nclients use this endpoint.\n",
+                "description": "\nQueue a bundle for addition to, or deletion from, the index.\nThe POST method is ued for additions, the DELETE method for\ndeletions.\n\nThe request must be authenticated using HMAC via the\n``signature`` header. Each Azul deployment has its own\nunique HMAC key. The HMAC components are the request method,\nrequest path, and the SHA256 digest of the request body.\n\nA valid HMAC header proves that the client is in possession\nof the secret HMAC key and that the request wasn't tampered\nwith while travelling between client and service, even\nthough the latter is not strictly necessary considering that\nTLS is used to encrypt the entire exchange. Internal clients\ncan obtain the secret key from the environment they are\nrunning in, and that they share with the service. External\nclients must have been given the secret key. The now-defunct\nDSS was such an external client. The Azul indexer provided\nthe HMAC secret to DSS when it registered with DSS to be\nnotified about bundle additions/deletions. These days only\ninternal clients use this endpoint. ",
                 "requestBody": {
                     "description": "Contents of the notification",
                     "required": true,
@@ -983,17 +983,110 @@
                         "description": "The name of the catalog to notify."
                     },
                     {
-                        "name": "action",
+                        "name": "signature",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "HMAC authentication signature."
+                    }
+                ]
+            },
+            "delete": {
+                "responses": {
+                    "400": {
+                        "description": "Request was rejected due to malformed parameters"
+                    },
+                    "429": {
+                        "description": "Too many requests. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
+                    "500": {
+                        "description": "Internal server error. An internal server error occurred."
+                    },
+                    "502": {
+                        "description": "Bad gateway. The server received an invalid response from the upstream server."
+                    },
+                    "503": {
+                        "description": "Service unavailable. \nWhen handling this response, clients should wait the number of seconds\nspecified in the `Retry-After` header and then retry the request.\n"
+                    },
+                    "504": {
+                        "description": "Gateway timeout. The server did not respond in time. Please try again later."
+                    },
+                    "200": {
+                        "description": "Notification was successfully queued for processing"
+                    },
+                    "401": {
+                        "description": "Request lacked a valid HMAC header"
+                    }
+                },
+                "tags": [
+                    "Indexing"
+                ],
+                "summary": "Notify the indexer to perform an action on a bundle",
+                "description": "\nQueue a bundle for addition to, or deletion from, the index.\nThe POST method is ued for additions, the DELETE method for\ndeletions.\n\nThe request must be authenticated using HMAC via the\n``signature`` header. Each Azul deployment has its own\nunique HMAC key. The HMAC components are the request method,\nrequest path, and the SHA256 digest of the request body.\n\nA valid HMAC header proves that the client is in possession\nof the secret HMAC key and that the request wasn't tampered\nwith while travelling between client and service, even\nthough the latter is not strictly necessary considering that\nTLS is used to encrypt the entire exchange. Internal clients\ncan obtain the secret key from the environment they are\nrunning in, and that they share with the service. External\nclients must have been given the secret key. The now-defunct\nDSS was such an external client. The Azul indexer provided\nthe HMAC secret to DSS when it registered with DSS to be\nnotified about bundle additions/deletions. These days only\ninternal clients use this endpoint. ",
+                "requestBody": {
+                    "description": "Contents of the notification",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "bundle_fqid": {
+                                        "type": "object",
+                                        "properties": {
+                                            "uuid": {
+                                                "type": "string"
+                                            },
+                                            "version": {
+                                                "type": "string"
+                                            },
+                                            "source": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "string"
+                                                    },
+                                                    "spec": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "id",
+                                                    "spec"
+                                                ],
+                                                "additionalProperties": false
+                                            }
+                                        },
+                                        "required": [
+                                            "uuid",
+                                            "version",
+                                            "source"
+                                        ],
+                                        "additionalProperties": false
+                                    }
+                                },
+                                "required": [
+                                    "bundle_fqid"
+                                ],
+                                "additionalProperties": false
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "catalog",
                         "in": "path",
                         "required": true,
                         "schema": {
                             "type": "string",
                             "enum": [
-                                "add",
-                                "delete"
+                                "dcp2"
                             ]
                         },
-                        "description": "Which action to perform."
+                        "description": "The name of the catalog to notify."
                     },
                     {
                         "name": "signature",
