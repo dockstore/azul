@@ -1711,6 +1711,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
                 self.assertIn(expected_auth_header, command_line)
 
     def _test_mirroring(self, *, delete: bool):
+        mirror_service = self.azul_client.mirror_service
         with self.subTest('mirror_files'):
             catalogs = [
                 c.name
@@ -1735,7 +1736,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
             _delete()
             for _ in range(2):
                 for catalog, sources in sources_by_catalog.items():
-                    self.azul_client.mirror_service.remote_mirror(catalog, sources)
+                    mirror_service.remote_mirror(catalog, sources)
                 self.azul_client.wait_for_mirroring()
                 self._assert_queues_empty([config.mirror_queue.to_fail.name])
             _delete()
