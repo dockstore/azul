@@ -1734,11 +1734,11 @@ class IndexingIntegrationTest(IntegrationTestCase):
             self._assert_queues_empty([config.mirror_queue.name,
                                        config.mirror_queue.to_fail.name])
             _delete()
-            for _ in range(2):
-                for catalog, sources in sources_by_catalog.items():
+            for catalog, sources in sources_by_catalog.items():
+                for _ in range(2):
                     mirror_service.remote_mirror(catalog, sources)
-                self.azul_client.wait_for_mirroring()
-                self._assert_queues_empty([config.mirror_queue.to_fail.name])
+                    self.azul_client.wait_for_mirroring()
+                    self._assert_queues_empty([config.mirror_queue.to_fail.name])
             _delete()
 
 
