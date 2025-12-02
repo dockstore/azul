@@ -306,8 +306,11 @@ class RepositoryService(ElasticsearchService):
         :return: The inner `files` entity or None if the catalog does not
                  contain information about the specified data file
         """
+        plugin = self.metadata_plugin(catalog)
+        file_uuid_path = ('contents', 'files', plugin.special_fields.file_uuid)
+        file_uuid_filter_field = plugin.field_mapping_reverse_lookup(file_uuid_path)
         filters = filters.update({
-            'fileId': {'is': [file_uuid]},
+            file_uuid_filter_field: {'is': [file_uuid]},
             **(
                 {'fileVersion': {'is': [file_version]}}
                 if file_version is not None else
@@ -327,7 +330,6 @@ class RepositoryService(ElasticsearchService):
         request = self.create_request(catalog, entity_type)
         request = chain.prepare_request(request)
 
-        plugin = self.metadata_plugin(catalog)
         if file_version is None:
             field_path = dotted(plugin.field_mapping['fileVersion'])
             request.sort({field_path: dict(order='desc')})

@@ -215,10 +215,9 @@ class AnvilSearchResponseStage(SearchResponseStage):
                         ) -> MutableJSON:
         inner_entity = copy_json(inner_entity)
         if inner_entity_type == 'files':
-            inner_entity['azul_url'] = self._file_url(uuid=json_str(inner_entity['uuid']),
+            inner_entity['azul_url'] = self._file_url(uuid=json_str(inner_entity['document_id']),
                                                       version=json_str(inner_entity['version']),
                                                       drs_uri=optional(json_str, inner_entity['drs_uri']))
-            inner_entity.pop('uuid', None)
             inner_entity.pop('version', None)
         return inner_entity
 

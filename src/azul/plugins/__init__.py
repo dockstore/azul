@@ -68,10 +68,12 @@ from azul.json import (
     DynamicPolymorphicSerializable,
 )
 from azul.types import (
+    AnyJSON,
     JSON,
     MutableJSON,
     MutableJSONs,
     derived_type_params,
+    json_mapping,
     json_str,
 )
 from azul.uuids import (
@@ -159,6 +161,7 @@ class SpecialFields:
     source_prefix: FieldName
     bundle_uuid: FieldName
     bundle_version: FieldName
+    file_uuid: FieldName
 
 
 class ManifestFormat(Enum):
@@ -420,6 +423,13 @@ class MetadataPlugin[BUNDLE: Bundle](Plugin[BUNDLE]):
                 f'Field {v!r} has conflicting paths', path, other_path
             )
         return inversion
+
+    def field_mapping_reverse_lookup(self, path: FieldPath) -> FieldName:
+        value: AnyJSON = json_mapping(self._field_mapping)
+        for key in path:
+            value = json_mapping(value)
+            value = value[key]
+        return json_str(value)
 
     @property
     @abstractmethod

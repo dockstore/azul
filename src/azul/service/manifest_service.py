@@ -1160,7 +1160,7 @@ class ManifestGenerator(metaclass=ABCMeta):
             return None
         else:
             return str(self.file_url_func(catalog=self.catalog,
-                                          file_uuid=file['uuid'],
+                                          file_uuid=file[self.metadata_plugin.special_fields.file_uuid],
                                           version=file['version'],
                                           fetch=False,
                                           **args))

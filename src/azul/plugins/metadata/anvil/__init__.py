@@ -260,7 +260,6 @@ class Plugin(MetadataPlugin[AnvilBundle]):
                     **{
                         # Not in schema
                         'version': 'fileVersion',
-                        'uuid': 'fileId',
                     }
                 }
             }
@@ -272,7 +271,8 @@ class Plugin(MetadataPlugin[AnvilBundle]):
                              source_spec='source_spec',
                              source_prefix='source_prefix',
                              bundle_uuid='bundle_uuid',
-                             bundle_version='bundle_version')
+                             bundle_version='bundle_version',
+                             file_uuid='document_id')
 
     @property
     def root_entity_type(self) -> str:
@@ -318,7 +318,6 @@ class Plugin(MetadataPlugin[AnvilBundle]):
             # entities of the `datasets` type, not to entities of the other
             # types, such as files, which the manifest is generated from.
             ('contents', 'datasets', 'duos_id'),
-            ('contents', 'files', 'uuid'),
             ('contents', 'files', 'version'),
         ]
 
