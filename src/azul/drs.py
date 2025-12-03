@@ -103,7 +103,7 @@ class DRSURI(metaclass=ABCMeta):
         #
         # https://ga4gh.github.io/data-repository-service-schemas/preview/develop/docs/#_drs_uris
         #
-        subcls = CompactDRSURI if drs_uri.find(':', len(prefix)) >= 0 else RegularDRSURI
+        subcls = CompactDRSURI if drs_uri.find(':', len(prefix)) >= 0 else HostBasedDRSURI
         return subcls.parse(drs_uri)
 
     @abstractmethod
@@ -116,7 +116,7 @@ class DRSURI(metaclass=ABCMeta):
 
 
 @attr.s(auto_attribs=True, kw_only=True, frozen=True, slots=True)
-class RegularDRSURI(DRSURI):
+class HostBasedDRSURI(DRSURI):
     uri: furl
 
     def __attrs_post_init__(self):

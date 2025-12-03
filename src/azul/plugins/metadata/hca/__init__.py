@@ -20,7 +20,7 @@ from azul.digests import (
     Digest,
 )
 from azul.drs import (
-    RegularDRSURI,
+    HostBasedDRSURI,
 )
 from azul.indexer.document import (
     Aggregate,
@@ -518,7 +518,7 @@ class HCAFile(File):
         else:
             # This requirement prevent mismatches in the DRS domain, and ensures
             # that changes to the column syntax don't go undetected.
-            parsed = RegularDRSURI.parse(file_id)
+            parsed = HostBasedDRSURI.parse(file_id)
             assert parsed.uri.netloc == config.tdr_service_url.netloc, R(
                 'Unexpected DRS URI location', parsed.uri)
             return file_id
