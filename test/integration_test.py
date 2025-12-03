@@ -1738,7 +1738,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
 
     def _test_mirroring(self, *, delete: bool):
         mirror_service = self.azul_client.mirror_service
-        with self.subTest('mirror_files'):
+        with self.subTest('mirroring'):
             catalogs = [
                 c.name
                 for c in config.catalogs.values()
@@ -1762,17 +1762,17 @@ class IndexingIntegrationTest(IntegrationTestCase):
             _delete()
 
             indexed_files: dict[File, tuple[SourceRef, JSON]] = {}
-            with self.subTest('remote_mirror'):
+            with self.subTest('mirror_sources_and_files'):
                 for catalog, sources in sources_by_catalog.items():
                     repository_file, source, file_response = self._get_one_mirrorable_file(catalog)
                     indexed_files[repository_file] = source, file_response
                     for _ in range(2):
-                        mirror_service.remote_mirror(catalog, sources)
+                        mirror_service.mirror_sources(catalog, sources)
                         mirror_service.mirror_file(catalog, source, repository_file)
                         self.azul_client.wait_for_mirroring()
                         self._assert_queues_empty([config.mirror_queue.to_fail.name])
 
-                with self.subTest('mirror_repository_files'):
+                with self.subTest('download_mirrored_files'):
                     for repository_file, (source, file_response) in indexed_files.items():
                         digest = repository_file.digest
                         expected_url = furl(scheme='https', host='s3.amazonaws.com', path=[
