@@ -503,24 +503,17 @@ class HCAFile(File):
     def _parse_drs_uri(cls, file_id: str | None, descriptor: JSON) -> str | None:
         if file_id is None:
             try:
-                external_drs_uri = descriptor['drs_uri']
+                external_drs_uri = optional(json_str, descriptor['drs_uri'])
             except KeyError:
                 assert False, R(
                     '`file_id` is null and `drs_uri` is not set in file descriptor',
                     descriptor)
             else:
-                # FIXME: Support non-null DRS URIs in file descriptors
-                #        https://github.com/DataBiosphere/azul/issues/3631
-                if external_drs_uri is not None:
-                    log.warning('Non-null `drs_uri` in file descriptor (%s)', external_drs_uri)
-                    external_drs_uri = None
                 return external_drs_uri
         else:
-            # This requirement prevent mismatches in the DRS domain, and ensures
-            # that changes to the column syntax don't go undetected.
             parsed = HostBasedDRSURI.parse(file_id)
-            assert parsed.uri.netloc == config.tdr_service_url.netloc, R(
-                'Unexpected DRS URI location', parsed.uri)
+            assert parsed.server == config.tdr_service_url.netloc, R(
+                'DRS URI must point to TDR as the server', file_id)
             return file_id
 
     @classmethod
