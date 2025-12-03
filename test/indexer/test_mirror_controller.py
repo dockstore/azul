@@ -141,9 +141,8 @@ class TestMirrorController(DCP2TestCase,
     def _mirror_event(self, body: JSON) -> list[SQSRecord]:
         return [self._mock_sqs_record(body, fifo=True)]
 
-    def _remote_mirror(self, mirror_source_cfg: bool = True) -> MutableJSONs:
-        cfg = SourceConfig(mirror=mirror_source_cfg)
-        self.service.remote_mirror(self.catalog, [(self.source, cfg)])
+    def _remote_mirror(self, source_config=SourceConfig(mirror=True)) -> MutableJSONs:
+        self.service.remote_mirror(self.catalog, [(self.source, source_config)])
         return self._read_queue(self.service._mirror_queue())
 
     def _test_remote_mirror(self):
@@ -223,7 +222,7 @@ class TestMirrorController(DCP2TestCase,
         self._create_mock_queues(config.mirror_queue_names)
 
         with self.subTest(no_mirror=True):
-            messages = self._remote_mirror(mirror_source_cfg=False)
+            messages = self._remote_mirror(SourceConfig(mirror=False))
             self.assertEqual([], messages)
 
         catalog = config.catalogs[self.catalog]
