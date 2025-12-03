@@ -759,6 +759,8 @@ class IndexingIntegrationTest(IntegrationTestCase):
         # allows up to 8 chars because it can be used with UUIDs
         prefix = Prefix(common=file_digest[:8], partition=0)
         source = self._source_from_response(catalog, source)
+        # FIXME: Avoid use of plugin, instantiate file from hit instead
+        #        https://github.com/DataBiosphere/azul/issues/7615
         files = plugin.list_files(source.with_prefix(prefix), prefix=prefix.common)
         file = one(file for file in files if file.digest.value == file_digest)
         return file, source, inner_file
