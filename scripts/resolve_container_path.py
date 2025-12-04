@@ -36,7 +36,10 @@ def resolve_container_path(container_path):
     return None
 
 
-if __name__ == '__main__':
-    container_path = sys.argv[1]
+def main(container_path):
     host_path = resolve_container_path(container_path)
     print(container_path if host_path is None else host_path)
+
+
+if __name__ == '__main__':
+    main(sys.argv[1])
