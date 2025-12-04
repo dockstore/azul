@@ -104,8 +104,8 @@ class TestMirrorController(DCP2TestCase,
     def test_mirroring(self):
         self._create_mock_queues(config.mirror_queue_names)
         file = self._file
-        with self.subTest('remote_mirror'):
-            source_message = self._test_remote_mirror()
+        with self.subTest('mirror_sources'):
+            source_message = self._test_mirror_sources()
 
             with self.subTest('mirror_source'):
                 partition_message = self._test_mirror_source(source_message)
@@ -141,13 +141,12 @@ class TestMirrorController(DCP2TestCase,
     def _mirror_event(self, body: JSON) -> list[SQSRecord]:
         return [self._mock_sqs_record(body, fifo=True)]
 
-    def _remote_mirror(self, mirror_source_cfg: bool = True) -> MutableJSONs:
-        cfg = SourceConfig(mirror=mirror_source_cfg)
-        self.service.remote_mirror(self.catalog, [(self.source, cfg)])
+    def _mirror_sources(self, source_config=SourceConfig(mirror=True)) -> MutableJSONs:
+        self.service.mirror_sources(self.catalog, [(self.source, source_config)])
         return self._read_queue(self.service._mirror_queue())
 
-    def _test_remote_mirror(self):
-        source_message = one(self._remote_mirror())
+    def _test_mirror_sources(self):
+        source_message = one(self._mirror_sources())
         expected_message = dict(action='MirrorSourceAction',
                                 catalog=self.catalog,
                                 source=self.source.to_json())
@@ -223,7 +222,7 @@ class TestMirrorController(DCP2TestCase,
         self._create_mock_queues(config.mirror_queue_names)
 
         with self.subTest(no_mirror=True):
-            messages = self._remote_mirror(mirror_source_cfg=False)
+            messages = self._mirror_sources(SourceConfig(mirror=False))
             self.assertEqual([], messages)
 
         catalog = config.catalogs[self.catalog]
@@ -235,14 +234,14 @@ class TestMirrorController(DCP2TestCase,
 
         with self.subTest(mirror_limit=-1):
             with patch_max_file_size(-1):
-                messages = self._remote_mirror()
+                messages = self._mirror_sources()
                 self.assertEqual([], messages)
 
         with self.subTest(mirror_limit=self._file.size):
             too_big = attrs.evolve(self._file,
                                    uuid='2873c8ef-8f76-4ccf-add7-26afe8c62873',
                                    size=self._file.size + 1)
-            source_message = self._test_remote_mirror()
+            source_message = self._test_mirror_sources()
             partition_message = self._test_mirror_source(source_message)
             with patch_max_file_size(self._file.size):
                 self._test_mirror_partition(partition_message, [too_big, self._file])
