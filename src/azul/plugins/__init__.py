@@ -159,7 +159,6 @@ class SpecialFields:
     source_prefix: FieldName
     bundle_uuid: FieldName
     bundle_version: FieldName
-    root_entity_id: FieldName
 
 
 class ManifestFormat(Enum):

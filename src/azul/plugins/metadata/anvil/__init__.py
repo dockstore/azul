@@ -274,8 +274,7 @@ class Plugin(MetadataPlugin[AnvilBundle]):
                              source_spec='source_spec',
                              source_prefix='source_prefix',
                              bundle_uuid='bundle_uuid',
-                             bundle_version='bundle_version',
-                             root_entity_id='datasets.dataset_id')
+                             bundle_version='bundle_version')
 
     @property
     def root_entity_type(self) -> str:

@@ -66,8 +66,7 @@ class TestRequestBuilder(DCP1CannedBundleTestCase, WebServiceTestCase):
                                  source_spec='sourceSpec',
                                  source_prefix='sourcePrefix',
                                  bundle_uuid='bundleUuid',
-                                 bundle_version='bundleVersion',
-                                 root_entity_id='projectId')
+                                 bundle_version='bundleVersion')
 
         @property
         def _field_mapping(self) -> MetadataPlugin._FieldMapping:
