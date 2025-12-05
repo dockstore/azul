@@ -60,16 +60,13 @@ from azul.service.app_controller import (
 from azul.service.repository_service import (
     RepositoryService,
 )
-from azul.service.source_controller import (
-    SourceController,
-)
 from azul.types import (
     JSON,
     MutableJSON,
 )
 
 
-class DRSController(ServiceAppController, SourceController):
+class DRSController(ServiceAppController):
 
     @cached_property
     def service(self) -> RepositoryService:

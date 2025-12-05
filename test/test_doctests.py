@@ -15,6 +15,7 @@ import azul.drs
 import azul.dss
 import azul.exceptions
 import azul.files
+import azul.functions
 import azul.http
 import azul.indexer
 import azul.indexer.aggregate
@@ -79,6 +80,7 @@ def load_tests(_loader,
         azul.dss,
         azul.exceptions,
         azul.files,
+        azul.functions,
         azul.http,
         azul.indexer,
         azul.indexer.aggregate,
@@ -123,5 +125,5 @@ def load_tests(_loader,
 
 if __name__ == '__main__':
     setUpModule()
-    runner = unittest.TextTestRunner()
+    runner = unittest.TextTestRunner(verbosity=2)
     runner.run(load_tests(None, unittest.TestSuite(), None))

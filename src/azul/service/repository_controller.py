@@ -43,8 +43,8 @@ from azul.indexer.field import (
     FieldType,
     pass_thru_bool,
 )
-from azul.indexer.mirror_service import (
-    BaseMirrorService,
+from azul.indexer.mirror_file_service import (
+    BaseMirrorFileService,
     MirrorFileDownload,
 )
 from azul.plugins import (
@@ -68,9 +68,6 @@ from azul.service.repository_service import (
     EntityNotFoundError,
     RepositoryService,
 )
-from azul.service.source_controller import (
-    SourceController,
-)
 from azul.types import (
     JSON,
     is_optional,
@@ -82,15 +79,15 @@ from azul.uuids import (
 log = logging.getLogger(__name__)
 
 
-class RepositoryController(ServiceAppController, SourceController):
+class RepositoryController(ServiceAppController):
 
     @cached_property
     def service(self) -> RepositoryService:
         return RepositoryService()
 
     @cache
-    def mirror_service(self, catalog: CatalogName) -> BaseMirrorService:
-        return BaseMirrorService(catalog=catalog)
+    def mirror_service(self, catalog: CatalogName) -> BaseMirrorFileService:
+        return BaseMirrorFileService(catalog=catalog)
 
     @cache
     def repository_plugin(self, catalog: CatalogName) -> RepositoryPlugin:

@@ -11,7 +11,6 @@ from concurrent.futures.thread import (
 )
 from contextlib import (
     contextmanager,
-    nullcontext,
 )
 import csv
 import gzip
@@ -127,15 +126,12 @@ from azul.indexer.document import (
     EntityReference,
     EntityType,
 )
-from azul.indexer.index_queue_service import (
-    IndexAction,
-)
 from azul.indexer.index_service import (
     IndexExistsAndDiffersException,
     IndexService,
 )
-from azul.indexer.mirror_service import (
-    BaseMirrorService,
+from azul.indexer.mirror_file_service import (
+    BaseMirrorFileService,
 )
 from azul.json_freeze import (
     freeze,
@@ -599,13 +595,8 @@ class IndexingIntegrationTest(IntegrationTestCase):
                         responses.append(response)
                         return response
 
-                    is_anvil = config.is_anvil_enabled(catalog)
-                    with (
-                        mock.patch.object(self, '_get_url', new=get_url),
-                        # Include MA files to reduce the chances of an empty
-                        # manifest due to files not matching the filter
-                        self._service_account_credentials if is_anvil else nullcontext()
-                    ):
+                    with mock.patch.object(self, '_get_url', new=get_url):
+
                         # Make multiple identical concurrent requests to test
                         # the idempotence of manifest generation, and its
                         # resilience against DOS attacks.
@@ -672,12 +663,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
         supported_formats = self._manifest_formats(catalog)
         for format in [ManifestFormat.compact, ManifestFormat.curl]:
             if format in supported_formats:
-                with (
-                    self.subTest('manifest_tagging_race', catalog=catalog, format=format),
-                    # Include MA files in manifest to reduce our chances of
-                    # an empty manifest due to files not matching the filter
-                    self._service_account_credentials
-                ):
+                with self.subTest('manifest_tagging_race', catalog=catalog, format=format):
                     filters = self._manifest_filters(catalog)
                     manifest_url = config.service_endpoint.set(path='/manifest/files',
                                                                args=dict(catalog=catalog,
@@ -1123,7 +1109,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
     def _test_repository_files(self, catalog: CatalogName):
         with self.subTest('repository_files', catalog=catalog):
             outer_file, inner_file = self._get_one_inner_file(catalog)
-            file_url = inner_file['url']
+            file_url = inner_file['azul_url']
             if file_url:
                 file_url = furl(file_url)
                 # FIXME: Use _check_endpoint() instead
@@ -1164,10 +1150,6 @@ class IndexingIntegrationTest(IntegrationTestCase):
                 self._validate_fastq_content(buf)
         else:
             file_size = lookup(file, 'file_size', 'size')
-            # FIXME: Two AnVIL snapshots with null in anvil_file.file_size column
-            #        https://github.com/DataBiosphere/azul/issues/7243
-            if file_size is None:
-                file_size = 1
             self.assertEqual(1 if file_size > 0 else 0, len(content.read(1)))
 
     def _validate_file_response(self,
@@ -1220,7 +1202,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
                                             path=drs.dos_object_url_path(file_uuid),
                                             args=dict(catalog=catalog))
             json_data = json.loads(response)['data_object']
-            file_url = first(json_data['urls'])['url']
+            file_url = first(json_data['urls'])['azul_url']
             while True:
                 with self._get_url(method=GET,
                                    url=file_url,
@@ -1283,7 +1265,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
         # some notifications may end up being sent three or more times.
         num_duplicates = len(bundle_fqids) // 2
         duplicate_bundles = [
-            queue_service.index_bundle_message(IndexAction.add, catalog, bundle.to_json())
+            queue_service.index_bundle_message(catalog, bundle.to_json())
             for bundle in self.random.choices(sorted(bundle_fqids), k=num_duplicates)
         ]
         notifications.extend(duplicate_bundles)
@@ -1553,7 +1535,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
                 }
             })
         managed_access_file_urls = {
-            one(file['files'])['url']
+            one(file['files'])['azul_url']
             for file in files
         }
         file_url = furl(self.random.choice(sorted(managed_access_file_urls)))
@@ -1740,14 +1722,14 @@ class IndexingIntegrationTest(IntegrationTestCase):
                     # since each IT catalog currently uses the same mirror
                     # prefix and bucket
                     for catalog in catalogs:
-                        BaseMirrorService(catalog=catalog).delete_it_files()
+                        BaseMirrorFileService(catalog=catalog).delete_it_files()
 
             self._assert_queues_empty([config.mirror_queue.name,
                                        config.mirror_queue.to_fail.name])
             _delete()
             for _ in range(2):
                 for catalog, sources in sources_by_catalog.items():
-                    self.azul_client.remote_mirror(catalog, sources)
+                    self.azul_client.mirror_service.remote_mirror(catalog, sources)
                 self.azul_client.wait_for_mirroring()
                 self._assert_queues_empty([config.mirror_queue.to_fail.name])
             _delete()

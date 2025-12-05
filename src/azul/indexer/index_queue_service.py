@@ -1,9 +1,6 @@
 from collections import (
     defaultdict,
 )
-from enum import (
-    auto,
-)
 import logging
 from typing import (
     Iterable,
@@ -59,10 +56,29 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 
+@attrs.frozen(kw_only=True)
 class IndexAction(Action):
-    reindex = auto()
-    add = auto()
-    delete = auto()
+    catalog: CatalogName
+
+
+@attrs.frozen(kw_only=True)
+class IndexBundleAction(IndexAction):
+    bundle_fqid: JSON
+    bundle_partition: BundlePartition
+
+
+class AddBundleAction(IndexBundleAction):
+    pass
+
+
+class DeleteBundleAction(IndexBundleAction):
+    pass
+
+
+@attrs.frozen(kw_only=True)
+class IndexPartitionAction(IndexAction):
+    source: SourceRef
+    prefix: str
 
 
 class IndexQueueService:
@@ -113,33 +129,27 @@ class IndexQueueService:
         return self.queues.send_messages(queue, messages)
 
     def index_bundle_message(self,
-                             action: IndexAction,
                              catalog: CatalogName,
                              bundle_fqid: JSON,
                              bundle_partition: BundlePartition = BundlePartition.root,
+                             *,
+                             delete: bool = False
                              ) -> SQSMessage:
-        return SQSMessage(
-            body={
-                'action': action.to_json(),
-                'catalog': catalog,
-                'bundle_fqid': bundle_fqid,
-                'bundle_partition': bundle_partition.to_json(),
-            }
-        )
+        message_cls = DeleteBundleAction if delete else AddBundleAction
+        message = message_cls(catalog=catalog,
+                              bundle_fqid=bundle_fqid,
+                              bundle_partition=bundle_partition)
+        return SQSMessage(body=json_mapping(message.to_json()))
 
     def index_partition_message(self,
                                 catalog: CatalogName,
                                 source: SourceRef,
                                 prefix: str
                                 ) -> SQSMessage:
-        return SQSMessage(
-            body={
-                'action': IndexAction.reindex.to_json(),
-                'catalog': catalog,
-                'source': source.to_json(),
-                'prefix': prefix
-            }
-        )
+        message = IndexPartitionAction(catalog=catalog,
+                                       source=source,
+                                       prefix=prefix)
+        return SQSMessage(body=json_mapping(message.to_json()))
 
     def remote_reindex(self, catalog: CatalogName, sources: Iterable[SourceSpec]):
         service = self.index_repository_service
@@ -158,13 +168,10 @@ class IndexQueueService:
             messages = map(message, prefix.partition_prefixes())
             self.queue_notifications(messages)
 
-    def remote_reindex_partition(self, message: JSON) -> None:
+    def remote_reindex_partition(self, message: IndexPartitionAction) -> None:
         service = self.index_repository_service
-        catalog, prefix = message['catalog'], message['prefix']
+        catalog, prefix, source = message.catalog, message.prefix, message.source
         assert isinstance(catalog, str) and isinstance(prefix, str)
-        source = json_mapping(message['source'])
-        plugin = service.repository_plugin(catalog)
-        source = plugin.source_ref_cls.from_json(source)
         bundle_fqids = service.list_bundles(catalog, source, prefix)
         # All AnVIL bundles and entities use the same version
         if not config.is_anvil_enabled(catalog):
@@ -173,23 +180,24 @@ class IndexQueueService:
                      '%i bundles remain in prefix %r of source %r in catalog %r',
                      len(bundle_fqids), prefix, str(source.spec), catalog)
         messages = (
-            self.index_bundle_message(IndexAction.add, catalog, bundle_fqid.to_json())
+            self.index_bundle_message(catalog, bundle_fqid.to_json())
             for bundle_fqid in bundle_fqids
         )
         num_messages = self.queue_notifications(messages)
         log.info('Successfully queued %i notification(s) for prefix %s of '
                  'source %r', num_messages, prefix, source)
 
-    def contribute(self, action: IndexAction, message: JSON):
-        if action is IndexAction.reindex:
+    def contribute(self, message: IndexAction):
+        if isinstance(message, IndexPartitionAction):
             self.remote_reindex_partition(message)
-        else:
-            catalog = json_str(message['catalog'])
+        elif isinstance(message, IndexBundleAction):
+            catalog = json_str(message.catalog)
             assert catalog is not None
-            delete = action is IndexAction.delete
-            bundle_fqid = json_mapping(message['bundle_fqid'])
-            bundle_partition = json_mapping(message['bundle_partition'])
-            bundle_partition = BundlePartition.from_json(bundle_partition)
+            delete = isinstance(message, DeleteBundleAction)
+            if not delete:
+                assert isinstance(message, AddBundleAction)
+            bundle_fqid = json_mapping(message.bundle_fqid)
+            bundle_partition = message.bundle_partition
             contributions, replicas = self.transform(catalog,
                                                      bundle_fqid,
                                                      bundle_partition,
@@ -236,15 +244,14 @@ class IndexQueueService:
                                                bundle_partition,
                                                delete=delete)
         if isinstance(results, list):
-            action = IndexAction.delete if delete else IndexAction.add
             for bundle_partition in results:
                 assert isinstance(bundle_partition, BundlePartition)
                 # There's a good chance that the partition will also fail in
                 # the non-retry Lambda function so we'll go straight to retry.
-                message = self.index_bundle_message(action,
-                                                    catalog,
+                message = self.index_bundle_message(catalog,
                                                     bundle_fqid,
-                                                    bundle_partition)
+                                                    bundle_partition,
+                                                    delete=delete)
                 self.queue_notification(message, retry=True)
             return [], []
         elif isinstance(results, tuple):

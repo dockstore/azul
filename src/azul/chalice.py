@@ -153,6 +153,7 @@ class AzulChaliceApp(Chalice):
         # Middleware is invoked in order of registration
         self.register_middleware(self._logging_middleware, 'http')
         self.register_middleware(self._security_headers_middleware, 'http')
+        self.register_middleware(self._retry_503, 'http')
         self.register_middleware(self._api_gateway_context_middleware, 'http')
         self.register_middleware(self._authentication_middleware, 'http')
 
@@ -258,6 +259,15 @@ class AzulChaliceApp(Chalice):
         response.headers['Cache-Control'] = cache_control
         return response
 
+    def _retry_503(self, event, get_response):
+        """
+        Add a retry-after header to 503 responses
+        """
+        response = get_response(event)
+        if response.status_code == 503:
+            response.headers.setdefault('Retry-After', '30')
+        return response
+
     def _http_cache_for(self, seconds: int):
         """
         The HTTP Cache-Control response header value that will cause the
@@ -323,7 +333,7 @@ class AzulChaliceApp(Chalice):
             if not interactive:
                 require(bool(methods), 'Must list methods with interactive=False')
                 self.non_interactive_routes.update((path, method) for method in methods)
-            spec = deep_dict_merge(spec, self.default_specs())
+            spec = deep_dict_merge(self.default_specs(), spec, override=True)
             chalice_decorator = super().route(path, methods=methods, **kwargs)
 
             def decorator(view_func):
@@ -867,14 +877,33 @@ class AzulChaliceApp(Chalice):
         return locals()
 
     def default_specs(self):
+        retry_after = format_description('''
+            When handling this response, clients should wait the number of seconds
+            specified in the `Retry-After` header and then retry the request.
+        ''')
         return {
             'responses': {
+                '400': {
+                    'description': 'Bad request. The request was rejected due '
+                                   'to malformed parameters.'
+                },
+                '429': {
+                    'description': 'Too many requests. ' + retry_after
+                },
+                '500': {
+                    'description': 'Internal server error. An internal server '
+                                   'error occurred.'
+                },
+                '502': {
+                    'description': 'Bad gateway. The server received an '
+                                   'invalid response from the upstream server.'
+                },
+                '503': {
+                    'description': 'Service unavailable. ' + retry_after
+                },
                 '504': {
-                    'description': format_description('''
-                        Request timed out. When handling this response, clients
-                        should wait the number of seconds specified in the
-                        `Retry-After` header and then retry the request.
-                    ''')
+                    'description': 'Gateway timeout. The server did not '
+                                   'respond in time. Please try again later.'
                 }
             }
         }

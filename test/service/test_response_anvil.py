@@ -1270,13 +1270,10 @@ class TestAnvilResponse(AnvilIndexerTestCase, WebServiceTestCase):
                                 'accessible': True,
                                 'drs_uri': f'drs://{self._drs_domain_name}/v1_6c87f0e1-509d-46a4-b845-7584df39263b_'
                                            f'1e269f04-4347-4188-b060-1dcc69e71d67',
-                                **{
-                                    field: str(self.base_url.set(
-                                        path='/repository/files/15b76f9c-6b46-433f-851d-34e89f1b9ba6',
-                                        args=dict(catalog='test', version=self.version)
-                                    ))
-                                    for field in ['azul_url', 'url']
-                                }
+                                'azul_url': str(self.base_url.set(
+                                    path='/repository/files/15b76f9c-6b46-433f-851d-34e89f1b9ba6',
+                                    args=dict(catalog='test', version=self.version)
+                                ))
                             }
                         ]
                     },
@@ -1353,13 +1350,10 @@ class TestAnvilResponse(AnvilIndexerTestCase, WebServiceTestCase):
                                 'accessible': True,
                                 'drs_uri': f'drs://{self._drs_domain_name}/v1_6c87f0e1-509d-46a4-b845-7584df39263b_'
                                            f'8b722e88-8103-49c1-b351-e64fa7c6ab37',
-                                **{
-                                    field: str(self.base_url.set(
-                                        path='/repository/files/3b17377b-16b1-431c-9967-e5d01fc5923f',
-                                        args=dict(catalog='test', version=self.version)
-                                    ))
-                                    for field in ['azul_url', 'url']
-                                }
+                                'azul_url': str(self.base_url.set(
+                                    path='/repository/files/3b17377b-16b1-431c-9967-e5d01fc5923f',
+                                    args=dict(catalog='test', version=self.version)
+                                ))
                             }
                         ]
                     }
