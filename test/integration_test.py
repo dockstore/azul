@@ -708,8 +708,8 @@ class IndexingIntegrationTest(IntegrationTestCase):
                             self._manifest_validators[format](catalog, response.data)
                             break
 
-                execution_ids = self._manifest_execution_ids(responses)
-                self.assertEqual(1, len(execution_ids))
+                    execution_ids = self._manifest_execution_ids(responses)
+                    self.assertEqual(1, len(execution_ids))
 
     def _manifest_execution_ids(self,
                                 responses: list[urllib3.HTTPResponse]
