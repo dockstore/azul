@@ -26,7 +26,7 @@ emit({
     "iam_role_arn": "${aws_iam_role.%s.arn}" % app_name,
     "environment_variables": config.lambda_env,
     "lambda_timeout": config.api_gateway_lambda_timeout,
-    "lambda_memory_size": 2048,
+    "lambda_memory_size": 768 if config.is_anvil_enabled() else 512,
     **chalice.vpc_lambda_config(app_name),
     "stages": {
         config.deployment_stage: {
@@ -35,10 +35,10 @@ emit({
                 "api_handler": chalice.vpc_lambda_config(app_name),
                 service.generate_manifest.name: {
                     "lambda_timeout": config.service_lambda_timeout,
-                    "lambda_memory_size": 3072 if config.deployment.is_stable else 2048,
+                    "lambda_memory_size": 3009 if config.deployment.is_stable else 2048,
                 },
                 service.update_health_cache.name: {
-                    "lambda_memory_size": 128,
+                    "lambda_memory_size": 160,
                     "lambda_timeout": config.health_cache_lambda_timeout
                 }
             }

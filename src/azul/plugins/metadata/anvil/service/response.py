@@ -218,9 +218,6 @@ class AnvilSearchResponseStage(SearchResponseStage):
             inner_entity['azul_url'] = self._file_url(uuid=json_str(inner_entity['uuid']),
                                                       version=json_str(inner_entity['version']),
                                                       drs_uri=optional(json_str, inner_entity['drs_uri']))
-            # FIXME: https://github.com/DataBiosphere/azul/issues/6549
-            #        Remove files.url
-            inner_entity['url'] = inner_entity['azul_url']
             inner_entity.pop('uuid', None)
             inner_entity.pop('version', None)
         return inner_entity

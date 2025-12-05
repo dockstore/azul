@@ -1669,11 +1669,15 @@ class Config:
         return self.qualified_resource_name('sources_cache_by_auth')
 
     @property
-    def current_sources(self) -> list[str]:
-        sources = self.environ.get('azul_current_sources', '*')
-        sources = shlex.split(sources)
-        assert bool(sources), R('Sources cannot be empty', sources)
-        return sources
+    def current_sources(self) -> list[str] | None:
+        try:
+            sources = self.environ['azul_current_sources']
+        except KeyError:
+            return None
+        else:
+            sources = shlex.split(sources)
+            assert bool(sources), R('Sources cannot be empty', sources)
+            return sources
 
     terms_aggregation_size = 99999
 
