@@ -708,8 +708,8 @@ class IndexingIntegrationTest(IntegrationTestCase):
                             self._manifest_validators[format](catalog, response.data)
                             break
 
-                execution_ids = self._manifest_execution_ids(responses)
-                self.assertEqual(1, len(execution_ids))
+                    execution_ids = self._manifest_execution_ids(responses)
+                    self.assertEqual(1, len(execution_ids))
 
     def _manifest_execution_ids(self,
                                 responses: list[urllib3.HTTPResponse]
@@ -1855,7 +1855,7 @@ class AzulChaliceLocalIntegrationTest(AzulTestCase):
     catalog = first(config.integration_test_catalogs)
 
     def test_local_chalice_index_endpoints(self):
-        url = str(self.url.copy().set(path='index/files',
+        url = str(self.url.copy().set(path='repository/sources',
                                       query=dict(catalog=self.catalog)))
         response = requests.get(url)
         self.assertEqual(200, response.status_code, response.content)
