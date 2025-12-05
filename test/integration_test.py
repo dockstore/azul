@@ -1855,7 +1855,7 @@ class AzulChaliceLocalIntegrationTest(AzulTestCase):
     catalog = first(config.integration_test_catalogs)
 
     def test_local_chalice_index_endpoints(self):
-        url = str(self.url.copy().set(path='index/files',
+        url = str(self.url.copy().set(path='repository/sources',
                                       query=dict(catalog=self.catalog)))
         response = requests.get(url)
         self.assertEqual(200, response.status_code, response.content)
