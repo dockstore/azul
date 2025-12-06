@@ -386,8 +386,10 @@ class MirrorFileService(BaseMirrorFileService, HasCachedHttpClient):
                                              str(download_url),
                                              headers=headers)
         if response.status == expected_status:
+            actual_size = len(response.data)
             log.info('Downloaded %d bytes in %.3fs from file %r',
-                     size, time.time() - start, file)
+                     actual_size, time.time() - start, file)
+            assert actual_size == size, R(f'Expected {size} bytes, got {actual_size}')
             return response.data
         else:
             raise RuntimeError('Unexpected response from repository', response.status)
