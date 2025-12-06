@@ -1157,10 +1157,10 @@ class ManifestGenerator(metaclass=ABCMeta):
 
     def _azul_mirror_uri(self, file: JSON) -> str | None:
         file = self.metadata_plugin.file_class.from_index(file)
-        if BaseMirrorService.do_not_mirror(self.catalog, file.size):
-            return None
-        else:
+        if BaseMirrorService.may_mirror(self.catalog, file.size):
             return self.mirror_file_service.mirror_uri(file)
+        else:
+            return None
 
     @cached_property
     def manifest_content_hash(self) -> int:
