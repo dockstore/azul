@@ -275,7 +275,7 @@ class RepositoryController(ServiceAppController):
             assert request_index == 0, request_index
             download = MirrorFileDownload(
                 file=file,
-                location=mirror_service.get_mirror_url(file),
+                location=mirror_service.mirror_url(file),
                 replica=replica,
                 token=token
             )

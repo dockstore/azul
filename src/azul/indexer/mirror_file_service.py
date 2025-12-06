@@ -174,7 +174,7 @@ class BaseMirrorFileService:
                         netloc=self._storage.bucket_name,
                         path=self.mirror_object_key(file)))
 
-    def get_mirror_url(self, file: File) -> str:
+    def mirror_url(self, file: File) -> str:
         return self._storage.get_presigned_url(key=self.mirror_object_key(file),
                                                file_name=file.name,
                                                content_type=file.content_type)
