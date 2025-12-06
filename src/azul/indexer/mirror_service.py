@@ -146,8 +146,8 @@ class BaseMirrorService:
         else:
 
             def messages():
-                for source, cfg in sources:
-                    if cfg.mirror:
+                for source, source_config in sources:
+                    if source_config.mirror:
                         log.info('Mirroring files in source %r from catalog %r',
                                  str(source.spec), catalog)
                         yield MirrorSourceAction(catalog=catalog, source=source)
