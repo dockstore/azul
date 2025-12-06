@@ -1160,7 +1160,7 @@ class ManifestGenerator(metaclass=ABCMeta):
         if BaseMirrorService.do_not_mirror(self.catalog, file.size):
             return None
         else:
-            return self.mirror_file_service.get_mirror_uri(file)
+            return self.mirror_file_service.mirror_uri(file)
 
     @cached_property
     def manifest_content_hash(self) -> int:
