@@ -140,8 +140,11 @@ class BaseMirrorService:
         returns False, the service will definitely refuse to mirror such files,
         although it may accept smaller files.
         """
-        max_size = config.catalogs[catalog].mirror_limit
-        return max_size is None or file_size <= max_size
+        if config.enable_mirroring:
+            max_size = config.catalogs[catalog].mirror_limit
+            return max_size is None or file_size <= max_size
+        else:
+            return False
 
     def mirror_sources(self,
                        catalog: CatalogName,
