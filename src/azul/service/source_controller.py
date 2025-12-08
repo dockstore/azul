@@ -15,7 +15,7 @@ from azul.auth import (
 from azul.chalice import (
     AppController,
     BadGatewayError,
-    ServiceUnavailableError,
+    TerraTimeoutError,
 )
 from azul.http import (
     LimitedTimeoutException,
@@ -46,7 +46,7 @@ class SourceController(AppController):
         except PermissionError:
             raise UnauthorizedError
         except LimitedTimeoutException as e:
-            raise ServiceUnavailableError(*e.args)
+            raise TerraTimeoutError(*e.args)
         except TooManyRequestsException as e:
             raise TooManyRequestsError(*e.args)
         else:
@@ -74,7 +74,7 @@ class SourceController(AppController):
         except PermissionError:
             raise UnauthorizedError
         except LimitedTimeoutException as e:
-            raise ServiceUnavailableError(*e.args)
+            raise TerraTimeoutError(*e.args)
         except TooManyRequestsException as e:
             raise TooManyRequestsError(*e.args)
         else:
