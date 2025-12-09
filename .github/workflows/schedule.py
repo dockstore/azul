@@ -38,6 +38,7 @@ class FrontMatter(TypedDict, total=False):
     type: str
     labels: list[str]
     assignees: list[str]
+    _priority: str
     _repository: str
     _start: str
     _period: str
@@ -211,13 +212,34 @@ class IssueTemplate:
                     '--owner', owner,
                     '--jq', '.projects[]|select(.title == "Azul")'
                 )
+                project_number = str(project['number'])
                 item = self.gh_json(
-                    'project', 'item-add', str(project['number']),
+                    'project', 'item-add', project_number,
                     '--owner', owner,
                     '--url', url,
                     '--format', 'json'
                 )
-                assert item['id'], item
+                item_id = item['id']
+                assert item_id, item
+                priority_field = self.gh_json(
+                    'project', 'field-list', project_number,
+                    '--format', 'json',
+                    '--owner', owner,
+                    '--jq', '.fields[]|select(.name == "Priority")'
+                )
+                priority_ids = {pf['name']: pf['id'] for pf in priority_field['options']}
+                priority = self.properties['_priority']
+                item = self.gh_json(
+                    'project', 'item-edit',
+                    '--id', item_id,
+                    '--field-id', priority_field['id'],
+                    '--project-id', project['id'],
+                    '--single-select-option-id', priority_ids[priority],
+                    '--format', 'json'
+                )
+                assert item['title'] == title, (title, item)
+                assert item['url'] == url, (url, item)
+                assert item['id'] == item_id, (item_id, item)
 
     def gh_json(self, *args: str) -> dict:
         """
