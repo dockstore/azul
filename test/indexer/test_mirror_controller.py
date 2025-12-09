@@ -227,13 +227,13 @@ class TestMirrorController(DCP2TestCase,
 
         catalog = config.catalogs[self.catalog]
 
-        def patch_max_file_size(size):
+        def patch_mirror_limit(size):
             return patch.dict(config.catalogs, {
                 self.catalog: attrs.evolve(catalog, mirror_limit=size)
             })
 
         with self.subTest(mirror_limit=-1):
-            with patch_max_file_size(-1):
+            with patch_mirror_limit(-1):
                 messages = self._mirror_sources()
                 self.assertEqual([], messages)
 
@@ -243,5 +243,5 @@ class TestMirrorController(DCP2TestCase,
                                    size=self._file.size + 1)
             source_message = self._test_mirror_sources()
             partition_message = self._test_mirror_source(source_message)
-            with patch_max_file_size(self._file.size):
+            with patch_mirror_limit(self._file.size):
                 self._test_mirror_partition(partition_message, [too_big, self._file])

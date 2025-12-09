@@ -107,6 +107,12 @@ from azul.indexer.field import (
     FieldTypes,
     null_str,
 )
+from azul.indexer.mirror_file_service import (
+    BaseMirrorFileService,
+)
+from azul.indexer.mirror_service import (
+    BaseMirrorService,
+)
 from azul.json import (
     copy_json,
 )
@@ -814,6 +820,10 @@ class ManifestGenerator(metaclass=ABCMeta):
     def metadata_plugin(self) -> MetadataPlugin:
         return self.service.metadata_plugin(self.catalog)
 
+    @cached_property
+    def mirror_file_service(self) -> BaseMirrorFileService:
+        return BaseMirrorFileService(catalog=self.catalog)
+
     @classmethod
     @abstractmethod
     def file_name_extension(cls) -> str:
@@ -1083,7 +1093,7 @@ class ManifestGenerator(metaclass=ABCMeta):
             try:
                 field_type = field_types[field_name]
             except KeyError:
-                if field_name == 'file_url':
+                if field_name in ('file_url', 'file_mirror_uri'):
                     field_type = null_str
                 else:
                     raise
@@ -1144,6 +1154,13 @@ class ManifestGenerator(metaclass=ABCMeta):
                                           version=file['version'],
                                           fetch=False,
                                           **args))
+
+    def _azul_mirror_uri(self, file: JSON) -> str | None:
+        file = self.metadata_plugin.file_class.from_index(file)
+        if BaseMirrorService.may_mirror(self.catalog, file.size):
+            return self.mirror_file_service.mirror_uri(file)
+        else:
+            return None
 
     @cached_property
     def manifest_content_hash(self) -> int:
@@ -1671,7 +1688,10 @@ class CompactManifestGenerator(PagedManifestGenerator):
                     entities = self._get_entities(field_path, doc)
                     if field_path == ('contents', 'files'):
                         file = copy_json(one(entities))
-                        file['file_url'] = self._azul_file_url(file)
+                        if 'file_url' in column_mapping:
+                            file['file_url'] = self._azul_file_url(file)
+                        if 'file_mirror_uri' in column_mapping:
+                            file['file_mirror_uri'] = self._azul_mirror_uri(file)
                         entities = [file]
                     self._extract_fields(field_path=field_path,
                                          entities=entities,
@@ -1684,7 +1704,10 @@ class CompactManifestGenerator(PagedManifestGenerator):
                             for related_file in file['related_files']:
                                 related_row = {}
                                 file.update(related_file)
-                                file['file_url'] = self._azul_file_url(file)
+                                if 'file_url' in column_mapping:
+                                    file['file_url'] = self._azul_file_url(file)
+                                if 'file_mirror_uri' in column_mapping:
+                                    file['file_mirror_uri'] = self._azul_mirror_uri(file)
                                 self._extract_fields(field_path=field_path,
                                                      entities=[file],
                                                      column_mapping=column_mapping,

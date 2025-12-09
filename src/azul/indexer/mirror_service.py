@@ -131,19 +131,29 @@ class BaseMirrorService:
     def _queues(self) -> Queues:
         return Queues()
 
+    @classmethod
+    def may_mirror(cls, catalog: CatalogName, file_size: int = 0) -> bool:
+        """
+        Test whether it makes sense to request the mirroring of files from the
+        given catalog if they are of the given size or larger. If this method
+        returns True, such files may or may not be mirrored. If this method
+        returns False, the service will definitely refuse to mirror such files,
+        although it may accept smaller files.
+        """
+        if config.enable_mirroring:
+            max_size = config.catalogs[catalog].mirror_limit
+            return max_size is None or file_size <= max_size
+        else:
+            return False
+
     def mirror_sources(self,
                        catalog: CatalogName,
                        sources: Iterable[tuple[SourceRef, SourceConfig]]
                        ):
-        mirror_limit = config.catalogs[catalog].mirror_limit
-        if mirror_limit is not None and mirror_limit < 0:
-            log.info('Not mirroring any files in catalog %r because the file '
-                     'size limit is negative', catalog)
-        else:
-
+        if self.may_mirror(catalog):
             def messages():
-                for source, cfg in sources:
-                    if cfg.mirror:
+                for source, source_config in sources:
+                    if source_config.mirror:
                         log.info('Mirroring files in source %r from catalog %r',
                                  str(source.spec), catalog)
                         yield MirrorSourceAction(catalog=catalog, source=source)
@@ -153,6 +163,9 @@ class BaseMirrorService:
                                  str(source.spec), catalog)
 
             self._queue_messages(messages())
+        else:
+            log.info('Not mirroring any files in catalog %r because the file '
+                     'size limit is negative', catalog)
 
     def mirror_file(self, catalog: CatalogName, source: SourceRef, file: File):
         self._queue_messages([MirrorFileAction(catalog=catalog,
@@ -238,17 +251,16 @@ class MirrorService(BaseMirrorService):
     def _(self, a: MirrorPartitionAction) -> Iterable[MirrorAction]:
         plugin = self._repository_plugin(a.catalog)
         files = plugin.list_files(a.source, a.prefix)
-        max_size = config.catalogs[a.catalog].mirror_limit
         for file in files:
             assert file.size is not None, R('File size unknown', file)
-            if max_size is not None and file.size > max_size:
-                log.info('Not mirroring file to save cost: %r', file)
-            else:
+            if self.may_mirror(a.catalog, file.size):
                 log.debug('Queueing file %r', file)
                 yield MirrorFileAction(catalog=a.catalog,
                                        source=a.source,
                                        prefix=a.prefix,
                                        file=file)
+            else:
+                log.info('Not mirroring file to save cost: %r', file)
         log.info('Queued %d files in partition %r of source %r in catalog %r',
                  len(files), a.prefix, str(a.source), a.catalog)
 

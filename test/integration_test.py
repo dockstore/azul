@@ -468,7 +468,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
                     # If test_mirroring is run for the catalog, ensure that the
                     # source is not flagged as no_mirror so that we can test
                     # downloading a mirrored file
-                    mirror=config.enable_mirroring and catalog.mirror_limit >= 0
+                    mirror=self.azul_client.mirror_service.may_mirror(catalog.name)
                 )
                 ma_source = self._select_source(catalog.name, public=False)
                 if ma_source is not None:
@@ -1744,7 +1744,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
             catalogs = [
                 c.name
                 for c in config.catalogs.values()
-                if c.is_integration_test_catalog and c.mirror_limit >= 0
+                if c.is_integration_test_catalog and mirror_service.may_mirror(c.name)
             ]
             sources_by_catalog = {
                 catalog: [self._select_source(catalog, public=True, mirror=True)]
