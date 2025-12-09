@@ -14,6 +14,7 @@ from typing import (
     AbstractSet,
     Callable,
     Iterable,
+    Mapping,
 )
 import uuid
 
@@ -940,17 +941,16 @@ class Plugin(TDRPlugin[TDRAnvilBundle, TDRAnvilBundleFQID]):
         else:
             return []
 
-    _schema_columns = {
-        table['name']: [column['name'] for column in table['columns']]
-        for table in anvil_schema['tables']
-    }
+    @cached_property
+    def _schema_columns_by_table(self) -> Mapping[str, AbstractSet[str]]:
+        columns_by_table = {}
+        for table in anvil_schema['tables']:
+            table_name = table['name']
+            column_names = {column['name'] for column in table['columns']}
+            column_names.add('datarepo_row_id')
+            columns_by_table[table_name] = column_names
+        return columns_by_table
 
-    def _columns(self, table_name: str) -> set[str]:
-        try:
-            columns = self._schema_columns[table_name]
-        except KeyError:
-            return {'*'}
-        else:
-            columns = set(columns)
-            columns.add('datarepo_row_id')
-            return columns
+    def _columns(self, table_name: str) -> AbstractSet[str]:
+        # Include all columns for replicas of non-schema tables
+        return self._schema_columns_by_table.get(table_name, {'*'})
