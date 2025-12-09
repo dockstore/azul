@@ -213,8 +213,7 @@ class TDRAnvilBundle(AnvilBundle[TDRAnvilBundleFQID], TDRBundle):
             drs_uri = row['file_ref']
             # Validate URI syntax
             DRSURI.parse(drs_uri)
-            metadata.update(drs_uri=drs_uri,
-                            crc32='')
+            metadata.update(drs_uri=drs_uri)
         target[entity] = metadata
 
     def add_links(self, links: Iterable[EntityLink]):

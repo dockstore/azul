@@ -1733,12 +1733,6 @@ class TestAnvilManifests(AnvilManifestTestCase):
                 'False'
             ),
             (
-                'files.crc32',
-                '',
-                '',
-                ''
-            ),
-            (
                 'files.drs_uri',
                 self._drs_uri('v1_6c87f0e1-509d-46a4-b845-7584df39263b_1fab11f5-7eab-4318-9a58-68d8d06e0715'),
                 self._drs_uri('v1_6c87f0e1-509d-46a4-b845-7584df39263b_1e269f04-4347-4188-b060-1dcc69e71d67'),

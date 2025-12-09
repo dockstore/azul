@@ -1265,7 +1265,6 @@ class TestAnvilResponse(AnvilIndexerTestCase, WebServiceTestCase):
                                 'reference_assembly': [None],
                                 'file_name': '307500.merged.matefixed.sorted.markeddups.recal.g.vcf.gz',
                                 'is_supplementary': False,
-                                'crc32': '',
                                 'accessible': True,
                                 'drs_uri': f'drs://{self._drs_domain_name}/v1_6c87f0e1-509d-46a4-b845-7584df39263b_'
                                            f'1e269f04-4347-4188-b060-1dcc69e71d67',
@@ -1344,7 +1343,6 @@ class TestAnvilResponse(AnvilIndexerTestCase, WebServiceTestCase):
                                 'reference_assembly': [None],
                                 'file_name': '307500.merged.matefixed.sorted.markeddups.recal.bam',
                                 'is_supplementary': False,
-                                'crc32': '',
                                 'accessible': True,
                                 'drs_uri': f'drs://{self._drs_domain_name}/v1_6c87f0e1-509d-46a4-b845-7584df39263b_'
                                            f'8b722e88-8103-49c1-b351-e64fa7c6ab37',

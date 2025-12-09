@@ -38,8 +38,7 @@
                 "file_inventory:04ff3af2-0543-4ea6-830a-d31b957fa2ee"
             ],
             "version": "2022-06-01T00:00:00.000000Z",
-            "drs_uri": "drs://mock_tdr.lan/v1_6c87f0e1-509d-46a4-b845-7584df39263b_1fab11f5-7eab-4318-9a58-68d8d06e0715",
-            "crc32": ""
+            "drs_uri": "drs://mock_tdr.lan/v1_6c87f0e1-509d-46a4-b845-7584df39263b_1fab11f5-7eab-4318-9a58-68d8d06e0715"
         }
     },
     "links": [
@@ -69,8 +68,7 @@
                 "file_inventory:81d16471-97ac-48fe-99a0-73d9ec62c2c0"
             ],
             "version": "2022-06-01T00:00:00.000000Z",
-            "drs_uri": "drs://mock_tdr.lan/v1_6c87f0e1-509d-46a4-b845-7584df39263b_1e269f04-4347-4188-b060-1dcc69e71d67",
-            "crc32": ""
+            "drs_uri": "drs://mock_tdr.lan/v1_6c87f0e1-509d-46a4-b845-7584df39263b_1e269f04-4347-4188-b060-1dcc69e71d67"
         },
         "anvil_file/3b17377b-16b1-431c-9967-e5d01fc5923f": {
             "data_modality": [],
@@ -87,8 +85,7 @@
                 "file_inventory:9658d94a-511d-4b49-82c3-d0cb07e0cff2"
             ],
             "version": "2022-06-01T00:00:00.000000Z",
-            "drs_uri": "drs://mock_tdr.lan/v1_6c87f0e1-509d-46a4-b845-7584df39263b_8b722e88-8103-49c1-b351-e64fa7c6ab37",
-            "crc32": ""
+            "drs_uri": "drs://mock_tdr.lan/v1_6c87f0e1-509d-46a4-b845-7584df39263b_8b722e88-8103-49c1-b351-e64fa7c6ab37"
         }
     }
 }
