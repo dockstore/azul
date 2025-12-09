@@ -1755,6 +1755,12 @@ class TestAnvilManifests(AnvilManifestTestCase):
                 self._file_url('6b0f6c0f-5d80-4242-accb-840921351cd5', self.version),
                 self._file_url('15b76f9c-6b46-433f-851d-34e89f1b9ba6', self.version),
                 self._file_url('3b17377b-16b1-431c-9967-e5d01fc5923f', self.version)
+            ),
+            (
+                'files.azul_mirror_uri',
+                self._mirror_uri('4bf181ad18f3640418aa1deb7623d8cc'),
+                self._mirror_uri('beec606ee0aa299fdf913f4259316622'),
+                self._mirror_uri('7cd9fd7b54a8bf380e44e93706f1fa2d'),
             )
         ]
         self._assert_tsv(expected, response)
