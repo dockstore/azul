@@ -1,5 +1,6 @@
 from abc import (
     ABCMeta,
+    abstractmethod,
 )
 from collections import (
     defaultdict,
@@ -249,6 +250,7 @@ class CannedManifestTestCase(CannedFileTestCase):
 class ManifestTestCase(WebServiceTestCase,
                        StorageServiceTestCase,
                        CannedManifestTestCase,
+                       MirrorTestCase,
                        metaclass=ABCMeta):
 
     def setUp(self):
@@ -332,19 +334,25 @@ class ManifestTestCase(WebServiceTestCase,
                         path=file_id,
                         args=adict(version=version)))
 
+    def _mirror_uri(self, digest: str) -> str:
+        return f's3://{self.mirror_bucket}/file/{digest}.{self._digest_type()}'
+
+    @abstractmethod
+    def _digest_type(self) -> str:
+        raise NotImplementedError
+
     @property
     def _drs_domain(self) -> str:
         return config.drs_domain or config.api_lambda_domain('service')
 
 
 class DCP1ManifestTestCase(ManifestTestCase, DCP1CannedBundleTestCase):
-    pass
+
+    def _digest_type(self) -> str:
+        return 'sha256'
 
 
-class TestManifests(DCP1ManifestTestCase, MirrorTestCase):
-
-    def _mirror_uri(self, sha256: str):
-        return f's3://{self.mirror_bucket}/file/{sha256}.sha256'
+class TestManifests(DCP1ManifestTestCase):
 
     def run(self,
             result: Optional[unittest.result.TestResult] = None
@@ -1275,6 +1283,9 @@ class TestManifestPartitioning(DCP1ManifestTestCase, DocumentCloningTestCase):
 
 
 class AnvilManifestTestCase(ManifestTestCase, AnvilCannedBundleTestCase):
+
+    def _digest_type(self) -> str:
+        return 'md5'
 
     @property
     def _drs_domain(self) -> str:
