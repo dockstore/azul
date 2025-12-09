@@ -352,7 +352,7 @@ class Plugin(TDRPlugin[TDRAnvilBundle, TDRAnvilBundleFQID]):
         batch = self._get_batch(source.spec,
                                 'anvil_file',
                                 prefix,
-                                key_column='file_md5sum')
+                                key_column=self._column_from_64_to_hex('file_md5sum'))
         return [
             AnvilFile(uuid=ref.entity_id,
                       name=row['file_name'],
@@ -948,9 +948,16 @@ class Plugin(TDRPlugin[TDRAnvilBundle, TDRAnvilBundleFQID]):
             table_name = table['name']
             column_names = {column['name'] for column in table['columns']}
             column_names.add('datarepo_row_id')
+            if table_name == 'anvil_file':
+                column = 'file_md5sum'
+                column_names.remove(column)
+                column_names.add(f'{self._column_from_64_to_hex(column)} AS {column}')
             columns_by_table[table_name] = column_names
         return columns_by_table
 
     def _columns(self, table_name: str) -> AbstractSet[str]:
         # Include all columns for replicas of non-schema tables
         return self._schema_columns_by_table.get(table_name, {'*'})
+
+    def _column_from_64_to_hex(self, column: str) -> str:
+        return f'TO_HEX(FROM_BASE64({column}))'

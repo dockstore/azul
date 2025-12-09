@@ -1710,9 +1710,9 @@ class TestAnvilManifests(AnvilManifestTestCase):
             ),
             (
                 'files.file_md5sum',
-                'S/GBrRjzZAQYqh3rdiPYzA==',
-                'vuxgbuCqKZ/fkT9CWTFmIg==',
-                'fNn9e1SovzgOROk3BvH6LQ=='
+                '4bf181ad18f3640418aa1deb7623d8cc',
+                'beec606ee0aa299fdf913f4259316622',
+                '7cd9fd7b54a8bf380e44e93706f1fa2d'
             ),
             (
                 'files.reference_assembly',
