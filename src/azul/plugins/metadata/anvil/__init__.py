@@ -251,7 +251,6 @@ class Plugin(MetadataPlugin[AnvilBundle]):
                             'is_supplementary',
                             # Not in schema
                             'crc32',
-                            'sha256',
                             'drs_uri',
                         ]
                     },

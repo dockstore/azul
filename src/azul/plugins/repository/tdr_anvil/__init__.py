@@ -214,7 +214,6 @@ class TDRAnvilBundle(AnvilBundle[TDRAnvilBundleFQID], TDRBundle):
             # Validate URI syntax
             DRSURI.parse(drs_uri)
             metadata.update(drs_uri=drs_uri,
-                            sha256='',
                             crc32='')
         target[entity] = metadata
 

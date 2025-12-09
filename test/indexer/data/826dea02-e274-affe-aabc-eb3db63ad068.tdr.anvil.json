@@ -122,7 +122,6 @@
             ],
             "version": "2022-06-01T00:00:00.000000Z",
             "drs_uri": "drs://mock_tdr.lan/v1_6c87f0e1-509d-46a4-b845-7584df39263b_1e269f04-4347-4188-b060-1dcc69e71d67",
-            "sha256": "",
             "crc32": ""
         },
         "anvil_file/3b17377b-16b1-431c-9967-e5d01fc5923f": {
@@ -141,7 +140,6 @@
             ],
             "version": "2022-06-01T00:00:00.000000Z",
             "drs_uri": "drs://mock_tdr.lan/v1_6c87f0e1-509d-46a4-b845-7584df39263b_8b722e88-8103-49c1-b351-e64fa7c6ab37",
-            "sha256": "",
             "crc32": ""
         },
         "anvil_sequencingactivity/1509ef40-d1ba-440d-b298-16b7c173dcd4": {
