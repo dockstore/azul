@@ -58,7 +58,6 @@ class TestRequestBuilder(DCP1CannedBundleTestCase, WebServiceTestCase):
         def metadata_plugin(self, catalog: CatalogName) -> MetadataPlugin:
             return self.plugin
 
-    # The mock plugin
     class MockPlugin(Plugin):
 
         @property
