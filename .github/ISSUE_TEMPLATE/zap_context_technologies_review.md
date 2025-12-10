@@ -2,7 +2,7 @@
 name: Update the ZAP scan context file
 about: Template for the annual review/update of the web application vulnerability scan (DAST) context file
 title: Update the ZAP scan context file
-labels: -,compliance,infra,no demo,operator
+labels: compliance,infra,no demo,operator
 type: Chore
 _priority: -
 _repository: DataBiosphere/azul-private
