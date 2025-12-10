@@ -308,7 +308,7 @@ class RepositoryService(ElasticsearchService):
         """
         plugin = self.metadata_plugin(catalog)
         file_uuid_path = ('contents', 'files', plugin.special_fields.file_uuid)
-        file_uuid_filter_field = plugin.field_mapping_reverse_lookup(file_uuid_path)
+        file_uuid_filter_field = plugin.field_name_for_path(file_uuid_path)
         filters = filters.update({
             file_uuid_filter_field: {'is': [file_uuid]},
             **(

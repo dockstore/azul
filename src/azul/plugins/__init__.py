@@ -447,7 +447,7 @@ class MetadataPlugin[BUNDLE: Bundle](Plugin[BUNDLE]):
         """
         raise NotImplementedError
 
-    def field_mapping_reverse_lookup(self, path: FieldPath) -> FieldName:
+    def field_name_for_path(self, path: FieldPath) -> FieldName:
         """
         Given the path of a response field, return the name of the field as it
         would need to be referenced in requests, e.g. for filtering or sorting
