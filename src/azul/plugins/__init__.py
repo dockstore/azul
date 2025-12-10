@@ -96,6 +96,10 @@ FieldName = str
 
 FieldMapping = Mapping[FieldName, FieldPath]
 
+_FieldMapping2 = Mapping[FieldPathElement, FieldName]
+_FieldMapping1 = Mapping[FieldPathElement, FieldName | _FieldMapping2]
+InverseFieldMapping = Mapping[FieldPathElement, FieldName | _FieldMapping1]
+
 ColumnMapping = Mapping[FieldPathElement, FieldName | None]
 ManifestConfig = Mapping[FieldPath, ColumnMapping]
 MutableColumnMapping = dict[FieldPathElement, FieldName]
@@ -392,11 +396,6 @@ class MetadataPlugin[BUNDLE: Bundle](Plugin[BUNDLE]):
         """
         raise NotImplementedError
 
-    #: See :meth:`_field_mapping`
-    _FieldMapping2 = Mapping[FieldPathElement, FieldName]
-    _FieldMapping1 = Mapping[FieldPathElement, FieldName | _FieldMapping2]
-    _FieldMapping = Mapping[FieldPathElement, FieldName | _FieldMapping1]
-
     @cached_property
     def field_mapping(self) -> FieldMapping:
         """
@@ -404,7 +403,7 @@ class MetadataPlugin[BUNDLE: Bundle](Plugin[BUNDLE]):
         Elasticsearch index documents.
         """
 
-        def invert(v: MetadataPlugin._FieldMapping,
+        def invert(v: InverseFieldMapping,
                    *path: FieldPathElement
                    ) -> Iterable[tuple[FieldName, FieldPath]]:
             if isinstance(v, dict):
@@ -433,7 +432,7 @@ class MetadataPlugin[BUNDLE: Bundle](Plugin[BUNDLE]):
 
     @property
     @abstractmethod
-    def _field_mapping(self) -> _FieldMapping:
+    def _field_mapping(self) -> InverseFieldMapping:
         """
         An inverted and more compact representation of the field mapping. It is
         made up of nested dictionaries where each key is an element in a field's

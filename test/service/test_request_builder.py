@@ -18,6 +18,7 @@ from azul.logging import (
 )
 from azul.plugins import (
     FieldPath,
+    InverseFieldMapping,
     ManifestConfig,
     MetadataPlugin,
     SpecialFields,
@@ -70,7 +71,7 @@ class TestRequestBuilder(DCP1CannedBundleTestCase, WebServiceTestCase):
                                  file_uuid='uuid')
 
         @property
-        def _field_mapping(self) -> MetadataPlugin._FieldMapping:
+        def _field_mapping(self) -> InverseFieldMapping:
             return {
                 'default_factory': {},
                 'entity_id': 'entity_id',

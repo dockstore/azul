@@ -31,6 +31,7 @@ from azul.indexer.document import (
 from azul.plugins import (
     DocumentSlice,
     File,
+    InverseFieldMapping,
     ManifestConfig,
     MetadataPlugin,
     Sorting,
@@ -197,7 +198,7 @@ class Plugin(MetadataPlugin[HCABundle]):
         ]
 
     @property
-    def _field_mapping(self) -> MetadataPlugin._FieldMapping:
+    def _field_mapping(self) -> InverseFieldMapping:
         # FIXME: Detect invalid values in field mapping
         #        https://github.com/DataBiosphere/azul/issues/3071
         return {

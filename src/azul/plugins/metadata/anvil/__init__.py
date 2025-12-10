@@ -38,6 +38,7 @@ from azul.plugins import (
     DocumentSlice,
     FieldName,
     File,
+    InverseFieldMapping,
     ManifestConfig,
     MetadataPlugin,
     Sorting,
@@ -151,7 +152,7 @@ class Plugin(MetadataPlugin[AnvilBundle]):
         return mapping
 
     @property
-    def _field_mapping(self) -> MetadataPlugin._FieldMapping:
+    def _field_mapping(self) -> InverseFieldMapping:
         common_fields = [
             'document_id',
             'source_datarepo_row_ids'
@@ -330,7 +331,7 @@ class Plugin(MetadataPlugin[AnvilBundle]):
             ('sources', 'spec'): 'sources.source_spec',
         }
 
-        def recurse(mapping: MetadataPlugin._FieldMapping, path: FieldPath):
+        def recurse(mapping: InverseFieldMapping, path: FieldPath):
             for path_element, name_or_type in mapping.items():
                 new_path = (*path, path_element)
                 if isinstance(name_or_type, dict):
