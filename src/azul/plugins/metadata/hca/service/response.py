@@ -410,7 +410,7 @@ class HCASearchResponseStage(SearchResponseStage):
             'sha256': file.get('sha256'),
             'size': file.get('size'),
             'fileSource': file.get('file_source'),
-            'uuid': file.get('uuid'),
+            self.plugin.special_fields.file_uuid: file.get('uuid'),
             'version': file.get('version'),
             'matrixCellCount': file.get('matrix_cell_count'),
             'drs_uri': file.get('drs_uri'),
