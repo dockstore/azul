@@ -27,6 +27,7 @@ In your AnVIL personal deployments' ``environment.py`` files:
 
 1. Set ``AZUL_ENABLE_MIRRORING`` to ``'1'``
 2. Set the ``anvil`` catalog's ``mirror_limit`` property to ``int(1.5 * 1024 ** 3)``
+3. Add the ``no_mirror`` flag to source ``1000G_2019_Dev_20230609_ANV5_202306121732``
 
 As always, use the sandbox deployment's ``environment.py`` as a model when
 upgrading personal deployments.

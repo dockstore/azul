@@ -353,6 +353,16 @@ class Plugin(TDRPlugin[TDRAnvilBundle, TDRAnvilBundleFQID]):
                                 'anvil_file',
                                 prefix,
                                 key_column=self._column_from_64_to_hex('file_md5sum'))
+
+        def missing_md5(row: BigQueryRow) -> bool:
+            missing = row['file_md5sum'] is None
+            if missing:
+                # FIXME: Files from 1000G snapshot in anvildev can't be mirrored
+                #        https://github.com/DataBiosphere/azul/issues/7634
+                assert source.spec.name == 'ANVIL_1000G_2019_Dev_20230609_ANV5_202306121732', R(
+                    'File lacks MD5 digest', source, dict(row))
+            return missing
+
         return [
             AnvilFile(uuid=ref.entity_id,
                       name=row['file_name'],
@@ -361,6 +371,7 @@ class Plugin(TDRPlugin[TDRAnvilBundle, TDRAnvilBundleFQID]):
                       md5=row['file_md5sum'],
                       drs_uri=row['file_ref'])
             for ref, row in batch
+            if not missing_md5(row)
         ]
 
     def _emulate_bundle(self, bundle_fqid: TDRAnvilBundleFQID) -> TDRAnvilBundle:
