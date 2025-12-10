@@ -388,7 +388,7 @@ class HCASearchResponseStage(SearchResponseStage):
         if matrices:
             for file in json_element_mappings(one(matrices)['file']):
                 translated_file = {
-                    **self.make_translated_file(file),
+                    **self.make_file(file),
                     'strata': json_str(file['strata'])
                 }
                 files.append(translated_file)
@@ -397,11 +397,11 @@ class HCASearchResponseStage(SearchResponseStage):
     def make_files(self, entry: JSON) -> JSONs:
         files = []
         for _file in json_element_mappings(json_mapping(entry['contents'])['files']):
-            translated_file = self.make_translated_file(_file)
+            translated_file = self.make_file(_file)
             files.append(translated_file)
         return files
 
-    def make_translated_file(self, file: JSON) -> JSON:
+    def make_file(self, file: JSON) -> JSON:
         translated_file = {
             'contentDescription': file.get('content_description'),
             'format': file.get('file_format'),
