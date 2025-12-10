@@ -91,10 +91,23 @@ if TYPE_CHECKING:
         SummaryResponseStage,
     )
 
+#: Field names are used to reference fields in requests to the service, e.g.,
+#: when clients specify which fields to filter and sort documents by. They are
+#: also used as keys in the termFacets part of a response but only for the
+#: fields for which a facet is defined. Field names have to be unique, but
+#: different plugins may use different conventions to disambiguate them, such as
+#: prefixing the field name with the entity type, either separated by a dot or
+#: using a case transition (camel case).
+#:
 FieldName = str
 
+#: The bijective mapping between field names and field paths.
+#:
 FieldMapping = Mapping[FieldName, FieldPath]
 
+#: The inverse of the field mapping. It is a less verbose representation in
+#: which field paths manifest as the keys in nested dictionaries.
+#:
 type InverseFieldMapping = Mapping[
     FieldPathElement,
     FieldName | InverseFieldMapping
@@ -399,8 +412,8 @@ class MetadataPlugin[BUNDLE: Bundle](Plugin[BUNDLE]):
     @cached_property
     def field_mapping(self) -> FieldMapping:
         """
-        Maps a field's name in the service response to the field's path in
-        Elasticsearch index documents.
+        Maps a field's name, as used in service requests for filtering or
+        sorting, to the field's path in index documents.
         """
 
         def invert(v: InverseFieldMapping,
