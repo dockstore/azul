@@ -423,6 +423,17 @@ class MetadataPlugin[BUNDLE: Bundle](Plugin[BUNDLE]):
             )
         return inversion
 
+    @property
+    @abstractmethod
+    def _field_mapping(self) -> InverseFieldMapping:
+        """
+        An inverted and more compact representation of the field mapping. It is
+        made up of nested dictionaries where each key is an element in a field's
+        path whereas the corresponding value is either the field's name, if the
+        key represents the element in the path, or a dictionary otherwise.
+        """
+        raise NotImplementedError
+
     def field_mapping_reverse_lookup(self, path: FieldPath) -> FieldName:
         """
         Given the path of a response field, return the name of the field as it
@@ -435,17 +446,6 @@ class MetadataPlugin[BUNDLE: Bundle](Plugin[BUNDLE]):
             value = value[element]
         assert isinstance(value, FieldName), R('Path too short', path, value)
         return value
-
-    @property
-    @abstractmethod
-    def _field_mapping(self) -> InverseFieldMapping:
-        """
-        An inverted and more compact representation of the field mapping. It is
-        made up of nested dictionaries where each key is an element in a field's
-        path whereas the corresponding value is either the field's name, if the
-        key represents the element in the path, or a dictionary otherwise.
-        """
-        raise NotImplementedError
 
     @property
     @abstractmethod
