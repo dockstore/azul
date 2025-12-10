@@ -300,14 +300,12 @@ class Plugin(MetadataPlugin[HCABundle]):
             }
         }
 
-    @property
-    def special_fields(self) -> SpecialFields:
-        return SpecialFields(source_id='sourceId',
-                             source_spec='sourceSpec',
-                             source_prefix='sourcePrefix',
-                             bundle_uuid='bundleUuid',
-                             bundle_version='bundleVersion',
-                             file_uuid='uuid')
+    special_fields = SpecialFields(source_id='sourceId',
+                                   source_spec='sourceSpec',
+                                   source_prefix='sourcePrefix',
+                                   bundle_uuid='bundleUuid',
+                                   bundle_version='bundleVersion',
+                                   file_uuid='uuid')
 
     @property
     def root_entity_type(self) -> str:

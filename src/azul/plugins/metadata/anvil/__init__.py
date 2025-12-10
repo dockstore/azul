@@ -266,14 +266,12 @@ class Plugin(MetadataPlugin[AnvilBundle]):
             }
         }
 
-    @property
-    def special_fields(self) -> SpecialFields:
-        return SpecialFields(source_id='source_id',
-                             source_spec='source_spec',
-                             source_prefix='source_prefix',
-                             bundle_uuid='bundle_uuid',
-                             bundle_version='bundle_version',
-                             file_uuid='document_id')
+    special_fields = SpecialFields(source_id='source_id',
+                                   source_spec='source_spec',
+                                   source_prefix='source_prefix',
+                                   bundle_uuid='bundle_uuid',
+                                   bundle_version='bundle_version',
+                                   file_uuid='document_id')
 
     @property
     def root_entity_type(self) -> str:
