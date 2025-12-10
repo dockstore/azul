@@ -29,6 +29,7 @@ from more_itertools import (
 
 from azul import (
     CatalogName,
+    R,
     cached_property,
     config,
 )
@@ -68,12 +69,10 @@ from azul.json import (
     DynamicPolymorphicSerializable,
 )
 from azul.types import (
-    AnyJSON,
     JSON,
     MutableJSON,
     MutableJSONs,
     derived_type_params,
-    json_mapping,
     json_str,
 )
 from azul.uuids import (
@@ -96,9 +95,10 @@ FieldName = str
 
 FieldMapping = Mapping[FieldName, FieldPath]
 
-_FieldMapping2 = Mapping[FieldPathElement, FieldName]
-_FieldMapping1 = Mapping[FieldPathElement, FieldName | _FieldMapping2]
-InverseFieldMapping = Mapping[FieldPathElement, FieldName | _FieldMapping1]
+type InverseFieldMapping = Mapping[
+    FieldPathElement,
+    FieldName | InverseFieldMapping
+]
 
 ColumnMapping = Mapping[FieldPathElement, FieldName | None]
 ManifestConfig = Mapping[FieldPath, ColumnMapping]
@@ -424,11 +424,17 @@ class MetadataPlugin[BUNDLE: Bundle](Plugin[BUNDLE]):
         return inversion
 
     def field_mapping_reverse_lookup(self, path: FieldPath) -> FieldName:
-        value: AnyJSON = json_mapping(self._field_mapping)
-        for key in path:
-            value = json_mapping(value)
-            value = value[key]
-        return json_str(value)
+        """
+        Given the path of a response field, return the name of the field as it
+        would need to be referenced in requests, e.g. for filtering or sorting
+        by that field.
+        """
+        value: InverseFieldMapping | FieldName = self._field_mapping
+        for element in path:
+            assert isinstance(value, Mapping), R('Path too long', path, element, value)
+            value = value[element]
+        assert isinstance(value, FieldName), R('Path too short', path, value)
+        return value
 
     @property
     @abstractmethod
