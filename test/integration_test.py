@@ -1,6 +1,3 @@
-from abc import (
-    ABCMeta,
-)
 from collections.abc import (
     Iterable,
     Mapping,
@@ -216,7 +213,7 @@ PUT = 'PUT'
 POST = 'POST'
 
 
-class IntegrationTestCase(AzulTestCase, metaclass=ABCMeta):
+class IntegrationTestCase(AzulTestCase):
     min_bundles = 32
 
     @cached_property
