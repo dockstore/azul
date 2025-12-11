@@ -62,6 +62,9 @@ from azul.logging import (
     configure_test_logging,
     get_test_logger,
 )
+from azul.plugins import (
+    MetadataPlugin,
+)
 from azul.service.source_service import (
     NotFound,
     SourceService,
@@ -134,6 +137,16 @@ class WebServiceTestCase(IndexerTestCase, LocalAppTestCase, metaclass=ABCMeta):
             'catalog': self.catalog,
             **params
         }
+
+    @property
+    def _metadata_plugin(self) -> MetadataPlugin:
+        """
+        Returns the app's plugin instance for the default catalog, which is
+        assumed to have been patched adequately to match the test requirements.
+        """
+        plugin = self._app.metadata_plugin
+        assert isinstance(plugin, MetadataPlugin)
+        return plugin
 
 
 class DocumentCloningTestCase(WebServiceTestCase, metaclass=ABCMeta):

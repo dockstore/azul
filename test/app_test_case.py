@@ -24,6 +24,9 @@ from azul import (
     config,
     mutable_furl,
 )
+from azul.chalice import (
+    AzulChaliceApp,
+)
 from azul.logging import (
     get_test_logger,
 )
@@ -107,9 +110,18 @@ class LocalAppTestCase(CatalogTestCase, metaclass=ABCMeta):
         cls.app_module = None
         super().tearDownClass()
 
+    @property
+    def _app(self) -> AzulChaliceApp:
+        app = self.app_module.app
+        assert isinstance(app, AzulChaliceApp)
+        return app
+
     def setUp(self):
         super().setUp()
-        self.server_thread = ChaliceServerThread(self.app_module.app, self.chalice_config(), 'localhost', 0)
+        self.server_thread = ChaliceServerThread(app=self._app,
+                                                 config=self.chalice_config(),
+                                                 host='localhost',
+                                                 port=0)
         self.server_thread.start()
         deadline = time.time() + 10
         while True:

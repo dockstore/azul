@@ -53,6 +53,7 @@ from azul.service.async_manifest_service import (
     Token,
 )
 from azul.service.manifest_controller import (
+    ManifestController,
     ManifestGenerationState,
 )
 from azul.service.manifest_service import (
@@ -265,8 +266,8 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                 input = dict(filters=filters.to_json(),
                              manifest_key=manifest_key.to_json(),
                              partition=partitions[0].to_json())
-                service: AsyncManifestService
-                service = self.app_module.app.manifest_controller.async_service
+                controller: ManifestController = self._app.manifest_controller
+                service = controller.async_service
                 generation_id = manifest_key.uuid
                 execution_names = [
                     service.execution_name(generation_id, iteration=i)

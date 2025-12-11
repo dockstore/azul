@@ -270,7 +270,7 @@ class ManifestTestCase(WebServiceTestCase,
 
     @property
     def _service(self):
-        return ManifestService(self.storage_service, self.app_module.app.file_url)
+        return ManifestService(self.storage_service, self._app.file_url)
 
     def _get_manifest(self,
                       format: ManifestFormat,
@@ -1075,7 +1075,7 @@ class TestManifestCache(DCP1ManifestTestCase):
         self._index_canned_bundle(original_fqid)
         filters = self._filters({'project': {'is': ['Single of human pancreas']}})
         old_keys = {}
-        service = ManifestService(self.storage_service, self.app_module.app.file_url)
+        service = ManifestService(self.storage_service, self._app.file_url)
 
         def manifest_generator(format: ManifestFormat) -> ManifestGenerator:
             generator_cls = ManifestGenerator.cls_for_format(format)
@@ -1257,7 +1257,7 @@ class TestManifestResponse(DCP1ManifestTestCase):
                 self.assertEqual(object_url, furl(response.headers['location']))
                 self.assertEqual('text/plain', response.headers['Content-Type'])
 
-        for format in self.app_module.app.metadata_plugin.manifest_formats:
+        for format in self._metadata_plugin.manifest_formats:
             for fetch in True, False:
                 with self.subTest(format=format, fetch=fetch):
                     test(format=format, fetch=fetch)

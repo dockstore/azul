@@ -63,7 +63,6 @@ from azul.logging import (
 )
 from azul.plugins import (
     FieldPath,
-    MetadataPlugin,
     SpecialFields,
 )
 from azul.plugins.metadata.hca import (
@@ -140,7 +139,7 @@ class TestIndexResponse(IndexResponseTestCase):
 
     @property
     def file_url_func(self):
-        return self.app_module.app.file_url
+        return self._app.file_url
 
     def _get_hits(self, entity_type: str, entity_id: str):
         """
@@ -1014,7 +1013,7 @@ class TestIndexResponse(IndexResponseTestCase):
                 response_json = response.json()
                 # Verify default sort field is set correctly
                 self.assertEqual(response_json['pagination']['sort'],
-                                 self.app_module.app.metadata_plugin.exposed_indices[entity_type].field_name)
+                                 self._metadata_plugin.exposed_indices[entity_type].field_name)
                 # Verify all fields in the response that are lists of primitives are sorted
                 for hit in response_json['hits']:
                     self._verify_sorted_lists(hit)
@@ -2822,8 +2821,10 @@ class TestProjectMatrices(IndexResponseTestCase):
                 }
             ),
             'catalog': self.catalog,
-            'size': min(sorting.max_page_size
-                        for sorting in self.app_module.app.metadata_plugin.exposed_indices.values())
+            'size': min(
+                sorting.max_page_size
+                for sorting in self._metadata_plugin.exposed_indices.values()
+            )
         }
 
     def test_file_source_facet(self):
@@ -3583,7 +3584,7 @@ class TestUnpopulatedIndexResponse(IndexResponseTestCase):
         # the `accessible` term facet, so we must perform the same replacement
         # before the list of facets can be used to verify the contents of the
         # response.
-        plugin: MetadataPlugin = self.app_module.app.metadata_plugin
+        plugin = self._metadata_plugin
         facets = list(plugin.facets)
         special_fields = plugin.special_fields
         facets[facets.index(special_fields.source_id)] = special_fields.accessible
@@ -3591,7 +3592,7 @@ class TestUnpopulatedIndexResponse(IndexResponseTestCase):
 
     @property
     def field_mapping(self) -> Mapping[str, FieldPath]:
-        return self.app_module.app.metadata_plugin.field_mapping
+        return self._metadata_plugin.field_mapping
 
     def entity_types(self) -> list[str]:
         return [
@@ -3607,7 +3608,7 @@ class TestUnpopulatedIndexResponse(IndexResponseTestCase):
                                         args=dict(order='asc'))
                 response = requests.get(str(url))
                 response.raise_for_status()
-                sort_field = self.app_module.app.metadata_plugin.exposed_indices[entity_type].field_name
+                sort_field = self._metadata_plugin.exposed_indices[entity_type].field_name
                 expected_response = {
                     'hits': [],
                     'pagination': {

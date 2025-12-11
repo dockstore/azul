@@ -160,7 +160,7 @@ class RequestParameterValidationTest(DCP1CannedBundleTestCase,
         self.assertBadField(url)
 
     def test_source_filter(self):
-        special_fields = self.app_module.app.metadata_plugin.special_fields
+        special_fields = self._metadata_plugin.special_fields
         for field in special_fields.source_id, special_fields.accessible:
             with self.subTest(field=field):
                 params = {
@@ -306,7 +306,7 @@ class RequestParameterValidationTest(DCP1CannedBundleTestCase,
 
     def test_bad_entity_type(self):
         bad_entity_type = 'spiders'
-        good_entity_types = set(self.app_module.app.metadata_plugin.exposed_indices)
+        good_entity_types = set(self._metadata_plugin.exposed_indices)
         assert bad_entity_type not in good_entity_types
         url = self.base_url.set(path='/index/' + bad_entity_type)
         expected = (f'Entity type {bad_entity_type!r} is invalid for catalog '
@@ -315,7 +315,7 @@ class RequestParameterValidationTest(DCP1CannedBundleTestCase,
 
     def test_bad_manifest_format(self):
         bad_format = 'fluffy'
-        good_formats = {f.value for f in self.app_module.app.metadata_plugin.manifest_formats}
+        good_formats = {f.value for f in self._metadata_plugin.manifest_formats}
         assert bad_format not in good_formats
         url = self.base_url.set(path='/manifest/files',
                                 query_params={'format': bad_format})
