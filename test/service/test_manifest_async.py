@@ -378,7 +378,7 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                     _sfn.describe_execution.return_value = {'status': 'RUNNING'}
                     url = self._request('GET', url, expect=301)
                     get_manifest.return_value = partitions[1]
-                    state = self.app_module.generate_manifest(state, None)
+                    state = self._app_module.generate_manifest(state, None)
                     self.assertEqual(partitions[1],
                                      ManifestPartition.from_json(state['partition']))
                     assert_get_manifest(partition=0)
@@ -412,7 +412,7 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                 def get_token_when_done():
                     nonlocal url, state, key_url, final_url
                     get_manifest.return_value = manifest
-                    state = self.app_module.generate_manifest(state, None)
+                    state = self._app_module.generate_manifest(state, None)
                     _sfn.describe_execution.return_value = {
                         'status': 'SUCCEEDED',
                         'input': json.dumps(input),
@@ -508,7 +508,7 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                 def get_stale_token_when_done():
                     nonlocal url, state, token_url
                     get_manifest.return_value = manifest
-                    state = self.app_module.generate_manifest(state, None)
+                    state = self._app_module.generate_manifest(state, None)
                     get_cached_manifest_with_key.side_effect = not_found
                     previous_iteration = len(iterations)
                     iterations.append(input)

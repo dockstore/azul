@@ -103,16 +103,16 @@ class LocalAppTestCase(CatalogTestCase, metaclass=ABCMeta):
         # app modules from different lambdas loaded by different concrete
         # subclasses. It does, however, violate this one invariant:
         # `sys.modules[module.__name__] == module`
-        cls.app_module = load_app_module(cls.app_name())
+        cls._app_module = load_app_module(cls.app_name())
 
     @classmethod
     def tearDownClass(cls):
-        cls.app_module = None
+        cls._app_module = None
         super().tearDownClass()
 
     @property
     def _app(self) -> AzulChaliceApp:
-        app = self.app_module.app
+        app = self._app_module.app
         assert isinstance(app, AzulChaliceApp)
         return app
 
