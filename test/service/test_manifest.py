@@ -346,7 +346,7 @@ class ManifestTestCase(WebServiceTestCase,
         return config.drs_domain or config.api_lambda_domain('service')
 
 
-class DCP1ManifestTestCase(ManifestTestCase, DCP1CannedBundleTestCase):
+class DCP1ManifestTestCase(DCP1CannedBundleTestCase, ManifestTestCase):
 
     def _digest_type(self) -> str:
         return 'sha256'

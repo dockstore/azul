@@ -1,5 +1,6 @@
 from abc import (
     ABCMeta,
+    abstractmethod,
 )
 import copy
 import json
@@ -101,11 +102,9 @@ class WebServiceTestCase(IndexerTestCase, LocalAppTestCase, metaclass=ABCMeta):
     indexed_bundles: ClassVar[Optional[dict[BundleUUID, Bundle]]] = None
 
     @classmethod
+    @abstractmethod
     def bundles(cls) -> list[SourcedBundleFQID]:
-        return [
-            cls.bundle_fqid(uuid='aaa96233-bf27-44c7-82df-b4dc15ad4d9d',
-                            version='2018-11-02T11:33:44.698028Z')
-        ]
+        raise NotImplementedError
 
     @classmethod
     def app_name(cls) -> str:
