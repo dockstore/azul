@@ -209,7 +209,7 @@ class IssueTemplate:
                 assert set(labels) <= actual_labels, (labels, actual_labels)
                 actual_type = issue['type']['name']
                 assert type == actual_type, (type, actual_type)
-                log.info('Successfully created and verfied issue #%s', issue_number)
+                log.info('Successfully created and verified issue #%s', issue_number)
 
 
 def main(args):
