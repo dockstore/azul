@@ -181,13 +181,13 @@ class RepositoryService(ElasticsearchService):
         plugin = self.metadata_plugin(catalog)
         field_mapping = plugin.field_mapping
 
-        for facet in filters.explicit.keys():
-            if facet != plugin.special_fields.accessible and facet not in field_mapping:
-                raise BadArgumentException(f'Unable to filter by undefined facet {facet}.')
+        for field in filters.explicit.keys():
+            if field != plugin.special_fields.accessible and field not in field_mapping:
+                raise BadArgumentException(f'Unable to filter by undefined field {field}.')
 
-        facet = pagination.sort
-        if facet not in field_mapping:
-            raise BadArgumentException(f'Unable to sort by undefined facet {facet}.')
+        field = pagination.sort
+        if field not in field_mapping:
+            raise BadArgumentException(f'Unable to sort by undefined field {field}.')
 
         chain = self.create_chain(catalog=catalog,
                                   entity_type=entity_type,
