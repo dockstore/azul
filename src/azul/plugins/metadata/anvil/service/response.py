@@ -218,6 +218,7 @@ class AnvilSearchResponseStage(SearchResponseStage):
             inner_entity['azul_url'] = self._file_url(uuid=json_str(inner_entity['document_id']),
                                                       version=json_str(inner_entity['version']),
                                                       drs_uri=optional(json_str, inner_entity['drs_uri']))
+            inner_entity['azul_mirror_uri'] = self._file_mirror_uri(inner_entity)
             inner_entity.pop('version', None)
         return inner_entity
 

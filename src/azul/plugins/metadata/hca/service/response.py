@@ -416,7 +416,8 @@ class HCASearchResponseStage(SearchResponseStage):
             'drs_uri': file.get('drs_uri'),
             'azul_url': self._file_url(uuid=json_str(file['uuid']),
                                        version=json_str(file['version']),
-                                       drs_uri=optional(json_str, file['drs_uri']))
+                                       drs_uri=optional(json_str, file['drs_uri'])),
+            'azul_mirror_uri': self._file_mirror_uri(file),
         }
         return translated_file
 

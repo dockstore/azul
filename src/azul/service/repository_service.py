@@ -73,6 +73,7 @@ class EntityNotFoundError(Exception):
 @attrs.frozen(auto_attribs=True, kw_only=True)
 class SearchResponseStage(_ElasticsearchStage[ResponseTriple, MutableJSON],
                           metaclass=ABCMeta):
+    service: 'RepositoryService'
     file_url_func: FileUrlFunc
 
     def prepare_request(self, request: Search) -> Search:
@@ -93,6 +94,14 @@ class SearchResponseStage(_ElasticsearchStage[ResponseTriple, MutableJSON],
                                           fetch=False,
                                           file_uuid=uuid,
                                           version=version))
+
+    def _file_mirror_uri(self, file: JSON) -> str | None:
+        file = self.plugin.file_class.from_index(file)
+        mirror_service = self.service.mirror_service(self.catalog)
+        if mirror_service.may_mirror(file.size):
+            return mirror_service.mirror_uri(file)
+        else:
+            return None
 
 
 class SummaryResponseStage(ElasticsearchStage[JSON, MutableJSON],
