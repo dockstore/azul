@@ -72,7 +72,9 @@ def union(previous_catalog: dict[DatasetName, SourceItem | None],
 
 
 anvil_sources = union({}, 3, delta([
-    source('e53e74aa', '1000G_2019_Dev_20230609_ANV5_202306121732'),
+    # FIXME: Files from 1000G snapshot in anvildev can't be mirrored
+    #        https://github.com/DataBiosphere/azul/issues/7634
+    source('e53e74aa', '1000G_2019_Dev_20230609_ANV5_202306121732', no_mirror),
     source('42c70e6a', 'CCDG_Sample_1_20230228_ANV5_202302281520'),
     source('dd576076', 'CMG_Sample_1_20230225_ANV5_202512031111')
 ]))
@@ -113,11 +115,12 @@ def env() -> Mapping[str, str | None]:
         'AZUL_CATALOGS': json.dumps({
             f'{catalog}{suffix}': dict(atlas=atlas,
                                        internal=is_it,
+                                       mirror_limit=it_mirror_limit if is_it else mirror_limit,
                                        plugins=dict(metadata=dict(name='anvil'),
                                                     repository=dict(name='tdr_anvil')),
                                        sources=condense(sources))
-            for atlas, catalog, sources in [
-                ('anvil', 'anvil', anvil_sources),
+            for atlas, catalog, sources, mirror_limit, it_mirror_limit, in [
+                ('anvil', 'anvil', anvil_sources, int(1.5 * 1024 ** 3), int(1.5 * 1024 ** 3)),
             ]
             for suffix, is_it in [
                 ('', False),
@@ -152,6 +155,8 @@ def env() -> Mapping[str, str | None]:
         'AZUL_DEPLOYMENT_INCARNATION': '2',
 
         'AZUL_GOOGLE_OAUTH2_CLIENT_ID': '561542988117-3cv4g8ii9enl2000ra6m02r3ne7bgnth.apps.googleusercontent.com',
+
+        'AZUL_ENABLE_MIRRORING': '1',
 
         'azul_slack_integration': json.dumps({
             'workspace_id': 'T09P9H91S',  # ucsc-gi.slack.com
