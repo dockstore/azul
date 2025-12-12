@@ -85,6 +85,7 @@ from azul import (
     config,
     drs,
     false,
+    mutable_furl,
 )
 from azul.auth import (
     OAuth2,
@@ -148,6 +149,7 @@ from azul.oauth2 import (
     OAuth2Client,
 )
 from azul.plugins import (
+    File,
     MetadataPlugin,
     RepositoryPlugin,
 )
@@ -458,23 +460,31 @@ class IndexingIntegrationTest(IntegrationTestCase):
             log.warning('Will skip indexing due to overriding IT flag.')
 
         catalogs: list[Catalog] = []
-        for catalog in config.integration_test_catalogs:
+        for catalog in config.integration_test_catalogs.values():
             if index:
-                public_source, _ = self._select_source(catalog, public=True)
-                ma_source = self._select_source(catalog, public=False)
+                public_source, _ = self._select_source(
+                    catalog.name,
+                    public=True,
+                    # If test_mirroring is run for the catalog, ensure that the
+                    # source is not flagged as no_mirror so that we can test
+                    # downloading a mirrored file
+                    mirror=config.enable_mirroring and catalog.mirror_limit >= 0
+                )
+                ma_source = self._select_source(catalog.name, public=False)
                 if ma_source is not None:
                     ma_source = ma_source[0]
                 sources = alist(public_source, ma_source)
-                notifications, fqids = self._prepare_notifications(catalog, sources)
+                notifications, fqids = self._prepare_notifications(catalog.name, sources)
             else:
                 with self._service_account_credentials:
-                    fqids = self._get_indexed_bundles(catalog)
+                    fqids = self._get_indexed_bundles(catalog.name)
                 indexed_sources = {fqid.source for fqid in fqids}
-                ma_source_ids = {s.id for s in self.managed_access_sources_by_catalog[catalog]}
+                ma_sources = self.managed_access_sources_by_catalog[catalog.name]
+                ma_source_ids = {s.id for s in ma_sources}
                 public_source = one(s for s in indexed_sources if s.id not in ma_source_ids)
                 ma_source = only(s for s in indexed_sources if s.id in ma_source_ids)
                 notifications = []
-            catalogs.append(Catalog(name=catalog,
+            catalogs.append(Catalog(name=catalog.name,
                                     bundles=fqids,
                                     notifications=notifications,
                                     public_source=public_source,
@@ -500,6 +510,9 @@ class IndexingIntegrationTest(IntegrationTestCase):
                                       public_source=catalog.public_source,
                                       ma_source=catalog.ma_source)
 
+        if config.enable_mirroring:
+            self._test_mirroring(delete=delete)
+
         if index and delete:
             # FIXME: Test delete notifications
             #        https://github.com/DataBiosphere/azul/issues/3548
@@ -511,9 +524,6 @@ class IndexingIntegrationTest(IntegrationTestCase):
             log.warning('Will skip deletions due to overriding IT flag')
 
         self._test_other_endpoints()
-
-        if config.enable_mirroring:
-            self._test_mirroring(delete=delete)
 
     def _reset_indexer(self):
         # While it's OK to erase the integration test catalog, the queues are
@@ -698,8 +708,8 @@ class IndexingIntegrationTest(IntegrationTestCase):
                             self._manifest_validators[format](catalog, response.data)
                             break
 
-                execution_ids = self._manifest_execution_ids(responses)
-                self.assertEqual(1, len(execution_ids))
+                    execution_ids = self._manifest_execution_ids(responses)
+                    self.assertEqual(1, len(execution_ids))
 
     def _manifest_execution_ids(self,
                                 responses: list[urllib3.HTTPResponse]
@@ -735,6 +745,26 @@ class IndexingIntegrationTest(IntegrationTestCase):
                 urls.append(furl(response.headers['Location']))
         return urls
 
+    def _get_one_mirrorable_file(self,
+                                 catalog: CatalogName
+                                 ) -> tuple[File, SourceRef, JSON]:
+        plugin = self.repository_plugin(catalog)
+        with self._public_service_account_credentials:
+            # This depends on the indexing test choosing a public source that
+            # is not flagged as no_mirror
+            outer_file, inner_file = self._get_one_inner_file(catalog)
+        file_digest = lookup(inner_file, 'sha256', 'file_md5sum')
+        source = one(outer_file['sources'])
+        # In principle, we could use the entire digest here, but Prefix only
+        # allows up to 8 chars because it can be used with UUIDs
+        prefix = Prefix(common=file_digest[:8], partition=0)
+        source = self._source_from_response(catalog, source)
+        # FIXME: Avoid use of plugin, instantiate file from hit instead
+        #        https://github.com/DataBiosphere/azul/issues/7615
+        files = plugin.list_files(source.with_prefix(prefix), prefix=prefix.common)
+        file = one(file for file in files if file.digest.value == file_digest)
+        return file, source, inner_file
+
     def _get_one_inner_file(self, catalog: CatalogName) -> tuple[JSON, JSON]:
         outer_file = self._get_one_outer_file(catalog)
         inner_files: JSONs = outer_file['files']
@@ -761,13 +791,8 @@ class IndexingIntegrationTest(IntegrationTestCase):
         return one(hits)
 
     def _source_spec(self, catalog: CatalogName, entity: JSON) -> SourceSpec:
-        if config.is_hca_enabled(catalog):
-            field = 'sourceSpec'
-        elif config.is_anvil_enabled(catalog):
-            field = 'source_spec'
-        else:
-            assert False, catalog
-        return TDRSourceSpec.parse(one(entity['sources'])[field])
+        source = self._source_from_response(catalog, one(entity['sources']))
+        return source.spec
 
     def _file_size_facet(self, catalog: CatalogName) -> str:
         if config.is_hca_enabled(catalog):
@@ -1111,26 +1136,31 @@ class IndexingIntegrationTest(IntegrationTestCase):
             outer_file, inner_file = self._get_one_inner_file(catalog)
             file_url = inner_file['azul_url']
             if file_url:
-                file_url = furl(file_url)
-                # FIXME: Use _check_endpoint() instead
-                #        https://github.com/DataBiosphere/azul/issues/7373
-                self.assertEqual(file_url.path.segments[0], 'repository')
-                file_url.path.segments.insert(0, 'fetch')
-                response = self._get_url_unchecked(GET, file_url)
-                self.assertEqual(200, response.status)
-                response = json.loads(response.data)
-                while response['Status'] != 302:
-                    self.assertEqual(301, response['Status'])
-                    self.assertNotIn('Retry-After', response)
-                    response = self._get_url_json(GET, furl(response['Location']))
-                self.assertNotIn('Retry-After', response)
-                response = self._get_url(GET, furl(response['Location']), stream=True)
                 source = self._source_spec(catalog, outer_file)
-                self._validate_file_response(response, source, inner_file)
+                self._test_file_download(source, inner_file)
             else:
                 # Phantom files lack DRS URIs and cannot be downloaded
                 self.assertIsNone(file_url, inner_file)
                 self.assertEqual('lungmap', config.catalogs[catalog].atlas, inner_file)
+
+    def _test_file_download(self, source: SourceSpec, file: JSON) -> mutable_furl:
+        file_url = furl(file['azul_url'])
+        # FIXME: Use _check_endpoint() instead
+        #        https://github.com/DataBiosphere/azul/issues/7373
+        self.assertEqual(file_url.path.segments[0], 'repository')
+        file_url.path.segments.insert(0, 'fetch')
+        response = self._get_url_unchecked(GET, file_url)
+        self.assertEqual(200, response.status)
+        response = json.loads(response.data)
+        while response['Status'] != 302:
+            self.assertEqual(301, response['Status'])
+            self.assertNotIn('Retry-After', response)
+            response = self._get_url_json(GET, furl(response['Location']))
+        self.assertNotIn('Retry-After', response)
+        final_file_url = furl(response['Location'])
+        response = self._get_url(GET, final_file_url, stream=True)
+        self._validate_file_response(response, source, file)
+        return final_file_url
 
     def _file_ext(self, file: JSON) -> str:
         # We believe that the file extension is a more reliable indicator than
@@ -1271,6 +1301,13 @@ class IndexingIntegrationTest(IntegrationTestCase):
         notifications.extend(duplicate_bundles)
         return notifications, bundle_fqids
 
+    def _source_from_response(self, catalog: CatalogName, source_json: JSON) -> SourceRef:
+        special_fields = self.metadata_plugin(catalog).special_fields
+        source = dict(id=source_json[special_fields.source_id],
+                      spec=source_json[special_fields.source_spec],
+                      prefix=source_json[special_fields.source_prefix])
+        return self.repository_plugin(catalog).source_ref_cls.from_json(source)
+
     def _get_indexed_bundles(self,
                              catalog: CatalogName,
                              filters: JSON | None = None
@@ -1280,10 +1317,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
         special_fields = self.metadata_plugin(catalog).special_fields
         for hit in hits:
             source, bundle = one(hit['sources']), one(hit['bundles'])
-            source = dict(id=source[special_fields.source_id],
-                          spec=source[special_fields.source_spec],
-                          prefix=source[special_fields.source_prefix])
-            source = self.repository_plugin(catalog).source_ref_cls.from_json(source)
+            source = self._source_from_response(catalog, source)
             bundle_fqid = SourcedBundleFQID(uuid=bundle[special_fields.bundle_uuid],
                                             version=bundle[special_fields.bundle_version],
                                             source=source)
@@ -1705,7 +1739,8 @@ class IndexingIntegrationTest(IntegrationTestCase):
                 self.assertIn(expected_auth_header, command_line)
 
     def _test_mirroring(self, *, delete: bool):
-        with self.subTest('mirror_files'):
+        mirror_service = self.azul_client.mirror_service
+        with self.subTest('mirroring'):
             catalogs = [
                 c.name
                 for c in config.catalogs.values()
@@ -1727,11 +1762,27 @@ class IndexingIntegrationTest(IntegrationTestCase):
             self._assert_queues_empty([config.mirror_queue.name,
                                        config.mirror_queue.to_fail.name])
             _delete()
-            for _ in range(2):
+
+            indexed_files: dict[File, tuple[SourceRef, JSON]] = {}
+            with self.subTest('mirror_sources_and_files'):
                 for catalog, sources in sources_by_catalog.items():
-                    self.azul_client.mirror_service.remote_mirror(catalog, sources)
-                self.azul_client.wait_for_mirroring()
-                self._assert_queues_empty([config.mirror_queue.to_fail.name])
+                    repository_file, source, file_response = self._get_one_mirrorable_file(catalog)
+                    indexed_files[repository_file] = source, file_response
+                    for _ in range(2):
+                        mirror_service.mirror_sources(catalog, sources)
+                        mirror_service.mirror_file(catalog, source, repository_file)
+                        self.azul_client.wait_for_mirroring()
+                        self._assert_queues_empty([config.mirror_queue.to_fail.name])
+
+                with self.subTest('download_mirrored_files'):
+                    for repository_file, (source, file_response) in indexed_files.items():
+                        digest = repository_file.digest
+                        expected_url = furl(scheme='https', host='s3.amazonaws.com', path=[
+                            aws.mirror_bucket, '_it', 'file', f'{digest.value}.{digest.type}',
+                        ])
+                        actual_url = self._test_file_download(source.spec, file_response)
+                        actual_url.set(args=None)
+                        self.assertEqual(expected_url, actual_url)
             _delete()
 
 
@@ -1804,7 +1855,7 @@ class AzulChaliceLocalIntegrationTest(AzulTestCase):
     catalog = first(config.integration_test_catalogs)
 
     def test_local_chalice_index_endpoints(self):
-        url = str(self.url.copy().set(path='index/files',
+        url = str(self.url.copy().set(path='repository/sources',
                                       query=dict(catalog=self.catalog)))
         response = requests.get(url)
         self.assertEqual(200, response.status_code, response.content)

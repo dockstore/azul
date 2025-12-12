@@ -743,17 +743,26 @@ session`_ and run a scan. After your scan has completed and you have generated
 a report, close the ZAP application, and then repeat the steps above to start
 each additional scan with a fresh authentication token.
 
-.. _`create a new session`: #zap-sessions
+.. _`create a new session`: #zap-context-and-sessions
 
-ZAP Sessions
-""""""""""""
+ZAP Context and Sessions
+""""""""""""""""""""""""
 
-With the ZAP application open, you must start a new session prior to running a
-new scan. Failure to do so can pollute the scan results with the findings from
-the previous scan. A new session is created each time you launch ZAP, or
-alternatively, to manually open a new session, from the app menu bar select
-*File*, and then *New Session*.
+With the ZAP application open, and prior to running any scan, start a new
+session and import `azul-zap-scan.context`_ from the azul-private repo.
+Failure to do so will pollute the scan results with known false positives and
+findings from the previous scan. A new session is created each time you launch
+ZAP. Alternatively, to manually open a new session, select *File* from the
+application menu bar, and then select *New Session*.
 
+To import the context file select *File* from the application menu bar, followed
+by *Import Context…* and then proceed to find the `azul-zap-scan.context`_ file
+and click *Open*. Confirm the context is *In Scope* by double-clicking the newly
+imported context and ensuring the checkmark is present in the *In Scope*
+checkbox. After clicking *OK*, a red dot will be shown in the icon next to the
+entry labeled *Azul Context*. Lastly, delete the ``Default Context`` by
+right-clicking it and selecting the *Delete* option.
+˚
 If you are prompted with options to persist the ZAP session, select the *No, I
 do not want to persis this session at this moment in time* option and click
 *Start*.
@@ -761,6 +770,7 @@ do not want to persis this session at this moment in time* option and click
 You may now continue with either a `Data Portal / Browser scan`_ or `Azul
 Indexer / Service API scan`_.
 
+.. _`azul-zap-scan.context`: https://github.com/DataBiosphere/azul-private/blob/main/azul-zap-scan.context
 .. _`Portal / Browser scan`: #running-a-portal-browser-scan
 .. _`Azul Indexer / Service API scan`: #running-an-azul-indexer-service-api-scan
 

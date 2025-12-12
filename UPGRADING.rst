@@ -20,6 +20,15 @@ reverted. This is all fairly informal and loosely defined. Hopefully we won't
 have too many entries in this file.
 
 
+#7543 No mirror-able sources in anvildev/anvilbox
+=================================================
+
+In your AnVIL personal deployments' ``environment.py`` files, update the list of
+sources for the ``anvil`` catalog using the anvilbox deployment's
+``environment.py`` as a model. Redeploy and reindex your deployments after
+updating their configuration.
+
+
 #7571 Add new snapshot to dcp3 on HCA dev
 =========================================
 
