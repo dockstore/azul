@@ -131,6 +131,10 @@ class BaseMirrorService:
     def _queues(self) -> Queues:
         return Queues()
 
+    @cache
+    def _repository_plugin(self, catalog: CatalogName) -> RepositoryPlugin:
+        return RepositoryPlugin.load(catalog).create(catalog)
+
     @classmethod
     def may_mirror(cls, catalog: CatalogName, file_size: int = 0) -> bool:
         """
@@ -198,10 +202,6 @@ class MirrorService(BaseMirrorService):
     def _file_service(self, catalog: CatalogName) -> MirrorFileService:
         return MirrorFileService(catalog=catalog,
                                  schema_url_func=self._schema_url_func)
-
-    @cache
-    def _repository_plugin(self, catalog: CatalogName) -> RepositoryPlugin:
-        return RepositoryPlugin.load(catalog).create(catalog)
 
     @cached_property
     def _source_service(self) -> SourceService:
