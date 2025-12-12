@@ -688,6 +688,14 @@ class RepositoryPlugin[BUNDLE: Bundle = Bundle[SourcedBundleFQID],
         """
         raise NotImplementedError
 
+    # Sanity-check the partition size. We know the upper bound
+    # caused some mirror Lambda invocations to time out. The lower
+    # bound is hypothetical. It'll likely still work for mirroring,
+    # but we'd like to know if partitions get that small. For
+    # indexing, the partition size is fixed at the upper bound.
+    min_partition_size: ClassVar[int] = 512
+    max_partition_size: ClassVar[int] = 8192
+
     def partition_source_for_indexing(self,
                                       catalog: CatalogName,
                                       source: SOURCE_REF
@@ -697,7 +705,7 @@ class RepositoryPlugin[BUNDLE: Bundle = Bundle[SourcedBundleFQID],
         an updated copy of the source with a heuristically computed prefix that
         should be appropriate for indexing in the given catalog.
         """
-        partition_size = 8192
+        partition_size = self.max_partition_size
         return self._partition_source(catalog, source, self.count_bundles, partition_size)
 
     def partition_source_for_mirroring(self,
@@ -725,12 +733,8 @@ class RepositoryPlugin[BUNDLE: Bundle = Bundle[SourcedBundleFQID],
             # We use the "lesser" heuristic during IT to keep the cost and
             # performance of the tests within reasonable limits
             if is_main and not is_it:
-                # Sanity-check the partition size. We know the upper bound
-                # caused some mirror Lambda invocations to time out. The lower
-                # bound is hypothetical. It'll likely still work for mirroring
-                # but we'd like to know if partitions get that small. For
-                # indexing, the partition size is fixed at the upper bound.
-                assert 512 <= partition_size <= 8192, partition_size
+                assert partition_size >= self.min_partition_size, partition_size
+                assert partition_size <= self.max_partition_size, partition_size
                 prefix = Prefix.for_main_deployment(count, partition_size)
             else:
                 prefix = Prefix.for_lesser_deployment(count)

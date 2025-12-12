@@ -218,18 +218,18 @@ class MirrorService(BaseMirrorService):
     def _(self, a: MirrorSourceAction) -> Iterable[MirrorAction]:
         assert a.source.id in self._list_public_source_ids(a.catalog), R(
             'Cannot mirror non-public source', a.source)
+        plugin = self._repository_plugin(a.catalog)
         # The desired partition size depends on the maximum number of messages
         # we can send in one Lambda invocation, because queueing the individual
         # mirror_file messages turns out to dominate the running time of
         # handling a mirror_source message.
-        partition_size = int(
+        partition_size = min(plugin.max_partition_size, int(
             aws.sqs_fifo_rate_limit  # max. # of SendMessage calls per second
             * Queues.batch_size  # number of messages per call
             * config.mirror_lambda_timeout  # max. duration of the invocation
             / config.mirroring_concurrency  # number of concurrent invocations
             / 2  # safety margin
-        )
-        plugin = self._repository_plugin(a.catalog)
+        ))
         partitioned_source = plugin.partition_source_for_mirroring(a.catalog,
                                                                    a.source,
                                                                    partition_size)
