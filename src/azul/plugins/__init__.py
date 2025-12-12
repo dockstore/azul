@@ -733,7 +733,8 @@ class RepositoryPlugin[BUNDLE: Bundle = Bundle[SourcedBundleFQID],
             # We use the "lesser" heuristic during IT to keep the cost and
             # performance of the tests within reasonable limits
             if is_main and not is_it:
-                assert self.min_partition_size <= partition_size <= self.max_partition_size, partition_size
+                assert partition_size >= self.min_partition_size, partition_size
+                assert partition_size <= self.max_partition_size, partition_size
                 prefix = Prefix.for_main_deployment(count, partition_size)
             else:
                 prefix = Prefix.for_lesser_deployment(count)
