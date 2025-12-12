@@ -163,6 +163,12 @@ class TestIndexResponse(IndexResponseTestCase):
     def _index_service(self):
         return IndexService()
 
+    def _response_stage(self, entity_type: str) -> HCASearchResponseStage:
+        return HCASearchResponseStage(service=self.index_service,
+                                      entity_type=entity_type,
+                                      catalog=self.catalog,
+                                      file_url_func=self.file_url_func)
+
     @property
     def paginations(self):
         return [
@@ -355,10 +361,7 @@ class TestIndexResponse(IndexResponseTestCase):
                 # FIXME: Use response from `/index/files` to validate
                 #        https://github.com/DataBiosphere/azul/issues/2970
                 hits = self._get_hits('files', '0c5ac7c0-817e-40d4-b1b1-34c3d5cfecdb')
-                stage = HCASearchResponseStage(service=self.index_service,
-                                               entity_type='files',
-                                               catalog=self.catalog,
-                                               file_url_func=self.file_url_func)
+                stage = self._response_stage('files')
                 response = stage.process_response((hits, self.paginations[n], {}))
                 self.assertElasticEqual(responses[n], response)
 
@@ -369,10 +372,7 @@ class TestIndexResponse(IndexResponseTestCase):
         # FIXME: Use response from `/index/samples` to validate
         #        https://github.com/DataBiosphere/azul/issues/2970
         hits = self._get_hits('samples', 'a21dc760-a500-4236-bcff-da34a0e873d2')
-        stage = HCASearchResponseStage(service=self.index_service,
-                                       entity_type='samples',
-                                       catalog=self.catalog,
-                                       file_url_func=self.file_url_func)
+        stage = self._response_stage('samples')
         response = stage.process_response((hits, self.paginations[0], {}))
 
         for hit in response['hits']:
@@ -427,10 +427,7 @@ class TestIndexResponse(IndexResponseTestCase):
         """
         # FIXME: Use response from `/index/files` to validate
         #        https://github.com/DataBiosphere/azul/issues/2970
-        stage = HCASearchResponseStage(service=self.index_service,
-                                       entity_type='files',
-                                       catalog=self.catalog,
-                                       file_url_func=self.file_url_func)
+        stage = self._response_stage('files')
         facets = stage.make_facets(self.canned_aggs)
         expected_output = {
             'organ': {
@@ -472,10 +469,7 @@ class TestIndexResponse(IndexResponseTestCase):
         # FIXME: Use response from `/index/projects` to validate
         #        https://github.com/DataBiosphere/azul/issues/2970
         hits = self._get_hits('projects', 'e8642221-4c2c-4fd7-b926-a68bce363c88')
-        stage = HCASearchResponseStage(service=self.index_service,
-                                       entity_type='projects',
-                                       catalog=self.catalog,
-                                       file_url_func=self.file_url_func)
+        stage = self._response_stage('projects')
         response = stage.process_response((hits, self.paginations[0], self.canned_aggs))
 
         expected_response = {
@@ -708,10 +702,7 @@ class TestIndexResponse(IndexResponseTestCase):
         # FIXME: Use response from `/index/projects` to validate
         #        https://github.com/DataBiosphere/azul/issues/2970
         hits = self._get_hits('projects', '627cb0ba-b8a1-405a-b58f-0add82c3d635')
-        stage = HCASearchResponseStage(service=self.index_service,
-                                       entity_type='projects',
-                                       catalog=self.catalog,
-                                       file_url_func=self.file_url_func)
+        stage = self._response_stage('projects')
         response = stage.process_response((hits, self.paginations[0], {}))
         expected_hits = [
             {
@@ -932,10 +923,7 @@ class TestIndexResponse(IndexResponseTestCase):
         # FIXME: Use response from `/index/projects` to validate
         #        https://github.com/DataBiosphere/azul/issues/2970
         hits = self._get_hits('projects', '250aef61-a15b-4d97-b8b4-54bb997c1d7d')
-        stage = HCASearchResponseStage(service=self.index_service,
-                                       entity_type='projects',
-                                       catalog=self.catalog,
-                                       file_url_func=self.file_url_func)
+        stage = self._response_stage('projects')
         response = stage.process_response((hits, self.paginations[0], {}))
         cell_suspension = one(response['hits'][0]['cellSuspensions'])
         self.assertEqual(['Plasma cells'], cell_suspension['selectedCellType'])
@@ -947,10 +935,7 @@ class TestIndexResponse(IndexResponseTestCase):
         # FIXME: Use response from `/index/projects` to validate
         #        https://github.com/DataBiosphere/azul/issues/2970
         hits = self._get_hits('projects', 'c765e3f9-7cfc-4501-8832-79e5f7abd321')
-        stage = HCASearchResponseStage(service=self.index_service,
-                                       entity_type='projects',
-                                       catalog=self.catalog,
-                                       file_url_func=self.file_url_func)
+        stage = self._response_stage('projects')
         response = stage.process_response((hits, self.paginations[0], {}))
         expected_cell_lines = {
             'id': ['cell_line_Day7_hiPSC-CM_BioRep2', 'cell_line_GM18517'],
@@ -977,10 +962,7 @@ class TestIndexResponse(IndexResponseTestCase):
         # FIXME: Use response from `/index/files` to validate
         #        https://github.com/DataBiosphere/azul/issues/2970
         hits = self._get_hits('files', '4015da8b-18d8-4f3c-b2b0-54f0b77ae80a')
-        stage = HCASearchResponseStage(service=self.index_service,
-                                       entity_type='files',
-                                       catalog=self.catalog,
-                                       file_url_func=self.file_url_func)
+        stage = self._response_stage('files')
         response = stage.process_response((hits, self.paginations[0], {}))
         expected_file = {
             'contentDescription': ['RNA sequence'],
