@@ -131,10 +131,10 @@ class BaseMirrorService:
     def _queues(self) -> Queues:
         return Queues()
 
-    def remote_mirror(self,
-                      catalog: CatalogName,
-                      sources: Iterable[tuple[SourceRef, SourceConfig]]
-                      ):
+    def mirror_sources(self,
+                       catalog: CatalogName,
+                       sources: Iterable[tuple[SourceRef, SourceConfig]]
+                       ):
         mirror_limit = config.catalogs[catalog].mirror_limit
         if mirror_limit is not None and mirror_limit < 0:
             log.info('Not mirroring any files in catalog %r because the file '
@@ -153,6 +153,12 @@ class BaseMirrorService:
                                  str(source.spec), catalog)
 
             self._queue_messages(messages())
+
+    def mirror_file(self, catalog: CatalogName, source: SourceRef, file: File):
+        self._queue_messages([MirrorFileAction(catalog=catalog,
+                                               source=source,
+                                               prefix='',
+                                               file=file)])
 
     def _mirror_queue(self):
         name = config.mirror_queue.name
