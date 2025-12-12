@@ -632,8 +632,9 @@ class TestManifests(DCP1ManifestTestCase):
                                      metadata=metadata,
                                      links=links))
 
+        special_fields = self._metadata_plugin.special_fields
         filters = {
-            'fileId': {
+            special_fields.file_uuid.name: {
                 'is': [
                     '5f9b45af-9a26-4b16-a785-7f2d1053dd7c',
                     'f2b6c6f0-8d25-4aae-b255-1974cc110cfe'

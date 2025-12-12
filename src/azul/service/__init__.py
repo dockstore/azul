@@ -372,8 +372,10 @@ class Filters:
             else:
                 return set(values)
 
-        explicit_sources = extract_filter(special_fields.source_id, default=None)
-        accessible = extract_filter(special_fields.accessible, default={False, True})
+        explicit_sources = extract_filter(special_fields.source_id.name,
+                                          default=None)
+        accessible = extract_filter(special_fields.accessible.name,
+                                    default={False, True})
         source_relation = 'is'
 
         if limit_access:
@@ -408,10 +410,10 @@ class Filters:
         if sources is None:
             assert limit_access is False, limit_access
         else:
-            filters[special_fields.source_id] = {source_relation: sorted(sources)}
+            filters[special_fields.source_id.name] = {source_relation: sorted(sources)}
 
         if limit_access:
-            assert set(filters[special_fields.source_id]['is']) <= self.source_ids
+            assert set(filters[special_fields.source_id.name]['is']) <= self.source_ids
 
         return filters
 

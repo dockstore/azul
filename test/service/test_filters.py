@@ -10,6 +10,7 @@ from chalice import (
 )
 
 from azul.plugins import (
+    SpecialField,
     SpecialFields,
 )
 from azul.service import (
@@ -30,7 +31,7 @@ class TestFilterReification(AzulTestCase):
     assert inaccessible_source not in accessible_sources
 
     special_fields = SpecialFields(
-        source_id='sourceId',
+        source_id=SpecialField.symmetric('sourceId'),
         source_spec=MagicMock(),
         source_prefix=MagicMock(),
         bundle_uuid=MagicMock(),
@@ -53,12 +54,12 @@ class TestFilterReification(AzulTestCase):
                 'within': [[10000, 1000000000]]
             },
             **({} if explicit_sources is None else {
-                self.special_fields.source_id: {
+                self.special_fields.source_id.name: {
                     'is': explicit_sources
                 }
             }),
             **({} if explicit_access is None else {
-                self.special_fields.accessible: {
+                self.special_fields.accessible.name: {
                     'is': explicit_access
                 }
             })
@@ -76,7 +77,7 @@ class TestFilterReification(AzulTestCase):
         expected_filters = {
             'cellCount': {'within': [[10000, 1000000000]]},
             **({} if expected_source_id_filter is None else {
-                self.special_fields.source_id: expected_source_id_filter
+                self.special_fields.source_id.name: expected_source_id_filter
             })
         }
         with self.subTest(explicit_sources=explicit_sources,

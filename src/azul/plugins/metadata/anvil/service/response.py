@@ -184,9 +184,9 @@ class AnvilSearchResponseStage(SearchResponseStage):
 
     def _make_source(self, es_source: JSON) -> MutableJSON:
         return {
-            self._special_fields.source_prefix: json_str(es_source['prefix']),
-            self._special_fields.source_spec: json_str(es_source['spec']),
-            self._special_fields.source_id: json_str(es_source['id'])
+            self._special_fields.source_prefix.name_in_hit: json_str(es_source['prefix']),
+            self._special_fields.source_spec.name_in_hit: json_str(es_source['spec']),
+            self._special_fields.source_id.name_in_hit: json_str(es_source['id'])
         }
 
     @cached_property
@@ -195,8 +195,8 @@ class AnvilSearchResponseStage(SearchResponseStage):
 
     def _make_bundle(self, es_bundle: JSON) -> MutableJSON:
         return {
-            self._special_fields.bundle_uuid: json_str(es_bundle['uuid']),
-            self._special_fields.bundle_version: json_str(es_bundle['version'])
+            self._special_fields.bundle_uuid.name_in_hit: json_str(es_bundle['uuid']),
+            self._special_fields.bundle_version.name_in_hit: json_str(es_bundle['version'])
         }
 
     def _make_contents(self, es_contents: JSON) -> MutableJSON:

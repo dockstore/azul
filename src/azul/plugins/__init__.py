@@ -158,6 +158,27 @@ class Sorting:
 
 
 @attrs.frozen(auto_attribs=True, kw_only=True)
+class SpecialField:
+    """
+    See :py:class:`SpecialFields`.
+    """
+
+    #: The standalone name of the field, as it appears in filters, the `sort`
+    #: request parameter and in the `termFacets` part of a service response.
+    #:
+    name: FieldName
+
+    #: The name of the field in an inner entity, as it appears in the `hit`
+    #: part of a service response.
+    #:
+    name_in_hit: str  # we currently have no alias for this type of occurrence
+
+    @classmethod
+    def symmetric(cls, name: str) -> Self:
+        return cls(name=name, name_in_hit=name)
+
+
+@attrs.frozen(auto_attribs=True, kw_only=True)
 class SpecialFields:
     """
     Azul defines a number of fields in each /index/{entity_type} response that
@@ -168,17 +189,15 @@ class SpecialFields:
 
     It is an incomplete abstraction in that it does not express the name of the
     inner entity the field is a property of in the /index/{entity_type}
-    response. In that way, the values of the attributes of instances of this
-    class are more akin to a facet name, rather than a field name. However, not
-    every field represented here is actually a facet.
+    response.
     """
-    accessible: ClassVar[FieldName] = 'accessible'
-    source_id: FieldName
-    source_spec: FieldName
-    source_prefix: FieldName
-    bundle_uuid: FieldName
-    bundle_version: FieldName
-    file_uuid: FieldName
+    accessible: ClassVar[SpecialField] = SpecialField.symmetric('accessible')
+    source_id: SpecialField
+    source_spec: SpecialField
+    source_prefix: SpecialField
+    bundle_uuid: SpecialField
+    bundle_version: SpecialField
+    file_uuid: SpecialField
 
 
 class ManifestFormat(Enum):
@@ -500,7 +519,7 @@ class MetadataPlugin[BUNDLE: Bundle](Plugin[BUNDLE]):
 
     @property
     def facets(self) -> Sequence[str]:
-        return [self.special_fields.source_id]
+        return [self.special_fields.source_id.name]
 
     @property
     @abstractmethod

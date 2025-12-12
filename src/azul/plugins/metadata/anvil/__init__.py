@@ -42,6 +42,7 @@ from azul.plugins import (
     ManifestConfig,
     MetadataPlugin,
     Sorting,
+    SpecialField,
     SpecialFields,
 )
 from azul.plugins.metadata.anvil.bundle import (
@@ -96,7 +97,7 @@ class Plugin(MetadataPlugin[AnvilBundle]):
         return dict(
             activities=Sorting(field_name='activities.activity_id'),
             biosamples=Sorting(field_name='biosamples.biosample_id'),
-            bundles=Sorting(field_name=self.special_fields.bundle_uuid),
+            bundles=Sorting(field_name=self.special_fields.bundle_uuid.name),
             datasets=Sorting(field_name='datasets.dataset_id'),
             donors=Sorting(field_name='donors.donor_id'),
             files=Sorting(field_name='files.file_id'),
@@ -162,14 +163,14 @@ class Plugin(MetadataPlugin[AnvilBundle]):
             'bundles': {
                 # These field paths have a brittle coupling that must be
                 # maintained to the field lookups in `self.manifest_config`.
-                'uuid': self.special_fields.bundle_uuid,
-                'version': self.special_fields.bundle_version
+                'uuid': self.special_fields.bundle_uuid.name,
+                'version': self.special_fields.bundle_version.name
             },
             'sources': {
                 # These field paths have a brittle coupling that must be
                 # maintained to the field lookups in `self.manifest_config`.
-                'id': self.special_fields.source_id,
-                'spec': self.special_fields.source_spec
+                'id': self.special_fields.source_id.name,
+                'spec': self.special_fields.source_spec.name
             },
             'contents': {
                 'datasets': {
@@ -266,12 +267,14 @@ class Plugin(MetadataPlugin[AnvilBundle]):
             }
         }
 
-    special_fields = SpecialFields(source_id='source_id',
-                                   source_spec='source_spec',
-                                   source_prefix='source_prefix',
-                                   bundle_uuid='bundle_uuid',
-                                   bundle_version='bundle_version',
-                                   file_uuid='document_id')
+    special_fields = SpecialFields(
+        source_id=SpecialField.symmetric('source_id'),
+        source_spec=SpecialField.symmetric('source_spec'),
+        source_prefix=SpecialField.symmetric('source_prefix'),
+        bundle_uuid=SpecialField.symmetric('bundle_uuid'),
+        bundle_version=SpecialField.symmetric('bundle_version'),
+        file_uuid=SpecialField(name='files.document_id', name_in_hit='document_id')
+    )
 
     @property
     def root_entity_type(self) -> str:

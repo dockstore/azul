@@ -166,10 +166,10 @@ class RequestParameterValidationTest(DCP1CannedBundleTestCase,
                 params = {
                     'catalog': self.catalog,
                     'size': 1,
-                    'filters': json.dumps({field: {'is': [None]}})
+                    'filters': json.dumps({field.name: {'is': [None]}})
                 }
                 url = self.base_url.set(path='/index/projects', args=params)
-                self.assertBadRequest(url, f'The `{field}` field does not support null values')
+                self.assertBadRequest(url, f'The `{field.name}` field does not support null values')
 
     def test_bad_sort_field_of_file(self):
         params = {

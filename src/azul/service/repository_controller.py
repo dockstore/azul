@@ -356,9 +356,9 @@ class RepositoryController(ServiceAppController):
                 result[field] = field_type
         # This field is a synthetic element of the response and will never be
         # null. Including it here helps to streamline request validation.
-        accessible = plugin.special_fields.accessible
-        assert accessible not in result, result
-        result[accessible] = pass_thru_bool
+        accessible_field = plugin.special_fields.accessible.name
+        assert accessible_field not in result, result
+        result[accessible_field] = pass_thru_bool
         return result
 
     def _validate_wait(self, wait: str | None):
