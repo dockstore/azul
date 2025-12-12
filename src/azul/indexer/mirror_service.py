@@ -38,6 +38,7 @@ from azul.functions import (
 from azul.indexer import (
     SourceConfig,
     SourceRef,
+    SourceSpec,
 )
 from azul.indexer.mirror_file_service import (
     FilePart,
@@ -134,6 +135,23 @@ class BaseMirrorService:
     @cache
     def _repository_plugin(self, catalog: CatalogName) -> RepositoryPlugin:
         return RepositoryPlugin.load(catalog).create(catalog)
+
+    def may_mirror_files_from_source(self,
+                                     catalog: CatalogName,
+                                     source_spec: SourceSpec,
+                                     ) -> bool:
+        """
+        Test whether it makes sense to request the mirroring of files from the
+        given source. If this method returns True, files from the source may or
+        may not be mirrored. If this method returns False, the service will
+        definitely refuse to mirror all files from the source.
+        """
+        if self.may_mirror(catalog):
+            plugin = self._repository_plugin(catalog)
+            source_config = plugin.sources[source_spec]
+            return source_config.mirror
+        else:
+            return False
 
     @classmethod
     def may_mirror(cls, catalog: CatalogName, file_size: int = 0) -> bool:
