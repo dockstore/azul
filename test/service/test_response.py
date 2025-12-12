@@ -11,7 +11,6 @@ from itertools import (
 import json
 import os
 from typing import (
-    Optional,
     Self,
     cast,
 )
@@ -2604,8 +2603,8 @@ class TestSchemaTestDataCannedBundle(IndexResponseTestCase):
 
 @attr.s(auto_attribs=True, frozen=True)
 class CellCounts:
-    estimated_cell_count: Optional[int]
-    total_cells: dict[str, Optional[int]]
+    estimated_cell_count: int | None
+    total_cells: dict[str, int | None]
 
     @classmethod
     def from_response(cls, hit: JSON) -> Self:
@@ -2812,8 +2811,8 @@ class TestProjectMatrices(IndexResponseTestCase):
 
     def params(self,
                project_id: str,
-               facet: Optional[str] = None,
-               value: Optional[str] = None) -> JSON:
+               facet: str | None = None,
+               value: str | None = None) -> JSON:
         return {
             'filters': json.dumps(
                 {
