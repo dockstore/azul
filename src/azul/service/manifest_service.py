@@ -1065,8 +1065,7 @@ class ManifestGenerator(metaclass=ABCMeta):
     def _hit_to_doc(self, hit: Hit) -> MutableJSON:
         return self.service.translate_fields(self.catalog,
                                              hit.to_dict(),
-                                             forward=False,
-                                             allowed_paths=self.included_fields)
+                                             forward=False)
 
     column_joiner = config.manifest_column_joiner
     padded_joiner = ' ' + column_joiner + ' '
