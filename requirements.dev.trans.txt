@@ -1,5 +1,5 @@
 blessed==1.25.0
-botocore-stubs==1.42.7
+botocore-stubs==1.42.9
 click==8.3.1
 colorama==0.4.6
 docutils==0.19
@@ -25,9 +25,9 @@ mypy-boto3-ecr==1.42.3
 mypy-boto3-es==1.42.3
 mypy-boto3-iam==1.42.4
 mypy-boto3-kms==1.42.3
-mypy-boto3-lambda==1.42.3
+mypy-boto3-lambda==1.42.8
 mypy-boto3-s3==1.42.3
-mypy-boto3-secretsmanager==1.42.3
+mypy-boto3-secretsmanager==1.42.8
 mypy-boto3-securityhub==1.42.3
 mypy-boto3-sns==1.42.3
 mypy-boto3-sqs==1.42.3
@@ -52,7 +52,7 @@ rpds-py==0.30.0
 runs==1.2.2
 smmap==5.0.2
 tqdm==4.67.1
-types-awscrt==0.29.2
+types-awscrt==0.30.0
 types-s3transfer==0.16.0
 uritemplate==4.2.0
 wcwidth==0.2.14
