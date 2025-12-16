@@ -270,7 +270,7 @@ class ManifestTestCase(WebServiceTestCase,
 
     @property
     def _service(self):
-        return ManifestService(self.storage_service, self.app_module.app.file_url)
+        return ManifestService(self.storage_service, self._app.file_url)
 
     def _get_manifest(self,
                       format: ManifestFormat,
@@ -346,7 +346,7 @@ class ManifestTestCase(WebServiceTestCase,
         return config.drs_domain or config.api_lambda_domain('service')
 
 
-class DCP1ManifestTestCase(ManifestTestCase, DCP1CannedBundleTestCase):
+class DCP1ManifestTestCase(DCP1CannedBundleTestCase, ManifestTestCase):
 
     def _digest_type(self) -> str:
         return 'sha256'
@@ -632,8 +632,9 @@ class TestManifests(DCP1ManifestTestCase):
                                      metadata=metadata,
                                      links=links))
 
+        special_fields = self._metadata_plugin.special_fields
         filters = {
-            'fileId': {
+            special_fields.file_uuid.name: {
                 'is': [
                     '5f9b45af-9a26-4b16-a785-7f2d1053dd7c',
                     'f2b6c6f0-8d25-4aae-b255-1974cc110cfe'
@@ -1075,7 +1076,7 @@ class TestManifestCache(DCP1ManifestTestCase):
         self._index_canned_bundle(original_fqid)
         filters = self._filters({'project': {'is': ['Single of human pancreas']}})
         old_keys = {}
-        service = ManifestService(self.storage_service, self.app_module.app.file_url)
+        service = ManifestService(self.storage_service, self._app.file_url)
 
         def manifest_generator(format: ManifestFormat) -> ManifestGenerator:
             generator_cls = ManifestGenerator.cls_for_format(format)
@@ -1257,7 +1258,7 @@ class TestManifestResponse(DCP1ManifestTestCase):
                 self.assertEqual(object_url, furl(response.headers['location']))
                 self.assertEqual('text/plain', response.headers['Content-Type'])
 
-        for format in self.app_module.app.metadata_plugin.manifest_formats:
+        for format in self._metadata_plugin.manifest_formats:
             for fetch in True, False:
                 with self.subTest(format=format, fetch=fetch):
                     test(format=format, fetch=fetch)
@@ -1731,18 +1732,6 @@ class TestAnvilManifests(AnvilManifestTestCase):
                 'True',
                 'False',
                 'False'
-            ),
-            (
-                'files.crc32',
-                '',
-                '',
-                ''
-            ),
-            (
-                'files.sha256',
-                '',
-                '',
-                ''
             ),
             (
                 'files.drs_uri',

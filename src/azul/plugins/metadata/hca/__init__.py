@@ -31,9 +31,11 @@ from azul.indexer.document import (
 from azul.plugins import (
     DocumentSlice,
     File,
+    InverseFieldMapping,
     ManifestConfig,
     MetadataPlugin,
     Sorting,
+    SpecialField,
     SpecialFields,
 )
 from azul.plugins.metadata.hca.bundle import (
@@ -175,7 +177,7 @@ class Plugin(MetadataPlugin[HCABundle]):
     @property
     def exposed_indices(self) -> dict[EntityType, Sorting]:
         return dict(
-            bundles=Sorting(field_name=self.special_fields.bundle_version,
+            bundles=Sorting(field_name=self.special_fields.bundle_version.name,
                             descending=True,
                             max_page_size=100),
             files=Sorting(field_name='fileName'),
@@ -197,18 +199,18 @@ class Plugin(MetadataPlugin[HCABundle]):
         ]
 
     @property
-    def _field_mapping(self) -> MetadataPlugin._FieldMapping:
+    def _field_mapping(self) -> InverseFieldMapping:
         # FIXME: Detect invalid values in field mapping
         #        https://github.com/DataBiosphere/azul/issues/3071
         return {
             'entity_id': 'entryId',
             'bundles': {
-                'uuid': self.special_fields.bundle_uuid,
-                'version': self.special_fields.bundle_version
+                'uuid': self.special_fields.bundle_uuid.name,
+                'version': self.special_fields.bundle_version.name
             },
             'sources': {
-                'id': self.special_fields.source_id,
-                'spec': self.special_fields.source_spec
+                'id': self.special_fields.source_id.name,
+                'spec': self.special_fields.source_spec.name
             },
             'cell_count': 'cellCount',
             'effective_cell_count': 'effectiveCellCount',
@@ -226,7 +228,7 @@ class Plugin(MetadataPlugin[HCABundle]):
                     'name': 'fileName',
                     'size': 'fileSize',
                     'file_source': 'fileSource',
-                    'uuid': 'fileId',
+                    'uuid': self.special_fields.file_uuid.name,
                     'version': 'fileVersion',
                     'content_description': 'contentDescription',
                     'matrix_cell_count': 'matrixCellCount',
@@ -299,14 +301,14 @@ class Plugin(MetadataPlugin[HCABundle]):
             }
         }
 
-    @property
-    def special_fields(self) -> SpecialFields:
-        return SpecialFields(source_id='sourceId',
-                             source_spec='sourceSpec',
-                             source_prefix='sourcePrefix',
-                             bundle_uuid='bundleUuid',
-                             bundle_version='bundleVersion',
-                             root_entity_id='projectId')
+    special_fields = SpecialFields(
+        source_id=SpecialField.symmetric('sourceId'),
+        source_spec=SpecialField.symmetric('sourceSpec'),
+        source_prefix=SpecialField.symmetric('sourcePrefix'),
+        bundle_uuid=SpecialField.symmetric('bundleUuid'),
+        bundle_version=SpecialField.symmetric('bundleVersion'),
+        file_uuid=SpecialField(name='fileId', name_in_hit='uuid')
+    )
 
     @property
     def root_entity_type(self) -> str:

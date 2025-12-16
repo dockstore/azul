@@ -1,6 +1,3 @@
-from abc import (
-    ABCMeta,
-)
 from collections.abc import (
     Iterable,
     Mapping,
@@ -216,7 +213,7 @@ PUT = 'PUT'
 POST = 'POST'
 
 
-class IntegrationTestCase(AzulTestCase, metaclass=ABCMeta):
+class IntegrationTestCase(AzulTestCase):
     min_bundles = 32
 
     @cached_property
@@ -1308,9 +1305,9 @@ class IndexingIntegrationTest(IntegrationTestCase):
 
     def _source_from_response(self, catalog: CatalogName, source_json: JSON) -> SourceRef:
         special_fields = self.metadata_plugin(catalog).special_fields
-        source = dict(id=source_json[special_fields.source_id],
-                      spec=source_json[special_fields.source_spec],
-                      prefix=source_json[special_fields.source_prefix])
+        source = dict(id=source_json[special_fields.source_id.name_in_hit],
+                      spec=source_json[special_fields.source_spec.name_in_hit],
+                      prefix=source_json[special_fields.source_prefix.name_in_hit])
         return self.repository_plugin(catalog).source_ref_cls.from_json(source)
 
     def _get_indexed_bundles(self,
@@ -1320,12 +1317,16 @@ class IndexingIntegrationTest(IntegrationTestCase):
         indexed_fqids = set()
         hits = self._get_entities(catalog, 'bundles', filters)
         special_fields = self.metadata_plugin(catalog).special_fields
+        bundle_uuid_field = special_fields.bundle_uuid.name_in_hit
+        bundle_version_field = special_fields.bundle_version.name_in_hit
         for hit in hits:
             source, bundle = one(hit['sources']), one(hit['bundles'])
             source = self._source_from_response(catalog, source)
-            bundle_fqid = SourcedBundleFQID(uuid=bundle[special_fields.bundle_uuid],
-                                            version=bundle[special_fields.bundle_version],
-                                            source=source)
+            bundle_fqid = SourcedBundleFQID(
+                uuid=bundle[bundle_uuid_field],
+                version=bundle[bundle_version_field],
+                source=source
+            )
             indexed_fqids.add(bundle_fqid)
         return indexed_fqids
 
@@ -1513,6 +1514,8 @@ class IndexingIntegrationTest(IntegrationTestCase):
         """
 
         special_fields = self.metadata_plugin(catalog).special_fields
+        source_id_field = special_fields.source_id.name_in_hit
+        accessible_field = special_fields.accessible.name_in_hit
         bundle_type = self._bundle_type(catalog)
         project_type = self._project_type(catalog)
 
@@ -1520,15 +1523,15 @@ class IndexingIntegrationTest(IntegrationTestCase):
         for accessible in None, False, True:
             with self.subTest(accessible=accessible):
                 filters = None if accessible is None else {
-                    special_fields.accessible: {'is': [accessible]}
+                    special_fields.accessible.name: {'is': [accessible]}
                 }
                 hits = self._get_entities(catalog, project_type, filters=filters)
                 if accessible is None:
                     unfiltered_hits = hits
                 for hit in hits:
-                    source_id = one(hit['sources'])[special_fields.source_id]
+                    source_id = one(hit['sources'])[source_id_field]
                     source_accessible = {public_source.id: True, ma_source.id: False}[source_id]
-                    hit_accessible = one(hit[project_type])[special_fields.accessible]
+                    hit_accessible = one(hit[project_type])[accessible_field]
                     self.assertEqual(source_accessible, hit_accessible, hit['entryId'])
                     if accessible is not None:
                         self.assertEqual(accessible, hit_accessible)
@@ -1539,7 +1542,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
         self.assertEqual(hit_source_ids, {public_source.id})
 
         source_filter = {
-            special_fields.source_id: {
+            special_fields.source_id.name: {
                 'is': [ma_source.id]
             }
         }
@@ -1569,7 +1572,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
         special_fields = self.metadata_plugin(catalog).special_fields
         with self._service_account_credentials:
             files = self._get_entities(catalog, 'files', filters={
-                special_fields.source_id: {
+                special_fields.source_id.name: {
                     'is': [ma_source.id]
                 }
             })
@@ -1620,7 +1623,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
 
         def bundle_uuids(hit: JSON) -> set[str]:
             return {
-                bundle[special_fields.bundle_uuid]
+                bundle[special_fields.bundle_uuid.name_in_hit]
                 for bundle in hit['bundles']
             }
 
@@ -1629,7 +1632,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
             for file in files
             if len(file['sources']) == 1
         ))
-        filters = {special_fields.source_id: {'is': [public_source.id]}}
+        filters = {special_fields.source_id.name: {'is': [public_source.id]}}
         params = {'size': 1, 'catalog': catalog, 'filters': json.dumps(filters)}
         files_url = furl(url=endpoint, path='index/files', args=params)
         response = self._get_url_json(GET, files_url)
@@ -1638,7 +1641,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
         all_bundles = {public_bundle, *managed_access_bundles}
 
         filters = {
-            special_fields.bundle_uuid: {
+            special_fields.bundle_uuid.name: {
                 'is': list(all_bundles)
             }
         }
@@ -1701,7 +1704,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
             manifest_url = furl(url=endpoint, path='/manifest/files', args={
                 'catalog': catalog,
                 'format': format.value,
-                'filters': json.dumps({special_fields.bundle_uuid: {'is': list(bundles)}})
+                'filters': json.dumps({special_fields.bundle_uuid.name: {'is': list(bundles)}})
             })
             content = BytesIO(self._get_url_content(PUT, manifest_url))
             return {
@@ -1722,7 +1725,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
             # Create a single-file curl manifest and verify that the OAuth2
             # token is present on the command line
             managed_access_file_id = one(self.random.choice(files)['files'])['uuid']
-            filters = {'fileId': {'is': [managed_access_file_id]}}
+            filters = {metadata_plugin.special_fields.file_uuid.name: {'is': [managed_access_file_id]}}
             manifest_url.set(args=dict(catalog=catalog,
                                        filters=json.dumps(filters),
                                        format='curl'))

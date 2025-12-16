@@ -63,8 +63,6 @@ from azul.logging import (
 )
 from azul.plugins import (
     FieldPath,
-    MetadataPlugin,
-    SpecialFields,
 )
 from azul.plugins.metadata.hca import (
     HCABundle,
@@ -140,7 +138,7 @@ class TestIndexResponse(IndexResponseTestCase):
 
     @property
     def file_url_func(self):
-        return self.app_module.app.file_url
+        return self._app.file_url
 
     def _get_hits(self, entity_type: str, entity_id: str):
         """
@@ -1014,7 +1012,7 @@ class TestIndexResponse(IndexResponseTestCase):
                 response_json = response.json()
                 # Verify default sort field is set correctly
                 self.assertEqual(response_json['pagination']['sort'],
-                                 self.app_module.app.metadata_plugin.exposed_indices[entity_type].field_name)
+                                 self._metadata_plugin.exposed_indices[entity_type].field_name)
                 # Verify all fields in the response that are lists of primitives are sorted
                 for hit in response_json['hits']:
                     self._verify_sorted_lists(hit)
@@ -1142,6 +1140,7 @@ class TestIndexResponse(IndexResponseTestCase):
         Test that sample(s) in the response contain values matching values in
         the source cellLine/organoid/specimen
         """
+        accessible_field = self._metadata_plugin.special_fields.accessible.name_in_hit
         for entity_type in 'projects', 'samples', 'files', 'bundles':
             with self.subTest(entity_type=entity_type):
                 url = self.base_url.set(path=('index', entity_type), args=self._params())
@@ -1156,7 +1155,7 @@ class TestIndexResponse(IndexResponseTestCase):
                                 if key not in [
                                     'sampleEntityType',
                                     'effectiveOrgan',
-                                    SpecialFields.accessible,
+                                    accessible_field,
                                 ]:
                                     if isinstance(val, list):
                                         for one_val in val:
@@ -1174,8 +1173,8 @@ class TestIndexResponse(IndexResponseTestCase):
         self.assertEqual(len(self.bundles()), len(indexed_bundles))
         special_fields = self.index_service.metadata_plugin(self.catalog).special_fields
         actual_bundles = {
-            self.bundle_fqid(uuid=bundle[special_fields.bundle_uuid],
-                             version=bundle[special_fields.bundle_version])
+            self.bundle_fqid(uuid=bundle[special_fields.bundle_uuid.name_in_hit],
+                             version=bundle[special_fields.bundle_version.name_in_hit])
             for hit in response['hits']
             for bundle in hit['bundles']
         }
@@ -2178,6 +2177,7 @@ class TestIndexResponse(IndexResponseTestCase):
         }
 
         def _test(entity_type: str, expect_empty: bool, expect_accessible: bool):
+            accessible_field = self._metadata_plugin.special_fields.accessible.name_in_hit
             with self.subTest(entity_type=entity_type, access=expect_accessible):
                 url = str(self.base_url.set(path=('index', entity_type)))
                 response = requests.get(url)
@@ -2189,7 +2189,7 @@ class TestIndexResponse(IndexResponseTestCase):
                     self.assertGreater(len(hits), 0)
                     for hit in hits:
                         entity = one(hit[entity_type])
-                        self.assertEqual(expect_accessible, entity[SpecialFields.accessible])
+                        self.assertEqual(expect_accessible, entity[accessible_field])
 
         for entity_type in filtered_entity_types:
             _test(entity_type, expect_empty=False, expect_accessible=True)
@@ -2822,8 +2822,10 @@ class TestProjectMatrices(IndexResponseTestCase):
                 }
             ),
             'catalog': self.catalog,
-            'size': min(sorting.max_page_size
-                        for sorting in self.app_module.app.metadata_plugin.exposed_indices.values())
+            'size': min(
+                sorting.max_page_size
+                for sorting in self._metadata_plugin.exposed_indices.values()
+            )
         }
 
     def test_file_source_facet(self):
@@ -3583,15 +3585,18 @@ class TestUnpopulatedIndexResponse(IndexResponseTestCase):
         # the `accessible` term facet, so we must perform the same replacement
         # before the list of facets can be used to verify the contents of the
         # response.
-        plugin: MetadataPlugin = self.app_module.app.metadata_plugin
+        plugin = self._metadata_plugin
         facets = list(plugin.facets)
         special_fields = plugin.special_fields
-        facets[facets.index(special_fields.source_id)] = special_fields.accessible
+        source_id_field = special_fields.source_id
+        accessible_field = special_fields.accessible
+        facet_index = facets.index(source_id_field.name)
+        facets[facet_index] = accessible_field.name
         return facets
 
     @property
     def field_mapping(self) -> Mapping[str, FieldPath]:
-        return self.app_module.app.metadata_plugin.field_mapping
+        return self._metadata_plugin.field_mapping
 
     def entity_types(self) -> list[str]:
         return [
@@ -3607,7 +3612,7 @@ class TestUnpopulatedIndexResponse(IndexResponseTestCase):
                                         args=dict(order='asc'))
                 response = requests.get(str(url))
                 response.raise_for_status()
-                sort_field = self.app_module.app.metadata_plugin.exposed_indices[entity_type].field_name
+                sort_field = self._metadata_plugin.exposed_indices[entity_type].field_name
                 expected_response = {
                     'hits': [],
                     'pagination': {
@@ -3722,11 +3727,14 @@ class TestResponseWithDCP2Cans(DCP2CannedBundleTestCase, WebServiceTestCase):
         response_json = response.json()
         plugin = self.index_service.metadata_plugin(self.catalog)
         special_fields = plugin.special_fields
+        id_field = special_fields.source_id.name_in_hit
+        spec_field = special_fields.source_spec.name_in_hit
+        prefix_field = special_fields.source_prefix.name_in_hit
         for hit in response_json['hits']:
             source = one(hit['sources'])
-            source = TDRSourceRef(id=source[special_fields.source_id],
-                                  spec=TDRSourceSpec.parse(source[special_fields.source_spec]),
-                                  prefix=Prefix.parse(source[special_fields.source_prefix]))
+            source = TDRSourceRef(id=source[id_field],
+                                  spec=TDRSourceSpec.parse(source[spec_field]),
+                                  prefix=Prefix.parse(source[prefix_field]))
             self.assertEqual(self.source, source)
 
     def get_file(self, entry_id: str) -> JSON:

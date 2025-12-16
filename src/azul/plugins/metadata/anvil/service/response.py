@@ -184,9 +184,9 @@ class AnvilSearchResponseStage(SearchResponseStage):
 
     def _make_source(self, es_source: JSON) -> MutableJSON:
         return {
-            self._special_fields.source_prefix: json_str(es_source['prefix']),
-            self._special_fields.source_spec: json_str(es_source['spec']),
-            self._special_fields.source_id: json_str(es_source['id'])
+            self._special_fields.source_prefix.name_in_hit: json_str(es_source['prefix']),
+            self._special_fields.source_spec.name_in_hit: json_str(es_source['spec']),
+            self._special_fields.source_id.name_in_hit: json_str(es_source['id'])
         }
 
     @cached_property
@@ -195,8 +195,8 @@ class AnvilSearchResponseStage(SearchResponseStage):
 
     def _make_bundle(self, es_bundle: JSON) -> MutableJSON:
         return {
-            self._special_fields.bundle_uuid: json_str(es_bundle['uuid']),
-            self._special_fields.bundle_version: json_str(es_bundle['version'])
+            self._special_fields.bundle_uuid.name_in_hit: json_str(es_bundle['uuid']),
+            self._special_fields.bundle_version.name_in_hit: json_str(es_bundle['version'])
         }
 
     def _make_contents(self, es_contents: JSON) -> MutableJSON:
@@ -215,10 +215,9 @@ class AnvilSearchResponseStage(SearchResponseStage):
                         ) -> MutableJSON:
         inner_entity = copy_json(inner_entity)
         if inner_entity_type == 'files':
-            inner_entity['azul_url'] = self._file_url(uuid=json_str(inner_entity['uuid']),
+            inner_entity['azul_url'] = self._file_url(uuid=json_str(inner_entity['document_id']),
                                                       version=json_str(inner_entity['version']),
                                                       drs_uri=optional(json_str, inner_entity['drs_uri']))
-            inner_entity.pop('uuid', None)
             inner_entity.pop('version', None)
         return inner_entity
 

@@ -342,7 +342,7 @@ class ServiceApp(HealthApp):
 
     @property
     def synthetic_fields(self) -> Sequence[str]:
-        return self.metadata_plugin.special_fields.accessible,
+        return self.metadata_plugin.special_fields.accessible.name,
 
     def __init__(self):
         super().__init__(app_name=config.service_name,
@@ -474,6 +474,11 @@ def validate_filters(filters):
     if type(filters) is not dict:
         raise BRE('The `filters` parameter must be a dictionary')
     field_types = app.repository_controller.field_types(app.catalog)
+    special_fields = app.metadata_plugin.special_fields
+    accessibility_fields = {
+        special_fields.source_id.name,
+        special_fields.accessible.name
+    }
     for field, filter_ in filters.items():
         validate_field(field, include_synthetic=True)
         try:
@@ -482,8 +487,7 @@ def validate_filters(filters):
             raise BRE(f'The `filters` parameter entry for `{field}` '
                       f'must be a single-item dictionary')
         else:
-            special_fields = app.metadata_plugin.special_fields
-            if field in (special_fields.source_id, special_fields.accessible):
+            if field in accessibility_fields:
                 valid_relations = ('is',)
                 disallow_null = True
             else:
