@@ -20,6 +20,17 @@ reverted. This is all fairly informal and loosely defined. Hopefully we won't
 have too many entries in this file.
 
 
+#7617 Index one snapshot from upcoming lm10 release in `dev`
+============================================================
+
+In your personal HCA deployments:
+
+- Remove the ``lungmap`` catalog
+
+As always, use the sandbox deployment's ``environment.py`` as a model when
+upgrading personal deployments.
+
+
 #7214 Enable mirroring in anvildev and anvilbox
 ===============================================
 

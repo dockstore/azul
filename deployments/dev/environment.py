@@ -233,7 +233,6 @@ def env() -> Mapping[str, str | None]:
                                        sources=condense(sources))
             for atlas, catalog, sources, mirror_limit, it_mirror_limit, in [
                 ('hca', 'dcp3', dcp3_sources, int(1.5 * 1024 ** 3), int(1.5 * 1024 ** 3)),
-                ('lungmap', 'lungmap', lungmap_sources, -1, -1),
                 ('lungmap', 'lm2', lm2_sources, -1, -1)
             ]
             for suffix, is_it in [
