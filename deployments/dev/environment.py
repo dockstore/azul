@@ -187,8 +187,9 @@ lungmap_sources = union({}, 2, delta([
     source('bigquery', 'datarepo-dev-8de6d66b', 'lungmap_dev_2620497955a349b28d2b53e0bdfcb176__20220404_20220404')
 ]))
 
-lm2_sources = union(lungmap_sources, 3, delta([
+lm2_sources = union(lungmap_sources, 4, delta([
     source('bigquery', 'datarepo-dev-b47b6759', 'lungmap_dev_00f056f273ff43ac97ff69ca10e38c89__20220404_20220404_lm2'),
+    source('bigquery', 'datarepo-dev-419f6325', 'lungmap_dev_fdadee7e209745d5bf81cc280bd8348e__20240206_20251204_lm10')
 ]))
 
 

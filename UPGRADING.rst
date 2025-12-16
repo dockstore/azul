@@ -26,6 +26,7 @@ have too many entries in this file.
 In your personal HCA deployments:
 
 - Remove the ``lungmap`` catalog
+- Add the snapshot for project ``fdadee7e…`` to the ``lm2`` catalog
 
 As always, use the sandbox deployment's ``environment.py`` as a model when
 upgrading personal deployments.
