@@ -30,7 +30,11 @@ from opensearchpy.helpers.response import (
 
 from azul import (
     CatalogName,
+    cache,
     config,
+)
+from azul.indexer.mirror_service import (
+    BaseMirrorService,
 )
 from azul.plugins import (
     File,
@@ -107,6 +111,10 @@ class SummaryResponseStage(ElasticsearchStage[JSON, MutableJSON],
 
 
 class RepositoryService(ElasticsearchService):
+
+    @cache
+    def mirror_service(self, catalog: CatalogName) -> BaseMirrorService:
+        return BaseMirrorService(catalog=catalog)
 
     def search(self,
                *,
