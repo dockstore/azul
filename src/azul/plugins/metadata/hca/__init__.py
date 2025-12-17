@@ -232,7 +232,8 @@ class Plugin(MetadataPlugin[HCABundle]):
                     'version': 'fileVersion',
                     'content_description': 'contentDescription',
                     'matrix_cell_count': 'matrixCellCount',
-                    'is_intermediate': 'isIntermediate'
+                    'is_intermediate': 'isIntermediate',
+                    'sha256': 'sha256',
                 },
                 'projects': {
                     'contact_names': 'contactName',
