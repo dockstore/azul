@@ -849,7 +849,7 @@ def emit(t: T, target_branch: str):
                             'type': 'cli',
                             'content': f'Deleted unreferenced indices in `{s}`',
                             'alt': f'or this PR does not remove catalogs '
-                                   f'or otherwise causes unreferenced indices in `{d}`'
+                                   f'or otherwise causes unreferenced indices in `{s}`'
                         },
                         {
                             'type': 'cli',
