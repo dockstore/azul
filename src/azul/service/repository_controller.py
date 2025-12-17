@@ -89,9 +89,8 @@ class RepositoryController(ServiceAppController):
     def mirror_service(self, catalog: CatalogName) -> BaseMirrorService:
         return BaseMirrorService(catalog=catalog)
 
-    @cache
     def repository_plugin(self, catalog: CatalogName) -> RepositoryPlugin:
-        return RepositoryPlugin.load(catalog).create(catalog)
+        return self.service.repository_plugin(catalog)
 
     def search(self,
                *,
