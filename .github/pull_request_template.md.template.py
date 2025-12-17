@@ -844,7 +844,7 @@ def emit(t: T, target_branch: str):
                         'content': f'Reviewed build logs for anomalies in `{s}` deployment',
                         'alt': iif(t is T.upgrade, None, 'or PR is labeled `no sandbox`')
                     },
-                    *iif(t is T.default, [
+                    *iif(t is not T.upgrade, [
                         {
                             'type': 'cli',
                             'content': f'Deleted unreferenced indices in `{s}`',
