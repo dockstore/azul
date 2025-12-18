@@ -57,6 +57,10 @@ one of ``sha1``, ``md5`` or ``sha256``, denoting the type of algorithm used to
 derive that hash. Henceforth we'll be referring to the pair of ``digest_type``
 and ``digest_value`` as *digest*.
 
+Any content type associated directly with a file object should be ignored. The
+authoritative source of information about a file's content type(s) is its
+associated info object (see below).
+
 
 Alias objects
 +++++++++++++
