@@ -57,6 +57,7 @@ if TYPE_CHECKING:
         CompletedPartTypeDef,
         CreateMultipartUploadRequestTypeDef,
         DeleteObjectsRequestTypeDef,
+        GetObjectOutputTypeDef,
         HeadObjectOutputTypeDef,
         PutObjectRequestTypeDef,
         PutObjectTaggingRequestTypeDef,
@@ -105,13 +106,16 @@ class StorageService:
                 raise e
 
     def get_object(self, object_key: str) -> bytes:
+        return self._get_object(object_key)['Body'].read()
+
+    def _get_object(self, object_key: str) -> 'GetObjectOutputTypeDef':
         try:
             response = self._s3.get_object(Bucket=self.bucket_name,
                                            Key=object_key)
         except self._s3.exceptions.NoSuchKey:
             raise StorageObjectNotFound(object_key)
         else:
-            return response['Body'].read()
+            return response
 
     def put_object(self,
                    *,
