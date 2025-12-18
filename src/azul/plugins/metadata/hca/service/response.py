@@ -21,6 +21,10 @@ from more_itertools import (
 from azul import (
     cached_property,
 )
+from azul.indexer import (
+    SourceRef,
+    SourceSpec,
+)
 from azul.plugins import (
     SpecialFields,
 )
@@ -345,7 +349,7 @@ class HCASearchResponseStage(SearchResponseStage):
             for dates in entry['contents']['dates']
         ]
 
-    def make_projects(self, entry) -> MutableJSONs:
+    def make_projects(self, source: SourceSpec, entry) -> MutableJSONs:
         projects = []
         contents = entry['contents']
         for project in contents['projects']:
@@ -374,8 +378,10 @@ class HCASearchResponseStage(SearchResponseStage):
                     for key in list(publication.keys()):
                         publication[to_camel_case(key)] = publication.pop(key)
                 translated_project['supplementaryLinks'] = project.get('supplementary_links', [None])
-                translated_project['matrices'] = self.make_matrices_(contents['matrices'])
-                translated_project['contributedAnalyses'] = self.make_matrices_(contents['contributed_analyses'])
+                translated_project['matrices'] = self.make_matrices_(source,
+                                                                     contents['matrices'])
+                translated_project['contributedAnalyses'] = self.make_matrices_(source,
+                                                                                contents['contributed_analyses'])
                 translated_project['accessions'] = project.get('accessions', [None])
             projects.append(translated_project)
         return projects
@@ -383,25 +389,25 @@ class HCASearchResponseStage(SearchResponseStage):
     # FIXME: Move this to during aggregation
     #        https://github.com/DataBiosphere/azul/issues/2415
 
-    def make_matrices_(self, matrices: JSONs) -> JSON:
+    def make_matrices_(self, source: SourceSpec, matrices: JSONs) -> JSON:
         files: list[JSON] = []
         if matrices:
             for file in json_element_mappings(one(matrices)['file']):
                 translated_file = {
-                    **self.make_file(file),
+                    **self.make_file(source, file),
                     'strata': json_str(file['strata'])
                 }
                 files.append(translated_file)
         return make_stratification_tree(files)
 
-    def make_files(self, entry: JSON) -> JSONs:
+    def make_files(self, source: SourceSpec, entry: JSON) -> JSONs:
         files = []
         for _file in json_element_mappings(json_mapping(entry['contents'])['files']):
-            translated_file = self.make_file(_file)
+            translated_file = self.make_file(source, _file)
             files.append(translated_file)
         return files
 
-    def make_file(self, file: JSON) -> JSON:
+    def make_file(self, source: SourceSpec, file: JSON) -> JSON:
         translated_file = {
             'contentDescription': file.get('content_description'),
             'format': file.get('file_format'),
@@ -417,7 +423,7 @@ class HCASearchResponseStage(SearchResponseStage):
             'azul_url': self._file_url(uuid=json_str(file['uuid']),
                                        version=json_str(file['version']),
                                        drs_uri=optional(json_str, file['drs_uri'])),
-            'azul_mirror_uri': self._file_mirror_uri(file),
+            'azul_mirror_uri': self._file_mirror_uri(source, file),
         }
         return translated_file
 
@@ -511,10 +517,11 @@ class HCASearchResponseStage(SearchResponseStage):
         return list(map(self.make_hit, hits))
 
     def make_hit(self, es_hit) -> SummarizedHit | CompleteHit:
+        source: SourceSpec = SourceRef.from_json(one(es_hit['sources'])).spec
         hit = Hit(protocols=self.make_protocols(es_hit),
                   entryId=es_hit['entity_id'],
                   sources=self.make_sources(es_hit),
-                  projects=self.make_projects(es_hit),
+                  projects=self.make_projects(source, es_hit),
                   samples=self.make_samples(es_hit),
                   specimens=self.make_specimens(es_hit),
                   cellLines=self.make_cell_lines(es_hit),
@@ -525,7 +532,7 @@ class HCASearchResponseStage(SearchResponseStage):
         if self.entity_type in ('files', 'bundles'):
             complete_hit = cast(CompleteHit, hit)
             complete_hit['bundles'] = self.make_bundles(es_hit)
-            complete_hit['files'] = self.make_files(es_hit)
+            complete_hit['files'] = self.make_files(source, es_hit)
             return complete_hit
         else:
             summarized_hit = cast(SummarizedHit, hit)

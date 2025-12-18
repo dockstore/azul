@@ -427,15 +427,36 @@ class BaseMirrorService:
     #
     assert 1.5 * 1024 ** 4 <= max_file_size
 
-    def mirror_uri(self, file: File) -> str:
+    def mirror_uri(self,
+                   source: SourceSpec,
+                   file_cls: type[File],
+                   file_json: JSON
+                   ) -> str | None:
         """
-        Speculative S3 URI of the given file. No check is performed to see if
-        the file is currently mirrored, so there is no guarantee that requests
-        to the URI will succeed.
+        Return the the URI of the mirror copy of the given file from the current
+        catalog. If this method returns None, the file was not mirrored, and no
+        such URI exists. Otherwise, a mirror copy of the file may or may not
+        exist under the returned URI.
+
+        :param source: The source of the file
+
+        :param file_cls: The type of the file. This parameter is needed in order
+                         to avoid deserializing a file from a source that was
+                         configured to not be mirrored because the file metadata
+                         in that source is incomplete or broken
+
+        :param file_json: the index representation of the file
         """
-        return str(furl(scheme='s3',
-                        netloc=self._storage.bucket_name,
-                        path=self._file_object_key(file)))
+        if self.may_mirror_files_from_source(source):
+            file = file_cls.from_index(file_json)
+            if self.may_mirror(0 if file.size is None else file.size):
+                return str(furl(scheme='s3',
+                                netloc=self._storage.bucket_name,
+                                path=self._file_object_key(file)))
+            else:
+                return None
+        else:
+            return None
 
     def mirror_url(self, file: File) -> str:
         return self._storage.get_presigned_url(object_key=self._file_object_key(file),

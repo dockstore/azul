@@ -30,6 +30,9 @@ from azul import (
     cache,
     config,
 )
+from azul.indexer import (
+    SourceSpec,
+)
 from azul.indexer.mirror_service import (
     BaseMirrorService,
 )
@@ -95,13 +98,10 @@ class SearchResponseStage(_ElasticsearchStage[ResponseTriple, MutableJSON],
                                           file_uuid=uuid,
                                           version=version))
 
-    def _file_mirror_uri(self, file: JSON) -> str | None:
-        file = self.plugin.file_class.from_index(file)
+    def _file_mirror_uri(self, source: SourceSpec, file: JSON) -> str | None:
+        file_cls = self.plugin.file_class
         mirror_service = self.service.mirror_service(self.catalog)
-        if mirror_service.may_mirror(file.size):
-            return mirror_service.mirror_uri(file)
-        else:
-            return None
+        return mirror_service.mirror_uri(source, file_cls, file)
 
 
 class SummaryResponseStage(ElasticsearchStage[JSON, MutableJSON],
