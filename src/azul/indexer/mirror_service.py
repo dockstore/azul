@@ -699,7 +699,10 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
             def update(data: bytes) -> bytes:
                 json_content = json.loads(data)
                 content_types = json_content['content-type']
-                content_types = set(content_types)
+                if isinstance(content_types, list):
+                    content_types = set(content_types)
+                else:
+                    content_types = set()
                 content_types.add(content_type)
                 json_content['content-type'] = sorted(content_types)
                 return json.dumps(json_content).encode()
