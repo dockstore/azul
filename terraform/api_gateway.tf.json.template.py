@@ -181,8 +181,9 @@ def waf_match_path(path_regex: str) -> JSON:
 def add_waf_blocked_alarm(resources: JSON) -> JSON:
     """
     Add a metric alarm that trips if the ratio between blocked and overall
-    requests goes above 25%. Note that requests blocked by rules listed in
-    :py:attr:`Config.waf_rules_not_logged` are not considered.
+    requests goes above a deployment-specific threshold. Note that requests
+    blocked by rules listed in :py:attr:`Config.waf_rules_not_logged` are not
+    considered for the alarm.
     """
     if not config.enable_monitoring:
         return resources
@@ -240,7 +241,7 @@ def add_waf_blocked_alarm(resources: JSON) -> JSON:
                         }
                     ],
                     'comparison_operator': 'GreaterThanThreshold',
-                    'threshold': 25,  # percent blocked of total requests in a period
+                    'threshold': config.waf_blocked_alarm_threshold,
                     'evaluation_periods': 1,
                     'datapoints_to_alarm': 1,
                     'alarm_actions': ['${data.aws_sns_topic.monitoring.arn}'],
