@@ -1,5 +1,6 @@
 from abc import (
     ABCMeta,
+    abstractmethod,
 )
 from collections import (
     defaultdict,
@@ -135,6 +136,7 @@ from indexer import (
 )
 from service import (
     DocumentCloningTestCase,
+    MirrorTestCase,
     StorageServiceTestCase,
     WebServiceTestCase,
 )
@@ -248,6 +250,7 @@ class CannedManifestTestCase(CannedFileTestCase):
 class ManifestTestCase(WebServiceTestCase,
                        StorageServiceTestCase,
                        CannedManifestTestCase,
+                       MirrorTestCase,
                        metaclass=ABCMeta):
 
     def setUp(self):
@@ -331,13 +334,22 @@ class ManifestTestCase(WebServiceTestCase,
                         path=file_id,
                         args=adict(version=version)))
 
+    def _mirror_uri(self, digest: str) -> str:
+        return f's3://{self.mirror_bucket}/file/{digest}.{self._digest_type()}'
+
+    @abstractmethod
+    def _digest_type(self) -> str:
+        raise NotImplementedError
+
     @property
     def _drs_domain(self) -> str:
         return config.drs_domain or config.api_lambda_domain('service')
 
 
 class DCP1ManifestTestCase(ManifestTestCase, DCP1CannedBundleTestCase):
-    pass
+
+    def _digest_type(self) -> str:
+        return 'sha256'
 
 
 class TestManifests(DCP1ManifestTestCase):
@@ -499,6 +511,10 @@ class TestManifests(DCP1ManifestTestCase):
                             '2018-09-14T12:33:47.012715Z'),
              self._file_url('f2b6c6f0-8d25-4aae-b255-1974cc110cfe',
                             '2018-09-14T12:33:43.720332Z')),
+
+            ('file_mirror_uri',
+             self._mirror_uri('2f6866c4ede92123f90dd15fb180fac56e33309b8fd3f4f52f263ed2f8af2f16'),
+             self._mirror_uri('3125f2f86092798b85be93fbc66f4e733e9aec0929b558589c06929627115582')),
 
             ('cell_suspension.provenance.document_id',
              '',
@@ -1268,6 +1284,9 @@ class TestManifestPartitioning(DCP1ManifestTestCase, DocumentCloningTestCase):
 
 class AnvilManifestTestCase(ManifestTestCase, AnvilCannedBundleTestCase):
 
+    def _digest_type(self) -> str:
+        return 'md5'
+
     @property
     def _drs_domain(self) -> str:
         return self.mock_tdr_service_url.netloc
@@ -1691,9 +1710,9 @@ class TestAnvilManifests(AnvilManifestTestCase):
             ),
             (
                 'files.file_md5sum',
-                'S/GBrRjzZAQYqh3rdiPYzA==',
-                'vuxgbuCqKZ/fkT9CWTFmIg==',
-                'fNn9e1SovzgOROk3BvH6LQ=='
+                '4bf181ad18f3640418aa1deb7623d8cc',
+                'beec606ee0aa299fdf913f4259316622',
+                '7cd9fd7b54a8bf380e44e93706f1fa2d'
             ),
             (
                 'files.reference_assembly',
@@ -1736,6 +1755,12 @@ class TestAnvilManifests(AnvilManifestTestCase):
                 self._file_url('6b0f6c0f-5d80-4242-accb-840921351cd5', self.version),
                 self._file_url('15b76f9c-6b46-433f-851d-34e89f1b9ba6', self.version),
                 self._file_url('3b17377b-16b1-431c-9967-e5d01fc5923f', self.version)
+            ),
+            (
+                'files.azul_mirror_uri',
+                self._mirror_uri('4bf181ad18f3640418aa1deb7623d8cc'),
+                self._mirror_uri('beec606ee0aa299fdf913f4259316622'),
+                self._mirror_uri('7cd9fd7b54a8bf380e44e93706f1fa2d'),
             )
         ]
         self._assert_tsv(expected, response)

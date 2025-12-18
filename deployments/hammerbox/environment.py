@@ -1299,11 +1299,12 @@ def env() -> Mapping[str, str | None]:
         'AZUL_CATALOGS': base64.b64encode(bz2.compress(json.dumps({
             f'{catalog}{suffix}': dict(atlas=atlas,
                                        internal=is_it,
+                                       mirror_limit=it_mirror_limit if is_it else mirror_limit,
                                        plugins=dict(metadata=dict(name='anvil'),
                                                     repository=dict(name='tdr_anvil')),
                                        sources=condense(sources))
-            for atlas, catalog, sources in [
-                ('anvil', 'anvil12', anvil12_sources),
+            for atlas, catalog, sources, mirror_limit, it_mirror_limit in [
+                ('anvil', 'anvil12', anvil12_sources, int(1.5 * 1024 ** 3), int(1.5 * 1024 ** 3)),
             ]
             for suffix, is_it in [
                 ('', False),
@@ -1351,4 +1352,6 @@ def env() -> Mapping[str, str | None]:
         'AZUL_GOOGLE_OAUTH2_CLIENT_ID': '1055427471534-ienqfvg4fl2n7agcumn63b12npsjorlr.apps.googleusercontent.com',
 
         'AZUL_ENABLE_VERBATIM_RELATIONS': '0',
+
+        'AZUL_ENABLE_MIRRORING': '1',
     }

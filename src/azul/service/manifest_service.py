@@ -98,6 +98,8 @@ from azul.deployment import (
 )
 from azul.indexer import (
     Prefix,
+    SourceRef,
+    SourceSpec,
 )
 from azul.indexer.document import (
     DocumentType,
@@ -106,6 +108,12 @@ from azul.indexer.document import (
 from azul.indexer.field import (
     FieldTypes,
     null_str,
+)
+from azul.indexer.mirror_file_service import (
+    BaseMirrorFileService,
+)
+from azul.indexer.mirror_service import (
+    BaseMirrorService,
 )
 from azul.json import (
     copy_json,
@@ -814,6 +822,14 @@ class ManifestGenerator(metaclass=ABCMeta):
     def metadata_plugin(self) -> MetadataPlugin:
         return self.service.metadata_plugin(self.catalog)
 
+    @cached_property
+    def mirror_service(self) -> BaseMirrorService:
+        return BaseMirrorService()
+
+    @cached_property
+    def mirror_file_service(self) -> BaseMirrorFileService:
+        return BaseMirrorFileService(catalog=self.catalog)
+
     @classmethod
     @abstractmethod
     def file_name_extension(cls) -> str:
@@ -1044,7 +1060,12 @@ class ManifestGenerator(metaclass=ABCMeta):
         if self.included_fields is None:
             document_slice = DocumentSlice()
         else:
-            document_slice = DocumentSlice(includes=list(map(dotted, self.included_fields)))
+            includes = list(map(dotted, self.included_fields))
+            # The complete set of source fields is needed to polymorphically
+            # deserialize sources from the index. The sources are used to
+            # help determine which files might be mirrored.
+            includes.append('sources.*')
+            document_slice = DocumentSlice(includes=includes)
         pipeline = self.service.create_chain(catalog=self.catalog,
                                              entity_type=self.entity_type,
                                              filters=self.filters,
@@ -1055,8 +1076,7 @@ class ManifestGenerator(metaclass=ABCMeta):
     def _hit_to_doc(self, hit: Hit) -> MutableJSON:
         return self.service.translate_fields(self.catalog,
                                              hit.to_dict(),
-                                             forward=False,
-                                             allowed_paths=self.included_fields)
+                                             forward=False)
 
     column_joiner = config.manifest_column_joiner
     padded_joiner = ' ' + column_joiner + ' '
@@ -1083,7 +1103,7 @@ class ManifestGenerator(metaclass=ABCMeta):
             try:
                 field_type = field_types[field_name]
             except KeyError:
-                if field_name == 'file_url':
+                if field_name in ('file_url', 'file_mirror_uri'):
                     field_type = null_str
                 else:
                     raise
@@ -1144,6 +1164,16 @@ class ManifestGenerator(metaclass=ABCMeta):
                                           version=file['version'],
                                           fetch=False,
                                           **args))
+
+    def _azul_mirror_uri(self, file: JSON, source: SourceSpec) -> str | None:
+        if self.mirror_service.may_mirror_files_from_source(self.catalog, source):
+            file = self.metadata_plugin.file_class.from_index(file)
+            if self.mirror_service.may_mirror(self.catalog, file.size):
+                return self.mirror_file_service.mirror_uri(file)
+            else:
+                return None
+        else:
+            return None
 
     @cached_property
     def manifest_content_hash(self) -> int:
@@ -1661,6 +1691,7 @@ class CompactManifestGenerator(PagedManifestGenerator):
                 doc = self._hit_to_doc(hit)
                 assert isinstance(doc, dict)
                 contents = doc['contents']
+                source = SourceRef.from_json(one(doc['sources'])).spec
                 if len(project_short_names) < 2 and 'projects' in contents:
                     project = one(cast(JSONs, contents['projects']))
                     short_names = project['project_short_name']
@@ -1671,7 +1702,10 @@ class CompactManifestGenerator(PagedManifestGenerator):
                     entities = self._get_entities(field_path, doc)
                     if field_path == ('contents', 'files'):
                         file = copy_json(one(entities))
-                        file['file_url'] = self._azul_file_url(file)
+                        if 'file_url' in column_mapping:
+                            file['file_url'] = self._azul_file_url(file)
+                        if 'file_mirror_uri' in column_mapping:
+                            file['file_mirror_uri'] = self._azul_mirror_uri(file, source)
                         entities = [file]
                     self._extract_fields(field_path=field_path,
                                          entities=entities,
@@ -1684,7 +1718,10 @@ class CompactManifestGenerator(PagedManifestGenerator):
                             for related_file in file['related_files']:
                                 related_row = {}
                                 file.update(related_file)
-                                file['file_url'] = self._azul_file_url(file)
+                                if 'file_url' in column_mapping:
+                                    file['file_url'] = self._azul_file_url(file)
+                                if 'file_mirror_uri' in column_mapping:
+                                    file['file_mirror_uri'] = self._azul_mirror_uri(file, source)
                                 self._extract_fields(field_path=field_path,
                                                      entities=[file],
                                                      column_mapping=column_mapping,

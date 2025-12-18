@@ -359,6 +359,7 @@ class Plugin(MetadataPlugin[AnvilBundle]):
         # Above, we already configured these two fields to be omitted from the
         # manifest since they are not informative to the user.
         result[('contents', 'files')]['file_url'] = 'files.azul_url'
+        result[('contents', 'files')]['file_mirror_uri'] = 'files.azul_mirror_uri'
         return result
 
     primary_keys_by_table = {

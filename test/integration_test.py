@@ -468,7 +468,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
                     # If test_mirroring is run for the catalog, ensure that the
                     # source is not flagged as no_mirror so that we can test
                     # downloading a mirrored file
-                    mirror=config.enable_mirroring and catalog.mirror_limit >= 0
+                    mirror=self.azul_client.mirror_service.may_mirror(catalog.name)
                 )
                 ma_source = self._select_source(catalog.name, public=False)
                 if ma_source is not None:
@@ -753,7 +753,9 @@ class IndexingIntegrationTest(IntegrationTestCase):
             # This depends on the indexing test choosing a public source that
             # is not flagged as no_mirror
             outer_file, inner_file = self._get_one_inner_file(catalog)
-        file_digest = lookup(inner_file, 'sha256', 'file_md5sum')
+        # Order matters here because sha256 is present in the file response for
+        # AnVIL, but is always set to the empty string
+        file_digest = lookup(inner_file, 'file_md5sum', 'sha256')
         source = one(outer_file['sources'])
         # In principle, we could use the entire digest here, but Prefix only
         # allows up to 8 chars because it can be used with UUIDs
@@ -762,7 +764,10 @@ class IndexingIntegrationTest(IntegrationTestCase):
         # FIXME: Avoid use of plugin, instantiate file from hit instead
         #        https://github.com/DataBiosphere/azul/issues/7615
         files = plugin.list_files(source.with_prefix(prefix), prefix=prefix.common)
-        file = one(file for file in files if file.digest.value == file_digest)
+        # Multiple files may have the same contents and therefore the same
+        # digest. In AnVIL snapshot `CMG_Sample_1_20230225_ANV5_20251203111`,
+        # *every* file has the same digest.
+        file = first(file for file in files if file.digest.value == file_digest)
         return file, source, inner_file
 
     def _get_one_inner_file(self, catalog: CatalogName) -> tuple[JSON, JSON]:
@@ -1744,7 +1749,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
             catalogs = [
                 c.name
                 for c in config.catalogs.values()
-                if c.is_integration_test_catalog and c.mirror_limit >= 0
+                if c.is_integration_test_catalog and mirror_service.may_mirror(c.name)
             ]
             sources_by_catalog = {
                 catalog: [self._select_source(catalog, public=True, mirror=True)]

@@ -183,7 +183,7 @@
                         "file_size": 213021639,
                         "file_size_": 213021639,
                         "file_md5sum": [
-                            "vuxgbuCqKZ/fkT9CWTFmIg=="
+                            "beec606ee0aa299fdf913f4259316622"
                         ],
                         "reference_assembly": [
                             "~null"
@@ -390,7 +390,7 @@
                         "file_format": ".vcf.gz",
                         "file_size": 213021639,
                         "file_size_": 213021639,
-                        "file_md5sum": "vuxgbuCqKZ/fkT9CWTFmIg==",
+                        "file_md5sum": "beec606ee0aa299fdf913f4259316622",
                         "reference_assembly": [
                             "~null"
                         ],
@@ -637,7 +637,7 @@
                         "file_format": ".vcf.gz",
                         "file_size": 213021639,
                         "file_size_": 213021639,
-                        "file_md5sum": "vuxgbuCqKZ/fkT9CWTFmIg==",
+                        "file_md5sum": "beec606ee0aa299fdf913f4259316622",
                         "reference_assembly": [
                             "~null"
                         ],
@@ -828,7 +828,7 @@
                         "file_format": ".vcf.gz",
                         "file_size": 213021639,
                         "file_size_": 213021639,
-                        "file_md5sum": "vuxgbuCqKZ/fkT9CWTFmIg==",
+                        "file_md5sum": "beec606ee0aa299fdf913f4259316622",
                         "reference_assembly": [
                             "~null"
                         ],
@@ -856,7 +856,7 @@
     },
     {
         "_index": "azul_v2_nadove4_test_replica",
-        "_id": "anvil_file_15b76f9c-6b46-433f-851d-34e89f1b9ba6_aec7ac65991cc6ea974a7a86fc30ec96c081cfcf",
+        "_id": "anvil_file_15b76f9c-6b46-433f-851d-34e89f1b9ba6_5d1a78bcffdd1ab9966053541cf7aba09f6d8353",
         "_score": 1.0,
         "_source": {
             "entity_id": "15b76f9c-6b46-433f-851d-34e89f1b9ba6",
@@ -876,7 +876,7 @@
                 "datarepo_row_id": "15b76f9c-6b46-433f-851d-34e89f1b9ba6",
                 "file_format": ".vcf.gz",
                 "file_id": "1e269f04-4347-4188-b060-1dcc69e71d67",
-                "file_md5sum": "vuxgbuCqKZ/fkT9CWTFmIg==",
+                "file_md5sum": "beec606ee0aa299fdf913f4259316622",
                 "file_name": "307500.merged.matefixed.sorted.markeddups.recal.g.vcf.gz",
                 "file_ref": "drs://mock_tdr.lan/v1_6c87f0e1-509d-46a4-b845-7584df39263b_1e269f04-4347-4188-b060-1dcc69e71d67",
                 "file_size": 213021639,
@@ -1123,7 +1123,7 @@
                         "file_size": 213021639,
                         "file_size_": 213021639,
                         "file_md5sum": [
-                            "vuxgbuCqKZ/fkT9CWTFmIg=="
+                            "beec606ee0aa299fdf913f4259316622"
                         ],
                         "reference_assembly": [
                             "~null"
@@ -1170,7 +1170,7 @@
                         "file_size": 3306845592,
                         "file_size_": 3306845592,
                         "file_md5sum": [
-                            "fNn9e1SovzgOROk3BvH6LQ=="
+                            "7cd9fd7b54a8bf380e44e93706f1fa2d"
                         ],
                         "reference_assembly": [
                             "~null"
@@ -1395,7 +1395,7 @@
                         "file_format": ".vcf.gz",
                         "file_size": 213021639,
                         "file_size_": 213021639,
-                        "file_md5sum": "vuxgbuCqKZ/fkT9CWTFmIg==",
+                        "file_md5sum": "beec606ee0aa299fdf913f4259316622",
                         "reference_assembly": [
                             "~null"
                         ],
@@ -1419,7 +1419,7 @@
                         "file_format": ".bam",
                         "file_size": 3306845592,
                         "file_size_": 3306845592,
-                        "file_md5sum": "fNn9e1SovzgOROk3BvH6LQ==",
+                        "file_md5sum": "7cd9fd7b54a8bf380e44e93706f1fa2d",
                         "reference_assembly": [
                             "~null"
                         ],
@@ -1671,7 +1671,7 @@
                         "file_format": ".bam",
                         "file_size": 3306845592,
                         "file_size_": 3306845592,
-                        "file_md5sum": "fNn9e1SovzgOROk3BvH6LQ==",
+                        "file_md5sum": "7cd9fd7b54a8bf380e44e93706f1fa2d",
                         "reference_assembly": [
                             "~null"
                         ],
@@ -1704,7 +1704,7 @@
     },
     {
         "_index": "azul_v2_nadove4_test_replica",
-        "_id": "anvil_file_3b17377b-16b1-431c-9967-e5d01fc5923f_669b7664f4b6865a0604285f923995acaf84b4ab",
+        "_id": "anvil_file_3b17377b-16b1-431c-9967-e5d01fc5923f_f5083a9b6e1e772f4f6fd89e329070fa23885d18",
         "_score": 1.0,
         "_source": {
             "entity_id": "3b17377b-16b1-431c-9967-e5d01fc5923f",
@@ -1713,7 +1713,7 @@
                 "datarepo_row_id": "3b17377b-16b1-431c-9967-e5d01fc5923f",
                 "file_format": ".bam",
                 "file_id": "8b722e88-8103-49c1-b351-e64fa7c6ab37",
-                "file_md5sum": "fNn9e1SovzgOROk3BvH6LQ==",
+                "file_md5sum": "7cd9fd7b54a8bf380e44e93706f1fa2d",
                 "file_name": "307500.merged.matefixed.sorted.markeddups.recal.bam",
                 "file_ref": "drs://mock_tdr.lan/v1_6c87f0e1-509d-46a4-b845-7584df39263b_8b722e88-8103-49c1-b351-e64fa7c6ab37",
                 "file_size": 3306845592,
@@ -1900,7 +1900,7 @@
                         "file_format": ".bam",
                         "file_size": 3306845592,
                         "file_size_": 3306845592,
-                        "file_md5sum": "fNn9e1SovzgOROk3BvH6LQ==",
+                        "file_md5sum": "7cd9fd7b54a8bf380e44e93706f1fa2d",
                         "reference_assembly": [
                             "~null"
                         ],
@@ -2110,7 +2110,7 @@
                         "file_size": 3306845592,
                         "file_size_": 3306845592,
                         "file_md5sum": [
-                            "fNn9e1SovzgOROk3BvH6LQ=="
+                            "7cd9fd7b54a8bf380e44e93706f1fa2d"
                         ],
                         "reference_assembly": [
                             "~null"
@@ -2353,7 +2353,7 @@
                         "file_format": ".bam",
                         "file_size": 3306845592,
                         "file_size_": 3306845592,
-                        "file_md5sum": "fNn9e1SovzgOROk3BvH6LQ==",
+                        "file_md5sum": "7cd9fd7b54a8bf380e44e93706f1fa2d",
                         "reference_assembly": [
                             "~null"
                         ],
@@ -2560,7 +2560,7 @@
                         "file_size": 213021639,
                         "file_size_": 213021639,
                         "file_md5sum": [
-                            "vuxgbuCqKZ/fkT9CWTFmIg=="
+                            "beec606ee0aa299fdf913f4259316622"
                         ],
                         "reference_assembly": [
                             "~null"
@@ -2607,7 +2607,7 @@
                         "file_size": 3306845592,
                         "file_size_": 3306845592,
                         "file_md5sum": [
-                            "fNn9e1SovzgOROk3BvH6LQ=="
+                            "7cd9fd7b54a8bf380e44e93706f1fa2d"
                         ],
                         "reference_assembly": [
                             "~null"
@@ -2832,7 +2832,7 @@
                         "file_format": ".vcf.gz",
                         "file_size": 213021639,
                         "file_size_": 213021639,
-                        "file_md5sum": "vuxgbuCqKZ/fkT9CWTFmIg==",
+                        "file_md5sum": "beec606ee0aa299fdf913f4259316622",
                         "reference_assembly": [
                             "~null"
                         ],
@@ -2856,7 +2856,7 @@
                         "file_format": ".bam",
                         "file_size": 3306845592,
                         "file_size_": 3306845592,
-                        "file_md5sum": "fNn9e1SovzgOROk3BvH6LQ==",
+                        "file_md5sum": "7cd9fd7b54a8bf380e44e93706f1fa2d",
                         "reference_assembly": [
                             "~null"
                         ],
@@ -3121,7 +3121,7 @@
                         "file_size": 213021639,
                         "file_size_": 213021639,
                         "file_md5sum": [
-                            "vuxgbuCqKZ/fkT9CWTFmIg=="
+                            "beec606ee0aa299fdf913f4259316622"
                         ],
                         "reference_assembly": [
                             "~null"
@@ -3168,7 +3168,7 @@
                         "file_size": 3306845592,
                         "file_size_": 3306845592,
                         "file_md5sum": [
-                            "fNn9e1SovzgOROk3BvH6LQ=="
+                            "7cd9fd7b54a8bf380e44e93706f1fa2d"
                         ],
                         "reference_assembly": [
                             "~null"
@@ -3393,7 +3393,7 @@
                         "file_format": ".vcf.gz",
                         "file_size": 213021639,
                         "file_size_": 213021639,
-                        "file_md5sum": "vuxgbuCqKZ/fkT9CWTFmIg==",
+                        "file_md5sum": "beec606ee0aa299fdf913f4259316622",
                         "reference_assembly": [
                             "~null"
                         ],
@@ -3417,7 +3417,7 @@
                         "file_format": ".bam",
                         "file_size": 3306845592,
                         "file_size_": 3306845592,
-                        "file_md5sum": "fNn9e1SovzgOROk3BvH6LQ==",
+                        "file_md5sum": "7cd9fd7b54a8bf380e44e93706f1fa2d",
                         "reference_assembly": [
                             "~null"
                         ],
@@ -3672,7 +3672,7 @@
                         "file_size": 213021639,
                         "file_size_": 213021639,
                         "file_md5sum": [
-                            "vuxgbuCqKZ/fkT9CWTFmIg=="
+                            "beec606ee0aa299fdf913f4259316622"
                         ],
                         "reference_assembly": [
                             "~null"
@@ -3719,7 +3719,7 @@
                         "file_size": 3306845592,
                         "file_size_": 3306845592,
                         "file_md5sum": [
-                            "fNn9e1SovzgOROk3BvH6LQ=="
+                            "7cd9fd7b54a8bf380e44e93706f1fa2d"
                         ],
                         "reference_assembly": [
                             "~null"
@@ -3944,7 +3944,7 @@
                         "file_format": ".vcf.gz",
                         "file_size": 213021639,
                         "file_size_": 213021639,
-                        "file_md5sum": "vuxgbuCqKZ/fkT9CWTFmIg==",
+                        "file_md5sum": "beec606ee0aa299fdf913f4259316622",
                         "reference_assembly": [
                             "~null"
                         ],
@@ -3968,7 +3968,7 @@
                         "file_format": ".bam",
                         "file_size": 3306845592,
                         "file_size_": 3306845592,
-                        "file_md5sum": "fNn9e1SovzgOROk3BvH6LQ==",
+                        "file_md5sum": "7cd9fd7b54a8bf380e44e93706f1fa2d",
                         "reference_assembly": [
                             "~null"
                         ],

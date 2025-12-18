@@ -38,6 +38,7 @@ from azul.functions import (
 from azul.indexer import (
     SourceConfig,
     SourceRef,
+    SourceSpec,
 )
 from azul.indexer.mirror_file_service import (
     FilePart,
@@ -131,19 +132,50 @@ class BaseMirrorService:
     def _queues(self) -> Queues:
         return Queues()
 
+    @cache
+    def _repository_plugin(self, catalog: CatalogName) -> RepositoryPlugin:
+        return RepositoryPlugin.load(catalog).create(catalog)
+
+    def may_mirror_files_from_source(self,
+                                     catalog: CatalogName,
+                                     source_spec: SourceSpec,
+                                     ) -> bool:
+        """
+        Test whether it makes sense to request the mirroring of files from the
+        given source. If this method returns True, files from the source may or
+        may not be mirrored. If this method returns False, the service will
+        definitely refuse to mirror all files from the source.
+        """
+        if self.may_mirror(catalog):
+            plugin = self._repository_plugin(catalog)
+            source_config = plugin.sources[source_spec]
+            return source_config.mirror
+        else:
+            return False
+
+    @classmethod
+    def may_mirror(cls, catalog: CatalogName, file_size: int = 0) -> bool:
+        """
+        Test whether it makes sense to request the mirroring of files from the
+        given catalog if they are of the given size or larger. If this method
+        returns True, such files may or may not be mirrored. If this method
+        returns False, the service will definitely refuse to mirror such files,
+        although it may accept smaller files.
+        """
+        if config.enable_mirroring:
+            max_size = config.catalogs[catalog].mirror_limit
+            return max_size is None or file_size <= max_size
+        else:
+            return False
+
     def mirror_sources(self,
                        catalog: CatalogName,
                        sources: Iterable[tuple[SourceRef, SourceConfig]]
                        ):
-        mirror_limit = config.catalogs[catalog].mirror_limit
-        if mirror_limit is not None and mirror_limit < 0:
-            log.info('Not mirroring any files in catalog %r because the file '
-                     'size limit is negative', catalog)
-        else:
-
+        if self.may_mirror(catalog):
             def messages():
-                for source, cfg in sources:
-                    if cfg.mirror:
+                for source, source_config in sources:
+                    if source_config.mirror:
                         log.info('Mirroring files in source %r from catalog %r',
                                  str(source.spec), catalog)
                         yield MirrorSourceAction(catalog=catalog, source=source)
@@ -153,6 +185,9 @@ class BaseMirrorService:
                                  str(source.spec), catalog)
 
             self._queue_messages(messages())
+        else:
+            log.info('Not mirroring any files in catalog %r because the file '
+                     'size limit is negative', catalog)
 
     def mirror_file(self, catalog: CatalogName, source: SourceRef, file: File):
         self._queue_messages([MirrorFileAction(catalog=catalog,
@@ -186,10 +221,6 @@ class MirrorService(BaseMirrorService):
         return MirrorFileService(catalog=catalog,
                                  schema_url_func=self._schema_url_func)
 
-    @cache
-    def _repository_plugin(self, catalog: CatalogName) -> RepositoryPlugin:
-        return RepositoryPlugin.load(catalog).create(catalog)
-
     @cached_property
     def _source_service(self) -> SourceService:
         return SourceService()
@@ -205,18 +236,18 @@ class MirrorService(BaseMirrorService):
     def _(self, a: MirrorSourceAction) -> Iterable[MirrorAction]:
         assert a.source.id in self._list_public_source_ids(a.catalog), R(
             'Cannot mirror non-public source', a.source)
+        plugin = self._repository_plugin(a.catalog)
         # The desired partition size depends on the maximum number of messages
         # we can send in one Lambda invocation, because queueing the individual
         # mirror_file messages turns out to dominate the running time of
         # handling a mirror_source message.
-        partition_size = int(
+        partition_size = min(plugin.max_partition_size, int(
             aws.sqs_fifo_rate_limit  # max. # of SendMessage calls per second
             * Queues.batch_size  # number of messages per call
             * config.mirror_lambda_timeout  # max. duration of the invocation
             / config.mirroring_concurrency  # number of concurrent invocations
             / 2  # safety margin
-        )
-        plugin = self._repository_plugin(a.catalog)
+        ))
         partitioned_source = plugin.partition_source_for_mirroring(a.catalog,
                                                                    a.source,
                                                                    partition_size)
@@ -238,17 +269,16 @@ class MirrorService(BaseMirrorService):
     def _(self, a: MirrorPartitionAction) -> Iterable[MirrorAction]:
         plugin = self._repository_plugin(a.catalog)
         files = plugin.list_files(a.source, a.prefix)
-        max_size = config.catalogs[a.catalog].mirror_limit
         for file in files:
             assert file.size is not None, R('File size unknown', file)
-            if max_size is not None and file.size > max_size:
-                log.info('Not mirroring file to save cost: %r', file)
-            else:
+            if self.may_mirror(a.catalog, file.size):
                 log.debug('Queueing file %r', file)
                 yield MirrorFileAction(catalog=a.catalog,
                                        source=a.source,
                                        prefix=a.prefix,
                                        file=file)
+            else:
+                log.info('Not mirroring file to save cost: %r', file)
         log.info('Queued %d files in partition %r of source %r in catalog %r',
                  len(files), a.prefix, str(a.source), a.catalog)
 
