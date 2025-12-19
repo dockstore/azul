@@ -86,6 +86,9 @@ from azul.service.app_controller import (
 from azul.service.catalog_controller import (
     CatalogController,
 )
+from azul.service.download_controller import (
+    DownloadController,
+)
 from azul.service.drs_controller import (
     DRSController,
 )
@@ -99,7 +102,6 @@ from azul.service.manifest_service import (
     CurlManifestGenerator,
 )
 from azul.service.repository_controller import (
-    DownloadController,
     RepositoryController,
 )
 from azul.types import (
