@@ -99,6 +99,7 @@ from azul.service.manifest_service import (
     CurlManifestGenerator,
 )
 from azul.service.repository_controller import (
+    DownloadController,
     RepositoryController,
 )
 from azul.types import (
@@ -305,6 +306,10 @@ class ServiceApp(HealthApp):
     @cached_property
     def repository_controller(self) -> RepositoryController:
         return RepositoryController(app=self, file_url_func=self.file_url)
+
+    @cached_property
+    def download_controller(self) -> DownloadController:
+        return DownloadController(app=self, file_url_func=self.file_url)
 
     @cached_property
     def manifest_controller(self) -> ManifestController:
@@ -1545,12 +1550,12 @@ def _repository_files(file_uuid: str, fetch: bool) -> MutableJSON:
     #        https://github.com/DataBiosphere/azul/issues/2682
 
     catalog = app.catalog
-    return app.repository_controller.download_file(catalog=catalog,
-                                                   fetch=fetch,
-                                                   file_uuid=file_uuid,
-                                                   query_params=query_params,
-                                                   headers=headers,
-                                                   authentication=request.authentication)
+    return app.download_controller.download_file(catalog=catalog,
+                                                 fetch=fetch,
+                                                 file_uuid=file_uuid,
+                                                 query_params=query_params,
+                                                 headers=headers,
+                                                 authentication=request.authentication)
 
 
 @app.route(

@@ -85,12 +85,6 @@ class RepositoryController(ServiceAppController):
     def service(self) -> RepositoryService:
         return RepositoryService()
 
-    def mirror_service(self, catalog: CatalogName) -> BaseMirrorService:
-        return self.service.mirror_service(catalog)
-
-    def repository_plugin(self, catalog: CatalogName) -> RepositoryPlugin:
-        return self.service.repository_plugin(catalog)
-
     def search(self,
                *,
                catalog: CatalogName,
@@ -127,71 +121,37 @@ class RepositoryController(ServiceAppController):
             raise BadRequestError(e)
         return cast(JSON, response)
 
-    def _parse_range_request_header(self,
-                                    range_specifier: str
-                                    ) -> Sequence[tuple[int | None, int | None]]:
+    @cache
+    def field_types(self, catalog: CatalogName) -> Mapping[str, FieldType]:
         """
-        >>> # noinspection PyTypeChecker
-        >>> rc = RepositoryController(app=None, file_url_func=None)
-        >>> rc._parse_range_request_header('bytes=100-200,300-400')
-        [(100, 200), (300, 400)]
-
-        >>> rc._parse_range_request_header('bytes=-100')
-        [(None, 100)]
-
-        >>> rc._parse_range_request_header('bytes=100-')
-        [(100, None)]
-
-        >>> rc._parse_range_request_header('foo=100')
-        []
-
-        >>> rc._parse_range_request_header('')
-        Traceback (most recent call last):
-        ...
-        chalice.app.BadRequestError: Invalid range specifier ''
-
-        >>> rc._parse_range_request_header('100-200')
-        Traceback (most recent call last):
-        ...
-        chalice.app.BadRequestError: Invalid range specifier '100-200'
-
-        >>> rc._parse_range_request_header('bytes=')
-        Traceback (most recent call last):
-        ...
-        chalice.app.BadRequestError: Invalid range specifier 'bytes='
-
-        >>> rc._parse_range_request_header('bytes=100')
-        Traceback (most recent call last):
-        ...
-        chalice.app.BadRequestError: Invalid range specifier 'bytes=100'
-
-        >>> rc._parse_range_request_header('bytes=-')
-        Traceback (most recent call last):
-        ...
-        chalice.app.BadRequestError: Invalid range specifier 'bytes=-'
-
-        >>> rc._parse_range_request_header('bytes=--')
-        Traceback (most recent call last):
-        ...
-        chalice.app.BadRequestError: Invalid range specifier 'bytes=--'
+        Returns the field type for each supported sort and filter field, using
+        the name of the field as provided by clients.
         """
+        result = {}
+        plugin = self.service.metadata_plugin(catalog)
+        for field, path in plugin.field_mapping.items():
+            field_type = self.service.field_type(catalog, path)
+            if isinstance(field_type, FieldType):
+                result[field] = field_type
+        # This field is a synthetic element of the response and will never be
+        # null. Including it here helps to streamline request validation.
+        accessible_field = plugin.special_fields.accessible.name
+        assert accessible_field not in result, result
+        result[accessible_field] = pass_thru_bool
+        return result
 
-        def to_int_or_none(value: str) -> int | None:
-            return None if value == '' else int(value)
 
-        parsed_ranges = []
-        try:
-            unit, ranges = range_specifier.split('=')
-            if unit == 'bytes':
-                for range_spec in ranges.split(','):
-                    start, end = range_spec.split('-')
-                    assert start != '' or end != '', R('Empty range')
-                    parsed_ranges.append((to_int_or_none(start), to_int_or_none(end)))
-            else:
-                assert unit != '', R('Empty range unit')
-        except Exception as e:
-            raise BadRequestError(f'Invalid range specifier {range_specifier!r}') from e
-        return parsed_ranges
+class DownloadController(ServiceAppController):
+
+    @cached_property
+    def service(self) -> RepositoryService:
+        return RepositoryService()
+
+    def mirror_service(self, catalog: CatalogName) -> BaseMirrorService:
+        return self.service.mirror_service(catalog)
+
+    def repository_plugin(self, catalog: CatalogName) -> RepositoryPlugin:
+        return self.service.repository_plugin(catalog)
 
     def download_file(self,
                       catalog: CatalogName,
@@ -340,24 +300,71 @@ class RepositoryController(ServiceAppController):
             raise NotFoundError(f'File {file_uuid!r} with version {file_version!r} '
                                 f'was found in catalog {catalog!r}, however no download is currently available')
 
-    @cache
-    def field_types(self, catalog: CatalogName) -> Mapping[str, FieldType]:
+    def _parse_range_request_header(self,
+                                    range_specifier: str
+                                    ) -> Sequence[tuple[int | None, int | None]]:
         """
-        Returns the field type for each supported sort and filter field, using
-        the name of the field as provided by clients.
+        >>> # noinspection PyTypeChecker
+        >>> dc = DownloadController(app=None, file_url_func=None)
+        >>> dc._parse_range_request_header('bytes=100-200,300-400')
+        [(100, 200), (300, 400)]
+
+        >>> dc._parse_range_request_header('bytes=-100')
+        [(None, 100)]
+
+        >>> dc._parse_range_request_header('bytes=100-')
+        [(100, None)]
+
+        >>> dc._parse_range_request_header('foo=100')
+        []
+
+        >>> dc._parse_range_request_header('')
+        Traceback (most recent call last):
+        ...
+        chalice.app.BadRequestError: Invalid range specifier ''
+
+        >>> dc._parse_range_request_header('100-200')
+        Traceback (most recent call last):
+        ...
+        chalice.app.BadRequestError: Invalid range specifier '100-200'
+
+        >>> dc._parse_range_request_header('bytes=')
+        Traceback (most recent call last):
+        ...
+        chalice.app.BadRequestError: Invalid range specifier 'bytes='
+
+        >>> dc._parse_range_request_header('bytes=100')
+        Traceback (most recent call last):
+        ...
+        chalice.app.BadRequestError: Invalid range specifier 'bytes=100'
+
+        >>> dc._parse_range_request_header('bytes=-')
+        Traceback (most recent call last):
+        ...
+        chalice.app.BadRequestError: Invalid range specifier 'bytes=-'
+
+        >>> dc._parse_range_request_header('bytes=--')
+        Traceback (most recent call last):
+        ...
+        chalice.app.BadRequestError: Invalid range specifier 'bytes=--'
         """
-        result = {}
-        plugin = self.service.metadata_plugin(catalog)
-        for field, path in plugin.field_mapping.items():
-            field_type = self.service.field_type(catalog, path)
-            if isinstance(field_type, FieldType):
-                result[field] = field_type
-        # This field is a synthetic element of the response and will never be
-        # null. Including it here helps to streamline request validation.
-        accessible_field = plugin.special_fields.accessible.name
-        assert accessible_field not in result, result
-        result[accessible_field] = pass_thru_bool
-        return result
+
+        def to_int_or_none(value: str) -> int | None:
+            return None if value == '' else int(value)
+
+        parsed_ranges = []
+        try:
+            unit, ranges = range_specifier.split('=')
+            if unit == 'bytes':
+                for range_spec in ranges.split(','):
+                    start, end = range_spec.split('-')
+                    assert start != '' or end != '', R('Empty range')
+                    parsed_ranges.append((to_int_or_none(start), to_int_or_none(end)))
+            else:
+                assert unit != '', R('Empty range unit')
+        except Exception as e:
+            raise BadRequestError(f'Invalid range specifier {range_specifier!r}') from e
+        return parsed_ranges
 
     def _validate_wait(self, wait: str | None):
         if wait not in ('0', '1', None):
