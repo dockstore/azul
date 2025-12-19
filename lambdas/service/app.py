@@ -620,7 +620,7 @@ deprecated_spec = {
                 **responses.json_content(
                     # The custom return type annotation is an experiment. Please
                     # don't adopt this just yet elsewhere in the program.
-                    signature(app.catalog_controller.list_catalogs).return_annotation
+                    one(signature(app.catalog_controller.list_catalogs).return_annotation.__metadata__)
                 )
             }
         }
