@@ -11,9 +11,6 @@ from concurrent.futures import (
 )
 import json
 import logging
-from typing import (
-    TYPE_CHECKING,
-)
 
 import attrs
 from more_itertools import (
@@ -220,8 +217,6 @@ class RepositoryService(ElasticsearchService):
                                 filters=filters).wrap(chain)
 
         response_stage_cls = plugin.search_response_stage
-        if TYPE_CHECKING:  # work around https://youtrack.jetbrains.com/issue/PY-44728
-            response_stage_cls = SearchResponseStage
         chain = response_stage_cls(service=self,
                                    catalog=catalog,
                                    entity_type=entity_type,
