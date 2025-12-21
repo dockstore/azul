@@ -156,6 +156,11 @@ def parse_filters(raw_filters: str | None) -> FiltersJSON:
         ...
     AssertionError: R('Invalid operator', 'x', 'foo')
 
+    >>> parse_filters('{"x":{"is":{}}}')
+    Traceback (most recent call last):
+        ...
+    AssertionError: R('Values must be an array', 'x')
+
     >>> parse_filters('{"x":{"is":[]}}')
     Traceback (most recent call last):
         ...
@@ -252,6 +257,7 @@ def parse_filters(raw_filters: str | None) -> FiltersJSON:
             assert len(filter) == 1, R('Need exactly one filter per field', field)
             operator, values = one(filter.items())
             assert operator in _filter_operators, R('Invalid operator', field, operator)
+            assert type(values) is list, R('Values must be an array', field)
             assert len(values) > 0, R('Need at least one value', field)
             num_value_types = set(map(type, values))
             num_value_types.discard(type(None))
