@@ -259,10 +259,10 @@ def parse_filters(raw_filters: str | None) -> FiltersJSON:
             assert operator in _filter_operators, R('Invalid operator', field, operator)
             assert type(values) is list, R('Values must be an array', field)
             assert len(values) > 0, R('Need at least one value', field)
-            num_value_types = set(map(type, values))
-            num_value_types.discard(type(None))
-            assert len(num_value_types) < 2, R('Inconsistent value types', field)
-            value_type = only(num_value_types)
+            value_types = set(map(type, values))
+            value_types.discard(type(None))
+            assert len(value_types) < 2, R('Inconsistent value types', field)
+            value_type = only(value_types)
             mismatch = R('Value does not match operator', field, value_type, operator)
             if value_type is None:
                 assert operator in {'is'}, mismatch
