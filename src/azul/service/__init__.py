@@ -8,6 +8,9 @@ from itertools import (
     chain,
 )
 import json
+from json import (
+    JSONDecodeError,
+)
 import logging
 from typing import (
     Protocol,
@@ -125,6 +128,11 @@ def parse_filters(raw_filters: str | None) -> FiltersJSON:
 
     >>> parse_filters('{"y":{"within":[[1,2]]},"x":{"is":[4, 3]}}')
     {'x': {'is': [3, 4]}, 'y': {'within': [[1, 2]]}}
+
+    >>> parse_filters('{]')
+    Traceback (most recent call last):
+        ...
+    AssertionError: R('Filters are not valid JSON')
 
     >>> parse_filters('[]')
     Traceback (most recent call last):
@@ -249,7 +257,10 @@ def parse_filters(raw_filters: str | None) -> FiltersJSON:
     if raw_filters is None:
         return {}
     else:
-        filters = json.loads(raw_filters)
+        try:
+            filters = json.loads(raw_filters)
+        except JSONDecodeError:
+            assert False, R('Filters are not valid JSON')
         assert type(filters) is dict, R('Filters must be an object')
         for field, filter in filters.items():
             assert len(field) > 0, R('Empty field name')
