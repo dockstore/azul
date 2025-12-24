@@ -271,6 +271,8 @@ class MirrorService(BaseMirrorService):
         files = plugin.list_files(a.source, a.prefix)
         for file in files:
             assert file.size is not None, R('File size unknown', file)
+            assert file.size <= MirrorFileService.max_file_size, R(
+                'File too big', file, MirrorFileService.max_file_size)
             if self.may_mirror(a.catalog, file.size):
                 log.debug('Queueing file %r', file)
                 yield MirrorFileAction(catalog=a.catalog,

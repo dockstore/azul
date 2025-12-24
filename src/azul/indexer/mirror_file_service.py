@@ -90,16 +90,19 @@ class FilePart(SerializableAttrs):
     max_size: ClassVar[int] = aws.s3_max_part_size
     max_num_parts: ClassVar[int] = aws.s3_max_num_parts
 
-    #: We observe a download rate of ~14 MB/s. Download time should ideally be
-    #: 1/4 of the Lambda timeout. Since we track the ETag of each part in SQS
-    #: messages, message size becomes another constraint: we observe ETags to be
-    #: 32 byte hexadecimal strings which, if represented in a JSON array, take
-    #: up 35 bytes per item, 36 if the comma is followed by a space. With a
-    #: maximum SQS message size of 256 KiB, we can store approximately 7280
-    #: ETags in an SQS messages, so the largest file we can mirror using a part
-    #: size of 256 MiB is 1.5 TiB.
+    #: In experiments, we observed a download rate of ~25 MB/s for an AWS Lambda
+    #: function downloading from GCS. To leave room for network impairments or
+    #: other partial outages, the normal download time for a single part should
+    #: be one third of the Lambda function timeout. Also, we heuristically
+    #: decided for the part size to not exceed 1 GiB in size in stable
+    # deployments, or 256 MiB in elsewhere.
     #:
-    default_size: ClassVar[int] = 256 * 1024 ** 2
+    default_size: ClassVar[int] = min(
+        1024 ** 3 if config.deployment.is_stable else 256 * 1024 ** 2,
+        int(config.mirror_lambda_timeout * 25 * 1024 ** 2 / 3)
+    )
+
+    assert min_size <= default_size <= max_size
 
     @classmethod
     def first(cls, file: File, part_size: int) -> Self:
@@ -166,6 +169,24 @@ class BaseMirrorFileService:
         if bucket is None or self.catalog in config.integration_test_catalogs:
             bucket = aws.mirror_bucket
         return StorageService(bucket)
+
+    #: Since we track the ETags of all parts of a multipart file in SQS
+    #: messages, the maximum file size is primarily constrained by the SQS
+    #: message size. We observe ETags to be 32-byte hexadecimal strings which,
+    #: if represented in a JSON array, take up 35 bytes per item, 36 if the
+    #: comma is followed by a space. This limits the number of ETags we can
+    #: store in a message, while leaving room for 64 KiB of other information,
+    #: and thereby also limits the maximum size of files we can mirror.
+    #:
+    max_file_size = (
+        FilePart.default_size
+        * (aws.sqs_max_message_size - 64 * 1024) / 36
+    )
+
+    # We should be able to copy files 1.5 TiB in size or larger. Currently, the
+    # largest file in the open-access datasets for AnVIL is 1.3 TiB.
+    #
+    assert 1.5 * 1024 ** 4 <= max_file_size
 
     def mirror_uri(self, file: File) -> str:
         """
