@@ -69,12 +69,14 @@ class FilePart(SerializableAttrs):
     """
     A part of a mirrored file
     """
+
     #: The part number, starting at 0 for the first part, unlike S3 API part
     #: numbers, which start at 1.
     #:
     index: int
 
     #: Offset of the first byte of this part, relative to the start of the file
+    #:
     offset: int
 
     #: The size of this part
@@ -155,6 +157,7 @@ class BaseMirrorFileService:
     Service for reading mirrored files, plus some test support. The most
     prominent reader of mirrored files is the service app.
     """
+
     catalog: CatalogName
 
     @cached_property
