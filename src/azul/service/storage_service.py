@@ -64,12 +64,6 @@ log = getLogger(__name__)
 # 5 MB; see https://docs.aws.amazon.com/AmazonS3/latest/dev/qfacts.html
 AWS_S3_DEFAULT_MINIMUM_PART_SIZE = 5242880
 
-MULTIPART_UPLOAD_MAX_WORKERS = 4
-
-# The amount of pending tasks that can be queued for execution. A value of 0
-# allows no tasks to be queued, only running tasks allowed in the thread pool.
-MULTIPART_UPLOAD_MAX_PENDING_PARTS = 4
-
 Tagging = Mapping[str, str]
 
 
