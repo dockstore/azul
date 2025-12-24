@@ -204,6 +204,20 @@ class IssueTemplate:
                 actual_type = issue['type']['name']
                 assert type == actual_type, (type, actual_type)
                 log.info('Successfully created and verified issue #%s', issue_number)
+                owner, _ = repository.split('/')
+                project = self.gh_json(
+                    'project', 'list',
+                    '--format', 'json',
+                    '--owner', owner,
+                    '--jq', '.projects[]|select(.title == "Azul")'
+                )
+                item = self.gh_json(
+                    'project', 'item-add', str(project['number']),
+                    '--owner', owner,
+                    '--url', url,
+                    '--format', 'json'
+                )
+                assert item['id'], item
 
     def gh_json(self, *args: str) -> dict:
         """
