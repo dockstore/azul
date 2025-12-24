@@ -155,16 +155,13 @@ class IssueTemplate:
     def create_issue(self, title_date: date) -> None:
         title = self.properties['title'] + ' ' + str(title_date)
         repository = self.properties.get('_repository', os.environ['GITHUB_REPO'])
-        command = [
-            'gh', 'issue', 'list',
+        results = self.gh_json(
+            'issue', 'list',
             f'--repo={repository}',
             f'--search=in:title "{title}"',
             '--json=number',
             '--limit=10',
-        ]
-        log.info('Running %r', command)
-        process = subprocess.run(command, check=True, stdout=subprocess.PIPE)
-        results = json.loads(process.stdout)
+        )
         issues = set(map(itemgetter('number'), results))
 
         if issues:
@@ -173,8 +170,7 @@ class IssueTemplate:
             type = self.properties.get('type')
             assert type is not None
             command = [
-                'gh', 'api',
-                '--method', 'POST',
+                'api', '--method', 'POST',
                 f'/repos/{repository}/issues',
                 '-H', 'Accept: application/vnd.github+json',
                 '-H', 'X-GitHub-Api-Version: 2022-11-28',
@@ -189,14 +185,12 @@ class IssueTemplate:
             for label in labels:
                 command.extend(['-f', f'labels[]={label}'])
             if self.dry_run:
-                log.info('Would run %r', command)
+                log.info('Would run %r', ['gh', *command])
             else:
-                log.info('Running %r …', command)
-                process = subprocess.run(command, check=True, stdout=subprocess.PIPE)
+                issue = self.gh_json(*command)
                 # If the current token lacks the necessary permissions, the GitHub
                 # CLI silently fails to apply the requested labels or assignees. We
                 # therefore need to verify those.
-                issue = json.loads(process.stdout)
                 url = issue['html_url']
                 log.info('… created %r, verifying labels and assignees …', url)
                 path = urllib.parse.urlparse(url).path.removeprefix('/')
@@ -210,6 +204,16 @@ class IssueTemplate:
                 actual_type = issue['type']['name']
                 assert type == actual_type, (type, actual_type)
                 log.info('Successfully created and verified issue #%s', issue_number)
+
+    def gh_json(self, *args: str) -> dict:
+        """
+        Invoke the ``gh`` command with the given arguments and return the
+        resulting JSON output.
+        """
+        command = ['gh', *args]
+        log.info('Running %r', command)
+        process = subprocess.run(command, check=True, stdout=subprocess.PIPE)
+        return json.loads(process.stdout)
 
 
 def main(args):
