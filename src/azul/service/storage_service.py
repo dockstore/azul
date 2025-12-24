@@ -61,9 +61,6 @@ if TYPE_CHECKING:
 
 log = getLogger(__name__)
 
-# 5 MB; see https://docs.aws.amazon.com/AmazonS3/latest/dev/qfacts.html
-AWS_S3_DEFAULT_MINIMUM_PART_SIZE = 5242880
-
 Tagging = Mapping[str, str]
 
 

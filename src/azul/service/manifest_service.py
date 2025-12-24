@@ -144,7 +144,6 @@ from azul.service.elasticsearch_service import (
     ToDictStage,
 )
 from azul.service.storage_service import (
-    AWS_S3_DEFAULT_MINIMUM_PART_SIZE,
     StorageObjectNotFound,
     StorageService,
 )
@@ -1310,7 +1309,7 @@ class PagedManifestGenerator(ClientSidePagingManifestGenerator):
 
     part_size = 50 * 1024 * 1024
 
-    assert part_size >= AWS_S3_DEFAULT_MINIMUM_PART_SIZE
+    assert aws.s3_min_part_size <= part_size <= aws.s3_max_part_size
 
     def write(self,
               manifest_key: ManifestKey,

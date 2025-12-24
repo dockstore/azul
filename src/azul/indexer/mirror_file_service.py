@@ -84,9 +84,9 @@ class FilePart(SerializableAttrs):
     #: Various S3 quotas related to parts and part sizes
     #: https://docs.aws.amazon.com/AmazonS3/latest/userguide/qfacts.html
     #:
-    min_size: ClassVar[int] = 5 * 1024 ** 2
-    max_size: ClassVar[int] = 5 * 1024 ** 3
-    max_num_parts: ClassVar[int] = 10000
+    min_size: ClassVar[int] = aws.s3_min_part_size
+    max_size: ClassVar[int] = aws.s3_max_part_size
+    max_num_parts: ClassVar[int] = aws.s3_max_num_parts
 
     #: We observe a download rate of ~14 MB/s. Download time should ideally be
     #: 1/4 of the Lambda timeout. Since we track the ETag of each part in SQS
