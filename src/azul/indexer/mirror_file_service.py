@@ -374,7 +374,7 @@ class MirrorFileService(BaseMirrorFileService, HasCachedHttpClient):
                           data=json.dumps(content).encode(),
                           content_type='application/json')
 
-    def _get_repository_url(self, file: File) -> furl:
+    def _repository_url(self, file: File) -> furl:
         assert config.is_tdr_enabled(self.catalog), R(
             'Only TDR catalogs are supported', self.catalog)
         assert file.drs_uri is not None, R(
@@ -385,7 +385,7 @@ class MirrorFileService(BaseMirrorFileService, HasCachedHttpClient):
         return furl(access.url)
 
     def _download(self, file: File, part: FilePart | None = None) -> bytes:
-        download_url = self._get_repository_url(file)
+        download_url = self._repository_url(file)
         start = time.time()
         if part is None:
             headers = {}
