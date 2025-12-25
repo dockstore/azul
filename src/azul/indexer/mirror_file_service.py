@@ -203,6 +203,17 @@ class BaseMirrorFileService:
                                                file_name=file.name,
                                                content_type=file.content_type)
 
+    def info_exists(self, file: File) -> bool:
+        return self._get_info(file) is not None
+
+    def file_exists(self, file: File) -> bool:
+        try:
+            self._storage.head(self._file_object_key(file))
+        except StorageObjectNotFound:
+            return False
+        else:
+            return True
+
     def _get_info(self, file: File) -> JSON | None:
         key = self._info_object_key(file)
         try:
@@ -220,22 +231,23 @@ class BaseMirrorFileService:
 
     info_prefix, file_prefix = 'info', 'file'
 
-    def _file_object_key(self, file: File) -> str:
-        return self._object_key(self.file_prefix, file)
-
     def _info_object_key(self, file: File) -> str:
         return self._object_key(self.info_prefix, file, extension='.json')
 
-    def info_exists(self, file: File) -> bool:
-        return self._get_info(file) is not None
+    def _file_object_key(self, file: File) -> str:
+        return self._object_key(self.file_prefix, file)
 
-    def file_exists(self, file: File) -> bool:
-        try:
-            self._storage.head(self._file_object_key(file))
-        except StorageObjectNotFound:
-            return False
-        else:
-            return True
+    def _object_key(self, prefix: str, file: File, *, extension: str = '') -> str:
+        digest = file.digest
+        digest_value = digest.value.lower()
+        assert all(c in string.hexdigits for c in digest_value), R(
+            'Expected a hexadecimal digest', digest)
+        mirror_prefix = self._mirror_prefix
+        return f'{mirror_prefix}{prefix}/{digest_value}.{digest.type}{extension}'
+
+    @cached_property
+    def _mirror_prefix(self) -> str:
+        return '_it/' if self.catalog in config.integration_test_catalogs else ''
 
     def delete_it_files(self):
         """
@@ -252,18 +264,6 @@ class BaseMirrorFileService:
         keys = self._storage.list(prefix)
         assert len(keys) <= 300, R('Too many objects', len(keys))
         self._storage.delete(keys, batch_size=100)
-
-    @cached_property
-    def _mirror_prefix(self) -> str:
-        return '_it/' if self.catalog in config.integration_test_catalogs else ''
-
-    def _object_key(self, prefix: str, file: File, *, extension: str = '') -> str:
-        digest = file.digest
-        digest_value = digest.value.lower()
-        assert all(c in string.hexdigits for c in digest_value), R(
-            'Expected a hexadecimal digest', digest)
-        mirror_prefix = self._mirror_prefix
-        return f'{mirror_prefix}{prefix}/{digest_value}.{digest.type}{extension}'
 
 
 class SchemaUrlFunc(Protocol):
