@@ -196,10 +196,10 @@ class BaseMirrorFileService:
         """
         return str(furl(scheme='s3',
                         netloc=self._storage.bucket_name,
-                        path=self.mirror_object_key(file)))
+                        path=self._file_object_key(file)))
 
     def mirror_url(self, file: File) -> str:
-        return self._storage.get_presigned_url(key=self.mirror_object_key(file),
+        return self._storage.get_presigned_url(key=self._file_object_key(file),
                                                file_name=file.name,
                                                content_type=file.content_type)
 
@@ -220,7 +220,7 @@ class BaseMirrorFileService:
 
     info_prefix, file_prefix = 'info', 'file'
 
-    def mirror_object_key(self, file: File) -> str:
+    def _file_object_key(self, file: File) -> str:
         return self._object_key(self.file_prefix, file)
 
     def _info_object_key(self, file: File) -> str:
@@ -231,7 +231,7 @@ class BaseMirrorFileService:
 
     def file_exists(self, file: File) -> bool:
         try:
-            self._storage.head(self.mirror_object_key(file))
+            self._storage.head(self._file_object_key(file))
         except StorageObjectNotFound:
             return False
         else:
@@ -309,7 +309,7 @@ class MirrorFileService(BaseMirrorFileService, HasCachedHttpClient):
         :meth:`begin_mirroring_file` instead.
         """
         file_content = self._download(file)
-        self._storage.put(object_key=self.mirror_object_key(file),
+        self._storage.put(object_key=self._file_object_key(file),
                           data=file_content,
                           content_type=self.file_object_content_type,
                           overwrite=False)
@@ -324,7 +324,7 @@ class MirrorFileService(BaseMirrorFileService, HasCachedHttpClient):
         ID.
         """
         storage = self._storage
-        key = self.mirror_object_key(file)
+        key = self._file_object_key(file)
         upload = storage.create_multipart_upload(object_key=key,
                                                  content_type=self.file_object_content_type)
         return upload.id
@@ -418,7 +418,7 @@ class MirrorFileService(BaseMirrorFileService, HasCachedHttpClient):
                     upload_id: str
                     ) -> 'MultipartUpload':
         storage = self._storage
-        key = self.mirror_object_key(file)
+        key = self._file_object_key(file)
         return storage.load_multipart_upload(object_key=key,
                                              upload_id=upload_id)
 

@@ -188,7 +188,7 @@ class TestMirrorController(DCP2TestCase,
             self.mirror_controller.mirror(event)
         service = self.file_service
         response = self._s3.get_object(Bucket=self.mirror_bucket,
-                                       Key=service.mirror_object_key(file))
+                                       Key=service._file_object_key(file))
         mirrored_file_contents = response['Body'].read()
         self.assertEqual(mirrored_file_contents, self._file_contents)
 
