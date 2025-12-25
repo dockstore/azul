@@ -293,7 +293,7 @@ class MirrorFileService(BaseMirrorFileService, HasCachedHttpClient):
     # value in the `Content-Type` metadata. We haven't found an efficient way to
     # update the content type of an existing object without copying its data.
     #
-    file_object_content_type = 'application/octet-stream'
+    _file_object_content_type = 'application/octet-stream'
 
     @cached_property
     def repository_plugin(self) -> RepositoryPlugin:
@@ -307,7 +307,7 @@ class MirrorFileService(BaseMirrorFileService, HasCachedHttpClient):
         file_content = self._download(file)
         self._storage.put(object_key=self._file_object_key(file),
                           data=file_content,
-                          content_type=self.file_object_content_type,
+                          content_type=self._file_object_content_type,
                           overwrite=False)
         hasher = get_resumable_hasher(file.digest.type)
         hasher.update(file_content)
@@ -322,7 +322,7 @@ class MirrorFileService(BaseMirrorFileService, HasCachedHttpClient):
         storage = self._storage
         key = self._file_object_key(file)
         upload = storage.create_multipart_upload(object_key=key,
-                                                 content_type=self.file_object_content_type)
+                                                 content_type=self._file_object_content_type)
         return upload.id
 
     def mirror_file_part(self,
