@@ -268,11 +268,7 @@ class BaseMirrorFileService:
 
 class SchemaUrlFunc(Protocol):
 
-    def __call__(self,
-                 *,
-                 schema_name: str,
-                 version: int
-                 ) -> mutable_furl: ...
+    def __call__(self, *, schema_name: str, version: int) -> mutable_furl: ...
 
 
 @attrs.frozen(kw_only=True, slots=False)
