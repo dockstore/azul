@@ -221,10 +221,10 @@ class BaseMirrorFileService:
     info_prefix, file_prefix = 'info', 'file'
 
     def mirror_object_key(self, file: File) -> str:
-        return self._file_key(self.file_prefix, file)
+        return self._object_key(self.file_prefix, file)
 
     def info_object_key(self, file: File) -> str:
-        return self._file_key(self.info_prefix, file, extension='.json')
+        return self._object_key(self.info_prefix, file, extension='.json')
 
     def info_exists(self, file: File) -> bool:
         return self._get_info(file) is not None
@@ -257,12 +257,7 @@ class BaseMirrorFileService:
     def _mirror_prefix(self) -> str:
         return '_it/' if self.catalog in config.integration_test_catalogs else ''
 
-    def _file_key(self,
-                  prefix: str,
-                  file: File,
-                  *,
-                  extension: str = ''
-                  ) -> str:
+    def _object_key(self, prefix: str, file: File, *, extension: str = '') -> str:
         digest = file.digest
         digest_value = digest.value.lower()
         assert all(c in string.hexdigits for c in digest_value), R(
