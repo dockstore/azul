@@ -204,7 +204,7 @@ class BaseMirrorFileService:
                                                content_type=file.content_type)
 
     def _get_info(self, file: File) -> JSON | None:
-        key = self.info_object_key(file)
+        key = self._info_object_key(file)
         try:
             content = self._storage.get(key)
         except StorageObjectNotFound:
@@ -223,7 +223,7 @@ class BaseMirrorFileService:
     def mirror_object_key(self, file: File) -> str:
         return self._object_key(self.file_prefix, file)
 
-    def info_object_key(self, file: File) -> str:
+    def _info_object_key(self, file: File) -> str:
         return self._object_key(self.info_prefix, file, extension='.json')
 
     def info_exists(self, file: File) -> bool:
@@ -372,7 +372,7 @@ class MirrorFileService(BaseMirrorFileService, HasCachedHttpClient):
         }
 
     def _put_info(self, file: File):
-        key = self.info_object_key(file)
+        key = self._info_object_key(file)
         content = self.info_object(file)
         self._storage.put(object_key=key,
                           data=json.dumps(content).encode(),

@@ -118,7 +118,7 @@ class TestMirrorController(DCP2TestCase,
 
                     service = self.file_service
                     self._s3.delete_object(Bucket=self.mirror_bucket,
-                                           Key=service.info_object_key(file))
+                                           Key=service._info_object_key(file))
 
                     with self.subTest('mirror_file', corrupted=True):
                         self._test_corrupted_download(file_message)
