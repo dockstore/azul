@@ -361,7 +361,7 @@ class MirrorFileService(BaseMirrorFileService, HasCachedHttpClient):
         self._get_info(file)
         self._put_info(file)
 
-    def info_object(self, file: File) -> JSON:
+    def _info(self, file: File) -> JSON:
         return {
             'content-type': file.content_type,
             '$schema': str(self._schema_url_func(schema_name='info', version=1))
@@ -369,7 +369,7 @@ class MirrorFileService(BaseMirrorFileService, HasCachedHttpClient):
 
     def _put_info(self, file: File):
         key = self._info_object_key(file)
-        content = self.info_object(file)
+        content = self._info(file)
         self._storage.put(object_key=key,
                           data=json.dumps(content).encode(),
                           content_type='application/json')

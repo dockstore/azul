@@ -212,7 +212,7 @@ class TestMirrorController(DCP2TestCase,
         client = http_client(log)
         file = MagicMock(content_type='text/plain')
         service = self.file_service
-        info = service.info_object(file)
+        info = service._info(file)
         response = client.request('GET', info['$schema'])
         self.assertEqual(200, response.status, response.data)
         schema = json.loads(response.data)
