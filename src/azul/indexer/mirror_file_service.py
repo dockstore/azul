@@ -284,7 +284,7 @@ class MirrorFileService(BaseMirrorFileService, HasCachedHttpClient):
     by the indexer app.
     """
 
-    schema_url_func: SchemaUrlFunc
+    _schema_url_func: SchemaUrlFunc
 
     # We don't store the mirrored files' actual content type(s) in S3's
     # `Content-Type` metadata because a single file object may store the
@@ -368,7 +368,7 @@ class MirrorFileService(BaseMirrorFileService, HasCachedHttpClient):
     def info_object(self, file: File) -> JSON:
         return {
             'content-type': file.content_type,
-            '$schema': str(self.schema_url_func(schema_name='info', version=1))
+            '$schema': str(self._schema_url_func(schema_name='info', version=1))
         }
 
     def _put_info(self, file: File):
