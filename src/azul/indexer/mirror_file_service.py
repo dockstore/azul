@@ -385,7 +385,7 @@ class MirrorFileService(BaseMirrorFileService, HasCachedHttpClient):
         return furl(access.url)
 
     def _download(self, file: File, part: FilePart | None = None) -> bytes:
-        download_url = self._repository_url(file)
+        url = self._repository_url(file)
         start = time.time()
         if part is None:
             headers = {}
@@ -397,9 +397,7 @@ class MirrorFileService(BaseMirrorFileService, HasCachedHttpClient):
             expected_status = 206
         # Ideally we would stream the response, but boto only supports uploading
         # from streams that are seekable.
-        response = self._http_client.request('GET',
-                                             str(download_url),
-                                             headers=headers)
+        response = self._http_client.request('GET', str(url), headers=headers)
         if response.status == expected_status:
             actual_size = len(response.data)
             log.info('Downloaded %d bytes in %.3fs from file %r',
