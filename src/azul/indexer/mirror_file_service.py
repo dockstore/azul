@@ -296,7 +296,7 @@ class MirrorFileService(BaseMirrorFileService, HasCachedHttpClient):
     _file_object_content_type = 'application/octet-stream'
 
     @cached_property
-    def repository_plugin(self) -> RepositoryPlugin:
+    def _repository_plugin(self) -> RepositoryPlugin:
         return RepositoryPlugin.load(self.catalog).create(self.catalog)
 
     def mirror_file(self, file: File):
@@ -379,7 +379,7 @@ class MirrorFileService(BaseMirrorFileService, HasCachedHttpClient):
             'Only TDR catalogs are supported', self.catalog)
         assert file.drs_uri is not None, R(
             'File cannot be downloaded', file)
-        drs = self.repository_plugin.drs_client(authentication=None)
+        drs = self._repository_plugin.drs_client(authentication=None)
         access = drs.get_object(file.drs_uri, AccessMethod.gs)
         assert access.method is AccessMethod.https, access
         return furl(access.url)
