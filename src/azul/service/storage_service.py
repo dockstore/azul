@@ -103,20 +103,19 @@ class StorageService:
             return response['Body'].read()
 
     def put(self,
+            *,
             object_key: str,
             data: bytes,
             content_type: str | None = None,
             tagging: Tagging | None = None,
-            *,
-            overwrite: bool = True,
-            **kwargs):
+            overwrite: bool = True):
         try:
+            kwargs = self._object_creation_kwargs(content_type=content_type,
+                                                  tagging=tagging,
+                                                  overwrite=overwrite)
             self._s3.put_object(Bucket=self.bucket_name,
                                 Key=object_key,
                                 Body=data,
-                                **self._object_creation_kwargs(content_type=content_type,
-                                                               tagging=tagging,
-                                                               overwrite=overwrite),
                                 **kwargs)
         except botocore.exceptions.ClientError as e:
             self._handle_overwrite(e, object_key)
