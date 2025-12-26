@@ -57,9 +57,7 @@ from azul.types import (
 )
 
 if TYPE_CHECKING:
-    from mypy_boto3_s3.service_resource import (
-        MultipartUpload,
-    )
+    pass
 
 log = logging.getLogger(__name__)
 
@@ -321,9 +319,9 @@ class MirrorFileService(BaseMirrorFileService, HasCachedHttpClient):
         """
         object_key = self._file_object_key(file)
         content_type = self._file_object_content_type
-        upload = self._storage.create_multipart_upload(object_key=object_key,
-                                                       content_type=content_type)
-        return upload.id
+        upload_id = self._storage.create_multipart_upload(object_key=object_key,
+                                                          content_type=content_type)
+        return upload_id
 
     def mirror_file_part(self,
                          file: File,
@@ -336,12 +334,13 @@ class MirrorFileService(BaseMirrorFileService, HasCachedHttpClient):
         :meth:`begin_mirroring_file` and return the uploaded part's ETag.
         The provided hasher is mutated to incorporated the part's content.
         """
-        upload = self._get_upload(file, upload_id)
+        object_key = self._file_object_key(file)
         content = self._download(file, part)
         hasher.update(content)
-        return self._storage.upload_multipart_part(buffer=content,
+        return self._storage.upload_multipart_part(object_key=object_key,
+                                                   upload_id=upload_id,
                                                    part_number=part.index + 1,
-                                                   upload=upload)
+                                                   buffer=content)
 
     def finish_mirroring_file(self,
                               *,
@@ -353,8 +352,9 @@ class MirrorFileService(BaseMirrorFileService, HasCachedHttpClient):
         """
         Complete a multipart upload begun with :meth:`begin_mirroring_file`.
         """
-        upload = self._get_upload(file, upload_id)
-        self._storage.complete_multipart_upload(upload=upload,
+        object_key = self._file_object_key(file)
+        self._storage.complete_multipart_upload(object_key=object_key,
+                                                upload_id=upload_id,
                                                 etags=etags,
                                                 overwrite=False)
         self._verify_digest(file, hasher)
@@ -406,15 +406,6 @@ class MirrorFileService(BaseMirrorFileService, HasCachedHttpClient):
             return response.data
         else:
             raise RuntimeError('Unexpected response from repository', response.status)
-
-    def _get_upload(self,
-                    file: File,
-                    upload_id: str
-                    ) -> 'MultipartUpload':
-        storage = self._storage
-        key = self._file_object_key(file)
-        return storage.load_multipart_upload(object_key=key,
-                                             upload_id=upload_id)
 
     def _verify_digest(self, file: File, hasher: Hasher):
         expected_digest = file.digest

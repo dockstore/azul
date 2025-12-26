@@ -52,13 +52,10 @@ if TYPE_CHECKING:
     from mypy_boto3_s3.client import (
         S3Client,
     )
-    from mypy_boto3_s3.service_resource import (
-        MultipartUpload,
-    )
     from mypy_boto3_s3.type_defs import (
-        DeleteTypeDef,
+        CompletedPartTypeDef,
         HeadObjectOutputTypeDef,
-)
+    )
 
 log = getLogger(__name__)
 
@@ -141,39 +138,40 @@ class StorageService:
         return keys
 
     def create_multipart_upload(self,
+                                *,
                                 object_key: str,
                                 content_type: str | None = None,
                                 tagging: Tagging | None = None
-                                ) -> 'MultipartUpload':
+                                ) -> str:
         kwargs = self._object_creation_kwargs(content_type=content_type,
                                               tagging=tagging)
-        return self._create_multipart_upload(object_key=object_key, **kwargs)
-
-    def _create_multipart_upload(self, *, object_key, **kwargs) -> 'MultipartUpload':
-        api_response = self._s3.create_multipart_upload(Bucket=self.bucket_name,
-                                                        Key=object_key,
-                                                        **kwargs)
-        upload_id = api_response['UploadId']
-        return self.load_multipart_upload(object_key, upload_id)
-
-    def load_multipart_upload(self, object_key, upload_id) -> 'MultipartUpload':
-        s3 = aws.s3_resource
-        return s3.MultipartUpload(self.bucket_name, object_key, upload_id)
+        response = self._s3.create_multipart_upload(Bucket=self.bucket_name,
+                                                    Key=object_key,
+                                                    **kwargs)
+        return response['UploadId']
 
     def upload_multipart_part(self,
-                              buffer: str | bytes | IO | StreamingBody,
+                              *,
+                              object_key: str,
+                              upload_id: str,
                               part_number: int,
-                              upload: 'MultipartUpload'
+                              buffer: str | bytes | IO | StreamingBody
                               ) -> str:
-        return upload.Part(part_number).upload(Body=buffer)['ETag']
+        response = self._s3.upload_part(Bucket=self.bucket_name,
+                                        Key=object_key,
+                                        UploadId=upload_id,
+                                        PartNumber=part_number,
+                                        Body=buffer)
+        return response['ETag']
 
     def complete_multipart_upload(self,
-                                  upload: 'MultipartUpload',
-                                  etags: Sequence[str],
                                   *,
+                                  object_key: str,
+                                  upload_id: str,
+                                  etags: Sequence[str],
                                   overwrite: bool = True,
                                   ) -> None:
-        parts = [
+        parts: list[CompletedPartTypeDef] = [
             {
                 'PartNumber': index + 1,
                 'ETag': etag
@@ -181,10 +179,13 @@ class StorageService:
             for index, etag in enumerate(etags)
         ]
         try:
-            upload.complete(MultipartUpload={'Parts': parts},
-                            **self._object_creation_kwargs(overwrite=overwrite))
+            self._s3.complete_multipart_upload(Bucket=self.bucket_name,
+                                               Key=object_key,
+                                               UploadId=upload_id,
+                                               MultipartUpload={'Parts': parts},
+                                               **self._object_creation_kwargs(overwrite=overwrite))
         except botocore.exceptions.ClientError as e:
-            self._handle_overwrite(e, upload.object_key)
+            self._handle_overwrite(e, object_key)
 
     def upload(self,
                file_path: str,

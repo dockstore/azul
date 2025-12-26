@@ -1326,11 +1326,10 @@ class PagedManifestGenerator(ClientSidePagingManifestGenerator):
             type(self).manifest_config.fset(self, config)
         object_key = self.s3_object_key(manifest_key)
         if partition.multipart_upload_id is None:
-            upload = self.storage.create_multipart_upload(object_key)
-            partition = partition.with_upload(upload.id)
+            upload_id = self.storage.create_multipart_upload(object_key=object_key)
+            partition = partition.with_upload(upload_id)
         else:
-            upload = self.storage.load_multipart_upload(object_key=object_key,
-                                                        upload_id=partition.multipart_upload_id)
+            upload_id = partition.multipart_upload_id
         if partition.page_index is None:
             partition = partition.first_page()
         with BytesIO() as buffer:
@@ -1343,10 +1342,15 @@ class PagedManifestGenerator(ClientSidePagingManifestGenerator):
                         break
                 if buffer.tell() > 0:
                     buffer.seek(0)
-                    part_etag = self.storage.upload_multipart_part(buffer, partition.index + 1, upload)
+                    part_etag = self.storage.upload_multipart_part(object_key=object_key,
+                                                                   upload_id=upload_id,
+                                                                   part_number=partition.index + 1,
+                                                                   buffer=buffer)
                     partition = partition.next(part_etag=part_etag)
                 if partition.is_last_page:
-                    self.storage.complete_multipart_upload(upload, partition.part_etags)
+                    self.storage.complete_multipart_upload(object_key=object_key,
+                                                           upload_id=upload_id,
+                                                           etags=partition.part_etags)
                     file_name = self.file_name(manifest_key, base_name=partition.file_name)
                     tagging = self.tagging(file_name)
                     if tagging is not None:
