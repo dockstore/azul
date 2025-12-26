@@ -1238,7 +1238,7 @@ class ManifestGenerator(metaclass=ABCMeta):
         raise NotImplementedError
 
     @property
-    def storage(self):
+    def storage(self) -> StorageService:
         return self.service.storage_service
 
 
