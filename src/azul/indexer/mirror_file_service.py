@@ -319,10 +319,10 @@ class MirrorFileService(BaseMirrorFileService, HasCachedHttpClient):
         Initiate a multipart upload of the file's content and return the upload
         ID.
         """
-        storage = self._storage
-        key = self._file_object_key(file)
-        upload = storage.create_multipart_upload(object_key=key,
-                                                 content_type=self._file_object_content_type)
+        object_key = self._file_object_key(file)
+        content_type = self._file_object_content_type
+        upload = self._storage.create_multipart_upload(object_key=object_key,
+                                                       content_type=content_type)
         return upload.id
 
     def mirror_file_part(self,
@@ -337,11 +337,11 @@ class MirrorFileService(BaseMirrorFileService, HasCachedHttpClient):
         The provided hasher is mutated to incorporated the part's content.
         """
         upload = self._get_upload(file, upload_id)
-        file_content = self._download(file, part)
-        hasher.update(file_content)
-        return self._storage.upload_multipart_part(file_content,
-                                                   part.index + 1,
-                                                   upload)
+        content = self._download(file, part)
+        hasher.update(content)
+        return self._storage.upload_multipart_part(buffer=content,
+                                                   part_number=part.index + 1,
+                                                   upload=upload)
 
     def finish_mirroring_file(self,
                               *,
@@ -354,8 +354,8 @@ class MirrorFileService(BaseMirrorFileService, HasCachedHttpClient):
         Complete a multipart upload begun with :meth:`begin_mirroring_file`.
         """
         upload = self._get_upload(file, upload_id)
-        self._storage.complete_multipart_upload(upload,
-                                                etags,
+        self._storage.complete_multipart_upload(upload=upload,
+                                                etags=etags,
                                                 overwrite=False)
         self._verify_digest(file, hasher)
         self._get_info(file)
@@ -368,10 +368,10 @@ class MirrorFileService(BaseMirrorFileService, HasCachedHttpClient):
         }
 
     def _put_info(self, file: File):
-        key = self._info_object_key(file)
-        content = self._info(file)
-        self._storage.put(object_key=key,
-                          data=json.dumps(content).encode(),
+        object_key = self._info_object_key(file)
+        info = self._info(file)
+        self._storage.put(object_key=object_key,
+                          data=json.dumps(info).encode(),
                           content_type='application/json')
 
     def _repository_url(self, file: File) -> furl:
