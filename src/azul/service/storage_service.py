@@ -56,8 +56,9 @@ if TYPE_CHECKING:
         MultipartUpload,
     )
     from mypy_boto3_s3.type_defs import (
+        DeleteTypeDef,
         HeadObjectOutputTypeDef,
-    )
+)
 
 log = getLogger(__name__)
 
@@ -125,13 +126,8 @@ class StorageService:
         num_keys = len(keys)
         for batch in chunked(keys, batch_size):
             log.debug('Deleting batch of objects: %r', batch)
-            self._s3.delete_objects(Bucket=self.bucket_name,
-                                    Delete={
-                                        'Objects': [
-                                            {'Key': key}
-                                            for key in batch
-                                        ]
-                                    })
+            delete = {'Objects': [{'Key': key} for key in batch]}
+            self._s3.delete_objects(Bucket=self.bucket_name, Delete=delete)
         log.info('Deleted %d objects overall', num_keys)
 
     def list(self, prefix: str) -> OrderedSet[str]:
