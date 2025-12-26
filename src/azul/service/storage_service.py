@@ -209,7 +209,7 @@ class StorageService:
                                 content_type: str | None = None,
                                 tagging: Tagging | None = None,
                                 overwrite: bool = True
-                                ) -> Mapping[str, str]:
+                                ) -> dict[str, str]:
         kwargs = {}
         if content_type is not None:
             kwargs['ContentType'] = content_type
