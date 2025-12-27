@@ -210,14 +210,12 @@ class StorageService:
         extra_args: dict[str, str] = {}
         if content_type is not None:
             extra_args['ContentType'] = content_type
+        if tagging is not None:
+            extra_args['Tagging'] = urlencode(tagging)
         self._s3.upload_file(Filename=file_path,
                              Bucket=self.bucket_name,
                              Key=object_key,
                              ExtraArgs=extra_args)
-        # upload_file doesn't support tags so we need to make a separate request
-        # https://stackoverflow.com/a/56351011/7830612
-        if tagging:
-            self.put_object_tagging(object_key, tagging)
 
     def get_presigned_url(self,
                           key: str,
