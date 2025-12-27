@@ -215,7 +215,7 @@ class BaseMirrorFileService:
     def _get_info(self, file: File) -> JSON | None:
         key = self._info_object_key(file)
         try:
-            content = self._storage.get(key)
+            content = self._storage.get_object(key)
         except StorageObjectNotFound:
             return None
         else:

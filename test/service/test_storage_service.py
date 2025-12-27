@@ -59,17 +59,17 @@ class StorageServiceTest(StorageServiceTestCase):
 
         # NOTE: Ensure that the key does not exist before writing.
         with self.assertRaises(StorageObjectNotFound):
-            self.storage_service.get(sample_key)
+            self.storage_service.get_object(sample_key)
 
         self.storage_service.put(object_key=sample_key, data=sample_content)
 
-        self.assertEqual(sample_content, self.storage_service.get(sample_key))
+        self.assertEqual(sample_content, self.storage_service.get_object(sample_key))
 
     def test_simple_get_unknown_item(self):
         sample_key = 'foo-simple'
 
         with self.assertRaises(StorageObjectNotFound):
-            self.storage_service.get(sample_key)
+            self.storage_service.get_object(sample_key)
 
     def test_presigned_url(self):
         sample_key = 'foo-presigned-url'

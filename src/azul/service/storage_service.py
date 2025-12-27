@@ -96,7 +96,7 @@ class StorageService:
             else:
                 raise e
 
-    def get(self, object_key: str) -> bytes:
+    def get_object(self, object_key: str) -> bytes:
         try:
             response = self._s3.get_object(Bucket=self.bucket_name,
                                            Key=object_key)

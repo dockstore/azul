@@ -134,7 +134,7 @@ class HealthController(AppController):
                                 self.app.catalog, config.default_catalog)
         else:
             try:
-                cache = json.loads(self.storage_service.get(self._cache_key))
+                cache = json.loads(self.storage_service.get_object(self._cache_key))
             except StorageObjectNotFound:
                 raise NotFoundError('Cached health object does not exist')
             else:
