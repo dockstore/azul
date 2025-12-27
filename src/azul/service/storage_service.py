@@ -118,7 +118,8 @@ class StorageService:
             request = dict(Bucket=self.bucket_name, Key=object_key, Body=data)
             if content_type is not None:
                 request['ContentType'] = content_type
-            self._add_tagging(request, tagging)
+            if tagging is not None:
+                request['Tagging'] = urlencode(tagging)
             self._add_overwrite(request, overwrite)
             self._s3.put_object(**request)
         except botocore.exceptions.ClientError as e:
@@ -156,7 +157,8 @@ class StorageService:
         request = dict(Bucket=self.bucket_name, Key=object_key)
         if content_type is not None:
             request['ContentType'] = content_type
-        self._add_tagging(request, tagging)
+        if tagging is not None:
+            request['Tagging'] = urlencode(tagging)
         response = self._s3.create_multipart_upload(**request)
         return response['UploadId']
 
@@ -215,15 +217,6 @@ class StorageService:
         # https://stackoverflow.com/a/56351011/7830612
         if tagging:
             self.put_object_tagging(object_key, tagging)
-
-    def _add_tagging(self,
-                     request: Union[
-                         'PutObjectRequestTypeDef',
-                         'CreateMultipartUploadRequestTypeDef'
-                     ],
-                     tagging: Mapping[str, str] | None):
-        if tagging is not None:
-            request['Tagging'] = urlencode(tagging)
 
     def _add_overwrite(self,
                        request: Union[
