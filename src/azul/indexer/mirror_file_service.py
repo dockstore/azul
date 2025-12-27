@@ -206,7 +206,7 @@ class BaseMirrorFileService:
 
     def file_exists(self, file: File) -> bool:
         try:
-            self._storage.head(self._file_object_key(file))
+            self._storage.head_object(self._file_object_key(file))
         except StorageObjectNotFound:
             return False
         else:

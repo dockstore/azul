@@ -86,7 +86,7 @@ class StorageService:
     def _s3(self) -> 'S3Client':
         return aws.s3
 
-    def head(self, object_key: str) -> 'HeadObjectOutputTypeDef':
+    def head_object(self, object_key: str) -> 'HeadObjectOutputTypeDef':
         try:
             return self._s3.head_object(Bucket=self.bucket_name,
                                         Key=object_key)
@@ -293,7 +293,7 @@ class StorageService:
                            lifecycle rule. This parameter is solely used to
                            verify the return value.
         """
-        response = self.head(object_key)
+        response = self.head_object(object_key)
         return self._time_until_object_expires(response, expiration)
 
     def _time_until_object_expires(self,

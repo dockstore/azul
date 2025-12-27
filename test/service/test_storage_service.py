@@ -105,7 +105,7 @@ class StorageServiceTest(StorageServiceTestCase):
                         'Expiration': 'expiry-date="Wed, 01 Jan 2020 00:00:00 UTC", rule-id="Test Rule"',
                         'LastModified': now - timedelta(days=float(expiration), seconds=object_age)
                     }
-                    with patch.object(self.storage_service, 'head', return_value=headers):
+                    with patch.object(self.storage_service, 'head_object', return_value=headers):
                         with self.assertLogs(logger=storage_service.log, level='DEBUG') as logs:
                             actual = self.storage_service.time_until_object_expires('foo', expiration)
                             self.assertEqual(0, actual)
