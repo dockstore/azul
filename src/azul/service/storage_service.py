@@ -257,9 +257,9 @@ class StorageService:
             })
 
     def put_object_tagging(self, object_key: str, tagging: Tagging):
+        log.info('Tagging object %r with %r', object_key, tagging)
         deadline = time.time() + 60
         tagging = {'TagSet': [{'Key': k, 'Value': v} for k, v in tagging.items()]}
-        log.info('Tagging object %r with %r', object_key, tagging)
         while True:
             try:
                 self._s3.put_object_tagging(Bucket=self.bucket_name,
