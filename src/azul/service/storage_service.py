@@ -21,7 +21,6 @@ from typing import (
     Collection,
     IO,
     TYPE_CHECKING,
-    Union,
 )
 from urllib.parse import (
     urlencode,
@@ -120,7 +119,8 @@ class StorageService:
                 request['ContentType'] = content_type
             if tagging is not None:
                 request['Tagging'] = urlencode(tagging)
-            self._add_overwrite(request, overwrite)
+            if overwrite is False:
+                request['IfNoneMatch'] = '*'
             self._s3.put_object(**request)
         except botocore.exceptions.ClientError as e:
             self._handle_overwrite(e, object_key)
@@ -196,7 +196,8 @@ class StorageService:
                            Key=object_key,
                            UploadId=upload_id,
                            MultipartUpload={'Parts': parts})
-            self._add_overwrite(request, overwrite)
+            if overwrite is False:
+                request['IfNoneMatch'] = '*'
             self._s3.complete_multipart_upload(**request)
         except botocore.exceptions.ClientError as e:
             self._handle_overwrite(e, object_key)
@@ -217,15 +218,6 @@ class StorageService:
         # https://stackoverflow.com/a/56351011/7830612
         if tagging:
             self.put_object_tagging(object_key, tagging)
-
-    def _add_overwrite(self,
-                       request: Union[
-                           'PutObjectRequestTypeDef',
-                           'CompleteMultipartUploadRequestTypeDef'
-                       ],
-                       overwrite: bool):
-        if overwrite is False:
-            request['IfNoneMatch'] = '*'
 
     def get_presigned_url(self,
                           key: str,
