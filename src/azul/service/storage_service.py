@@ -256,7 +256,7 @@ class StorageService:
                 )
             })
 
-    def put_object_tagging(self, object_key: str, tagging: Tagging = None):
+    def put_object_tagging(self, object_key: str, tagging: Tagging):
         deadline = time.time() + 60
         tagging = {'TagSet': [{'Key': k, 'Value': v} for k, v in tagging.items()]}
         log.info('Tagging object %r with %r', object_key, tagging)
