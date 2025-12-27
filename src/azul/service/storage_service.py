@@ -116,7 +116,8 @@ class StorageService:
         try:
             request: PutObjectRequestTypeDef
             request = dict(Bucket=self.bucket_name, Key=object_key, Body=data)
-            self._add_content_type(request, content_type)
+            if content_type is not None:
+                request['ContentType'] = content_type
             self._add_tagging(request, tagging)
             self._add_overwrite(request, overwrite)
             self._s3.put_object(**request)
@@ -153,7 +154,8 @@ class StorageService:
                                 ) -> str:
         request: CreateMultipartUploadRequestTypeDef
         request = dict(Bucket=self.bucket_name, Key=object_key)
-        self._add_content_type(request, content_type)
+        if content_type is not None:
+            request['ContentType'] = content_type
         self._add_tagging(request, tagging)
         response = self._s3.create_multipart_upload(**request)
         return response['UploadId']
@@ -203,7 +205,8 @@ class StorageService:
                content_type: str | None = None,
                tagging: Tagging | None = None):
         extra_args: dict[str, str] = {}
-        self._add_content_type(extra_args, content_type)
+        if content_type is not None:
+            extra_args['ContentType'] = content_type
         self._s3.upload_file(Filename=file_path,
                              Bucket=self.bucket_name,
                              Key=object_key,
@@ -212,16 +215,6 @@ class StorageService:
         # https://stackoverflow.com/a/56351011/7830612
         if tagging:
             self.put_object_tagging(object_key, tagging)
-
-    def _add_content_type(self,
-                          request: Union[
-                              'PutObjectRequestTypeDef',
-                              'CreateMultipartUploadRequestTypeDef',
-                              dict[str, str]
-                          ],
-                          content_type: str | None):
-        if content_type is not None:
-            request['ContentType'] = content_type
 
     def _add_tagging(self,
                      request: Union[
