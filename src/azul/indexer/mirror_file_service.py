@@ -261,7 +261,7 @@ class BaseMirrorFileService:
         assert len(prefix) > 1 and prefix.endswith('/'), prefix
         keys = self._storage.list(prefix)
         assert len(keys) <= 300, R('Too many objects', len(keys))
-        self._storage.delete(keys, batch_size=100)
+        self._storage.delete_objects(keys, batch_size=100)
 
 
 class SchemaUrlFunc(Protocol):

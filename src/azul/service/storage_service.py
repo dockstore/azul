@@ -125,7 +125,10 @@ class StorageService:
         except botocore.exceptions.ClientError as e:
             self._handle_overwrite(e, object_key)
 
-    def delete(self, keys: Collection[str], batch_size: int = 1000) -> None:
+    def delete_objects(self,
+                       keys: Collection[str],
+                       batch_size: int = 1000
+                       ) -> None:
         assert batch_size <= 1000, R('Batch size must <= 1000', batch_size)
         num_keys = len(keys)
         for batch in chunked(keys, batch_size):
