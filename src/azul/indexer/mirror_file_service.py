@@ -259,7 +259,7 @@ class BaseMirrorFileService:
             'Not an IT catalog', self.catalog)
         prefix = self._mirror_prefix
         assert len(prefix) > 1 and prefix.endswith('/'), prefix
-        keys = self._storage.list(prefix)
+        keys = self._storage.list_objects(prefix)
         assert len(keys) <= 300, R('Too many objects', len(keys))
         self._storage.delete_objects(keys, batch_size=100)
 

@@ -139,7 +139,7 @@ class StorageService:
             self._s3.delete_objects(**request)
         log.info('Deleted %d objects overall', num_keys)
 
-    def list(self, prefix: str) -> OrderedSet[str]:
+    def list_objects(self, prefix: str) -> OrderedSet[str]:
         keys: OrderedSet[str] = OrderedSet()
         num_keys = 0
         paginator = self._s3.get_paginator('list_objects_v2')
