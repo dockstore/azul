@@ -21,6 +21,7 @@ from typing import (
     Collection,
     IO,
     TYPE_CHECKING,
+    Union,
 )
 from urllib.parse import (
     urlencode,
@@ -53,8 +54,13 @@ if TYPE_CHECKING:
         S3Client,
     )
     from mypy_boto3_s3.type_defs import (
+        CompleteMultipartUploadRequestTypeDef,
         CompletedPartTypeDef,
+        CreateMultipartUploadRequestTypeDef,
+        DeleteObjectsRequestTypeDef,
         HeadObjectOutputTypeDef,
+        PutObjectRequestTypeDef,
+        PutObjectTaggingRequestTypeDef,
     )
 
 log = getLogger(__name__)
@@ -108,13 +114,12 @@ class StorageService:
             tagging: Tagging | None = None,
             overwrite: bool = True):
         try:
-            kwargs = self._object_creation_kwargs(content_type=content_type,
-                                                  tagging=tagging,
-                                                  overwrite=overwrite)
-            self._s3.put_object(Bucket=self.bucket_name,
-                                Key=object_key,
-                                Body=data,
-                                **kwargs)
+            request: PutObjectRequestTypeDef
+            request = dict(Bucket=self.bucket_name, Key=object_key, Body=data)
+            self._add_content_type(request, content_type)
+            self._add_tagging(request, tagging)
+            self._add_overwrite(request, overwrite)
+            self._s3.put_object(**request)
         except botocore.exceptions.ClientError as e:
             self._handle_overwrite(e, object_key)
 
@@ -123,12 +128,15 @@ class StorageService:
         num_keys = len(keys)
         for batch in chunked(keys, batch_size):
             log.debug('Deleting batch of objects: %r', batch)
-            delete = {'Objects': [{'Key': key} for key in batch]}
-            self._s3.delete_objects(Bucket=self.bucket_name, Delete=delete)
+            request: DeleteObjectsRequestTypeDef
+            request = dict(Bucket=self.bucket_name,
+                           Delete=dict(Objects=[dict(Key=key) for key in batch]))
+            self._s3.delete_objects(**request)
         log.info('Deleted %d objects overall', num_keys)
 
     def list(self, prefix: str) -> OrderedSet[str]:
-        keys, num_keys = OrderedSet(), 0
+        keys: OrderedSet[str] = OrderedSet()
+        num_keys = 0
         paginator = self._s3.get_paginator('list_objects_v2')
         for page in paginator.paginate(Bucket=self.bucket_name, Prefix=prefix):
             contents = page.get('Contents', ())
@@ -143,11 +151,11 @@ class StorageService:
                                 content_type: str | None = None,
                                 tagging: Tagging | None = None
                                 ) -> str:
-        kwargs = self._object_creation_kwargs(content_type=content_type,
-                                              tagging=tagging)
-        response = self._s3.create_multipart_upload(Bucket=self.bucket_name,
-                                                    Key=object_key,
-                                                    **kwargs)
+        request: CreateMultipartUploadRequestTypeDef
+        request = dict(Bucket=self.bucket_name, Key=object_key)
+        self._add_content_type(request, content_type)
+        self._add_tagging(request, tagging)
+        response = self._s3.create_multipart_upload(**request)
         return response['UploadId']
 
     def upload_multipart_part(self,
@@ -179,11 +187,13 @@ class StorageService:
             for index, etag in enumerate(etags)
         ]
         try:
-            self._s3.complete_multipart_upload(Bucket=self.bucket_name,
-                                               Key=object_key,
-                                               UploadId=upload_id,
-                                               MultipartUpload={'Parts': parts},
-                                               **self._object_creation_kwargs(overwrite=overwrite))
+            request: CompleteMultipartUploadRequestTypeDef
+            request = dict(Bucket=self.bucket_name,
+                           Key=object_key,
+                           UploadId=upload_id,
+                           MultipartUpload={'Parts': parts})
+            self._add_overwrite(request, overwrite)
+            self._s3.complete_multipart_upload(**request)
         except botocore.exceptions.ClientError as e:
             self._handle_overwrite(e, object_key)
 
@@ -192,29 +202,44 @@ class StorageService:
                object_key: str,
                content_type: str | None = None,
                tagging: Tagging | None = None):
+        extra_args: dict[str, str] = {}
+        self._add_content_type(extra_args, content_type)
         self._s3.upload_file(Filename=file_path,
                              Bucket=self.bucket_name,
                              Key=object_key,
-                             ExtraArgs=self._object_creation_kwargs(content_type=content_type))
+                             ExtraArgs=extra_args)
         # upload_file doesn't support tags so we need to make a separate request
         # https://stackoverflow.com/a/56351011/7830612
         if tagging:
             self.put_object_tagging(object_key, tagging)
 
-    def _object_creation_kwargs(self,
-                                *,
-                                content_type: str | None = None,
-                                tagging: Tagging | None = None,
-                                overwrite: bool = True
-                                ) -> dict[str, str]:
-        kwargs = {}
+    def _add_content_type(self,
+                          request: Union[
+                              'PutObjectRequestTypeDef',
+                              'CreateMultipartUploadRequestTypeDef',
+                              dict[str, str]
+                          ],
+                          content_type: str | None):
         if content_type is not None:
-            kwargs['ContentType'] = content_type
+            request['ContentType'] = content_type
+
+    def _add_tagging(self,
+                     request: Union[
+                         'PutObjectRequestTypeDef',
+                         'CreateMultipartUploadRequestTypeDef'
+                     ],
+                     tagging: Mapping[str, str] | None):
         if tagging is not None:
-            kwargs['Tagging'] = urlencode(tagging)
+            request['Tagging'] = urlencode(tagging)
+
+    def _add_overwrite(self,
+                       request: Union[
+                           'PutObjectRequestTypeDef',
+                           'CompleteMultipartUploadRequestTypeDef'
+                       ],
+                       overwrite: bool):
         if overwrite is False:
-            kwargs['IfNoneMatch'] = '*'
-        return kwargs
+            request['IfNoneMatch'] = '*'
 
     def get_presigned_url(self,
                           key: str,
@@ -258,13 +283,14 @@ class StorageService:
 
     def put_object_tagging(self, object_key: str, tagging: Tagging):
         log.info('Tagging object %r with %r', object_key, tagging)
-        tagging = {'TagSet': [{'Key': k, 'Value': v} for k, v in tagging.items()]}
+        request: PutObjectTaggingRequestTypeDef
+        request = dict(Bucket=self.bucket_name,
+                       Key=object_key,
+                       Tagging=dict(TagSet=[dict(Key=k, Value=v) for k, v in tagging.items()]))
         deadline = time.time() + 60
         while True:
             try:
-                self._s3.put_object_tagging(Bucket=self.bucket_name,
-                                            Key=object_key,
-                                            Tagging=tagging)
+                self._s3.put_object_tagging(**request)
             except self._s3.exceptions.NoSuchKey:
                 if time.time() > deadline:
                     log.error('Unable to tag %s on object.', tagging)
