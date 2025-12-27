@@ -302,7 +302,9 @@ class StorageService:
         # Example header value
         # expiry-date="Fri, 21 Dec 2012 00:00:00 GMT", rule-id="Rule for testfile.txt"
         expiration_header = parse_dict_header(head_response['Expiration'])
-        expiry = parsedate_to_datetime(expiration_header['expiry-date'])
+        expiry_date = expiration_header['expiry-date']
+        assert expiry_date is not None
+        expiry = parsedate_to_datetime(expiry_date)
         time_left = (expiry - now).total_seconds()
         # Verify the 'Expiration' value is what is expected given the
         # 'LastModified' value, the number of days before expiration, and that
