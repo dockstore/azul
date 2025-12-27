@@ -134,7 +134,7 @@ class HealthController(AppController):
                                 self.app.catalog, config.default_catalog)
         else:
             try:
-                cache = json.loads(self.storage_service.get(f'health/{self.app_name}'))
+                cache = json.loads(self.storage_service.get(self._cache_key))
             except StorageObjectNotFound:
                 raise NotFoundError('Cached health object does not exist')
             else:
@@ -148,8 +148,12 @@ class HealthController(AppController):
     def update_cache(self) -> None:
         assert self.app.catalog == config.default_catalog
         health_object = dict(time=time.time(), health=self._health.as_json_fast())
-        self.storage_service.put(object_key=f'health/{self.app_name}',
+        self.storage_service.put(object_key=self._cache_key,
                                  data=json.dumps(health_object).encode())
+
+    @property
+    def _cache_key(self) -> str:
+        return 'health/' + self.app_name
 
     @property
     def _health(self):
