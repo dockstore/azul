@@ -51,8 +51,7 @@ class StorageServiceTest(StorageServiceTestCase):
                     if tags is None:
                         tags = {}
                     upload_tags = self.storage_service.get_object_tagging(object_key)
-                    self.assertEqual(tags,
-                                     upload_tags)
+                    self.assertEqual(tags, upload_tags)
 
     def test_simple_get_put(self):
         sample_key = 'foo-simple'
