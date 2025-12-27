@@ -148,8 +148,8 @@ class HealthController(AppController):
     def update_cache(self) -> None:
         assert self.app.catalog == config.default_catalog
         health_object = dict(time=time.time(), health=self._health.as_json_fast())
-        self.storage_service.put(object_key=self._cache_key,
-                                 data=json.dumps(health_object).encode())
+        self.storage_service.put_object(object_key=self._cache_key,
+                                        data=json.dumps(health_object).encode())
 
     @property
     def _cache_key(self) -> str:

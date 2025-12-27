@@ -105,13 +105,13 @@ class StorageService:
         else:
             return response['Body'].read()
 
-    def put(self,
-            *,
-            object_key: str,
-            data: bytes,
-            content_type: str | None = None,
-            tagging: Tagging | None = None,
-            overwrite: bool = True):
+    def put_object(self,
+                   *,
+                   object_key: str,
+                   data: bytes,
+                   content_type: str | None = None,
+                   tagging: Tagging | None = None,
+                   overwrite: bool = True):
         try:
             request: PutObjectRequestTypeDef
             request = dict(Bucket=self.bucket_name, Key=object_key, Body=data)

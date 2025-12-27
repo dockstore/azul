@@ -303,10 +303,10 @@ class MirrorFileService(BaseMirrorFileService, HasCachedHttpClient):
         :meth:`begin_mirroring_file` instead.
         """
         file_content = self._download(file)
-        self._storage.put(object_key=self._file_object_key(file),
-                          data=file_content,
-                          content_type=self._file_object_content_type,
-                          overwrite=False)
+        self._storage.put_object(object_key=self._file_object_key(file),
+                                 data=file_content,
+                                 content_type=self._file_object_content_type,
+                                 overwrite=False)
         hasher = get_resumable_hasher(file.digest.type)
         hasher.update(file_content)
         self._verify_digest(file, hasher)
@@ -370,9 +370,9 @@ class MirrorFileService(BaseMirrorFileService, HasCachedHttpClient):
     def _put_info(self, file: File):
         object_key = self._info_object_key(file)
         info = self._info(file)
-        self._storage.put(object_key=object_key,
-                          data=json.dumps(info).encode(),
-                          content_type='application/json')
+        self._storage.put_object(object_key=object_key,
+                                 data=json.dumps(info).encode(),
+                                 content_type='application/json')
 
     def _repository_url(self, file: File) -> furl:
         assert config.is_tdr_enabled(self.catalog), R(

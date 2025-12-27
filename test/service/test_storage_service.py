@@ -61,7 +61,7 @@ class StorageServiceTest(StorageServiceTestCase):
         with self.assertRaises(StorageObjectNotFound):
             self.storage_service.get_object(sample_key)
 
-        self.storage_service.put(object_key=sample_key, data=sample_content)
+        self.storage_service.put_object(object_key=sample_key, data=sample_content)
 
         self.assertEqual(sample_content, self.storage_service.get_object(sample_key))
 
@@ -75,7 +75,7 @@ class StorageServiceTest(StorageServiceTestCase):
         sample_key = 'foo-presigned-url'
         sample_content = json.dumps({'a': 1})
 
-        self.storage_service.put(object_key=sample_key, data=sample_content.encode())
+        self.storage_service.put_object(object_key=sample_key, data=sample_content.encode())
 
         for file_name in None, 'foo.json':
             with self.subTest(file_name=file_name):
