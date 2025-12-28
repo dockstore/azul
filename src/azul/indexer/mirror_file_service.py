@@ -197,7 +197,7 @@ class BaseMirrorFileService:
                         path=self._file_object_key(file)))
 
     def mirror_url(self, file: File) -> str:
-        return self._storage.get_presigned_url(key=self._file_object_key(file),
+        return self._storage.get_presigned_url(object_key=self._file_object_key(file),
                                                file_name=file.name,
                                                content_type=file.content_type)
 

@@ -729,7 +729,7 @@ class ManifestService(ElasticsearchService):
                         file_name=file_name)
 
     def get_manifest_url(self, manifest: Manifest) -> str:
-        return self.storage_service.get_presigned_url(key=manifest.object_key,
+        return self.storage_service.get_presigned_url(object_key=manifest.object_key,
                                                       file_name=manifest.file_name)
 
     file_name_tag = 'azul_file_name'

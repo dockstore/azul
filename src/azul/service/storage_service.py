@@ -221,7 +221,7 @@ class StorageService:
                              ExtraArgs=extra_args)
 
     def get_presigned_url(self,
-                          key: str,
+                          object_key: str,
                           *,
                           file_name: str | None = None,
                           content_type: str | None = None
@@ -229,8 +229,8 @@ class StorageService:
         """
         Return a pre-signed URL to the given key.
 
-        :param key: The key of the S3 object whose content a request to the
-                    signed URL will return
+        :param object_key: The key of the S3 object whose content a request to
+                           the signed URL will return
 
         :param file_name: the file name to be returned as part of a
                           Content-Disposition header in the response to a
@@ -247,7 +247,7 @@ class StorageService:
             ClientMethod=self._s3.get_object.__name__,
             Params={
                 'Bucket': self.bucket_name,
-                'Key': key,
+                'Key': object_key,
                 **(
                     {}
                     if file_name is None else
