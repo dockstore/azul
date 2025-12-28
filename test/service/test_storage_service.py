@@ -3,7 +3,6 @@ from datetime import (
     timedelta,
     timezone,
 )
-import json
 import tempfile
 from unittest.mock import (
     patch,
@@ -72,16 +71,13 @@ class StorageServiceTest(StorageServiceTestCase):
             self.storage_service.get_object(sample_key)
 
     def test_presigned_url(self):
-        sample_key = 'foo-presigned-url'
-        sample_content = json.dumps({'a': 1})
-
-        self.storage_service.put_object(object_key=sample_key, data=sample_content.encode())
-
+        object_key, object_content = 'foo-presigned-url', b'{"a": 1}'
+        service = self.storage_service
+        service.put_object(object_key=object_key, data=object_content)
         for file_name in None, 'foo.json':
             with self.subTest(file_name=file_name):
-                presigned_url = self.storage_service.get_presigned_url(sample_key,
-                                                                       file_name=file_name)
-                response = requests.get(presigned_url)
+                url = service.get_presigned_url(object_key, file_name=file_name)
+                response = requests.get(url)
                 if file_name is None:
                     self.assertNotIn('Content-Disposition', response.headers)
                 else:
@@ -90,8 +86,9 @@ class StorageServiceTest(StorageServiceTestCase):
                         # mechanism of specifying response headers via request
                         # parameters (https://docs.aws.amazon.com/AmazonS3/latest/API/RESTObjectGET.html,
                         # section Request Parameters).
-                        self.assertEqual(response.headers['Content-Disposition'], f'attachment;filename="{file_name}"')
-                self.assertEqual(sample_content, response.text)
+                        self.assertEqual(response.headers['Content-Disposition'],
+                                         f'attachment;filename="{file_name}"')
+                self.assertEqual(object_content, response.content)
 
     def test_time_until_object_expires(self):
         test_data = [(1, False), (0, False), (-1, True)]
