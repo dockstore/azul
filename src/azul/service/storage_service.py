@@ -126,12 +126,12 @@ class StorageService:
             self._handle_overwrite(e, object_key)
 
     def delete_objects(self,
-                       keys: Collection[str],
+                       object_keys: Collection[str],
                        batch_size: int = 1000
                        ) -> None:
         assert batch_size <= 1000, R('Batch size must <= 1000', batch_size)
-        num_keys = len(keys)
-        for batch in chunked(keys, batch_size):
+        num_keys = len(object_keys)
+        for batch in chunked(object_keys, batch_size):
             log.debug('Deleting batch of objects: %r', batch)
             request: DeleteObjectsRequestTypeDef
             request = dict(Bucket=self.bucket_name,
