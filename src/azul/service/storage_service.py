@@ -243,22 +243,16 @@ class StorageService:
                              used.
         """
         assert file_name is None or '"' not in file_name, file_name
-        return self._s3.generate_presigned_url(
-            ClientMethod=self._s3.get_object.__name__,
-            Params={
-                'Bucket': self.bucket_name,
-                'Key': object_key,
-                **(
-                    {}
-                    if file_name is None else
-                    {'ResponseContentDisposition': f'attachment;filename="{file_name}"'}
-                ),
-                **(
-                    {}
-                    if content_type is None else
-                    {'ResponseContentType': content_type}
-                )
-            })
+        params = {
+            'Bucket': self.bucket_name,
+            'Key': object_key,
+        }
+        if file_name is not None:
+            params['ResponseContentDisposition'] = f'attachment;filename="{file_name}"'
+        if content_type is not None:
+            params['ResponseContentType'] = content_type
+        return self._s3.generate_presigned_url(Params=params,
+                                               ClientMethod=self._s3.get_object.__name__)
 
     def put_object_tagging(self, object_key: str, tagging: Tagging):
         log.info('Tagging object %r with %r', object_key, tagging)
