@@ -227,7 +227,7 @@ class StorageService:
                           content_type: str | None = None
                           ) -> str:
         """
-        Return a pre-signed URL to the given key.
+        Return a pre-signed URL of the object at the given key.
 
         :param object_key: The key of the S3 object whose content a request to
                            the signed URL will return
