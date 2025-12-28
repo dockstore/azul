@@ -259,9 +259,9 @@ class BaseMirrorFileService:
             'Not an IT catalog', self.catalog)
         prefix = self._mirror_prefix
         assert len(prefix) > 1 and prefix.endswith('/'), prefix
-        keys = self._storage.list_objects(prefix)
-        assert len(keys) <= 300, R('Too many objects', len(keys))
-        self._storage.delete_objects(keys, batch_size=100)
+        object_keys = self._storage.list_objects(prefix)
+        assert len(object_keys) <= 300, R('Too many objects', len(object_keys))
+        self._storage.delete_objects(object_keys, batch_size=100)
 
 
 class SchemaUrlFunc(Protocol):
