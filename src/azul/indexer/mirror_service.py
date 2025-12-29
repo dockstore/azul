@@ -328,7 +328,7 @@ class MirrorService(BaseMirrorService):
         etags = [*a.etags, etag]
         next_part = a.part.next(a.file)
         if next_part is None:
-            log.info('File fully uploaded in %d parts: %r', len(etags), a.file)
+            log.info('Uploaded all %d parts for file %r', len(etags), a.file)
             yield FinalizeFileAction(catalog=a.catalog,
                                      source=a.source,
                                      prefix=a.prefix,
