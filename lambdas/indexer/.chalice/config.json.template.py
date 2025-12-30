@@ -1,6 +1,9 @@
 from azul import (
     config,
 )
+from azul.indexer.mirror_file_service import (
+    FilePart,
+)
 from azul.modules import (
     load_app_module,
 )
@@ -74,7 +77,7 @@ emit({
                     {
                         indexer.mirror.name: {
                             'reserved_concurrency': config.mirroring_concurrency,
-                            'lambda_memory_size': 512,
+                            'lambda_memory_size': int(FilePart.default_size / 2 ** 20) + 256,
                             'lambda_timeout': config.mirror_lambda_timeout
                             # No VPC for this function so as to avoid paying for
                             # NAT Gateway traffic
