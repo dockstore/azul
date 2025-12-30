@@ -144,7 +144,6 @@ from azul.service.elasticsearch_service import (
     ToDictStage,
 )
 from azul.service.storage_service import (
-    AWS_S3_DEFAULT_MINIMUM_PART_SIZE,
     StorageObjectNotFound,
     StorageService,
 )
@@ -730,7 +729,7 @@ class ManifestService(ElasticsearchService):
                         file_name=file_name)
 
     def get_manifest_url(self, manifest: Manifest) -> str:
-        return self.storage_service.get_presigned_url(key=manifest.object_key,
+        return self.storage_service.get_presigned_url(object_key=manifest.object_key,
                                                       file_name=manifest.file_name)
 
     file_name_tag = 'azul_file_name'
@@ -1239,7 +1238,7 @@ class ManifestGenerator(metaclass=ABCMeta):
         raise NotImplementedError
 
     @property
-    def storage(self):
+    def storage(self) -> StorageService:
         return self.service.storage_service
 
 
@@ -1310,7 +1309,7 @@ class PagedManifestGenerator(ClientSidePagingManifestGenerator):
 
     part_size = 50 * 1024 * 1024
 
-    assert part_size >= AWS_S3_DEFAULT_MINIMUM_PART_SIZE
+    assert aws.s3_min_part_size <= part_size <= aws.s3_max_part_size
 
     def write(self,
               manifest_key: ManifestKey,
@@ -1327,11 +1326,10 @@ class PagedManifestGenerator(ClientSidePagingManifestGenerator):
             type(self).manifest_config.fset(self, config)
         object_key = self.s3_object_key(manifest_key)
         if partition.multipart_upload_id is None:
-            upload = self.storage.create_multipart_upload(object_key)
-            partition = partition.with_upload(upload.id)
+            upload_id = self.storage.create_multipart_upload(object_key=object_key)
+            partition = partition.with_upload(upload_id)
         else:
-            upload = self.storage.load_multipart_upload(object_key=object_key,
-                                                        upload_id=partition.multipart_upload_id)
+            upload_id = partition.multipart_upload_id
         if partition.page_index is None:
             partition = partition.first_page()
         with BytesIO() as buffer:
@@ -1344,10 +1342,15 @@ class PagedManifestGenerator(ClientSidePagingManifestGenerator):
                         break
                 if buffer.tell() > 0:
                     buffer.seek(0)
-                    part_etag = self.storage.upload_multipart_part(buffer, partition.index + 1, upload)
+                    part_etag = self.storage.upload_multipart_part(object_key=object_key,
+                                                                   upload_id=upload_id,
+                                                                   part_number=partition.index + 1,
+                                                                   buffer=buffer)
                     partition = partition.next(part_etag=part_etag)
                 if partition.is_last_page:
-                    self.storage.complete_multipart_upload(upload, partition.part_etags)
+                    self.storage.complete_multipart_upload(object_key=object_key,
+                                                           upload_id=upload_id,
+                                                           etags=partition.part_etags)
                     file_name = self.file_name(manifest_key, base_name=partition.file_name)
                     tagging = self.tagging(file_name)
                     if tagging is not None:
