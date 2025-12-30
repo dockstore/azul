@@ -49,6 +49,7 @@ from azul.plugins import (
     RepositoryPlugin,
 )
 from azul.service.storage_service import (
+    StorageObjectExists,
     StorageObjectNotFound,
     StorageService,
 )
@@ -302,14 +303,14 @@ class MirrorFileService(BaseMirrorFileService, HasCachedHttpClient):
         Upload the file in a single request. For larger files, use
         :meth:`begin_mirroring_file` instead.
         """
+        hasher = get_resumable_hasher(file.digest.type)
         file_content = self._download(file)
+        hasher.update(file_content)
+        self._verify_digest(file, hasher)
         self._storage.put_object(object_key=self._file_object_key(file),
                                  data=file_content,
                                  content_type=self._file_object_content_type,
                                  overwrite=False)
-        hasher = get_resumable_hasher(file.digest.type)
-        hasher.update(file_content)
-        self._verify_digest(file, hasher)
         self._put_info(file)
 
     def begin_mirroring_file(self, file: File) -> str:
@@ -352,12 +353,17 @@ class MirrorFileService(BaseMirrorFileService, HasCachedHttpClient):
         """
         Complete a multipart upload begun with :meth:`begin_mirroring_file`.
         """
-        object_key = self._file_object_key(file)
-        self._storage.complete_multipart_upload(object_key=object_key,
-                                                upload_id=upload_id,
-                                                etags=etags,
-                                                overwrite=False)
         self._verify_digest(file, hasher)
+        object_key = self._file_object_key(file)
+        try:
+            self._storage.complete_multipart_upload(object_key=object_key,
+                                                    upload_id=upload_id,
+                                                    etags=etags,
+                                                    overwrite=False)
+        except StorageObjectExists:
+            log.info('Discarding redundant upload %r of %r', upload_id, file)
+            self._storage.abort_multipart_upload(object_key=object_key,
+                                                 upload_id=upload_id)
         self._get_info(file)
         self._put_info(file)
 

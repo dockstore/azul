@@ -205,6 +205,14 @@ class StorageService:
         except botocore.exceptions.ClientError as e:
             self._handle_overwrite(e, object_key)
 
+    def abort_multipart_upload(self,
+                               *,
+                               object_key: str,
+                               upload_id: str):
+        self._s3.abort_multipart_upload(Bucket=self.bucket_name,
+                                        Key=object_key,
+                                        UploadId=upload_id)
+
     def upload(self,
                file_path: str,
                object_key: str,
