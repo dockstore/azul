@@ -132,17 +132,17 @@ class TestMirrorController(DCP2TestCase,
 
     @property
     def service(self) -> MirrorService:
-        return self.mirror_controller.service
+        return self.mirror_controller.service(self.catalog)
 
     @property
     def file_service(self) -> MirrorFileService:
-        return self.service._file_service(self.catalog)
+        return self.service._file_service
 
     def _mirror_event(self, body: JSON) -> list[SQSRecord]:
         return [self._mock_sqs_record(body, fifo=True)]
 
     def _mirror_sources(self, source_config=SourceConfig(mirror=True)) -> MutableJSONs:
-        self.service.mirror_sources(self.catalog, [(self.source, source_config)])
+        self.service.mirror_sources([(self.source, source_config)])
         return self._read_queue(self.service._mirror_queue())
 
     def _test_mirror_sources(self):
@@ -170,7 +170,7 @@ class TestMirrorController(DCP2TestCase,
 
     def _test_mirror_partition(self, partition_message, files: list[HCAFile]):
         event = self._mirror_event(partition_message)
-        plugin_cls = type(self.service._repository_plugin(self.catalog))
+        plugin_cls = type(self.service._repository_plugin)
         with patch.object(plugin_cls, 'list_files', return_value=files):
             self.mirror_controller.mirror(event)
         file_message = one(self._read_queue(self.service._mirror_queue()))

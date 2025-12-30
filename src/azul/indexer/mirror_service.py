@@ -15,7 +15,6 @@ import attrs
 from azul import (
     CatalogName,
     R,
-    cache,
     cached_property,
     config,
     json_mapping,
@@ -123,73 +122,70 @@ class FinalizeFileAction(MultiPartUploadAction):
     pass
 
 
+@attrs.frozen(kw_only=True, slots=False)
 class BaseMirrorService:
     """
     Service for queuing mirroring work, e.g., sending action messages.
     """
 
+    catalog: CatalogName
+
     @cached_property
     def _queues(self) -> Queues:
         return Queues()
 
-    @cache
-    def _repository_plugin(self, catalog: CatalogName) -> RepositoryPlugin:
-        return RepositoryPlugin.load(catalog).create(catalog)
+    @cached_property
+    def _repository_plugin(self) -> RepositoryPlugin:
+        return RepositoryPlugin.load(self.catalog).create(self.catalog)
 
-    def may_mirror_files_from_source(self,
-                                     catalog: CatalogName,
-                                     source_spec: SourceSpec,
-                                     ) -> bool:
+    def may_mirror_files_from_source(self, source_spec: SourceSpec) -> bool:
         """
         Test whether it makes sense to request the mirroring of files from the
         given source. If this method returns True, files from the source may or
         may not be mirrored. If this method returns False, the service will
         definitely refuse to mirror all files from the source.
         """
-        if self.may_mirror(catalog):
-            plugin = self._repository_plugin(catalog)
+        if self.may_mirror():
+            plugin = self._repository_plugin
             source_config = plugin.sources[source_spec]
             return source_config.mirror
         else:
             return False
 
-    def may_mirror(self, catalog: CatalogName, file_size: int = 0) -> bool:
+    def may_mirror(self, file_size: int = 0) -> bool:
         """
         Test whether it makes sense to request the mirroring of files from the
-        given catalog if they are of the given size or larger. If this method
+        current catalog if they are of the given size or larger. If this method
         returns True, such files may or may not be mirrored. If this method
         returns False, the service will definitely refuse to mirror such files,
         although it may accept smaller files.
         """
         if config.enable_mirroring:
-            max_size = config.catalogs[catalog].mirror_limit
+            max_size = config.catalogs[self.catalog].mirror_limit
             return max_size is None or file_size <= max_size
         else:
             return False
 
-    def mirror_sources(self,
-                       catalog: CatalogName,
-                       sources: Iterable[tuple[SourceRef, SourceConfig]]
-                       ):
-        if self.may_mirror(catalog):
+    def mirror_sources(self, sources: Iterable[tuple[SourceRef, SourceConfig]]):
+        if self.may_mirror():
             def messages():
                 for source, source_config in sources:
                     if source_config.mirror:
                         log.info('Mirroring files in source %r from catalog %r',
-                                 str(source.spec), catalog)
-                        yield MirrorSourceAction(catalog=catalog, source=source)
+                                 str(source.spec), self.catalog)
+                        yield MirrorSourceAction(catalog=self.catalog, source=source)
                     else:
                         log.info('Not mirroring any files in source %r from catalog %r because '
                                  'mirroring is explicitly disabled',
-                                 str(source.spec), catalog)
+                                 str(source.spec), self.catalog)
 
             self._queue_messages(messages())
         else:
             log.info('Not mirroring any files in catalog %r because the file '
-                     'size limit is negative', catalog)
+                     'size limit is negative', self.catalog)
 
-    def mirror_file(self, catalog: CatalogName, source: SourceRef, file: File):
-        self._queue_messages([MirrorFileAction(catalog=catalog,
+    def mirror_file(self, source: SourceRef, file: File):
+        self._queue_messages([MirrorFileAction(catalog=self.catalog,
                                                source=source,
                                                prefix='',
                                                file=file)])
@@ -215,9 +211,9 @@ class MirrorService(BaseMirrorService):
 
     _schema_url_func: SchemaUrlFunc
 
-    @cache
-    def _file_service(self, catalog: CatalogName) -> MirrorFileService:
-        return MirrorFileService(catalog=catalog,
+    @cached_property
+    def _file_service(self) -> MirrorFileService:
+        return MirrorFileService(catalog=self.catalog,
                                  schema_url_func=self._schema_url_func)
 
     @cached_property
@@ -233,9 +229,9 @@ class MirrorService(BaseMirrorService):
 
     @_mirror.register
     def _(self, a: MirrorSourceAction) -> Iterable[MirrorAction]:
-        assert a.source.id in self._list_public_source_ids(a.catalog), R(
+        assert a.source.id in self._list_public_source_ids(), R(
             'Cannot mirror non-public source', a.source)
-        plugin = self._repository_plugin(a.catalog)
+        plugin = self._repository_plugin
         # The desired partition size depends on the maximum number of messages
         # we can send in one Lambda invocation, because queueing the individual
         # mirror_file messages turns out to dominate the running time of
@@ -247,46 +243,46 @@ class MirrorService(BaseMirrorService):
             / config.mirroring_concurrency  # number of concurrent invocations
             / 2  # safety margin
         ))
-        partitioned_source = plugin.partition_source_for_mirroring(a.catalog,
+        partitioned_source = plugin.partition_source_for_mirroring(self.catalog,
                                                                    a.source,
                                                                    partition_size)
         prefix = partitioned_source.prefix
         assert prefix is not None, partitioned_source
         log.info('Queueing %d partitions of source %r in catalog %r',
-                 prefix.num_partitions, str(partitioned_source.spec), a.catalog)
+                 prefix.num_partitions, str(partitioned_source.spec), self.catalog)
 
         for partition in prefix.partition_prefixes():
             log.debug('Queueing partition %r', partition)
-            yield MirrorPartitionAction(catalog=a.catalog,
+            yield MirrorPartitionAction(catalog=self.catalog,
                                         source=partitioned_source,
                                         prefix=partition)
 
-    def _list_public_source_ids(self, catalog: CatalogName) -> set[str]:
-        return self._source_service.list_source_ids(catalog, authentication=None)
+    def _list_public_source_ids(self) -> set[str]:
+        return self._source_service.list_source_ids(self.catalog, authentication=None)
 
     @_mirror.register
     def _(self, a: MirrorPartitionAction) -> Iterable[MirrorAction]:
-        plugin = self._repository_plugin(a.catalog)
+        plugin = self._repository_plugin
         files = plugin.list_files(a.source, a.prefix)
         for file in files:
             assert file.size is not None, R('File size unknown', file)
             assert file.size <= MirrorFileService.max_file_size, R(
                 'File too big', file, MirrorFileService.max_file_size)
-            if self.may_mirror(a.catalog, file.size):
+            if self.may_mirror(file.size):
                 log.debug('Queueing file %r', file)
-                yield MirrorFileAction(catalog=a.catalog,
+                yield MirrorFileAction(catalog=self.catalog,
                                        source=a.source,
                                        prefix=a.prefix,
                                        file=file)
             else:
                 log.info('Not mirroring file to save cost: %r', file)
         log.info('Queued %d files in partition %r of source %r in catalog %r',
-                 len(files), a.prefix, str(a.source), a.catalog)
+                 len(files), a.prefix, str(a.source), self.catalog)
 
     @_mirror.register
     def _(self, a: MirrorFileAction) -> Iterable[MirrorAction]:
         assert a.file.size is not None, R('File size unknown', a.file)
-        service = self._file_service(a.catalog)
+        service = self._file_service
         if service.info_exists(a.file):
             log.info('File is already mirrored, skipping upload: %r', a.file)
         elif service.file_exists(a.file):
@@ -307,7 +303,7 @@ class MirrorService(BaseMirrorService):
                 next_part = first_part.next(a.file)
                 assert next_part is not None
                 log.info('Queueing part #%d of file %r', next_part.index, a.file)
-                yield MirrorPartAction(catalog=a.catalog,
+                yield MirrorPartAction(catalog=self.catalog,
                                        source=a.source,
                                        prefix=a.prefix,
                                        file=a.file,
@@ -319,7 +315,7 @@ class MirrorService(BaseMirrorService):
     @_mirror.register
     def _(self, a: MirrorPartAction) -> Iterable[MirrorAction]:
         log.info('Uploading part #%d of file %r', a.part.index, a.file)
-        service = self._file_service(a.catalog)
+        service = self._file_service
         # Hashers are mutable so we need to make a copy
         hasher = a.hasher.copy()
         etag = service.mirror_file_part(a.file, a.part, a.upload_id, hasher)
@@ -328,7 +324,7 @@ class MirrorService(BaseMirrorService):
         next_part = a.part.next(a.file)
         if next_part is None:
             log.info('Uploaded all %d parts for file %r', len(etags), a.file)
-            yield FinalizeFileAction(catalog=a.catalog,
+            yield FinalizeFileAction(catalog=self.catalog,
                                      source=a.source,
                                      prefix=a.prefix,
                                      file=a.file,
@@ -337,7 +333,7 @@ class MirrorService(BaseMirrorService):
                                      hasher=hasher)
         else:
             log.info('Queueing part #%d of file %r', next_part.index, a.file)
-            yield MirrorPartAction(catalog=a.catalog,
+            yield MirrorPartAction(catalog=self.catalog,
                                    source=a.source,
                                    prefix=a.prefix,
                                    file=a.file,
@@ -349,7 +345,7 @@ class MirrorService(BaseMirrorService):
     @_mirror.register
     def _(self, a: FinalizeFileAction) -> Iterable[MirrorAction]:
         assert len(a.etags) > 0
-        service = self._file_service(a.catalog)
+        service = self._file_service
         service.finish_mirroring_file(file=a.file,
                                       upload_id=a.upload_id,
                                       etags=a.etags,
