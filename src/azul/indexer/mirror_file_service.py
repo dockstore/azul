@@ -94,7 +94,7 @@ class FilePart(SerializableAttrs):
     #: other partial outages, the normal download time for a single part should
     #: be one third of the Lambda function timeout. Also, we heuristically
     #: decided for the part size to not exceed 1 GiB in size in stable
-    # deployments, or 256 MiB in elsewhere.
+    #: deployments, or 256 MiB in elsewhere.
     #:
     default_size: ClassVar[int] = min(
         1024 ** 3 if config.deployment.is_stable else 256 * 1024 ** 2,
