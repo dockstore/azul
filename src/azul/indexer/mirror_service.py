@@ -153,8 +153,7 @@ class BaseMirrorService:
         else:
             return False
 
-    @classmethod
-    def may_mirror(cls, catalog: CatalogName, file_size: int = 0) -> bool:
+    def may_mirror(self, catalog: CatalogName, file_size: int = 0) -> bool:
         """
         Test whether it makes sense to request the mirroring of files from the
         given catalog if they are of the given size or larger. If this method
