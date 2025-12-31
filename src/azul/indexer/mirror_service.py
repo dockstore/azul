@@ -222,12 +222,22 @@ class MirrorFileAction(MirrorPartitionAction):
 
 
 @attrs.frozen(kw_only=True)
-class MultiPartUploadAction(MirrorFileAction):
+class FileUpload(SerializableAttrs):
     upload_id: str
-    etags: list[str] = serializable(from_json=compose(list, json_element_strings),
-                                    to_json=list)
-    hasher: Hasher = serializable(from_json=hasher_from_json,
-                                  to_json=hasher_to_json)
+    etags: list[str] = serializable(to_json=list,
+                                    from_json=compose(list, json_element_strings))
+    hasher: Hasher = serializable(to_json=hasher_to_json,
+                                  from_json=hasher_from_json)
+
+    def copy(self) -> Self:
+        return attrs.evolve(self,
+                            etags=self.etags.copy(),
+                            hasher=self.hasher.copy())
+
+
+@attrs.frozen(kw_only=True)
+class MultiPartUploadAction(MirrorFileAction):
+    upload: FileUpload
 
 
 @attrs.frozen(kw_only=True)
@@ -526,13 +536,21 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
             part_size = FilePart.default_size
             if a.file.size <= part_size:
                 log.info('Mirroring file via standard upload: %r', a.file)
-                self._mirror_small_file(a.file)
+                self._mirror_file(a.file)
                 log.info('Successfully mirrored file via standard upload: %r', a.file)
             else:
                 log.info('Mirroring file via multi-part upload: %r', a.file)
-                yield self._mirror_large_file(a)
+                upload = self._create_upload(a.file)
+                next_part = self._mirror_first_part(a.file, upload)
+                log.info('Queueing part #%d of file %r', next_part.index, a.file)
+                yield MirrorPartAction(catalog=self.catalog,
+                                       source=a.source,
+                                       prefix=a.prefix,
+                                       file=a.file,
+                                       upload=upload,
+                                       part=next_part)
 
-    def _mirror_small_file(self, file: File):
+    def _mirror_file(self, file: File):
         """
         Upload the file in a single request. For larger files, use
         :meth:`begin_mirroring_file` instead.
@@ -547,84 +565,73 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
                                  overwrite=False)
         self._put_info(file)
 
-    def _mirror_large_file(self, a: MirrorFileAction) -> MirrorPartAction:
-        hasher = get_resumable_hasher(a.file.digest.type)
-        object_key = self._file_object_key(a.file)
+    def _create_upload(self, file: File) -> FileUpload:
+        object_key = self._file_object_key(file)
         content_type = self._file_object_content_type
         upload_id = self._storage.create_multipart_upload(object_key=object_key,
                                                           content_type=content_type)
-        first_part = FilePart.first(a.file)
-        log.info('Uploading part #%d of file %r', first_part.index, a.file)
-        etag = self._mirror_file_part(a.file, first_part, upload_id, hasher)
-        next_part = first_part.next(a.file)
-        assert next_part is not None
-        log.info('Queueing part #%d of file %r', next_part.index, a.file)
-        return MirrorPartAction(catalog=self.catalog,
-                                source=a.source,
-                                prefix=a.prefix,
-                                file=a.file,
-                                part=next_part,
-                                upload_id=upload_id,
-                                etags=[etag],
-                                hasher=hasher)
+        return FileUpload(upload_id=upload_id,
+                          hasher=get_resumable_hasher(file.digest.type),
+                          etags=[])
 
-    def _mirror_file_part(self,
-                          file: File,
-                          part: FilePart,
-                          upload_id: str,
-                          hasher: Hasher
-                          ) -> str:
-        object_key = self._file_object_key(file)
+    def _mirror_first_part(self, file: File, upload: FileUpload) -> FilePart:
+        first_part = FilePart.first(file)
+        next_part = self._mirror_part(file, upload, first_part)
+        # We shouldn't have started an MP upload for only one part
+        assert next_part is not None
+        return next_part
+
+    def _mirror_part(self,
+                     file: File,
+                     upload: FileUpload,
+                     part: FilePart
+                     ) -> FilePart | None:
+        log.info('Uploading part #%d of file %r', part.index, file)
         content = self._download(file, part)
-        hasher.update(content)
-        return self._storage.upload_multipart_part(object_key=object_key,
-                                                   upload_id=upload_id,
+        upload.hasher.update(content)
+        etag = self._storage.upload_multipart_part(object_key=self._file_object_key(file),
+                                                   upload_id=upload.upload_id,
                                                    part_number=part.index + 1,
                                                    buffer=content)
+        upload.etags.append(etag)
+        next_part = part.next(file)
+        return next_part
 
     @_mirror.register
     def _(self, a: MirrorPartAction) -> Iterable[MirrorAction]:
-        log.info('Uploading part #%d of file %r', a.part.index, a.file)
-        # Hashers are mutable so we need to make a copy
-        hasher = a.hasher.copy()
-        etag = self._mirror_file_part(a.file, a.part, a.upload_id, hasher)
-        # Same here: lists are mutable so a copy needs to be made
-        etags = [*a.etags, etag]
-        next_part = a.part.next(a.file)
+        # Some upload field values are mutable so we should make a copy
+        upload = a.upload.copy()
+        next_part = self._mirror_part(a.file, upload, a.part)
         if next_part is None:
-            log.info('Uploaded all %d parts for file %r', len(etags), a.file)
+            log.info('Uploaded all %d parts for file %r', len(upload.etags), a.file)
             yield FinalizeFileAction(catalog=self.catalog,
                                      source=a.source,
                                      prefix=a.prefix,
                                      file=a.file,
-                                     upload_id=a.upload_id,
-                                     etags=etags,
-                                     hasher=hasher)
+                                     upload=upload)
         else:
             log.info('Queueing part #%d of file %r', next_part.index, a.file)
             yield MirrorPartAction(catalog=self.catalog,
                                    source=a.source,
                                    prefix=a.prefix,
                                    file=a.file,
-                                   part=next_part,
-                                   upload_id=a.upload_id,
-                                   etags=etags,
-                                   hasher=hasher)
+                                   upload=upload,
+                                   part=next_part)
 
     @_mirror.register
     def _(self, a: FinalizeFileAction) -> Iterable[MirrorAction]:
-        assert len(a.etags) > 0
-        self._verify_digest(a.file, a.hasher)
+        assert len(a.upload.etags) > 0
+        self._verify_digest(a.file, a.upload.hasher)
         object_key = self._file_object_key(a.file)
         try:
             self._storage.complete_multipart_upload(object_key=object_key,
-                                                    upload_id=a.upload_id,
-                                                    etags=a.etags,
+                                                    upload_id=a.upload.upload_id,
+                                                    etags=a.upload.etags,
                                                     overwrite=False)
         except StorageObjectExists:
-            log.info('Discarding redundant upload %r of %r', a.upload_id, a.file)
+            log.info('Discarding redundant upload %r of %r', a.upload.upload_id, a.file)
             self._storage.abort_multipart_upload(object_key=object_key,
-                                                 upload_id=a.upload_id)
+                                                 upload_id=a.upload.upload_id)
         self._get_info(a.file)
         self._put_info(a.file)
         log.info('Successfully mirrored file via multi-part upload: %r', a.file)
