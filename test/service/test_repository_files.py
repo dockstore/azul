@@ -49,8 +49,8 @@ from azul.http import (
     http_client,
 )
 from azul.indexer.mirror_service import (
-    BaseMirrorFileService,
-    MirrorFileService,
+    BaseMirrorService,
+    MirrorService,
 )
 from azul.logging import (
     configure_test_logging,
@@ -116,7 +116,7 @@ class RepositoryFilesTestCase(LocalAppTestCase, metaclass=ABCMeta):
 
 @mock.patch.object(SourceService, '_put', new=MagicMock())
 @mock.patch.object(SourceService, '_get')
-@mock.patch.object(BaseMirrorFileService,
+@mock.patch.object(BaseMirrorService,
                    'info_exists',
                    new=MagicMock(return_value=False))
 class TestRepositoryFilesWithTDR(DCP2TestCase, RepositoryFilesTestCase):
@@ -249,7 +249,7 @@ class TestRepositoryFilesWithTDR(DCP2TestCase, RepositoryFilesTestCase):
             _test(authenticate=False, cache=False)
 
 
-@mock.patch.object(BaseMirrorFileService,
+@mock.patch.object(BaseMirrorService,
                    'info_exists',
                    new=MagicMock(return_value=False))
 class TestRepositoryFilesWithDSS(DCP1TestCase,
@@ -421,10 +421,10 @@ class TestRepositoryFilesWithMirroring(DCP2TestCase,
                        sha256=hashlib.sha256(file_content).hexdigest(),
                        crc32c=None)
 
-        mirror_service = MirrorFileService(catalog=self.catalog,
-                                           schema_url_func=MagicMock())
-        with mock.patch.object(MirrorFileService, '_download', return_value=file_content):
-            mirror_service.mirror_file(file)
+        mirror_service = MirrorService(catalog=self.catalog,
+                                       schema_url_func=MagicMock())
+        with mock.patch.object(MirrorService, '_download', return_value=file_content):
+            mirror_service._mirror_file(file)
         self.assertTrue(mirror_service.info_exists(file))
 
         client = http_client(log)

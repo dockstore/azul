@@ -110,7 +110,6 @@ from azul.indexer.field import (
     null_str,
 )
 from azul.indexer.mirror_service import (
-    BaseMirrorFileService,
     BaseMirrorService,
 )
 from azul.json import (
@@ -823,10 +822,6 @@ class ManifestGenerator(metaclass=ABCMeta):
     def mirror_service(self) -> BaseMirrorService:
         return BaseMirrorService(catalog=self.catalog)
 
-    @cached_property
-    def mirror_file_service(self) -> BaseMirrorFileService:
-        return BaseMirrorFileService(catalog=self.catalog)
-
     @classmethod
     @abstractmethod
     def file_name_extension(cls) -> str:
@@ -1166,7 +1161,7 @@ class ManifestGenerator(metaclass=ABCMeta):
         if self.mirror_service.may_mirror_files_from_source(source):
             file = self.metadata_plugin.file_class.from_index(file)
             if self.mirror_service.may_mirror(file.size):
-                return self.mirror_file_service.mirror_uri(file)
+                return self.mirror_service.mirror_uri(file)
             else:
                 return None
         else:

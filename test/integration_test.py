@@ -132,7 +132,6 @@ from azul.indexer.index_service import (
     IndexService,
 )
 from azul.indexer.mirror_service import (
-    BaseMirrorFileService,
     BaseMirrorService,
 )
 from azul.json_freeze import (
@@ -1768,7 +1767,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
                     # since each IT catalog currently uses the same mirror
                     # prefix and bucket
                     for catalog in catalogs:
-                        BaseMirrorFileService(catalog=catalog).delete_it_files()
+                        self._mirror_service(catalog=catalog).delete_it_files()
 
             self._assert_queues_empty([config.mirror_queue.name,
                                        config.mirror_queue.to_fail.name])
