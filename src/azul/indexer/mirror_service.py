@@ -129,18 +129,16 @@ class FilePart(SerializableAttrs):
     assert min_size <= default_size <= max_size
 
     @classmethod
-    def first(cls, file: File, part_size: int) -> Self:
+    def first(cls, file: File) -> Self:
         """
         The first part of the given file, using the given part size.
         """
         assert file.size is not None, R(
             'File size unknown', file)
-        assert cls.min_size <= part_size <= cls.max_size, R(
-            'Invalid part size', part_size)
-        part_count = math.ceil(file.size / part_size)
+        part_count = math.ceil(file.size / cls.default_size)
         assert part_count <= cls.max_num_parts, R(
-            'Part size is too small for this file', part_size, file)
-        return cls(index=0, offset=0, size=min(part_size, file.size))
+            'Too many parts', part_count, cls.default_size, file)
+        return cls(index=0, offset=0, size=min(cls.default_size, file.size))
 
     def next(self, file: File) -> Self | None:
         """
@@ -522,7 +520,7 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
                 log.info('Mirroring file via multi-part upload: %r', a.file)
                 hasher = get_resumable_hasher(a.file.digest.type)
                 upload_id = self._begin_mirroring_file(a.file)
-                first_part = FilePart.first(a.file, part_size)
+                first_part = FilePart.first(a.file)
                 log.info('Uploading part #%d of file %r', first_part.index, a.file)
                 etag = self._mirror_file_part(a.file, first_part, upload_id, hasher)
                 next_part = first_part.next(a.file)
