@@ -15,7 +15,6 @@ from typing import (
     Iterable,
     Protocol,
     Self,
-    Sequence,
 )
 
 import attr
@@ -444,6 +443,19 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
     def _repository_plugin(self) -> RepositoryPlugin:
         return RepositoryPlugin.load(self.catalog).create(self.catalog)
 
+    # We don't store the mirrored files' actual content type(s) in S3's
+    # `Content-Type` metadata because a single file object may store the
+    # contents of multiple file metadata entities, which may declare different
+    # content types for the same data. When file objects are downloaded from the
+    # mirror bucket via Azul, this value will be overridden with the requested
+    # file's actual content type via a query parameter in the signed URL.
+    #
+    # Files mirrored prior to this change may erroneously specify a different
+    # value in the `Content-Type` metadata. We haven't found an efficient way to
+    # update the content type of an existing object without copying its data.
+    #
+    _file_object_content_type = 'application/octet-stream'
+
     def mirror(self, action: MirrorAction):
         self._queue_messages(self._mirror(action))
 
@@ -514,26 +526,61 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
             part_size = FilePart.default_size
             if a.file.size <= part_size:
                 log.info('Mirroring file via standard upload: %r', a.file)
-                self._mirror_file(a.file)
+                self._mirror_small_file(a.file)
                 log.info('Successfully mirrored file via standard upload: %r', a.file)
             else:
                 log.info('Mirroring file via multi-part upload: %r', a.file)
-                hasher = get_resumable_hasher(a.file.digest.type)
-                upload_id = self._begin_mirroring_file(a.file)
-                first_part = FilePart.first(a.file)
-                log.info('Uploading part #%d of file %r', first_part.index, a.file)
-                etag = self._mirror_file_part(a.file, first_part, upload_id, hasher)
-                next_part = first_part.next(a.file)
-                assert next_part is not None
-                log.info('Queueing part #%d of file %r', next_part.index, a.file)
-                yield MirrorPartAction(catalog=self.catalog,
-                                       source=a.source,
-                                       prefix=a.prefix,
-                                       file=a.file,
-                                       part=next_part,
-                                       upload_id=upload_id,
-                                       etags=[etag],
-                                       hasher=hasher)
+                yield self._mirror_large_file(a)
+
+    def _mirror_small_file(self, file: File):
+        """
+        Upload the file in a single request. For larger files, use
+        :meth:`begin_mirroring_file` instead.
+        """
+        hasher = get_resumable_hasher(file.digest.type)
+        file_content = self._download(file)
+        hasher.update(file_content)
+        self._verify_digest(file, hasher)
+        self._storage.put_object(object_key=self._file_object_key(file),
+                                 data=file_content,
+                                 content_type=self._file_object_content_type,
+                                 overwrite=False)
+        self._put_info(file)
+
+    def _mirror_large_file(self, a: MirrorFileAction) -> MirrorPartAction:
+        hasher = get_resumable_hasher(a.file.digest.type)
+        object_key = self._file_object_key(a.file)
+        content_type = self._file_object_content_type
+        upload_id = self._storage.create_multipart_upload(object_key=object_key,
+                                                          content_type=content_type)
+        first_part = FilePart.first(a.file)
+        log.info('Uploading part #%d of file %r', first_part.index, a.file)
+        etag = self._mirror_file_part(a.file, first_part, upload_id, hasher)
+        next_part = first_part.next(a.file)
+        assert next_part is not None
+        log.info('Queueing part #%d of file %r', next_part.index, a.file)
+        return MirrorPartAction(catalog=self.catalog,
+                                source=a.source,
+                                prefix=a.prefix,
+                                file=a.file,
+                                part=next_part,
+                                upload_id=upload_id,
+                                etags=[etag],
+                                hasher=hasher)
+
+    def _mirror_file_part(self,
+                          file: File,
+                          part: FilePart,
+                          upload_id: str,
+                          hasher: Hasher
+                          ) -> str:
+        object_key = self._file_object_key(file)
+        content = self._download(file, part)
+        hasher.update(content)
+        return self._storage.upload_multipart_part(object_key=object_key,
+                                                   upload_id=upload_id,
+                                                   part_number=part.index + 1,
+                                                   buffer=content)
 
     @_mirror.register
     def _(self, a: MirrorPartAction) -> Iterable[MirrorAction]:
@@ -567,94 +614,21 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
     @_mirror.register
     def _(self, a: FinalizeFileAction) -> Iterable[MirrorAction]:
         assert len(a.etags) > 0
-        self._finish_mirroring_file(file=a.file,
-                                    upload_id=a.upload_id,
-                                    etags=a.etags,
-                                    hasher=a.hasher)
-        log.info('Successfully mirrored file via multi-part upload: %r', a.file)
-        return ()
-
-    # We don't store the mirrored files' actual content type(s) in S3's
-    # `Content-Type` metadata because a single file object may store the
-    # contents of multiple file metadata entities, which may declare different
-    # content types for the same data. When file objects are downloaded from the
-    # mirror bucket via Azul, this value will be overridden with the requested
-    # file's actual content type via a query parameter in the signed URL.
-    #
-    # Files mirrored prior to this change may erroneously specify a different
-    # value in the `Content-Type` metadata. We haven't found an efficient way to
-    # update the content type of an existing object without copying its data.
-    #
-    _file_object_content_type = 'application/octet-stream'
-
-    def _mirror_file(self, file: File):
-        """
-        Upload the file in a single request. For larger files, use
-        :meth:`begin_mirroring_file` instead.
-        """
-        hasher = get_resumable_hasher(file.digest.type)
-        file_content = self._download(file)
-        hasher.update(file_content)
-        self._verify_digest(file, hasher)
-        self._storage.put_object(object_key=self._file_object_key(file),
-                                 data=file_content,
-                                 content_type=self._file_object_content_type,
-                                 overwrite=False)
-        self._put_info(file)
-
-    def _begin_mirroring_file(self, file: File) -> str:
-        """
-        Initiate a multipart upload of the file's content and return the upload
-        ID.
-        """
-        object_key = self._file_object_key(file)
-        content_type = self._file_object_content_type
-        upload_id = self._storage.create_multipart_upload(object_key=object_key,
-                                                          content_type=content_type)
-        return upload_id
-
-    def _mirror_file_part(self,
-                          file: File,
-                          part: FilePart,
-                          upload_id: str,
-                          hasher: Hasher
-                          ) -> str:
-        """
-        Upload a part of a file to a multipart upload begun with
-        :meth:`begin_mirroring_file` and return the uploaded part's ETag.
-        The provided hasher is mutated to incorporated the part's content.
-        """
-        object_key = self._file_object_key(file)
-        content = self._download(file, part)
-        hasher.update(content)
-        return self._storage.upload_multipart_part(object_key=object_key,
-                                                   upload_id=upload_id,
-                                                   part_number=part.index + 1,
-                                                   buffer=content)
-
-    def _finish_mirroring_file(self,
-                               *,
-                               file: File,
-                               upload_id: str,
-                               etags: Sequence[str],
-                               hasher: Hasher
-                               ):
-        """
-        Complete a multipart upload begun with :meth:`begin_mirroring_file`.
-        """
-        self._verify_digest(file, hasher)
-        object_key = self._file_object_key(file)
+        self._verify_digest(a.file, a.hasher)
+        object_key = self._file_object_key(a.file)
         try:
             self._storage.complete_multipart_upload(object_key=object_key,
-                                                    upload_id=upload_id,
-                                                    etags=etags,
+                                                    upload_id=a.upload_id,
+                                                    etags=a.etags,
                                                     overwrite=False)
         except StorageObjectExists:
-            log.info('Discarding redundant upload %r of %r', upload_id, file)
+            log.info('Discarding redundant upload %r of %r', a.upload_id, a.file)
             self._storage.abort_multipart_upload(object_key=object_key,
-                                                 upload_id=upload_id)
-        self._get_info(file)
-        self._put_info(file)
+                                                 upload_id=a.upload_id)
+        self._get_info(a.file)
+        self._put_info(a.file)
+        log.info('Successfully mirrored file via multi-part upload: %r', a.file)
+        return ()
 
     def _info(self, file: File) -> JSON:
         return {
