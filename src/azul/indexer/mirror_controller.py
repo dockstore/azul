@@ -13,8 +13,9 @@ from chalice.app import (
 )
 
 from azul import (
+    CatalogName,
     R,
-    cached_property,
+    cache,
     config,
 )
 from azul.chalice import (
@@ -44,10 +45,11 @@ class MirrorController(ActionController[MirrorAction], SchemaController):
     def action_cls(self) -> type[MirrorAction]:
         return MirrorAction
 
-    @cached_property
-    def service(self) -> MirrorService:
+    @cache
+    def service(self, catalog: CatalogName) -> MirrorService:
         schema_url_func = partial(self.schema_url, facility='mirror')
-        return MirrorService(schema_url_func=schema_url_func)
+        return MirrorService(catalog=catalog,
+                             schema_url_func=schema_url_func)
 
     def handlers(self) -> dict[str, Any]:
         if config.enable_mirroring:
@@ -66,4 +68,8 @@ class MirrorController(ActionController[MirrorAction], SchemaController):
 
     def mirror(self, event: Iterable[SQSRecord]):
         assert config.enable_mirroring, R('Mirroring is disabled')
-        self._handle_events(event, self.service.mirror)
+
+        def message_handler(action: MirrorAction):
+            self.service(action.catalog).mirror(action)
+
+        self._handle_events(event, message_handler)

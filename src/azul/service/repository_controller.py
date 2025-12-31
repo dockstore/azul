@@ -43,8 +43,8 @@ from azul.indexer.field import (
     FieldType,
     pass_thru_bool,
 )
-from azul.indexer.mirror_file_service import (
-    BaseMirrorFileService,
+from azul.indexer.mirror_service import (
+    BaseMirrorService,
     MirrorFileDownload,
 )
 from azul.plugins import (
@@ -86,8 +86,8 @@ class RepositoryController(ServiceAppController):
         return RepositoryService()
 
     @cache
-    def mirror_service(self, catalog: CatalogName) -> BaseMirrorFileService:
-        return BaseMirrorFileService(catalog=catalog)
+    def mirror_service(self, catalog: CatalogName) -> BaseMirrorService:
+        return BaseMirrorService(catalog=catalog)
 
     @cache
     def repository_plugin(self, catalog: CatalogName) -> RepositoryPlugin:
