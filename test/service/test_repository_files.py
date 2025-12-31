@@ -48,7 +48,7 @@ from azul.drs import (
 from azul.http import (
     http_client,
 )
-from azul.indexer.mirror_file_service import (
+from azul.indexer.mirror_service import (
     BaseMirrorFileService,
     MirrorFileService,
 )

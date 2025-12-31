@@ -30,10 +30,8 @@ from azul.indexer import (
 from azul.indexer.mirror_controller import (
     MirrorController,
 )
-from azul.indexer.mirror_file_service import (
-    MirrorFileService,
-)
 from azul.indexer.mirror_service import (
+    MirrorFileService,
     MirrorService,
 )
 from azul.json import (

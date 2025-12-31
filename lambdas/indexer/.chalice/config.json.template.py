@@ -1,7 +1,7 @@
 from azul import (
     config,
 )
-from azul.indexer.mirror_file_service import (
+from azul.indexer.mirror_service import (
     FilePart,
 )
 from azul.modules import (

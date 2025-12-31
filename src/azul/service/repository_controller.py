@@ -43,7 +43,7 @@ from azul.indexer.field import (
     FieldType,
     pass_thru_bool,
 )
-from azul.indexer.mirror_file_service import (
+from azul.indexer.mirror_service import (
     BaseMirrorFileService,
     MirrorFileDownload,
 )

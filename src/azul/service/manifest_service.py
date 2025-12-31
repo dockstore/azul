@@ -109,10 +109,8 @@ from azul.indexer.field import (
     FieldTypes,
     null_str,
 )
-from azul.indexer.mirror_file_service import (
-    BaseMirrorFileService,
-)
 from azul.indexer.mirror_service import (
+    BaseMirrorFileService,
     BaseMirrorService,
 )
 from azul.json import (
