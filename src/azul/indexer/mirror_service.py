@@ -498,7 +498,6 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
                  prefix.num_partitions, str(partitioned_source.spec), self.catalog)
 
         for partition in prefix.partition_prefixes():
-            log.debug('Queueing partition %r', partition)
             yield MirrorPartitionAction(catalog=self.catalog,
                                         source=partitioned_source,
                                         prefix=partition)
@@ -515,7 +514,6 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
             assert file.size <= self.max_file_size, R(
                 'File too big', file, self.max_file_size)
             if self.may_mirror(file.size):
-                log.debug('Queueing file %r', file)
                 yield MirrorFileAction(catalog=self.catalog,
                                        source=a.source,
                                        prefix=a.prefix,
@@ -542,7 +540,6 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
                 log.info('Mirroring file via multi-part upload: %r', a.file)
                 upload = self._create_upload(a.file)
                 next_part = self._mirror_first_part(a.file, upload)
-                log.info('Queueing part #%d of file %r', next_part.index, a.file)
                 yield MirrorPartAction(catalog=self.catalog,
                                        source=a.source,
                                        prefix=a.prefix,
@@ -610,7 +607,6 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
                                      file=a.file,
                                      upload=upload)
         else:
-            log.info('Queueing part #%d of file %r', next_part.index, a.file)
             yield MirrorPartAction(catalog=self.catalog,
                                    source=a.source,
                                    prefix=a.prefix,
