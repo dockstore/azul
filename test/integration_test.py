@@ -128,8 +128,8 @@ from azul.indexer.index_service import (
     IndexExistsAndDiffersException,
     IndexService,
 )
-from azul.indexer.mirror_file_service import (
-    BaseMirrorFileService,
+from azul.indexer.mirror_service import (
+    BaseMirrorService,
 )
 from azul.json_freeze import (
     freeze,
@@ -465,7 +465,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
                     # If test_mirroring is run for the catalog, ensure that the
                     # source is not flagged as no_mirror so that we can test
                     # downloading a mirrored file
-                    mirror=self.azul_client.mirror_service.may_mirror(catalog.name)
+                    mirror=self._mirror_service(catalog.name).may_mirror()
                 )
                 ma_source = self._select_source(catalog.name, public=False)
                 if ma_source is not None:
@@ -1746,13 +1746,18 @@ class IndexingIntegrationTest(IntegrationTestCase):
             for command_line in command_lines:
                 self.assertIn(expected_auth_header, command_line)
 
+    def _mirror_service(self, catalog: CatalogName) -> BaseMirrorService:
+        return self.azul_client.mirror_service(catalog)
+
     def _test_mirroring(self, *, delete: bool):
-        mirror_service = self.azul_client.mirror_service
         with self.subTest('mirroring'):
             catalogs = [
-                c.name
-                for c in config.catalogs.values()
-                if c.is_integration_test_catalog and mirror_service.may_mirror(c.name)
+                catalog.name
+                for catalog in config.catalogs.values()
+                if (
+                    catalog.is_integration_test_catalog
+                    and self._mirror_service(catalog.name).may_mirror()
+                )
             ]
             sources_by_catalog = {
                 catalog: [self._select_source(catalog, public=True, mirror=True)]
@@ -1765,7 +1770,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
                     # since each IT catalog currently uses the same mirror
                     # prefix and bucket
                     for catalog in catalogs:
-                        BaseMirrorFileService(catalog=catalog).delete_it_files()
+                        self._mirror_service(catalog=catalog).delete_it_files()
 
             self._assert_queues_empty([config.mirror_queue.name,
                                        config.mirror_queue.to_fail.name])
@@ -1774,11 +1779,12 @@ class IndexingIntegrationTest(IntegrationTestCase):
             indexed_files: dict[File, tuple[SourceRef, JSON]] = {}
             with self.subTest('mirror_sources_and_files'):
                 for catalog, sources in sources_by_catalog.items():
+                    mirror_service = self._mirror_service(catalog)
                     repository_file, source, file_response = self._get_one_mirrorable_file(catalog)
                     indexed_files[repository_file] = source, file_response
                     for _ in range(2):
-                        mirror_service.mirror_sources(catalog, sources)
-                        mirror_service.mirror_file(catalog, source, repository_file)
+                        mirror_service.mirror_sources(sources)
+                        mirror_service.mirror_file(source, repository_file)
                         self.azul_client.wait_for_mirroring()
                         self._assert_queues_empty([config.mirror_queue.to_fail.name])
 

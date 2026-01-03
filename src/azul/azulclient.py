@@ -33,6 +33,7 @@ from urllib3.exceptions import (
 from azul import (
     CatalogName,
     R,
+    cache,
     cached_property,
     config,
 )
@@ -102,9 +103,9 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
     def metadata_plugin(self, catalog: CatalogName) -> MetadataPlugin:
         return self.index_service.metadata_plugin(catalog)
 
-    @cached_property
-    def mirror_service(self) -> BaseMirrorService:
-        return BaseMirrorService()
+    @cache
+    def mirror_service(self, catalog: CatalogName) -> BaseMirrorService:
+        return BaseMirrorService(catalog=catalog)
 
     def local_reindex(self, catalog: CatalogName, prefix: str) -> int:
         service = self.index_repository_service

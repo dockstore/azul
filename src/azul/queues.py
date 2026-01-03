@@ -207,7 +207,7 @@ class Queues:
                 time_spent = time.time() - start
                 time_to_sleep = period - time_spent
                 if time_to_sleep > 0:
-                    log.debug('Sleeping %.3fs to prevent exceeding rate limit', time_to_sleep)
+                    log.debug('Sleeping %.3fs to avoid SQS rate limit', time_to_sleep)
                     time.sleep(time_to_sleep)
             num_messages += len(batch)
         return num_messages
