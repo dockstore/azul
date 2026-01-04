@@ -467,6 +467,8 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
     _file_object_content_type = 'application/octet-stream'
 
     def mirror(self, action: MirrorAction):
+        assert action.catalog == self.catalog, R(
+            'Action references unexpected catalog', action, self.catalog)
         self._queue_actions(self._mirror(action))
 
     @singledispatchmethod
@@ -489,16 +491,16 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
             / config.mirroring_concurrency  # number of concurrent invocations
             / 2  # safety margin
         ))
-        partitioned_source = plugin.partition_source_for_mirroring(self.catalog,
+        partitioned_source = plugin.partition_source_for_mirroring(a.catalog,
                                                                    a.source,
                                                                    partition_size)
         prefix = partitioned_source.prefix
         assert prefix is not None, partitioned_source
         log.info('Queueing %d partitions of source %r in catalog %r',
-                 prefix.num_partitions, str(partitioned_source.spec), self.catalog)
+                 prefix.num_partitions, str(partitioned_source.spec), a.catalog)
 
         for partition in prefix.partition_prefixes():
-            yield MirrorPartitionAction(catalog=self.catalog,
+            yield MirrorPartitionAction(catalog=a.catalog,
                                         source=partitioned_source,
                                         prefix=partition)
 
@@ -514,14 +516,14 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
             assert file.size <= self.max_file_size, R(
                 'File too big', file, self.max_file_size)
             if self.may_mirror(file.size):
-                yield MirrorFileAction(catalog=self.catalog,
+                yield MirrorFileAction(catalog=a.catalog,
                                        source=a.source,
                                        prefix=a.prefix,
                                        file=file)
             else:
                 log.info('Not mirroring file to save cost: %r', file)
         log.info('Queued %d files in partition %r of source %r in catalog %r',
-                 len(files), a.prefix, str(a.source), self.catalog)
+                 len(files), a.prefix, str(a.source), a.catalog)
 
     @_mirror.register
     def _(self, a: MirrorFileAction) -> Iterator[MirrorAction]:
@@ -540,7 +542,7 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
                 log.info('Mirroring file via multi-part upload: %r', a.file)
                 upload = self._create_upload(a.file)
                 next_part = self._mirror_first_part(a.file, upload)
-                yield MirrorPartAction(catalog=self.catalog,
+                yield MirrorPartAction(catalog=a.catalog,
                                        source=a.source,
                                        prefix=a.prefix,
                                        file=a.file,
@@ -601,13 +603,13 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
         next_part = self._mirror_part(a.file, upload, a.part)
         if next_part is None:
             log.info('Uploaded all %d parts for file %r', len(upload.etags), a.file)
-            yield FinalizeFileAction(catalog=self.catalog,
+            yield FinalizeFileAction(catalog=a.catalog,
                                      source=a.source,
                                      prefix=a.prefix,
                                      file=a.file,
                                      upload=upload)
         else:
-            yield MirrorPartAction(catalog=self.catalog,
+            yield MirrorPartAction(catalog=a.catalog,
                                    source=a.source,
                                    prefix=a.prefix,
                                    file=a.file,
