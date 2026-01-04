@@ -304,7 +304,7 @@ class BaseMirrorService:
 
     def mirror_sources(self, sources: Iterable[tuple[SourceRef, SourceConfig]]):
         if self.may_mirror():
-            def messages():
+            def actions():
                 for source, source_config in sources:
                     if source_config.mirror:
                         log.info('Mirroring files in source %r from catalog %r',
@@ -315,27 +315,27 @@ class BaseMirrorService:
                                  'mirroring is explicitly disabled',
                                  str(source.spec), self.catalog)
 
-            self._queue_messages(messages())
+            self._queue_actions(actions())
         else:
             log.info('Not mirroring any files in catalog %r because the file '
                      'size limit is negative', self.catalog)
 
     def mirror_file(self, source: SourceRef, file: File):
-        self._queue_messages([MirrorFileAction(catalog=self.catalog,
-                                               source=source,
-                                               prefix='',
-                                               file=file)])
+        self._queue_actions([MirrorFileAction(catalog=self.catalog,
+                                              source=source,
+                                              prefix='',
+                                              file=file)])
 
     def _mirror_queue(self):
         name = config.mirror_queue.name
         return aws.sqs_queue(name)
 
-    def _queue_messages(self, messages: Iterable[MirrorAction]) -> int:
+    def _queue_actions(self, actions: Iterable[MirrorAction]) -> int:
         rate_limit = float(aws.sqs_fifo_rate_limit)
         if config.is_in_lambda:
             rate_limit /= config.mirroring_concurrency
         return self._queues.send_messages(self._mirror_queue(),
-                                          map(MirrorAction.to_sqs, messages),
+                                          map(MirrorAction.to_sqs, actions),
                                           rate_limit=rate_limit)
 
     #: Since we track the ETags of all parts of a multipart file in SQS
@@ -467,7 +467,7 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
     _file_object_content_type = 'application/octet-stream'
 
     def mirror(self, action: MirrorAction):
-        self._queue_messages(self._mirror(action))
+        self._queue_actions(self._mirror(action))
 
     @singledispatchmethod
     def _mirror(self, a: MirrorAction):
