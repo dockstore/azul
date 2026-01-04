@@ -453,10 +453,6 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
     def _source_service(self) -> SourceService:
         return SourceService()
 
-    @cached_property
-    def _repository_plugin(self) -> RepositoryPlugin:
-        return RepositoryPlugin.load(self.catalog).create(self.catalog)
-
     # We don't store the mirrored files' actual content type(s) in S3's
     # `Content-Type` metadata because a single file object may store the
     # contents of multiple file metadata entities, which may declare different
