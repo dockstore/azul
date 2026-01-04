@@ -16,6 +16,11 @@ from typing import (
     Iterator,
     Protocol,
     Self,
+    final,
+)
+from uuid import (
+    UUID,
+    uuid5,
 )
 
 import attr
@@ -188,12 +193,40 @@ class MirrorAction(Action, metaclass=ABCMeta):
 
     @property
     @abstractmethod
-    def group_id(self) -> str:
+    def group_id(self) -> tuple[str, ...]:
+        """
+        The SQS FIFO message group ID of a message about this action. Messages
+        in different groups can be handled in parallel. Messages in the same
+        group are handled serially. Use this property to prevent concurrent
+        actions against a particular resource, by making the ID of that resource
+        the group ID of those actions.
+        """
         raise NotImplementedError
+
+    @property
+    def dedup_id(self) -> tuple[str, ...]:
+        """
+        The SQS message deduplication ID to use for a message about this action.
+        If two messages with the same deduplication ID are sent within 5 min or
+        less of each other, the second message will be discarded silently. Use
+        this property to avoid redundant work.
+        """
+        # Since different catalogs may be configured to handle the same file in
+        # different ways, we can't conflate two messages that only differ in
+        # the catalog they are targetting.
+        return str(type(self)), self.catalog
 
     def to_sqs(self) -> SQSFifoMessage:
         return SQSFifoMessage(body=json_mapping(self.to_json()),
-                              group_id=self.group_id)
+                              group_id=self._make_id(self.group_id),
+                              dedup_id=self._make_id(self.dedup_id))
+
+    dedup_uuid_namespace = UUID('cb3a5301-5ad4-44f4-9020-cd34e7c61d3e')
+
+    def _make_id(self, id: tuple[str, ...]) -> str:
+        joiner = ':'
+        assert not any(joiner in s for s in id)
+        return str(uuid5(self.dedup_uuid_namespace, joiner.join(id)))
 
 
 @attrs.frozen(kw_only=True)
@@ -201,8 +234,12 @@ class MirrorSourceAction(MirrorAction):
     source: SourceRef
 
     @property
-    def group_id(self):
-        return self.source.id
+    def group_id(self) -> tuple[str, ...]:
+        return self.source.id,
+
+    @property
+    def dedup_id(self) -> tuple[str, ...]:
+        return *super().dedup_id, self.source.id
 
 
 @attrs.frozen(kw_only=True)
@@ -210,8 +247,12 @@ class MirrorPartitionAction(MirrorSourceAction):
     prefix: str
 
     @property
-    def group_id(self):
-        return super().group_id + ':' + self.prefix
+    def group_id(self) -> tuple[str, ...]:
+        return *super().group_id, self.prefix
+
+    @property
+    def dedup_id(self) -> tuple[str, ...]:
+        return *super().dedup_id, self.prefix
 
 
 @attrs.frozen(kw_only=True)
@@ -219,8 +260,16 @@ class MirrorFileAction(MirrorPartitionAction):
     file: File
 
     @property
-    def group_id(self):
-        return self.file.digest.value
+    @final
+    def group_id(self) -> tuple[str, ...]:
+        # This method is final because we need to serialize all actions that
+        # target a specific file in the mirror bucket.
+        digest = self.file.digest
+        return digest.type, digest.value
+
+    @property
+    def dedup_id(self) -> tuple[str, ...]:
+        return *super().dedup_id, self.file.uuid,
 
 
 @attrs.frozen(kw_only=True)
@@ -245,6 +294,10 @@ class MultiPartUploadAction(MirrorFileAction):
 @attrs.frozen(kw_only=True)
 class MirrorPartAction(MultiPartUploadAction):
     part: FilePart
+
+    @property
+    def dedup_id(self) -> tuple[str, ...]:
+        return *super().dedup_id, str(self.part.index)
 
 
 class FinalizeFileAction(MultiPartUploadAction):
