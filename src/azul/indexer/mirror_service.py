@@ -13,6 +13,7 @@ import time
 from typing import (
     ClassVar,
     Iterable,
+    Iterator,
     Protocol,
     Self,
 )
@@ -321,16 +322,19 @@ class BaseMirrorService:
                      'size limit is negative', self.catalog)
 
     def mirror_file(self, source: SourceRef, file: File):
-        self._queue_actions([MirrorFileAction(catalog=self.catalog,
-                                              source=source,
-                                              prefix='',
-                                              file=file)])
+        def actions():
+            yield MirrorFileAction(catalog=self.catalog,
+                                   source=source,
+                                   prefix='',
+                                   file=file)
+
+        self._queue_actions(actions())
 
     def _mirror_queue(self):
         name = config.mirror_queue.name
         return aws.sqs_queue(name)
 
-    def _queue_actions(self, actions: Iterable[MirrorAction]) -> int:
+    def _queue_actions(self, actions: Iterator[MirrorAction]) -> int:
         rate_limit = float(aws.sqs_fifo_rate_limit)
         if config.is_in_lambda:
             rate_limit /= config.mirroring_concurrency
@@ -474,7 +478,7 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
         raise NotImplementedError
 
     @_mirror.register
-    def _(self, a: MirrorSourceAction) -> Iterable[MirrorAction]:
+    def _(self, a: MirrorSourceAction) -> Iterator[MirrorAction]:
         assert a.source.id in self._list_public_source_ids(), R(
             'Cannot mirror non-public source', a.source)
         plugin = self._repository_plugin
@@ -506,7 +510,7 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
         return self._source_service.list_source_ids(self.catalog, authentication=None)
 
     @_mirror.register
-    def _(self, a: MirrorPartitionAction) -> Iterable[MirrorAction]:
+    def _(self, a: MirrorPartitionAction) -> Iterator[MirrorAction]:
         plugin = self._repository_plugin
         files = plugin.list_files(a.source, a.prefix)
         for file in files:
@@ -524,7 +528,7 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
                  len(files), a.prefix, str(a.source), self.catalog)
 
     @_mirror.register
-    def _(self, a: MirrorFileAction) -> Iterable[MirrorAction]:
+    def _(self, a: MirrorFileAction) -> Iterator[MirrorAction]:
         assert a.file.size is not None, R('File size unknown', a.file)
         if self.info_exists(a.file):
             log.info('File is already mirrored, skipping upload: %r', a.file)
@@ -595,7 +599,7 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
         return next_part
 
     @_mirror.register
-    def _(self, a: MirrorPartAction) -> Iterable[MirrorAction]:
+    def _(self, a: MirrorPartAction) -> Iterator[MirrorAction]:
         # Some upload field values are mutable so we should make a copy
         upload = a.upload.copy()
         next_part = self._mirror_part(a.file, upload, a.part)
@@ -615,7 +619,7 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
                                    part=next_part)
 
     @_mirror.register
-    def _(self, a: FinalizeFileAction) -> Iterable[MirrorAction]:
+    def _(self, a: FinalizeFileAction) -> Iterator[MirrorAction]:
         assert len(a.upload.etags) > 0
         self._verify_digest(a.file, a.upload.hasher)
         object_key = self._file_object_key(a.file)
@@ -631,7 +635,7 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
         self._get_info(a.file)
         self._put_info(a.file)
         log.info('Successfully mirrored file via multi-part upload: %r', a.file)
-        return ()
+        return iter(())
 
     def _info(self, file: File) -> JSON:
         return {
