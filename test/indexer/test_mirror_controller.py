@@ -31,6 +31,7 @@ from azul.indexer.mirror_controller import (
     MirrorController,
 )
 from azul.indexer.mirror_service import (
+    MirrorAction,
     MirrorService,
 )
 from azul.json import (
@@ -77,12 +78,17 @@ class TestMirrorController(DCP2TestCase,
     def app_name(cls) -> str:
         return 'indexer'
 
+    operation_id = 'foo_op'
+
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
         cls.addClassPatch(patch.object(SourceService,
                                        'list_source_ids',
                                        return_value={cls.source.id}))
+        cls.addClassPatch(patch.object(MirrorAction,
+                                       '_operation_id',
+                                       return_value=cls.operation_id))
 
     _file_contents = b'lorem ipsum dolor sit\n'
 
@@ -137,6 +143,7 @@ class TestMirrorController(DCP2TestCase,
         source_message = one(self._mirror_sources())
         expected_message = dict(action='MirrorSourceAction',
                                 catalog=self.catalog,
+                                operation_id=self.operation_id,
                                 source=self.source.to_json())
         self.assertEqual(expected_message, source_message)
         return source_message
@@ -151,6 +158,7 @@ class TestMirrorController(DCP2TestCase,
             partitions.append(message.pop('prefix'))
             self.assertEqual(dict(action='MirrorPartitionAction',
                                   catalog=self.catalog,
+                                  operation_id=self.operation_id,
                                   source=self.source.to_json()),
                              message)
         self.assertEqual(list(self.source.prefix.partition_prefixes()), partitions)
@@ -164,6 +172,7 @@ class TestMirrorController(DCP2TestCase,
         file_message = one(self._read_queue(self.service._mirror_queue()))
         expected_message = dict(action='MirrorFileAction',
                                 catalog=self.catalog,
+                                operation_id=self.operation_id,
                                 source=self.source.to_json(),
                                 prefix='00',
                                 file=self._file.to_json())

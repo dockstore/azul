@@ -20,6 +20,7 @@ from typing import (
 )
 from uuid import (
     UUID,
+    uuid4,
     uuid5,
 )
 
@@ -191,6 +192,18 @@ class SchemaUrlFunc(Protocol):
 class MirrorAction(Action, metaclass=ABCMeta):
     catalog: CatalogName
 
+    #: When performing a mirror action results in more secondary actions, this
+    #: field should be copied from the action being performed to those secondary
+    #: actions. When constructing primary actions, this field should be omitted
+    #: so that the default is used. The indirection via a class method for the
+    #: default factory allows for easy patching during unit tests.
+    #:
+    operation_id: str = attrs.field(factory=lambda: MirrorAction._operation_id())
+
+    @classmethod
+    def _operation_id(cls):
+        return str(uuid4())
+
     @property
     @abstractmethod
     def group_id(self) -> tuple[str, ...]:
@@ -214,7 +227,7 @@ class MirrorAction(Action, metaclass=ABCMeta):
         # Since different catalogs may be configured to handle the same file in
         # different ways, we can't conflate two messages that only differ in
         # the catalog they are targetting.
-        return str(type(self)), self.catalog
+        return str(type(self)), self.catalog, self.operation_id
 
     def to_sqs(self) -> SQSFifoMessage:
         return SQSFifoMessage(body=json_mapping(self.to_json()),
