@@ -78,15 +78,11 @@ class TestMirrorController(DCP2TestCase,
         return 'indexer'
 
     @classmethod
-    def _patch_list_source_ids(cls):
+    def setUpClass(cls):
+        super().setUpClass()
         cls.addClassPatch(patch.object(SourceService,
                                        'list_source_ids',
                                        return_value={cls.source.id}))
-
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls._patch_list_source_ids()
 
     _file_contents = b'lorem ipsum dolor sit\n'
 
