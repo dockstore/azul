@@ -16,6 +16,7 @@ from chalice import (
     BadRequestError,
     NotFoundError,
     TooManyRequestsError,
+    UnauthorizedError,
 )
 
 from azul import (
@@ -32,6 +33,9 @@ from azul.chalice import (
 )
 from azul.collections import (
     adict,
+)
+from azul.drs import (
+    DRSStatusException,
 )
 from azul.http import (
     LimitedTimeoutException,
@@ -168,6 +172,12 @@ class DownloadController(ServiceAppController):
             raise ServiceUnavailableError(*e.args)
         except TooManyRequestsException as e:
             raise TooManyRequestsError(*e.args)
+        except DRSStatusException as e:
+            msg, status, data = e.args
+            if status == UnauthorizedError.STATUS_CODE:
+                raise UnauthorizedError(msg)
+            else:
+                raise
         if download.retry_after is not None:
             retry_after = min(download.retry_after, int(1.3 ** request_index))
             if wait is not None:
