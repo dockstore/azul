@@ -1624,6 +1624,12 @@ emit_tf({} if config.terraform_component != 'gitlab' else {
                     ],
                     'ssh_authorized_keys': [] if config.deployment.is_stable else operator_keys,
                     'bootcmd': [
+                        '; '.join([
+                            'until [ -b /dev/nvme1n1 ]',
+                            'do echo "/dev/nvme1n1 does not exist, sleeping 1s"',
+                            'sleep 1',
+                            'done'
+                        ]),
                         [
                             'cloud-init-per',
                             'once',
