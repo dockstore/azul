@@ -34,6 +34,7 @@ from azul import (
 )
 from azul.attrs import (
     SerializableAttrs,
+    devolve,
     serializable,
 )
 from azul.auth import (
@@ -491,18 +492,16 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
             / config.mirroring_concurrency  # number of concurrent invocations
             / 2  # safety margin
         ))
-        partitioned_source = plugin.partition_source_for_mirroring(a.catalog,
-                                                                   a.source,
-                                                                   partition_size)
-        prefix = partitioned_source.prefix
-        assert prefix is not None, partitioned_source
+        source = plugin.partition_source_for_mirroring(a.catalog,
+                                                       a.source,
+                                                       partition_size)
+        prefix = source.prefix
+        assert prefix is not None, source
         log.info('Queueing %d partitions of source %r in catalog %r',
-                 prefix.num_partitions, str(partitioned_source.spec), a.catalog)
+                 prefix.num_partitions, str(source.spec), a.catalog)
 
         for partition in prefix.partition_prefixes():
-            yield MirrorPartitionAction(catalog=a.catalog,
-                                        source=partitioned_source,
-                                        prefix=partition)
+            yield devolve(MirrorPartitionAction, a, source=source, prefix=partition)
 
     def _list_public_source_ids(self) -> set[str]:
         return self._source_service.list_source_ids(self.catalog, authentication=None)
@@ -516,10 +515,7 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
             assert file.size <= self.max_file_size, R(
                 'File too big', file, self.max_file_size)
             if self.may_mirror(file.size):
-                yield MirrorFileAction(catalog=a.catalog,
-                                       source=a.source,
-                                       prefix=a.prefix,
-                                       file=file)
+                yield devolve(MirrorFileAction, a, file=file)
             else:
                 log.info('Not mirroring file to save cost: %r', file)
         log.info('Queued %d files in partition %r of source %r in catalog %r',
@@ -542,12 +538,7 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
                 log.info('Mirroring file via multi-part upload: %r', a.file)
                 upload = self._create_upload(a.file)
                 next_part = self._mirror_first_part(a.file, upload)
-                yield MirrorPartAction(catalog=a.catalog,
-                                       source=a.source,
-                                       prefix=a.prefix,
-                                       file=a.file,
-                                       upload=upload,
-                                       part=next_part)
+                yield devolve(MirrorPartAction, a, upload=upload, part=next_part)
 
     def _mirror_file(self, file: File):
         """
@@ -603,18 +594,9 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
         next_part = self._mirror_part(a.file, upload, a.part)
         if next_part is None:
             log.info('Uploaded all %d parts for file %r', len(upload.etags), a.file)
-            yield FinalizeFileAction(catalog=a.catalog,
-                                     source=a.source,
-                                     prefix=a.prefix,
-                                     file=a.file,
-                                     upload=upload)
+            yield devolve(FinalizeFileAction, a, upload=upload)
         else:
-            yield MirrorPartAction(catalog=a.catalog,
-                                   source=a.source,
-                                   prefix=a.prefix,
-                                   file=a.file,
-                                   upload=upload,
-                                   part=next_part)
+            yield devolve(MirrorPartAction, a, upload=upload, part=next_part)
 
     @_mirror.register
     def _(self, a: FinalizeFileAction) -> Iterator[MirrorAction]:
