@@ -1145,24 +1145,31 @@ class IndexingIntegrationTest(IntegrationTestCase):
                 self.assertIsNone(file_url, inner_file)
                 self.assertEqual('lungmap', config.catalogs[catalog].atlas, inner_file)
 
-    def _test_file_download(self, source: SourceSpec, file: JSON) -> mutable_furl:
+    def _test_file_download(self, source: SourceSpec, file: JSON) -> mutable_furl | None:
         file_url = furl(file['azul_url'])
         # FIXME: Use _check_endpoint() instead
         #        https://github.com/DataBiosphere/azul/issues/7373
         self.assertEqual(file_url.path.segments[0], 'repository')
         file_url.path.segments.insert(0, 'fetch')
         response = self._get_url_unchecked(GET, file_url)
-        self.assertEqual(200, response.status)
-        response = json.loads(response.data)
-        while response['Status'] != 302:
-            self.assertEqual(301, response['Status'])
+        if response.status == 401:
+            msg = json.loads(response.data)['Message']
+            prefix = 'Unexpected response from '
+            self.assertEqual(prefix, msg[:len(prefix)])
+            self.assertNotIn(str(config.tdr_service_url), msg)
+            return None
+        else:
+            self.assertEqual(200, response.status)
+            response = json.loads(response.data)
+            while response['Status'] != 302:
+                self.assertEqual(301, response['Status'])
+                self.assertNotIn('Retry-After', response)
+                response = self._get_url_json(GET, furl(response['Location']))
             self.assertNotIn('Retry-After', response)
-            response = self._get_url_json(GET, furl(response['Location']))
-        self.assertNotIn('Retry-After', response)
-        final_file_url = furl(response['Location'])
-        response = self._get_url(GET, final_file_url, stream=True)
-        self._validate_file_response(response, source, file)
-        return final_file_url
+            final_file_url = furl(response['Location'])
+            response = self._get_url(GET, final_file_url, stream=True)
+            self._validate_file_response(response, source, file)
+            return final_file_url
 
     def _file_ext(self, file: JSON) -> str:
         # We believe that the file extension is a more reliable indicator than
@@ -1795,6 +1802,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
                             aws.mirror_bucket, '_it', 'file', f'{digest.value}.{digest.type}',
                         ])
                         actual_url = self._test_file_download(source.spec, file_response)
+                        self.assertIsNotNone(actual_url)
                         actual_url.set(args=None)
                         self.assertEqual(expected_url, actual_url)
             _delete()
