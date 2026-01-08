@@ -59,11 +59,6 @@ Linked issue: #0000
 - [ ] Pushed PR branch to GitHub
 
 
-### Operator (deploy runner image)
-
-- [ ] Ran `_select prod.gitlab && make -C terraform/gitlab/runner` <sub>or this PR is not labeled `deploy:runner`</sub>
-
-
 ### Operator (merge the branch)
 
 - [ ] All status checks passed and the PR is mergeable

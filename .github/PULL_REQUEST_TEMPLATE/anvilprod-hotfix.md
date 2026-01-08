@@ -59,11 +59,6 @@ Linked issue: #0000
 - [ ] Pushed PR branch to GitHub
 
 
-### Operator (deploy runner image)
-
-- [ ] Ran `_select anvilprod.gitlab && make -C terraform/gitlab/runner` <sub>or this PR is not labeled `deploy:runner`</sub>
-
-
 ### Operator (sandbox build)
 
 - [ ] Added `sandbox` label <sub>or PR is labeled `no sandbox`</sub>

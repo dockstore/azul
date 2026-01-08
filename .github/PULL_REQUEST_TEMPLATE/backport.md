@@ -46,12 +46,6 @@ This is the PR template for backport PRs against `develop`.
 - [ ] Pushed PR branch to GitHub
 
 
-### Operator (deploy runner image)
-
-- [ ] Ran `_select dev.gitlab && make -C terraform/gitlab/runner` <sub>or this PR is not labeled `deploy:runner`</sub>
-- [ ] Ran `_select anvildev.gitlab && make -C terraform/gitlab/runner` <sub>or this PR is not labeled `deploy:runner`</sub>
-
-
 ### Operator (sandbox build)
 
 - [ ] Added `sandbox` label <sub>or PR is labeled `no sandbox`</sub>

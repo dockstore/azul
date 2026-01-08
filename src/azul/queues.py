@@ -48,6 +48,7 @@ from azul import (
 )
 from azul.attrs import (
     DiscriminatingPolymorphicSerializableAttrs,
+    SerializableAttrs,
 )
 from azul.deployment import (
     aws,
@@ -84,8 +85,8 @@ if TYPE_CHECKING:
     )
 
 
-@attrs.frozen(kw_only=True)
-class SQSMessage:
+@attrs.frozen(kw_only=True, repr=False)
+class SQSMessage(SerializableAttrs):
     body: JSON
 
     #: Approximate number of times this message has been received, or None if
@@ -110,6 +111,11 @@ class SQSMessage:
         return cls(id=json_str(record.to_dict()['messageId']),
                    body=json.loads(record.body),
                    attempts=int(json_str(attributes['ApproximateReceiveCount'])))
+
+    def __repr__(self) -> str:
+        # We profusely log instances of this class, so we would like their
+        # logged form to benefit from CloudWatch's automatic parsing of JSON
+        return json.dumps(self.to_json())
 
 
 @attrs.frozen(kw_only=True)
@@ -195,13 +201,16 @@ class Queues:
     def send_messages(self,
                       queue: 'Queue',
                       messages: Iterable[SQSMessage],
-                      rate_limit: float | None = None
+                      rate_limit: float | None = None,
+                      log_level: int = logging.DEBUG
                       ) -> int:
         num_messages = 0
         for batch in chunked(messages, self.batch_size):
             entries = [message.to_batch_entry(i) for i, message in enumerate(batch)]
             start = time.time()
             queue.send_messages(Entries=entries)
+            for message in batch:
+                self._log_queued_message(message, log_level)
             if rate_limit is not None:
                 period = 1 / rate_limit
                 time_spent = time.time() - start
@@ -212,8 +221,15 @@ class Queues:
             num_messages += len(batch)
         return num_messages
 
-    def send_message(self, queue: 'Queue', message: SQSMessage):
+    def send_message(self,
+                     queue: 'Queue',
+                     message: SQSMessage,
+                     log_level: int = logging.DEBUG):
         queue.send_message(**message.to_entry())
+        self._log_queued_message(message, log_level)
+
+    def _log_queued_message(self, message: SQSMessage, log_level: int):
+        log.log(log_level, 'Queued message %r', message)
 
     def _cleanup_messages(self, queue: 'Queue', messages: Iterable['Message']):
         message_batches = list(more_itertools.chunked(messages, self.batch_size))
