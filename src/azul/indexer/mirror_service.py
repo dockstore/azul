@@ -46,6 +46,9 @@ from azul.attrs import (
 from azul.auth import (
     Authentication,
 )
+from azul.collections import (
+    alist,
+)
 from azul.deployment import (
     aws,
 )
@@ -592,6 +595,7 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
         assert a.file.size is not None, R('File size unknown', a.file)
         if self.info_exists(a.file):
             log.info('File is already mirrored, skipping upload: %r', a.file)
+            self._update_info(a.file)
         elif self._file_exists(a.file):
             assert False, R('File object is already present', a.file)
         else:
@@ -684,9 +688,24 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
 
     def _info(self, file: File) -> JSON:
         return {
-            'content-type': file.content_type,
-            '$schema': str(self._schema_url_func(schema_name='info', version=1))
+            'content-type': alist(file.content_type),
+            '$schema': str(self._schema_url_func(schema_name='info', version=2))
         }
+
+    def _update_info(self, file: File):
+        content_type = file.content_type
+        if content_type is not None:
+
+            def update(data: bytes) -> bytes:
+                json_content = json.loads(data)
+                content_types = json_content['content-type']
+                content_types = set(content_types)
+                content_types.add(content_type)
+                json_content['content-type'] = sorted(content_types)
+                return json.dumps(json_content).encode()
+
+            key = self._info_object_key(file)
+            self._storage.update_object(key, update)
 
     def _put_info(self, file: File):
         object_key = self._info_object_key(file)

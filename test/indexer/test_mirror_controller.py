@@ -115,6 +115,9 @@ class TestMirrorController(DCP2TestCase,
                     with self.subTest('mirror_file (fresh upload)'):
                         self._test_mirror_file(file, file_message)
 
+                    with self.subTest('mirror_file (update existing info)'):
+                        self._test_content_type_update(file, file_message)
+
                     self._s3.delete_object(Bucket=self.mirror_bucket,
                                            Key=self.service._info_object_key(file))
 
@@ -203,6 +206,35 @@ class TestMirrorController(DCP2TestCase,
                 self.mirror_controller.mirror(event)
         self.assertTrue(R.caused(e.exception))
         self.assertEqual(e.exception.args[0].args[0], 'File object is already present')
+
+    def _test_content_type_update(self, file, file_message):
+        for content_type in [
+            'application/octet-stream',
+            'application/octet-stream',
+            'text/csv; charset="utf-8"',
+            'application/octet-stream',
+            'text/plain',
+        ]:
+            changed_message = {
+                **file_message,
+                'file': attrs.evolve(file, content_type=content_type).to_json()
+            }
+            old_content_types = self._get_content_types_from_info_object(file)
+            event = self._mirror_event(changed_message)
+            self.mirror_controller.mirror(event)
+            new_content_types = self._get_content_types_from_info_object(file)
+            if content_type in old_content_types:
+                self.assertEqual(old_content_types, new_content_types)
+            else:
+                self.assertIn(content_type, new_content_types)
+
+    def _get_content_types_from_info_object(self, file) -> list[str]:
+        service = self.service
+        info = json.loads(service._storage.get_object(service._info_object_key(file)))
+        content_types = info['content-type']
+        self.assertIsInstance(content_types, list)
+        self.assertEqual(sorted(set(content_types)), content_types)
+        return content_types
 
     def test_info_schema(self):
         client = http_client(log)

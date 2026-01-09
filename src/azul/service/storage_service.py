@@ -16,8 +16,10 @@ from email.utils import (
 from logging import (
     getLogger,
 )
+import random
 import time
 from typing import (
+    Callable,
     Collection,
     IO,
     TYPE_CHECKING,
@@ -123,6 +125,7 @@ class StorageService:
                    data: bytes,
                    content_type: str | None = None,
                    tagging: Tagging | None = None,
+                   etag: str | None = None,
                    overwrite: bool = True):
         try:
             request: PutObjectRequestTypeDef
@@ -131,11 +134,54 @@ class StorageService:
                 request['ContentType'] = content_type
             if tagging is not None:
                 request['Tagging'] = urlencode(tagging)
+            if etag is not None:
+                request['IfMatch'] = etag
             if overwrite is False:
                 request['IfNoneMatch'] = '*'
             self._s3.put_object(**request)
         except botocore.exceptions.ClientError as e:
             self._handle_overwrite(e, object_key)
+
+    def update_object(self,
+                      object_key: str,
+                      updater: Callable[[bytes], bytes],
+                      max_attempts: int = 10
+                      ):
+        """
+        Updates the contents of an object, based on its existing contents, while
+        ensuring that concurrent updates are not overwritten. Expects a callback
+        that returns the desired contents of the object given its current
+        contents. If the callback ever returns its argument unchanged, no
+        further writes will be attempted. If the object does not exist at any
+        point during the update, StorageObjectNotFound is raised.
+        """
+        for i in range(max_attempts):
+            response = self._get_object(object_key)
+            etag = response['ETag']
+            data = response['Body'].read()
+            new_data = updater(data)
+            if new_data == data:
+                log.info('Object contents of %r is already up to date during attempt #%r/%r.',
+                         object_key, i + 1, max_attempts)
+                break
+            else:
+                try:
+                    self.put_object(object_key=object_key, data=new_data, etag=etag)
+                except botocore.exceptions.ClientError as e:
+                    error = e.response['Error']
+                    code, condition = error['Code'], error.get('Condition')
+                    if code == 'PreconditionFailed' and condition == 'If-Match':
+                        log.info('Conflict during attempt #%r/%r of updating %r from %r to %r',
+                                 i + 1, max_attempts, object_key)
+                        if i >= max_attempts - 1:
+                            raise
+                        else:
+                            time.sleep(random.uniform(0.5, 5.0))
+                    else:
+                        raise
+                else:
+                    log.info('Update of %r succeeded after %r attempts', object_key, i + 1)
+                    break
 
     def delete_objects(self,
                        object_keys: Collection[str],

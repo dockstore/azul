@@ -89,8 +89,9 @@ hexadecimal form of a hash of the corresponding file object's content and
 algorithm used to derive that hash. The content of an ``info`` object is JSON of
 the form ``{"$schema":"…", "content-type":…}``.
 
-The ``content-type`` property contains the content type of the file, as defined
-for the HTTP response header of the same name [6]_.
+The ``content-type`` property contains a list of all content types known to be
+associated with the file, as defined for the HTTP response header of the same
+name [6]_.
 
 .. [6] https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Type
 
