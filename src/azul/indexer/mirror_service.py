@@ -464,7 +464,7 @@ class BaseMirrorService:
                                                content_type=file.content_type)
 
     def info_exists(self, file: File) -> bool:
-        return self._get_info(file) is not None
+        return self._storage.object_exists(self._info_object_key(file))
 
     def _file_exists(self, file: File) -> bool:
         return self._storage.object_exists(self._file_object_key(file))
