@@ -84,7 +84,6 @@ from azul.service.source_service import (
 )
 from azul.service.storage_service import (
     StorageObjectExists,
-    StorageObjectNotFound,
     StorageService,
 )
 from azul.types import (
@@ -469,21 +468,6 @@ class BaseMirrorService:
     def _file_exists(self, file: File) -> bool:
         return self._storage.object_exists(self._file_object_key(file))
 
-    def _get_info(self, file: File) -> JSON | None:
-        object_key = self._info_object_key(file)
-        try:
-            content = self._storage.get_object(object_key)
-        except StorageObjectNotFound:
-            return None
-        else:
-            json_content = json.loads(content)
-            content_type = json_content['content-type']
-            if content_type != file.content_type:
-                # FIXME: Content type in mirror info objects inconsistent with index
-                #        https://github.com/DataBiosphere/azul/issues/7193
-                log.warning('Conflicting content type %r for file %r', content_type, file)
-            return json_content
-
     info_prefix, file_prefix = 'info', 'file'
 
     def _info_object_key(self, file: File) -> str:
@@ -694,7 +678,6 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
             log.info('Discarding redundant upload %r of %r', a.upload.upload_id, a.file)
             self._storage.abort_multipart_upload(object_key=object_key,
                                                  upload_id=a.upload.upload_id)
-        self._get_info(a.file)
         self._put_info(a.file)
         log.info('Successfully mirrored file via multi-part upload: %r', a.file)
         return iter(())
@@ -710,7 +693,8 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
         info = self._info(file)
         self._storage.put_object(object_key=object_key,
                                  data=json.dumps(info).encode(),
-                                 content_type='application/json')
+                                 content_type='application/json',
+                                 overwrite=False)
 
     def _repository_url(self, file: File) -> furl:
         assert config.is_tdr_enabled(self.catalog), R(
