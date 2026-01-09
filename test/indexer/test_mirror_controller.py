@@ -30,9 +30,6 @@ from azul.indexer import (
 from azul.indexer.mirror_controller import (
     MirrorController,
 )
-from azul.indexer.mirror_file_service import (
-    MirrorFileService,
-)
 from azul.indexer.mirror_service import (
     MirrorService,
 )
@@ -116,9 +113,8 @@ class TestMirrorController(DCP2TestCase,
                     with self.subTest('mirror_file', corrupted=False, exists=False):
                         self._test_mirror_file(file, file_message)
 
-                    service = self.file_service
                     self._s3.delete_object(Bucket=self.mirror_bucket,
-                                           Key=service.info_object_key(file))
+                                           Key=self.service._info_object_key(file))
 
                     with self.subTest('mirror_file', corrupted=True):
                         self._test_corrupted_download(file_message)
@@ -128,21 +124,17 @@ class TestMirrorController(DCP2TestCase,
 
     @property
     def mirror_controller(self) -> MirrorController:
-        return self.app_module.app.mirror_controller
+        return self._app.mirror_controller
 
     @property
     def service(self) -> MirrorService:
-        return self.mirror_controller.service
-
-    @property
-    def file_service(self) -> MirrorFileService:
-        return self.service._file_service(self.catalog)
+        return self.mirror_controller.service(self.catalog)
 
     def _mirror_event(self, body: JSON) -> list[SQSRecord]:
         return [self._mock_sqs_record(body, fifo=True)]
 
     def _mirror_sources(self, source_config=SourceConfig(mirror=True)) -> MutableJSONs:
-        self.service.mirror_sources(self.catalog, [(self.source, source_config)])
+        self.service.mirror_sources([(self.source, source_config)])
         return self._read_queue(self.service._mirror_queue())
 
     def _test_mirror_sources(self):
@@ -170,7 +162,7 @@ class TestMirrorController(DCP2TestCase,
 
     def _test_mirror_partition(self, partition_message, files: list[HCAFile]):
         event = self._mirror_event(partition_message)
-        plugin_cls = type(self.service._repository_plugin(self.catalog))
+        plugin_cls = type(self.service._repository_plugin)
         with patch.object(plugin_cls, 'list_files', return_value=files):
             self.mirror_controller.mirror(event)
         file_message = one(self._read_queue(self.service._mirror_queue()))
@@ -184,25 +176,24 @@ class TestMirrorController(DCP2TestCase,
 
     def _test_mirror_file(self, file, file_message):
         event = self._mirror_event(file_message)
-        with patch.object(MirrorFileService, '_download', return_value=self._file_contents):
+        with patch.object(MirrorService, '_download', return_value=self._file_contents):
             self.mirror_controller.mirror(event)
-        service = self.file_service
         response = self._s3.get_object(Bucket=self.mirror_bucket,
-                                       Key=service.mirror_object_key(file))
+                                       Key=self.service._file_object_key(file))
         mirrored_file_contents = response['Body'].read()
         self.assertEqual(mirrored_file_contents, self._file_contents)
 
     def _test_corrupted_download(self, file_message):
         event = self._mirror_event(file_message)
         corrupted_contents = self._file_contents[:-1] + b'Q'
-        with patch.object(MirrorFileService, '_download', return_value=corrupted_contents):
+        with patch.object(MirrorService, '_download', return_value=corrupted_contents):
             with self.assertRaises(AssertionError) as e:
                 self.mirror_controller.mirror(event)
             self.assertTrue(R.caused(e.exception))
 
     def _test_reuploaded_file(self, file_message):
         event = self._mirror_event(file_message)
-        with patch.object(MirrorFileService, '_download', return_value=self._file_contents):
+        with patch.object(MirrorService, '_download', return_value=self._file_contents):
             with self.assertRaises(AssertionError) as e:
                 self.mirror_controller.mirror(event)
         self.assertTrue(R.caused(e.exception))
@@ -211,8 +202,7 @@ class TestMirrorController(DCP2TestCase,
     def test_info_schema(self):
         client = http_client(log)
         file = MagicMock(content_type='text/plain')
-        service = self.file_service
-        info = service.info_object(file)
+        info = self.service._info(file)
         response = client.request('GET', info['$schema'])
         self.assertEqual(200, response.status, response.data)
         schema = json.loads(response.data)
@@ -227,13 +217,13 @@ class TestMirrorController(DCP2TestCase,
 
         catalog = config.catalogs[self.catalog]
 
-        def patch_max_file_size(size):
+        def patch_mirror_limit(size):
             return patch.dict(config.catalogs, {
                 self.catalog: attrs.evolve(catalog, mirror_limit=size)
             })
 
         with self.subTest(mirror_limit=-1):
-            with patch_max_file_size(-1):
+            with patch_mirror_limit(-1):
                 messages = self._mirror_sources()
                 self.assertEqual([], messages)
 
@@ -243,5 +233,5 @@ class TestMirrorController(DCP2TestCase,
                                    size=self._file.size + 1)
             source_message = self._test_mirror_sources()
             partition_message = self._test_mirror_source(source_message)
-            with patch_max_file_size(self._file.size):
+            with patch_mirror_limit(self._file.size):
                 self._test_mirror_partition(partition_message, [too_big, self._file])

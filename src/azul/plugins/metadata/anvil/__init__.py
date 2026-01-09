@@ -38,9 +38,11 @@ from azul.plugins import (
     DocumentSlice,
     FieldName,
     File,
+    InverseFieldMapping,
     ManifestConfig,
     MetadataPlugin,
     Sorting,
+    SpecialField,
     SpecialFields,
 )
 from azul.plugins.metadata.anvil.bundle import (
@@ -95,7 +97,7 @@ class Plugin(MetadataPlugin[AnvilBundle]):
         return dict(
             activities=Sorting(field_name='activities.activity_id'),
             biosamples=Sorting(field_name='biosamples.biosample_id'),
-            bundles=Sorting(field_name=self.special_fields.bundle_uuid),
+            bundles=Sorting(field_name=self.special_fields.bundle_uuid.name),
             datasets=Sorting(field_name='datasets.dataset_id'),
             donors=Sorting(field_name='donors.donor_id'),
             files=Sorting(field_name='files.file_id'),
@@ -151,7 +153,7 @@ class Plugin(MetadataPlugin[AnvilBundle]):
         return mapping
 
     @property
-    def _field_mapping(self) -> MetadataPlugin._FieldMapping:
+    def _field_mapping(self) -> InverseFieldMapping:
         common_fields = [
             'document_id',
             'source_datarepo_row_ids'
@@ -161,14 +163,14 @@ class Plugin(MetadataPlugin[AnvilBundle]):
             'bundles': {
                 # These field paths have a brittle coupling that must be
                 # maintained to the field lookups in `self.manifest_config`.
-                'uuid': self.special_fields.bundle_uuid,
-                'version': self.special_fields.bundle_version
+                'uuid': self.special_fields.bundle_uuid.name,
+                'version': self.special_fields.bundle_version.name
             },
             'sources': {
                 # These field paths have a brittle coupling that must be
                 # maintained to the field lookups in `self.manifest_config`.
-                'id': self.special_fields.source_id,
-                'spec': self.special_fields.source_spec
+                'id': self.special_fields.source_id.name,
+                'spec': self.special_fields.source_spec.name
             },
             'contents': {
                 'datasets': {
@@ -250,8 +252,6 @@ class Plugin(MetadataPlugin[AnvilBundle]):
                             'file_name',
                             'is_supplementary',
                             # Not in schema
-                            'crc32',
-                            'sha256',
                             'drs_uri',
                         ]
                     },
@@ -262,20 +262,19 @@ class Plugin(MetadataPlugin[AnvilBundle]):
                     **{
                         # Not in schema
                         'version': 'fileVersion',
-                        'uuid': 'fileId',
                     }
                 }
             }
         }
 
-    @property
-    def special_fields(self) -> SpecialFields:
-        return SpecialFields(source_id='source_id',
-                             source_spec='source_spec',
-                             source_prefix='source_prefix',
-                             bundle_uuid='bundle_uuid',
-                             bundle_version='bundle_version',
-                             root_entity_id='datasets.dataset_id')
+    special_fields = SpecialFields(
+        source_id=SpecialField.symmetric('source_id'),
+        source_spec=SpecialField.symmetric('source_spec'),
+        source_prefix=SpecialField.symmetric('source_prefix'),
+        bundle_uuid=SpecialField.symmetric('bundle_uuid'),
+        bundle_version=SpecialField.symmetric('bundle_version'),
+        file_uuid=SpecialField(name='files.document_id', name_in_hit='document_id')
+    )
 
     @property
     def root_entity_type(self) -> str:
@@ -321,7 +320,6 @@ class Plugin(MetadataPlugin[AnvilBundle]):
             # entities of the `datasets` type, not to entities of the other
             # types, such as files, which the manifest is generated from.
             ('contents', 'datasets', 'duos_id'),
-            ('contents', 'files', 'uuid'),
             ('contents', 'files', 'version'),
         ]
 
@@ -334,7 +332,7 @@ class Plugin(MetadataPlugin[AnvilBundle]):
             ('sources', 'spec'): 'sources.source_spec',
         }
 
-        def recurse(mapping: MetadataPlugin._FieldMapping, path: FieldPath):
+        def recurse(mapping: InverseFieldMapping, path: FieldPath):
             for path_element, name_or_type in mapping.items():
                 new_path = (*path, path_element)
                 if isinstance(name_or_type, dict):
@@ -359,6 +357,7 @@ class Plugin(MetadataPlugin[AnvilBundle]):
         # Above, we already configured these two fields to be omitted from the
         # manifest since they are not informative to the user.
         result[('contents', 'files')]['file_url'] = 'files.azul_url'
+        result[('contents', 'files')]['file_mirror_uri'] = 'files.azul_mirror_uri'
         return result
 
     primary_keys_by_table = {

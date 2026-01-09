@@ -129,7 +129,8 @@ class CannedFileTestCase(AzulUnitTestCase):
             return json.load(infile)
 
 
-class CannedBundleTestCase[BUNDLE: Bundle](CannedFileTestCase):
+class CannedBundleTestCase[BUNDLE: Bundle](CannedFileTestCase,
+                                           metaclass=ABCMeta):
     """
     A test case that loads a canned bundle, i.e. a can containing the input to
     tests involving a metadata plugin or the expected output of tests involving
@@ -163,6 +164,13 @@ class DCP1CannedBundleTestCase(DCP1TestCase, CannedBundleTestCase[DSSBundle]):
                              uuid=uuid,
                              version=version)
 
+    @classmethod
+    def bundles(cls) -> list[SourcedBundleFQID]:
+        return [
+            cls.bundle_fqid(uuid='aaa96233-bf27-44c7-82df-b4dc15ad4d9d',
+                            version='2018-11-02T11:33:44.698028Z')
+        ]
+
 
 class DCP2CannedBundleTestCase(DCP2TestCase, CannedBundleTestCase[TDRHCABundle]):
 
@@ -177,7 +185,8 @@ class DCP2CannedBundleTestCase(DCP2TestCase, CannedBundleTestCase[TDRHCABundle])
                              version=version)
 
 
-class AnvilCannedBundleTestCase(AnvilTestCase, CannedBundleTestCase[TDRAnvilBundle]):
+class AnvilCannedBundleTestCase(AnvilTestCase,
+                                CannedBundleTestCase[TDRAnvilBundle]):
     #: AnVIL doesn't use versioning and all versions are fixed
     version = '2022-06-01T00:00:00.000000Z'
 

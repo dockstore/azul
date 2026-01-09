@@ -27,6 +27,7 @@ from furl import (
 from more_itertools import (
     flatten,
     stagger,
+    unzip,
 )
 
 from azul import (
@@ -823,10 +824,10 @@ def emit(t: T, target_branch: str):
                     'alt': iif(t is T.upgrade, None, 'or PR is labeled `no sandbox`')
                 }
             ]),
-            # zip() is used to interleave the steps for each deployment so
+            # unzip() is used to interleave the steps for each deployment so
             # that first, step 1 is done for all deployments, then step 2
             # for all of them, and so on.
-            *flatten(zip(*(
+            *flatten(unzip(
                 [
                     {
                         'type': 'cli',
@@ -843,12 +844,12 @@ def emit(t: T, target_branch: str):
                         'content': f'Reviewed build logs for anomalies in `{s}` deployment',
                         'alt': iif(t is T.upgrade, None, 'or PR is labeled `no sandbox`')
                     },
-                    *iif(t is T.default, [
+                    *iif(t is not T.upgrade, [
                         {
                             'type': 'cli',
                             'content': f'Deleted unreferenced indices in `{s}`',
                             'alt': f'or this PR does not remove catalogs '
-                                   f'or otherwise causes unreferenced indices in `{d}`'
+                                   f'or otherwise causes unreferenced indices in `{s}`'
                         },
                         {
                             'type': 'cli',
@@ -864,7 +865,7 @@ def emit(t: T, target_branch: str):
                 ]
                 for i, (d, s) in enumerate(t.target_deployments(target_branch).items())
                 if s is not None
-            ))),
+            )),
             {
                 'type': 'h2',
                 'content': 'Operator (merge the branch)'
@@ -1003,10 +1004,10 @@ def emit(t: T, target_branch: str):
                     'type': 'h2',
                     'content': 'Operator (reindex)'
                 },
-                # zip() is used to interleave the steps for each deployment so
+                # unzip() is used to interleave the steps for each deployment so
                 # that first, step 1 is done for all deployments, then step 2
                 # for all of them, and so on.
-                *flatten(zip(*(
+                *flatten(unzip(
                     [
                         *[
                             {
@@ -1037,7 +1038,7 @@ def emit(t: T, target_branch: str):
                         ]
                     ]
                     for d, s in t.target_deployments(target_branch).items()
-                ))),
+                )),
                 *[
                     {
                         'type': 'cli',
@@ -1076,7 +1077,10 @@ def emit(t: T, target_branch: str):
                     'type': 'h2',
                     'content': 'Operator (mirroring)'
                 },
-                *flatten(zip(*(
+                # unzip() is used to interleave the steps for each deployment so
+                # that first, step 1 is done for all deployments, then step 2
+                # for all of them, and so on.
+                *flatten(unzip(
                     [
                         *[
                             {
@@ -1096,7 +1100,7 @@ def emit(t: T, target_branch: str):
                         ]
                     ]
                     for d, s in t.target_deployments(target_branch).items()
-                )))
+                ))
             ]),
             {
                 'type': 'h2',

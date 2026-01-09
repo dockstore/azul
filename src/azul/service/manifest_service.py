@@ -98,6 +98,8 @@ from azul.deployment import (
 )
 from azul.indexer import (
     Prefix,
+    SourceRef,
+    SourceSpec,
 )
 from azul.indexer.document import (
     DocumentType,
@@ -106,6 +108,9 @@ from azul.indexer.document import (
 from azul.indexer.field import (
     FieldTypes,
     null_str,
+)
+from azul.indexer.mirror_service import (
+    BaseMirrorService,
 )
 from azul.json import (
     copy_json,
@@ -117,6 +122,7 @@ from azul.plugins import (
     ManifestFormat,
     MetadataPlugin,
     RepositoryPlugin,
+    SpecialField,
     dotted,
 )
 from azul.service import (
@@ -136,7 +142,6 @@ from azul.service.elasticsearch_service import (
     ToDictStage,
 )
 from azul.service.storage_service import (
-    AWS_S3_DEFAULT_MINIMUM_PART_SIZE,
     StorageObjectNotFound,
     StorageService,
 )
@@ -722,7 +727,7 @@ class ManifestService(ElasticsearchService):
                         file_name=file_name)
 
     def get_manifest_url(self, manifest: Manifest) -> str:
-        return self.storage_service.get_presigned_url(key=manifest.object_key,
+        return self.storage_service.get_presigned_url(object_key=manifest.object_key,
                                                       file_name=manifest.file_name)
 
     file_name_tag = 'azul_file_name'
@@ -813,6 +818,10 @@ class ManifestGenerator(metaclass=ABCMeta):
     @property
     def metadata_plugin(self) -> MetadataPlugin:
         return self.service.metadata_plugin(self.catalog)
+
+    @cached_property
+    def mirror_service(self) -> BaseMirrorService:
+        return BaseMirrorService(catalog=self.catalog)
 
     @classmethod
     @abstractmethod
@@ -1044,7 +1053,12 @@ class ManifestGenerator(metaclass=ABCMeta):
         if self.included_fields is None:
             document_slice = DocumentSlice()
         else:
-            document_slice = DocumentSlice(includes=list(map(dotted, self.included_fields)))
+            includes = list(map(dotted, self.included_fields))
+            # The complete set of source fields is needed to polymorphically
+            # deserialize sources from the index. The sources are used to
+            # help determine which files might be mirrored.
+            includes.append('sources.*')
+            document_slice = DocumentSlice(includes=includes)
         pipeline = self.service.create_chain(catalog=self.catalog,
                                              entity_type=self.entity_type,
                                              filters=self.filters,
@@ -1055,8 +1069,7 @@ class ManifestGenerator(metaclass=ABCMeta):
     def _hit_to_doc(self, hit: Hit) -> MutableJSON:
         return self.service.translate_fields(self.catalog,
                                              hit.to_dict(),
-                                             forward=False,
-                                             allowed_paths=self.included_fields)
+                                             forward=False)
 
     column_joiner = config.manifest_column_joiner
     padded_joiner = ' ' + column_joiner + ' '
@@ -1083,7 +1096,7 @@ class ManifestGenerator(metaclass=ABCMeta):
             try:
                 field_type = field_types[field_name]
             except KeyError:
-                if field_name == 'file_url':
+                if field_name in ('file_url', 'file_mirror_uri'):
                     field_type = null_str
                 else:
                     raise
@@ -1139,11 +1152,22 @@ class ManifestGenerator(metaclass=ABCMeta):
         if download_cls.needs_drs_uri and file['drs_uri'] is None:
             return None
         else:
+            special_fields = self.metadata_plugin.special_fields
             return str(self.file_url_func(catalog=self.catalog,
-                                          file_uuid=file['uuid'],
+                                          file_uuid=file[special_fields.file_uuid.name_in_hit],
                                           version=file['version'],
                                           fetch=False,
                                           **args))
+
+    def _azul_mirror_uri(self, file: JSON, source: SourceSpec) -> str | None:
+        if self.mirror_service.may_mirror_files_from_source(source):
+            file = self.metadata_plugin.file_class.from_index(file)
+            if self.mirror_service.may_mirror(file.size):
+                return self.mirror_service.mirror_uri(file)
+            else:
+                return None
+        else:
+            return None
 
     @cached_property
     def manifest_content_hash(self) -> int:
@@ -1209,7 +1233,7 @@ class ManifestGenerator(metaclass=ABCMeta):
         raise NotImplementedError
 
     @property
-    def storage(self):
+    def storage(self) -> StorageService:
         return self.service.storage_service
 
 
@@ -1280,7 +1304,7 @@ class PagedManifestGenerator(ClientSidePagingManifestGenerator):
 
     part_size = 50 * 1024 * 1024
 
-    assert part_size >= AWS_S3_DEFAULT_MINIMUM_PART_SIZE
+    assert aws.s3_min_part_size <= part_size <= aws.s3_max_part_size
 
     def write(self,
               manifest_key: ManifestKey,
@@ -1297,11 +1321,10 @@ class PagedManifestGenerator(ClientSidePagingManifestGenerator):
             type(self).manifest_config.fset(self, config)
         object_key = self.s3_object_key(manifest_key)
         if partition.multipart_upload_id is None:
-            upload = self.storage.create_multipart_upload(object_key)
-            partition = partition.with_upload(upload.id)
+            upload_id = self.storage.create_multipart_upload(object_key=object_key)
+            partition = partition.with_upload(upload_id)
         else:
-            upload = self.storage.load_multipart_upload(object_key=object_key,
-                                                        upload_id=partition.multipart_upload_id)
+            upload_id = partition.multipart_upload_id
         if partition.page_index is None:
             partition = partition.first_page()
         with BytesIO() as buffer:
@@ -1314,10 +1337,15 @@ class PagedManifestGenerator(ClientSidePagingManifestGenerator):
                         break
                 if buffer.tell() > 0:
                     buffer.seek(0)
-                    part_etag = self.storage.upload_multipart_part(buffer, partition.index + 1, upload)
+                    part_etag = self.storage.upload_multipart_part(object_key=object_key,
+                                                                   upload_id=upload_id,
+                                                                   part_number=partition.index + 1,
+                                                                   buffer=buffer)
                     partition = partition.next(part_etag=part_etag)
                 if partition.is_last_page:
-                    self.storage.complete_multipart_upload(upload, partition.part_etags)
+                    self.storage.complete_multipart_upload(object_key=object_key,
+                                                           upload_id=upload_id,
+                                                           etags=partition.part_etags)
                     file_name = self.file_name(manifest_key, base_name=partition.file_name)
                     tagging = self.tagging(file_name)
                     if tagging is not None:
@@ -1661,6 +1689,7 @@ class CompactManifestGenerator(PagedManifestGenerator):
                 doc = self._hit_to_doc(hit)
                 assert isinstance(doc, dict)
                 contents = doc['contents']
+                source = SourceRef.from_json(one(doc['sources'])).spec
                 if len(project_short_names) < 2 and 'projects' in contents:
                     project = one(cast(JSONs, contents['projects']))
                     short_names = project['project_short_name']
@@ -1671,7 +1700,10 @@ class CompactManifestGenerator(PagedManifestGenerator):
                     entities = self._get_entities(field_path, doc)
                     if field_path == ('contents', 'files'):
                         file = copy_json(one(entities))
-                        file['file_url'] = self._azul_file_url(file)
+                        if 'file_url' in column_mapping:
+                            file['file_url'] = self._azul_file_url(file)
+                        if 'file_mirror_uri' in column_mapping:
+                            file['file_mirror_uri'] = self._azul_mirror_uri(file, source)
                         entities = [file]
                     self._extract_fields(field_path=field_path,
                                          entities=entities,
@@ -1684,7 +1716,10 @@ class CompactManifestGenerator(PagedManifestGenerator):
                             for related_file in file['related_files']:
                                 related_row = {}
                                 file.update(related_file)
-                                file['file_url'] = self._azul_file_url(file)
+                                if 'file_url' in column_mapping:
+                                    file['file_url'] = self._azul_file_url(file)
+                                if 'file_mirror_uri' in column_mapping:
+                                    file['file_mirror_uri'] = self._azul_mirror_uri(file, source)
                                 self._extract_fields(field_path=field_path,
                                                      entities=[file],
                                                      column_mapping=column_mapping,
@@ -1817,8 +1852,8 @@ class VerbatimManifestGenerator(ClientSidePagingManifestGenerator,
         # orphans to be absent from the manifest, which is incorrect.
         #
         source_fields = {
-            plugin.special_fields.source_id,
-            plugin.special_fields.source_spec
+            plugin.special_fields.source_id.name,
+            plugin.special_fields.source_spec.name
         }
         return self.filters.explicit.keys() < (root_entity_fields | source_fields)
 
@@ -1948,7 +1983,7 @@ class JSONLVerbatimManifestGenerator(PagedManifestGenerator,
         return ManifestFormat.verbatim_jsonl
 
     @property
-    def source_id_field(self) -> str:
+    def source_id_field(self) -> SpecialField:
         return self.metadata_plugin.special_fields.source_id
 
     def source_ids(self) -> list[str]:
@@ -1962,7 +1997,7 @@ class JSONLVerbatimManifestGenerator(PagedManifestGenerator,
         # sources. If they are, an exception will be raised when the filters are
         # reified, so it's safe to skip that check here.
         try:
-            source_filter = self.filters.explicit[self.source_id_field]
+            source_filter = self.filters.explicit[self.source_id_field.name]
         except KeyError:
             sources = self.filters.source_ids
         else:
@@ -1981,7 +2016,7 @@ class JSONLVerbatimManifestGenerator(PagedManifestGenerator,
         source_id = source_ids[partition.page_index]
         log.info('Listing replicas from source %r for manifest page %d',
                  source_id, partition.page_index)
-        partition_filter = {self.source_id_field: {'is': [source_id]}}
+        partition_filter = {self.source_id_field.name: {'is': [source_id]}}
         original_filters = self.filters
         try:
             self.filters = original_filters.update(partition_filter)

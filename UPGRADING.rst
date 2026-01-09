@@ -20,6 +20,31 @@ reverted. This is all fairly informal and loosely defined. Hopefully we won't
 have too many entries in this file.
 
 
+#7617 Index one snapshot from upcoming lm10 release in `dev`
+============================================================
+
+In your personal HCA deployments:
+
+- Remove the ``lungmap`` catalog
+- Add the snapshot for project ``fdadee7e…`` to the ``lm2`` catalog
+
+As always, use the sandbox deployment's ``environment.py`` as a model when
+upgrading personal deployments.
+
+
+#7214 Enable mirroring in anvildev and anvilbox
+===============================================
+
+In your AnVIL personal deployments' ``environment.py`` files:
+
+1. Set ``AZUL_ENABLE_MIRRORING`` to ``'1'``
+2. Set the ``anvil`` catalog's ``mirror_limit`` property to ``int(1.5 * 1024 ** 3)``
+3. Add the ``no_mirror`` flag to source ``1000G_2019_Dev_20230609_ANV5_202306121732``
+
+As always, use the sandbox deployment's ``environment.py`` as a model when
+upgrading personal deployments.
+
+
 #7543 No mirror-able sources in anvildev/anvilbox
 =================================================
 

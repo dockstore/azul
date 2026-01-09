@@ -14,6 +14,7 @@ from typing import (
     AbstractSet,
     Callable,
     Iterable,
+    Mapping,
 )
 import uuid
 
@@ -212,9 +213,7 @@ class TDRAnvilBundle(AnvilBundle[TDRAnvilBundleFQID], TDRBundle):
             drs_uri = row['file_ref']
             # Validate URI syntax
             DRSURI.parse(drs_uri)
-            metadata.update(drs_uri=drs_uri,
-                            sha256='',
-                            crc32='')
+            metadata.update(drs_uri=drs_uri)
         target[entity] = metadata
 
     def add_links(self, links: Iterable[EntityLink]):
@@ -351,7 +350,17 @@ class Plugin(TDRPlugin[TDRAnvilBundle, TDRAnvilBundleFQID]):
         batch = self._get_batch(source.spec,
                                 'anvil_file',
                                 prefix,
-                                key_column='file_md5sum')
+                                key_column=self._column_from_64_to_hex('file_md5sum'))
+
+        def missing_md5(row: BigQueryRow) -> bool:
+            missing = row['file_md5sum'] is None
+            if missing:
+                # FIXME: Files from 1000G snapshot in anvildev can't be mirrored
+                #        https://github.com/DataBiosphere/azul/issues/7634
+                assert source.spec.name == 'ANVIL_1000G_2019_Dev_20230609_ANV5_202306121732', R(
+                    'File lacks MD5 digest', source, dict(row))
+            return missing
+
         return [
             AnvilFile(uuid=ref.entity_id,
                       name=row['file_name'],
@@ -360,6 +369,7 @@ class Plugin(TDRPlugin[TDRAnvilBundle, TDRAnvilBundleFQID]):
                       md5=row['file_md5sum'],
                       drs_uri=row['file_ref'])
             for ref, row in batch
+            if not missing_md5(row)
         ]
 
     def _emulate_bundle(self, bundle_fqid: TDRAnvilBundleFQID) -> TDRAnvilBundle:
@@ -940,17 +950,23 @@ class Plugin(TDRPlugin[TDRAnvilBundle, TDRAnvilBundleFQID]):
         else:
             return []
 
-    _schema_columns = {
-        table['name']: [column['name'] for column in table['columns']]
-        for table in anvil_schema['tables']
-    }
+    @cached_property
+    def _schema_columns_by_table(self) -> Mapping[str, AbstractSet[str]]:
+        columns_by_table = {}
+        for table in anvil_schema['tables']:
+            table_name = table['name']
+            column_names = {column['name'] for column in table['columns']}
+            column_names.add('datarepo_row_id')
+            if table_name == 'anvil_file':
+                column = 'file_md5sum'
+                column_names.remove(column)
+                column_names.add(f'{self._column_from_64_to_hex(column)} AS {column}')
+            columns_by_table[table_name] = column_names
+        return columns_by_table
 
-    def _columns(self, table_name: str) -> set[str]:
-        try:
-            columns = self._schema_columns[table_name]
-        except KeyError:
-            return {'*'}
-        else:
-            columns = set(columns)
-            columns.add('datarepo_row_id')
-            return columns
+    def _columns(self, table_name: str) -> AbstractSet[str]:
+        # Include all columns for replicas of non-schema tables
+        return self._schema_columns_by_table.get(table_name, {'*'})
+
+    def _column_from_64_to_hex(self, column: str) -> str:
+        return f'TO_HEX(FROM_BASE64({column}))'
