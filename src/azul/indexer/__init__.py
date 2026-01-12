@@ -465,7 +465,11 @@ class SourceRef[SOURCE_SPEC: SourceSpec](
 
     Note to plugin implementers: Since the source ID can't be assumed to be
     globally unique, plugins should subclass this class, even if the subclass
-    body is empty.
+    body is empty. Additionally, subclasses may not override the constructor in
+    a way that changes its signature, to allow for polymorphic instantiation.
+    Specifically, this means that subclasses may not add fields without a
+    default or modify whether a field is initialized via a keyword-only or
+    positional-only argument.
 
     >>> spec = SimpleSourceSpec(name='')
     >>> prefix = Prefix(partition=0)
