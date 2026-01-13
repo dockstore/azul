@@ -690,13 +690,20 @@ class RepositoryPlugin[BUNDLE: Bundle = Bundle[SourcedBundleFQID],
         """
         raise NotImplementedError
 
+    @abstractmethod
+    def list_sources(self) -> Iterable[SOURCE_REF]:
+        """
+        The sources the plugin is configured to read metadata from. Retrieving
+        this information may require a round-trip to the underlying repository.
+        """
+        raise NotImplementedError
+
     def list_accessible_source_ids(self,
                                    authentication: Authentication | None
                                    ) -> set[str]:
         """
         List source IDs in the underlying repository that are accessible using
-        the provided authentication. Sources may be included even if they are
-        not configured to be read from. Subclasses should override this method
+        the provided authentication. Subclasses should override this method
         if it can be implemented more efficiently than `list_accessible_sources`.
 
         Retrieving this information may require a round-trip to the underlying

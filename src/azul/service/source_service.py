@@ -9,8 +9,11 @@ from typing import (
 
 from azul import (
     CatalogName,
+    NotInLambdaContextException,
     cache,
+    cached_property,
     config,
+    open_resource,
 )
 from azul.auth import (
     Authentication,
@@ -26,6 +29,8 @@ from azul.plugins import (
 )
 from azul.types import (
     AnyJSON,
+    AnyMutableJSON,
+    json_element_mappings,
 )
 
 log = logging.getLogger(__name__)
@@ -90,6 +95,13 @@ class SourceService:
         """
         return self.repository_plugin(catalog).list_accessible_sources(authentication)
 
+    def list_sources(self, catalog_name: CatalogName) -> Iterable[SourceRef]:
+        """
+        List sources in the given catalog that are accessible to the indexer.
+        May require a roundtrip to the underlying repository.
+        """
+        return self.repository_plugin(catalog_name).list_sources()
+
     table_name = config.dynamo_sources_cache_table_name
 
     key_attribute = 'identity'
@@ -132,3 +144,37 @@ class SourceService:
 
     def _now(self) -> int:
         return int(time())
+
+    @cached_property
+    def configured_public_sources(self) -> Iterable[SourceRef]:
+        """
+        The set of all sources included in any catalog in the current
+        deployment that are accessible to the public service account. When
+        invoked from a lambda function, this will never make a roundtrip to the
+        underlying repository. Unlike :meth:`list_sources`, if the public
+        service account gains or loses access to a source, that change will not
+        be reflected in the return value until the lambda function is
+        re-deployed.
+        """
+        try:
+            with open_resource('public_sources.json') as f:
+                public_sources = json.load(f)
+        except NotInLambdaContextException:
+            public_sources = set()
+            for catalog in config.catalogs.values():
+                if not catalog.is_integration_test_catalog:
+                    public_sources.update(self.list_accessible_sources(catalog.name,
+                                                                       authentication=None))
+            return public_sources
+        else:
+            return [
+                SourceRef.from_json(source)
+                for source in json_element_mappings(public_sources)
+            ]
+
+    @property
+    def configured_public_sources_for_outsourcing(self) -> AnyMutableJSON:
+        return [
+            source.to_json()
+            for source in self.configured_public_sources
+        ]
