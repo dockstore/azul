@@ -20,6 +20,23 @@ reverted. This is all fairly informal and loosely defined. Hopefully we won't
 have too many entries in this file.
 
 
+#7128 Add support for HCA atlas (partial)
+=========================================
+
+In your personal HCA deployments, add the following snapshots to the ``dcp3``
+catalog:
+
+- ``8c4e43fb…``
+- ``8f1f653d…``
+- ``aca93e28…``
+- ``c0518445…``
+- ``c4e11369…``
+- ``edc54c5d…``
+
+As always, use the sandbox deployment's ``environment.py`` as a model when
+upgrading personal deployments.
+
+
 #7617 Index one snapshot from upcoming lm10 release in `dev`
 ============================================================
 
