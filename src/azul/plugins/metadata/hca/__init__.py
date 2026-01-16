@@ -538,13 +538,18 @@ class HCAFile(File):
         parameter_suffix = '; dcp-type=data'
         if content_type.endswith(parameter_suffix):
             content_type = content_type.removesuffix(parameter_suffix)
-        elif config.catalogs[catalog].atlas == 'lungmap':
+
+        atlas = config.catalogs[catalog].atlas
+        if atlas == 'hca':
+            assert ';' not in content_type, R(
+                'Unexpected MIME parameter in content type', content_type)
+        elif atlas == 'lungmap':
             # FIXME: Re-enable content-type validation for lungmap
             #        https://github.com/DataBiosphere/azul/issues/7244
             pass
         else:
-            assert ';' not in content_type, R(
-                'Unexpected MIME parameter in content type', content_type)
+            assert False, atlas
+
         return cls(uuid=json_str(descriptor['file_id']),
                    name=json_str(json_mapping(metadata['file_core'])['file_name']),
                    version=json_str(descriptor['file_version']),
