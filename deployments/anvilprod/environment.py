@@ -1205,7 +1205,7 @@ anvil11_sources = union(anvil10_sources, 366, delta([
     source('61b6b42b', 'ccdg_broad_np_epilepsy_zafagn_ds_epi_como_mds_wes_20221026_ANV5_202409302116', pop),
 ]))
 
-anvil12_sources = union(anvil11_sources, 372, delta([
+anvil12_sources = union(anvil11_sources, 369, delta([
     source('e4df6a8b', 'CCDG_Broad_CVD_EOCAD_PartnersBiobank_HMB_WES_20230621_ANV5_202511202351'),
     source('50aed057', 'CCDG_Broad_NP_Epilepsy_AUSAUS_EP_BA_CN_ID_MDS_GSA_MD_20251016_ANV5_202510161935'),
     source('f4d7152d', 'CCDG_Broad_NP_Epilepsy_USAMON_GRU_WES_20250721_ANV5_202511210008'),
@@ -1233,9 +1233,9 @@ anvil12_sources = union(anvil11_sources, 372, delta([
     source('3e69f21f', 'Complex_Chromosomal_Changes_R1_20251110_ANV5_202511101946'),
     source('f5dfb465', 'ENCORE_293T_20251123_ANV5_202511232035'),
     source('a443c0bd', 'ENCORE_RS293_20251123_ANV5_202511232027'),
-    source('4096189d', 'GREGOR_R04_GRU_20250917_ANV5_202509221559'),
+    source('262cd5df', 'GREGOR_R03_GRU_20250612_ANV5_202506271443', pop),
     source('f71485a8', 'GREGOR_R04_HMB_20250910_ANV5_202509221540'),
-    source('3b09455f', 'GREGoR_R01_GRU_20240208_ANV5_202510101245'),
+    source('3b09455f', 'GREGoR_R01_GRU_20240208_ANV5_202510101245', pop),
     source('25d953fe', 'GTEx_public_data_20240117_ANV5_202510101251'),
     source('8285aa5e', 'GTEx_v10_hg38_20241105_ANV5_202511210107'),
     source('3dddda4d', 'HPRC_20240401_ANV5_202511121431'),
