@@ -1,4 +1,4 @@
-https://github.com/gitpython-developers/gitdb/LICENSE
+https://github.com/gitpython-developers/gitdb/blob/HEAD/LICENSE
 
 Copyright (C) 2010, 2011 Sebastian Thiel and contributors
 All rights reserved.

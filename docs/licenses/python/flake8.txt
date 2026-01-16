@@ -1,4 +1,4 @@
-https://github.com/pycqa/flake8/LICENSE
+https://github.com/pycqa/flake8/blob/HEAD/LICENSE
 
 == Flake8 License (MIT) ==
 

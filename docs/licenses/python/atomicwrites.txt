@@ -1,4 +1,4 @@
-https://github.com/untitaker/python-atomicwrites/LICENSE
+https://github.com/untitaker/python-atomicwrites/blob/HEAD/LICENSE
 
 Copyright (c) 2015-2016 Markus Unterwaditzer
 

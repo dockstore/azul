@@ -1,4 +1,4 @@
-https://github.com/martinblech/xmltodict/LICENSE
+https://github.com/martinblech/xmltodict/blob/HEAD/LICENSE
 
 Copyright (C) 2012 Martin Blech and individual contributors.
 

@@ -1,4 +1,4 @@
-https://github.com/googleapis/google-api-python-client/LICENSE
+https://github.com/googleapis/google-api-python-client/blob/HEAD/LICENSE
 
                                  Apache License
                            Version 2.0, January 2004

@@ -1,4 +1,4 @@
-https://github.com/pycqa/mccabe/LICENSE
+https://github.com/pycqa/mccabe/blob/HEAD/LICENSE
 
 Copyright © <year> Ned Batchelder
 Copyright © 2011-2013 Tarek Ziade <tarek@ziade.org>

@@ -1,4 +1,4 @@
-https://github.com/more-itertools/more-itertools/LICENSE
+https://github.com/more-itertools/more-itertools/blob/HEAD/LICENSE
 
 Copyright (c) 2012 Erik Rose
 

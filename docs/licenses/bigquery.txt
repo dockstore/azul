@@ -1,121 +1,990 @@
 https://cloud.google.com/terms/service-terms
 
+
 Service Specific Terms
 
-These Service Specific Terms are incorporated into the agreement under which Google has agreed to provide Google Cloud Platform (as described at https://cloud.google.com/terms/services) to Customer (the “Agreement”). If the Agreement authorizes the resale or supply of Google Cloud Platform under a Google Cloud partner or reseller program, then all references to Customer in the Service Specific Terms mean Partner or Reseller (as applicable), and all references to Customer Data in the Service Specific Terms mean Partner Data. Capitalized terms used but not defined in the Service Specific Terms have the meaning given to them in the Agreement.
+These Service Specific Terms are incorporated into the agreement under which Google has agreed to provide Google Cloud Platform and SecOps Services (as described at https://cloud.google.com/terms/services) to Customer (the “Agreement”). If the Agreement authorizes you to resell or supply Google Cloud Platform under a Google Cloud partner or reseller program, then except for in the section entitled “Partner-Specific Terms”, all references to Customer in the Service Specific Terms refer to you (“Partner” or “Reseller”, as used in the Agreement), and all references to Customer Data in the Service Specific Terms mean Partner Data. If you are accessing the Services as a customer of an unaffiliated Google Cloud reseller, then Section 14 (Resold Customers) of the General Service Terms applies to you. Capitalized terms used but not defined in the Service Specific Terms have the meaning given to them in the Agreement.
 
 General Service Terms
 
-1. Data Location. Customer may configure the Services listed at https://cloud.google.com/terms/data-residency to store Customer Data in a specific Region or Multi-Region as detailed in the Cloud Locations Page, and Google will store that Customer Data at rest only in the selected Region or Multi-Region. The Services do not limit the locations from which Customer or Customer End Users may access Customer Data or to which they may move Customer Data. For clarity, Customer Data does not include resource identifiers, attributes, or other data labels.
+General Definitions.
 
-2. Operations of Communications Services. Notwithstanding any telecommunications restrictions in the Agreement, Customer may use the Services for hosting capacity in connection with Customer’s provision of telecommunications services to Customer End Users if (a) Customer obtains, maintains, and complies with all necessary regulatory licenses, registrations or other applicable requirements relating to such telecommunications services, and (b) Customer does not use or resell the Services to provide telecommunications connectivity, including for virtual private network services, network transport, or voice or data transmission.
+“Cloud Data Processing Addendum” (formerly referred to as the Data Processing and Security Terms) has the meaning given in the Agreement or, if no such meaning is given, means the then-current terms describing data processing and security obligations with respect to Customer Data at https://cloud.google.com/terms/data-processing-addendum.
 
-3. General Software Terms. The following terms apply to all Software:
-
-    a. License. Google grants Customer a royalty-free (unless otherwise stated by Google), non-exclusive, non-sublicensable, non-transferable license during the Term to reproduce and use the Software ordered by Customer on systems owned, operated, or managed by or on behalf of Customer in accordance with (i) the Agreement, and (ii) if applicable, the Scope of Use. Customer may authorize its and its Affiliates' employees, agents, and subcontractors (collectively, “Software Users”) to use the Software in accordance with this section (License), so long as Customer remains responsible. Customer may make a reasonable number of copies of the Software for back-up and archival purposes. For clarity, Software does not constitute Services.
-
-    b. Documentation. Google may provide Documentation describing the appropriate operation of the Software, including a description of how Software is properly used, and whether and how the Software collects and processes data. Customer will comply with any restrictions in the Documentation regarding Software use.
-
-    c. Compliance With Scope of Use. Within 30 days of Google’s reasonable written request, Customer will provide a sufficiently detailed written report describing its usage in accordance with the applicable Scope of Use of each Software product used by Customer and its Software Users during the requested period. If requested, Customer will provide reasonable assistance and access to information to verify the accuracy of Customer’s Software usage report(s).
-
-    d. Other Warranties and Compliance. Each party represents and warrants that it will comply with all laws and regulations applicable to its provision or use of the Software, as applicable. Customer will: (i) ensure that Customer and its Software Users' use of the Software complies with the Agreement and the restrictions in the Agreement applying to Customer's use of the Services; (ii) use commercially reasonable efforts to prevent and terminate any unauthorized access to or use of the Software; and (iii) promptly notify Google of any unauthorized access to or use of the Software of which Customer becomes aware. If the Software contains open source or third-party components, those components may be subject to separate license agreements, which Google will make available to Customer. Customer is solely responsible for complying with the terms of any third-party sources from which Customer elects to migrate its workloads onto the Services, and represents and warrants that such third-party sources permit the use of Software to migrate applications away from such sources. If the Agreement terminates or expires, then Customer will stop using all Software and delete it from Customer's systems.
-
-4. Premium Software Terms. The following terms apply only to Premium Software:
-
-    a. Introduction. Google makes certain Software available under the Agreement described as “Premium Software” at https://cloud.google.com/terms/services(“Premium Software”). Customer will pay applicable Fees for any Premium Software it obtains as described at the Fees URL. Premium Software is Google’s Confidential Information.
-
-    b. Software Warranty. Google warrants to Customer that for one year from its delivery, Premium Software will perform in material conformance with the applicable Documentation. This warranty will not apply if (i) Customer does not notify Google of the non-conformity within 30 days after Customer first discovers it, (ii) Customer modifies Premium Software or uses it in violation of the Agreement, or (iii) the non-conformity is caused by any third-party hardware, software, services, or other offerings or materials, in each case not provided by Google.
-
-    If Google breaches this warranty, then Google will, in its discretion, repair or replace the impacted Premium Software at no additional charge. If Google does not believe that repairing or replacing would be commercially reasonable, then Google will notify Customer and (A) Customer will immediately cease use of the impacted Premium Software and (B) Google will refund or credit any prepaid amounts for the impacted Premium Software and Customer will be relieved of any then-current commitment to pay for future use of the impacted Premium Software. Without limiting the parties’ termination rights, this section (Software Warranty) states Customer’s sole remedy for Google’s breach of the warranty in this section (Software Warranty).
-
-    c. Software Indemnification. Google’s indemnity obligations under the Agreement with respect to allegations of infringement of third-party Intellectual Property Rights apply to Premium Software, and Customer’s indemnity obligations under the Agreement with respect to Customer’s use of the Services apply to Customer’s use of Premium Software. In addition to any other indemnity exclusions in the Agreement, Google’s indemnity obligations will not apply to the extent the underlying allegation arises from modifications to Premium Software not made by Google or use of versions of Premium Software that are no longer supported by Google.
-
-    d. Technical Support. Unless otherwise specified by Google, Google will make TSS available for Premium Software for an additional charge, in accordance with the TSS Guidelines.
-
-    e. Compliance. Premium Software may transmit to Google metering information reasonably necessary to verify that use of the Premium Software complies with the Scope of Use, as described in the applicable Documentation. Customer will not disable or interfere with the transmission of such metering information.
-
-    f. Updates and Maintenance. During the Term, Google will make available to Customer copies of all current versions, updates, and upgrades of Premium Software, promptly upon general availability, as described in the Documentation. Unless otherwise stated in the Documentation for the applicable component of Premium Software, Google will maintain the current release of Premium Software and the two versions immediately preceding the current release, including by providing reasonable bug fixes and security patches. Maintenance for any Premium Software may be discontinued with one year’s notice from Google, except Google may eliminate maintenance for a version and require upgrading to a maintained version to address a material security risk or when reasonably necessary to avoid an infringement claim or comply with applicable law.
-
-5. Pre-GA Offerings Terms. Google may make available to Customer pre-general availability Google Cloud Platform features, services or software that are either not yet listed at https://cloud.google.com/terms/services or identified as “Early Access,” “Alpha,” “Beta,” “Preview,” “Experimental,” or a similar designation in related documentation or materials (collectively, “Pre-GA Offerings”). While Pre-GA Offerings are not Services or Software, Customer’s use of Pre-GA Offerings is subject to the terms of the Agreement applicable to Services (or Software, if applicable), as amended by this Section 5.
-
-Customer may provide feedback and suggestions about the Pre-GA Offerings to Google, and Google and its Affiliates may use any feedback or suggestions provided without restriction and without obligation to Customer.
-
-PRE-GA OFFERINGS ARE PROVIDED “AS IS” WITHOUT ANY EXPRESS OR IMPLIED WARRANTIES OR REPRESENTATIONS OF ANY KIND. Pre-GA Offerings (a) may be changed, suspended or discontinued at any time without prior notice to Customer and (b) are not covered by any SLA or Google indemnity. Except as otherwise expressly indicated in a written notice or the documentation for a given Pre-GA Offering, (i) Pre-GA Offerings may not be covered by TSS, (ii) the Cloud Data Processing Addendum does not apply to Pre-GA Offerings and Customer should not use Pre-GA Offerings to process personal data or other data subject to legal or regulatory compliance requirements, and (iii) Google’s data location commitments set out in these Service Specific Terms will not apply to Pre-GA Offerings. With respect to Pre-GA Offerings, to the maximum extent permitted by applicable law, neither Google nor its suppliers will be liable for any amounts in excess of the lesser of (A) the limitation on the amount of liability stated in the Agreement or (B) $25,000. Nothing in the preceding sentence will affect the remaining terms of the Agreement relating to liability (including any specific exclusions from any limitation of liability). Customer's access to and use of any Pre-GA Offering is subject to any applicable Scope of Use. Either party may terminate Customer's use of a Pre-GA Offering at any time with written notice to the other party. Certain Pre-GA Offerings may be subject to additional terms stated below.
-
-6. Google-Managed Multi-Cloud. The then-current services described as “Google-Managed Multi-Cloud Services” at https://cloud.google.com/terms/services ("Google-Managed MCS") are Google services, products and features that are hosted on the infrastructure of a third party cloud provider (“Multi-Cloud Service Third-Party Provider”). While the Google-Managed MCS are not Services or Software, Customer’s use of the Google-Managed MCS is subject to the terms of the Agreement applicable to Services (or Software, if applicable), as amended by this Section 6. In addition to the terms of the Agreement and notwithstanding anything to the contrary in the “Conflicting Terms” section of the Agreement, Customer’s use of the Google-Managed MCS is subject to the following terms:
-
-a. Admin Console. The Google-Managed MCS may not be available through the Admin Console.
-
-b. Multi-Cloud Service Third-Party Provider Relationship.
-
-i. To make use of the Google-Managed MCS, Customer must maintain an independent account and billing relationship with the applicable Multi-Cloud Service Third-Party Provider. Customer is responsible for entering into and complying with an appropriate agreement with the applicable Multi-Cloud Service Third-Party Provider governing Customer’s use of the Multi-Cloud Service Third-Party Provider’s services and the Multi-Cloud Service Third-Party Provider’s processing of personal data on behalf of Customer. The Agreement does not obligate Google or the Multi-Cloud Service Third-Party Provider to provide the Multi-Cloud Service Third-Party Provider’s services that are necessary for the Customer to use the Google-Managed MCS.
-
-ii. If the Multi-Cloud Service Third-Party Provider makes a change to its services or terms, and Google reasonably concludes that its provision of the Google-Managed MCS is no longer commercially feasible as a result of the change, Google may immediately Suspend all or part of Customer's use of the impacted Google-Managed MCS, or make any other discontinuance or backwards-incompatible change necessary to continue to provide the Google-Managed MCS. Google will lift any such Suspension once the circumstances giving rise to the Suspension have been resolved. To the extent Google may Suspend or modify the Google-Managed MCS as set forth in this Section, the Google-Managed MCS are not subject to the sections of the Agreement covering discontinuance and backwards-incompatible changes.
-
-c. Data Processing. Processing of data by the Google-Managed MCS is subject to the terms of the Cloud Data Processing Addendum, as supplemented and amended by the Google-Managed Multi-Cloud Services Cloud Data Processing Addendum. "Google-Managed Multi-Cloud Services Cloud Data Processing Addendum" means the terms stated at https://cloud.google.com/terms/mcs-data-processing-terms.
-
-d. Limitation of Liability. Notwithstanding anything to the contrary in the Agreement (except subject to any unlimited liabilities expressly stated in the Agreement), to the maximum extent permitted by law, each party’s total aggregate Liability for damages arising out of or relating to the Google-Managed MCS is limited to the greater of (1) the Fees Customer paid for the Google-Managed MCS during the 12-month period before the event giving rise to liability and (2) $25,000.
-
-e. Disclaimers. Notwithstanding anything to the contrary in the Agreement, the Google-Managed MCS (i) are not covered by any SLA covering Google Cloud Platform Services, unless specifically identified under the terms of the SLA, (ii) are not subject to any obligations for Google to provide termination or transition assistance or other technical assistance after Suspension or termination, (iii) are not subject to any business continuity or disaster recovery commitments, and (iv) are not Audited Services, unless specifically identified at the Audited Services URL as listed in Section 2.1 (Definitions) of the CDPA.
-
-f. Survival. The following subsections of these Google-Managed Multi-Cloud Service Specific Terms will survive expiration or termination of the Agreement: d (Limitation of Liability); e (Disclaimer); and f (Survival).
-
-7. Benchmarking. Customer may conduct benchmark tests of the Services (each a "Test"). Customer may only publicly disclose the results of such Tests if it (a) obtains Google's prior written consent, (b) provides Google all necessary information to replicate the Tests, and (c) allows Google to conduct benchmark tests of Customer's publicly available products or services and publicly disclose the results of such tests. Notwithstanding the foregoing, Customer may not do either of the following on behalf of a hyperscale public cloud provider without Google's prior written consent: (i) conduct (directly or through a third party) any Test of the Services or (ii) disclose the results of any such Test.
-
-8. Trials. Certain Services may be made available to Customer on a trial basis. The parameters of each trial, including any Scope of Use, may be presented to Customer either through the Fees URL, Admin Console, Documentation, email, or as otherwise communicated by Google. Use of a trial indicates Customer’s acceptance of any such parameters.
-
-9. User Experience Research. If Customer enrolls in the Google Cloud User Experience Research Program for Google Cloud Platform, Customer’s participation will be subject to the Google Cloud User Experience Research Panel Addendum available at https://cloud.google.com/terms/user-experience-research or a successor URL.
-
-10. PGSSI-S. Customer will comply with France's General Security Policy for Health Information Systems (PGSSI-S) to the extent applicable.
-
-11. Additional Definitions.
-
-“Cloud Locations Page” means https://cloud.google.com/about/locations/.
-
-“Documentation” means the then-current Google documentation made available by Google to its customers for use with the Services at https://cloud.google.com/docs/.
+“Documentation” means the then-current Services and / or Software documentation at https://cloud.google.com/docs/.
 
 “Fees URL” means https://cloud.google.com/skus.
+
+“Scope of Use” means any limits on installation or usage of Services or Software described at the Fees URL, Admin Console, Documentation, order form, or otherwise presented by Google.
+
+1. Data Location.
+
+a. Additional Definitions.
+
+“Cloud Locations Page” means https://cloud.google.com/about/locations/.
 
 “Multi-Region” means a defined set of Regions.
 
 “Region” means a region from which a particular Service is offered, as identified at the Cloud Locations Page.
 
-“Scope of Use” means any limits on installation or usage of Services or Software described at the Fees URL, Admin Console, order form, or otherwise presented by Google.
+b. Applicable Terms. For any Service listed at https://cloud.google.com/terms/data-residency, Customer may select a specific Region or Multi-Region as detailed in the Cloud Locations Page, and Google will store Customer Data for that Service at rest only within the selected Region or Multi-Region. Google may replicate that Customer Data within any other Region located within the country of the selected Region or within the country or countries of the selected Multi-Region (as applicable) for backup, reliability, debugging, support, maintenance, or security purposes. The Services do not limit the locations from which Customer or Customer End Users may access Customer Data or to which they may move Customer Data. For clarity, Customer Data does not include resource identifiers, attributes, or other data labels. Additional terms regarding configuration of specific Services are in the following sections under “Service Terms”:
+
+(i) AI/ML Data Location; and
+
+(ii) Assured Workloads Data Location.
+
+Services that do not store Customer Data at-rest or process Customer Data in use are also listed on https://cloud.google.com/terms/data-residency.
+
+2. Operations of Communications Services. Notwithstanding any telecommunications restrictions in the Agreement, Customer may use the Services for hosting capacity in connection with Customer’s provision of telecommunications services if (a) Customer obtains, maintains, and complies with all necessary regulatory licenses, registrations or other applicable requirements relating to such telecommunications services, and (b) Customer does not use or resell the Services to provide telecommunications connectivity, including for virtual private network services, network transport, or voice or data transmission.
+
+3. General Software Terms. The following terms apply to all Software:
+
+a. License. Google grants Customer a royalty-free (unless otherwise stated by Google), non-exclusive, non-sublicensable, non-transferable license during the Term to reproduce and use the Software ordered by Customer on systems owned, operated, or managed by or on behalf of Customer in accordance with (i) the Agreement, and (ii) if applicable, the Scope of Use. Customer may authorize its and its Affiliates' employees, agents, and subcontractors (collectively, “Software Users”) to use the Software in accordance with this subsection. Customer may make a reasonable number of copies of the Software for back-up and archival purposes. For clarity, Software does not constitute Services.
+
+b. Compliance With Scope of Use. Within 30 days of Google's reasonable written request, Customer will provide a detailed written report describing its usage in accordance with the applicable Scope of Use of each Software product used by Customer and its Software Users during the requested period. If requested, Customer will provide reasonable assistance and access to information to verify the accuracy of Customer’s Software usage report(s).
+
+c. Other Warranties and Compliance. Each party represents and warrants that it will comply with all laws applicable to its provision or use of the Software. Customer will: (i) ensure that Customer and its Software Users' use of the Software complies with the Agreement (including the Scope of Use) and the restrictions in the Agreement applying to Customer's use of the Services; (ii) use commercially reasonable efforts to prevent and terminate any unauthorized access to or use of the Software; and (iii) promptly notify Google of any unauthorized access to or use of the Software of which Customer becomes aware.
+
+d. Open Source or Third Party Terms. If the Software contains open source or third-party components, those components may be subject to separate license agreements, which Google will make available to Customer. Customer is solely responsible for complying with the terms of any third parties from which Customer elects to migrate its workloads onto the Services, and represents and warrants that such third-party sources permit the use of Software to migrate applications away from such sources.
+
+e. Termination. On termination or expiration of the Agreement, Customer will stop using all Software and delete all copies.
+
+4. Premium Software Terms. The following terms apply only to Premium Software:
+
+a. Introduction. Google makes certain Software available under the Agreement described as “Premium Software” at https://cloud.google.com/terms/services (“Premium Software”). Customer will pay applicable Fees for any Premium Software it obtains as described at the Fees URL. Premium Software is Google’s Confidential Information.
+
+b. Software Warranty.
+
+(i) Google warrants to Customer that for one year from its delivery, Premium Software will perform in material conformance with the applicable Documentation. This warranty will not apply if (A) Customer does not notify Google of the non-conformity within 30 days after Customer first discovers it, (B) Customer modifies Premium Software or uses it in violation of the Agreement, or (C) the non-conformity is caused by any third-party hardware, software, services, or other offerings or materials, in each case not provided by Google.
+
+(ii) If Google breaches this warranty, then Google will, in its discretion, repair or replace the impacted Premium Software at no additional charge. If Google does not believe that repairing or replacing would be commercially reasonable, then Google will notify Customer and (A) Customer will immediately cease use of the impacted Premium Software and (B) Google will refund or credit any prepaid amounts for the impacted Premium Software and Customer will be relieved of any then-current commitment to pay for future use of the impacted Premium Software. Without limiting the parties’ termination rights, this subsection states Customer’s sole remedy for Google’s breach of the warranty in this Section (Software Warranty).
+
+c. Software Indemnification. Google’s Intellectual Property Rights infringement indemnity obligations under the Agreement apply to Premium Software, and Customer’s indemnity obligations under the Agreement with respect to Customer’s use of the Services apply to Customer’s use of Premium Software. In addition to any other indemnity exclusions in the Agreement, Google’s indemnity obligations will not apply to the extent the underlying allegation arises from modifications to Premium Software not made by Google or use of versions of Premium Software that are no longer supported by Google.
+
+d. Technical Support. Unless otherwise specified by Google, Google will make TSS available for Premium Software, in accordance with the TSS Guidelines, for an additional charge.
+
+e. Compliance. Premium Software may transmit to Google metering information reasonably necessary to verify that use of the Premium Software complies with the Scope of Use. Customer will not disable or interfere with the transmission of such metering information.
+
+f. Updates and Maintenance. During the Term, Google will make available to Customer copies of all current versions, updates, and upgrades of Premium Software, promptly upon general availability, as described in the Documentation. Unless otherwise stated in the Documentation, Google will maintain the current release of Premium Software and the two versions immediately preceding the current release, including by providing reasonable bug fixes and security patches. Maintenance for any Premium Software may be discontinued with one year’s notice from Google, except Google may eliminate maintenance for a version and require upgrading to a maintained version to address a material security risk or when reasonably necessary to avoid an infringement claim or comply with applicable law.
+
+5. Pre-GA Offerings Terms.
+
+a. Introduction. Google may make available to Customer pre-general availability Google Cloud Platform features, models, tools, services or software that are either not yet listed at https://cloud.google.com/terms/services or identified as “Early Access,” “Alpha,” “Beta,” “Preview,” “Experimental,” or a similar designation in related documentation or materials (collectively, “Pre-GA Offerings”). Customer's access to and use of any Pre-GA Offering is subject to any applicable Scope of Use. While Pre-GA Offerings are not Services or Software, Customer’s use of Pre-GA Offerings is subject to the terms of the Agreement applicable to Services (or Software, if applicable), as amended by this Section (Pre-GA Offerings Terms).
+
+b. Disclaimer. PRE-GA OFFERINGS ARE PROVIDED “AS IS” WITHOUT ANY EXPRESS OR IMPLIED WARRANTIES OR REPRESENTATIONS OF ANY KIND. Pre-GA Offerings (i) may be changed, suspended or discontinued at any time without prior notice to Customer and (ii) are not covered by any SLA or Google indemnity. Except as otherwise expressly indicated in a written notice or Google documentation, (A) Pre-GA Offerings are not covered by TSS, and (B) the Data Location Section above will not apply to Pre-GA Offerings.
+
+c. Liability. Notwithstanding anything to the contrary in any other limitation of liability Section in the Agreement,with respect to Pre-GA Offerings, Google will not be liable for any amounts in excess of the lesser of (i) the limitation on the amount of liability stated in the Agreement or (ii) $25,000. Nothing in the preceding sentence will affect any exclusions from any limitation of liability in the Agreement with respect to the following: (A) death or personal injury resulting from negligence, (B) fraud or fraudulent misrepresentation, (C) infringement of the other party’s Intellectual Property Rights, or (D) matters for which liability cannot be excluded or limited under applicable law.
+
+d. Data Processing. Except as otherwise expressly indicated in a written notice or Google documentation, no data processing terms (including the Cloud Data Processing Addendum) apply to Pre-GA Offerings and Customer should not use Pre-GA Offerings to process personal data or other data subject to legal or regulatory compliance requirements.
+
+e. Termination. Either party may terminate Customer's use of a Pre-GA Offering at any time with written notice to the other party.
+
+f. EU Data Act Exclusion. Google has no obligations under Chapter VI of the EU Data Act or the EU Data Act Terms below in respect of Pre-GA Offerings.
+
+6. Google-Managed Multi-Cloud.
+
+a. Introduction. The then-current services described as “Google-Managed Multi-Cloud Services” at https://cloud.google.com/terms/services ("Google-Managed MCS") are Google services, products and features that are hosted on the infrastructure of a third party cloud provider (“MCS Third-Party Provider”). While the Google-Managed MCS are not Services or Software, Customer’s use of the Google-Managed MCS is subject to the terms of the Agreement applicable to Services (or Software, if applicable), as amended by this Section (Google-Managed Multi-Cloud).
+
+b. Admin Console. The Google-Managed MCS may not be available through the Admin Console.
+
+c. MCS Third-Party Provider Relationship.
+
+(i) To make use of the Google-Managed MCS, Customer must maintain an independent agreement, account and billing relationship with the applicable MCS Third-Party Provider. The Agreement does not obligate Google or the MCS Third-Party Provider to provide the MCS Third-Party Provider’s services that are necessary for the Customer to use the Google-Managed MCS.
+
+(ii) If the MCS Third-Party Provider makes a change to its services or terms, and Google reasonably concludes that its provision of the Google-Managed MCS is no longer commercially feasible as a result of the change, Google may immediately Suspend all or part of Customer's use of the impacted Google-Managed MCS, or make any other discontinuance or backwards-incompatible change necessary to continue to provide the Google-Managed MCS. To the extent Google may Suspend or modify the Google-Managed MCS as set forth in this Section, the Google-Managed MCS are not subject to the Sections of the Agreement covering discontinuance and backwards-incompatible changes.
+
+d. Liability. Notwithstanding anything to the contrary in the Agreement (except subject to any unlimited liabilities expressly stated in the Agreement), to the maximum extent permitted by law, each party’s total aggregate Liability for damages arising out of or relating to the Google-Managed MCS is limited to the greater of (i) the Fees Customer paid for the Google-Managed MCS during the 12-month period before the event giving rise to liability and (ii) $25,000.
+
+e. Disclaimer. Notwithstanding anything to the contrary in the Agreement, the Google-Managed MCS are not (i) covered by any SLA, unless specifically identified under the terms of the SLA, (ii) subject to any obligations for Google to provide termination or transition assistance or other technical assistance after Suspension or termination, and (iii) subject to any business continuity or disaster recovery commitments.
+
+7. Benchmarking. Customer may itself (but may not permit a third party to): (a) conduct benchmark tests of the Services (each a "Test"); and (b) publicly disclose the results of such Tests only if (i) the public disclosure includes all necessary information to replicate the Tests, and (ii) Customer allows Google to conduct benchmark tests of Customer's publicly available products or services and publicly disclose the results of such tests. Notwithstanding the foregoing, Customer may not do either of the following on behalf of a hyperscale public cloud provider without Google's prior written consent: (A) conduct (directly or through a third party) any Test or (B) disclose the results of any such Test.
+
+8. Trials. Certain Services may be made available to Customer on a trial basis ("Free Trial") subject to parameters and any Scope of Use, as presented in a Fees URL, Admin Console, Documentation, or otherwise. Use of a Free Trial indicates Customer’s acceptance of any such parameters. If Customer is a government entity and is offered a Free Trial: (a) Customer represents and warrants that: (i) it is permitted to accept the Free Trial, (ii) its use of the Free Trial is not prohibited by applicable law or regulation, including any applicable anti-bribery, ethics, or conflict of interest rules and laws, and (iii) its use of the Free Trial will not prevent Google from bidding on, or otherwise participating in, other potential contracts issued by the government entity or its related bodies; (b) Customer may only use the Free Trial for official government purposes; and (c) Google has no expectation of payment or favorable treatment by offering the Free Trial.
+
+9. User Experience Research. If Customer enrolls in the Google Cloud User Experience Research Program for Google Cloud Platform, Customer’s participation will be subject to the Google Cloud User Experience Research Panel Addendum available at https://cloud.google.com/terms/user-experience-research or a successor URL.
+
+10. PGSSI-S. Customer will comply with France's General Security Policy for Health Information Systems (PGSSI-S) to the extent applicable.
+
+11. APIs and non-Google cloud services. Certain APIs and non-Google cloud services accessible through the Admin Console have separate terms or privacy policies. Notwithstanding any reference to the Google Cloud Terms of Service or the Google Cloud Privacy Notice in the Admin Console, the API-specific terms and privacy policies will apply to Customer’s use of those APIs or services.
+
+12. Resource Fields Data. Data included in Project Name, Project ID, or other resource fields do not constitute Customer Data. Do not include confidential, sensitive, or personally identifiable information in these fields.
+
+13. Google Maps Content. Certain Services may incorporate features and content from Google Maps (“Google Maps Content”). If Customer provides its Google Maps Platform credentials to enable a Service to access Google Maps Content, such use or access is subject to the agreement under which Google has agreed to provide Google Maps Platform to Customer. Otherwise, Customer agrees that its use of or access to such Google Maps Content is subject to the then-current versions of the: (a) Google Maps/Google Earth Additional Terms of Service at https://maps.google.com/help/terms_maps.html; and (b) Google Privacy Policy at https://www.google.com/policies/privacy/.
+
+14. Resold Customers. This Section 14 (Resold Customers) applies only if (a) Customer orders Google Cloud Platform Services from a Reseller under a Reseller Agreement (such Services, “Resold Services”) and (b) Customer has a direct agreement with Google to provision those Resold Services.
+
+a. Additional Definitions.
+
+“Reseller” means, if applicable, the authorized unaffiliated third-party reseller that sells the Services to Customer.
+
+“Reseller Agreement” means, if applicable, the separate agreement between Customer and Reseller regarding the Services. The Reseller Agreement is independent of and outside the scope of this Agreement.
+
+“Reseller Fees” means the fees (if any) for Services used or ordered by Customer as agreed in a Reseller Agreement, plus any applicable Taxes.
+
+“Reseller Order” means, if applicable, an order form issued by a Reseller and executed by Customer and the Reseller specifying the Services Customer is ordering from the Reseller.
+
+b. Applicable Terms. For the purposes of Resold Services:
+
+(i) The Section of the Agreement entitled “Payment Terms” will not apply, nor will any provisions in the applicable Service Specific Terms relating to billing, invoicing, or payment;
+
+(ii) Reseller Fees will apply and be payable directly to Reseller, and all prices for Resold Services will be solely determined between Reseller and Customer;
+
+(iii) Google will provide to Customer the Resold Services described in the Reseller Order to the extent that there is a valid and binding order for such Services between Google and Reseller;
+
+(iv) Customer will receive any applicable SLA credits or monetary refunds described in this Agreement from Reseller only (and Customer must notify Reseller if Google fails to meet any SLA);
+
+(v) Notwithstanding Google’s support obligations in the TSS Guidelines, Google will not provide any support to Customer unless (A) Customer orders TSS from Google directly or (B) Reseller orders TSS from Google on behalf of Customer, and such TSS entitlement requires Google to provide TSS directly to Customer. All other support (if any) will be provided to Customer by Reseller in accordance with the Reseller Agreement, subject to Section 14(e) (Reseller Technical Support);
+
+(vi) Customer acknowledges that access to the Services may be Suspended if at any time Reseller or Customer fails to maintain a billing account linked to Customer’s Account;
+
+(vii) In the event of termination of this Agreement, Google will send Reseller (and not Customer) the final invoice (if applicable) for payment obligations related to Resold Services. Customer will notify (A) Reseller of any termination of this Agreement and (B) Google of any termination of the Reseller Agreement;
+
+(viii) Any renewal(s) of the Resold Services and/or any Reseller Order will be as agreed between Customer and Reseller;
+
+(ix) If Reseller fails to pay an undisputed invoice for Resold Services to Google due to Customer's failure to pay Reseller, Google may Suspend Customer's access to the Services;
+
+(x) To the extent that any Customer Data is under Reseller's organizational resource, then notwithstanding anything to the contrary in this Agreement (including the Cloud Data Processing Addendum):
+
+(A) the Cloud Data Processing Addendum will not apply with respect to the processing and security of such Customer Data;
+
+(B) Google will only access, use, and otherwise process such Customer Data in accordance with the separate agreement between Google and Reseller (including its then-current terms describing data processing and security of “Partner Data” as defined by that agreement) and will not access, use, or process such Customer Data for any other purpose; and
+
+(C) the consents and notices for which Customer is responsible under the section of this Agreement titled “Privacy” or “Consents” must also permit accessing, storing, and processing of Customer Data as described in subsection (B) above.
+
+(xi) The Google Cloud Platform Services require linking to the Reseller's billing account in order to be billed by the Reseller. Customer acknowledges and agrees that, (A) if Google’s agreement with the Reseller or Customer’s Reseller Agreement is terminated or expires, then the Services will no longer be linked to the Reseller’s billing account, and (B) unless any such Services used by Customer are linked to the Reseller’s billing account, such Services will (x) not constitute Resold Services (and therefore not be subject to this Section 14 (Resold Customers)), and (y) be regarded as Services ordered directly from Google and accordingly, despite the terms of the Reseller Agreement (including the fees agreed between Customer and Reseller), Customer will be required to pay Fees to Google for such Services, in accordance with the terms of this Agreement.
+
+(xii) “Cloud Data Processing Addendum”, as it is used in this Agreement, means the then-current terms describing data processing and security obligations with respect to Customer Data that is under Customer’s (not Reseller’s) organizational resource, as described at https://cloud.google.com/terms/data-processing-addendum.
+
+(xiii) “Order Term,” as it is used in this Agreement, means the period of time starting on the Services Start Date or the renewal date (as applicable) for the Resold Services and continuing until the expiration or termination of the applicable Reseller Order; and
+
+(xiv) “Services Start Date,” as it is used in this Agreement, means either the start date described in the Reseller Order or, if none is specified in the Reseller Order, the date Google makes the Resold Services available to Customer; and
+
+c. Liability Cap. For the purposes of the section of the Agreement titled “Limitation on Amount of Liability”, where the event giving rise to Liability is a breach of this Agreement or otherwise arises in connection with the Resold Services, “Fees” as it is used in that Section means “Reseller Fees”. If Customer or Google brings a claim under the Agreement, then, for the purposes of establishing the Liability cap under the section of the Agreement titled “Limitation on Amount of Liability”, upon Google's request, Customer will (i) promptly disclose to Google the amount of any Reseller Fees paid or payable under the Reseller Agreement; (ii) consent to Reseller disclosing such amount to Google, notwithstanding Reseller's confidentiality obligations under the Reseller Agreement; and (iii) procure any consents necessary to enable Customer's or Reseller's disclosure under this Section 14(c) (Liability Cap). Subject to the section of the Agreement titled “Unlimited Liabilities”, Google will not be liable for damages under this Agreement to the extent Customer has claimed damages from Reseller in respect of the same event or series of events.
+
+d. Sharing Confidential Information. Google may share Customer Confidential Information with Reseller as a Delegate subject to the section of the Agreement titled “Confidentiality” or “Confidential Information”.
+
+e. Reseller-Customer Relationship. At Customer’s discretion, Reseller may access Customer’s Account. As between Google and Customer, Customer is solely responsible for (i) any access by Reseller to Customer's Account; (ii) defining in the Reseller Agreement any rights or obligations as between Reseller and Customer with respect to the Resold Services; and (iii) verifying whether data provided to Google by Customer or End Users through the Resold Services under the Account, and data that Customer or End Users derive from that data through their use of the Resold Services, will be under Customer’s or Reseller’s organizational resource. Google will not have any Liability arising out of a Reseller’s (A) suspension or termination of Customer’s access to the Services; (B) access to and visibility of Customer’s Account and Customer’s Account’s billing-related metadata; or (C) offering or provisioning of Reseller or third party products or services.
+
+f. Reseller Technical Support. Customer acknowledges and agrees that Reseller may disclose Customer and End User personal data to Google as reasonably required for Reseller to handle any support issues that Customer escalates to or via Reseller.
+
+15. Customer Data. Except to the extent expressly described in the Agreement or required by applicable law, Customer is responsible for all Customer Data, including securing and maintaining all applicable rights required for Customer’s use of Customer Data.
+
+16. EU Data Act Terms.
+
+a. Additional Definitions. For purposes of this Section (EU Data Act Terms):
+
+“Completion Notice” has the meaning given in Section 16(g) (Switching Initiation and Process) and takes effect as described in that Section.
+
+“Customer Account Information” means information that is provided by Customer when creating the Account for use with the Google DP Service(s).
+
+"Customer Configurations" means configurations and settings (including service and security settings for data) that are applied by Customer within the Google DP Service(s).
+
+“Customer Defined Attributes” means resource identifiers, attributes and other data labels that are applied by Customer within the Google DP Service(s).
+
+“Data” has the meaning given by the EUDA.
+
+“Data Processing Service” (or “DP Service”) has the meaning given by the EUDA.
+
+“Data Recovery Period” means the period of at least 30 calendar days from the end of the Migration Period until termination of the Agreement or withdrawal of Customer’s Exit Notice under Section 16(g)(ii), as applicable in accordance with Section 16(g) (Switching Initiation and Process).
+
+“Digital Assets” has the meaning given by the EUDA.
+
+“EUDA” means Regulation (EU) 2023/2854 of the European Parliament and of the Council of 13 December 2023 on harmonised rules on fair access to and use of data and amending Regulation (EU) 2017/2394 and Directive (EU) 2020/1828.
+
+“Exit Notice” has the meaning given in Section 16(e) (Customer’s Decision).
+
+“Exportable Data” has the meaning given by the EUDA (notwithstanding references to specific articles of the EUDA in the EUDA definition).
+
+“Google DP Service” means a DP Service provided by Google, as described at https://cloud.google.com/terms/data-portability (as may be updated from time to time).
+
+“Google Metadata” means Google-generated metadata that is (a) directly related to Customer’s use of the Google DP Service(s) and (b) required by Google to operate and maintain the Google DP Service(s) and by Customer to restore service functionalities in the infrastructure of a destination provider of DP Services or an On-Premises ICT Infrastructure.
+
+“Google Operational Data” means Google-generated data (including metadata) that is (a) not directly related to Customer’s use of the Google DP Service(s) and (b) derived from Google’s systems and operation of the Google DP Service(s).
+
+“ICT” means information and communication technology.
+
+“Initiation Period” means the period of 30 calendar days from the end of the Intake Period.
+
+“Intake Period” means the period of 14 calendar days from the date of Customer’s submission of an Exit Notice.
+
+“Migration Period” means the period of 30 calendar days from the end of the Initiation Period, as applicable in accordance with Section 16(g) (Switching Initiation and Process) and as may be extended in accordance with Section 16(h) (Extended Migration Period).
+
+“Month End” means the last day of a calendar month.
+
+“Non-Personal Data” has the meaning given by the EUDA.
+
+“On-Premises ICT Infrastructure” has the meaning given by the EUDA.
+
+“Parallel DP Service” means a DP Service offered by a different provider and procured by Customer for its own use in parallel with a Google DP Service.
+
+“personal data” has the meaning given by the EU GDPR.
+
+“Processing” has the meaning given by the EUDA.
+
+“Switching” (or “Switch”) has the meaning given by the EUDA.
+
+“Switching Charges” has the meaning given by the EUDA.
+
+“Trade Secret” has the meaning given by the EUDA.
+
+b. Application. This Section applies only (i) if Customer’s billing address is in the European Economic Area and (ii) in respect of the Google DP Service(s).
+
+c. Compliance with EUDA. Both parties will comply with their obligations under the EUDA related to Switching from the Google DP Service(s), including cooperating in good faith as required by the EUDA.
+
+d. Customer’s Right to Switch. In accordance with this Section Customer may, upon request, Switch from a Google DP Service to a DP Service offered by a different provider and/or port all Exportable Data and Digital Assets to an On-Premises ICT Infrastructure without undue delay during the Initiation Period and Migration Period. For clarity, this right to Switch will not prevent Customer from continuing to access the Google DP Service(s) during the Data Recovery Period as described in Section 16(g) (Switching Initiation and Process).
+
+e. Customer’s Decision. If Customer wishes to Switch from a Google DP Service as described in Section 16(d) (Customer’s Right to Switch) during and/or after the Initiation Period and/or wishes to erase its Exportable Data and Digital Assets related to a Google DP Service(s) after the Initiation Period, Customer must first notify Google of Customer’s decision by having a duly authorized representative submit the form at https://support.google.com/cloud/contact/cloud_exit (an “Exit Notice”) and, if applicable, include the necessary details of any destination provider of DP Services.
+
+f. Google’s Switching Obligations. If Customer submits an Exit Notice as described in Section 16(e) (Customer’s Decision), then Google will do the following during the Initiation Period, Migration Period, and Data Recovery Period, as applicable:
+
+(i) provide reasonable assistance to Customer and third parties authorised by Customer in the Switching process;
+
+(ii) act with due care to maintain business continuity and continue the provision of the Google DP Service(s) under the Agreement;
+
+(iii) provide clear information concerning known risks to continuity in the provision of the Google DP Service(s) under the Agreement, including via the dashboard at https://status.cloud.google.com and/or the dashboard Customer may choose to enable and configure via the Google DP Service(s) to access more specific information (both of which dashboards are provided for informational purposes only);
+
+(iv) maintain a continued high level of security throughout the Switching process, in particular for Exportable Data and Digital Assets during their export and during the Data Recovery Period, in accordance with applicable European Union or national law;
+
+(v) enable Customer, in a manner consistent with the functionality of the Google DP Service(s), to export the categories of Data and Digital Assets described in Section 16(g) (Switching Initiation and Process); and
+
+(vi) otherwise support Customer’s exit strategy for the relevant Google DP Service(s), including by assigning a Google support agent during the Intake Period to coordinate Google’s assistance with the Switching process and by providing all relevant information.
+
+g. Switching Initiation and Process. If Customer submits an Exit Notice as described in Section 16(e) (Customer’s Decision), then Customer will be responsible for initiating the Switching process (if applicable) during the Initiation Period with at least two (2) working days’ prior notice to its assigned Google support agent, subject to the following:
+
+(i) if Customer has opted for only Switching as described in Section 16(e) (Customer’s Decision) but does not initiate the Switching process in compliance with this Section by the end of the Initiation Period, then in relation to any Google DP Service(s) covered by Customer’s decision:
+
+(A) neither a Migration Period nor Data Recovery Period will apply;
+
+(B) Customer will be deemed to have withdrawn its Exit Notice (without limiting Customer’s ability to submit another one); and
+
+(C) the Agreement will remain in force;
+
+(ii) If Customer has opted for Switching as described in Section 16(e) (Customer’s Decision) and initiates the Switching process in compliance with this Section by the end of the Initiation Period, then in relation to any Google DP Service(s) covered by Customer’s decision:
+
+(A) a Migration Period and Data Recovery Period will apply;
+
+(B) the categories of Data and Digital Assets that can be exported during the Switching process are as follows:
+
+a) Exportable Data comprising Customer Account Information, Customer Configurations, Customer Data and Google Metadata; and
+
+b) Customer Applications;
+
+(C) the categories of Data that are exempted from Exportable Data, without the exemption impeding or delaying the Switching process, are as follows:
+
+a) Data specific to the internal functioning of the Google DP Service(s) that would, if exported, risk a breach of Google’s Trade Secrets, namely Google Operational Data; and
+
+b) Data related to the integrity and/or security of the Google DP Service(s) that would, if exported, expose Google to cybersecurity vulnerabilities;
+
+(D) for clarity, Exportable Data excludes the following by definition:
+
+a) Data not directly or indirectly generated or cogenerated by Customer’s use of the Google DP Service(s); and
+
+b) assets or Data protected by intellectual property rights, or constituting a Trade Secret, of Google or third parties;
+
+(E) as between the parties and without limiting any of Google’s obligations under this Section, Customer will be responsible for:
+
+a) its storage of any copies of Data and Digital Assets (including Exportable Data) related to the Google DP Service(s) outside Google’s or Google’s Subprocessors’ systems;
+
+b) the security of any Data and Digital Assets (including Exportable Data) outside Google’s and Google’s Subprocessors’ systems (including the security of Data and Digital Assets on systems managed or controlled by the destination provider of DP Services or on Customer’s own infrastructure);
+
+c) driving and managing the Switching process, in particular during the Initiation Period and Migration Period;
+
+d) all acts and omissions of third parties engaged by Customer in relation to the Switching process;
+
+(F) after the Migration Period:
+
+a) Customer may no longer migrate workloads or production data (or otherwise consume networking resources) for Switching purposes, but may complete other aspects of the Switching process such as data retrieval;
+
+b) Customer will:
+
+(i) be responsible for notifying Google of Customer’s successful completion of the Switching process by having a duly authorized representative submit the form at https://support.google.com/cloud/contact/cloud_exit_completion (a “Completion Notice”) no earlier than the first day after the Migration Period and within 180 calendar days of the end of the Migration Period;
+
+(ii) be deemed to have terminated the Agreement for convenience, a minimum of 30 calendar days after the date of Customer’s submission of the Completion Notice, at the Month End following such minimum period; and
+
+(iii) if Customer fails to submit a Completion Notice within 180 calendar days of the end of the Migration Period, be deemed to have withdrawn its Exit Notice at the end of such 180-day period (without limiting Customer’s ability to submit another one);
+
+c) Google will notify Customer of any such termination and, subject to Section 16(i) (Customer’s Partial Exit), fully erase all Exportable Data and Digital Assets generated directly by Customer or relating to Customer directly in accordance with the Cloud Data Processing Addendum (as applicable);
+
+(G) Google will not impose any Switching Charges for the Switching process described in this Section; and/or
+
+(iii) If Customer has opted for erasure as described in Section 16(e) (Customer’s Decision), then in relation to the Google DP Service(s) covered by Customer’s decision:
+
+(A) if Section 16(g)(ii) also applies, then:
+
+a) a Migration Period and Data Recovery Period will apply as described in Section 16(g)(ii); and
+
+b) erasure of Exportable Data and Digital Assets will be governed by Section 16(g)(ii); and
+
+(B) if Section 16(g)(ii) does not also apply, then:
+
+a) neither a Migration Period nor Data Recovery Period will apply;
+
+b) Customer will be deemed to have terminated the Agreement for convenience at the end of the Initiation Period; and
+
+c) Google will notify Customer of such termination and, subject to Section 16(i) (Customer’s Partial Exit), fully erase all Exportable Data and Digital Assets generated directly by Customer or relating to Customer directly in accordance with the Cloud Data Processing Addendum (as applicable).
+
+h. Extended Migration Period. The Migration Period may be extended:
+
+(i) once by Google, if Google believes a Migration Period of 30 calendar days is not technically feasible; notifies Customer during the Intake Period; and, in Google’s notice, duly justifies the technical unfeasibility and defines an alternative Migration Period of no greater than 7 months; and
+
+(ii) once by Customer, if Customer wishes to have a longer Migration Period for any reason; notifies its assigned Google support agent during the then-current Migration Period; and, in Customer’s notice, defines an alternative Migration Period.
+
+i. Customer’s Partial Exit. If, on the date of deemed termination of the Agreement in relation to the Google DP Service(s) under Section 16(g) (Switching Initiation and Process), Customer continues to use or order any other Services under the Agreement, Customer acknowledges that the Agreement will continue to apply to such other Services and agrees to defer full erasure under Section 16(g) (Switching Initiation and Process) of Exportable Data and Digital Assets related to the Google DP Service(s) until the Agreement terminates in its entirety.
+
+j. Required Information. Google will provide Customer with the following information and keep it up to date:
+
+(i) information about available procedures for Switching and porting to and from the Google DP Service(s), including information about available Switching and porting methods and formats as well as restrictions and technical limitations known to Google, at https://cloud.google.com/terms/data-portability;
+
+(ii) details of all data structures, data formats, relevant standards and open interoperability specifications available or applicable for the Exportable Data referred to in Section 16(g)(ii)(B) at https://cloud.google.com/terms/data-portability;
+
+(iii) information about the jurisdictions to which the ICT infrastructure deployed for Data Processing of the Google DP Service(s) is or may be subject at
+https://cloud.google.com/about/locations, https://cloud.google.com/vpc/docs/edge-locations, https://cloud.google.com/cdn/docs/locations and https://cloud.google.com/network-connectivity/docs/interconnect/concepts/colocation-facilities; and
+
+(iv) a general description of the technical, organisational, and contractual measures adopted by Google as provider of the Google DP Service(s) to prevent international governmental access to or the transfer of Non-Personal Data held in the European Union, where such access or transfer would conflict with EU or EU Member State law, in:
+
+(A) the Cloud Data Processing Addendum, including Sections 7 (Data Security) and 11 (Subprocessors) of the General Terms, Appendix 2 (Security Measures) and the Google Cloud Platform section of Appendix 4 (Specific Products); and
+
+(B) the remainder of the Agreement, including the sections entitled “Confidential Information” and “Representations and Warranties”.
+
+k. Agreement Duration; Separate Rights; Notices; Pre-GA Offerings. For clarity:
+
+(i) the Agreement will remain in effect, and Customer will be responsible for the Fees or Reseller Fees it incurs, until the effective date of termination of the Agreement in relation to the relevant Service(s);
+
+(ii) nothing in this Section will limit Customer’s separate right to delete or export Customer Data in accordance with the Cloud Data Processing Addendum, to terminate the Agreement or to stop using a Google DP Service at any time;
+
+(iii) all notices given under this Section must be in writing; and
+
+(iv) Google has no obligations under Chapter VI of the EUDA or this Section in respect of Pre-GA Offerings.
+
+l. Interoperability. Unless Customer has submitted an Exit Notice as described in Section 16(e) (Customer’s Decision) for the relevant Google DP Service, Customer may export Data from a Google DP Service to a Parallel DP Service as described at https://cloud.google.com/data-transfer-essentials/docs/overview (as may be updated from time to time), subject to the following:
+
+(i) subsections (ii) and (iv) of Section 16(f) (Google’s Switching Obligations) and subsections (ii) (B), (C) and (D) of Section 16(g) (Switching Initiation and Process) will apply mutatis mutandis to facilitate interoperability for the purpose of such parallel use of DP Services; and
+
+(ii) if Google imposes any data egress charges for such Data exports (as described at the above URL), Google may do so only for the purpose of passing on the egress costs incurred by Google, without exceeding such costs.
+
+m. Compliance Review. Google may monitor or review the movement of Data or Digital Assets away from a Google DP Service to verify that Customer’s Switching process or Data export complies with this Section.
+
+n. Precedence. To the extent of any conflict between:
+
+(i) this Section and the EU GDPR, the EU GDPR will prevail with respect to personal data; and
+
+(ii) this Section and Google’s right to terminate the Agreement for an uncured material breach by Customer, Google’s termination right will prevail.
+
+o. Transition; Availability of Terms. Customer acknowledges that:
+
+(i) this Section was made available prior to Customer’s entry into the Agreement in relation to the Google DP Service(s) or that the Agreement was in force in relation to the Google DP Service(s) on 9 September 2025 when this Section was first published; and
+
+(ii) Customer may store and reproduce this Section at any time by selecting “Expand all” at the top of https://cloud.google.com/terms/service-terms and then printing (and/or saving) all Service Specific Terms, including this Section, as a PDF.
+
+17. Survival. The following Sections of these General Service Terms will survive expiration or termination of the Agreement: (a) Liability and the Disclaimer subsections in the Google-Managed Multi-Cloud Section and Pre-GA Offerings Terms; (b) Benchmarking; (c) the following subsections of the Resold Customers section: subsection (b)(vii); subsection (c) (Liability Cap); subsection (d) (Sharing Confidential Information); and subsection (e) (Reseller-Customer Relationship); and (d) Google’s obligations under the EU Data Act Terms with respect to erasure of Exportable Data and Digital Assets.
 
 Service Terms
+The following terms apply only to the Service(s) indicated in the Section title.
 
-5. BigQuery.
+Compute
 
-a. ODBC/JDBC Drivers. The ODBC and JDBC drivers for BigQuery (as described here) are “Software” as defined in the Agreement and any use of them is subject to the “General Software Terms” above. These drivers may only be used with BigQuery and may not be used with any other product or service.
+1. App Engine - Data Location. Customer may configure App Engine to store Customer Data in the United States or European Union, and Google will store that Customer Data at rest only in that location. The Service does not limit the locations from which Customer or Customer End Users may access Customer Data or to which they may move Customer Data. For clarity, Customer Data does not include resource identifiers, attributes, or other data labels.
 
-b. Analytics Hub (PREVIEW)
+2. Google Cloud VMware Engine (GCVE).
 
-(i) Introduction. Analytics Hub is a feature of BigQuery that helps users find and share sets of Customer Data (“Datasets”). Datasets are organized into shared repositories (“Exchanges”) with each Dataset’s listings containing (as applicable) a description, documentation, branding, metadata or similar materials (“Listing Materials”).
+a. Definitions. For the purposes of this Section:
 
-(ii) Roles. Customer can serve different roles in Analytics Hub:
+“CA Software” means certain third-party software underlying GCVE, which includes VMware Cloud Foundation (VCF) software (for the avoidance of doubt, CA Software is not “Software” as defined in the Agreement); and
 
-    A. “Publishers” create and submit Datasets for listing within Exchanges.
+“CA, Inc.” means CA, Inc. (the entity that licenses the CA Software), its applicable affiliate (such as Broadcom or VMware), or a successor entity to either of the foregoing.
 
-    B. “Subscribers” request access to Datasets listed in Exchanges for their own use in BigQuery.
+b. Customer Security Obligations. Google may not have access to Customer's VMware environment or be able to encrypt personal data in Customer's VMware environment.
 
-    C. “Exchange Administrators” (1) create and administer Exchanges, (2) add or remove Listing Materials in Exchanges, (3) control visibility of Exchanges and Listing Materials, and (4) on behalf of the relevant Publisher, enable or reject Subscriber requests to access Datasets.
+c. Usage Reporting. Google may send certain information including usage metrics, location, and Customer’s status as a GCVE customer to CA, Inc. This information will not include Customer Data.
 
-(iii) Publishers. Publishers can serve as their own Exchange Administrators or submit Datasets to Exchanges operated by third-party Exchange Administrators. In the latter case, the Publisher submits its Dataset to the Exchange Administrator and must follow any enrollment steps specified by the Exchange Administrator for its Exchange.
+d. Service Restrictions. Customer agrees to comply with all of the terms and conditions listed in https://cloud.google.com/vmware-engine/docs or a successor URL (as such terms and conditions may be updated by Google from time to time), including in the linked “Product Restrictions” page.
 
-(iv) Exchange Administrators. When acting as an Exchange Administrator, Customer must:
+e. CA Software. In the course of using GCVE, Customer may have access to copies of the CA Software. Customer agrees that Customer will maintain the appropriate entitlements to use the CA Software (e.g., licenses from CA, Inc. to use the CA Software outside of GCVE).
 
-    A. Secure and maintain all necessary rights, consents and permissions (including from any third-party Publishers) to list, share or take other action with respect to the Datasets or Listing Materials; and
+f. Licensing Portability Customers. If Customer is using a GCVE SKU that supports CA Software licensing portability (as described in the Documentation), then Customer will (i) purchase an entitlement to the CA Software from CA, Inc. or a reseller of CA, Inc., and (ii) comply with all applicable sections of its agreement governing such purchase. Customer acknowledges and agrees that if Customer purchases such entitlements, then Google may restrict Customer’s access to GCVE upon instruction from CA, Inc., in which case (A) Google will have no liability to Customer (including no responsibility to return pre-paid Fees) for such restrictions and (B) Customer will still be responsible for all GCVE financial commitments.
 
-    B. Handle takedown requests, data subject requests, notices of infringement, and any other notices or requests it receives regarding its Exchange or related Listing Materials or Datasets.
+g. Prepaid 3-Year Committed Units. Partners purchasing prepaid 3-year Committed Unit(s) (as defined in “Pricing and Billing Terms” below) for GCVE on or after July 18, 2024 may not use those Committed Unit(s) to make any multi-tenant CA, Inc. interfaces available to multiple customers.
 
-    For clarity, Listing Materials are considered Customer Data of the applicable Exchange Administrator.
+h. Aria Suite. If Customer is using the “Aria Suite” in a self-managed capacity as part of Customer’s use of GCVE, Customer acknowledges and agrees that installation, configuration, maintenance, and security patching for the Aria Suite is Customer’s sole responsibility. Customer will ensure that the environment is maintained and patched in a timely manner after receiving patches and other updates from Google, including from a security standpoint (e.g., critical security patches). Further, Customer will enable Google to provide the support required for any use of Aria Suite. Google will not be responsible for any liability that ensues from Customer’s failure to comply with this Section.
 
-(v) Separate Relationships.
+i. VMware Cloud Universal Program (“VMware Universal”). VMware, Inc. (“VMware”) and VMware partners sell credits through VMware Universal that may be applied towards GCVE in accordance with Customer’s agreement with VMware. Customer’s purchase and use of GCVE through VMware Universal is subject to the Agreement and the following terms.
 
-    A. Google is not responsible for and will have no liability to Customer in relation to any terms or relationships between Customer and any third party acting as a Publisher, Subscriber, or Exchange Administrator. If Customer offers any commitments to any third such party beyond the commitments that Google has made to Customer in the Agreement (including in these Service Specific Terms), Google will not be liable for such commitments.
+(i) The Agreement’s payment terms will not apply, and all fees will be payable to VMware and determined solely between VMware and Customer.
 
-    B. Publishers and Exchange Administrators must ensure that any terms they have with Subscribers do not contradict these Service Specific Terms or the Agreement.
+(ii) Data Sharing with VMware.
 
-    C. If a Publisher or Exchange Administrator charges fees for access to Datasets, it is solely responsible for (1) collecting the fees independently of Google and Analytics Hub and (2) any related refunds or liabilities to Subscribers.
+(A) Google may share with VMware information regarding Customer’s use of GCVE and Google Cloud Platform.
 
-    D. Google does not guarantee continued availability of any Datasets, and gives no warranty, indemnification or other obligation, and accepts no liability or responsibility, with respect to Datasets or their use.
+(B) Customer acknowledges that, to the extent Customer provides any data to VMware in connection with GCVE, VMware may share such data with Google to the extent reasonably required to provide GCVE (including technical support) and administer VMware Universal.
+
+(C) If Customer brings a claim under the Agreement related to GCVE, Customer acknowledges that VMware may disclose to Google the fees or other amounts paid or payable by Customer to VMware for GCVE, and any other terms of the agreement between Customer and VMware regarding GCVE or either party’s performance under that agreement.
+
+(iii) Remedies. Customer will seek any applicable SLA credits and monetary remedies described in the Agreement from VMware (and will not do so from Google).
+
+(iv) Support. Google will provide technical support to Customer in accordance with the Agreement. Support fees for GCVE may be charged by VMware to Customer.
+
+(v) Financial Commitments. If Customer has made financial commitments in an Order Form or addendum to the Agreement, then Google may apply Customer's GCVE consumption (at a rate determined by Google), or a portion of the applicable fees Google receives from VMware, to those commitments.
+
+j. Termination. Customer agrees that if Customer materially breaches either (i) this Section or (ii) any other provision of the Agreement with respect to GCVE, then Google may, at its discretion, opt to exercise its “Termination for Breach” or “Termination for Cause” right under the Agreement with respect to GCVE only, in which case Customer may no longer access GCVE but may still access other Services.
+
+3. BigQuery.
+
+a. ODBC/JDBC Drivers. The ODBC and JDBC drivers for BigQuery (described here) are “Software” as defined in the Agreement and their use is subject to the “General Software Terms.” These drivers may only be used with BigQuery.
+
+b. Sharing (Analytics Hub)
+
+(i) Introduction. Sharing in BigQuery (formerly known as Analytics Hub) helps customers publish and share sets of Customer Data (“Datasets”) with other BigQuery customers as subscribers. Datasets are organized into shared repositories (“Exchanges”) with each Dataset’s listings including additional listing information (“Listing Materials”) managed by the administrator of that Exchange (“Exchange Administrator”).
+
+(ii) Exchange Administrators. When acting as an Exchange Administrator: (A) Customer Listing Materials are considered Customer Data and (B) Customer is responsible for any Datasets listed in its Exchange, including handling takedown requests and securing necessary rights and consents.
+
+(iii) Disclaimer. Google is not responsible for and will have no liability for (A) any terms or relationships between Customer and any third party or (B) any Datasets.
+
+4. Looker Studio.
+
+This Agreement only applies to (a) Looker Studio Pro or (b) Looker Studio if Customer has selected it to govern in the Admin Console.
+
+5. Google Earth Engine.
+
+a. Non-Commercial Use. Use of the free, non-commercial / research activities edition of Google Earth Engine is subject to the terms at https://earthengine.google.com/terms/ or a successor URL, which may be updated by Google periodically.
+
+b. Incorporation into Applications. Customer may not allow End Users of Customer’s Applications to directly access or interact with the Google Earth Engine APIs unless those End Users have their own Google Cloud Platform Accounts and have access to Google Earth Engine from those Accounts.
+
+6. Compute Engine.
+
+a. Future Reservations. Customer may request a future reservation, as described at https://cloud.google.com/compute/docs/future-reservations (or a successor URL), by following the instructions at that URL. Google will determine in its sole discretion whether to approve each future reservation request, and approval will not be unreasonably withheld or delayed. Reserved VMs may not be transferred or shared amongst multiple customers by Customer (if the Customer is a reseller or supplier of Google Cloud Platform).
+
+Networking
+
+7. Cloud Interconnect
+
+a. Partner Interconnect. Customer will independently engage a network service provider who has agreed with Google to supply connectivity between Customer and Google under Google’s partner terms for Partner Interconnect. Google is not responsible for any issues arising outside of Google’s network.
+
+b. Cross-Site Interconnect (CSI). Notwithstanding any telecommunications restrictions in the Agreement, Customer may use CSI only in the countries listed at https://cloud.google.com/network-connectivity/docs/interconnect/concepts/cross-site-locations. In order for Customer to use CSI, Customer must establish Dedicated Interconnect presence with Google Cloud and may only use CSI in combination with that Dedicated Interconnect service offering. To the extent that Customer's use of CSI is subject to a Legal Process requesting Customer Data, Google will not be responsible for responding and Customer must directly respond to those requests.
+
+8. Cloud NGFW and Cloud Intrusion Detection System (Cloud IDS). Notwithstanding anything to the contrary in the “Benchmarking” section of the General Service Terms of these Service Specific Terms, Customer will not, and will not allow End Users to, disclose, publish, or otherwise make publicly-available any benchmark, or performance or comparison tests that are run on either the edition of Cloud NGFW titled “Cloud NGFW Enterprise” or Cloud IDS and that are conducted by Customer or an End User (or a third party authorized by Customer or an End User).
+
+9. Network Connectivity Center (NCC). Notwithstanding any telecommunications restrictions in the Agreement, Customer may use NCC only in the countries listed at https://cloud.google.com/network-connectivity/docs/network-connectivity-center/concepts/locations. In order for Customer to use NCC, Customer must establish Virtual Private Cloud (VPC) presence with Google Cloud and may only use NCC in combination with that VPC service offering.
+
+10. Spectrum Access System.
+
+a. Governing Agreement. This Section 10 (Spectrum Access System) only applies to Customers procuring SAS under the terms of this Agreement.
+
+b. Additional Customer Obligations. Customer is solely responsible for (i) the installation, operation, maintenance, and repair of Registered CBSDs; (ii) staffing, instructing, and managing personnel performing the installation, operation, maintenance, and repair of Registered CBSDs; (iii) ensuring that such personnel are certified by WInnForum to the extent required by applicable law; and (iv) procuring and maintaining connectivity with Spectrum Access System to enable the ordering and registration of CBSDs and the use of Registered CBSDs. For clarity, Section 2(b) (Operations of Communications Services) in the General Services Terms of these Service Specific Terms does not prohibit Customer from using Spectrum Access System in compliance with this Section 10 (Spectrum Access System).
+
+c. Applicable Law. Spectrum Access System is subject to Federal Communications Commission (“FCC”) regulations. Each party will comply with the rules and implementing orders of the FCC (including 47 C.F.R. Part 96), the Department of Defense, and the National Telecommunications and Information Administration, along with the duly adopted Release 1 standards of WInnForum, to the extent applicable to that party’s provision, receipt, or use of Spectrum Access System.
+
+d. No Personal Data. Except for any Customer Account Information that may include personal data, Customer will not provide any CBSD Endpoint User Information or other regulated data to Google through Customer’s use of Spectrum Access System.
+
+e. Definitions.
+
+“CBSD” means a device with a radio access point that is certified by the FCC to operate in the Citizens Broadband Radio Services band.
+
+“CBSD Registration Information” means data relating to the location, identification, operating parameters, and other aspects of Registered CBSDs.
+
+“CBSD Reporting Data” means the anonymized or aggregated data and metadata Google receives from the Registered CBSDs during Customer’s use of Spectrum Access System.
+
+“CBSD Endpoint” means a device that may establish wireless connectivity with the authorization of a Registered CBSD.
+
+“CBSD Endpoint User” means an individual that uses any CBSD Endpoint.
+
+“CBSD Endpoint User Information” means any information, data, or content relating to a CBSD Endpoint User, including (i) billing and usage information, passwords, and PINs; (ii) transmitted or received content information; (iii) authentication information and any other demographic information; and (iv) other information in connection with use by a CBSD Endpoint User of a CBSD Endpoint on any Registered CBSD or network of Registered CBSDs (excluding any information that may qualify as CBSD Registration Information or CBSD Reporting Data).
+
+“Customer Account Information” means information provided by Customer in connection with the registration of CBSDs, which information consists of (i) contact and account information for Customer; (ii) identification information for all Registered CBSDs registered to Customer, as prescribed by WInnForum standards; (iii) identifying information for all groups of CBSDs for Customer; and (iv) information relating to Customer’s priority access licenses (as applicable), including identification numbers, boundary information, protection area, CBSD cluster lists, grouping information, and any leases of such priority access licenses.
+
+“Registered CBSD” means a CBSD that is registered with Google and operated by Customer via Spectrum Access System.
+
+“WInnForum” means the Wireless Innovation Forum or any successor organization.
+
+Developer Tools
+
+11. Assured Open Source Software (AOSS). TSS is not available for free tiers of AOSS.
+
+12. Google Device Cloud.
+
+a. License Agreement. Customer’s access to and use of a Device Partner’s testing device or the Partner Device Lab itself through Google Device Cloud is governed solely by the license agreement between Customer and the Device Partner. By enabling the Partner Device Lab or by accessing any Device Partner testing device through the Google Device Cloud service, Customer accepts the license agreement terms presented at the time of initial access and instructs Google to share Customer Data with that Device Partner for use by the Device Partner for the sole purpose of executing development tests. Customer acknowledges that Device Partners are not acting as Google’s subprocessors, and as such any Customer Data that is shared with a Device Partner will be processed in accordance with that Device Partner’s data processing terms (and not the Cloud Data Processing Addendum). Customer acknowledges that Google exercises no control over the operation or location of Partner Device Labs offered through Google Device Cloud and is not responsible or liable for Device Partner’s actions, labs or devices.
+
+b. Definition(s).
+
+“Device Partner” means a device manufacturing company that maintains a lab of Android-based devices for purposes of connecting to the Google infrastructure.
+
+AI / ML Services
+
+13. Definitions.
+
+“AI Agents” are goal-oriented, AI systems or workflows that perform actions or tasks on behalf of Customer in a supervised or autonomous manner that Customer may create, orchestrate, or initiate within an Agentic AI Service.
+
+“Customer Adapter Model” means an adapter model that Customer creates using its Customer Data with an AI/ML Service.
+
+“Customer Model” means (i) a model that Customer creates without using a Google Pre-Trained Model or (ii) a model owned by Customer that Customer uploads, fine tunes, or deploys in AI/ML Services. Customer Models do not include Customer Adapter Models.
+
+“Fine-Tuned Google Model” means an uptrained model that Customer creates by using an AI/ML Service to retrain or fine-tune a Google Pre-Trained Model using Customer Data.
+
+“Google Customer-Trained Model” means a model trained or retrained by Customer that leverages Google’s pre-existing intellectual property using an AI/ML Service and not released as an open model under an open source or other license.
+
+“Google Models” means Google Pre-Trained Models, Fine-Tuned Google Models, and Google Customer-Trained Models.
+
+“Google Pre-Trained Model” means a model trained by Google and not released as an open model under an open source or other license.
+
+“Separate Offering” means a model, dataset, application, product, service, solution, AI Agent or any other offering that Google makes available for a Customer’s use with AI/ML Services that is subject to terms and conditions separate from the Agreement, such as an open source license, third party terms, or other terms.
+
+14. Intellectual Property Terms for AI/ML Services.
+
+a. Non-Google Models. As between Customer and Google and in connection with use of an AI/ML Service (as described at https://cloud.google.com/terms/services), Google does not assert any ownership rights in (i) Customer Models, (ii) Customer Adapter Models, or (iii) Separate Offerings, each to the extent they do not contain any pre-existing Google intellectual property.
+
+b. Google Models. Customer will have sole access to use Fine-Tuned Google Models and Google Customer-Trained Models. Neither Google nor any third party not authorized by Customer may access or use Fine-Tuned Google Models and Google Customer-Trained Models, including after expiration or termination of the Agreement. Google owns all Intellectual Property Rights in Google Models. Where permitted by the AI/ML Service, any exported Fine-Tuned Google Model is licensed as Software.
+
+15. AI/ML Data Location. Customer may configure the Services listed at https://cloud.google.com/terms/data-residency to (a) store Customer Data at rest and (b) perform machine learning processing of Customer Data by the Service, in each case in a specific Multi-Region, and Google will perform (a) and (b) only in that Multi-Region. For clarity, Customer Data does not include resource identifiers, attributes, or other data labels.
+
+16. Use Restrictions for AI/ML Services.
+
+a. Competitive Use. Customer will not, and will not allow End Users to use an AI/ML Service or Generated Output to develop a similar or competing product or service. Google may immediately suspend or terminate Customer's use of any AI/ML Service based on any suspected violation of the preceding sentence. This restriction does not apply to Vertex AI Platform so long as Customer does not use a Google Pre-Trained Model.
+
+b. ​​Model Restrictions. Customer will not, and will not allow End Users to, use output from an AI/ML Service (including Generated Output) to: (i) substitute, replace, or circumvent the use of a Google Model, directly or indirectly, or (ii) create or improve models similar to a Google Model. However, if an AI/ML Service offers the feature of fine-tuning, Customer may use output from that AI/ML Service (including Generated Output) to create and use Fine-Tuned Google Models instead of Google Pre-Trained Models.
+
+c. No Reverse Engineering. Customer will not, and will not allow End Users to, reverse engineer or extract any components of an AI/ML Service, Software, or its models (such as using prompts to discover training data). Google may immediately suspend or terminate Customer's use of any AI/ML Service based on any suspected violation of the preceding sentence.
+
+17. Training Restriction. Google will not use Customer Data to train or fine-tune any AI/ML models without Customer's prior permission or instruction.
+
+18. Separate Offerings and Customer Models.
+
+a. Use of Separate Offerings on the Google Cloud Platform. Customer’s use of Separate Offerings is subject to separate terms and conditions.
+
+b. Disclaimer and Indemnity. Google disclaims all liability arising from Customer’s use of Separate Offerings and Customer Models, and Google’s indemnification obligations do not apply to allegations arising from Separate Offerings or Customer Models.
+
+19. Generative AI Services.
+
+a. Definition. “Generated Output” means the data or content generated by a Generative AI Service prompted by Customer Data. Generated Output is Customer Data. As between Customer and Google, Google does not assert any ownership rights in any new intellectual property created in the Generated Output.
+
+b. Disclaimer. Generative AI Services (as described at https://cloud.google.com/terms/services) use emerging technology, may provide inaccurate or offensive Generated Output, and are not designed for or intended to meet Customer’s regulatory, legal, or other obligations. Customer acknowledges that a Generative AI Service may, in some scenarios, produce the same or similar Generated Output for multiple customers.
+
+c. Prohibited Use Policy. For the purposes of Generative AI Services, the Prohibited Use Policy located at https://policies.google.com/terms/generative-ai/use-policy, as may be updated from time to time, is incorporated into the AUP.
+
+d. Age Restrictions. Customer will not, and will not allow End Users to, use a Generative AI Service as part of a website, Customer Application, or other online service that is directed towards or is likely to be accessed by individuals under the age of 18.
+
+e. Healthcare Restrictions. Customer will not, and will not allow End Users to, use the Generative AI Services for clinical purposes (for clarity, non-clinical research, scheduling, or other administrative tasks is not restricted), as a substitute for professional medical advice, or in any manner that is overseen by or requires clearance or approval from any applicable regulatory authority.
+
+f. Suspected Violations. Google may immediately suspend or terminate Customer's use of a Generative AI Service based on any suspected violation of Section 16(b) or subsection (d) above.
+
+g. Restrictions. The restrictions contained in subsections (d) and (e) above are deemed to be “Restrictions” or “Use Restrictions” under the applicable Agreement.
+
+h. Handling of Prompts and Generated Output. Absent Customer’s prior permission or instruction, Google will not store outside Customer’s Account (i) Customer Data prompted to a Generative AI Service for longer than is reasonably necessary to create the Generated Output, or (ii) the Generated Output.
+
+i. Additional Google Indemnification Obligations.
+
+(i) Generated Output. Google’s indemnification obligations under the Agreement also apply to allegations that an unmodified Generated Output from a Generative AI Indemnified Service using only Google Pre-Trained Model(s), a Fine-Tuned Google Model, or a Customer Adapter Model used with a Google Pre-Trained Model infringes a third party’s Intellectual Property Rights. This subsection (i) (Generated Output) does not apply if the allegation relates to a Generated Output where: (1) Customer creates or uses such Generated Output that it knew or should have known was likely infringing, (2) Customer (or Google at Customer’s instruction) disregards, disables, modifies, or circumvents source citations, filters, instructions, or other tools Google makes available to help Customer create or use Generated Output responsibly, (3) Customer uses such Generated Output after receiving notice of an infringement claim from the rightsholder or its authorized agent, (4) the allegation is based on a trademark-related right as a result of Customer’s use of such Generated Output in trade or commerce, or (5) Customer does not have the necessary rights to the Customer Data used to customize or retrain the Fine-Tuned Google Model or Customer Adapter Model, or customize such Generated Output using a Generative AI Service. “Generative AI Indemnified Service” means a Service or feature listed at https://cloud.google.com/terms/generative-ai-indemnified-services, where the use of such Service or feature is not provided to Customer free of charge.
+
+(ii) Training Data. Google’s indemnification obligations under the Agreement also apply to allegations that Google’s use of training data to create any Google Pre-Trained Model utilized by a Generative AI Service infringes a third party’s Intellectual Property Rights. This indemnity does not cover allegations related to a specific Generated Output, which may be covered by subsection (i) (Generated Output) above.
+
+j. Modifying, Disregarding, or Disabling Safety Filters. Google makes available safety filters for certain Generative AI Services. Customer is solely responsible for (i) its use, non-use, or modification (including modifications made by Google at Customer’s instruction) of safety filters in creating Generated Output, and (ii) disregarding safety instructions or Documentation.
+
+k. Grounding with Google Search. “Grounding with Google Search” is a generative AI feature of Vertex AI that provides Grounded Results and Search Suggestions. “Grounded Results” mean responses that Google generates using the prompt from the End User, contextual information that Customer may provide (as applicable), and results from Google’s search engine. "Search Suggestions" mean search suggestions that Google provides with the Grounded Results. If a Grounded Result is clicked on, separate terms (not these terms) govern the destination page. If a Search Suggestion is clicked on, the Google Terms of Service govern the google.com destination page. Grounded Results and Search Suggestions are Generated Output. “Links” are any means to fetch web pages (including hyperlinks and URLs) which may be contained in a Grounded Result or Search Suggestion. Links also include titles or labels provided with those means to fetch web pages. Excluding a Customer-owned web domain, Customer will not assert ownership rights in any intellectual property in Search Suggestions or Links in Grounded Results.
+
+(i) Use Restrictions for Grounding with Google Search. Customer:
+
+1. Will only use Grounding with Google Search in a Customer Application that is owned and operated by the Customer and will only display the Grounded Results with the associated Search Suggestion(s) to the End User who submitted the prompt.
+
+2. Will not, and will not allow its End Users or any third party to, cache, frame, syndicate, resell, analyze, train on, or otherwise learn from Grounded Results or Search Suggestions. For clarity, Grounded Results, Search Suggestions, and Links are intended to be used in combination to respond to a given End User prompt and it is a violation of these terms to use Grounding with Google Search to extract or collect one or more of these components for another purpose (for example, using programmatic or automated means to collect Links, using Links to build an index, or using Links to identify destination pages for crawling or scraping).
+
+3. Will not, and will not allow its End Users or any third party to, copy, store, or implement any click tracking, Link-tracking or other monitoring of Grounded Results or Search Suggestions, except that:
+
+- Customer may copy and store, for up to two (2) years the Grounded Results:
+
+(1) that were displayed by Customer only to evaluate and optimize the display of the Grounded Results in the Customer Application;
+
+(2) in the chat history of an End User of the Customer Application only for the purpose of allowing that End User to view their chat history.
+
+- Customer may copy and store the Grounded Result and Search Suggestions only for the purpose of and for the minimum time necessary to comply with applicable law or regulations.
+
+- Customer may allow its End Users to copy and store individual Grounded Results that Customer displayed to that End User through the Customer Application as long as Customer does not allow Grounded Results to be: (i) accessed or collected by automated or programmatic means, or (ii) to be used to create a database.
+
+- Customer may monitor End User interactions with their Customer Application interface, however, Customer will not track whether those interactions were specifically with a given Search Suggestion or Grounded Result (in each case, in whole or in part, including any specific Links).
+
+4. Unless permitted by Google in writing (including in the Documentation):
+
+- will not modify, or intersperse any other content with, the Grounded Results or Search Suggestions; and
+
+- will not place any interstitial content between any Link or Search Suggestion and the associated destination page, redirect End Users away from destination pages, or minimize, remove, or otherwise inhibit the full and complete display of any destination page.
+
+(ii) Storage for Debugging and Testing. Customer acknowledges that it is reasonably necessary for Google to store prompts, contextual information that Customer may provide, and Generated Output for thirty (30) days for the purposes of creating Grounded Results and Search Suggestions, and since such information is being stored, Customer instructs Google that the stored information can be used for debugging and testing of systems that support Grounding with Google Search.
+
+(iii) Guidelines. If Customer builds an external-facing Customer Application, the Client Application Guidelines apply to the Customer’s use of Grounding with Google Search. For purposes of the Client Application Guidelines, Customer Applications that are using Grounding with Google Search are considered Approved Applications.
+
+(iv) Survival. This subsection “Grounding with Google Search” will survive termination or expiration of the Agreement, as applicable.
+
+l. Web Grounding for Enterprise. Section 19(k) (Grounding with Google Search) also applies to Web Grounding for Enterprise, except that: (i) all references to ‘Grounding with Google Search’ are replaced with ‘Web Grounding for Enterprise’, (ii) in the “Grounded Results” definition, the phrase ‘Google’s search engine’ is replaced with ‘GCP’s web index’, and; (iii) subsection 19k(ii) is deleted.
+
+m. Grounding with Google Maps. “Grounding with Google Maps” is a generative AI feature of the Generative AI on Vertex AI Service that provides Grounded Results. “Google Maps Grounded Results” mean responses that Google generates using Google Maps Data in response to an End User initiated prompt. “Google Maps Data” means the content originating from Google Maps in the Google Maps Grounded Results, including in the output text, in the metadata of the Google Maps Grounded Results, in the Google Maps Links, and content accessed through Google Maps Links. “Google Maps Links” mean the URLs that Google provides in a Google Maps Grounded Result and any titles or labels provided with those URLs. If Google Maps Links are clicked on, these separate Google Maps End User Terms and the Google Privacy Policy govern the destination page. Google Maps Data in the text of a Google Maps Grounded Result will be identified via the Google Maps Links. Google Maps Grounded Results are Generated Output. Notwithstanding anything to the contrary in the Agreement, Google and its content providers retain all rights to Google Maps Data.
+
+(i) Use Restrictions for Grounding with Google Maps. Customer:
+
+1. Will only use Grounding with Google Maps in a Customer Application that is owned and operated by Customer and will only use Grounding with Google Maps to display the Google Maps Grounded Results with the associated Google Maps Links to the End User who initiated the prompt.
+
+2. Will not modify the Google Maps Grounded Result or intersperse any other content with the Google Maps Grounded Result, place any interstitial content between the text of the Google Maps Grounded Result and the Google Maps Links or the Google Maps Links and the associated destination page, or redirect End Users away from the destination pages or minimize, remove, or otherwise inhibit the full and complete display of any destination page.
+
+3. Will comply with the Documentation.
+
+4. Will not, and will not allow its End Users or any third party to:
+
+(a) cache or store Google Maps Grounded Results except that Customer may cache or store Google Maps Grounded Results:
+
+(i) for up to ninety (90) days, only to evaluate and optimize the display of the Google Maps Grounded Results for the Customer Application; or,
+
+(ii) in the chat history of an End User of the Customer Application for up to six (6) months for the purpose of allowing that End User to view their chat history or to maintain prior conversation context for that End User within the Customer Application;
+
+(b) scrape any Google Maps Data;
+
+(c) use Google Maps Grounded Results for High Risk Activities, including activities such as emergency response services; and
+
+(d) distribute or market any Customer Applications in any Prohibited Territory as defined in the Documentation.
+
+(ii) Storage for Debugging and Testing. Customer acknowledges that it is reasonably necessary for Google to store prompts, contextual information that Customer may provide, and Generated Output for thirty (30) days for the purposes of creating Google Maps Grounded Results, and since such information is being stored, Customer instructs Google that the stored information can be used for debugging and testing of systems that support Grounding with Google Maps.
+
+n. Agentic AI Services.
+
+(i) Customer is solely responsible for: (a) the actions and tasks performed by an Agentic AI Service or AI Agent; (b) determining whether the use of an Agentic AI Service or AI Agent is fit for its use case; (c) authorizing an Agentic AI Service or AI Agent’s access and connection to data, applications, and systems; and (d) exercising judgment and supervision when and if an Agentic AI Service or AI Agent is used in production environments to avoid any potential harm the Agentic AI Service or AI Agent may cause.
+
+(ii) The actions or tasks that an AI Agent performs are not Generated Output.
+
+(iii) When using Grounding with Google Search in Gemini Enterprise or Agentspace, Section 19(k) (Grounding with Google Search) applies, provided that where Customer's use is in the Service's UI only, Section 19(k) is amended as follows:
+
+(A) Subsections 19(k)(i)(1), (3), and (4) are deleted in their entirety and the first sentence of 19(k)(i)(2) is replaced with the following: “Customer will not, and will not allow its End Users or any third party to, copy, implement any click tracking, Link-tracking or other monitoring of, syndicate, resell, analyze, train on, or otherwise learn from Grounded Results or Search Suggestions.”
+
+(B) Subsection 19(k)(iii) (Guidelines) is deleted in its entirety.
+
+o. Provisioned Throughput. Provisioned Throughput is a feature of the Vertex AI API. If Customer uses Provisioned Throughput, Google will use commercially reasonable efforts to prioritize Customer’s throughput for its API calls to the designated models available through Generative AI on Vertex AI. Notwithstanding any other provision of the Agreement related to product discontinuation, Google may discontinue Provisioned Throughput for any model available through Generative AI on Vertex AI by providing Customer at least 6 months’ prior notice, with no notice required if Google replaces such functionality with materially similar functionality.
+
+20. Vertex AI Search and Gemini Enterprise. With respect to these Services, Customer may use only Customer Data and web domains that it owns or is authorized to utilize.
+
+21. Vertex AI Studio. With respect to this Service’s integration with YouTube, Customer may use only Customer Data and Content (as defined in the YouTube Terms of Service) that it owns or is authorized to use through the YouTube integration feature.
+
+22. Celebrity Recognition. Customer will use celebrity recognition functionality in Cloud Vision and Video Intelligence API on celebrities, only with professionally-filmed media content that Customer owns or is authorized to use, and not for any surveillance-based purpose.
+
+23. Customer Engagement Suite (formerly Contact Center AI (CCAI) Platform).
+
+a. No Access to Emergency Services. Customer Engagement Suite includes Contact Center as a Service (CCaaS). CCaaS does not function as a telephonic or other communication service. The Service cannot send or receive emergency calls or texts, and will not be used for emergency services.
+
+b. Bring Your Own Carrier (“BYOC”). In the BYOC model, Customer is responsible for obtaining telephony services from a third party and for all associated costs. Customer and its telephony provider are solely responsible for compliance with any regulatory and licensing requirements for such telephony services.
+
+24. Cloud Translation API. Customer will comply with the HTML Markup Requirements found at https://cloud.google.com/translate/markup and the attribution requirements found at https://cloud.google.com/translate/attribution.
+
+25. Speech on Device (SOD) / Automotive AI Agent (AAA) Premium Software. Customer’s license to the Premium Software components of SOD and AAA is limited to using the Premium Software locally on activated, designated devices. Only Customers who subscribe to TSS are eligible to receive updates to the Premium Software. Upon termination or expiration of Customer’s Order Form for SOD/AAA, Customer will permanently delete the Premium Software and associated SOD/AAA models (except those models on already-activated devices) and may not use SOD/AAA to perform any additional activations or distribute any more devices. Notwithstanding anything to the contrary in the “License” subsection of the “General Software Terms” above, the following apply:
+
+a. Customer may sublicense the Premium Software included as part of SOD/AAA to the extent necessary for using it on End User devices;
+
+b. Customer’s license to such Premium Software will be perpetual to the extent that it remains on any device after the Term.
+
+26. Automotive AI Agent. Automotive AI Agent models created by Customer based on Google Pre-Trained Models are Fine-Tuned Google Models as defined in these Service Specific Terms.
+
+27. Visual Inspection AI. Customer may only download from Visual Inspection AI containerized Solution Artifacts (as described in the Documentation and licensed as Software) for the duration and number of cameras designated when downloaded by Customer in the Admin Console.
+
+28. Retail Search. If Customer provides results for any query in a different order than the ranked order returned by Retail Search (“Alternative Ranking”), then (a) Google will not provide any support (including TSS) in relation to this Alternative Ranking and (b) Customer forfeits any rights granted by Google to use Google Brand Features in connection with Retail Search.
+
+29. Anti Money Laundering AI. The Service may only be used for Customer’s (or its own customers’) detection of money-laundering activities as part of an anti money laundering (AML) compliance program. Customer will comply with the service limits defined in the Documentation and ensure that Service outputs are subject to human oversight, investigation, and evaluation by trained AML compliance personnel. Google may suspend or terminate Customer’s use of the Service based on any suspected violation of the foregoing obligations.
+
+30. Gemini Enterprise and Gemini for Government.
+
+a. Additional Products. Google makes optional Additional Products available to Customer and Customer End Users through Gemini for Government and Gemini Enterprise. Customer's use of Additional Products is subject to the Google Terms of Service available at https://policies.google.com/terms which are incorporated by reference into the Agreement and which may be updated by Google from time to time, and any other terms of service Google makes available for a particular Additional Product. Additional Products may be enabled or disabled through the Admin Console.
+
+b. "Additional Products" means products, services and applications that are not part of the Services but that may be accessible for use in conjunction with the Services. "Flow", "Project Mariner", and "Whisk" are Additional Products accessible via Gemini for Government and Gemini Enterprise.
+
+Storage
+
+31. Persistent Disk.
+
+a. Hyperdisk Exapools. Customer and Google will work together in good faith to select the appropriate Zones (as defined at https://cloud.google.com/compute/docs/regions-zones) for Hyperdisk Exapool clusters. Customer acknowledges and agrees that once a Hyperdisk Exapool cluster is deployed to a particular Zone, Customer may not move it to another Zone without written agreement from Google.
+
+Data Analytics
+
+32. Looker (Google Cloud core). If Google’s measurement tools are unable to confirm Customer’s usage of the Services, then (a) within 30 days of Google’s request, Customer will provide a sufficiently-detailed written report describing usage of the Looker (Google Cloud core) Service by Customer and End Users during the requested period, and (b) Customer will provide reasonable assistance and access to information to verify the accuracy of Customer’s usage report(s).
+
+API Management
+
+33. Apigee. Customer acknowledges and agrees that Customer will be charged overage Fees for usage of the Services in excess of Customer’s subscription amount. If Customer is using Apigee Edge Team or Apigee Edge Business, the Fees for these overages are listed at https://cloud.google.com/apigee/pricing/edge-overage.
+
+Bare Metal
+
+34. Bare Metal Solution.
+
+a. Liability. Notwithstanding anything to the contrary in the Agreement (except subject to any unlimited liabilities expressly stated in the Agreement), to the maximum extent permitted by law, each party’s total aggregate Liability for damages arising out of or relating to Bare Metal Solution is limited to the greater of (i) the Fees Customer paid for Bare Metal Solution during the 12 month period before the event giving rise to liability and (ii) $25,000. This Section will survive expiration or termination of the Agreement.
+
+b. Bare Metal Solution Proof of Concepts. Customer may not use Bare Metal Solution proof of concepts and trials in connection with any production workloads.
+
+Migration
+
+35. Transfer Appliance Service.
+
+a. Trade Compliance.
+
+(i) In case of cross-border shipments of Appliance Materials, Customer may be responsible for export clearance and licensing (if applicable). Appliance Materials may be dual-use goods (including under Export Control Number 5A002) and subject to export restrictions. Google may designate a carrier to act as Customer's agent with the relevant customs and tax authorities to import or export the Appliance Materials, and Customer will cooperate with Google and its carrier, including providing export classification information and acting as the importer or exporter of record. Customer will not ship Appliance Materials except as authorized in writing by Google.
+
+(ii) Without limiting Customer’s obligation to comply with all laws applicable to its receipt or use of Appliance Materials (including any prohibitions on exporting, re-exporting or transferring Appliance Materials to comprehensively embargoed United States countries and regions), Customer may not export, re-export or transfer Appliance Materials to Russia or for use in Russia except as authorized in writing by Google.
+
+b. Responsibility for Appliance Materials. While Appliance Materials are in its control, Customer is responsible for any loss or damage and will use appropriate security measures to protect them.
+
+c. Sole Remedy. Customer's sole remedy in connection with any unsuccessful attempt to complete the Transfer Appliance Service is for Google to use reasonable efforts to re-perform the Transfer Appliance Service.
+
+The Service Specific Terms for the Transfer Appliance Service are also applicable to Google Distributed Cloud connected Appliance Service excluding the “Sole Remedy” subsection above.
+
+“Appliance Materials” means the materials provided by Google or its Subprocessors in connection with the Transfer Appliance Service or the Google Distributed Cloud connected Appliance Service, as applicable, including hardware and software.
+
+Security and Identity
+
+36. Assured Workloads.
+
+a. General. Google will provide TSS for Assured Workloads in accordance with Customer-selected controls. It is Customer's responsibility to determine whether Customer-selected Admin Console controls are adequate for Customer’s purposes.
+
+b. Assured Workloads Data Location. If Customer is using Assured Workloads and configures any Service listed in the “Assured Workloads” section of https://cloud.google.com/terms/data-residency for data location as described in the General Service Terms Section 1 (Data Location), then in addition to Google's data location commitments under that Section 1 (Data Location), Google will process Customer Data in use by the configured Service (not including in any user interface) only within the country of the selected Region or within the country or countries of the selected Multi-Region (as applicable). If the selected Region or Multi-Region is located in the European Union, Google will process Customer Data in use by the configured Service only within the European Union (but not necessarily in the same country).
+
+Further, Assured Workloads enables Customer to prevent Google personnel located outside the Customer-selected Region or Multi-Region from accessing Customer Data in an Assured Workloads environment, as specified in the Documentation.
+
+c. ITAR Data. Notwithstanding any restriction on the access or use of the Services for materials or activities subject to ITAR in the Agreement, Customer may access or use the Services with software or technical data subject to ITAR if Customer uses Assured Workloads Services explicitly identified in the Documentation as being compatible with ITAR requirements.
+
+d. Federal Risk and Authorization Management Program (FedRAMP) and Department of Defense Cloud Security Requirements Guide (DoD SRG). Certain Google Services have received FedRAMP or DoD SRG Authority to Operate (“ATO”) for defined Services. FedRAMP ATO Services are currently described at https://cloud.google.com/security/compliance/fedramp and DoD SRG ATO Services are currently described at https://cloud.google.com/security/compliance/disa. Customers are responsible for complying with the relevant FedRAMP and SRG requirements when using the Services, including the requirements in the Customer Responsibility Matrix (“CRM”). The CRM is a part of the Google Services System Security Plan maintained by the FedRAMP Program Management Office, and is available to government customers upon request. Customer may not use any Services to store or process classified information data.
+
+37. Access Approval. Use of Access Approval may increase response times for TSS, and Customer will be responsible for any disruption or loss as a result of Customer denying or delaying approval via Access Approval. The SLAs do not apply to any Service disruption impacted by Customer’s use of Access Approval.
+
+38. Security Command Center.
+
+a. Data Processing. In order to protect your assets against new and evolving threats, Security Command Center analyzes data related to misconfigured assets, indicators of compromise in logs, and attack vectors. This activity may include processing to improve service models, identifying recommendations to harden customer environments, collecting metrics to evaluate the effectiveness and quality of services, and conducting experiments to optimize the user experience.
+
+b. Cryptomining Protection Program. Customer’s use of Security Command Center Premium is subject to the terms of the Security Command Center Cryptomining Protection Program (“Cryptomining Protection Program”). Google reserves the right to update or discontinue the Cryptomining Protection Program upon 30 days notice.
+
+c. Security Command Center Enterprise. The SecOps Service Specific Terms (and, other than this subsection, not these Google Cloud Platform Service Specific Terms) apply to your use of the Google Security Operations and Mandiant Attack Surface Management components (as each is described in the SecOps Services Summary) of Security Command Center Enterprise.
+
+39. Cloud Identity Services. The following terms apply only to the Cloud Identity Services provided under this Agreement:
+
+a. Use of Google Workspace Components. Customer’s use of the Google Workspace Components is subject to any applicable provisions of the then-current Google Workspace Service Specific Terms at https://workspace.google.com/intl/en/terms/service-terms/, which provisions are incorporated by reference into this Agreement.
+
+b. Additional Products. Google makes optional Additional Products available to Customer and Customer End Users through the Cloud Identity Services. Customer’s use of Additional Products is subject to the Additional Product Terms.
+
+c. Governing agreement. Customer’s use of Cloud Identity Services under the Account, will be governed by: (i) Customer's Google Workspace agreement; (ii) this Agreement; or (iii) the terms at https://cloud.google.com/terms/identity, if and as applicable, depending on which is in effect. This Section will survive expiry or termination of this Agreement.
+
+d. Definitions.
+
+“Additional Products” means products, services and applications that are not part of the Services but that may be accessible for use in conjunction with the Services.
+
+“Additional Product Terms” means the then-current terms at https://workspace.google.com/intl/en/terms/additional_services.html.
+
+“Google Workspace Components” has the meaning given in the then-current services summary for Cloud Identity Services at https://cloud.google.com/terms/identity/user-features.
+
+“Google Workspace” means the then-current services described at https://workspace.google.com/terms/user_features.html
+
+40. Firebase Authentication and Identity Platform.
+
+a. Phone Authentication. Google temporarily stores phone numbers provided for authentication to improve spam and abuse prevention across Google services. Phone numbers are not logically isolated for a given customer's end users. Customer should obtain appropriate end-user consent before using the Firebase Authentication or Identity Platform phone number sign-in service.
+
+b. Other Authentication Services. Use of Google Sign-In for authentication is subject to Google’s API Services: User Data Policy. Google is not responsible for any third-party sign-in service used with Firebase Authentication or Identity Platform.
+
+c. reCAPTCHA Notice Requirement. Customer agrees to explicitly inform Customer End Users of phone authentication features that their use of reCAPTCHA is subject to the Google Privacy Policy and Terms of Use. For users in the European Union, you and your Application(s) must comply with the EU User Consent Policy. Google collects hardware and software information, such as device and application data, through reCAPTCHA only as necessary to provide, maintain, and improve the Service, and for general security purposes. Such information will not be used for any other purpose, such as personalized advertising by Google.
+
+41. reCAPTCHA Enterprise.
+
+a. Information. Google processes information submitted via use of the Service only as necessary to provide and maintain the Service, and ensure that the Service’s security, threat detection, protection, and response capabilities remain effective against evolving threats. Such information will not be used for any other purpose, such as personalized advertising by Google.
+
+b. Terms. Customer will inform applicable Customer’s End Users that Customer has implemented reCAPTCHA Enterprise on its properties and that Customer’s End Users' use of reCAPTCHA Enterprise is subject to the Privacy Policy and Terms of Use.
+
+c. Use. reCAPTCHA Enterprise may only be used to fight fraud and abuse on Customer's properties, and not for any other purposes, such as determining credit worthiness, employment eligibility, financial status, or insurability of a user.
+
+d. Customer Privacy Policy. Customer will provide and adhere to a privacy policy for its API client that clearly and accurately describes to applicable Customer End Users what user information Customer collects and how Customer uses and shares such information with Google and third parties. Customer will be responsible for providing any necessary notices or consents for the collection and sharing of this data with Google. Customer and its API client(s) will comply with the EU User Consent Policy.
+
+42. Web Risk.
+
+a. Attribution. Customer may display a warning about unsafe web resources for a particular site based on verification against Google’s list of unsafe sites provided that (i) the applicable Customer Application has received from Google an updated list (via the applicable API method) before the expiration time provided by the applicable API response or within 30 minutes if no expiration time is specified; and (ii) Customer provides attribution and conspicuous notice that the reliability and accuracy of the protection cannot be guaranteed using language similar to the “Advisory Notice” subsection below.
+
+b. Advisory Notice. Google works to provide the most accurate and up-to-date information about unsafe web resources, but cannot guarantee that its information is comprehensive and error-free: some risky sites may not be identified, and some safe sites may be identified in error.
+
+c. Brand Protection, Evaluate and Submission APIs. Google uses URLs and associated data submitted through the Brand Protection product, Evaluate API or Submission API (“Submitted URLs, Content and Metadata”) and corresponding maliciousness scores to provide, maintain, protect and improve Google's products and services, including Google's list of unsafe web resources. Google may also share Submitted URLs, Content and Metadata with third parties, including other Google customers and users. Submitted URLs are not Customer Confidential Information or Customer Data.
+
+43. Chrome Enterprise Premium.
+
+a. Chrome Enterprise Core. In order to use Chrome Enterprise Premium Threat and Data Protection Services:
+
+(i) Customer agrees to the Chrome Enterprise Core Agreement at https://chromeenterprise.google/terms/chrome-enterprise-core/; and
+
+(ii) Customer acknowledges and agrees that Customer must enable “Chrome Enterprise Connectors” in the Chrome Browser section of the Admin Console.
+
+b. Threats. When Chrome Enterprise Premium checks for malware, unsafe web pages, or other unsafe files (“Threats”), the URL or a file hash and the result of the analysis are temporarily stored in a Google global cache for performance-related purposes. Customer acknowledges and agrees that Customer URLs, content, metadata and file hashes that Chrome Enterprise Premium identifies as Threats are not Customer Confidential Information or Customer Data and Google may use such URLs, content, metadata and file hashes to provide, maintain, protect and improve Google's products and services, including Google's lists of Threats, including without limitation sharing the same with third parties, including other customers and users.
+
+c. App Connector. Customer agrees to install Software for App Connector in Customer’s private data center or other non-Google cloud environments in accordance with the minimum specifications described in the Documentation. Customer authorizes Google to connect and maintain the Software in order to provide connectivity for the applications accessed by Customer via App Connector.
+
+44. Certificate Manager. Customer authorizes Google Cloud to apply for and obtain publicly trusted SSL/TLS certificates from third-party or Google-managed certificate authorities for domains operated and controlled by Customer (“Customer Domains”) pursuant to the CA/Browser Forum Baseline Requirements or any applicable successor requirements (“Requirements”). Customer represents and warrants that it operates and controls the Customer Domains and will revoke the authorization from Google when Customer ceases to operate and control a Customer Domain. Google may revoke a certificate as required by the Requirements or for failure to comply with the AUP.
+
+45. Audit Manager. Reports generated by Audit Manager support information gathering only and do not determine or attest to compliance with any compliance standard. Use of Audit Manager neither relieves Customer of nor substitutes for any of Customer’s obligations to verify compliance; Customer remains responsible for separately verifying its compliance with applicable compliance standards.
+
+Google Distributed Cloud
+
+46. Google Distributed Cloud connected (formerly Google Distributed Cloud Edge). If you purchased Google Distributed Cloud connected prior to August 15, 2023, the terms available at https://cloud.google.com/distributed-cloud/edge/service-terms will apply.
+
+Data Boundary by Partners
+
+47. Data Boundary by Partners (formerly Sovereign Controls by Partners).
+
+a. Customer Responsibilities. The Data Boundary by Partners solution applies only to the Supported Google Cloud Services listed at https://cloud.google.com/terms/in-scope-sovereign-cloud (“Supported Google Cloud Services”). The Party using the Data Boundary Partner's solution, whether Customer or a customer of the Data Boundary Partner or other Reseller or Partner, is responsible for: (i) receiving the Data Boundary Partner's services, including external key management services (“EKM”), from a Data Boundary Partner listed at https://cloud.google.com/terms/in-scope-sovereign-cloud, and (ii) maintaining separate terms directly with the Data Boundary Partner governing the use of that Data Boundary Partner's services.
+
+b. Partner Access. To the extent applicable, Customer authorizes (and will ensure, if applicable, it has all relevant approvals to allow) Google to share, with the relevant Data Boundary Partner, TSS case details and Customer's contact information, metadata, log data, billing information, and configuration data from the Services used in the environment applicable to the Data Boundary by Partners solution, or that of Customer’s applicable end customer. Google is not responsible for a Data Boundary Partner’s handling of such data.
+
+c. Key Access Justifications. Google will transmit an accurate justification to the EKM for each request to obtain key access to decrypt Customer Data for supported, generally-available Services, pursuant to terms agreed between the Data Boundary Partner and Google (if applicable). Once the EKM receives a justification, they are responsible for determining whether to grant Google the requested key access. Google is not responsible if the operation or functionality of the Services is impacted because Google cannot obtain a key access needed for such operation or functionality.
+
+d. Security Controls. Data location controls made available by Google for the Data Boundary by Partners solution will be the same as the controls Google makes available for Assured Workloads, as described in the Assured Workloads Service Specific Terms.
+
+Databases
+
+48. AlloyDB Omni. Users of the free AlloyDB Omni Developer Edition and their Software Users (as defined in the General Service Terms) may use the Alloy DB Omni Software only for the purposes of developing, testing, prototyping, and demonstrating software programs (in any environment). Such users and Software Users may not use the AlloyDB Omni Software for any data processing, business, commercial, or production purposes.
+
+Premium Software
+
+49. Telecom Subscriber Insights.
+
+a. Updates. If Google makes available to Customer an update to the Telecom Subscriber Insights Software and Customer does not download the update within 30 days of notification of its availability, Google will automatically push the update to Customer’s Project(s) that use Telecom Subscriber Insights.
+
+b. Additional Restrictions. Customer will not (either directly or via third parties) (i) use Telecom Subscriber Insights or any of its components to create, train, or improve (directly or indirectly) any similar or competing system, product or service; or (ii) use output data from Telecom Subscriber Insights for the purpose of creating, training, or improving (directly or indirectly) any similar or competing system, product or service.
+
+Free Evaluation Services
+
+50. Free Evaluation Services.
+
+a. Definitions.
+
+"Free Evaluation Services" means (a) presales, evaluation, or proof-of-concept services; and (b) ad-hoc technical assistance (brief technical assistance to address immediate, isolated technical inquiries or minor operational issues) related to Google Cloud products, in each case provided to Customer free of charge by Google Personnel. Free Evaluation Services do not include work that falls under any agreement governing (i) implementation services or deliverables, (ii) ongoing, paid technical support services, or (iii) any similar scoped or on-going professional technical or consulting services by Google Personnel.
+
+"Free Model" means a version of an artificial intelligence or machine learning model trained, adapted, or fine-tuned by Google Personnel as part of the Free Evaluation Services using Customer Data.
+
+"Google Personnel" means Google’s and its Affiliates’ employees, agents, and subcontractors.
+
+"Materials" means tools, code, algorithms, models, written documentation, and other technology provided to Customer by Google Personnel as part of the Free Evaluation Services.
+
+b. Scope. Google will provide Free Evaluation Services in accordance with this Section. Free Evaluation Services may be provided without an Order Form. Free Evaluation Services are only intended to enable Customer to receive help, recommendations, learnings, and advice from Google Personnel to evaluate, demo, and learn how Customer can use Google Cloud products and services to meet its business use cases.
+
+c. Terms. Free Evaluation Services are “Pre-GA Offerings” and will be subject to the Pre-GA Offerings Terms in the SSTs and any additional terms described in this Section (Free Evaluation Services). In addition to the terms of the Agreement excluded for Pre-GA Offerings, any terms specific to the function of the Services or Software, and not appropriate or relevant for Free Evaluation Services, such as provision of an Account or a Status Dashboard, location of Data Centers, or information about Significant Developments, do not apply to Free Evaluation Services. In addition, notwithstanding anything to the contrary in the Agreement, Google has no obligation to implement tools and measures designed to prevent the introduction of Viruses into Materials. (Customer may use tools and measures available as part of the Services to assess Materials for Viruses in Customer’s Account.) To the extent permitted by applicable law, Google may assign a new subcontractor or subprocessor to provide Free Evaluation Services immediately upon written notice to Customer.
+
+d. Materials. While Materials may be provided to Customer by Google, Free Evaluation Services do not create deliverables or new Intellectual Property for Customer. Google retains all Intellectual Property Rights in Materials, except to the extent Materials contain Customer Data owned or licensed by Customer (a) before the start date of the Evaluation Services or (b) independent of the Evaluation Services. Customer may use Materials for its internal business purposes only. Customer agrees and acknowledges that open source code may be included in Materials. Nothing in this Section (Free Evaluation Services) grants any right for Customer to use any materials, products, or services that are otherwise made available to Google customers under a separate license or agreement.
+
+e. Customer Obligations.
+
+(i) Non-Production Environment. Customer will only provide Google Personnel with access to Customer Data for Free Evaluation Services in a non-production Google Cloud Platform environment managed by Customer. Google will only access, use, and otherwise process Customer Data to provide the Free Evaluation Services.
+
+(ii) Customer Personal Data. Customer will not provide Google Personnel with access to Customer Personal Data (as defined in the Cloud Data Processing Addendum) to receive Free Evaluation Services unless the parties have defined the scope and purpose of Google’s access to such Customer Personal Data in a separate agreement. If Google discovers that Customer has provided Google Personnel with access to Customer Personal Data, Google will suspend performing Free Evaluation Services until Customer deletes such Customer Personal Data. If the Parties agree that Google will access Customer Personal Data in a separate agreement, then (a) the Cloud Data Processing Addendum will apply, but only with respect to Customer Personal Data, and (b) Free Evaluation Services will be treated as Implementation Services in the Cloud Data Processing Addendum (with the exception of Google’s Compliance Certification obligations for Implementation Services).
+
+f. AI Services. If Free Evaluation Services involve helping Customer to evaluate Google Cloud’s artificial intelligence or machine learning products and services:
+
+(i) Customer will have sole access to any Free Model; Google will not use any Free Model for its own purposes or provide a Free Model to any other Google customer.
+
+(ii) Data or content generated by a Free Model will be treated as Generated Output, even if not generated by a Generative AI Service.
+
+(iii) Customer’s use of a Free Model provided to Customer by Google will be subject to the Generative AI Service Disclaimer, the AUP, the Prohibited Use Policy located at https://policies.google.com/terms/generative-ai/use-policy, and the “Restrictions” or “Use Restrictions” sections in the Agreement and AI/ML Services Section of the Service Specific Terms, in each case regardless of whether such Free Model includes a Generative AI Service.
+
+Third-Party Terms
+1. Red Hat Enterprise Linux.
+
+Customer’s use of the Red Hat Enterprise Linux product, provided by Google in conjunction with Compute Engine, is subject to the terms and conditions stated at https://www.redhat.com/licenses/cloud_cssa/.
+
+2. Microsoft Products.
+
+Customer’s use of the Microsoft products, which may include associated media, printed materials, and “online” or electronic documentation (individually and collectively, “Microsoft Products”), provided by Google in conjunction with any applicable Service(s) is subject to the terms and conditions stated at https://cloud.google.com/terms/service-terms/microsoft.
+
+3. NVIDIA Drivers.
+
+The NVIDIA software components used in conjunction with the Services are subject to the terms and conditions stated at https://cloud.google.com/terms/service-terms/nvidia. Notwithstanding the preceding sentence, the NVIDIA Linux GPU kernel modules identified at https://github.com/NVIDIA/open-gpu-kernel-modules will be made available under, and subject to, the open source terms included on that page.
+
+In addition, the following NVIDIA software components may be used solely with the Services for compute and offline graphics purposes: GRID, Tesla Driver, Cuda Toolkit, cuDNN, TensorRT, NVENC, NVCUVID, NVML, and nvidia-aml.
+
+4. Oracle JDBC Driver in Looker (Google Cloud core) only.
+
+The Oracle JDBC software components used in conjunction with the Looker (Google Cloud core) service are subject to the terms and conditions stated at https://cloud.google.com/terms/looker/legal/customers/service-terms/oracle.
+
+5. Ubuntu Pro (Canonical).
+
+Customer’s use of Ubuntu Pro (a product of Canonical Group Limited), provided by Google in conjunction with Compute Engine, is subject to the terms and conditions stated at https://ubuntu.com/legal/ubuntu-pro-service-terms.
+
+6. Squarespace Domains.
+
+Customer’s use of Squarespace Domains purchased through Google Cloud Platform is subject to the terms and conditions stated at Squarespace’s Terms of Service (excluding the section entitled “Paid Services and Fees”, as all payments will be in accordance with the Agreement), Squarespace’s Domain Registration Agreement, and Squarespace’s Privacy Policy.
+
+Pricing and Billing Terms
+1. Committed Units.
+
+a. Selection and Commitment. If Customer purchases Committed Units, then notwithstanding the payment terms in the Agreement, Customer will pay the Fees for those Committed Units during the Committed Unit Term selected by Customer, whether or not they are used, as stated at the Fees URL for the applicable SKU. The Fees for some Committed Units may be fixed for the duration of the Committed Unit Term to the price in effect at the beginning of that Committed Unit Term, as described in the applicable Documentation.
+
+b. Renewal. Unless otherwise stated in the Admin Console or other documentation, at the end of each Committed Unit Term, the Committed Unit selection will automatically renew for the same Committed Unit Term at the same quantity until Customer selects in the Admin Console to stop renewing or either party notifies the other party in writing to cancel the renewal.
+
+c. Cancellation and Expiration. If Google serves notice to non-renew the Agreement, terminates the Agreement (other than for Customer's material breach), or discontinues providing the Services applicable to the Committed Units, Google will refund Customer any unused prepaid Fees following the expiration or termination of the Agreement, or discontinuance of the relevant Services, as applicable. Any use of the Services after cancellation or expiration of the Committed Units will be billed at standard Fee rates.
+
+d. No Resell or Transfer. Unless Google agrees otherwise, Customer may not resell or transfer Committed Units. Further, unless Google agrees otherwise in writing, Partners may not transfer or share Committed Units between multiple customers.
+
+2. Currency Conversion.
+
+When charging in non-USD currency, Google will convert USD-denominated prices into applicable currency according to market conversion rates published by leading financial institutions from time to time.
+
+3. SAP S/4HANA.
+
+If Customer is purchasing the SAP S/4HANA offering from SAP and has made financial commitments for expenditure on Google Cloud Platform Services in an addendum to the Agreement, then Google agrees to apply the dollar amount (net of any credits, discounts and Taxes) of Google Cloud Platform infrastructure services consumed by SAP in delivering SAP S/4HANA to Customer under the SAP S/4HANA Cloud Contract (the “SAP Allocation”) towards Customer’s then-current commitment. If Customer has multiple commitments, then the SAP Allocation will be applied towards the commitment that was most recently entered into with Google. Customer acknowledges that SAP will provide Google with the information necessary for Google to obtain the accurate volume of Google Cloud Platform infrastructure services consumed by SAP under the framework of Customer’s SAP S/4HANA Cloud Contract, and agrees that Google may use this information to determine the monetary amount to be counted towards Customer’s commitment.
+
+For the purposes of this subsection:
+
+“SAP” means SAP SE, a company registered in Germany, or its Affiliate, as applicable.
+
+“SAP S/4HANA Cloud Contract” means the separate contract between Customer and SAP (entitled “RISE with SAP S/4HANA Cloud Private Edition-SAP RISE Order Form”) under which the SAP S/4HANA Cloud (private edition) is made available by SAP to Customer.
+
+This Section (SAP S/4HANA) does not apply to any customer accessing Google Cloud Platform Services as a customer of an unaffiliated Google Cloud Platform reseller.
+
+4. Additional Definitions.
+
+“Committed Units” means a non-cancellable (a) specified quantity of the Services (e.g. Compute Engine virtual machine instances), which may include a specified machine type, region, zone, query capacity, and period of time to use; (b) specified amount of credits to be purchased for expenditure on specified Services during a specified time period; or (c) a specified quantity of the Services offered on a subscription basis during a specified time period.
+
+“Committed Unit Term” means the period of time during which Customer is obligated to pay for the Committed Units.
+
+“Fees URL” means https://cloud.google.com/skus.
+
+“Order Form” means an order form executed by Customer and Google or an order placed by Customer via a Google website, in either case specifying the Services Google will provide to Customer.
+
+5. Price Change Rationale.
+
+To the extent Google has a right to modify Prices under the Agreement, it may have various reasons for doing so, including (for example, and without limitation): (a) changes in Google's underlying costs for developing, providing, maintaining, and/or selling the Services, such as costs related to hardware, software licenses, energy, labor, and data center infrastructure; (b) enhancements, modifications, or changes to the nature, features, or functionality of the Services, including the introduction of new services or capabilities; (c) prevailing market conditions, including competitive pressures, inflation, deflation, or currency exchange rate fluctuations; (d) changes in applicable laws, regulations, taxes, or other compliance requirements that impact the cost or manner of delivering the Services; (e) the evolution of technology and industry standards affecting the Services; and (f) changes to costs payable by Google to third parties.
+
+Partner-Specific Terms
+1. Modification of Terms. The following amendments to these Service Specific Terms apply if the Agreement authorizes the resale or supply of Google Cloud Platform Services under a Google Cloud partner or reseller program:
+
+a. A “Partner Customer” will mean an entity to whom Partner resells or supplies the Services under the Agreement.
+
+b. Any references to a Customer Application means an Application.
+
+c. The subsection of these Services Specific Terms under “Generative AI Services” titled “Restrictions” will be amended to state:
+
+The restrictions contained in subsections (d) and (e) above are deemed to be additional restrictions in the “Use Restrictions” section under the applicable Agreement’s Google Cloud Platform Product Schedule.
+
+d. The definition of a Customer Adapter Model will mean:
+
+“Customer Adapter Model” means an adapter model that Partner or a Partner Customer creates using its Partner Data with an AI/ML Service.
+
+e. The definition of a Customer Model will mean:
+
+“Customer Model” means (i) a model that Partner or a Partner Customer creates without using a Google Pre-Trained Model or (ii) a model owned by Partner, a Partner Customer, or a third party that Partner or a Partner Customer uploads, fine-tunes, or deploys in AI/ML Services. Customer Models do not include Customer Adapter Models.
+
+f. The definition of a Fine-Tuned Google Model will mean:
+
+“Fine-Tuned Google Model” means an uptrained model that Partner or a Partner Customer creates by using an AI/ML Service to retrain or fine-tune a Google Pre-Trained Model using Partner Data.
+
+g. The Partner or Partner Customer (as applicable) that creates a Fine-Tuned Google Model will have sole access to use that Fine-Tuned Google Model.
+
+2. Partner Software Terms. The following apply to Partner’s use of Software (including “Premium Software” as defined in the General Service Terms):
+
+a. Sublicensing.
+
+(i) Partner may sublicense Software, but only to its Customers who are obtaining the Software from Partner (“Authorized Sublicensees”).
+
+(ii) Partner may not grant any Authorized Sublicensee the right to further sublicense any Software.
+
+b. Provision Limitations. Unless Google has provided specific written instructions otherwise, Partner may not directly provide the Software to any third party (including any Authorized Sublicensee) and will instruct Authorized Sublicensees to directly download the Software from a URL or other repository provided by Google.
+
+3. SAP S/4HANA (Partner).
+
+If a Partner Customer is purchasing the SAP S/4HANA offering from SAP and Partner has made financial commitments for expenditure on Google Cloud Platform Services with respect to that Partner Customer in an addendum to the Agreement, then Google agrees to apply the dollar amount (net of any credits, discounts, and Taxes) of Google Cloud Platform infrastructure services consumed by SAP in delivering SAP S/4HANA to Partner Customer under the SAP S/4HANA Cloud Contract (the “SAP Allocation”) towards Partner’s then-current commitment with respect to that Partner Customer. If Partner has multiple commitments with respect to a Partner Customer, then the SAP Allocation will be applied towards the commitment that was most recently entered into with Google. Partner acknowledges that SAP will provide Google with the information necessary for Google to obtain the accurate volume of Google Cloud Platform infrastructure services consumed by SAP under the framework of Customer’s SAP S/4HANA Cloud Contract, and agrees that Google may use this information to determine the monetary amount to be counted towards Partner’s applicable commitment. Partner will obtain any consents from Partner Customer necessary to allow for the provision and use of information described in the preceding sentence. Notwithstanding the foregoing, if a Partner Customer has a separate financial commitment directly with Google to which the SAP Allocation is being applied, then this Section (SAP S/4HANA (Partner)) will not apply to Partner with respect to that Partner Customer.
+
+For the purposes of this subsection:
+
+“SAP” means SAP SE, a company registered in Germany, or its Affiliate, as applicable.
+
+“SAP S/4HANA Cloud Contract” means the separate contract between Partner Customer and SAP (entitled “RISE with SAP S/4HANA Cloud Private Edition-SAP RISE Order Form”) under which the SAP S/4HANA Cloud (private edition) is made available by SAP to Partner Customer.
+
+SecOps Service Specific Terms
+The Service Specific Terms specific to one or more SecOps Services or Software can be found at: https://cloud.google.com/terms/secops/service-terms, which are incorporated into these Service Specific Terms. The SecOps Service Specific Terms (and other than this section, not these GCP Service Specific Terms) apply to Customer's use of SecOps Services and Software (as each is described in the SecOps Services Summary).

@@ -1,8 +1,8 @@
-https://github.com/Ousret/charset_normalizer/LICENSE
+https://github.com/jawah/charset_normalizer/blob/HEAD/LICENSE
 
 MIT License
 
-Copyright (c) 2019 TAHRI Ahmed R.
+Copyright (c) 2025 TAHRI Ahmed R.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

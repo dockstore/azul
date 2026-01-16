@@ -1,4 +1,4 @@
-https://github.com/urllib3/urllib3/LICENSE.txt
+https://github.com/urllib3/urllib3/blob/HEAD/LICENSE.txt
 
 MIT License
 

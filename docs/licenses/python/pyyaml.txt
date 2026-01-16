@@ -1,4 +1,4 @@
-https://github.com/yaml/pyyaml/LICENSE
+https://github.com/yaml/pyyaml/blob/HEAD/LICENSE
 
 Copyright (c) 2017-2021 Ingy döt Net
 Copyright (c) 2006-2016 Kirill Simonov
