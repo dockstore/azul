@@ -118,7 +118,6 @@ class IndexQueueService:
                            ) -> None:
         queue = self.notifications_queue(retry=retry)
         self.queues.send_message(queue, message)
-        log.info('Queued notification message %r', message)
 
     def queue_tallies(self,
                       messages: Iterable[SQSMessage],
@@ -126,7 +125,8 @@ class IndexQueueService:
                       retry: bool = False
                       ) -> int:
         queue = self.tallies_queue(retry=retry)
-        return self.queues.send_messages(queue, messages)
+        # Logging tallies would be excessively verbose
+        return self.queues.send_messages(queue, messages, log_level=0)
 
     def index_bundle_message(self,
                              catalog: CatalogName,

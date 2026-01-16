@@ -86,6 +86,9 @@ from azul.service.app_controller import (
 from azul.service.catalog_controller import (
     CatalogController,
 )
+from azul.service.download_controller import (
+    DownloadController,
+)
 from azul.service.drs_controller import (
     DRSController,
 )
@@ -121,7 +124,7 @@ spec = {
         # changes and reset the minor version to zero. Otherwise, increment only
         # the minor version for backwards compatible changes. A backwards
         # compatible change is one that does not require updates to clients.
-        'version': '15.0',
+        'version': '15.1',
         'description': fd(f'''
             # Overview
 
@@ -307,6 +310,10 @@ class ServiceApp(HealthApp):
         return RepositoryController(app=self, file_url_func=self.file_url)
 
     @cached_property
+    def download_controller(self) -> DownloadController:
+        return DownloadController(app=self, file_url_func=self.file_url)
+
+    @cached_property
     def manifest_controller(self) -> ManifestController:
         return ManifestController(app=self,
                                   file_url_func=self.file_url,
@@ -342,7 +349,7 @@ class ServiceApp(HealthApp):
 
     @property
     def synthetic_fields(self) -> Sequence[str]:
-        return self.metadata_plugin.special_fields.accessible,
+        return self.metadata_plugin.special_fields.accessible.name,
 
     def __init__(self):
         super().__init__(app_name=config.service_name,
@@ -474,6 +481,11 @@ def validate_filters(filters):
     if type(filters) is not dict:
         raise BRE('The `filters` parameter must be a dictionary')
     field_types = app.repository_controller.field_types(app.catalog)
+    special_fields = app.metadata_plugin.special_fields
+    accessibility_fields = {
+        special_fields.source_id.name,
+        special_fields.accessible.name
+    }
     for field, filter_ in filters.items():
         validate_field(field, include_synthetic=True)
         try:
@@ -482,8 +494,7 @@ def validate_filters(filters):
             raise BRE(f'The `filters` parameter entry for `{field}` '
                       f'must be a single-item dictionary')
         else:
-            special_fields = app.metadata_plugin.special_fields
-            if field in (special_fields.source_id, special_fields.accessible):
+            if field in accessibility_fields:
                 valid_relations = ('is',)
                 disallow_null = True
             else:
@@ -616,7 +627,7 @@ deprecated_spec = {
                 **responses.json_content(
                     # The custom return type annotation is an experiment. Please
                     # don't adopt this just yet elsewhere in the program.
-                    signature(app.catalog_controller.list_catalogs).return_annotation
+                    one(signature(app.catalog_controller.list_catalogs).return_annotation.__metadata__)
                 )
             }
         }
@@ -1541,12 +1552,12 @@ def _repository_files(file_uuid: str, fetch: bool) -> MutableJSON:
     #        https://github.com/DataBiosphere/azul/issues/2682
 
     catalog = app.catalog
-    return app.repository_controller.download_file(catalog=catalog,
-                                                   fetch=fetch,
-                                                   file_uuid=file_uuid,
-                                                   query_params=query_params,
-                                                   headers=headers,
-                                                   authentication=request.authentication)
+    return app.download_controller.download_file(catalog=catalog,
+                                                 fetch=fetch,
+                                                 file_uuid=file_uuid,
+                                                 query_params=query_params,
+                                                 headers=headers,
+                                                 authentication=request.authentication)
 
 
 @app.route(

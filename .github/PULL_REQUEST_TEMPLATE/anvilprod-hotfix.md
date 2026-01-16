@@ -59,17 +59,15 @@ Linked issue: #0000
 - [ ] Pushed PR branch to GitHub
 
 
-### Operator (deploy runner image)
-
-- [ ] Ran `_select anvilprod.gitlab && make -C terraform/gitlab/runner` <sub>or this PR is not labeled `deploy:runner`</sub>
-
-
 ### Operator (sandbox build)
 
 - [ ] Added `sandbox` label <sub>or PR is labeled `no sandbox`</sub>
 - [ ] Pushed PR branch to GitLab `anvilprod` <sub>or PR is labeled `no sandbox`</sub>
 - [ ] Build passes in `hammerbox` deployment <sub>or PR is labeled `no sandbox`</sub>
 - [ ] Reviewed build logs for anomalies in `hammerbox` deployment <sub>or PR is labeled `no sandbox`</sub>
+- [ ] Deleted unreferenced indices in `hammerbox` <sub>or this PR does not remove catalogs or otherwise causes unreferenced indices in `hammerbox`</sub>
+- [ ] Started reindex in `hammerbox` <sub>or this PR is not labeled `reindex:anvilprod`</sub>
+- [ ] Checked for failures in `hammerbox` <sub>or this PR is not labeled `reindex:anvilprod`</sub>
 
 
 ### Operator (merge the branch)

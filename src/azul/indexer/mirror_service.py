@@ -13,8 +13,15 @@ import time
 from typing import (
     ClassVar,
     Iterable,
+    Iterator,
     Protocol,
     Self,
+    final,
+)
+from uuid import (
+    UUID,
+    uuid4,
+    uuid5,
 )
 
 import attr
@@ -33,6 +40,7 @@ from azul import (
 )
 from azul.attrs import (
     SerializableAttrs,
+    devolve,
     serializable,
 )
 from azul.auth import (
@@ -184,14 +192,54 @@ class SchemaUrlFunc(Protocol):
 class MirrorAction(Action, metaclass=ABCMeta):
     catalog: CatalogName
 
+    #: When performing a mirror action results in more secondary actions, this
+    #: field should be copied from the action being performed to those secondary
+    #: actions. When constructing primary actions, this field should be omitted
+    #: so that the default is used. The indirection via a class method for the
+    #: default factory allows for easy patching during unit tests.
+    #:
+    operation_id: str = attrs.field(factory=lambda: MirrorAction._operation_id())
+
+    @classmethod
+    def _operation_id(cls):
+        return str(uuid4())
+
     @property
     @abstractmethod
-    def group_id(self) -> str:
+    def group_id(self) -> tuple[str, ...]:
+        """
+        The SQS FIFO message group ID of a message about this action. Messages
+        in different groups can be handled in parallel. Messages in the same
+        group are handled serially. Use this property to prevent concurrent
+        actions against a particular resource, by making the ID of that resource
+        the group ID of those actions.
+        """
         raise NotImplementedError
+
+    @property
+    def dedup_id(self) -> tuple[str, ...]:
+        """
+        The SQS message deduplication ID to use for a message about this action.
+        If two messages with the same deduplication ID are sent within 5 min or
+        less of each other, the second message will be discarded silently. Use
+        this property to avoid redundant work.
+        """
+        # Since different catalogs may be configured to handle the same file in
+        # different ways, we can't conflate two messages that only differ in
+        # the catalog they are targetting.
+        return str(type(self)), self.catalog, self.operation_id
 
     def to_sqs(self) -> SQSFifoMessage:
         return SQSFifoMessage(body=json_mapping(self.to_json()),
-                              group_id=self.group_id)
+                              group_id=self._make_id(self.group_id),
+                              dedup_id=self._make_id(self.dedup_id))
+
+    dedup_uuid_namespace = UUID('cb3a5301-5ad4-44f4-9020-cd34e7c61d3e')
+
+    def _make_id(self, id: tuple[str, ...]) -> str:
+        joiner = ':'
+        assert not any(joiner in s for s in id)
+        return str(uuid5(self.dedup_uuid_namespace, joiner.join(id)))
 
 
 @attrs.frozen(kw_only=True)
@@ -199,8 +247,12 @@ class MirrorSourceAction(MirrorAction):
     source: SourceRef
 
     @property
-    def group_id(self):
-        return self.source.id
+    def group_id(self) -> tuple[str, ...]:
+        return self.source.id,
+
+    @property
+    def dedup_id(self) -> tuple[str, ...]:
+        return *super().dedup_id, self.source.id
 
 
 @attrs.frozen(kw_only=True)
@@ -208,8 +260,12 @@ class MirrorPartitionAction(MirrorSourceAction):
     prefix: str
 
     @property
-    def group_id(self):
-        return super().group_id + ':' + self.prefix
+    def group_id(self) -> tuple[str, ...]:
+        return *super().group_id, self.prefix
+
+    @property
+    def dedup_id(self) -> tuple[str, ...]:
+        return *super().dedup_id, self.prefix
 
 
 @attrs.frozen(kw_only=True)
@@ -217,8 +273,16 @@ class MirrorFileAction(MirrorPartitionAction):
     file: File
 
     @property
-    def group_id(self):
-        return self.file.digest.value
+    @final
+    def group_id(self) -> tuple[str, ...]:
+        # This method is final because we need to serialize all actions that
+        # target a specific file in the mirror bucket.
+        digest = self.file.digest
+        return digest.type, digest.value
+
+    @property
+    def dedup_id(self) -> tuple[str, ...]:
+        return *super().dedup_id, self.file.uuid,
 
 
 @attrs.frozen(kw_only=True)
@@ -243,6 +307,10 @@ class MultiPartUploadAction(MirrorFileAction):
 @attrs.frozen(kw_only=True)
 class MirrorPartAction(MultiPartUploadAction):
     part: FilePart
+
+    @property
+    def dedup_id(self) -> tuple[str, ...]:
+        return *super().dedup_id, str(self.part.index)
 
 
 class FinalizeFileAction(MultiPartUploadAction):
@@ -304,7 +372,7 @@ class BaseMirrorService:
 
     def mirror_sources(self, sources: Iterable[tuple[SourceRef, SourceConfig]]):
         if self.may_mirror():
-            def messages():
+            def actions():
                 for source, source_config in sources:
                     if source_config.mirror:
                         log.info('Mirroring files in source %r from catalog %r',
@@ -315,27 +383,30 @@ class BaseMirrorService:
                                  'mirroring is explicitly disabled',
                                  str(source.spec), self.catalog)
 
-            self._queue_messages(messages())
+            self._queue_actions(actions())
         else:
             log.info('Not mirroring any files in catalog %r because the file '
                      'size limit is negative', self.catalog)
 
     def mirror_file(self, source: SourceRef, file: File):
-        self._queue_messages([MirrorFileAction(catalog=self.catalog,
-                                               source=source,
-                                               prefix='',
-                                               file=file)])
+        def actions():
+            yield MirrorFileAction(catalog=self.catalog,
+                                   source=source,
+                                   prefix='',
+                                   file=file)
+
+        self._queue_actions(actions())
 
     def _mirror_queue(self):
         name = config.mirror_queue.name
         return aws.sqs_queue(name)
 
-    def _queue_messages(self, messages: Iterable[MirrorAction]) -> int:
+    def _queue_actions(self, actions: Iterator[MirrorAction]) -> int:
         rate_limit = float(aws.sqs_fifo_rate_limit)
         if config.is_in_lambda:
             rate_limit /= config.mirroring_concurrency
         return self._queues.send_messages(self._mirror_queue(),
-                                          map(MirrorAction.to_sqs, messages),
+                                          map(MirrorAction.to_sqs, actions),
                                           rate_limit=rate_limit)
 
     #: Since we track the ETags of all parts of a multipart file in SQS
@@ -356,15 +427,36 @@ class BaseMirrorService:
     #
     assert 1.5 * 1024 ** 4 <= max_file_size
 
-    def mirror_uri(self, file: File) -> str:
+    def mirror_uri(self,
+                   source: SourceSpec,
+                   file_cls: type[File],
+                   file_json: JSON
+                   ) -> str | None:
         """
-        Speculative S3 URI of the given file. No check is performed to see if
-        the file is currently mirrored, so there is no guarantee that requests
-        to the URI will succeed.
+        Return the the URI of the mirror copy of the given file from the current
+        catalog. If this method returns None, the file was not mirrored, and no
+        such URI exists. Otherwise, a mirror copy of the file may or may not
+        exist under the returned URI.
+
+        :param source: The source of the file
+
+        :param file_cls: The type of the file. This parameter is needed in order
+                         to avoid deserializing a file from a source that was
+                         configured to not be mirrored because the file metadata
+                         in that source is incomplete or broken
+
+        :param file_json: the index representation of the file
         """
-        return str(furl(scheme='s3',
-                        netloc=self._storage.bucket_name,
-                        path=self._file_object_key(file)))
+        if self.may_mirror_files_from_source(source):
+            file = file_cls.from_index(file_json)
+            if self.may_mirror(0 if file.size is None else file.size):
+                return str(furl(scheme='s3',
+                                netloc=self._storage.bucket_name,
+                                path=self._file_object_key(file)))
+            else:
+                return None
+        else:
+            return None
 
     def mirror_url(self, file: File) -> str:
         return self._storage.get_presigned_url(object_key=self._file_object_key(file),
@@ -449,10 +541,6 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
     def _source_service(self) -> SourceService:
         return SourceService()
 
-    @cached_property
-    def _repository_plugin(self) -> RepositoryPlugin:
-        return RepositoryPlugin.load(self.catalog).create(self.catalog)
-
     # We don't store the mirrored files' actual content type(s) in S3's
     # `Content-Type` metadata because a single file object may store the
     # contents of multiple file metadata entities, which may declare different
@@ -467,14 +555,16 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
     _file_object_content_type = 'application/octet-stream'
 
     def mirror(self, action: MirrorAction):
-        self._queue_messages(self._mirror(action))
+        assert action.catalog == self.catalog, R(
+            'Action references unexpected catalog', action, self.catalog)
+        self._queue_actions(self._mirror(action))
 
     @singledispatchmethod
     def _mirror(self, a: MirrorAction):
         raise NotImplementedError
 
     @_mirror.register
-    def _(self, a: MirrorSourceAction) -> Iterable[MirrorAction]:
+    def _(self, a: MirrorSourceAction) -> Iterator[MirrorAction]:
         assert a.source.id in self._list_public_source_ids(), R(
             'Cannot mirror non-public source', a.source)
         plugin = self._repository_plugin
@@ -489,25 +579,22 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
             / config.mirroring_concurrency  # number of concurrent invocations
             / 2  # safety margin
         ))
-        partitioned_source = plugin.partition_source_for_mirroring(self.catalog,
-                                                                   a.source,
-                                                                   partition_size)
-        prefix = partitioned_source.prefix
-        assert prefix is not None, partitioned_source
+        source = plugin.partition_source_for_mirroring(a.catalog,
+                                                       a.source,
+                                                       partition_size)
+        prefix = source.prefix
+        assert prefix is not None, source
         log.info('Queueing %d partitions of source %r in catalog %r',
-                 prefix.num_partitions, str(partitioned_source.spec), self.catalog)
+                 prefix.num_partitions, str(source.spec), a.catalog)
 
         for partition in prefix.partition_prefixes():
-            log.debug('Queueing partition %r', partition)
-            yield MirrorPartitionAction(catalog=self.catalog,
-                                        source=partitioned_source,
-                                        prefix=partition)
+            yield devolve(MirrorPartitionAction, a, source=source, prefix=partition)
 
     def _list_public_source_ids(self) -> set[str]:
         return self._source_service.list_source_ids(self.catalog, authentication=None)
 
     @_mirror.register
-    def _(self, a: MirrorPartitionAction) -> Iterable[MirrorAction]:
+    def _(self, a: MirrorPartitionAction) -> Iterator[MirrorAction]:
         plugin = self._repository_plugin
         files = plugin.list_files(a.source, a.prefix)
         for file in files:
@@ -515,18 +602,14 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
             assert file.size <= self.max_file_size, R(
                 'File too big', file, self.max_file_size)
             if self.may_mirror(file.size):
-                log.debug('Queueing file %r', file)
-                yield MirrorFileAction(catalog=self.catalog,
-                                       source=a.source,
-                                       prefix=a.prefix,
-                                       file=file)
+                yield devolve(MirrorFileAction, a, file=file)
             else:
                 log.info('Not mirroring file to save cost: %r', file)
         log.info('Queued %d files in partition %r of source %r in catalog %r',
-                 len(files), a.prefix, str(a.source), self.catalog)
+                 len(files), a.prefix, str(a.source), a.catalog)
 
     @_mirror.register
-    def _(self, a: MirrorFileAction) -> Iterable[MirrorAction]:
+    def _(self, a: MirrorFileAction) -> Iterator[MirrorAction]:
         assert a.file.size is not None, R('File size unknown', a.file)
         if self.info_exists(a.file):
             log.info('File is already mirrored, skipping upload: %r', a.file)
@@ -542,13 +625,7 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
                 log.info('Mirroring file via multi-part upload: %r', a.file)
                 upload = self._create_upload(a.file)
                 next_part = self._mirror_first_part(a.file, upload)
-                log.info('Queueing part #%d of file %r', next_part.index, a.file)
-                yield MirrorPartAction(catalog=self.catalog,
-                                       source=a.source,
-                                       prefix=a.prefix,
-                                       file=a.file,
-                                       upload=upload,
-                                       part=next_part)
+                yield devolve(MirrorPartAction, a, upload=upload, part=next_part)
 
     def _mirror_file(self, file: File):
         """
@@ -598,28 +675,18 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
         return next_part
 
     @_mirror.register
-    def _(self, a: MirrorPartAction) -> Iterable[MirrorAction]:
+    def _(self, a: MirrorPartAction) -> Iterator[MirrorAction]:
         # Some upload field values are mutable so we should make a copy
         upload = a.upload.copy()
         next_part = self._mirror_part(a.file, upload, a.part)
         if next_part is None:
             log.info('Uploaded all %d parts for file %r', len(upload.etags), a.file)
-            yield FinalizeFileAction(catalog=self.catalog,
-                                     source=a.source,
-                                     prefix=a.prefix,
-                                     file=a.file,
-                                     upload=upload)
+            yield devolve(FinalizeFileAction, a, upload=upload)
         else:
-            log.info('Queueing part #%d of file %r', next_part.index, a.file)
-            yield MirrorPartAction(catalog=self.catalog,
-                                   source=a.source,
-                                   prefix=a.prefix,
-                                   file=a.file,
-                                   upload=upload,
-                                   part=next_part)
+            yield devolve(MirrorPartAction, a, upload=upload, part=next_part)
 
     @_mirror.register
-    def _(self, a: FinalizeFileAction) -> Iterable[MirrorAction]:
+    def _(self, a: FinalizeFileAction) -> Iterator[MirrorAction]:
         assert len(a.upload.etags) > 0
         self._verify_digest(a.file, a.upload.hasher)
         object_key = self._file_object_key(a.file)
@@ -635,7 +702,7 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
         self._get_info(a.file)
         self._put_info(a.file)
         log.info('Successfully mirrored file via multi-part upload: %r', a.file)
-        return ()
+        return iter(())
 
     def _info(self, file: File) -> JSON:
         return {

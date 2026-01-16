@@ -14,6 +14,10 @@ from more_itertools import (
 from azul import (
     cached_property,
 )
+from azul.indexer import (
+    SourceRef,
+    SourceSpec,
+)
 from azul.json import (
     copy_any_json,
     copy_json,
@@ -39,6 +43,7 @@ from azul.types import (
     json_int,
     json_item_sequences,
     json_mapping,
+    json_sequence_of_mappings,
     json_str,
     json_untyped_dict,
     optional,
@@ -171,22 +176,25 @@ class AnvilSearchResponseStage(SearchResponseStage):
         }
 
     def _make_hit(self, es_hit: JSON) -> MutableJSON:
-        sources, bundles = es_hit['sources'], es_hit['bundles']
+        contents = json_mapping(es_hit['contents'])
+        sources = json_sequence_of_mappings(es_hit['sources'])
+        bundles = json_element_mappings(es_hit['bundles'])
+        source = SourceRef[SourceSpec].from_json(one(sources)).spec
         return {
             'entryId': json_str(es_hit['entity_id']),
             # Note that there is a brittle coupling that must be maintained
             # between the `sources` and `bundles` field paths here and the
             # renamed fields in `Plugin.manifest_config`.
-            'sources': list(map(self._make_source, json_element_mappings(sources))),
-            'bundles': list(map(self._make_bundle, json_element_mappings(bundles))),
-            **self._make_contents(json_mapping(es_hit['contents']))
+            'sources': list(map(self._make_source, sources)),
+            'bundles': list(map(self._make_bundle, bundles)),
+            **self._make_contents(source, contents)
         }
 
     def _make_source(self, es_source: JSON) -> MutableJSON:
         return {
-            self._special_fields.source_prefix: json_str(es_source['prefix']),
-            self._special_fields.source_spec: json_str(es_source['spec']),
-            self._special_fields.source_id: json_str(es_source['id'])
+            self._special_fields.source_prefix.name_in_hit: json_str(es_source['prefix']),
+            self._special_fields.source_spec.name_in_hit: json_str(es_source['spec']),
+            self._special_fields.source_id.name_in_hit: json_str(es_source['id'])
         }
 
     @cached_property
@@ -195,14 +203,18 @@ class AnvilSearchResponseStage(SearchResponseStage):
 
     def _make_bundle(self, es_bundle: JSON) -> MutableJSON:
         return {
-            self._special_fields.bundle_uuid: json_str(es_bundle['uuid']),
-            self._special_fields.bundle_version: json_str(es_bundle['version'])
+            self._special_fields.bundle_uuid.name_in_hit: json_str(es_bundle['uuid']),
+            self._special_fields.bundle_version.name_in_hit: json_str(es_bundle['version'])
         }
 
-    def _make_contents(self, es_contents: JSON) -> MutableJSON:
+    def _make_contents(self, source: SourceSpec, es_contents: JSON) -> MutableJSON:
         return {
             inner_entity_type: (
-                [self._pivotal_entity(inner_entity_type, json_mapping(one(inner_entities)))]
+                [
+                    self._pivotal_entity(source,
+                                         inner_entity_type,
+                                         json_mapping(one(inner_entities)))
+                ]
                 if inner_entity_type == self.entity_type else
                 list(map(partial(self._non_pivotal_entity, inner_entity_type), inner_entities))
             )
@@ -210,15 +222,16 @@ class AnvilSearchResponseStage(SearchResponseStage):
         }
 
     def _pivotal_entity(self,
+                        source: SourceSpec,
                         inner_entity_type: str,
-                        inner_entity: JSON
+                        inner_entity: JSON,
                         ) -> MutableJSON:
         inner_entity = copy_json(inner_entity)
         if inner_entity_type == 'files':
-            inner_entity['azul_url'] = self._file_url(uuid=json_str(inner_entity['uuid']),
+            inner_entity['azul_url'] = self._file_url(uuid=json_str(inner_entity['document_id']),
                                                       version=json_str(inner_entity['version']),
                                                       drs_uri=optional(json_str, inner_entity['drs_uri']))
-            inner_entity.pop('uuid', None)
+            inner_entity['azul_mirror_uri'] = self._file_mirror_uri(source, inner_entity)
             inner_entity.pop('version', None)
         return inner_entity
 

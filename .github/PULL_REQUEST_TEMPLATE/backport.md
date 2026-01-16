@@ -46,12 +46,6 @@ This is the PR template for backport PRs against `develop`.
 - [ ] Pushed PR branch to GitHub
 
 
-### Operator (deploy runner image)
-
-- [ ] Ran `_select dev.gitlab && make -C terraform/gitlab/runner` <sub>or this PR is not labeled `deploy:runner`</sub>
-- [ ] Ran `_select anvildev.gitlab && make -C terraform/gitlab/runner` <sub>or this PR is not labeled `deploy:runner`</sub>
-
-
 ### Operator (sandbox build)
 
 - [ ] Added `sandbox` label <sub>or PR is labeled `no sandbox`</sub>
@@ -61,6 +55,12 @@ This is the PR template for backport PRs against `develop`.
 - [ ] Build passes in `anvilbox` deployment <sub>or PR is labeled `no sandbox`</sub>
 - [ ] Reviewed build logs for anomalies in `sandbox` deployment <sub>or PR is labeled `no sandbox`</sub>
 - [ ] Reviewed build logs for anomalies in `anvilbox` deployment <sub>or PR is labeled `no sandbox`</sub>
+- [ ] Deleted unreferenced indices in `sandbox` <sub>or this PR does not remove catalogs or otherwise causes unreferenced indices in `sandbox`</sub>
+- [ ] Deleted unreferenced indices in `anvilbox` <sub>or this PR does not remove catalogs or otherwise causes unreferenced indices in `anvilbox`</sub>
+- [ ] Started reindex in `sandbox` <sub>or this PR is not labeled `reindex:dev`</sub>
+- [ ] Started reindex in `anvilbox` <sub>or this PR is not labeled `reindex:anvildev`</sub>
+- [ ] Checked for failures in `sandbox` <sub>or this PR is not labeled `reindex:dev`</sub>
+- [ ] Checked for failures in `anvilbox` <sub>or this PR is not labeled `reindex:anvildev`</sub>
 
 
 ### Operator (merge the branch)

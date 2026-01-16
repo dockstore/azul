@@ -122,6 +122,7 @@ from azul.plugins import (
     ManifestFormat,
     MetadataPlugin,
     RepositoryPlugin,
+    SpecialField,
     dotted,
 )
 from azul.service import (
@@ -1151,21 +1152,16 @@ class ManifestGenerator(metaclass=ABCMeta):
         if download_cls.needs_drs_uri and file['drs_uri'] is None:
             return None
         else:
+            special_fields = self.metadata_plugin.special_fields
             return str(self.file_url_func(catalog=self.catalog,
-                                          file_uuid=file['uuid'],
+                                          file_uuid=file[special_fields.file_uuid.name_in_hit],
                                           version=file['version'],
                                           fetch=False,
                                           **args))
 
-    def _azul_mirror_uri(self, file: JSON, source: SourceSpec) -> str | None:
-        if self.mirror_service.may_mirror_files_from_source(source):
-            file = self.metadata_plugin.file_class.from_index(file)
-            if self.mirror_service.may_mirror(file.size):
-                return self.mirror_service.mirror_uri(file)
-            else:
-                return None
-        else:
-            return None
+    def _azul_mirror_uri(self, source: SourceSpec, file: JSON) -> str | None:
+        file_cls = self.metadata_plugin.file_class
+        return self.mirror_service.mirror_uri(source, file_cls, file)
 
     @cached_property
     def manifest_content_hash(self) -> int:
@@ -1701,7 +1697,7 @@ class CompactManifestGenerator(PagedManifestGenerator):
                         if 'file_url' in column_mapping:
                             file['file_url'] = self._azul_file_url(file)
                         if 'file_mirror_uri' in column_mapping:
-                            file['file_mirror_uri'] = self._azul_mirror_uri(file, source)
+                            file['file_mirror_uri'] = self._azul_mirror_uri(source, file)
                         entities = [file]
                     self._extract_fields(field_path=field_path,
                                          entities=entities,
@@ -1717,7 +1713,7 @@ class CompactManifestGenerator(PagedManifestGenerator):
                                 if 'file_url' in column_mapping:
                                     file['file_url'] = self._azul_file_url(file)
                                 if 'file_mirror_uri' in column_mapping:
-                                    file['file_mirror_uri'] = self._azul_mirror_uri(file, source)
+                                    file['file_mirror_uri'] = self._azul_mirror_uri(source, file)
                                 self._extract_fields(field_path=field_path,
                                                      entities=[file],
                                                      column_mapping=column_mapping,
@@ -1850,8 +1846,8 @@ class VerbatimManifestGenerator(ClientSidePagingManifestGenerator,
         # orphans to be absent from the manifest, which is incorrect.
         #
         source_fields = {
-            plugin.special_fields.source_id,
-            plugin.special_fields.source_spec
+            plugin.special_fields.source_id.name,
+            plugin.special_fields.source_spec.name
         }
         return self.filters.explicit.keys() < (root_entity_fields | source_fields)
 
@@ -1981,7 +1977,7 @@ class JSONLVerbatimManifestGenerator(PagedManifestGenerator,
         return ManifestFormat.verbatim_jsonl
 
     @property
-    def source_id_field(self) -> str:
+    def source_id_field(self) -> SpecialField:
         return self.metadata_plugin.special_fields.source_id
 
     def source_ids(self) -> list[str]:
@@ -1995,7 +1991,7 @@ class JSONLVerbatimManifestGenerator(PagedManifestGenerator,
         # sources. If they are, an exception will be raised when the filters are
         # reified, so it's safe to skip that check here.
         try:
-            source_filter = self.filters.explicit[self.source_id_field]
+            source_filter = self.filters.explicit[self.source_id_field.name]
         except KeyError:
             sources = self.filters.source_ids
         else:
@@ -2014,7 +2010,7 @@ class JSONLVerbatimManifestGenerator(PagedManifestGenerator,
         source_id = source_ids[partition.page_index]
         log.info('Listing replicas from source %r for manifest page %d',
                  source_id, partition.page_index)
-        partition_filter = {self.source_id_field: {'is': [source_id]}}
+        partition_filter = {self.source_id_field.name: {'is': [source_id]}}
         original_filters = self.filters
         try:
             self.filters = original_filters.update(partition_filter)

@@ -29,6 +29,7 @@ from more_itertools import (
 
 from azul import (
     CatalogName,
+    R,
     cached_property,
     config,
 )
@@ -90,9 +91,27 @@ if TYPE_CHECKING:
         SummaryResponseStage,
     )
 
+#: Field names are used to reference fields in requests to the service, e.g.,
+#: when clients specify which fields to filter and sort documents by. They are
+#: also used as keys in the termFacets part of a response but only for the
+#: fields for which a facet is defined. Field names have to be unique, but
+#: different plugins may use different conventions to disambiguate them, such as
+#: prefixing the field name with the entity type, either separated by a dot or
+#: using a case transition (camel case).
+#:
 FieldName = str
 
+#: The bijective mapping between field names and field paths.
+#:
 FieldMapping = Mapping[FieldName, FieldPath]
+
+#: The inverse of the field mapping. It is a less verbose representation in
+#: which field paths manifest as the keys in nested dictionaries.
+#:
+type InverseFieldMapping = Mapping[
+    FieldPathElement,
+    FieldName | InverseFieldMapping
+]
 
 ColumnMapping = Mapping[FieldPathElement, FieldName | None]
 ManifestConfig = Mapping[FieldPath, ColumnMapping]
@@ -139,6 +158,27 @@ class Sorting:
 
 
 @attrs.frozen(auto_attribs=True, kw_only=True)
+class SpecialField:
+    """
+    See :py:class:`SpecialFields`.
+    """
+
+    #: The standalone name of the field, as it appears in filters, the `sort`
+    #: request parameter and in the `termFacets` part of a service response.
+    #:
+    name: FieldName
+
+    #: The name of the field in an inner entity, as it appears in the `hit`
+    #: part of a service response.
+    #:
+    name_in_hit: str  # we currently have no alias for this type of occurrence
+
+    @classmethod
+    def symmetric(cls, name: str) -> Self:
+        return cls(name=name, name_in_hit=name)
+
+
+@attrs.frozen(auto_attribs=True, kw_only=True)
 class SpecialFields:
     """
     Azul defines a number of fields in each /index/{entity_type} response that
@@ -149,17 +189,15 @@ class SpecialFields:
 
     It is an incomplete abstraction in that it does not express the name of the
     inner entity the field is a property of in the /index/{entity_type}
-    response. In that way, the values of the attributes of instances of this
-    class are more akin to a facet name, rather than a field name. However, not
-    every field represented here is actually a facet.
+    response.
     """
-    accessible: ClassVar[FieldName] = 'accessible'
-    source_id: FieldName
-    source_spec: FieldName
-    source_prefix: FieldName
-    bundle_uuid: FieldName
-    bundle_version: FieldName
-    root_entity_id: FieldName
+    accessible: ClassVar[SpecialField] = SpecialField.symmetric('accessible')
+    source_id: SpecialField
+    source_spec: SpecialField
+    source_prefix: SpecialField
+    bundle_uuid: SpecialField
+    bundle_version: SpecialField
+    file_uuid: SpecialField
 
 
 class ManifestFormat(Enum):
@@ -390,19 +428,14 @@ class MetadataPlugin[BUNDLE: Bundle](Plugin[BUNDLE]):
         """
         raise NotImplementedError
 
-    #: See :meth:`_field_mapping`
-    _FieldMapping2 = Mapping[FieldPathElement, FieldName]
-    _FieldMapping1 = Mapping[FieldPathElement, FieldName | _FieldMapping2]
-    _FieldMapping = Mapping[FieldPathElement, FieldName | _FieldMapping1]
-
     @cached_property
     def field_mapping(self) -> FieldMapping:
         """
-        Maps a field's name in the service response to the field's path in
-        Elasticsearch index documents.
+        Maps a field's name, as used in service requests for filtering or
+        sorting, to the field's path in index documents.
         """
 
-        def invert(v: MetadataPlugin._FieldMapping,
+        def invert(v: InverseFieldMapping,
                    *path: FieldPathElement
                    ) -> Iterable[tuple[FieldName, FieldPath]]:
             if isinstance(v, dict):
@@ -424,7 +457,7 @@ class MetadataPlugin[BUNDLE: Bundle](Plugin[BUNDLE]):
 
     @property
     @abstractmethod
-    def _field_mapping(self) -> _FieldMapping:
+    def _field_mapping(self) -> InverseFieldMapping:
         """
         An inverted and more compact representation of the field mapping. It is
         made up of nested dictionaries where each key is an element in a field's
@@ -432,6 +465,19 @@ class MetadataPlugin[BUNDLE: Bundle](Plugin[BUNDLE]):
         key represents the element in the path, or a dictionary otherwise.
         """
         raise NotImplementedError
+
+    def field_name_for_path(self, path: FieldPath) -> FieldName:
+        """
+        Given the path of a response field, return the name of the field as it
+        would need to be referenced in requests, e.g. for filtering or sorting
+        by that field.
+        """
+        value: InverseFieldMapping | FieldName = self._field_mapping
+        for element in path:
+            assert isinstance(value, Mapping), R('Path too long', path, element, value)
+            value = value[element]
+        assert isinstance(value, FieldName), R('Path too short', path, value)
+        return value
 
     @property
     @abstractmethod
@@ -473,7 +519,7 @@ class MetadataPlugin[BUNDLE: Bundle](Plugin[BUNDLE]):
 
     @property
     def facets(self) -> Sequence[str]:
-        return [self.special_fields.source_id]
+        return [self.special_fields.source_id.name]
 
     @property
     @abstractmethod

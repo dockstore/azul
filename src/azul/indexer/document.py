@@ -629,7 +629,13 @@ class ReplicaCoordinates[E: EntityReference](DocumentCoordinates[E]):
         return f'replica of {self.entity}'
 
 
+#: The elements of a field path (see below)
+#:
 FieldPathElement = str
+
+#: The path to a field in an index document. The first (last) element in the
+#: path is the key into the outermost (innermost) dictionary in that document.
+#:
 FieldPath = tuple[FieldPathElement, ...]
 
 InternalVersion = tuple[int, int]
