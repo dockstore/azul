@@ -143,8 +143,9 @@ class RepositoryService(ElasticsearchService):
         special_fields = self.metadata_plugin(catalog).special_fields
         for hit in response['hits']:
             entity = one(hit[entity_type])
-            source_id = one(hit['sources'])[special_fields.source_id]
-            entity[special_fields.accessible] = source_id in filters.source_ids
+            source_id = one(hit['sources'])[special_fields.source_id.name_in_hit]
+            accessible = source_id in filters.source_ids
+            entity[special_fields.accessible.name_in_hit] = accessible
 
         if item_id is not None:
             response = one(response['hits'], too_short=EntityNotFoundError(entity_type, item_id))
@@ -181,13 +182,14 @@ class RepositoryService(ElasticsearchService):
         plugin = self.metadata_plugin(catalog)
         field_mapping = plugin.field_mapping
 
-        for facet in filters.explicit.keys():
-            if facet != plugin.special_fields.accessible and facet not in field_mapping:
-                raise BadArgumentException(f'Unable to filter by undefined facet {facet}.')
+        for field in filters.explicit.keys():
+            accessible_field = plugin.special_fields.accessible.name
+            if field != accessible_field and field not in field_mapping:
+                raise BadArgumentException(f'Unable to filter by undefined field {field}.')
 
-        facet = pagination.sort
-        if facet not in field_mapping:
-            raise BadArgumentException(f'Unable to sort by undefined facet {facet}.')
+        field = pagination.sort
+        if field not in field_mapping:
+            raise BadArgumentException(f'Unable to sort by undefined field {field}.')
 
         chain = self.create_chain(catalog=catalog,
                                   entity_type=entity_type,
@@ -306,8 +308,10 @@ class RepositoryService(ElasticsearchService):
         :return: The inner `files` entity or None if the catalog does not
                  contain information about the specified data file
         """
+        plugin = self.metadata_plugin(catalog)
+        file_uuid_field = plugin.special_fields.file_uuid
         filters = filters.update({
-            'fileId': {'is': [file_uuid]},
+            file_uuid_field.name: {'is': [file_uuid]},
             **(
                 {'fileVersion': {'is': [file_version]}}
                 if file_version is not None else
@@ -327,7 +331,6 @@ class RepositoryService(ElasticsearchService):
         request = self.create_request(catalog, entity_type)
         request = chain.prepare_request(request)
 
-        plugin = self.metadata_plugin(catalog)
         if file_version is None:
             field_path = dotted(plugin.field_mapping['fileVersion'])
             request.sort({field_path: dict(order='desc')})

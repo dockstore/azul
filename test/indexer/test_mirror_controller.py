@@ -124,7 +124,7 @@ class TestMirrorController(DCP2TestCase,
 
     @property
     def mirror_controller(self) -> MirrorController:
-        return self.app_module.app.mirror_controller
+        return self._app.mirror_controller
 
     @property
     def service(self) -> MirrorService:

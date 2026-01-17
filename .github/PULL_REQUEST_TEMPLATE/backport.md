@@ -61,6 +61,12 @@ This is the PR template for backport PRs against `develop`.
 - [ ] Build passes in `anvilbox` deployment <sub>or PR is labeled `no sandbox`</sub>
 - [ ] Reviewed build logs for anomalies in `sandbox` deployment <sub>or PR is labeled `no sandbox`</sub>
 - [ ] Reviewed build logs for anomalies in `anvilbox` deployment <sub>or PR is labeled `no sandbox`</sub>
+- [ ] Deleted unreferenced indices in `sandbox` <sub>or this PR does not remove catalogs or otherwise causes unreferenced indices in `sandbox`</sub>
+- [ ] Deleted unreferenced indices in `anvilbox` <sub>or this PR does not remove catalogs or otherwise causes unreferenced indices in `anvilbox`</sub>
+- [ ] Started reindex in `sandbox` <sub>or this PR is not labeled `reindex:dev`</sub>
+- [ ] Started reindex in `anvilbox` <sub>or this PR is not labeled `reindex:anvildev`</sub>
+- [ ] Checked for failures in `sandbox` <sub>or this PR is not labeled `reindex:dev`</sub>
+- [ ] Checked for failures in `anvilbox` <sub>or this PR is not labeled `reindex:anvildev`</sub>
 
 
 ### Operator (merge the branch)

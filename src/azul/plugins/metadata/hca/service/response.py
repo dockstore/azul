@@ -283,8 +283,8 @@ class HCASearchResponseStage(SearchResponseStage):
     def make_bundles(self, entry) -> MutableJSONs:
         return [
             {
-                self._special_fields.bundle_uuid: b['uuid'],
-                self._special_fields.bundle_version: b['version']
+                self._special_fields.bundle_uuid.name_in_hit: b['uuid'],
+                self._special_fields.bundle_version.name_in_hit: b['version']
             }
             for b in entry['bundles']
         ]
@@ -292,9 +292,9 @@ class HCASearchResponseStage(SearchResponseStage):
     def make_sources(self, entry) -> MutableJSONs:
         return [
             {
-                self._special_fields.source_id: s['id'],
-                self._special_fields.source_spec: s['spec'],
-                self._special_fields.source_prefix: s['prefix'],
+                self._special_fields.source_id.name_in_hit: s['id'],
+                self._special_fields.source_spec.name_in_hit: s['spec'],
+                self._special_fields.source_prefix.name_in_hit: s['prefix'],
             }
             for s in entry['sources']
         ]
@@ -388,7 +388,7 @@ class HCASearchResponseStage(SearchResponseStage):
         if matrices:
             for file in json_element_mappings(one(matrices)['file']):
                 translated_file = {
-                    **self.make_translated_file(file),
+                    **self.make_file(file),
                     'strata': json_str(file['strata'])
                 }
                 files.append(translated_file)
@@ -397,11 +397,11 @@ class HCASearchResponseStage(SearchResponseStage):
     def make_files(self, entry: JSON) -> JSONs:
         files = []
         for _file in json_element_mappings(json_mapping(entry['contents'])['files']):
-            translated_file = self.make_translated_file(_file)
+            translated_file = self.make_file(_file)
             files.append(translated_file)
         return files
 
-    def make_translated_file(self, file: JSON) -> JSON:
+    def make_file(self, file: JSON) -> JSON:
         translated_file = {
             'contentDescription': file.get('content_description'),
             'format': file.get('file_format'),
@@ -410,7 +410,7 @@ class HCASearchResponseStage(SearchResponseStage):
             'sha256': file.get('sha256'),
             'size': file.get('size'),
             'fileSource': file.get('file_source'),
-            'uuid': file.get('uuid'),
+            self.plugin.special_fields.file_uuid.name_in_hit: file.get('uuid'),
             'version': file.get('version'),
             'matrixCellCount': file.get('matrix_cell_count'),
             'drs_uri': file.get('drs_uri'),
