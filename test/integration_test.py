@@ -1209,13 +1209,13 @@ class IndexingIntegrationTest(IntegrationTestCase):
                   file: JSON
                   ) -> None:
         repository_plugin = self.azul_client.repository_plugin(catalog)
-        drs = repository_plugin.drs_client()
         file_uuid = lookup(file, 'document_id', 'uuid')
+        drs_uri = f'drs://{config.api_lambda_domain("service")}/{file_uuid}'
+        drs_object = repository_plugin.drs_object(drs_uri)
         for access_method in AccessMethod:
             with self.subTest('drs', catalog=catalog, access_method=AccessMethod.https):
                 log.info('Resolving file %r with DRS using %r', file_uuid, access_method)
-                drs_uri = f'drs://{config.api_lambda_domain("service")}/{file_uuid}'
-                access = drs.get_object(drs_uri, access_method=access_method)
+                access = drs_object.get(access_method)
                 self.assertIsNone(access.headers)
                 if access.method is AccessMethod.https:
                     response = self._get_url(GET, furl(access.url), stream=True)

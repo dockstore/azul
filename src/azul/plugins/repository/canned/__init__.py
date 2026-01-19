@@ -27,9 +27,6 @@ from azul import (
 from azul.auth import (
     Authentication,
 )
-from azul.drs import (
-    DRSClient,
-)
 from azul.http import (
     HasCachedHttpClient,
 )
@@ -275,12 +272,6 @@ class Plugin(RepositoryPlugin[
 
     def file_download_class(self) -> type[RepositoryFileDownload]:
         return CannedFileDownload
-
-    def drs_client(self,
-                   authentication: Authentication | None = None
-                   ) -> DRSClient:
-        assert authentication is None, type(authentication)
-        return DRSClient(http_client=self._http_client)
 
     def validate_version(self, version: str) -> None:
         parse_dcp2_version(version)
