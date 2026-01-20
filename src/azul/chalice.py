@@ -916,7 +916,7 @@ class AzulChaliceApp(Chalice):
                     'description': 'Too many requests. ' + retry_after
                 },
                 '500': {
-                    'description': 'Internal server error. ' + do_not_retry
+                    'description': 'Internal application error. ' + do_not_retry
                 },
                 '502': {
                     'description': 'Bad gateway. The frontend server received '
