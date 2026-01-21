@@ -432,11 +432,10 @@ class StatusRetryHttpClient(HttpClientDecorator):
                     num_retries -= 1
                     if retries.respect_retry_after_header:
                         try:
-                            retry_after = response.headers['Retry-After']
+                            retry_after = int(response.headers['Retry-After'])
                         except KeyError:
                             pass
                         else:
-                            retry_after = int(retry_after)
                             if logging_client is not None:
                                 logging_client.log('Sleeping %ds to honor Retry-After header', retry_after)
                             time.sleep(retry_after)
