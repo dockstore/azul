@@ -12,10 +12,10 @@ from furl import (
     furl,
 )
 import urllib3
+import urllib3._request_methods
 import urllib3.connection
 import urllib3.connectionpool
 import urllib3.exceptions
-import urllib3.request
 
 from azul import (
     R,
@@ -28,7 +28,7 @@ from azul.logging import (
     http_body_log_message,
 )
 
-HttpClient = urllib3.request.RequestMethods
+HttpClient = urllib3._request_methods.RequestMethods
 
 
 class HttpClientDecorator(HttpClient):
@@ -45,7 +45,7 @@ class HttpClientDecorator(HttpClient):
         super().__init__(headers)
         self._inner = inner
 
-    def urlopen(self, *args, **kwargs) -> urllib3.HTTPResponse:
+    def urlopen(self, *args, **kwargs) -> urllib3.BaseHTTPResponse:
         return self._inner.urlopen(*args, **kwargs)
 
     def delegate[T: HttpClient](self, cls: type[T]) -> T | None:
@@ -160,7 +160,7 @@ class DisableCrossHostRedirectClient(HttpClientDecorator):
     To enable the logic, simply pass ``redirect=True`` to the urlopen() method.
     """
 
-    def urlopen(self, method, url, *args, **kwargs) -> urllib3.HTTPResponse:
+    def urlopen(self, method, url, *args, **kwargs) -> urllib3.BaseHTTPResponse:
         kwargs.setdefault('redirect', False)
         return super().urlopen(method, url, *args, **kwargs)
 
@@ -288,7 +288,7 @@ class LimitedRetryHttpClient(HttpClientDecorator):
     def retries(self) -> int:
         return 0 if self._timing_is_restricted else 2
 
-    def urlopen(self, method, url, *args, **kwargs) -> urllib3.HTTPResponse:
+    def urlopen(self, method, url, *args, **kwargs) -> urllib3.BaseHTTPResponse:
         timeout, retries = self.timeout, self.retries
         require('retries' not in kwargs, "Argument 'retries' is disallowed")
         retry = _LimitedRetry.create(retries=retries, timeout=timeout)
@@ -314,7 +314,7 @@ class LimitedRetryHttpClient(HttpClientDecorator):
 
 class Propagate429HttpClient(HttpClientDecorator):
 
-    def urlopen(self, method, url, *args, **kwargs) -> urllib3.HTTPResponse:
+    def urlopen(self, method, url, *args, **kwargs) -> urllib3.BaseHTTPResponse:
         response = super().urlopen(method, url, *args, **kwargs)
         if response.status == 429:
             raise TooManyRequestsException(url)
@@ -383,7 +383,7 @@ class StatusRetryHttpClient(HttpClientDecorator):
                 *args,
                 retries: urllib3.Retry | None = None,
                 **kwargs
-                ) -> urllib3.HTTPResponse:
+                ) -> urllib3.BaseHTTPResponse:
         """
         The ``retries`` argument, if specified, must be ``None`` or an instance
         of ``urllib3.Retry`` that has the ``status`` attribute set to an integer

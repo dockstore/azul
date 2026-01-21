@@ -53,7 +53,6 @@ from more_itertools import (
 )
 import urllib3
 import urllib3.exceptions
-import urllib3.request
 import urllib3.response
 
 from azul import (
@@ -80,6 +79,7 @@ from azul.drs import (
     DRSObject,
 )
 from azul.http import (
+    HttpClient,
     LimitedRetryHttpClient,
     LimitedTimeoutException,
     Propagate429HttpClient,
@@ -289,7 +289,7 @@ class TerraClient(OAuth2Client):
     """
     credentials_provider: TerraCredentialsProvider
 
-    def _create_http_client(self) -> urllib3.request.RequestMethods:
+    def _create_http_client(self) -> HttpClient:
         return Propagate429HttpClient(
             LimitedRetryHttpClient(
                 super()._create_http_client()
