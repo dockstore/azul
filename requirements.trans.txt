@@ -7,7 +7,7 @@ google-cloud-core==2.5.0
 google-crc32c==1.8.0
 google-resumable-media==2.8.0
 googleapis-common-protos==1.72.0
-grpcio==1.76.0
+grpcio==1.78.0rc2
 grpcio-status==1.62.3
 idna==3.11
 markupsafe==3.0.3
@@ -15,9 +15,9 @@ orderedmultidict==1.0.2
 packaging==25.0
 proto-plus==1.27.0
 protobuf==4.25.8
-pyasn1==0.6.1
+pyasn1==0.6.2
 pyasn1_modules==0.4.2
-pycparser==2.23
+pycparser==3.0
 pyopenssl==25.3.0
 python-dateutil==2.9.0.post0
 s3transfer==0.16.0
