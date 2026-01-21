@@ -961,12 +961,13 @@ def repository_search(entity_type: str, entity_id: str | None = None) -> JSON:
                     size=partial(validate_size, entity_type),
                     sort=validate_field)
     validate_entity_type(entity_type)
-    return app.repository_controller.search(catalog=app.catalog,
-                                            entity_type=entity_type,
-                                            item_id=entity_id,
-                                            filters=query_params.get('filters'),
-                                            pagination=app.get_pagination(entity_type),
-                                            authentication=request.authentication)
+    response = app.repository_controller.search(catalog=app.catalog,
+                                                entity_type=entity_type,
+                                                item_id=entity_id,
+                                                filters=query_params.get('filters'),
+                                                pagination=app.get_pagination(entity_type),
+                                                authentication=request.authentication)
+    return '' if request.method == 'HEAD' else response
 
 
 def _hoist_parameters(query_params, request):
@@ -1048,9 +1049,10 @@ def get_summary():
                     catalog=validate_catalog)
     filters = query_params.get('filters', '{}')
     validate_filters(filters)
-    return app.repository_controller.summary(catalog=app.catalog,
-                                             filters=filters,
-                                             authentication=request.authentication)
+    response = app.repository_controller.summary(catalog=app.catalog,
+                                                 filters=filters,
+                                                 authentication=request.authentication)
+    return '' if request.method == 'HEAD' else response
 
 
 def manifest_route(*, fetch: bool, initiate: bool):
