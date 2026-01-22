@@ -466,7 +466,7 @@ class BaseMirrorService:
     def info_exists(self, file: File) -> bool:
         return self._get_info(file) is not None
 
-    def file_exists(self, file: File) -> bool:
+    def _file_exists(self, file: File) -> bool:
         return self._storage.object_exists(self._file_object_key(file))
 
     def _get_info(self, file: File) -> JSON | None:
@@ -608,7 +608,7 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
         assert a.file.size is not None, R('File size unknown', a.file)
         if self.info_exists(a.file):
             log.info('File is already mirrored, skipping upload: %r', a.file)
-        elif self.file_exists(a.file):
+        elif self._file_exists(a.file):
             assert False, R('File object is already present', a.file)
         else:
             part_size = FilePart.default_size
