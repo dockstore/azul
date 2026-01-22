@@ -86,6 +86,14 @@ class StorageService:
     def _s3(self) -> 'S3Client':
         return aws.s3
 
+    def object_exists(self, object_key: str) -> bool:
+        try:
+            self.head_object(object_key)
+        except StorageObjectNotFound:
+            return False
+        else:
+            return True
+
     def head_object(self, object_key: str) -> 'HeadObjectOutputTypeDef':
         try:
             return self._s3.head_object(Bucket=self.bucket_name,

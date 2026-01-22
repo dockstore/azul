@@ -467,12 +467,7 @@ class BaseMirrorService:
         return self._get_info(file) is not None
 
     def file_exists(self, file: File) -> bool:
-        try:
-            self._storage.head_object(self._file_object_key(file))
-        except StorageObjectNotFound:
-            return False
-        else:
-            return True
+        return self._storage.object_exists(self._file_object_key(file))
 
     def _get_info(self, file: File) -> JSON | None:
         object_key = self._info_object_key(file)
