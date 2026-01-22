@@ -919,5 +919,11 @@ def env() -> Mapping[str, str | None]:
         # $1 per one million requests above ten million requests. The blocking
         # only applies to URLs disallowed via robots.txt.
         #
-        'azul_waf_bot_control': '0'
+        'azul_waf_bot_control': '0',
+
+        # The maximum allowed percentage of blocked requests (number of blocked
+        # requests, divided by the number of all requests, times 100) for a
+        # configured period before a metric alarm is tripped.
+        #
+        'azul_waf_blocked_alarm_threshold': '50'
     }
