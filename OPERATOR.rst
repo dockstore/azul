@@ -290,11 +290,11 @@ Updating the AMI for GitLab instances
 
 As part of the upgrades isssue, operators must check for updates to the AMI for
 the root volume of the EC2 instance running GitLab. We use a hardened — to the
-requirements of the CIS Amazon Linux 2 benchmark — variant of Amazon's Linux 2
-AMI. The license to use the AMI for an EC2 instance is sold by CIS as a
-subscription on the AWS Marketplace:
+requirements of the CIS Hardened Image Level 1 on Amazon Linux 2023. The license
+to use the AMI for an EC2 instance is sold by CIS as a subscription on the AWS
+Marketplace:
 
-https://aws.amazon.com/marketplace/pp/prodview-wv574yqgjv6jg
+https://aws.amazon.com/marketplace/pp/prodview-fqqp6ebucarnm
 
 The license costs $0.024 per instance/hour. Every AWS account must subscribe
 separately.
@@ -313,7 +313,7 @@ component, say, ``_select dev.gitlab`` and run
 
     aws ec2 describe-images \
             --owners aws-marketplace \
-            --filters="Name=name,Values=*abcfcbaf-134e-4639-a7b4-fd285b9fcf0a*" \
+            --filters="Name=name,Values=*prod-fvm47vekg24oc*" \
         | jq -r '.Images[] | .CreationDate+"\t"+.ImageId+"\t"+.Name' \
         | sort \
         | tail -1
