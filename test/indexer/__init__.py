@@ -11,6 +11,10 @@ from typing import (
     Literal,
     cast,
 )
+from unittest.mock import (
+    PropertyMock,
+    patch,
+)
 
 from more_itertools import (
     one,
@@ -217,6 +221,10 @@ class IndexerTestCase(CatalogTestCase,
     def setUpClass(cls):
         super().setUpClass()
         cls.index_service = ForcedRefreshIndexService()
+        cls.addClassPatch(patch.object(type(config),
+                                       'mirror_bucket',
+                                       new_callable=PropertyMock,
+                                       return_value=None))
 
     @classmethod
     def _purge_indices(cls):
