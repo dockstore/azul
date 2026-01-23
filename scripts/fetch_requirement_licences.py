@@ -76,13 +76,21 @@ class Main:
                     urls = json.loads(response.data)['info']['project_urls']
                     urls = [] if urls is None else github_urls(urls.values())
                     for url in urls:
+                        url_raw = furl(url)
+                        if len(url_raw.path.segments) > 2:
+                            if url_raw.path.segments[2] in ('blob', 'tree'):
+                                url_raw.path.segments[2] = 'raw'
+                        else:
+                            url_raw.path.segments.extend(['raw', 'HEAD'])
+                        url_blob = url_raw.copy()
+                        url_blob.path.segments[2] = 'blob'
                         for filename in self.file_names:
-                            response = self.fetch(f'{url}/raw/HEAD/{filename}')
+                            response = self.fetch(f'{url_raw}/{filename}')
                             assert isinstance(response, HTTPResponse)
                             if response.status == 200:
                                 file_path = f'{self.destination_path}{package}.txt'
                                 with open(file_path, 'wb') as f:
-                                    f.write(f'{url}/{filename}\n\n'.encode('ascii'))
+                                    f.write(f'{url_blob}/{filename}\n\n'.encode('ascii'))
                                     f.write(response.data)
                                 log.info('%s... SUCCESS', package)
                                 found = True
