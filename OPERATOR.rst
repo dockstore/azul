@@ -698,7 +698,7 @@ you can simply jump to `Launching ZAP`_.
    temporarily blocked by the system, you will need to configure the maximum
    rate of requests that ZAP will send out. From the app menu bar, select
    *Tools*, then *Options*, then *Network*, then *Rate Limit*. Add and enable a
-   three request per second rule for the match string ``anvilprod.org``, and
+   three request per second rule for the match string ``anvilproject.org``, and
    another rule for the match string ``humancellatlas.org``.
 
 #. With the *Options* window open, select *Check for Updates* from the list of
