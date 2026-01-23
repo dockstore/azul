@@ -11,8 +11,10 @@ Recommended usage when updating the current set of license files:
    for the python packages that this script failed to locate.
 4) Delete the old license files.
 """
+import argparse
 import json
 import logging
+import sys
 import time
 from typing import (
     Sequence,
@@ -28,6 +30,9 @@ from urllib3 import (
 from azul import (
     cached_property,
     config,
+)
+from azul.args import (
+    AzulArgumentHelpFormatter,
 )
 from azul.http import (
     http_client,
@@ -58,48 +63,64 @@ class Main:
     def http(self):
         return http_client()
 
-    def main(self):
+    def main(self, argv: list[str]):
+        parser = argparse.ArgumentParser(description=__doc__,
+                                         formatter_class=AzulArgumentHelpFormatter)
+        parser.add_argument('--package', '-p',
+                            help='Optionally specify one or more packages to '
+                                 'download from. If not specified, licenses from '
+                                 'all Python dependencies will be downloaded.',
+                            nargs='+',
+                            metavar='PACKAGE',
+                            )
+        parser.add_argument('--debug',
+                            action='store_true',
+                            help='Log debugging information')
+        args = parser.parse_args(argv)
+
+        packages = []
         failures = []
 
-        with open(f'{config.project_root}/requirements.all.txt', 'r') as f:
-            lines = f.readlines()
+        if args.package:
+            packages = [p for p in args.package]
+        else:
+            with open(f'{config.project_root}/requirements.all.txt', 'r') as f:
+                packages = [p.split('==')[0] for p in f.readlines() if p]
 
-        for line in lines:
-            if line:
-                found = False
-                package, version = line.split('==')
-                pypi_url = f'https://pypi.org/pypi/{package}/json'
-                response = self.fetch(pypi_url)
-                assert isinstance(response, HTTPResponse)
-                # Not all requirements are found on pypi (e.g. resumablehash)
-                if response.status == 200:
-                    urls = json.loads(response.data)['info']['project_urls']
-                    urls = [] if urls is None else self.github_urls(urls.values())
-                    for url in urls:
-                        url_raw = furl(url)
-                        if len(url_raw.path.segments) > 2:
-                            if url_raw.path.segments[2] in ('blob', 'tree'):
-                                url_raw.path.segments[2] = 'raw'
-                        else:
-                            url_raw.path.segments.extend(['raw', 'HEAD'])
-                        url_blob = url_raw.copy()
-                        url_blob.path.segments[2] = 'blob'
-                        for filename in self.file_names:
-                            response = self.fetch(f'{url_raw}/{filename}')
-                            assert isinstance(response, HTTPResponse)
-                            if response.status == 200:
-                                file_path = f'{self.destination_path}{package}.txt'
-                                with open(file_path, 'wb') as f:
-                                    f.write(f'{url_blob}/{filename}\n\n'.encode('ascii'))
-                                    f.write(response.data)
-                                log.info('%s... SUCCESS', package)
-                                found = True
-                                break
-                        if found:
+        for package in packages:
+            found = False
+            pypi_url = f'https://pypi.org/pypi/{package}/json'
+            response = self.fetch(pypi_url)
+            assert isinstance(response, HTTPResponse)
+            # Not all requirements are found on pypi (e.g. resumablehash)
+            if response.status == 200:
+                urls = json.loads(response.data)['info']['project_urls']
+                urls = [] if urls is None else self.github_urls(urls.values())
+                for url in urls:
+                    url_raw = furl(url)
+                    if len(url_raw.path.segments) > 2:
+                        if url_raw.path.segments[2] in ('blob', 'tree'):
+                            url_raw.path.segments[2] = 'raw'
+                    else:
+                        url_raw.path.segments.extend(['raw', 'HEAD'])
+                    url_blob = url_raw.copy()
+                    url_blob.path.segments[2] = 'blob'
+                    for filename in self.file_names:
+                        response = self.fetch(f'{url_raw}/{filename}')
+                        assert isinstance(response, HTTPResponse)
+                        if response.status == 200:
+                            file_path = f'{self.destination_path}{package}.txt'
+                            with open(file_path, 'wb') as f:
+                                f.write(f'{url_blob}/{filename}\n\n'.encode('ascii'))
+                                f.write(response.data)
+                            log.info('%s... SUCCESS', package)
+                            found = True
                             break
-                if not found:
-                    failures.append(package)
-                    log.info('%s... FAIL (%s)', package, pypi_url)
+                    if found:
+                        break
+            if not found:
+                failures.append(package)
+                log.info('%s... FAIL (%s)', package, pypi_url)
 
         if failures:
             log.error('Failed to fetch licenses for packages: %s', failures)
@@ -146,4 +167,4 @@ class Main:
 
 if __name__ == '__main__':
     configure_script_logging(log)
-    Main().main()
+    Main().main(sys.argv[1:])
