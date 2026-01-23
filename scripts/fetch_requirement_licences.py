@@ -13,6 +13,7 @@ Recommended usage when updating the current set of license files:
 """
 import json
 import logging
+import time
 from typing import (
     Sequence,
 )
@@ -68,7 +69,7 @@ class Main:
                 found = False
                 package, version = line.split('==')
                 pypi_url = f'https://pypi.org/pypi/{package}/json'
-                response = self.http.request('GET', pypi_url)
+                response = self.fetch(pypi_url)
                 assert isinstance(response, HTTPResponse)
                 # Not all requirements are found on pypi (e.g. resumablehash)
                 if response.status == 200:
@@ -76,7 +77,7 @@ class Main:
                     urls = [] if urls is None else github_urls(urls.values())
                     for url in urls:
                         for filename in self.file_names:
-                            response = self.http.request('GET', f'{url}/raw/HEAD/{filename}')
+                            response = self.fetch(f'{url}/raw/HEAD/{filename}')
                             assert isinstance(response, HTTPResponse)
                             if response.status == 200:
                                 file_path = f'{self.destination_path}{package}.txt'
@@ -112,6 +113,19 @@ class Main:
                     url_.path.segments[-1] = last_segment[:-4]
                 urls_.add(str(url_))
         return urls_
+
+    def fetch(self, url: str) -> HTTPResponse:
+        while True:
+            response = self.http.request('GET', url)
+            if response.status in [301, 302]:
+                url = response.get_redirect_location()
+                retry_after = response.headers.get('Retry-After')
+                if retry_after is not None:
+                    print('Sleeping %.3fs to honor Retry-After property' % retry_after)
+                    log.info(f'Sleeping {retry_after:.3fs} to honor Retry-After property')
+                    time.sleep(retry_after)
+            else:
+                return response
 
 
 if __name__ == '__main__':
