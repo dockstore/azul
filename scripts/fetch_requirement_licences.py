@@ -27,7 +27,6 @@ from urllib3 import (
 from azul import (
     cached_property,
     config,
-    require,
 )
 from azul.http import (
     http_client,
@@ -66,28 +65,30 @@ class Main:
 
         for line in lines:
             if line:
+                found = False
                 package, version = line.split('==')
                 pypi_url = f'https://pypi.org/pypi/{package}/json'
                 response = self.http.request('GET', pypi_url)
                 assert isinstance(response, HTTPResponse)
-                require(response.status == 200, response)
-                urls = json.loads(response.data)['info']['project_urls']
-                found = False
-                for url in github_urls(urls.values()):
-                    for filename in self.file_names:
-                        response = self.http.request('GET', f'{url}/raw/HEAD/{filename}')
-                        assert isinstance(response, HTTPResponse)
-                        if response.status == 200:
-                            file_path = f'{self.destination_path}{package}.txt'
-                            with open(file_path, 'wb') as f:
-                                f.write(f'{url}/{filename}\n\n'.encode('ascii'))
-                                f.write(response.data)
-                            log.info('%s... SUCCESS', package)
-                            found = True
+                # Not all requirements are found on pypi (e.g. resumablehash)
+                if response.status == 200:
+                    urls = json.loads(response.data)['info']['project_urls']
+                    urls = [] if urls is None else github_urls(urls.values())
+                    for url in urls:
+                        for filename in self.file_names:
+                            response = self.http.request('GET', f'{url}/raw/HEAD/{filename}')
+                            assert isinstance(response, HTTPResponse)
+                            if response.status == 200:
+                                file_path = f'{self.destination_path}{package}.txt'
+                                with open(file_path, 'wb') as f:
+                                    f.write(f'{url}/{filename}\n\n'.encode('ascii'))
+                                    f.write(response.data)
+                                log.info('%s... SUCCESS', package)
+                                found = True
+                                break
+                        if found:
                             break
-                    if found:
-                        break
-                else:
+                if not found:
                     failures.append(package)
                     log.info('%s... FAIL (%s)', package, pypi_url)
 
