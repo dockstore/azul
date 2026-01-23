@@ -74,7 +74,7 @@ class Main:
                 # Not all requirements are found on pypi (e.g. resumablehash)
                 if response.status == 200:
                     urls = json.loads(response.data)['info']['project_urls']
-                    urls = [] if urls is None else github_urls(urls.values())
+                    urls = [] if urls is None else self.github_urls(urls.values())
                     for url in urls:
                         url_raw = furl(url)
                         if len(url_raw.path.segments) > 2:
@@ -104,23 +104,31 @@ class Main:
         if failures:
             log.error('Failed to fetch licenses for packages: %s', failures)
 
-    def github_urls(self, urls: Sequence[str]) -> set[str]:
+    def github_urls(self, urls: Sequence[str]) -> list[str]:
         """
         Return URLs to GitHub project home directories found in the URLs given.
         """
-        urls_ = set()
+        urls_: set[str] = set()
         for url in urls:
-            url_ = furl(url.rstrip('/'))
+            url_ = furl(url).remove(args=True, fragment=True)
             if url_.netloc == 'github.com':
-                last_segment = url_.path.segments[-1] if url_.path.segments else ''
-                if last_segment == 'issues':
-                    # https://github.com/USER/PACKAGE/issues
+                if url_.path.segments and url_.path.segments[-1] == '':
                     url_.path.segments.pop()
-                elif last_segment.endswith('.git'):
-                    # https://github.com/googleapis/proto-plus-python.git
-                    url_.path.segments[-1] = last_segment[:-4]
-                urls_.add(str(url_))
-        return urls_
+                if url_.path.segments:
+                    last_segment = url_.path.segments[-1]
+                    if last_segment.endswith('.git'):
+                        url_.path.segments[-1] = last_segment.removesuffix('.git')
+                    elif last_segment.startswith('README'):
+                        url_.path.segments.pop()
+                    # Note we can't just chop segments at [:2] due to projects like:
+                    # https://github.com/googleapis/google-cloud-python/blob/main/packages/google-cloud-bigquery-reservation
+                    elif (
+                        len(url_.path.segments) == 3
+                        and last_segment in ('discussions', 'issues', 'pulls', 'wiki')
+                    ):
+                        url_.path.segments.pop()
+                    urls_.add(str(url_))
+        return sorted(urls_)
 
     def fetch(self, url: str) -> HTTPResponse:
         while True:
