@@ -41,16 +41,9 @@ class ActionController[A: Action](AppController, metaclass=ABCMeta):
                        event: Iterable[SQSRecord],
                        message_handler: Callable[[A], None]):
         for record in event:
-            message: SQSMessage
-            if self.actions_are_fifo:
-                message = SQSFifoMessage.from_record(record)
-                suffix, args = ', group ID %s', [message.group_id]
-            else:
-                message = SQSMessage.from_record(record)
-                suffix, args = '', []
-            log.info('Worker handling message %r, ' +
-                     'attempt #%i (approx), message ID %s' + suffix,
-                     message.body, message.attempts, message.id, *args)
+            message_cls = SQSFifoMessage if self.actions_are_fifo else SQSMessage
+            message = message_cls.from_record(record)
+            log.info('Worker handling message %r', message)
             start = time.time()
             try:
                 action = self.action_cls.from_json(message.body)

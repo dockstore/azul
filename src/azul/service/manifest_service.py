@@ -1159,15 +1159,9 @@ class ManifestGenerator(metaclass=ABCMeta):
                                           fetch=False,
                                           **args))
 
-    def _azul_mirror_uri(self, file: JSON, source: SourceSpec) -> str | None:
-        if self.mirror_service.may_mirror_files_from_source(source):
-            file = self.metadata_plugin.file_class.from_index(file)
-            if self.mirror_service.may_mirror(file.size):
-                return self.mirror_service.mirror_uri(file)
-            else:
-                return None
-        else:
-            return None
+    def _azul_mirror_uri(self, source: SourceSpec, file: JSON) -> str | None:
+        file_cls = self.metadata_plugin.file_class
+        return self.mirror_service.mirror_uri(source, file_cls, file)
 
     @cached_property
     def manifest_content_hash(self) -> int:
@@ -1703,7 +1697,7 @@ class CompactManifestGenerator(PagedManifestGenerator):
                         if 'file_url' in column_mapping:
                             file['file_url'] = self._azul_file_url(file)
                         if 'file_mirror_uri' in column_mapping:
-                            file['file_mirror_uri'] = self._azul_mirror_uri(file, source)
+                            file['file_mirror_uri'] = self._azul_mirror_uri(source, file)
                         entities = [file]
                     self._extract_fields(field_path=field_path,
                                          entities=entities,
@@ -1719,7 +1713,7 @@ class CompactManifestGenerator(PagedManifestGenerator):
                                 if 'file_url' in column_mapping:
                                     file['file_url'] = self._azul_file_url(file)
                                 if 'file_mirror_uri' in column_mapping:
-                                    file['file_mirror_uri'] = self._azul_mirror_uri(file, source)
+                                    file['file_mirror_uri'] = self._azul_mirror_uri(source, file)
                                 self._extract_fields(field_path=field_path,
                                                      entities=[file],
                                                      column_mapping=column_mapping,

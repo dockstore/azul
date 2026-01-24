@@ -798,21 +798,23 @@ def emit(t: T, target_branch: str):
                     'content': 'PR is assigned to only the operator and the author',
                 },
             ]),
-            {
-                'type': 'h2',
-                'content': 'Operator (deploy runner image)'
-            },
-            *[
+            *iif(t not in (T.hotfix, T.backport), [
                 {
-                    'type': 'cli',
-                    'content': 'Ran ' + bq(
-                        f'_select {d}.gitlab && '
-                        f'make -C terraform/gitlab/runner'
-                    ),
-                    'alt': 'or this PR is not labeled `deploy:runner`'
-                }
-                for d in t.target_deployments(target_branch)
-            ],
+                    'type': 'h2',
+                    'content': 'Operator (deploy runner image)'
+                },
+                *[
+                    {
+                        'type': 'cli',
+                        'content': 'Ran ' + bq(
+                            f'_select {d}.gitlab && '
+                            f'make -C terraform/gitlab/runner'
+                        ),
+                        'alt': 'or this PR is not labeled `deploy:runner`'
+                    }
+                    for d in t.target_deployments(target_branch)
+                ]
+            ]),
             *iif(t.has_sandbox_for(target_branch), [
                 {
                     'type': 'h2',

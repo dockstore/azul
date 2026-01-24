@@ -1,3 +1,7 @@
+from typing import (
+    Annotated,
+)
+
 import attr
 
 from azul import (
@@ -26,7 +30,7 @@ class CatalogController(ServiceAppController):
     # The custom return type annotation is an experiment. Please don't adopt
     # this just yet elsewhere in the program.
 
-    def list_catalogs(self) -> schema.object(
+    def list_catalogs(self) -> Annotated[JSON, schema.object(
         default_catalog=str,
         catalogs=schema.object(
             additionalProperties=schema.object(
@@ -47,7 +51,7 @@ class CatalogController(ServiceAppController):
                 )
             )
         )
-    ):
+    )]:
         return {
             'default_catalog': config.default_catalog,
             'catalogs': {

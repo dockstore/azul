@@ -28,6 +28,9 @@ from uuid import (
     UUID,
 )
 
+from attr import (
+    AttrsInstance,
+)
 import attrs
 from more_itertools import (
     flatten,
@@ -915,3 +918,49 @@ def polymorphic[T](field: T | None = None,
     <azul.attrs.Inner object at ...>
     """
     return _set_field_metadata(field, 'discriminator', discriminator)
+
+
+def devolve[T: AttrsInstance](cls: type[T],
+                              inst: AttrsInstance,
+                              **changes: Any
+                              ) -> T:
+    """
+    Like attrs.evolve but for an arbitrary class. The most common use case is
+    to evolve an instance of a class to an instance of a subclass of that class,
+    in which case the keyword arguments must supply values for all the fields
+    that the subclass adds. When evolving to an instance of a superclass, any
+    instance fields not defined in the superclass will be discarded.
+
+    >>> @attrs.frozen()
+    ... class Foo:
+    ...     x: int
+    ...     _y: str
+
+    >>> @attrs.frozen()
+    ... class Bar(Foo):
+    ...     z: str
+    ...     c: float = attrs.field(default=3.14159, init=False)
+
+    >>> devolve(Bar, Foo(x=42, y='foo'), z='bar')
+    Bar(x=42, _y='foo', z='bar', c=3.14159)
+
+    >>> devolve(Foo, Bar(x=42, y='foo', z='bar'), x=24)
+    Foo(x=24, _y='foo')
+
+    >>> devolve(Bar, Foo(x=42, y='foo'))
+    Traceback (most recent call last):
+    ....
+    AttributeError: 'Foo' object has no attribute 'z'
+
+    >>> devolve(Bar, Foo(x=42, y='foo'), z='bar', c=2.71828)
+    Traceback (most recent call last):
+    ...
+    TypeError: Bar.__init__() got an unexpected keyword argument 'c'
+    """
+    fields = attrs.fields(cls)
+    for field in fields:
+        if field.init:
+            init_name = field.alias
+            if init_name not in changes:
+                changes[init_name] = getattr(inst, field.name)
+    return cls(**changes)

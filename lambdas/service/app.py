@@ -86,6 +86,9 @@ from azul.service.app_controller import (
 from azul.service.catalog_controller import (
     CatalogController,
 )
+from azul.service.download_controller import (
+    DownloadController,
+)
 from azul.service.drs_controller import (
     DRSController,
 )
@@ -305,6 +308,10 @@ class ServiceApp(HealthApp):
     @cached_property
     def repository_controller(self) -> RepositoryController:
         return RepositoryController(app=self, file_url_func=self.file_url)
+
+    @cached_property
+    def download_controller(self) -> DownloadController:
+        return DownloadController(app=self, file_url_func=self.file_url)
 
     @cached_property
     def manifest_controller(self) -> ManifestController:
@@ -620,7 +627,7 @@ deprecated_spec = {
                 **responses.json_content(
                     # The custom return type annotation is an experiment. Please
                     # don't adopt this just yet elsewhere in the program.
-                    signature(app.catalog_controller.list_catalogs).return_annotation
+                    one(signature(app.catalog_controller.list_catalogs).return_annotation.__metadata__)
                 )
             }
         }
@@ -1545,12 +1552,12 @@ def _repository_files(file_uuid: str, fetch: bool) -> MutableJSON:
     #        https://github.com/DataBiosphere/azul/issues/2682
 
     catalog = app.catalog
-    return app.repository_controller.download_file(catalog=catalog,
-                                                   fetch=fetch,
-                                                   file_uuid=file_uuid,
-                                                   query_params=query_params,
-                                                   headers=headers,
-                                                   authentication=request.authentication)
+    return app.download_controller.download_file(catalog=catalog,
+                                                 fetch=fetch,
+                                                 file_uuid=file_uuid,
+                                                 query_params=query_params,
+                                                 headers=headers,
+                                                 authentication=request.authentication)
 
 
 @app.route(
