@@ -105,7 +105,7 @@ class TestAppSpecs(AzulUnitTestCase):
                     for code, message in [
                         ('400', 'Bad request'),
                         ('429', 'Too many requests'),
-                        ('500', 'Internal server error'),
+                        ('500', 'Internal application error'),
                         ('502', 'Bad gateway'),
                         ('503', 'Service unavailable'),
                         ('504', 'Gateway timeout'),

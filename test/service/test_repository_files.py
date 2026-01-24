@@ -43,7 +43,7 @@ from azul.deployment import (
 from azul.drs import (
     Access,
     AccessMethod,
-    DRSClient,
+    DRSObject,
 )
 from azul.http import (
     http_client,
@@ -168,10 +168,8 @@ class TestRepositoryFilesWithTDR(DCP2TestCase, RepositoryFilesTestCase):
                                              'X-Goog-SignedHeaders': 'host',
                                              'X-Goog-Signature': 'SOMESIGNATURE',
                                          })
-                    with mock.patch.object(DRSClient,
-                                           'get_object',
-                                           return_value=Access(method=AccessMethod.https,
-                                                               url=str(pre_signed_gs))):
+                    access = Access(method=AccessMethod.https, url=str(pre_signed_gs))
+                    with mock.patch.object(DRSObject, 'get', return_value=access):
                         response = client.request('GET', str(azul_url), redirect=False)
                         self.assertEqual(200 if fetch else 302, response.status)
                         if fetch:
