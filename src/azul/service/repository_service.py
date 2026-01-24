@@ -11,9 +11,6 @@ from concurrent.futures import (
 )
 import json
 import logging
-from typing import (
-    TYPE_CHECKING,
-)
 
 import attrs
 from more_itertools import (
@@ -30,7 +27,14 @@ from opensearchpy.helpers.response import (
 
 from azul import (
     CatalogName,
+    cache,
     config,
+)
+from azul.indexer import (
+    SourceSpec,
+)
+from azul.indexer.mirror_service import (
+    BaseMirrorService,
 )
 from azul.plugins import (
     File,
@@ -72,6 +76,7 @@ class EntityNotFoundError(Exception):
 @attrs.frozen(auto_attribs=True, kw_only=True)
 class SearchResponseStage(_ElasticsearchStage[ResponseTriple, MutableJSON],
                           metaclass=ABCMeta):
+    service: 'RepositoryService'
     file_url_func: FileUrlFunc
 
     def prepare_request(self, request: Search) -> Search:
@@ -93,6 +98,11 @@ class SearchResponseStage(_ElasticsearchStage[ResponseTriple, MutableJSON],
                                           file_uuid=uuid,
                                           version=version))
 
+    def _file_mirror_uri(self, source: SourceSpec, file: JSON) -> str | None:
+        file_cls = self.plugin.file_class
+        mirror_service = self.service.mirror_service(self.catalog)
+        return mirror_service.mirror_uri(source, file_cls, file)
+
 
 class SummaryResponseStage(ElasticsearchStage[JSON, MutableJSON],
                            metaclass=ABCMeta):
@@ -107,6 +117,10 @@ class SummaryResponseStage(ElasticsearchStage[JSON, MutableJSON],
 
 
 class RepositoryService(ElasticsearchService):
+
+    @cache
+    def mirror_service(self, catalog: CatalogName) -> BaseMirrorService:
+        return BaseMirrorService(catalog=catalog)
 
     def search(self,
                *,
@@ -212,8 +226,6 @@ class RepositoryService(ElasticsearchService):
                                 filters=filters).wrap(chain)
 
         response_stage_cls = plugin.search_response_stage
-        if TYPE_CHECKING:  # work around https://youtrack.jetbrains.com/issue/PY-44728
-            response_stage_cls = SearchResponseStage
         chain = response_stage_cls(service=self,
                                    catalog=catalog,
                                    entity_type=entity_type,

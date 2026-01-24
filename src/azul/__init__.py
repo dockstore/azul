@@ -24,11 +24,14 @@ import shlex
 from typing import (
     Any,
     BinaryIO,
+    Callable,
     ClassVar,
+    Hashable,
     IO,
     Literal,
     NotRequired,
     Self,
+    TYPE_CHECKING,
     TextIO,
     TypedDict,
     final,
@@ -82,7 +85,19 @@ cached_property = azul.caching.CachedProperty
 
 lru_cache = functools.lru_cache
 
-cache = functools.cache
+if TYPE_CHECKING:
+    # Work around https://github.com/python/typeshed/issues/15139
+    @final
+    class CacheWrapper[_T]:
+
+        def __call__(self, *args: Hashable, **kwargs: Hashable) -> _T:
+            ...
+
+
+    def cache[_T](f: Callable[..., _T], /) -> CacheWrapper[_T]:  # noqa: E303
+        ...
+else:
+    cache = functools.cache
 
 
 def cache_per_thread(f, /):
