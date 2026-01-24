@@ -77,6 +77,7 @@ from azul.deployment import (
 )
 from azul.drs import (
     DRSClient,
+    DRSObject,
 )
 from azul.http import (
     LimitedRetryHttpClient,
@@ -368,7 +369,7 @@ class SAMClient(TerraClient):
         return self.credentials_provider.insufficient_access(resource)
 
 
-class TDRClient(SAMClient):
+class TDRClient(SAMClient, DRSClient):
     """
     A client for the Broad Institute's Terra Data Repository aka "Jade".
     """
@@ -641,8 +642,8 @@ class TDRClient(SAMClient):
         else:
             return self
 
-    def drs_client(self) -> DRSClient:
-        return DRSClient(http_client=self._http_client)
+    def drs_object(self, drs_url: furl) -> DRSObject:
+        return DRSObject(url=drs_url, http_client=self._http_client)
 
     def get_duos(self,
                  source: TDRSourceRef

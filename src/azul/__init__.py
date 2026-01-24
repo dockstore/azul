@@ -1871,6 +1871,10 @@ class Config:
         return self._boolean(self.environ['azul_waf_bot_control'])
 
     @property
+    def waf_blocked_alarm_threshold(self) -> int:
+        return int(self.environ['azul_waf_blocked_alarm_threshold'])
+
+    @property
     def vpc_cidr(self) -> str:
         return self.environ['azul_vpc_cidr']
 
