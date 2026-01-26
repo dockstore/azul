@@ -50,7 +50,7 @@ class Expired(CacheMiss):
 class SourceService:
 
     @cache
-    def _repository_plugin(self, catalog: CatalogName) -> RepositoryPlugin:
+    def repository_plugin(self, catalog: CatalogName) -> RepositoryPlugin:
         return RepositoryPlugin.load(catalog).create(catalog)
 
     def list_accessible_source_ids(self,
@@ -64,7 +64,7 @@ class SourceService:
         underlying repository, but results are cached in DynamoDB for a short
         time.
         """
-        plugin = self._repository_plugin(catalog)
+        plugin = self.repository_plugin(catalog)
 
         cache_key = (
             catalog,
@@ -88,7 +88,7 @@ class SourceService:
         List sources in the given catalog that are accessible using the provided
         authentication. May require a roundtrip to the underlying repository.
         """
-        return self._repository_plugin(catalog).list_accessible_sources(authentication)
+        return self.repository_plugin(catalog).list_accessible_sources(authentication)
 
     table_name = config.dynamo_sources_cache_table_name
 
