@@ -9,7 +9,7 @@ fastavro==1.12.1
 furl==2.1.4
 google-api-core==2.29.0
 google-auth[pyopenssl]==2.47.0
-google-cloud-bigquery==3.13.0  # < 3.14.0, see https://github.com/DataBiosphere/azul/issues/6709
+google-cloud-bigquery==3.40.0
 http-message-signatures==2.0.0
 http_sfv==0.9.9
 jmespath==1.0.1
