@@ -12,7 +12,7 @@ grpcio-status==1.62.3
 idna==3.11
 markupsafe==3.0.3
 orderedmultidict==1.0.2
-packaging==25.0
+packaging==26.0
 proto-plus==1.27.0
 protobuf==4.25.8
 pyasn1==0.6.2

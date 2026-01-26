@@ -27,7 +27,6 @@ requirements-parser==v0.13.0+6  # match version with find-links entry above
 responses==0.25.8
 strict-rfc3339==0.7
 types-chevron==0.14.2  # match with chevron in requirements.txt
-types-urllib3==1.26.25.14  # match with urllib in requirements.txt
 watchdog==6.0.0
 -r requirements.dev.trans.txt
 -r requirements.txt

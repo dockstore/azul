@@ -288,7 +288,7 @@ class HealthCheckTestCase(LocalAppTestCase,
         helper.add(responses.Response(method='HEAD',
                                       url=self._endpoint('/index/bundles?size=1'),
                                       status=200 if up else 503,
-                                      json={}))
+                                      body=''))
         # Patching the Health class to use a random generator with a pinned
         # seed allows us to predict the service endpoint that will be picked
         # to check the health of the service REST API.

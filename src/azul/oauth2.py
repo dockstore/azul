@@ -8,7 +8,6 @@ from collections.abc import (
 import json
 import logging
 from typing import (
-    TYPE_CHECKING,
     TypedDict,
 )
 
@@ -25,7 +24,6 @@ from google.oauth2.credentials import (
 from google.oauth2.service_account import (
     Credentials as ServiceAccountCredentials,
 )
-import urllib3.request
 
 from azul import (
     R,
@@ -36,6 +34,7 @@ from azul import (
 )
 from azul.http import (
     HasCachedHttpClient,
+    HttpClient,
     HttpClientDecorator,
 )
 
@@ -89,15 +88,12 @@ class OAuth2Client(HasCachedHttpClient):
     # we use AuthorizedHttp in. The AuthorizedHttp.__del__ method calls `clear`
     # on the wrapped instance, so this adapter only provides that.
     #
-    if TYPE_CHECKING:
-        _PoolManagerAdapter = urllib3.PoolManager
-    else:
-        class _PoolManagerAdapter(HttpClientDecorator):
+    class _PoolManagerAdapter(HttpClientDecorator):
 
-            def clear(self):
-                pass
+        def clear(self):
+            pass
 
-    def _create_http_client(self) -> urllib3.request.RequestMethods:
+    def _create_http_client(self) -> HttpClient:
         """
         A urllib3 HTTP client with OAuth 2.0 credentials
         """
@@ -114,7 +110,7 @@ class OAuth2Client(HasCachedHttpClient):
                               refresh_status_codes=())
 
     @cached_property
-    def _http_client_without_credentials(self) -> urllib3.request.RequestMethods:
+    def _http_client_without_credentials(self) -> HttpClient:
         """
         A urllib3 HTTP client for making unauthenticated requests
         """

@@ -24,6 +24,7 @@ import uuid
 import attrs
 import requests
 from urllib3 import (
+    BaseHTTPResponse,
     HTTPResponse,
 )
 from urllib3.exceptions import (
@@ -150,6 +151,7 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
                                        json=notification)
             request = request.prepare()
             self.sign(request)
+            result: BaseHTTPResponse | HTTPError
             try:
                 result = self._http_client.request(url=request.url,
                                                    method=request.method,
@@ -158,7 +160,7 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
             except HTTPError as e:
                 result = e
 
-            if isinstance(result, HTTPResponse) and result.status == 202:
+            if isinstance(result, BaseHTTPResponse) and result.status == 202:
                 log.info('Success notifying %s about %s, attempt %i.',
                          *log_args)
                 return notification, None
