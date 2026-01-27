@@ -20,6 +20,14 @@ reverted. This is all fairly informal and loosely defined. Hopefully we won't
 have too many entries in this file.
 
 
+#6675 Docker build with Bookworm base image fails on GL
+=======================================================
+
+These changes make the ``fips_enabled`` file obsolete, which was previously not
+commited due to its entry in the ``.gitignore`` file. Remove it from your clones
+of ``azul``.
+
+
 #7128 Add support for HCA atlas (partial)
 =========================================
 
