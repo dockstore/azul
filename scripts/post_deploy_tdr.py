@@ -9,6 +9,7 @@ from typing import (
 
 from azul import (
     CatalogName,
+    R,
     cache_per_thread,
     cached_property,
     config,
@@ -80,13 +81,13 @@ class TerraValidator:
                 for source in catalog_sources - all_sources:
                     futures.append(tpe.submit(self.verify_source, catalog, source))
                 all_sources |= catalog_sources
+            exceptions = []
             for completed_future in as_completed(futures):
                 futures.remove(completed_future)
                 e = completed_future.exception()
                 if e is not None:
-                    for running_future in futures:
-                        running_future.cancel()
-                    raise e
+                    exceptions.append(e)
+        assert exceptions == [], R('Exception(s) in worker thread(s)', exceptions)
 
     def verify_source(self,
                       catalog: CatalogName,
