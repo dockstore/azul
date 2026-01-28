@@ -496,7 +496,7 @@ class MetadataPlugin[BUNDLE: Bundle](Plugin[BUNDLE]):
         raise NotImplementedError
 
     @property
-    def root_entity_type(self) -> str:
+    def root_entity_type(self) -> EntityType:
         """
         The type of entity that sits at the root of the entity graph, and that
         all other entities are directly or indirectly associated with.
@@ -510,7 +510,7 @@ class MetadataPlugin[BUNDLE: Bundle](Plugin[BUNDLE]):
         raise NotImplementedError
 
     @property
-    def hot_entity_types(self) -> Iterable[str]:
+    def hot_entity_types(self) -> Iterable[EntityType]:
         """
         The types of inner entities that do not explicitly track their hubs in
         replica documents in order to avoid a large list of hub references in

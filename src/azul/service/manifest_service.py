@@ -104,6 +104,7 @@ from azul.indexer import (
 )
 from azul.indexer.document import (
     DocumentType,
+    EntityType,
     FieldPath,
 )
 from azul.indexer.field import (
@@ -851,7 +852,7 @@ class ManifestGenerator(metaclass=ABCMeta):
 
     @property
     @abstractmethod
-    def entity_type(self) -> str:
+    def entity_type(self) -> EntityType:
         """
         The type of the index entities this generator consumes. This controls
         which aggregate Elasticsearch index is queried to fetch the aggregate
@@ -1043,7 +1044,7 @@ class ManifestGenerator(metaclass=ABCMeta):
             file_name = atlas + '-manifest-' + self.s3_object_key_base(manifest_key)
         return file_name
 
-    def _create_request(self, entity_type: str) -> Search:
+    def _create_request(self, entity_type: EntityType) -> Search:
         pipeline = self._create_pipeline()
         request = self.service.create_request(self.catalog, entity_type)
         request = pipeline.prepare_request(request)
@@ -1444,7 +1445,7 @@ class CurlManifestGenerator(PagedManifestGenerator):
         return 'curlrc'
 
     @property
-    def entity_type(self) -> str:
+    def entity_type(self) -> EntityType:
         return 'files'
 
     @cached_property
@@ -1698,7 +1699,7 @@ class CompactManifestGenerator(PagedManifestGenerator):
         return 'tsv'
 
     @property
-    def entity_type(self) -> str:
+    def entity_type(self) -> EntityType:
         return 'files'
 
     @cached_property
@@ -1843,7 +1844,7 @@ class VerbatimManifestGenerator(ClientSidePagingManifestGenerator,
                                 metaclass=ABCMeta):
 
     @property
-    def entity_type(self) -> str:
+    def entity_type(self) -> EntityType:
         # Orphans only have projects/datasets as hubs, so we need to retrieve
         # aggregates of those types in order to join against orphan replicas
         root_entity_type = self.metadata_plugin.root_entity_type
