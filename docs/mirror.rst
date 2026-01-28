@@ -57,6 +57,10 @@ one of ``sha1``, ``md5`` or ``sha256``, denoting the type of algorithm used to
 derive that hash. Henceforth we'll be referring to the pair of ``digest_type``
 and ``digest_value`` as *digest*.
 
+Any content type associated directly with a file object should be ignored. The
+authoritative source of information about a file's content type(s) is its
+associated info object (see below).
+
 
 Alias objects
 +++++++++++++
@@ -85,8 +89,9 @@ hexadecimal form of a hash of the corresponding file object's content and
 algorithm used to derive that hash. The content of an ``info`` object is JSON of
 the form ``{"$schema":"…", "content-type":…}``.
 
-The ``content-type`` property contains the content type of the file, as defined
-for the HTTP response header of the same name [6]_.
+The ``content-type`` property contains a list of all content types known to be
+associated with the file, as defined for the HTTP response header of the same
+name [6]_.
 
 .. [6] https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Type
 

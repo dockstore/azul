@@ -1,4 +1,5 @@
 import logging
+import re
 from typing import (
     Iterable,
     Self,
@@ -538,13 +539,21 @@ class HCAFile(File):
         parameter_suffix = '; dcp-type=data'
         if content_type.endswith(parameter_suffix):
             content_type = content_type.removesuffix(parameter_suffix)
-        elif config.catalogs[catalog].atlas == 'lungmap':
+
+        atlas = config.catalogs[catalog].atlas
+        if atlas == 'hca':
+            assert ';' not in content_type, R(
+                'Unexpected MIME parameter in content type', content_type)
+            content_type = cls._content_type_corrections.get(content_type, content_type)
+            assert cls._content_type_re.match(content_type), R(
+                'Invalid content type', content_type)
+        elif atlas == 'lungmap':
             # FIXME: Re-enable content-type validation for lungmap
             #        https://github.com/DataBiosphere/azul/issues/7244
             pass
         else:
-            assert ';' not in content_type, R(
-                'Unexpected MIME parameter in content type', content_type)
+            assert False, atlas
+
         return cls(uuid=json_str(descriptor['file_id']),
                    name=json_str(json_mapping(metadata['file_core'])['file_name']),
                    version=json_str(descriptor['file_version']),
@@ -566,3 +575,22 @@ class HCAFile(File):
         entry['content-type'] = entry.pop('content_type')
         entry['indexed'] = False
         return entry
+
+    _content_type_corrections = {
+        # Only correct for files created with Excel 2007 or later. Hopefully we
+        # don't have any files older than that.
+        'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    }
+
+    # We use the stricter character set and 127-char limit from
+    # https://datatracker.ietf.org/doc/html/rfc6838#section-4.2, for the media
+    # type and subtype, but since this RFC does not describe MIME parameters or
+    # what character to use for the joiner, we draw those specifications from
+    # https://datatracker.ietf.org/doc/html/rfc7231#section-3.1.1.5
+    _restricted_name_re = r'[a-zA-Z0-9]([a-zA-Z0-9!#$&^_.+-]{,125}[a-zA-Z0-9!#$&^_-])?'
+    _token_re = r'[a-zA-Z0-9!#$%&\'*+.^_`|~-]+'
+    _qstr_re = r'"[\t !#-[\]-~\x80-\xff]*"'
+    _content_type_re = re.compile(
+        fr'^{_restricted_name_re}/{_restricted_name_re}'
+        fr'([\t ]*;[\t ]*{_token_re}=(({_token_re})|({_qstr_re})))?$'
+    )
