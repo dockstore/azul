@@ -27,7 +27,6 @@ from azul.docker import (
 )
 from azul.strings import (
     departition,
-    double_quote as dq,
     join_lines as jl,
     join_words as jw,
     single_quote as sq,
@@ -1867,7 +1866,7 @@ emit_tf({} if config.terraform_component != 'gitlab' else {
                                     str(clamav_image),
                                     '/bin/sh',
                                     '-c',
-                                    dq(
+                                    sq(
                                         'freshclam',
                                         '&& echo freshclam succeeded',
                                         '|| (echo freshclam failed; false)',
