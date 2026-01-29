@@ -662,6 +662,8 @@ class RepositoryPlugin[BUNDLE: Bundle = Bundle[SourcedBundleFQID],
         for each matching source.`
         """
         configured_specs_by_name = {spec.name: spec for spec in self.sources}
+        assert len(self.sources) == len(configured_specs_by_name), R(
+            'Source names are not unique', self.sources)
         source_ids_by_name = {
             name: id
             for id, name in source_names_by_id.items()
