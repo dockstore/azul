@@ -1,4 +1,4 @@
-https://github.com/dateutil/dateutil/LICENSE
+https://github.com/dateutil/dateutil/blob/HEAD/LICENSE
 
 Copyright 2017- Paul Ganssle <paul@ganssle.io>
 Copyright 2017- dateutil contributors (see AUTHORS file)

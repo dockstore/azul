@@ -1,4 +1,4 @@
-https://github.com/magmax/python-readchar/LICENCE
+https://github.com/magmax/python-readchar/blob/HEAD/LICENCE
 
 MIT Licence
 

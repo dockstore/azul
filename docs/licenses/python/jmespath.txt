@@ -1,4 +1,4 @@
-https://github.com/jmespath/jmespath.py/LICENSE
+https://github.com/jmespath/jmespath.py/blob/HEAD/LICENSE
 
 MIT License
 

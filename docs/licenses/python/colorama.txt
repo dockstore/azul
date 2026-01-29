@@ -1,4 +1,4 @@
-https://github.com/tartley/colorama/LICENSE.txt
+https://github.com/tartley/colorama/blob/HEAD/LICENSE.txt
 
 Copyright (c) 2010 Jonathan Hartley
 All rights reserved.

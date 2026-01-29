@@ -1,4 +1,4 @@
-https://github.com/pygithub/pygithub/COPYING
+https://github.com/pygithub/pygithub/blob/HEAD/COPYING
 
                     GNU GENERAL PUBLIC LICENSE
                        Version 3, 29 June 2007

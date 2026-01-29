@@ -1,4 +1,4 @@
-https://github.com/pypa/wheel/LICENSE.txt
+https://github.com/pypa/wheel/blob/HEAD/LICENSE.txt
 
 MIT License
 

@@ -1,4 +1,4 @@
-https://github.com/msgpack/msgpack-python/COPYING
+https://github.com/msgpack/msgpack-python/blob/HEAD/COPYING
 
 Copyright (C) 2008-2011 INADA Naoki <songofacandy@gmail.com>
 

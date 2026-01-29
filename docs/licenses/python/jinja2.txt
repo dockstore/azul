@@ -1,4 +1,4 @@
-https://github.com/pallets/jinja/LICENSE.txt
+https://github.com/pallets/jinja/blob/HEAD/LICENSE.txt
 
 Copyright 2007 Pallets
 

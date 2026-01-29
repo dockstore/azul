@@ -1,4 +1,4 @@
-https://github.com/googleapis/python-api-common-protos/LICENSE
+https://github.com/googleapis/google-cloud-python/blob/main/packages/googleapis-common-protos/LICENSE
 
 
                                  Apache License

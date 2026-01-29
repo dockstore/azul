@@ -1,4 +1,4 @@
-https://github.com/aws/aws-cli/LICENSE.txt
+https://github.com/aws/aws-cli/blob/HEAD/LICENSE.txt
 
 Copyright 2012-2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 
