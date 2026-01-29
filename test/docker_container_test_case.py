@@ -114,7 +114,8 @@ class DockerContainerTestCase(AzulUnitTestCase):
         try:
             container_info = cls._docker.api.inspect_container(container.id)
             if is_sibling:  # no coverage
-                container_ip = container_info['NetworkSettings']['IPAddress']
+                container_networks = container_info['NetworkSettings']['Networks']
+                container_ip = container_networks['bridge']['IPAddress']
                 assert isinstance(container_ip, str)
                 endpoint = (container_ip, container_port)
                 log.info('Sibling container %s from image %s is listening on %s:%i',
