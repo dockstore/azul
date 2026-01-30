@@ -2,8 +2,9 @@
 name: Prune GitLab data volume backups
 about: Issue template for the quarterly pruning of GitLab data volume snapshots
 title: Prune GitLab data volume backups
-labels: -,infra,operator
+labels: infra,operator
 type: Chore
+_priority: -
 _start: 2025-04-01T09:00
 _period: 3 months
 ---
