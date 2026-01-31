@@ -900,6 +900,9 @@ def env() -> Mapping[str, str | None]:
         # not covering any changes to the indexer, since indexing will be
         # skipped.
         #
+        # To supress IT coverage of the mirroring functionality in Azul, include
+        # the 'no_mirror' flag.
+        #
         'azul_it_flags': None,
 
         # Wether to enable bot control in AWS WAF. Setting this to 1 will enable

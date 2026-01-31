@@ -448,7 +448,10 @@ class IndexingIntegrationTest(IntegrationTestCase):
             ma_source: SourceRef | None
 
         flags = config.it_flags
-        index, delete = ['no_' + flag not in flags for flag in ['index', 'delete']]
+        index, delete, mirror = [
+            'no_' + flag not in flags
+            for flag in ['index', 'delete', 'mirror']
+        ]
 
         self._assert_queues_empty(config.indexer_fail_queue_names)
         if index:
@@ -465,7 +468,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
                     # If test_mirroring is run for the catalog, ensure that the
                     # source is not flagged as no_mirror so that we can test
                     # downloading a mirrored file
-                    mirror=self._mirror_service(catalog.name).may_mirror()
+                    mirror=mirror and self._mirror_service(catalog.name).may_mirror()
                 )
                 ma_source = self._select_source(catalog.name, public=False)
                 if ma_source is not None:
@@ -507,7 +510,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
                                       public_source=catalog.public_source,
                                       ma_source=catalog.ma_source)
 
-        if config.enable_mirroring:
+        if mirror and config.enable_mirroring:
             self._test_mirroring(delete=delete)
 
         if index and delete:
