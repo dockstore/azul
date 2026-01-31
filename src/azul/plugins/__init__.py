@@ -23,6 +23,9 @@ from typing import (
 )
 
 import attrs
+from furl import (
+    furl,
+)
 from more_itertools import (
     one,
 )
@@ -43,7 +46,12 @@ from azul.digests import (
     Digest,
 )
 from azul.drs import (
-    DRSClient,
+    CompactDRSURI,
+    DRSObject,
+    DRSURI,
+    HostBasedDRSURI,
+    IdentifiersDotOrgClient,
+    UnauthenticatedDRSClient,
 )
 from azul.indexer import (
     Bundle,
@@ -830,16 +838,36 @@ class RepositoryPlugin[BUNDLE: Bundle = Bundle[SourcedBundleFQID],
 
         raise NotImplementedError
 
-    @abstractmethod
-    def drs_client(self,
+    def drs_object(self,
+                   drs_uri: str,
                    authentication: Authentication | None = None
-                   ) -> DRSClient:
+                   ) -> DRSObject:
         """
         Returns a DRS client that uses the given authentication with requests to
         the DRS server. If a concrete subclass doesn't support authentication,
         it should assert that the argument is ``None``.
         """
-        raise NotImplementedError
+        assert authentication is None, type(authentication)
+        drs_url = self._resolve_drs_uri(drs_uri)
+        return self._unauthenticated_drs.drs_object(drs_url)
+
+    def _resolve_drs_uri(self, drs_uri: str) -> furl:
+        drs_uri = DRSURI.parse(drs_uri)
+        if isinstance(drs_uri, CompactDRSURI):
+            drs_url = drs_uri.to_url(self._identifiers_dot_org)
+        elif isinstance(drs_uri, HostBasedDRSURI):
+            drs_url = drs_uri.to_url()
+        else:
+            assert False
+        return drs_url
+
+    @cached_property
+    def _unauthenticated_drs(self) -> UnauthenticatedDRSClient:
+        return UnauthenticatedDRSClient()
+
+    @cached_property
+    def _identifiers_dot_org(self) -> IdentifiersDotOrgClient:
+        return IdentifiersDotOrgClient()
 
     @abstractmethod
     def file_download_class(self) -> type['RepositoryFileDownload']:

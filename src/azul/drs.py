@@ -34,7 +34,6 @@ import urllib3.request
 from azul import (
     R,
     cache,
-    cached_property,
     mutable_furl,
 )
 from azul.http import (
@@ -199,14 +198,6 @@ class DRSURI(metaclass=ABCMeta):
             else:
                 raise
 
-    @abstractmethod
-    def to_url(self, client: 'DRSClient', access_id: str | None = None) -> furl:
-        """
-        Translate this DRS URI into a URL of the DRS REST API endpoint at which
-        the file identified by this DRS URI can be accessed.
-        """
-        raise NotImplementedError
-
 
 @attr.s(auto_attribs=True, kw_only=True, frozen=True, slots=True)
 class HostBasedDRSURI(DRSURI):
@@ -228,8 +219,8 @@ class HostBasedDRSURI(DRSURI):
         assert len(path) == 1, R('Invalid path', drs_uri)
         return cls(server=parsed_uri.netloc, object_id=path[0])
 
-    def to_url(self, client: 'DRSClient', access_id: str | None = None) -> furl:
-        path = drs_object_url_path(object_id=self.object_id, access_id=access_id)
+    def to_url(self) -> furl:
+        path = drs_object_url_path(object_id=self.object_id)
         return furl(scheme='https', netloc=self.server, path=path)
 
 
@@ -281,23 +272,23 @@ class CompactDRSURI(DRSURI):
     def _decode(cls, s: str) -> str:
         return urllib.parse.unquote(s, errors='strict')
 
-    def to_url(self, client: 'DRSClient', access_id: str | None = None) -> furl:
+    def to_url(self, id_client: 'IdentifiersDotOrgClient') -> furl:
         if self.provider_code is not None:
             raise NotImplementedError(
                 'Resolving compact identifier-based DRS URIs with '
                 'provider codes is currently not supported', self
             )
-        url = client.id_client.resolve(self.namespace, self.accession)
+        url = id_client.resolve(self.namespace, self.accession)
         # The URL pattern registered at identifiers.org ought to replicate the
-        # DRS spec, but we have to re-create the path using the spec because the
-        # registered pattern does not support embedding the access ID.
+        # DRS spec. If the response to a request to the returned URL includes an
+        # access ID, another request must be made to the returned URL followed
+        # by the string `/access/` and the ID.
         assert str(url.path) == drs_object_url_path(object_id=self.accession), R(
             'Format of resolved URL is incompatible with the DRS specification', url)
-        url.set(path=drs_object_url_path(object_id=self.accession, access_id=access_id))
         return url
 
 
-class IdentifiersDotOrgClient(HasCachedHttpClient):
+class _BaseClient(HasCachedHttpClient):
 
     def _create_http_client(self) -> urllib3.request.RequestMethods:
         return Propagate429HttpClient(
@@ -305,6 +296,26 @@ class IdentifiersDotOrgClient(HasCachedHttpClient):
                 super()._create_http_client()
             )
         )
+
+
+class DRSClient(metaclass=ABCMeta):
+
+    @abstractmethod
+    def drs_object(self, drs_url: furl) -> 'DRSObject':
+        raise NotImplementedError
+
+
+class UnauthenticatedDRSClient(DRSClient, _BaseClient):
+    """
+    A generic DRS client that does not send authentication to the server.
+    """
+
+    def drs_object(self, drs_url: furl) -> 'DRSObject':
+        return DRSObject(url=drs_url,
+                         http_client=self._http_client)
+
+
+class IdentifiersDotOrgClient(_BaseClient):
 
     def resolve(self, prefix: str, accession: str) -> mutable_furl:
         namespace_id = self._prefix_to_namespace(prefix)
@@ -343,26 +354,20 @@ class IdentifiersDotOrgClient(HasCachedHttpClient):
 
 
 @attr.s(auto_attribs=True, kw_only=True, frozen=True)
-class DRSClient:
+class DRSObject:
     _http_client: urllib3.request.RequestMethods
+    _url: furl
 
-    @cached_property
-    def id_client(self) -> IdentifiersDotOrgClient:
-        return IdentifiersDotOrgClient()
-
-    def get_object(self,
-                   drs_uri: str,
-                   access_method: AccessMethod = AccessMethod.https
-                   ) -> Access:
+    def get(self, access_method: AccessMethod = AccessMethod.https) -> Access:
         """
         Returns access to the content of the data object identified by the
         given URI. The scheme of the URL in the returned access object depends
         on the access method specified.
         """
-        return self._get_object(drs_uri, access_method)
+        return self._get(access_method)
 
-    def _get_object(self, drs_uri: str, access_method: AccessMethod) -> Access:
-        url = DRSURI.parse(drs_uri).to_url(self)
+    def _get(self, access_method: AccessMethod) -> Access:
+        url = self._url
         while True:
             response = self._request(url)
             if response.status == 200:
@@ -381,9 +386,9 @@ class DRSClient:
                     # https://github.com/ga4gh/data-repository-service-schemas/issues/361
                     assert access_method is AccessMethod.gs, R(
                         'Unexpected access method', access_method)
-                    return self._get_object_access(drs_uri, access_id, AccessMethod.https)
+                    return self._get_access(access_id, AccessMethod.https)
                 elif access_id is not None:
-                    return self._get_object_access(drs_uri, access_id, access_method)
+                    return self._get_access(access_id, access_method)
                 elif access_url is not None:
                     scheme = furl(access_url['url']).scheme
                     assert scheme == access_method.scheme, R(
@@ -400,12 +405,9 @@ class DRSClient:
             else:
                 raise DRSStatusException(url, response)
 
-    def _get_object_access(self,
-                           drs_uri: str,
-                           access_id: str,
-                           access_method: AccessMethod
-                           ) -> Access:
-        url = DRSURI.parse(drs_uri).to_url(self, access_id)
+    def _get_access(self, access_id: str, access_method: AccessMethod) -> Access:
+        url = self._url.copy()
+        url.path.add(['access', access_id])
         while True:
             response = self._request(url)
             if response.status == 200:

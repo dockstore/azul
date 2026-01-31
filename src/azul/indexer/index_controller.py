@@ -187,7 +187,7 @@ class IndexController(ActionController[IndexAction]):
                                threshold=int(config.contribution_concurrency(retry=True) * 1 / 4),
                                period=5 * 60)
         @self.app.metric_alarm(metric=LambdaMetric.throttles,
-                               threshold=int(31760 / config.contribution_concurrency(retry=True)),
+                               threshold=int(39700 / config.contribution_concurrency(retry=True)),
                                period=5 * 60)
         @self.app.on_sqs_message(
             queue=config.notifications_queue.to_retry.name,
