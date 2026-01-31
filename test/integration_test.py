@@ -24,6 +24,7 @@ from random import (
     Random,
     randint,
 )
+import re
 import sys
 import tempfile
 import threading
@@ -237,11 +238,20 @@ class IntegrationTestCase(AzulTestCase):
 
     def setUp(self) -> None:
         super().setUp()
+        pinned_seed = only(
+            int(m.group(1))
+            for flag in config.it_flags
+            if (m := re.fullmatch(r'seed=(.*)', flag)) is not None
+        )
+        if pinned_seed is None:
+            self.random_seed = randint(0, sys.maxsize)
+            log.info('Using random seed %r', self.random_seed)
+        else:
+            self.random_seed = pinned_seed
+            log.info('Using pinned seed %r', self.random_seed)
         # All random operations should be made using this seed so that test
         # results are deterministically reproducible
-        self.random_seed = randint(0, sys.maxsize)
         self.random = Random(self.random_seed)
-        log.info('Using random seed %r', self.random_seed)
 
     @cached_property
     def _tdr_client(self) -> TDRClient:
