@@ -1838,6 +1838,20 @@ lm9_sources = union(lm8_sources, 19, delta([
     source('bigquery', 'datarepo-c10ea239', 'lungmap_prod_fdadee7e209745d5bf81cc280bd8348e__20240206_20250521_lm9'),
 ]))
 
+lm10_sources = union(lm9_sources, 25, delta([
+    source('bigquery', 'datarepo-27e08fa5', 'lungmap_prod_0e2b244192a5424cbce1abc13435686f__20251204_20251204_lm10'),
+    source('bigquery', 'datarepo-96fffa45', 'lungmap_prod_1977dc4784144263a8706b0f207d8ab3__20240206_20251204_lm10'),
+    source('bigquery', 'datarepo-6a0330b7', 'lungmap_prod_20037472ea1d4ddb9cd356a11a6f0f76__20220307_20251204_lm10'),
+    source('bigquery', 'datarepo-b90b4d81', 'lungmap_prod_4ae8c5c91520437198276935661f6c84__20231004_20251204_lm10'),
+    source('bigquery', 'datarepo-cf74ef80', 'lungmap_prod_4c40f6e7b9f545288e2dd1129014cec8__20251204_20251204_lm10'),
+    source('bigquery', 'datarepo-8927acab', 'lungmap_prod_780514ad4c1e40a890342ee7ec447dcb__20251204_20251204_lm10'),
+    source('bigquery', 'datarepo-e248f3b9', 'lungmap_prod_9393acbfe8d84b969c71996e245e5f23__20251204_20251204_lm10'),
+    source('bigquery', 'datarepo-3d3a02e4', 'lungmap_prod_aef908bcfeec4c549b3b78b0adbd6502__20251204_20251204_lm10'),
+    source('bigquery', 'datarepo-f5e7ee25', 'lungmap_prod_e99faee277064c1a9d2876c68320f549__20251204_20251204_lm10'),
+    source('bigquery', 'datarepo-ff773934', 'lungmap_prod_f899709cae2c4bb988f0131142e6c7ec__20220310_20251204_lm10'),
+    source('bigquery', 'datarepo-1c09ab61', 'lungmap_prod_fdadee7e209745d5bf81cc280bd8348e__20240206_20251204_lm10'),
+]))
+
 
 def env() -> Mapping[str, str | None]:
     """
@@ -1879,7 +1893,8 @@ def env() -> Mapping[str, str | None]:
                                        sources=condense(sources))
             for atlas, catalog, sources, mirror_limit, it_mirror_limit in [
                 ('hca', 'dcp56', dcp56_sources, None, int(1.5 * 1024 ** 3)),
-                ('lungmap', 'lm9', lm9_sources, -1, -1)
+                ('lungmap', 'lm9', lm9_sources, -1, -1),
+                ('lungmap', 'lm10', lm10_sources, -1, -1)
             ]
             for suffix, is_it in [
                 ('', False),

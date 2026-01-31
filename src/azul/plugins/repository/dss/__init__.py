@@ -32,9 +32,6 @@ from azul.collections import (
 from azul.deployment import (
     aws,
 )
-from azul.drs import (
-    DRSClient,
-)
 from azul.http import (
     HasCachedHttpClient,
 )
@@ -197,12 +194,6 @@ class Plugin(RepositoryPlugin[
         url.path.add(['files', file_uuid])
         url.query.add(adict(version=file_version, replica=replica, token=token))
         return str(url)
-
-    def drs_client(self,
-                   authentication: Authentication | None = None
-                   ) -> DRSClient:
-        assert authentication is None, type(authentication)
-        return DRSClient(http_client=self._http_client)
 
     def file_download_class(self) -> type[RepositoryFileDownload]:
         return DSSFileDownload
