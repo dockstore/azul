@@ -1823,11 +1823,12 @@ lm8_sources = union(lm7_sources, 12, delta([
     source('bigquery', 'datarepo-c11ef363', 'lungmap_prod_fdadee7e209745d5bf81cc280bd8348e__20240206_20241002_lm8')
 ]))
 
-lm9_sources = union(lm8_sources, 19, delta([
+lm9_sources = union(lm8_sources, 18, delta([
+    # @formatter:off
     source('bigquery', 'datarepo-6a2dd798', 'lungmap_prod_0229ea32ef02489eb11eff15819e22c1__20250415_20250521_lm9'),
     source('bigquery', 'datarepo-1635e8d0', 'lungmap_prod_1977dc4784144263a8706b0f207d8ab3__20240206_20250521_lm9'),
     source('bigquery', 'datarepo-753403ae', 'lungmap_prod_1f00915122064294929a9c720f19a13f__20250415_20250521_lm9'),
-    source('bigquery', 'datarepo-13f2c938', 'lungmap_prod_20037472ea1d4ddb9cd356a11a6f0f76__20220307_20250521_lm9'),
+    source('bigquery', 'datarepo-13f2c938', 'lungmap_prod_20037472ea1d4ddb9cd356a11a6f0f76__20220307_20250521_lm9', pop),  # noqa E501
     source('bigquery', 'datarepo-aa49b92f', 'lungmap_prod_4ae8c5c91520437198276935661f6c84__20231004_20250521_lm9'),
     source('bigquery', 'datarepo-27a7736d', 'lungmap_prod_4fb3669262404146a7e654543543230c__20250415_20250521_lm9'),
     source('bigquery', 'datarepo-73797ea1', 'lungmap_prod_5134c97dbbdb4d9db483cdebeaf667b3__20250415_20250521_lm9'),
@@ -1836,6 +1837,7 @@ lm9_sources = union(lm8_sources, 19, delta([
     source('bigquery', 'datarepo-35ee2bca', 'lungmap_prod_e68d2111316f4dedbf490ab332488665__20250415_20250521_lm9'),
     source('bigquery', 'datarepo-79fb8a00', 'lungmap_prod_f899709cae2c4bb988f0131142e6c7ec__20220310_20250521_lm9'),
     source('bigquery', 'datarepo-c10ea239', 'lungmap_prod_fdadee7e209745d5bf81cc280bd8348e__20240206_20250521_lm9'),
+    # @formatter:on
 ]))
 
 lm10_sources = union(lm9_sources, 24, delta([
