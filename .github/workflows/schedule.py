@@ -71,6 +71,8 @@ class IssueTemplate:
                     else:
                         k, _, v = line.partition(':')
                         k, v = k.strip(), v.strip()
+                        if v.startswith('\\'):
+                            v = v[1:]
                         if k in ('assignees', 'labels'):
                             v = v.split(',')
                         front_matter[k] = v
