@@ -488,7 +488,6 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                     iterations.append(input)
                     mock_start_generation()
                     url = self._request('PUT', equivalent_url, expect=301)
-                    assert_get_cached_manifest()
                     self.assertNotEqual(token_url, url)
                     assert_get_cached_manifest()
                     assert_start_generation()
