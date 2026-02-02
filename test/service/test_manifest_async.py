@@ -379,9 +379,9 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                     url = self._request('GET', url, expect=301)
                     get_manifest.return_value = partitions[1]
                     state = self._app_module.generate_manifest(state, None)
+                    assert_get_manifest(partition=0)
                     self.assertEqual(partitions[1],
                                      ManifestPartition.from_json(state['partition']))
-                    assert_get_manifest(partition=0)
                     _sfn.describe_execution.assert_called_once()
 
                 get_token_while_running()
@@ -412,6 +412,7 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                     nonlocal url, state, key_url, final_url
                     get_manifest.return_value = manifest
                     state = self._app_module.generate_manifest(state, None)
+                    assert_get_manifest(partition=1)
                     _sfn.describe_execution.return_value = {
                         'status': 'SUCCEEDED',
                         'input': json.dumps(input),
@@ -428,7 +429,6 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                     get_cached_manifest_with_key.return_value = manifest
                     url = self._request('GET', url, expect=302)
                     self.assertEqual(final_url, url)
-                    assert_get_manifest(partition=1)
                     _sfn.describe_execution.assert_called_once()
                     get_cached_manifest_with_key.assert_called_once_with(manifest_key)
 
@@ -507,6 +507,7 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                     nonlocal url, state, token_url
                     get_manifest.return_value = manifest
                     state = self._app_module.generate_manifest(state, None)
+                    assert_get_manifest(partition=1)
                     get_cached_manifest_with_key.side_effect = not_found
                     previous_iteration = len(iterations)
                     iterations.append(input)
@@ -514,7 +515,6 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                                           describe=previous_iteration - 1)
                     url = self._request('GET', url, expect=301)
                     self.assertNotEqual(token_url, url)
-                    assert_get_manifest(partition=1)
                     get_cached_manifest_with_key.assert_called_once_with(manifest_key)
                     assert_start_generation(start=previous_iteration,
                                             describe=previous_iteration - 1)
