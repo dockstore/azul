@@ -387,11 +387,10 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                 get_token_while_running()
 
                 # Follow the redirect. The StepFunction has finished but the
-                # output is not yet available due to eventual consistency.
-                # We observed this behaviour a few years ago, but it
-                # probably doesn't happen anymore. The output is most likely
-                # stored on S3 under the hood which strongly consistent a
-                # while back.
+                # output is not yet available due to eventual consistency. We
+                # did originally observe this behavior, but not anymore. Under
+                # the hood, the output is probably stored on S3 which became
+                # strongly consistent a few years ago.
                 #
                 @reset
                 def get_token_when_almost_done():
@@ -500,9 +499,9 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                 get_token_while_running()
                 get_token_when_almost_done()
 
-                # The StepFunction has finished but the output is has expired
-                # or was deleted. We expect yet another execution to restart
-                # the generation.
+                # The StepFunction has finished but the output has expired or
+                # was deleted. We expect yet another execution to restart the
+                # generation.
                 #
                 @reset
                 def get_stale_token_when_done():
