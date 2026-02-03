@@ -414,11 +414,7 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                     get_manifest.return_value = manifest
                     state = self._app_module.generate_manifest(state, None)
                     assert_get_manifest(partition=1)
-                    _sfn.describe_execution.return_value = {
-                        'status': 'SUCCEEDED',
-                        'input': json.dumps(input),
-                        'output': json.dumps(state)
-                    }
+                    mock_describe_execution(0)
                     if fetch and format is ManifestFormat.curl:
                         key_url = self.base_url.set(path=[*path, signed_manifest_key.encode()])
                         final_url = key_url
