@@ -338,7 +338,7 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                     expected_calls = [
                         mock.call(stateMachineArn=machine_arn,
                                   name=execution_names[i],
-                                  input=json.dumps(execution_inputs[-1]))
+                                  input=json.dumps(execution_inputs[i]))
                         for i in iterations
                     ]
                     self.assertEqual(expected_calls, _sfn.start_execution.mock_calls)
