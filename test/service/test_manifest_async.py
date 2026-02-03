@@ -383,7 +383,8 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                     assert_get_manifest(partition=0)
                     self.assertEqual(partitions[1],
                                      ManifestPartition.from_json(state['partition']))
-                    assert_describe_execution(len(execution_inputs) - 1)
+                    iteration = len(execution_inputs) - 1
+                    assert_describe_execution(iteration)
 
                 get_token_while_running()
 
@@ -414,7 +415,8 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                     get_manifest.return_value = manifest
                     state = self._app_module.generate_manifest(state, None)
                     assert_get_manifest(partition=1)
-                    mock_describe_execution(0)
+                    iteration = len(execution_inputs) - 1
+                    mock_describe_execution(iteration)
                     if fetch and format is ManifestFormat.curl:
                         key_url = self.base_url.set(path=[*path, signed_manifest_key.encode()])
                         final_url = key_url
@@ -426,7 +428,7 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                     get_cached_manifest_with_key.return_value = manifest
                     url = self._request('GET', url, expect=302)
                     self.assertEqual(final_url, url)
-                    _sfn.describe_execution.assert_called_once()
+                    assert_describe_execution(iteration)
                     get_cached_manifest_with_key.assert_called_once_with(manifest_key)
 
                 get_token_when_done()
