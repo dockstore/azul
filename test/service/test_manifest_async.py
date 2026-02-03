@@ -312,10 +312,10 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                 equivalent_url: furl
                 equivalent_filters: FiltersJSON
 
-                iterations: list[JSON] = []
+                execution_inputs: list[JSON] = []
 
                 def mock_start_execution(from_iteration: int = 0):
-                    *rest, last = range(from_iteration, len(iterations))
+                    *rest, last = range(from_iteration, len(execution_inputs))
                     _sfn.start_execution.side_effect = [
                         *(execution_exists for _ in rest),
                         {
@@ -325,26 +325,26 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                     ]
 
                 def mock_describe_execution(from_iteration: int = 0):
-                    *rest, last = range(from_iteration, len(iterations))
+                    *rest, last = range(from_iteration, len(execution_inputs))
                     _sfn.describe_execution.side_effect = [
                         {
                             'status': 'SUCCEEDED',
-                            'input': json.dumps(iterations[i]),
+                            'input': json.dumps(execution_inputs[i]),
                             'output': json.dumps(state)
                         }
                         for i in rest
                     ]
 
                 def assert_start_generation(*, start: int = 0, describe: int = 0):
-                    indices = range(start, len(iterations))
+                    indices = range(start, len(execution_inputs))
                     expected_calls = [
                         mock.call(stateMachineArn=machine_arn,
                                   name=execution_names[i],
-                                  input=json.dumps(iterations[-1]))
+                                  input=json.dumps(execution_inputs[-1]))
                         for i in indices
                     ]
                     self.assertEqual(expected_calls, _sfn.start_execution.mock_calls)
-                    indices = range(describe, len(iterations))
+                    indices = range(describe, len(execution_inputs))
                     expected_calls = [
                         mock.call(executionArn=execution_arns[i])
                         for i in indices[:-1]
@@ -360,7 +360,7 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                 def put():
                     nonlocal url, state, token_url
                     get_cached_manifest.side_effect = not_found
-                    iterations.append(input)
+                    execution_inputs.append(input)
                     mock_start_execution()
                     mock_describe_execution()
                     url = self._request('PUT', initial_url, expect=301)
@@ -488,7 +488,7 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                 def modified_put_after_expiration():
                     nonlocal url, state, token_url
                     get_cached_manifest.side_effect = not_found
-                    iterations.append(input)
+                    execution_inputs.append(input)
                     mock_start_execution()
                     mock_describe_execution()
                     url = self._request('PUT', equivalent_url, expect=301)
@@ -513,8 +513,8 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                     state = self._app_module.generate_manifest(state, None)
                     assert_get_manifest(partition=1)
                     get_cached_manifest_with_key.side_effect = not_found
-                    previous_iteration = len(iterations)
-                    iterations.append(input)
+                    previous_iteration = len(execution_inputs)
+                    execution_inputs.append(input)
                     mock_start_execution(previous_iteration)
                     mock_describe_execution(previous_iteration - 1)
                     url = self._request('GET', url, expect=301)
