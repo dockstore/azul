@@ -314,25 +314,24 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
 
                 execution_inputs: list[JSON] = []
 
-                def mock_start_execution(from_iteration: int = 0):
-                    *rest, last = range(from_iteration, len(execution_inputs))
+                def mock_start_execution(*iterations: int):
+                    *rest, last = iterations
                     _sfn.start_execution.side_effect = [
-                        *(execution_exists for _ in rest),
+                        *(execution_exists for i in rest),
                         {
                             'executionArn': execution_arns[last],
                             'startDate': 1234
                         }
                     ]
 
-                def mock_describe_execution(from_iteration: int = 0):
-                    *rest, last = range(from_iteration, len(execution_inputs))
+                def mock_describe_execution(*iterations: int):
                     _sfn.describe_execution.side_effect = [
                         {
                             'status': 'SUCCEEDED',
                             'input': json.dumps(execution_inputs[i]),
                             'output': json.dumps(state)
                         }
-                        for i in rest
+                        for i in iterations
                     ]
 
                 def assert_start_generation(*, start: int = 0, describe: int = 0):
@@ -361,8 +360,7 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                     nonlocal url, state, token_url
                     get_cached_manifest.side_effect = not_found
                     execution_inputs.append(input)
-                    mock_start_execution()
-                    mock_describe_execution()
+                    mock_start_execution(0)
                     url = self._request('PUT', initial_url, expect=301)
                     assert_get_cached_manifest()
                     assert_start_generation()
@@ -489,8 +487,8 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                     nonlocal url, state, token_url
                     get_cached_manifest.side_effect = not_found
                     execution_inputs.append(input)
-                    mock_start_execution()
-                    mock_describe_execution()
+                    mock_start_execution(0, 1)
+                    mock_describe_execution(0)
                     url = self._request('PUT', equivalent_url, expect=301)
                     self.assertNotEqual(token_url, url)
                     assert_get_cached_manifest()
