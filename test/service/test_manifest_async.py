@@ -334,21 +334,19 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                         for i in iterations
                     ]
 
-                def assert_start_execution(start: int):
-                    indices = range(start, len(execution_inputs))
+                def assert_start_execution(*iterations: int):
                     expected_calls = [
                         mock.call(stateMachineArn=machine_arn,
                                   name=execution_names[i],
                                   input=json.dumps(execution_inputs[-1]))
-                        for i in indices
+                        for i in iterations
                     ]
                     self.assertEqual(expected_calls, _sfn.start_execution.mock_calls)
 
-                def assert_describe_execution(describe: int):
-                    indices = range(describe, len(execution_inputs))
+                def assert_describe_execution(*iterations: int):
                     expected_calls = [
                         mock.call(executionArn=execution_arns[i])
-                        for i in indices[:-1]
+                        for i in iterations
                     ]
                     self.assertEqual(expected_calls, _sfn.describe_execution.mock_calls)
 
@@ -366,7 +364,6 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                     url = self._request('PUT', initial_url, expect=301)
                     assert_get_cached_manifest()
                     assert_start_execution(0)
-                    assert_describe_execution(0)
                     state = input
                     token_url = url
 
@@ -491,7 +488,7 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                     url = self._request('PUT', equivalent_url, expect=301)
                     self.assertNotEqual(token_url, url)
                     assert_get_cached_manifest()
-                    assert_start_execution(0)
+                    assert_start_execution(0, 1)
                     assert_describe_execution(0)
                     token_url = url
                     state = input
