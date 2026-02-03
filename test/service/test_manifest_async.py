@@ -314,8 +314,8 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
 
                 iterations: list[JSON] = []
 
-                def mock_start_generation(*, start: int = 0, describe: int = 0):
-                    *rest, last = range(start, len(iterations))
+                def mock_start_execution(from_iteration: int = 0):
+                    *rest, last = range(from_iteration, len(iterations))
                     _sfn.start_execution.side_effect = [
                         *(execution_exists for _ in rest),
                         {
@@ -323,7 +323,9 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                             'startDate': 1234
                         }
                     ]
-                    *rest, last = range(describe, len(iterations))
+
+                def mock_describe_execution(from_iteration: int = 0):
+                    *rest, last = range(from_iteration, len(iterations))
                     _sfn.describe_execution.side_effect = [
                         {
                             'status': 'SUCCEEDED',
@@ -359,7 +361,8 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                     nonlocal url, state, token_url
                     get_cached_manifest.side_effect = not_found
                     iterations.append(input)
-                    mock_start_generation()
+                    mock_start_execution()
+                    mock_describe_execution()
                     url = self._request('PUT', initial_url, expect=301)
                     assert_get_cached_manifest()
                     assert_start_generation()
@@ -486,7 +489,8 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                     nonlocal url, state, token_url
                     get_cached_manifest.side_effect = not_found
                     iterations.append(input)
-                    mock_start_generation()
+                    mock_start_execution()
+                    mock_describe_execution()
                     url = self._request('PUT', equivalent_url, expect=301)
                     self.assertNotEqual(token_url, url)
                     assert_get_cached_manifest()
@@ -511,8 +515,8 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                     get_cached_manifest_with_key.side_effect = not_found
                     previous_iteration = len(iterations)
                     iterations.append(input)
-                    mock_start_generation(start=previous_iteration,
-                                          describe=previous_iteration - 1)
+                    mock_start_execution(previous_iteration)
+                    mock_describe_execution(previous_iteration - 1)
                     url = self._request('GET', url, expect=301)
                     self.assertNotEqual(token_url, url)
                     get_cached_manifest_with_key.assert_called_once_with(manifest_key)
