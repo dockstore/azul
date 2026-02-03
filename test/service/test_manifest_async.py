@@ -334,7 +334,7 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                         for i in iterations
                     ]
 
-                def assert_start_generation(*, start: int = 0, describe: int = 0):
+                def assert_start_execution(start: int):
                     indices = range(start, len(execution_inputs))
                     expected_calls = [
                         mock.call(stateMachineArn=machine_arn,
@@ -343,6 +343,8 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                         for i in indices
                     ]
                     self.assertEqual(expected_calls, _sfn.start_execution.mock_calls)
+
+                def assert_describe_execution(describe: int):
                     indices = range(describe, len(execution_inputs))
                     expected_calls = [
                         mock.call(executionArn=execution_arns[i])
@@ -363,7 +365,8 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                     mock_start_execution(0)
                     url = self._request('PUT', initial_url, expect=301)
                     assert_get_cached_manifest()
-                    assert_start_generation()
+                    assert_start_execution(0)
+                    assert_describe_execution(0)
                     state = input
                     token_url = url
 
@@ -488,7 +491,8 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                     url = self._request('PUT', equivalent_url, expect=301)
                     self.assertNotEqual(token_url, url)
                     assert_get_cached_manifest()
-                    assert_start_generation()
+                    assert_start_execution(0)
+                    assert_describe_execution(0)
                     token_url = url
                     state = input
 
@@ -514,8 +518,8 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                     url = self._request('GET', url, expect=301)
                     self.assertNotEqual(token_url, url)
                     get_cached_manifest_with_key.assert_called_once_with(manifest_key)
-                    assert_start_generation(start=previous_iteration,
-                                            describe=previous_iteration - 1)
+                    assert_start_execution(previous_iteration)
+                    assert_describe_execution(previous_iteration - 1)
                     token_url = url
                     state = input
 
