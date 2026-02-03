@@ -314,14 +314,17 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
 
                 execution_inputs: list[JSON] = []
 
-                def mock_start_execution(*iterations: int):
-                    *rest, last = iterations
+                def mock_start_execution(iteration: int):
                     _sfn.start_execution.side_effect = [
-                        *(execution_exists for i in rest),
                         {
-                            'executionArn': execution_arns[last],
-                            'startDate': 1234 + last
+                            'executionArn': execution_arns[iteration],
+                            'startDate': 1234 + iteration
                         }
+                    ]
+
+                def mock_start_execution_exists(iteration: int):
+                    _sfn.start_execution.side_effect = [
+                        execution_exists
                     ]
 
                 def mock_describe_execution(*iterations: int):
@@ -474,40 +477,32 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
 
                 modified_put()
 
-                # Expire the cached manifest and repeat the initial request
-                # with the insignificant difference. The repeated request
-                # should be considered valid and matching the completed step
-                # function execution. However, because the manifest is missing,
-                # the generation should be restarted with a new execution.
+                # Expire the cached manifest and repeat the initial request with
+                # the insignificant difference. The repeated request should be
+                # considered valid and matching the completed step function
+                # execution. A token corresponding for the already completed
+                # execution will be returned …
                 #
                 @reset
                 def modified_put_after_expiration():
-                    nonlocal url, state, token_url
+                    nonlocal url
                     get_cached_manifest.side_effect = not_found
-                    execution_inputs.append(input)
-                    mock_start_execution(0, 1)
+                    mock_start_execution_exists(0)
                     mock_describe_execution(0)
                     url = self._request('PUT', equivalent_url, expect=301)
-                    self.assertNotEqual(token_url, url)
+                    self.assertEqual(token_url, url)
                     assert_get_cached_manifest()
-                    assert_start_execution(0, 1)
+                    assert_start_execution(0)
                     assert_describe_execution(0)
-                    token_url = url
-                    state = input
 
                 modified_put_after_expiration()
-                get_token_while_running()
-                get_token_when_almost_done()
-                get_token_when_done()
 
-                # The StepFunction has finished but the output has expired or
-                # was deleted. We expect yet another execution to restart the
-                # generation.
+                # … and when following the resulting, we expect yet another
+                # execution to restart the generation.
                 #
                 @reset
                 def get_stale_token_when_done():
                     nonlocal url, state, token_url
-                    url = token_url
                     get_cached_manifest_with_key.side_effect = not_found
                     execution_inputs.append(input)
                     iteration = len(execution_inputs) - 1
