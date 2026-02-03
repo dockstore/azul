@@ -383,7 +383,7 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                     assert_get_manifest(partition=0)
                     self.assertEqual(partitions[1],
                                      ManifestPartition.from_json(state['partition']))
-                    _sfn.describe_execution.assert_called_once()
+                    assert_describe_execution(len(execution_inputs) - 1)
 
                 get_token_while_running()
 
