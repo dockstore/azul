@@ -33,7 +33,7 @@ class DynamoDBTestCase(AzulUnitTestCase, metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def _dynamodb_atttributes(self) -> Mapping[str, ScalarAttributeTypeType]:
+    def _dynamodb_attributes(self) -> Mapping[str, ScalarAttributeTypeType]:
         raise NotImplementedError
 
     @abstractmethod
@@ -51,7 +51,7 @@ class DynamoDBTestCase(AzulUnitTestCase, metaclass=ABCMeta):
                                    BillingMode='PAY_PER_REQUEST',
                                    AttributeDefinitions=[
                                        dict(AttributeName=attr_name, AttributeType=attr_type)
-                                       for attr_name, attr_type in self._dynamodb_atttributes().items()
+                                       for attr_name, attr_type in self._dynamodb_attributes().items()
                                    ],
                                    KeySchema=[
                                        dict(AttributeName=self._dynamodb_hash_key(), KeyType='HASH')

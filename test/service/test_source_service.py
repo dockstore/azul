@@ -29,7 +29,7 @@ class TestSourceCache(DynamoDBTestCase):
     def _dynamodb_table_name(self) -> str:
         return SourceService.table_name
 
-    def _dynamodb_atttributes(self) -> Mapping[str, ScalarAttributeTypeType]:
+    def _dynamodb_attributes(self) -> Mapping[str, ScalarAttributeTypeType]:
         return {SourceService.key_attribute: 'S'}
 
     def _dynamodb_hash_key(self) -> str:
