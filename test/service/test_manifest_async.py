@@ -498,6 +498,7 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                 modified_put_after_expiration()
                 get_token_while_running()
                 get_token_when_almost_done()
+                get_token_when_done()
 
                 # The StepFunction has finished but the output has expired or
                 # was deleted. We expect yet another execution to restart the
@@ -506,19 +507,17 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                 @reset
                 def get_stale_token_when_done():
                     nonlocal url, state, token_url
-                    get_manifest.return_value = manifest
-                    state = self._app_module.generate_manifest(state, None)
-                    assert_get_manifest(partition=1)
+                    url = token_url
                     get_cached_manifest_with_key.side_effect = not_found
-                    previous_iteration = len(execution_inputs)
                     execution_inputs.append(input)
-                    mock_start_execution(previous_iteration)
-                    mock_describe_execution(previous_iteration - 1)
+                    iteration = len(execution_inputs) - 1
+                    mock_start_execution(iteration)
+                    mock_describe_execution(iteration - 1)
                     url = self._request('GET', url, expect=301)
                     self.assertNotEqual(token_url, url)
                     get_cached_manifest_with_key.assert_called_once_with(manifest_key)
-                    assert_start_execution(previous_iteration)
-                    assert_describe_execution(previous_iteration - 1)
+                    assert_start_execution(iteration)
+                    assert_describe_execution(iteration - 1)
                     token_url = url
                     state = input
 
