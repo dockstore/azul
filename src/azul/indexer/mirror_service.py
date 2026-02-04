@@ -91,6 +91,7 @@ from azul.service.storage_service import (
 )
 from azul.types import (
     JSON,
+    MutableJSON,
     json_element_strings,
 )
 
@@ -686,7 +687,7 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
         log.info('Successfully mirrored file via multi-part upload: %r', a.file)
         return iter(())
 
-    def _info(self, file: File) -> JSON:
+    def _info(self, file: File) -> MutableJSON:
         return {
             'content-type': alist(file.content_type),
             '$schema': str(self._schema_url_func(schema_name='info', version=2))
