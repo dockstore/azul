@@ -24,6 +24,7 @@ from random import (
     Random,
     randint,
 )
+import re
 import sys
 import tempfile
 import threading
@@ -237,11 +238,20 @@ class IntegrationTestCase(AzulTestCase):
 
     def setUp(self) -> None:
         super().setUp()
+        pinned_seed = only(
+            int(m.group(1))
+            for flag in config.it_flags
+            if (m := re.fullmatch(r'seed=(.*)', flag)) is not None
+        )
+        if pinned_seed is None:
+            self.random_seed = randint(0, sys.maxsize)
+            log.info('Using random seed %r', self.random_seed)
+        else:
+            self.random_seed = pinned_seed
+            log.info('Using pinned seed %r', self.random_seed)
         # All random operations should be made using this seed so that test
         # results are deterministically reproducible
-        self.random_seed = randint(0, sys.maxsize)
         self.random = Random(self.random_seed)
-        log.info('Using random seed %r', self.random_seed)
 
     @cached_property
     def _tdr_client(self) -> TDRClient:
@@ -448,7 +458,10 @@ class IndexingIntegrationTest(IntegrationTestCase):
             ma_source: SourceRef | None
 
         flags = config.it_flags
-        index, delete = ['no_' + flag not in flags for flag in ['index', 'delete']]
+        index, delete, mirror = [
+            'no_' + flag not in flags
+            for flag in ['index', 'delete', 'mirror']
+        ]
 
         self._assert_queues_empty(config.indexer_fail_queue_names)
         if index:
@@ -465,7 +478,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
                     # If test_mirroring is run for the catalog, ensure that the
                     # source is not flagged as no_mirror so that we can test
                     # downloading a mirrored file
-                    mirror=self._mirror_service(catalog.name).may_mirror()
+                    mirror=mirror and self._mirror_service(catalog.name).may_mirror()
                 )
                 ma_source = self._select_source(catalog.name, public=False)
                 if ma_source is not None:
@@ -507,7 +520,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
                                       public_source=catalog.public_source,
                                       ma_source=catalog.ma_source)
 
-        if config.enable_mirroring:
+        if mirror and config.enable_mirroring:
             self._test_mirroring(delete=delete)
 
         if index and delete:
@@ -612,9 +625,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
                             response = self._check_endpoint(PUT, '/manifest/files', args=args, fetch=fetch)
                             self._manifest_validators[format](catalog, response)
 
-                        # FIXME: Set number of workers back to 3
-                        #        https://github.com/DataBiosphere/azul/issues/6850
-                        num_workers = 1
+                        num_workers = 3
                         with ThreadPoolExecutor(max_workers=num_workers) as tpe:
                             results = list(tpe.map(worker, range(num_workers)))
 
