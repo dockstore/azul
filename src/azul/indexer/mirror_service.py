@@ -694,22 +694,21 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
         }
 
     def _update_info(self, file: File):
-        content_type = file.content_type
-        if content_type is not None:
+        new_info = self._info(file)
 
-            def update(data: bytes) -> bytes:
-                json_content = json.loads(data)
-                content_types = json_content['content-type']
-                if isinstance(content_types, list):
-                    content_types = set(content_types)
-                else:
-                    content_types = set()
-                content_types.add(content_type)
-                json_content['content-type'] = sorted(content_types)
-                return json.dumps(json_content).encode()
+        def update(data: bytes) -> bytes:
+            old_info = json.loads(data)
+            content_types = old_info['content-type']
+            if isinstance(content_types, list):
+                content_types = set(content_types)
+            else:
+                content_types = set()
+            content_types.update(json_element_strings(new_info['content-type']))
+            new_info['content-type'] = sorted(content_types)
+            return json.dumps(new_info).encode()
 
-            key = self._info_object_key(file)
-            self._storage.update_object(key, update)
+        key = self._info_object_key(file)
+        self._storage.update_object(key, update)
 
     def _put_info(self, file: File):
         object_key = self._info_object_key(file)
