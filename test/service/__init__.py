@@ -1,5 +1,6 @@
 from abc import (
     ABCMeta,
+    abstractmethod,
 )
 import copy
 import json
@@ -62,6 +63,9 @@ from azul.logging import (
     configure_test_logging,
     get_test_logger,
 )
+from azul.plugins import (
+    MetadataPlugin,
+)
 from azul.service.source_service import (
     NotFound,
     SourceService,
@@ -98,14 +102,12 @@ class WebServiceTestCase(IndexerTestCase, LocalAppTestCase, metaclass=ABCMeta):
     indexed_bundles: ClassVar[Optional[dict[BundleUUID, Bundle]]] = None
 
     @classmethod
+    @abstractmethod
     def bundles(cls) -> list[SourcedBundleFQID]:
-        return [
-            cls.bundle_fqid(uuid='aaa96233-bf27-44c7-82df-b4dc15ad4d9d',
-                            version='2018-11-02T11:33:44.698028Z')
-        ]
+        raise NotImplementedError
 
     @classmethod
-    def lambda_name(cls) -> str:
+    def app_name(cls) -> str:
         return 'service'
 
     @classmethod
@@ -134,6 +136,16 @@ class WebServiceTestCase(IndexerTestCase, LocalAppTestCase, metaclass=ABCMeta):
             'catalog': self.catalog,
             **params
         }
+
+    @property
+    def _metadata_plugin(self) -> MetadataPlugin:
+        """
+        Returns the app's plugin instance for the default catalog, which is
+        assumed to have been patched adequately to match the test requirements.
+        """
+        plugin = self._app.metadata_plugin
+        assert isinstance(plugin, MetadataPlugin)
+        return plugin
 
 
 class DocumentCloningTestCase(WebServiceTestCase, metaclass=ABCMeta):

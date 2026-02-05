@@ -54,11 +54,11 @@ from azul.openapi import (
 from azul.plugins import (
     File,
 )
+from azul.service.app_controller import (
+    ServiceAppController,
+)
 from azul.service.repository_service import (
     RepositoryService,
-)
-from azul.service.source_controller import (
-    SourceController,
 )
 from azul.types import (
     JSON,
@@ -66,7 +66,7 @@ from azul.types import (
 )
 
 
-class DRSController(SourceController):
+class DRSController(ServiceAppController):
 
     @cached_property
     def service(self) -> RepositoryService:

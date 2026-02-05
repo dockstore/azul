@@ -1,4 +1,4 @@
-https://github.com/python-openapi/openapi-schema-validator/LICENSE
+https://github.com/python-openapi/openapi-schema-validator/blob/HEAD/LICENSE
 
 BSD 3-Clause License
 

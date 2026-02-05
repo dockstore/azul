@@ -15,7 +15,6 @@ import requests
 
 from azul import (
     Config,
-    JSON,
 )
 from azul.chalice import (
     AzulChaliceApp,
@@ -23,6 +22,9 @@ from azul.chalice import (
 )
 from azul.logging import (
     configure_test_logging,
+)
+from azul.types import (
+    JSON,
 )
 from indexer import (
     DCP1CannedBundleTestCase,
@@ -50,7 +52,7 @@ class TestServiceAppLogging(DCP1CannedBundleTestCase, WebServiceTestCase):
         super().tearDownClass()
 
     @classmethod
-    def lambda_name(cls) -> str:
+    def app_name(cls) -> str:
         return 'service'
 
     def test_request_logs(self):
@@ -59,38 +61,38 @@ class TestServiceAppLogging(DCP1CannedBundleTestCase, WebServiceTestCase):
         def filter_body(organ: str) -> JSON:
             return {'filters': json.dumps({'organ': {'is': [organ]}})}
 
-        for debug, authenticated, request_body_json in product(
+        for debug, authenticated, body_json in product(
             [0, 1, 2],
             [False, True],
             [None, filter_body('foo'), filter_body('foo' * int(prefix_len / 3 + 1))]
         ):
-            if request_body_json is None:
-                request_body = ''
+            if body_json is None:
+                body = b''
             else:
-                request_body = json.dumps(request_body_json)
+                body = json.dumps(body_json).encode()
 
             with self.subTest(azul_debug=debug,
                               authenticated=authenticated,
-                              request_body=len(request_body)):
+                              body_len=len(body)):
                 url = self.base_url.set(path='/index/projects')
                 request_headers = {'authorization': 'Bearer foo_token'} if authenticated else {}
                 level = [INFO, DEBUG, DEBUG][debug]
                 with self.assertLogs(logger=log, level=level) as logs:
                     with patch.object(Config, 'debug', new=PropertyMock(return_value=debug)):
-                        if request_body:
+                        if body:
                             request_headers = {
-                                'content-length': str(len(request_body)),
+                                'content-length': str(len(body)),
                                 'content-type': 'application/json',
                                 **request_headers
                             }
                         response = requests.get(str(url),
                                                 headers=request_headers,
-                                                json=request_body_json)
+                                                json=body_json)
                 logs = [(r.levelno, r.getMessage()) for r in logs.records]
                 body_log_level, body_log_message = logs.pop()  # asserted separately
                 request_headers = {
                     'host': url.netloc,
-                    'user-agent': 'python-requests/2.32.4',
+                    'user-agent': 'python-requests/2.32.5',
                     'accept-encoding': 'gzip, deflate',
                     'accept': '*/*',
                     'connection': 'keep-alive',
@@ -106,6 +108,7 @@ class TestServiceAppLogging(DCP1CannedBundleTestCase, WebServiceTestCase):
                     **AzulChaliceApp.security_headers(),
                     'Cache-Control': 'no-store'
                 }
+                body_prefix = body[:prefix_len - 3] + b'...'
                 self.assertEqual(
                     [
                         (
@@ -117,17 +120,17 @@ class TestServiceAppLogging(DCP1CannedBundleTestCase, WebServiceTestCase):
                             INFO,
                             '… without a request body'
                         )
-                        if request_body == '' else
+                        if body == b'' else
                         (
                             INFO,
-                            "… with a request body of type (<class 'dict'>)"
+                            f"… with a request body of length {len(body)} and type <class 'bytes'>"
                         )
                         if debug == 0 else
                         (
                             INFO,
-                            f'… with a request body starting in {request_body[:prefix_len]}'
-                            if debug == 1 and len(request_body) > prefix_len else
-                            f'… with a request body of length {len(request_body)} being {request_body}'
+                            f'… with a request body of length {len(body)} starting in {body_prefix!r}'
+                            if debug == 1 and len(body) > prefix_len else
+                            f"… with a request body of length {len(body)} being {body!r}"
                         ),
                         (
                             INFO,
@@ -150,7 +153,7 @@ class TestServiceAppLogging(DCP1CannedBundleTestCase, WebServiceTestCase):
                 elif debug == 1:
                     expected_log = f'… with a response body starting in {body[:prefix_len]}'
                 elif debug > 1:
-                    expected_log = f'… with a response body of length 9118 being {body}'
+                    expected_log = f'… with a response body of length 9137 being {body}'
                 else:
                     assert False
                 self.assertEqual(expected_log, body_log_message)

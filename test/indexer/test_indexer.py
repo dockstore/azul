@@ -33,6 +33,7 @@ from uuid import (
 )
 
 import attr
+import attrs
 from more_itertools import (
     bucket,
     ilen,
@@ -95,6 +96,8 @@ from azul.plugins.metadata.hca import (
 )
 from azul.plugins.repository.dss import (
     DSSBundle,
+    DSSBundleFQID,
+    DSSSourceRef,
 )
 from azul.threads import (
     Latch,
@@ -330,7 +333,7 @@ class TestDCP1Indexer(DCP1IndexerTestCase):
                             self.assertIs(doc_type, DocumentType.replica)
 
                     for pair in docs_by_entity.values():
-                        self.assertEqual(list(sorted(doc.coordinates.deleted for doc in pair)), [False, True])
+                        self.assertEqual(sorted(doc.coordinates.deleted for doc in pair), [False, True])
                 finally:
                     self._purge_indices()
 
@@ -466,6 +469,32 @@ class TestDCP1IndexerWithIndexesSetUp(DCP1IndexerTestCase):
                                     fr'Got 201 response after [^ ]+ from PUT to '
                                     fr'.*_aggregate/_create/{doc_id}.*')
             self.assertTrue(any(message_re.fullmatch(message) for message in logs.output))
+
+    def test_entity_disjunctivity(self):
+        bundle1 = self._load_canned_bundle(self.old_bundle)
+        self._index_bundle(bundle1)
+        # For bundle2 we create a new bundle using bundle1's contents, however
+        # with a different source and bundle UUID, which, when indexed, results
+        # in aggregates with two sources.
+        source1 = bundle1.fqid.source
+        source2 = attrs.evolve(source1, id='6b26d8d7-6e5a-4bcb-910d-1804cc59e32e')
+        fqid2 = DSSBundleFQID(source=source2,
+                              uuid='3ccbc8a7-009e-4bc6-8854-da47bffae862',
+                              version=bundle1.version)
+        bundle2 = attrs.evolve(bundle1, fqid=fqid2)
+        with self.assertRaises(AssertionError) as cm:
+            self._index_bundle(bundle2)
+        expected = R(
+            'Entity has an invalid number of sources',
+            CataloguedEntityReference(entity_type='cell_suspensions',
+                                      entity_id='412898c5-5b9b-4907-b07c-e9b89666e204',
+                                      catalog='test'),
+            {
+                DSSSourceRef(id=source1.id, spec=source1.spec, prefix=source1.prefix),
+                DSSSourceRef(id=source2.id, spec=source2.spec, prefix=source2.prefix),
+            }
+        )
+        self.assertEqual(expected, one(cm.exception.args))
 
     def test_deletion_before_addition(self):
         self._index_canned_bundle(self.new_bundle, delete=True)

@@ -10,6 +10,7 @@ from operator import (
     attrgetter,
 )
 from typing import (
+    Any,
     Callable,
     ClassVar,
     Generic,
@@ -38,6 +39,13 @@ from google.auth.credentials import (
 from google.cloud import (
     bigquery,
 )
+from google.cloud._helpers import (
+    _datetime_from_microseconds,
+)
+from google.cloud.bigquery._helpers import (
+    CellDataParser,
+    _not_null,
+)
 from google.oauth2.service_account import (
     Credentials as ServiceAccountCredentials,
 )
@@ -60,6 +68,9 @@ from azul.bigquery import (
 )
 from azul.docker import (
     resolve_docker_image_for_launch,
+)
+from azul.indexer import (
+    Prefix,
 )
 from azul.logging import (
     configure_test_logging,
@@ -191,22 +202,76 @@ class TDRPluginTestCase(TDRTestCase,
                                                '--dataset=' + cls.source.spec.name
                                            ])
         cls._patch_tdr_client()
+        cls._patch_timestamp_conversion()
 
-    def _make_mock_tdr_tables(self, source: TDRSourceRef) -> JSON:
-        tables = self._load_canned_file_version(uuid=source.id,
-                                                version=None,
-                                                extension='tables.tdr')['tables']
-        for table_name, table_rows in tables.items():
-            self._make_mock_entity_table(source.spec,
-                                         table_name,
-                                         table_rows['rows'])
-        return tables
+    @classmethod
+    def _patch_timestamp_conversion(cls):
+        """
+        BigQueryEmulator returns a TIMESTAMP column as a string with the decimal
+        representation of a real number of seconds since 1970 with microsecond
+        precision in the decimal part. It does so even though the BigQuery
+        Python API specifies the 'formatOptions.useInt64Timestamp' option along
+        most requests which should trigger these columns to be returned as a
+        string with the decimal representation of a 64-bit integer number of
+        microseconds since 1970. The fact that the emulator seems to ignore that
+        option breaks the API when it's trying to parse the string.
 
-    def _make_mock_entity_table(self,
-                                source: TDRSourceSpec,
-                                table_name: str,
-                                rows: JSONs) -> None:
-        schema = self._bq_schema(rows[0])
+        https://github.com/goccy/bigquery-emulator/issues/32#issuecomment-2661687330
+        """
+
+        def timestamp_to_py(self, value, field):
+            if _not_null(value, field):
+                us = cls._float_seconds_to_int_microseconds(value)
+                return _datetime_from_microseconds(us)
+            else:
+                return None
+
+        cls.addClassPatch(mock.patch.object(CellDataParser,
+                                            'timestamp_to_py',
+                                            new=timestamp_to_py))
+
+    @classmethod
+    def _float_seconds_to_int_microseconds(cls, value) -> int | Any:
+        """
+        >>> f = TDRPluginTestCase._float_seconds_to_int_microseconds
+        >>> f('0')
+        0
+
+        >>> f('1769204298.1')
+        1769204298100000
+
+        >>> f('1769204298.999999')
+        1769204298999999
+
+        Loss of microsecond precision in year 2242 (note last digit)
+
+        >>> f('8589934592.000001')
+        8589934592000002
+        """
+        return int(float(value) * 10 ** 6)
+
+    def _make_mock_tables(self, source: TDRSourceRef) -> None:
+        can = self._load_canned_file_version(uuid=source.id,
+                                             version=None,
+                                             extension='tables.tdr')
+        for name, table in can['tables'].items():
+            self._make_mock_table(source.spec, name, table['rows'], table.get('schema'))
+
+    def _make_mock_table(self,
+                         source: TDRSourceSpec,
+                         table_name: str,
+                         rows: JSONs,
+                         canned_schema: JSON | None = None
+                         ) -> None:
+        if canned_schema is None:
+            assert len(rows) > 0, 'Empty tables require an explicit schema'
+            schema = self._bq_schema_from_row(rows[0])
+        else:
+            schema = [
+                bigquery.SchemaField(**column_schema)
+                for column_schema in canned_schema['columns']
+            ]
+
         columns = {column.name for column in schema}
         json_type = reify(JSON)
 
@@ -232,7 +297,7 @@ class TDRPluginTestCase(TDRTestCase,
         self.addCleanup(bq.delete_table, table)
         bq.insert_rows(table=table, selected_fields=schema, rows=map(dump_row, rows))
 
-    def _bq_schema(self, row: BigQueryRow) -> list[bigquery.SchemaField]:
+    def _bq_schema_from_row(self, row: BigQueryRow) -> list[bigquery.SchemaField]:
 
         def field_type(key: str, value: AnyJSON) -> str:
             if key == 'version':
@@ -259,25 +324,70 @@ class TestTDRHCAPlugin(DCP2CannedBundleTestCase,
     def _plugin_cls(cls) -> Type[tdr_hca.Plugin]:
         return tdr_hca.Plugin
 
-    def test_list_bundles(self):
+    def test_list_and_count_bundles(self):
         source = self.source
         current_version = '2001-01-01T00:00:00.100001Z'
         links_ids = ['42-abc', '42-def', '42-ghi', '86-xyz']
-        self._make_mock_entity_table(source=source.spec,
-                                     table_name='links',
-                                     rows=[
-                                         dict(links_id=links_id,
-                                              version=current_version,
-                                              content={})
-                                         for links_id in links_ids
-                                     ])
-        bundle_ids = self.plugin.list_bundles(source, prefix='42')
-        bundle_ids.sort(key=attrgetter('uuid'))
-        self.assertEqual(bundle_ids, [
+        self._make_mock_table(source=source.spec,
+                              table_name='links',
+                              rows=[
+                                  dict(links_id=links_id,
+                                       version=current_version,
+                                       content={})
+                                  for links_id in links_ids
+                              ])
+        expected_bundle_ids = [
             TDRBundleFQID(source=source, uuid='42-abc', version=current_version),
             TDRBundleFQID(source=source, uuid='42-def', version=current_version),
             TDRBundleFQID(source=source, uuid='42-ghi', version=current_version)
-        ])
+        ]
+        with self.subTest('list_bundles'):
+            actual_bundle_ids = self.plugin.list_bundles(source, prefix='42')
+            actual_bundle_ids.sort(key=attrgetter('uuid'))
+            self.assertEqual(expected_bundle_ids, actual_bundle_ids)
+        with self.subTest('count_bundles_unpartitioned'):
+            unpartitioned_src = attr.evolve(source, prefix=None)
+            actual_bundle_count = self.plugin.count_bundles(unpartitioned_src)
+            self.assertEqual(len(links_ids), actual_bundle_count)
+        with self.subTest('count_bundles_partitioned'):
+            partitioned_src = attr.evolve(source, prefix=Prefix.parse('42/0'))
+            actual_bundle_count = self.plugin.count_bundles(partitioned_src)
+            self.assertEqual(len(expected_bundle_ids), actual_bundle_count)
+
+    def test_list_and_count_files(self):
+        source = self.source
+        self._make_mock_tables(source)
+        tables = self._load_canned_file_version(uuid=source.id,
+                                                version=None,
+                                                extension='tables.tdr')['tables']
+        all_files = [
+            row['descriptor']
+            for table_name, table_contents in tables.items()
+            if table_name.endswith('_file')
+            for row in table_contents['rows']
+        ]
+        prefix = '3'
+        partition_file_uuids = [
+            file['file_id']
+            for file in all_files
+            if file['sha256'].startswith(prefix)
+        ]
+        self.assertGreater(len(partition_file_uuids), 0, 'Empty prefix')
+        with mock.patch.object(tdr_hca.Plugin, '_assert_partition'):
+            with self.subTest('list_files'):
+                actual_file_uuids = [
+                    file.uuid
+                    for file in self.plugin.list_files(source, prefix=prefix)
+                ]
+                self.assertEqual(partition_file_uuids, actual_file_uuids)
+        with self.subTest('count_files_unpartitioned'):
+            unpartitioned_src = attr.evolve(source, prefix=None)
+            actual_file_count = self.plugin.count_files(unpartitioned_src)
+            self.assertEqual(len(all_files), actual_file_count)
+        with self.subTest('count_files_partitioned'):
+            partitioned_src = attr.evolve(source, prefix=Prefix.parse(f'{prefix}/0'))
+            actual_file_count = self.plugin.count_files(partitioned_src)
+            self.assertEqual(len(partition_file_uuids), actual_file_count)
 
     def test_fetch_bundle(self):
         fqid = self.bundle_fqid(uuid='1b6d8348-d6e9-406a-aa6a-7ee886e52bf9',
@@ -340,7 +450,7 @@ class TestTDRHCAPlugin(DCP2CannedBundleTestCase,
                            *,
                            load_tables: bool):
         if load_tables:
-            self._make_mock_tdr_tables(test_bundle.fqid.source)
+            self._make_mock_tables(test_bundle.fqid.source)
         emulated_bundle = self.plugin.fetch_bundle(test_bundle.fqid)
 
         self.assertEqual(test_bundle.fqid, emulated_bundle.fqid)

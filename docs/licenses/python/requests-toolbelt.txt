@@ -1,4 +1,4 @@
-https://github.com/requests/toolbelt/LICENSE
+https://github.com/requests/toolbelt/blob/HEAD/LICENSE
 
 Copyright 2014 Ian Cordasco, Cory Benfield
 

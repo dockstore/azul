@@ -23,6 +23,8 @@ from azul.service.elasticsearch_service import (
 )
 from azul.types import (
     MutableJSON,
+    json_dict,
+    json_int,
 )
 
 
@@ -143,11 +145,11 @@ class HCASummaryAggregationStage(HCAAggregationStage):
 
     def process_response(self, response: MutableJSON) -> MutableJSON:
         response = super().process_response(response)
-        result = response['aggregations']
+        result = json_dict(response['aggregations'])
         threshold = config.precision_threshold
 
         for agg_name in self._cardinality_aggregations:
-            agg_value = result[agg_name]['value']
+            agg_value = json_int(json_dict(result[agg_name])['value'])
             assert agg_value <= threshold * .9, (agg_name, agg_value, threshold)
 
         return result

@@ -1,7 +1,3 @@
-from __future__ import (
-    annotations,
-)
-
 from collections.abc import (
     Mapping,
     Sequence,
@@ -20,8 +16,10 @@ from email.utils import (
 from logging import (
     getLogger,
 )
+import random
 import time
 from typing import (
+    Callable,
     Collection,
     IO,
     TYPE_CHECKING,
@@ -56,23 +54,18 @@ if TYPE_CHECKING:
     from mypy_boto3_s3.client import (
         S3Client,
     )
-    from mypy_boto3_s3.service_resource import (
-        MultipartUpload,
-    )
     from mypy_boto3_s3.type_defs import (
+        CompleteMultipartUploadRequestTypeDef,
+        CompletedPartTypeDef,
+        CreateMultipartUploadRequestTypeDef,
+        DeleteObjectsRequestTypeDef,
+        GetObjectOutputTypeDef,
         HeadObjectOutputTypeDef,
+        PutObjectRequestTypeDef,
+        PutObjectTaggingRequestTypeDef,
     )
 
 log = getLogger(__name__)
-
-# 5 MB; see https://docs.aws.amazon.com/AmazonS3/latest/dev/qfacts.html
-AWS_S3_DEFAULT_MINIMUM_PART_SIZE = 5242880
-
-MULTIPART_UPLOAD_MAX_WORKERS = 4
-
-# The amount of pending tasks that can be queued for execution. A value of 0
-# allows no tasks to be queued, only running tasks allowed in the thread pool.
-MULTIPART_UPLOAD_MAX_PENDING_PARTS = 4
 
 Tagging = Mapping[str, str]
 
@@ -93,10 +86,18 @@ class StorageService:
         self.bucket_name = bucket_name
 
     @property
-    def _s3(self) -> S3Client:
+    def _s3(self) -> 'S3Client':
         return aws.s3
 
-    def head(self, object_key: str) -> HeadObjectOutputTypeDef:
+    def object_exists(self, object_key: str) -> bool:
+        try:
+            self.head_object(object_key)
+        except StorageObjectNotFound:
+            return False
+        else:
+            return True
+
+    def head_object(self, object_key: str) -> 'HeadObjectOutputTypeDef':
         try:
             return self._s3.head_object(Bucket=self.bucket_name,
                                         Key=object_key)
@@ -106,50 +107,99 @@ class StorageService:
             else:
                 raise e
 
-    def get(self, object_key: str) -> bytes:
+    def get_object(self, object_key: str) -> bytes:
+        return self._get_object(object_key)['Body'].read()
+
+    def _get_object(self, object_key: str) -> 'GetObjectOutputTypeDef':
         try:
             response = self._s3.get_object(Bucket=self.bucket_name,
                                            Key=object_key)
         except self._s3.exceptions.NoSuchKey:
             raise StorageObjectNotFound(object_key)
         else:
-            return response['Body'].read()
+            return response
 
-    def put(self,
-            object_key: str,
-            data: bytes,
-            content_type: str | None = None,
-            tagging: Tagging | None = None,
-            *,
-            overwrite: bool = True,
-            **kwargs):
+    def put_object(self,
+                   *,
+                   object_key: str,
+                   data: bytes,
+                   content_type: str | None = None,
+                   tagging: Tagging | None = None,
+                   etag: str | None = None,
+                   overwrite: bool = True):
         try:
-            self._s3.put_object(Bucket=self.bucket_name,
-                                Key=object_key,
-                                Body=data,
-                                **self._object_creation_kwargs(content_type=content_type,
-                                                               tagging=tagging,
-                                                               overwrite=overwrite),
-                                **kwargs)
+            request: PutObjectRequestTypeDef
+            request = dict(Bucket=self.bucket_name, Key=object_key, Body=data)
+            if content_type is not None:
+                request['ContentType'] = content_type
+            if tagging is not None:
+                request['Tagging'] = urlencode(tagging)
+            if etag is not None:
+                request['IfMatch'] = etag
+            if overwrite is False:
+                request['IfNoneMatch'] = '*'
+            self._s3.put_object(**request)
         except botocore.exceptions.ClientError as e:
             self._handle_overwrite(e, object_key)
 
-    def delete(self, keys: Collection[str], batch_size: int = 1000) -> None:
+    def update_object(self,
+                      object_key: str,
+                      updater: Callable[[bytes], bytes],
+                      max_attempts: int = 10
+                      ):
+        """
+        Updates the contents of an object, based on its existing contents, while
+        ensuring that concurrent updates are not overwritten. Expects a callback
+        that returns the desired contents of the object given its current
+        contents. If the callback ever returns its argument unchanged, no
+        further writes will be attempted. If the object does not exist at any
+        point during the update, StorageObjectNotFound is raised.
+        """
+        for i in range(max_attempts):
+            response = self._get_object(object_key)
+            etag = response['ETag']
+            data = response['Body'].read()
+            new_data = updater(data)
+            if new_data == data:
+                log.info('Object contents of %r is already up to date during attempt #%r/%r.',
+                         object_key, i + 1, max_attempts)
+                break
+            else:
+                try:
+                    self.put_object(object_key=object_key, data=new_data, etag=etag)
+                except botocore.exceptions.ClientError as e:
+                    error = e.response['Error']
+                    code, condition = error['Code'], error.get('Condition')
+                    if code == 'PreconditionFailed' and condition == 'If-Match':
+                        log.info('Conflict during attempt #%r/%r of updating %r from %r to %r',
+                                 i + 1, max_attempts, object_key)
+                        if i >= max_attempts - 1:
+                            raise
+                        else:
+                            time.sleep(random.uniform(0.5, 5.0))
+                    else:
+                        raise
+                else:
+                    log.info('Update of %r succeeded after %r attempts', object_key, i + 1)
+                    break
+
+    def delete_objects(self,
+                       object_keys: Collection[str],
+                       batch_size: int = 1000
+                       ) -> None:
         assert batch_size <= 1000, R('Batch size must <= 1000', batch_size)
-        num_keys = len(keys)
-        for batch in chunked(keys, batch_size):
+        num_keys = len(object_keys)
+        for batch in chunked(object_keys, batch_size):
             log.debug('Deleting batch of objects: %r', batch)
-            self._s3.delete_objects(Bucket=self.bucket_name,
-                                    Delete={
-                                        'Objects': [
-                                            {'Key': key}
-                                            for key in batch
-                                        ]
-                                    })
+            request: DeleteObjectsRequestTypeDef
+            request = dict(Bucket=self.bucket_name,
+                           Delete=dict(Objects=[dict(Key=key) for key in batch]))
+            self._s3.delete_objects(**request)
         log.info('Deleted %d objects overall', num_keys)
 
-    def list(self, prefix: str) -> OrderedSet[str]:
-        keys, num_keys = OrderedSet(), 0
+    def list_objects(self, prefix: str) -> OrderedSet[str]:
+        keys: OrderedSet[str] = OrderedSet()
+        num_keys = 0
         paginator = self._s3.get_paginator('list_objects_v2')
         for page in paginator.paginate(Bucket=self.bucket_name, Prefix=prefix):
             contents = page.get('Contents', ())
@@ -159,38 +209,42 @@ class StorageService:
         return keys
 
     def create_multipart_upload(self,
+                                *,
                                 object_key: str,
                                 content_type: str | None = None,
-                                tagging: Tagging | None = None) -> MultipartUpload:
-        kwargs = self._object_creation_kwargs(content_type=content_type,
-                                              tagging=tagging)
-        return self._create_multipart_upload(object_key=object_key, **kwargs)
-
-    def _create_multipart_upload(self, *, object_key, **kwargs) -> MultipartUpload:
-        api_response = self._s3.create_multipart_upload(Bucket=self.bucket_name,
-                                                        Key=object_key,
-                                                        **kwargs)
-        upload_id = api_response['UploadId']
-        return self.load_multipart_upload(object_key, upload_id)
-
-    def load_multipart_upload(self, object_key, upload_id) -> MultipartUpload:
-        s3 = aws.s3_resource
-        return s3.MultipartUpload(self.bucket_name, object_key, upload_id)
+                                tagging: Tagging | None = None
+                                ) -> str:
+        request: CreateMultipartUploadRequestTypeDef
+        request = dict(Bucket=self.bucket_name, Key=object_key)
+        if content_type is not None:
+            request['ContentType'] = content_type
+        if tagging is not None:
+            request['Tagging'] = urlencode(tagging)
+        response = self._s3.create_multipart_upload(**request)
+        return response['UploadId']
 
     def upload_multipart_part(self,
-                              buffer: str | bytes | IO | StreamingBody,
+                              *,
+                              object_key: str,
+                              upload_id: str,
                               part_number: int,
-                              upload: MultipartUpload
+                              buffer: str | bytes | IO | StreamingBody
                               ) -> str:
-        return upload.Part(part_number).upload(Body=buffer)['ETag']
+        response = self._s3.upload_part(Bucket=self.bucket_name,
+                                        Key=object_key,
+                                        UploadId=upload_id,
+                                        PartNumber=part_number,
+                                        Body=buffer)
+        return response['ETag']
 
     def complete_multipart_upload(self,
-                                  upload: MultipartUpload,
-                                  etags: Sequence[str],
                                   *,
+                                  object_key: str,
+                                  upload_id: str,
+                                  etags: Sequence[str],
                                   overwrite: bool = True,
                                   ) -> None:
-        parts = [
+        parts: list[CompletedPartTypeDef] = [
             {
                 'PartNumber': index + 1,
                 'ETag': etag
@@ -198,51 +252,51 @@ class StorageService:
             for index, etag in enumerate(etags)
         ]
         try:
-            upload.complete(MultipartUpload={'Parts': parts},
-                            **self._object_creation_kwargs(overwrite=overwrite))
+            request: CompleteMultipartUploadRequestTypeDef
+            request = dict(Bucket=self.bucket_name,
+                           Key=object_key,
+                           UploadId=upload_id,
+                           MultipartUpload={'Parts': parts})
+            if overwrite is False:
+                request['IfNoneMatch'] = '*'
+            self._s3.complete_multipart_upload(**request)
         except botocore.exceptions.ClientError as e:
-            self._handle_overwrite(e, upload.object_key)
+            self._handle_overwrite(e, object_key)
+
+    def abort_multipart_upload(self,
+                               *,
+                               object_key: str,
+                               upload_id: str):
+        self._s3.abort_multipart_upload(Bucket=self.bucket_name,
+                                        Key=object_key,
+                                        UploadId=upload_id)
 
     def upload(self,
                file_path: str,
                object_key: str,
                content_type: str | None = None,
                tagging: Tagging | None = None):
+        extra_args: dict[str, str] = {}
+        if content_type is not None:
+            extra_args['ContentType'] = content_type
+        if tagging is not None:
+            extra_args['Tagging'] = urlencode(tagging)
         self._s3.upload_file(Filename=file_path,
                              Bucket=self.bucket_name,
                              Key=object_key,
-                             ExtraArgs=self._object_creation_kwargs(content_type=content_type))
-        # upload_file doesn't support tags so we need to make a separate request
-        # https://stackoverflow.com/a/56351011/7830612
-        if tagging:
-            self.put_object_tagging(object_key, tagging)
-
-    def _object_creation_kwargs(self,
-                                *,
-                                content_type: str | None = None,
-                                tagging: Tagging | None = None,
-                                overwrite: bool = True
-                                ) -> Mapping[str, str]:
-        kwargs = {}
-        if content_type is not None:
-            kwargs['ContentType'] = content_type
-        if tagging is not None:
-            kwargs['Tagging'] = urlencode(tagging)
-        if overwrite is False:
-            kwargs['IfNoneMatch'] = '*'
-        return kwargs
+                             ExtraArgs=extra_args)
 
     def get_presigned_url(self,
-                          key: str,
+                          object_key: str,
                           *,
                           file_name: str | None = None,
                           content_type: str | None = None
                           ) -> str:
         """
-        Return a pre-signed URL to the given key.
+        Return a pre-signed URL of the object at the given key.
 
-        :param key: The key of the S3 object whose content a request to the
-                    signed URL will return
+        :param object_key: The key of the S3 object whose content a request to
+                           the signed URL will return
 
         :param file_name: the file name to be returned as part of a
                           Content-Disposition header in the response to a
@@ -255,32 +309,27 @@ class StorageService:
                              used.
         """
         assert file_name is None or '"' not in file_name, file_name
-        return self._s3.generate_presigned_url(
-            ClientMethod=self._s3.get_object.__name__,
-            Params={
-                'Bucket': self.bucket_name,
-                'Key': key,
-                **(
-                    {}
-                    if file_name is None else
-                    {'ResponseContentDisposition': f'attachment;filename="{file_name}"'}
-                ),
-                **(
-                    {}
-                    if content_type is None else
-                    {'ResponseContentType': content_type}
-                )
-            })
+        params = {
+            'Bucket': self.bucket_name,
+            'Key': object_key,
+        }
+        if file_name is not None:
+            params['ResponseContentDisposition'] = f'attachment;filename="{file_name}"'
+        if content_type is not None:
+            params['ResponseContentType'] = content_type
+        return self._s3.generate_presigned_url(Params=params,
+                                               ClientMethod=self._s3.get_object.__name__)
 
-    def put_object_tagging(self, object_key: str, tagging: Tagging = None):
-        deadline = time.time() + 60
-        tagging = {'TagSet': [{'Key': k, 'Value': v} for k, v in tagging.items()]}
+    def put_object_tagging(self, object_key: str, tagging: Tagging):
         log.info('Tagging object %r with %r', object_key, tagging)
+        request: PutObjectTaggingRequestTypeDef
+        request = dict(Bucket=self.bucket_name,
+                       Key=object_key,
+                       Tagging=dict(TagSet=[dict(Key=k, Value=v) for k, v in tagging.items()]))
+        deadline = time.time() + 60
         while True:
             try:
-                self._s3.put_object_tagging(Bucket=self.bucket_name,
-                                            Key=object_key,
-                                            Tagging=tagging)
+                self._s3.put_object_tagging(**request)
             except self._s3.exceptions.NoSuchKey:
                 if time.time() > deadline:
                     log.error('Unable to tag %s on object.', tagging)
@@ -307,18 +356,20 @@ class StorageService:
                            lifecycle rule. This parameter is solely used to
                            verify the return value.
         """
-        response = self.head(object_key)
+        response = self.head_object(object_key)
         return self._time_until_object_expires(response, expiration)
 
     def _time_until_object_expires(self,
-                                   head_response: HeadObjectOutputTypeDef,
+                                   head_response: 'HeadObjectOutputTypeDef',
                                    expiration: int
                                    ) -> float:
         now = datetime.now(timezone.utc)
         # Example header value
         # expiry-date="Fri, 21 Dec 2012 00:00:00 GMT", rule-id="Rule for testfile.txt"
         expiration_header = parse_dict_header(head_response['Expiration'])
-        expiry = parsedate_to_datetime(expiration_header['expiry-date'])
+        expiry_date = expiration_header['expiry-date']
+        assert expiry_date is not None
+        expiry = parsedate_to_datetime(expiry_date)
         time_left = (expiry - now).total_seconds()
         # Verify the 'Expiration' value is what is expected given the
         # 'LastModified' value, the number of days before expiration, and that

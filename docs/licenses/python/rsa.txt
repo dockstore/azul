@@ -1,4 +1,4 @@
-https://github.com/sybrenstuvel/python-rsa/LICENSE
+https://github.com/sybrenstuvel/python-rsa/blob/HEAD/LICENSE
 
 Copyright 2011 Sybren A. Stüvel <sybren@stuvel.eu>
 

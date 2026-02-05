@@ -1,8 +1,9 @@
+import logging
+import re
 from typing import (
     Iterable,
     Self,
     Sequence,
-    TYPE_CHECKING,
 )
 
 from attrs import (
@@ -10,13 +11,17 @@ from attrs import (
 )
 
 from azul import (
-    JSON,
+    CatalogName,
     R,
     config,
     iif,
+    json_mapping,
 )
 from azul.digests import (
     Digest,
+)
+from azul.drs import (
+    HostBasedDRSURI,
 )
 from azul.indexer.document import (
     Aggregate,
@@ -27,9 +32,11 @@ from azul.indexer.document import (
 from azul.plugins import (
     DocumentSlice,
     File,
+    InverseFieldMapping,
     ManifestConfig,
     MetadataPlugin,
     Sorting,
+    SpecialField,
     SpecialFields,
 )
 from azul.plugins.metadata.hca.bundle import (
@@ -61,11 +68,20 @@ from azul.service.manifest_service import (
     ManifestFormat,
 )
 from azul.types import (
+    JSON,
     MutableJSON,
+    json_dict,
+    json_dict_of_dicts,
+    json_int,
+    json_list,
+    json_str,
+    optional,
 )
 from humancellatlas.data.metadata import (
     api,
 )
+
+log = logging.getLogger(__name__)
 
 
 class Plugin(MetadataPlugin[HCABundle]):
@@ -86,15 +102,13 @@ class Plugin(MetadataPlugin[HCABundle]):
                      ) -> Iterable[BaseTransformer]:
         api_bundle = api.Bundle(uuid=bundle.uuid,
                                 version=bundle.version,
-                                manifest=bundle.manifest,
-                                metadata=bundle.metadata,
+                                manifest=json_dict_of_dicts(bundle.manifest),
+                                metadata=json_dict_of_dicts(bundle.metadata),
                                 links_json=bundle.links,
                                 stitched_entity_ids=bundle.stitched)
 
         def transformers():
             for transformer_cls in self.transformer_types():
-                if TYPE_CHECKING:  # work around https://youtrack.jetbrains.com/issue/PY-44728
-                    transformer_cls = BaseTransformer
                 yield transformer_cls(bundle=bundle, api_bundle=api_bundle, deleted=delete)
 
         return list(transformers())
@@ -105,7 +119,7 @@ class Plugin(MetadataPlugin[HCABundle]):
     def mapping(self, index_name: IndexName) -> MutableJSON:
         mapping = super().mapping(index_name)
         if index_name.doc_type in (DocumentType.contribution, DocumentType.aggregate):
-            mapping['properties']['contents'] = {
+            json_dict(mapping['properties'])['contents'] = {
                 'properties': {
                     'projects': {
                         'properties': {
@@ -119,7 +133,7 @@ class Plugin(MetadataPlugin[HCABundle]):
                     }
                 }
             }
-            mapping['dynamic_templates'][0:0] = [
+            json_list(mapping['dynamic_templates'])[0:0] = [
                 {
                     'donor_age_range': {
                         'path_match': 'contents.donors.organism_age_range',
@@ -164,12 +178,12 @@ class Plugin(MetadataPlugin[HCABundle]):
     @property
     def exposed_indices(self) -> dict[EntityType, Sorting]:
         return dict(
-            bundles=Sorting(field_name=self.special_fields.bundle_version,
+            bundles=Sorting(field_name=self.special_fields.bundle_version.name,
                             descending=True,
                             max_page_size=100),
             files=Sorting(field_name='fileName'),
             projects=Sorting(field_name='projectTitle',
-                             max_page_size=100),
+                             max_page_size=75),
             samples=Sorting(field_name='sampleId')
         )
 
@@ -186,18 +200,18 @@ class Plugin(MetadataPlugin[HCABundle]):
         ]
 
     @property
-    def _field_mapping(self) -> MetadataPlugin._FieldMapping:
+    def _field_mapping(self) -> InverseFieldMapping:
         # FIXME: Detect invalid values in field mapping
         #        https://github.com/DataBiosphere/azul/issues/3071
         return {
             'entity_id': 'entryId',
             'bundles': {
-                'uuid': self.special_fields.bundle_uuid,
-                'version': self.special_fields.bundle_version
+                'uuid': self.special_fields.bundle_uuid.name,
+                'version': self.special_fields.bundle_version.name
             },
             'sources': {
-                'id': self.special_fields.source_id,
-                'spec': self.special_fields.source_spec
+                'id': self.special_fields.source_id.name,
+                'spec': self.special_fields.source_spec.name
             },
             'cell_count': 'cellCount',
             'effective_cell_count': 'effectiveCellCount',
@@ -215,11 +229,12 @@ class Plugin(MetadataPlugin[HCABundle]):
                     'name': 'fileName',
                     'size': 'fileSize',
                     'file_source': 'fileSource',
-                    'uuid': 'fileId',
+                    'uuid': self.special_fields.file_uuid.name,
                     'version': 'fileVersion',
                     'content_description': 'contentDescription',
                     'matrix_cell_count': 'matrixCellCount',
-                    'is_intermediate': 'isIntermediate'
+                    'is_intermediate': 'isIntermediate',
+                    'sha256': 'sha256',
                 },
                 'projects': {
                     'contact_names': 'contactName',
@@ -288,13 +303,14 @@ class Plugin(MetadataPlugin[HCABundle]):
             }
         }
 
-    @property
-    def special_fields(self) -> SpecialFields:
-        return SpecialFields(source_id='sourceId',
-                             source_spec='sourceSpec',
-                             bundle_uuid='bundleUuid',
-                             bundle_version='bundleVersion',
-                             root_entity_id='projectId')
+    special_fields = SpecialFields(
+        source_id=SpecialField.symmetric('sourceId'),
+        source_spec=SpecialField.symmetric('sourceSpec'),
+        source_prefix=SpecialField.symmetric('sourcePrefix'),
+        bundle_uuid=SpecialField.symmetric('bundleUuid'),
+        bundle_version=SpecialField.symmetric('bundleVersion'),
+        file_uuid=SpecialField(name='fileId', name_in_hit='uuid')
+    )
 
     @property
     def root_entity_type(self) -> str:
@@ -369,7 +385,8 @@ class Plugin(MetadataPlugin[HCABundle]):
                 'sha256': 'file_sha256',
                 'content-type': 'file_content_type',
                 'drs_uri': 'file_drs_uri',
-                'file_url': 'file_url'
+                'file_url': 'file_azul_url',
+                'file_mirror_uri': 'file_mirror_uri',
             },
             ('contents', 'cell_suspensions'): {
                 'document_id': 'cell_suspension.provenance.document_id',
@@ -475,47 +492,105 @@ class HCAFile(File):
     s3_etag: str | None = None
 
     @classmethod
-    def from_hit(cls, hit: JSON) -> Self:
-        return cls(uuid=hit['uuid'],
-                   version=hit['version'],
-                   name=hit['name'],
-                   size=hit['size'],
-                   drs_uri=hit['drs_uri'],
-                   content_type=hit['content-type'],
-                   sha256=hit['sha256'],
-                   crc32c=hit['crc32c'],
-                   sha1=hit.get('sha1'),
-                   s3_etag=hit.get('s3_etag'))
+    def from_index(cls, hit: JSON) -> Self:
+        return cls(uuid=json_str(hit['uuid']),
+                   version=json_str(hit['version']),
+                   name=json_str(hit['name']),
+                   size=json_int(hit['size']),
+                   drs_uri=optional(json_str, hit['drs_uri']),
+                   content_type=json_str(hit['content-type']),
+                   sha256=json_str(hit['sha256']),
+                   crc32c=json_str(hit['crc32c']),
+                   sha1=optional(json_str, hit.get('sha1')),
+                   s3_etag=optional(json_str, hit.get('s3_etag')))
 
     @classmethod
-    def from_descriptor(cls,
-                        descriptor: JSON,
-                        *,
-                        uuid: str,
-                        name: str,
-                        drs_uri: str | None) -> Self:
-        content_type = descriptor['content_type']
+    def _parse_drs_uri(cls, file_id: str | None, descriptor: JSON) -> str | None:
+        if file_id is None:
+            try:
+                external_drs_uri = optional(json_str, descriptor['drs_uri'])
+            except KeyError:
+                assert False, R(
+                    '`file_id` is null and `drs_uri` is not set in file descriptor',
+                    descriptor)
+            else:
+                return external_drs_uri
+        else:
+            parsed = HostBasedDRSURI.parse(file_id)
+            assert parsed.server == config.tdr_service_url.netloc, R(
+                'DRS URI must point to TDR as the server', file_id)
+            return file_id
+
+    @classmethod
+    def from_metadata(cls,
+                      *,
+                      catalog: CatalogName,
+                      metadata: JSON,
+                      descriptor: JSON,
+                      drs_uri: str | None
+                      ) -> Self:
+        # FIXME: Move validation of descriptor to the metadata API
+        #        https://github.com/DataBiosphere/azul/issues/6299
+        api.Entity.validate_described_by(descriptor)
+        drs_uri = cls._parse_drs_uri(drs_uri, descriptor)
+        content_type = json_str(descriptor['content_type'])
         # FIXME: Obsolete MIME parameter in file content types
         #        https://github.com/HumanCellAtlas/dcp2/issues/73
         parameter_suffix = '; dcp-type=data'
         if content_type.endswith(parameter_suffix):
             content_type = content_type.removesuffix(parameter_suffix)
-        else:
-            # FIXME: Re-enable assertion, potentially in a weakened form
-            #        https://github.com/DataBiosphere/azul/issues/7244
-            assert True or ';' not in content_type, R(
+
+        atlas = config.catalogs[catalog].atlas
+        if atlas == 'hca':
+            assert ';' not in content_type, R(
                 'Unexpected MIME parameter in content type', content_type)
-        return cls(uuid=uuid,
-                   name=name,
-                   version=descriptor['file_version'],
-                   size=descriptor['size'],
+            content_type = cls._content_type_corrections.get(content_type, content_type)
+            assert cls._content_type_re.match(content_type), R(
+                'Invalid content type', content_type)
+        elif atlas == 'lungmap':
+            # FIXME: Re-enable content-type validation for lungmap
+            #        https://github.com/DataBiosphere/azul/issues/7244
+            pass
+        else:
+            assert False, atlas
+
+        return cls(uuid=json_str(descriptor['file_id']),
+                   name=json_str(json_mapping(metadata['file_core'])['file_name']),
+                   version=json_str(descriptor['file_version']),
+                   size=json_int(descriptor['size']),
                    content_type=content_type,
-                   sha256=descriptor['sha256'],
-                   crc32c=descriptor['crc32c'],
-                   sha1=descriptor.get('sha1'),
-                   s3_etag=descriptor.get('s3_etag'),
+                   sha256=json_str(descriptor['sha256']),
+                   crc32c=json_str(descriptor['crc32c']),
+                   sha1=optional(json_str, descriptor.get('sha1')),
+                   s3_etag=optional(json_str, descriptor.get('s3_etag')),
                    drs_uri=drs_uri)
 
     @property
     def digest(self) -> Digest:
         return Digest(value=self.sha256, type='sha256')
+
+    def to_manifest_entry(self) -> JSON:
+        entry = self.to_json()
+        entry.pop(self.discriminator())
+        entry['content-type'] = entry.pop('content_type')
+        entry['indexed'] = False
+        return entry
+
+    _content_type_corrections = {
+        # Only correct for files created with Excel 2007 or later. Hopefully we
+        # don't have any files older than that.
+        'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    }
+
+    # We use the stricter character set and 127-char limit from
+    # https://datatracker.ietf.org/doc/html/rfc6838#section-4.2, for the media
+    # type and subtype, but since this RFC does not describe MIME parameters or
+    # what character to use for the joiner, we draw those specifications from
+    # https://datatracker.ietf.org/doc/html/rfc7231#section-3.1.1.5
+    _restricted_name_re = r'[a-zA-Z0-9]([a-zA-Z0-9!#$&^_.+-]{,125}[a-zA-Z0-9!#$&^_-])?'
+    _token_re = r'[a-zA-Z0-9!#$%&\'*+.^_`|~-]+'
+    _qstr_re = r'"[\t !#-[\]-~\x80-\xff]*"'
+    _content_type_re = re.compile(
+        fr'^{_restricted_name_re}/{_restricted_name_re}'
+        fr'([\t ]*;[\t ]*{_token_re}=(({_token_re})|({_qstr_re})))?$'
+    )

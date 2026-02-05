@@ -7,7 +7,6 @@ from furl import (
 )
 
 from azul import (
-    JSON,
     RequirementError,
 )
 from azul.chalice import (
@@ -22,6 +21,9 @@ from azul.logging import (
 from azul.openapi import (
     params,
     schema,
+)
+from azul.types import (
+    JSON,
 )
 from azul_test_case import (
     AzulUnitTestCase,
@@ -100,9 +102,17 @@ class TestAppSpecs(AzulUnitTestCase):
                 methods = {'get', 'put'}  # only what's used in these tests
                 if method in methods:
                     responses = spec.pop('responses')
-                    response = responses.pop('504')
-                    description = response.pop('description')
-                    self.assertIn('Request timed out', description)
+                    for code, message in [
+                        ('400', 'Bad request'),
+                        ('429', 'Too many requests'),
+                        ('500', 'Internal application error'),
+                        ('502', 'Bad gateway'),
+                        ('503', 'Service unavailable'),
+                        ('504', 'Gateway timeout'),
+                    ]:
+                        response = responses.pop(code)
+                        description = response.pop('description')
+                        self.assertIn(message, description)
                     self.assertEqual(({}, {}), (response, responses))
         return actual_spec
 

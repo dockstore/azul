@@ -8,8 +8,11 @@ This is the PR template for backport PRs against `develop`.
 
 ### Author
 
+- [ ] PR is assigned to the author
+- [ ] Status of PR is *In progress*
 - [ ] Target branch is `develop`
 - [ ] Name of PR branch matches `backports/<7-digit SHA1 of most recent backported commit>`
+- [ ] Status of linked issue is *Stable*
 - [ ] PR title contains the 7-digit SHA1 of the backported commits
 - [ ] PR title references the issues relating to the backported commits
 - [ ] PR title references the PRs that introduced the backported commits
@@ -18,9 +21,13 @@ This is the PR template for backport PRs against `develop`.
 ### Author (before every review)
 
 - [ ] PR branch is up to date (if not, merge `develop` into PR branch to integrate upstream changes)
-- [ ] Ran `make requirements_update` <sub>or this PR does not modify `requirements*.txt`, `common.mk`, `Makefile` and `Dockerfile`</sub>
+- [ ] Ran `make requirements_update` <sub>or this PR does not modify `Dockerfile`, `environment`, `requirements*.txt`, `common.mk`, `Makefile` or `environment.boot`</sub>
 - [ ] Added `R` tag to commit title <sub>or this PR does not modify `requirements*.txt`</sub>
 - [ ] This PR is labeled `reqs` <sub>or does not modify `requirements*.txt`</sub>
+- [ ] PR is not a draft
+- [ ] PR is awaiting requested review from system administrator
+- [ ] Status of PR is *Review requested*
+- [ ] PR is assigned to only the system administrator and the author
 
 
 ### System administrator (after approval)
@@ -28,14 +35,19 @@ This is the PR template for backport PRs against `develop`.
 - [ ] Actually approved the PR
 - [ ] Decided if PR can be labeled `no sandbox`
 - [ ] PR title is appropriate as title of merge commit
-- [ ] Moved connected issue to *Approved* column
-- [ ] PR is assigned to only the operator
+- [ ] `N reviews` label is accurate
+- [ ] Status of PR is *Approved*
+- [ ] PR is assigned to only the operator and the author
 
 
-### Operator (before pushing merge the commit)
+### Operator
 
 - [ ] Sanity-checked history
 - [ ] Pushed PR branch to GitHub
+
+
+### Operator (sandbox build)
+
 - [ ] Added `sandbox` label <sub>or PR is labeled `no sandbox`</sub>
 - [ ] Pushed PR branch to GitLab `dev` <sub>or PR is labeled `no sandbox`</sub>
 - [ ] Pushed PR branch to GitLab `anvildev` <sub>or PR is labeled `no sandbox`</sub>
@@ -43,14 +55,25 @@ This is the PR template for backport PRs against `develop`.
 - [ ] Build passes in `anvilbox` deployment <sub>or PR is labeled `no sandbox`</sub>
 - [ ] Reviewed build logs for anomalies in `sandbox` deployment <sub>or PR is labeled `no sandbox`</sub>
 - [ ] Reviewed build logs for anomalies in `anvilbox` deployment <sub>or PR is labeled `no sandbox`</sub>
+- [ ] Deleted unreferenced indices in `sandbox` <sub>or this PR does not remove catalogs or otherwise causes unreferenced indices in `sandbox`</sub>
+- [ ] Deleted unreferenced indices in `anvilbox` <sub>or this PR does not remove catalogs or otherwise causes unreferenced indices in `anvilbox`</sub>
+- [ ] Started reindex in `sandbox` <sub>or this PR is not labeled `reindex:dev`</sub>
+- [ ] Started reindex in `anvilbox` <sub>or this PR is not labeled `reindex:anvildev`</sub>
+- [ ] Checked for failures in `sandbox` <sub>or this PR is not labeled `reindex:dev`</sub>
+- [ ] Checked for failures in `anvilbox` <sub>or this PR is not labeled `reindex:anvildev`</sub>
+
+
+### Operator (merge the branch)
+
 - [ ] All status checks passed and the PR is mergeable
 - [ ] The title of the merge commit starts with the title of this PR
 - [ ] Added PR # reference (to this PR) to merge commit title
 - [ ] Collected commit title tags in merge commit title <sub>but excluded any `p` tags</sub>
 - [ ] Pushed merge commit to GitHub
+- [ ] Status of PR is *Merged lower*
 
 
-### Operator (after pushing the merge commit)
+### Operator (main build)
 
 - [ ] Pushed merge commit to GitLab `dev`
 - [ ] Pushed merge commit to GitLab `anvildev`
@@ -59,8 +82,10 @@ This is the PR template for backport PRs against `develop`.
 - [ ] Build passes on GitLab `anvildev`
 - [ ] Reviewed build logs for anomalies on GitLab `anvildev`
 - [ ] Deleted PR branch from GitHub
+- [ ] PR is assigned to only the operator
 - [ ] Deleted PR branch from GitLab `dev`
 - [ ] Deleted PR branch from GitLab `anvildev`
+- [ ] Status of linked issue is *Stable*
 
 
 ### Operator

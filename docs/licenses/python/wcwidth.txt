@@ -1,4 +1,4 @@
-https://github.com/jquast/wcwidth/LICENSE
+https://github.com/jquast/wcwidth/blob/HEAD/LICENSE
 
 The MIT License (MIT)
 

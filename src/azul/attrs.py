@@ -28,6 +28,9 @@ from uuid import (
     UUID,
 )
 
+from attr import (
+    AttrsInstance,
+)
 import attrs
 from more_itertools import (
     flatten,
@@ -284,13 +287,16 @@ class SerializableAttrs(Serializable, attrs.AttrsInstance):
         """
         return {}
 
-    def to_json(self) -> dict[str, AnyJSON]:
+    def _to_json(self) -> dict[str, AnyJSON]:
         """
         Typically, the overrides in subclasses will be generated automatically
         but if a subclass explicitly defines an override, it will be left alone.
         """
-        self._assert_concrete()
         return {}
+
+    def to_json(self) -> dict[str, AnyJSON]:
+        self._assert_concrete()
+        return self._to_json()
 
     @classmethod
     def _assert_concrete(cls):
@@ -337,7 +343,7 @@ class SerializableAttrs(Serializable, attrs.AttrsInstance):
         # additional fields defined so we need to start from scratch and reset
         # any left-overs that would interfere with that.
         #
-        if cls._has_custom('to_json') and cls._has_custom('_from_json'):
+        if cls._has_custom('_to_json') and cls._has_custom('_from_json'):
             pass
         else:
             if '_deferred_fields' in cls.__dict__:
@@ -392,11 +398,11 @@ class SerializableAttrs(Serializable, attrs.AttrsInstance):
         globals = {cls.__name__: cls}
         serializers = (cls.Serializer(cls, field, globals) for field in fields)
         to_json = cls._indent([
-            'def to_json(self):', [
+            'def _to_json(self):', [
                 # Using the super() shortcut would require messing with the
                 # ``__closure__`` attribute of the function, and, we assume,
                 # would be slower.
-                f'json = super({cls.__name__}, self).to_json()',
+                f'json = super({cls.__name__}, self)._to_json()',
                 *flatten(
                     [
                         f'x = self.{serializer.field.name}',
@@ -715,10 +721,58 @@ class SerializableAttrs(Serializable, attrs.AttrsInstance):
             return f'{var_name}({x})'
 
 
-def serializable[T: attrs.Attribute](field: T | None = None,
-                                     *,
-                                     from_json: FromJSON,
-                                     to_json: ToJSON) -> T:
+class DiscriminatingPolymorphicSerializableAttrs(
+    SerializableAttrs,
+    PolymorphicSerializable,
+    metaclass=ABCMeta
+):
+    """
+    This class provides an alternative serialization format that includes the
+    discriminator field, facilitating the polymorphic deserialization of
+    subclasses even when they are not being used as polymorphic fields of a
+    larger serializable object. Each subclass is responsible for ensuring that
+    the name of the discriminator property does not conflict with the names of
+    any instance attributes.
+    """
+
+    @classmethod
+    @abstractmethod
+    def discriminator(cls) -> str:
+        """
+        The name of a property in serialized instances that contains the name
+        of the type said instances will be deserialized as.
+        """
+        raise NotImplementedError
+
+    # The @final decorator in SerializableAttrs is intended to only apply to
+    # clients of this module, not to parts of the module.
+
+    @classmethod  # type: ignore[misc]
+    def from_json(cls, json: AnyJSON) -> Self:
+        json = json_mapping(json)
+        try:
+            discriminator = json[cls.discriminator()]
+        except KeyError:
+            return super().from_json(json)
+        else:
+            subcls = cls.cls_from_json(discriminator)
+            kwargs = subcls._from_json(json)
+            return subcls(**kwargs)
+
+    def to_json(self) -> dict[str, AnyJSON]:
+        json = self._to_json()
+        discriminator = self.discriminator()
+        assert discriminator not in json, (discriminator, json)
+        return {
+            **json,
+            discriminator: self.cls_to_json()
+        }
+
+
+def serializable[T](field: T | None = None,
+                    *,
+                    from_json: FromJSON,
+                    to_json: ToJSON) -> T:
     """
     Use the provided callables to (de)serialize values of the given field,
     instead of generating them.
@@ -738,7 +792,7 @@ def serializable[T: attrs.Attribute](field: T | None = None,
     return _set_field_metadata(field, 'custom', custom)
 
 
-def not_serializable[T: attrs.Attribute](field: T) -> T:
+def not_serializable[T](field: T) -> T:
     """
     Skip the given field during (de)serialization. The field should have a
     default value or there should be some other provision for the constructor to
@@ -760,27 +814,33 @@ def not_serializable[T: attrs.Attribute](field: T) -> T:
     return _set_field_metadata(field, 'custom', custom)
 
 
-def _set_field_metadata[T: attrs.Attribute](field: T | None, key, value):
+def _set_field_metadata[T](field: T | None, key, value):
     if field is None:
         field = attrs.field()
+    # The actual return value of `attrs.field` is of a type that's internal to
+    # attrs and unrelated to any types in the public API. The declared return
+    # type is the same as the field's type, to facilitate type checking. Hence,
+    # there's no satisfactory type bound to declare for `T` or type to assert
+    # here.
+    assert hasattr(field, 'metadata'), field
     metadata = field.metadata.setdefault('azul', {})
     metadata[key] = value
     return field
 
 
-def polymorphic[T: attrs.Attribute](field: T | None = None,
-                                    *,
-                                    discriminator: str
-                                    ) -> T:
+def polymorphic[T](field: T | None = None,
+                   *,
+                   discriminator: str
+                   ) -> T:
     """
     Mark an attrs field to use the given name for the discriminator property in
     serialized instances of PolymorphicSerializable that occur in the value of
     that field. The given discriminator property of a serialized instance
     represents the type to use when deserializing that instance again.
 
-    >>> from azul.json import RegisteredPolymorphicSerializable
+    >>> from azul.json import StaticRegisteredPolymorphicSerializable
 
-    >>> class Inner(SerializableAttrs, RegisteredPolymorphicSerializable):
+    >>> class Inner(SerializableAttrs, StaticRegisteredPolymorphicSerializable):
     ...     pass
 
     >>> @attrs.frozen
@@ -858,3 +918,49 @@ def polymorphic[T: attrs.Attribute](field: T | None = None,
     <azul.attrs.Inner object at ...>
     """
     return _set_field_metadata(field, 'discriminator', discriminator)
+
+
+def devolve[T: AttrsInstance](cls: type[T],
+                              inst: AttrsInstance,
+                              **changes: Any
+                              ) -> T:
+    """
+    Like attrs.evolve but for an arbitrary class. The most common use case is
+    to evolve an instance of a class to an instance of a subclass of that class,
+    in which case the keyword arguments must supply values for all the fields
+    that the subclass adds. When evolving to an instance of a superclass, any
+    instance fields not defined in the superclass will be discarded.
+
+    >>> @attrs.frozen()
+    ... class Foo:
+    ...     x: int
+    ...     _y: str
+
+    >>> @attrs.frozen()
+    ... class Bar(Foo):
+    ...     z: str
+    ...     c: float = attrs.field(default=3.14159, init=False)
+
+    >>> devolve(Bar, Foo(x=42, y='foo'), z='bar')
+    Bar(x=42, _y='foo', z='bar', c=3.14159)
+
+    >>> devolve(Foo, Bar(x=42, y='foo', z='bar'), x=24)
+    Foo(x=24, _y='foo')
+
+    >>> devolve(Bar, Foo(x=42, y='foo'))
+    Traceback (most recent call last):
+    ....
+    AttributeError: 'Foo' object has no attribute 'z'
+
+    >>> devolve(Bar, Foo(x=42, y='foo'), z='bar', c=2.71828)
+    Traceback (most recent call last):
+    ...
+    TypeError: Bar.__init__() got an unexpected keyword argument 'c'
+    """
+    fields = attrs.fields(cls)
+    for field in fields:
+        if field.init:
+            init_name = field.alias
+            if init_name not in changes:
+                changes[init_name] = getattr(inst, field.name)
+    return cls(**changes)

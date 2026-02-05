@@ -4,14 +4,36 @@
 Data mirroring
 ##############
 
-This is a draft specification of the data mirroring facility in Azul. The
-facility is currently under construction in an effort to make all public data in
-the Human Cell Atlas [1]_ available in AWS S3, under the auspices of the Open
-Data Sponsorship Program [2]_. This specification may not be fully implemented
-at this time and is subject to change as the implementation progresses.
+This document is a specification of the data mirroring facility in Azul. The
+facility was implemented in an effort to make all open-access data in the Human
+Cell Atlas (HCA) [1]_ available in AWS S3, under the auspices of the Open Data
+Sponsorship Program [2]_. The facility was recently enhanced to include
+open-access data from the NHGRI AnVIL project [3]_. 
+
+This specification will be subject to minor changes as part of future
+enhancements to the facility. The ODP registry entries for HCA [4]_ and AnVIL
+[5]_ each specify the name of an S3 bucket that stores the mirrored data for the
+respective project. This specification describes how the data files in those
+buckets are organized and how to access them.
 
 .. [1] https://www.humancellatlas.org/
 .. [2] https://aws.amazon.com/opendata/open-data-sponsorship-program/
+.. [3] https://anvilproject.org/
+.. [4] https://registry.opendata.aws/humancellatlas/
+.. [5] https://registry.opendata.aws/anvilproject/
+
+
+Temporary caveats
+=================
+
+Alias objects are as specified here are currently not implemented.
+
+This work is tracked in https://github.com/DataBiosphere/azul/issues/7073.
+
+The ``azul_mirror_uri`` response property as specififed below will be 
+implemented as of 2026/02/01.
+
+This work is tracked in https://github.com/DataBiosphere/azul/issues/7624.
 
 
 Mirror bucket layout
@@ -34,6 +56,10 @@ hexadecimal form of a hash of the file object's content and ``digest_type`` is
 one of ``sha1``, ``md5`` or ``sha256``, denoting the type of algorithm used to
 derive that hash. Henceforth we'll be referring to the pair of ``digest_type``
 and ``digest_value`` as *digest*.
+
+Any content type associated directly with a file object should be ignored. The
+authoritative source of information about a file's content type(s) is its
+associated info object (see below).
 
 
 Alias objects
@@ -63,10 +89,11 @@ hexadecimal form of a hash of the corresponding file object's content and
 algorithm used to derive that hash. The content of an ``info`` object is JSON of
 the form ``{"$schema":"…", "content-type":…}``.
 
-The ``content-type`` property contains the content type of the file, as defined
-for the HTTP response header of the same name [4]_.
+The ``content-type`` property contains a list of all content types known to be
+associated with the file, as defined for the HTTP response header of the same
+name [6]_.
 
-.. [4] https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Type
+.. [6] https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Type
 
 The ``$schema`` property facilitates future changes to the format of info
 objects. For details see the `Schemas`_ section below.
@@ -76,7 +103,7 @@ Schemas
 =======
 
 The ``$schema`` property of alias and info objects contains, and always will
-contain, the ``http://`` or ``https://`` URL of a JSON schema [3]_ that the
+contain, the ``http://`` or ``https://`` URL of a JSON schema [7]_ that the
 alias and info objects' JSON content conforms to. The last path component of the
 schema URL is, and will always be, of the form ``v${schema_version}.json`` where
 ``schema_version`` is a monotonically increasing integer.
@@ -95,7 +122,7 @@ only assume that a request to the URL yields a valid JSON schema, that the last
 path component encodes the schema version and that different schema versions are
 incompatible to each other.
 
-.. [3] https://json-schema.org/
+.. [7] https://json-schema.org/
 
 
 Constraints and invariants
@@ -118,41 +145,60 @@ checking for the info object first.
 File retrieval procedure
 ========================
 
-A file can be retrieved from the mirror using the S3 REST API, given a certain
-digest, i.e., content hash of the file. There is only a limited set of digest
-types through which a file is accessible in the mirror: at most it will be
-``sha256``, ``sha1`` and ``md5``, but at least one of those. One of these digest
-types, the *primary* one, is used in the key of the file object, and there may
-or may not be alias objects for the other two.
+A file can be retrieved from the mirror using the S3 REST API, given its digest,
+i.e., a hash of the file's content. There is only a limited set of digest types
+through which a file is accessible in the mirror: at most it will be ``sha256``,
+``sha1`` and ``md5``, but at least one of those. One of these digest types, the
+*primary* one, is used in the key of the file object, and there may or may not
+be alias objects for the other two digest types.
 
-Digests of a file can be looked up in the Azul REST API, using the file's name
-or a combination of other metadata properties associated with the file. The Azul
-response indicates a file's primary type of digest. If the mirror doesn't
-contain a file object for the primary digest returned by Azul, it won't contain
-aliases for other digests returned by Azul either, but if Azul returns a primary
-digest for a file, the mirror will eventually include aliases for every other
-digest returned by Azul for that file.
+If you don't already know the digest of the file to be retrieved, one way to
+determine the primary digest of a file is by interrogating the ``GET
+/index/files`` endpoint of the Azul REST API ([8]_, [9]_), given the file's name
+or a combination of other metadata properties associated with the file. The
+response from that endpoint contains the file's mirror URI at
+``hits[].files[].azul_mirror_uri``. The mirror URI is of the form
+``s3://${bucket}/file/${digest_value}.${digest_type}`` where ``digest_type`` and
+``digest_value`` denote the primary digest of the file. If the property
+``azul_mirror_uri`` is absent from the Azul response, the mirror will not
+include that file. If the response property is present, the mirror will very
+likely include the file.
 
-There are two retrieval procedures, depending on whether the content type of the
-file is desired or not, and if the digest is guaranteed to be correct.
+.. [8] https://service.azul.data.humancellatlas.org/
+.. [9] https://service.explore.anvilproject.org/
+
+Alongside the ``azul_mirror_uri`` response property there may be properties
+denoting digests of other types. If the mirror doesn't contain a file object at
+the mirror URI from the ``azul_mirror_uri`` response property, or if the
+``azul_mirror_uri`` property is absent from the response, the mirror won't
+contain aliases for other digests returned by Azul either, but if Azul returns a
+primary digest for a file, the mirror may eventually include aliases for every
+other digest returned by Azul for that file.
+
+There are two retrieval procedures, and their suitability depends on whether the
+content type of the file is desired or not, and whether the digest is guaranteed
+to be correct.
 
 
 Retrieval of just the file content
 ++++++++++++++++++++++++++++++++++
 
-This method is slightly simpler than the one described in the next section but
-it should only be used if the file's content type is not needed, and if it is
-acceptable that, in rare circumstances, the file's actual content doesn't match
-the digest used in the file object's key or in the key of one of its aliases.
+This method is simpler than the one described in the next section but it should
+only be used if the file's content type is not needed, and if it is acceptable
+that, in rare circumstances, the file's actual content doesn't match the digest
+used in the file object's key or in the key of one of its aliases.
 
 Step 1: Try the file object
 ---------------------------
 
-Using the digest, compose the key of the file object. Attempt to retrieve the
-file object. If the digest originated from Azul and Azul denoted it as primary,
-the file object will exist. If the file object does not exist, continue with
-step 2. This can happen if the digest originated from another source or if it is
-unknown whether the digest is the primary one.
+Using one of the digests, compose the key of the file object. Obtain the bucket
+name from one of the ODP registry entries listed at the beginning of this
+document. Alternatively, you can determine the key and bucket from the
+``azul_mirror_uri`` property of responses returned from Azul's ``/index/files``
+endpoint. Attempt to retrieve the file object from the bucket. If this succeeds,
+you are done. If the file object is absent from the bucket and the digest is the
+primary digest (as returned by the Azul ``/index/files`` endpoint), then the
+mirror does not contain the file. Otherwise, proceed to step 2.
 
 Step 2: Try an alias
 --------------------

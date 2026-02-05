@@ -27,9 +27,6 @@ from azul import (
 from azul.auth import (
     Authentication,
 )
-from azul.drs import (
-    DRSClient,
-)
 from azul.http import (
     HasCachedHttpClient,
 )
@@ -92,7 +89,7 @@ class Plugin(RepositoryPlugin[
                      authentication: Authentication | None
                      ) -> list[CannedSourceRef]:
         return [
-            CannedSourceRef(id=self._lookup_source_id(spec), spec=spec)
+            CannedSourceRef(id=self._lookup_source_id(spec), spec=spec, prefix=None)
             for spec in self.sources
         ]
 
@@ -145,10 +142,10 @@ class Plugin(RepositoryPlugin[
 
     def count_bundles(self, source: CannedSourceRef) -> int:
         staging_area = self.staging_area(source.spec.name)
-        if source.spec.prefix is None:
+        if source.prefix is None:
             return len(staging_area.links)
         else:
-            prefix = source.spec.prefix.common
+            prefix = source.prefix.common
             assert prefix == prefix.lower(), source
             return sum(
                 1
@@ -156,8 +153,8 @@ class Plugin(RepositoryPlugin[
                 if links_id.lower().startswith(prefix)
             )
 
-    def count_files(self, source: SimpleSourceSpec) -> int:
-        staging_area = self.staging_area(source.name)
+    def count_files(self, source: CannedSourceRef) -> int:
+        staging_area = self.staging_area(source.spec.name)
         if source.prefix is None:
             return len(staging_area.descriptors)
         else:
@@ -209,10 +206,10 @@ class Plugin(RepositoryPlugin[
         assert prefix == prefix.lower(), prefix
         staging_area = self.staging_area(source.spec.name)
         return [
-            HCAFile.from_descriptor(descriptor.content,
-                                    uuid=file_uuid,
-                                    name=descriptor.content['file_name'],
-                                    drs_uri=None)
+            HCAFile.from_metadata(catalog=self.catalog,
+                                  metadata=staging_area.metadata[file_uuid].content,
+                                  descriptor=descriptor.content,
+                                  drs_uri=None)
             for file_uuid, descriptor in staging_area.descriptors.items()
             if descriptor.content['sha256'].lower().startswith(prefix)
         ]
@@ -275,12 +272,6 @@ class Plugin(RepositoryPlugin[
 
     def file_download_class(self) -> type[RepositoryFileDownload]:
         return CannedFileDownload
-
-    def drs_client(self,
-                   authentication: Authentication | None = None
-                   ) -> DRSClient:
-        assert authentication is None, type(authentication)
-        return DRSClient(http_client=self._http_client)
 
     def validate_version(self, version: str) -> None:
         parse_dcp2_version(version)

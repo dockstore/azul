@@ -41,7 +41,8 @@
                             "~null"
                         ],
                         "apriori_cell_type": [
-                            "~null"
+                            "bar",
+                            "foo"
                         ],
                         "biosample_type": [
                             "~null"
@@ -182,7 +183,7 @@
                         "file_size": 213021639,
                         "file_size_": 213021639,
                         "file_md5sum": [
-                            "vuxgbuCqKZ/fkT9CWTFmIg=="
+                            "beec606ee0aa299fdf913f4259316622"
                         ],
                         "reference_assembly": [
                             "~null"
@@ -196,24 +197,6 @@
                         "version": [
                             "2022-06-01T00:00:00.000000Z"
                         ],
-                        "uuid": [
-                            "15b76f9c-6b46-433f-851d-34e89f1b9ba6"
-                        ],
-                        "size": [
-                            213021639
-                        ],
-                        "size_": [
-                            213021639
-                        ],
-                        "name": [
-                            "307500.merged.matefixed.sorted.markeddups.recal.g.vcf.gz"
-                        ],
-                        "crc32": [
-                            ""
-                        ],
-                        "sha256": [
-                            ""
-                        ],
                         "drs_uri": [
                             "drs://mock_tdr.lan/v1_6c87f0e1-509d-46a4-b845-7584df39263b_1e269f04-4347-4188-b060-1dcc69e71d67"
                         ],
@@ -225,7 +208,9 @@
             "sources": [
                 {
                     "id": "6c87f0e1-509d-46a4-b845-7584df39263b",
-                    "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0"
+                    "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot",
+                    "prefix": "/0",
+                    "type": "azul.terra.TDRSourceRef"
                 }
             ],
             "bundles": [
@@ -272,7 +257,8 @@
                         "biosample_id": "f9d40cf6-37b8-22f3-ce35-0dc614d2452b",
                         "anatomical_site": "~null",
                         "apriori_cell_type": [
-                            "~null"
+                            "bar",
+                            "foo"
                         ],
                         "biosample_type": "~null",
                         "disease": "~null",
@@ -395,19 +381,13 @@
                         "file_format": ".vcf.gz",
                         "file_size": 213021639,
                         "file_size_": 213021639,
-                        "file_md5sum": "vuxgbuCqKZ/fkT9CWTFmIg==",
+                        "file_md5sum": "beec606ee0aa299fdf913f4259316622",
                         "reference_assembly": [
                             "~null"
                         ],
                         "file_name": "307500.merged.matefixed.sorted.markeddups.recal.g.vcf.gz",
                         "is_supplementary": 0,
                         "version": "2022-06-01T00:00:00.000000Z",
-                        "uuid": "15b76f9c-6b46-433f-851d-34e89f1b9ba6",
-                        "size": 213021639,
-                        "size_": 213021639,
-                        "name": "307500.merged.matefixed.sorted.markeddups.recal.g.vcf.gz",
-                        "crc32": "",
-                        "sha256": "",
                         "drs_uri": "drs://mock_tdr.lan/v1_6c87f0e1-509d-46a4-b845-7584df39263b_1e269f04-4347-4188-b060-1dcc69e71d67"
                     }
                 ]
@@ -415,7 +395,9 @@
             "document_id": "1509ef40-d1ba-440d-b298-16b7c173dcd4_826dea02-e274-affe-aabc-eb3db63ad068_2022-06-01T00:00:00.000000Z_exists",
             "source": {
                 "id": "6c87f0e1-509d-46a4-b845-7584df39263b",
-                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0"
+                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot",
+                "prefix": "/0",
+                "type": "azul.terra.TDRSourceRef"
             },
             "bundle_uuid": "826dea02-e274-affe-aabc-eb3db63ad068",
             "bundle_version": "2022-06-01T00:00:00.000000Z",
@@ -435,7 +417,9 @@
             ],
             "source": {
                 "id": "6c87f0e1-509d-46a4-b845-7584df39263b",
-                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0"
+                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot",
+                "prefix": "/0",
+                "type": "azul.terra.TDRSourceRef"
             },
             "contents": {
                 "activity_type": "Sequencing",
@@ -506,7 +490,8 @@
                             "~null"
                         ],
                         "apriori_cell_type": [
-                            "~null"
+                            "bar",
+                            "foo"
                         ],
                         "biosample_type": [
                             "~null"
@@ -640,19 +625,13 @@
                         "file_format": ".vcf.gz",
                         "file_size": 213021639,
                         "file_size_": 213021639,
-                        "file_md5sum": "vuxgbuCqKZ/fkT9CWTFmIg==",
+                        "file_md5sum": "beec606ee0aa299fdf913f4259316622",
                         "reference_assembly": [
                             "~null"
                         ],
                         "file_name": "307500.merged.matefixed.sorted.markeddups.recal.g.vcf.gz",
                         "is_supplementary": 0,
                         "version": "2022-06-01T00:00:00.000000Z",
-                        "uuid": "15b76f9c-6b46-433f-851d-34e89f1b9ba6",
-                        "size": 213021639,
-                        "size_": 213021639,
-                        "name": "307500.merged.matefixed.sorted.markeddups.recal.g.vcf.gz",
-                        "crc32": "",
-                        "sha256": "",
                         "drs_uri": "drs://mock_tdr.lan/v1_6c87f0e1-509d-46a4-b845-7584df39263b_1e269f04-4347-4188-b060-1dcc69e71d67"
                     }
                 ]
@@ -661,7 +640,9 @@
             "sources": [
                 {
                     "id": "6c87f0e1-509d-46a4-b845-7584df39263b",
-                    "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0"
+                    "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot",
+                    "prefix": "/0",
+                    "type": "azul.terra.TDRSourceRef"
                 }
             ],
             "bundles": [
@@ -708,7 +689,8 @@
                         "biosample_id": "f9d40cf6-37b8-22f3-ce35-0dc614d2452b",
                         "anatomical_site": "~null",
                         "apriori_cell_type": [
-                            "~null"
+                            "bar",
+                            "foo"
                         ],
                         "biosample_type": "~null",
                         "disease": "~null",
@@ -831,19 +813,13 @@
                         "file_format": ".vcf.gz",
                         "file_size": 213021639,
                         "file_size_": 213021639,
-                        "file_md5sum": "vuxgbuCqKZ/fkT9CWTFmIg==",
+                        "file_md5sum": "beec606ee0aa299fdf913f4259316622",
                         "reference_assembly": [
                             "~null"
                         ],
                         "file_name": "307500.merged.matefixed.sorted.markeddups.recal.g.vcf.gz",
                         "is_supplementary": 0,
                         "version": "2022-06-01T00:00:00.000000Z",
-                        "uuid": "15b76f9c-6b46-433f-851d-34e89f1b9ba6",
-                        "size": 213021639,
-                        "size_": 213021639,
-                        "name": "307500.merged.matefixed.sorted.markeddups.recal.g.vcf.gz",
-                        "crc32": "",
-                        "sha256": "",
                         "drs_uri": "drs://mock_tdr.lan/v1_6c87f0e1-509d-46a4-b845-7584df39263b_1e269f04-4347-4188-b060-1dcc69e71d67"
                     }
                 ]
@@ -851,7 +827,9 @@
             "document_id": "15b76f9c-6b46-433f-851d-34e89f1b9ba6_826dea02-e274-affe-aabc-eb3db63ad068_2022-06-01T00:00:00.000000Z_exists",
             "source": {
                 "id": "6c87f0e1-509d-46a4-b845-7584df39263b",
-                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0"
+                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot",
+                "prefix": "/0",
+                "type": "azul.terra.TDRSourceRef"
             },
             "bundle_uuid": "826dea02-e274-affe-aabc-eb3db63ad068",
             "bundle_version": "2022-06-01T00:00:00.000000Z",
@@ -860,7 +838,7 @@
     },
     {
         "_index": "azul_v2_nadove4_test_replica",
-        "_id": "anvil_file_15b76f9c-6b46-433f-851d-34e89f1b9ba6_aec7ac65991cc6ea974a7a86fc30ec96c081cfcf",
+        "_id": "anvil_file_15b76f9c-6b46-433f-851d-34e89f1b9ba6_7fd61c786c7deb23d54719db32381147c648f2dd",
         "_score": 1.0,
         "_source": {
             "entity_id": "15b76f9c-6b46-433f-851d-34e89f1b9ba6",
@@ -871,14 +849,16 @@
             ],
             "source": {
                 "id": "6c87f0e1-509d-46a4-b845-7584df39263b",
-                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0"
+                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot",
+                "prefix": "/0",
+                "type": "azul.terra.TDRSourceRef"
             },
             "contents": {
                 "data_modality": [],
                 "datarepo_row_id": "15b76f9c-6b46-433f-851d-34e89f1b9ba6",
                 "file_format": ".vcf.gz",
                 "file_id": "1e269f04-4347-4188-b060-1dcc69e71d67",
-                "file_md5sum": "vuxgbuCqKZ/fkT9CWTFmIg==",
+                "file_md5sum": "beec606ee0aa299fdf913f4259316622",
                 "file_name": "307500.merged.matefixed.sorted.markeddups.recal.g.vcf.gz",
                 "file_ref": "drs://mock_tdr.lan/v1_6c87f0e1-509d-46a4-b845-7584df39263b_1e269f04-4347-4188-b060-1dcc69e71d67",
                 "file_size": 213021639,
@@ -888,9 +868,7 @@
                     "file_inventory:81d16471-97ac-48fe-99a0-73d9ec62c2c0"
                 ],
                 "version": "2022-06-01T00:00:00.000000Z",
-                "drs_uri": "drs://mock_tdr.lan/v1_6c87f0e1-509d-46a4-b845-7584df39263b_1e269f04-4347-4188-b060-1dcc69e71d67",
-                "sha256": "",
-                "crc32": ""
+                "drs_uri": "drs://mock_tdr.lan/v1_6c87f0e1-509d-46a4-b845-7584df39263b_1e269f04-4347-4188-b060-1dcc69e71d67"
             }
         }
     },
@@ -908,7 +886,9 @@
             ],
             "source": {
                 "id": "6c87f0e1-509d-46a4-b845-7584df39263b",
-                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0"
+                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot",
+                "prefix": "/0",
+                "type": "azul.terra.TDRSourceRef"
             },
             "contents": {
                 "datarepo_row_id": "15d85d30-ad4a-4f50-87a8-a27f59dd1b5f",
@@ -987,7 +967,8 @@
                             "~null"
                         ],
                         "apriori_cell_type": [
-                            "~null"
+                            "bar",
+                            "foo"
                         ],
                         "biosample_type": [
                             "~null"
@@ -1122,7 +1103,7 @@
                         "file_size": 213021639,
                         "file_size_": 213021639,
                         "file_md5sum": [
-                            "vuxgbuCqKZ/fkT9CWTFmIg=="
+                            "beec606ee0aa299fdf913f4259316622"
                         ],
                         "reference_assembly": [
                             "~null"
@@ -1135,24 +1116,6 @@
                         ],
                         "version": [
                             "2022-06-01T00:00:00.000000Z"
-                        ],
-                        "uuid": [
-                            "15b76f9c-6b46-433f-851d-34e89f1b9ba6"
-                        ],
-                        "size": [
-                            213021639
-                        ],
-                        "size_": [
-                            213021639
-                        ],
-                        "name": [
-                            "307500.merged.matefixed.sorted.markeddups.recal.g.vcf.gz"
-                        ],
-                        "crc32": [
-                            ""
-                        ],
-                        "sha256": [
-                            ""
                         ],
                         "drs_uri": [
                             "drs://mock_tdr.lan/v1_6c87f0e1-509d-46a4-b845-7584df39263b_1e269f04-4347-4188-b060-1dcc69e71d67"
@@ -1178,7 +1141,7 @@
                         "file_size": 3306845592,
                         "file_size_": 3306845592,
                         "file_md5sum": [
-                            "fNn9e1SovzgOROk3BvH6LQ=="
+                            "7cd9fd7b54a8bf380e44e93706f1fa2d"
                         ],
                         "reference_assembly": [
                             "~null"
@@ -1192,24 +1155,6 @@
                         "version": [
                             "2022-06-01T00:00:00.000000Z"
                         ],
-                        "uuid": [
-                            "3b17377b-16b1-431c-9967-e5d01fc5923f"
-                        ],
-                        "size": [
-                            3306845592
-                        ],
-                        "size_": [
-                            3306845592
-                        ],
-                        "name": [
-                            "307500.merged.matefixed.sorted.markeddups.recal.bam"
-                        ],
-                        "crc32": [
-                            ""
-                        ],
-                        "sha256": [
-                            ""
-                        ],
                         "drs_uri": [
                             "drs://mock_tdr.lan/v1_6c87f0e1-509d-46a4-b845-7584df39263b_8b722e88-8103-49c1-b351-e64fa7c6ab37"
                         ],
@@ -1221,7 +1166,9 @@
             "sources": [
                 {
                     "id": "6c87f0e1-509d-46a4-b845-7584df39263b",
-                    "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0"
+                    "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot",
+                    "prefix": "/0",
+                    "type": "azul.terra.TDRSourceRef"
                 }
             ],
             "bundles": [
@@ -1286,7 +1233,8 @@
                         "biosample_id": "f9d40cf6-37b8-22f3-ce35-0dc614d2452b",
                         "anatomical_site": "~null",
                         "apriori_cell_type": [
-                            "~null"
+                            "bar",
+                            "foo"
                         ],
                         "biosample_type": "~null",
                         "disease": "~null",
@@ -1409,19 +1357,13 @@
                         "file_format": ".vcf.gz",
                         "file_size": 213021639,
                         "file_size_": 213021639,
-                        "file_md5sum": "vuxgbuCqKZ/fkT9CWTFmIg==",
+                        "file_md5sum": "beec606ee0aa299fdf913f4259316622",
                         "reference_assembly": [
                             "~null"
                         ],
                         "file_name": "307500.merged.matefixed.sorted.markeddups.recal.g.vcf.gz",
                         "is_supplementary": 0,
                         "version": "2022-06-01T00:00:00.000000Z",
-                        "uuid": "15b76f9c-6b46-433f-851d-34e89f1b9ba6",
-                        "size": 213021639,
-                        "size_": 213021639,
-                        "name": "307500.merged.matefixed.sorted.markeddups.recal.g.vcf.gz",
-                        "crc32": "",
-                        "sha256": "",
                         "drs_uri": "drs://mock_tdr.lan/v1_6c87f0e1-509d-46a4-b845-7584df39263b_1e269f04-4347-4188-b060-1dcc69e71d67"
                     },
                     {
@@ -1436,19 +1378,13 @@
                         "file_format": ".bam",
                         "file_size": 3306845592,
                         "file_size_": 3306845592,
-                        "file_md5sum": "fNn9e1SovzgOROk3BvH6LQ==",
+                        "file_md5sum": "7cd9fd7b54a8bf380e44e93706f1fa2d",
                         "reference_assembly": [
                             "~null"
                         ],
                         "file_name": "307500.merged.matefixed.sorted.markeddups.recal.bam",
                         "is_supplementary": 0,
                         "version": "2022-06-01T00:00:00.000000Z",
-                        "uuid": "3b17377b-16b1-431c-9967-e5d01fc5923f",
-                        "size": 3306845592,
-                        "size_": 3306845592,
-                        "name": "307500.merged.matefixed.sorted.markeddups.recal.bam",
-                        "crc32": "",
-                        "sha256": "",
                         "drs_uri": "drs://mock_tdr.lan/v1_6c87f0e1-509d-46a4-b845-7584df39263b_8b722e88-8103-49c1-b351-e64fa7c6ab37"
                     }
                 ]
@@ -1456,7 +1392,9 @@
             "document_id": "2370f948-2783-4eb6-afea-e022897f4dcf_826dea02-e274-affe-aabc-eb3db63ad068_2022-06-01T00:00:00.000000Z_exists",
             "source": {
                 "id": "6c87f0e1-509d-46a4-b845-7584df39263b",
-                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0"
+                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot",
+                "prefix": "/0",
+                "type": "azul.terra.TDRSourceRef"
             },
             "bundle_uuid": "826dea02-e274-affe-aabc-eb3db63ad068",
             "bundle_version": "2022-06-01T00:00:00.000000Z",
@@ -1475,7 +1413,9 @@
             ],
             "source": {
                 "id": "6c87f0e1-509d-46a4-b845-7584df39263b",
-                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0"
+                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot",
+                "prefix": "/0",
+                "type": "azul.terra.TDRSourceRef"
             },
             "contents": {
                 "consent_group": [
@@ -1552,7 +1492,8 @@
                             "~null"
                         ],
                         "apriori_cell_type": [
-                            "~null"
+                            "bar",
+                            "foo"
                         ],
                         "biosample_type": [
                             "~null"
@@ -1686,19 +1627,13 @@
                         "file_format": ".bam",
                         "file_size": 3306845592,
                         "file_size_": 3306845592,
-                        "file_md5sum": "fNn9e1SovzgOROk3BvH6LQ==",
+                        "file_md5sum": "7cd9fd7b54a8bf380e44e93706f1fa2d",
                         "reference_assembly": [
                             "~null"
                         ],
                         "file_name": "307500.merged.matefixed.sorted.markeddups.recal.bam",
                         "is_supplementary": 0,
                         "version": "2022-06-01T00:00:00.000000Z",
-                        "uuid": "3b17377b-16b1-431c-9967-e5d01fc5923f",
-                        "size": 3306845592,
-                        "size_": 3306845592,
-                        "name": "307500.merged.matefixed.sorted.markeddups.recal.bam",
-                        "crc32": "",
-                        "sha256": "",
                         "drs_uri": "drs://mock_tdr.lan/v1_6c87f0e1-509d-46a4-b845-7584df39263b_8b722e88-8103-49c1-b351-e64fa7c6ab37"
                     }
                 ]
@@ -1707,7 +1642,9 @@
             "sources": [
                 {
                     "id": "6c87f0e1-509d-46a4-b845-7584df39263b",
-                    "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0"
+                    "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot",
+                    "prefix": "/0",
+                    "type": "azul.terra.TDRSourceRef"
                 }
             ],
             "bundles": [
@@ -1720,7 +1657,7 @@
     },
     {
         "_index": "azul_v2_nadove4_test_replica",
-        "_id": "anvil_file_3b17377b-16b1-431c-9967-e5d01fc5923f_669b7664f4b6865a0604285f923995acaf84b4ab",
+        "_id": "anvil_file_3b17377b-16b1-431c-9967-e5d01fc5923f_4e91ba6c986387ca2552997338b6b796f625553c",
         "_score": 1.0,
         "_source": {
             "entity_id": "3b17377b-16b1-431c-9967-e5d01fc5923f",
@@ -1729,7 +1666,7 @@
                 "datarepo_row_id": "3b17377b-16b1-431c-9967-e5d01fc5923f",
                 "file_format": ".bam",
                 "file_id": "8b722e88-8103-49c1-b351-e64fa7c6ab37",
-                "file_md5sum": "fNn9e1SovzgOROk3BvH6LQ==",
+                "file_md5sum": "7cd9fd7b54a8bf380e44e93706f1fa2d",
                 "file_name": "307500.merged.matefixed.sorted.markeddups.recal.bam",
                 "file_ref": "drs://mock_tdr.lan/v1_6c87f0e1-509d-46a4-b845-7584df39263b_8b722e88-8103-49c1-b351-e64fa7c6ab37",
                 "file_size": 3306845592,
@@ -1739,14 +1676,14 @@
                     "file_inventory:9658d94a-511d-4b49-82c3-d0cb07e0cff2"
                 ],
                 "version": "2022-06-01T00:00:00.000000Z",
-                "drs_uri": "drs://mock_tdr.lan/v1_6c87f0e1-509d-46a4-b845-7584df39263b_8b722e88-8103-49c1-b351-e64fa7c6ab37",
-                "sha256": "",
-                "crc32": ""
+                "drs_uri": "drs://mock_tdr.lan/v1_6c87f0e1-509d-46a4-b845-7584df39263b_8b722e88-8103-49c1-b351-e64fa7c6ab37"
             },
             "replica_type": "anvil_file",
             "source": {
                 "id": "6c87f0e1-509d-46a4-b845-7584df39263b",
-                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0"
+                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot",
+                "prefix": "/0",
+                "type": "azul.terra.TDRSourceRef"
             },
             "hub_ids": [
                 "2370f948-2783-4eb6-afea-e022897f4dcf",
@@ -1790,7 +1727,8 @@
                         "biosample_id": "f9d40cf6-37b8-22f3-ce35-0dc614d2452b",
                         "anatomical_site": "~null",
                         "apriori_cell_type": [
-                            "~null"
+                            "bar",
+                            "foo"
                         ],
                         "biosample_type": "~null",
                         "disease": "~null",
@@ -1913,19 +1851,13 @@
                         "file_format": ".bam",
                         "file_size": 3306845592,
                         "file_size_": 3306845592,
-                        "file_md5sum": "fNn9e1SovzgOROk3BvH6LQ==",
+                        "file_md5sum": "7cd9fd7b54a8bf380e44e93706f1fa2d",
                         "reference_assembly": [
                             "~null"
                         ],
                         "file_name": "307500.merged.matefixed.sorted.markeddups.recal.bam",
                         "is_supplementary": 0,
                         "version": "2022-06-01T00:00:00.000000Z",
-                        "uuid": "3b17377b-16b1-431c-9967-e5d01fc5923f",
-                        "size": 3306845592,
-                        "size_": 3306845592,
-                        "name": "307500.merged.matefixed.sorted.markeddups.recal.bam",
-                        "crc32": "",
-                        "sha256": "",
                         "drs_uri": "drs://mock_tdr.lan/v1_6c87f0e1-509d-46a4-b845-7584df39263b_8b722e88-8103-49c1-b351-e64fa7c6ab37"
                     }
                 ]
@@ -1933,7 +1865,9 @@
             "document_id": "3b17377b-16b1-431c-9967-e5d01fc5923f_826dea02-e274-affe-aabc-eb3db63ad068_2022-06-01T00:00:00.000000Z_exists",
             "source": {
                 "id": "6c87f0e1-509d-46a4-b845-7584df39263b",
-                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0"
+                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot",
+                "prefix": "/0",
+                "type": "azul.terra.TDRSourceRef"
             },
             "bundle_uuid": "826dea02-e274-affe-aabc-eb3db63ad068",
             "bundle_version": "2022-06-01T00:00:00.000000Z",
@@ -1982,7 +1916,8 @@
                             "~null"
                         ],
                         "apriori_cell_type": [
-                            "~null"
+                            "bar",
+                            "foo"
                         ],
                         "biosample_type": [
                             "~null"
@@ -2123,7 +2058,7 @@
                         "file_size": 3306845592,
                         "file_size_": 3306845592,
                         "file_md5sum": [
-                            "fNn9e1SovzgOROk3BvH6LQ=="
+                            "7cd9fd7b54a8bf380e44e93706f1fa2d"
                         ],
                         "reference_assembly": [
                             "~null"
@@ -2137,24 +2072,6 @@
                         "version": [
                             "2022-06-01T00:00:00.000000Z"
                         ],
-                        "uuid": [
-                            "3b17377b-16b1-431c-9967-e5d01fc5923f"
-                        ],
-                        "size": [
-                            3306845592
-                        ],
-                        "size_": [
-                            3306845592
-                        ],
-                        "name": [
-                            "307500.merged.matefixed.sorted.markeddups.recal.bam"
-                        ],
-                        "crc32": [
-                            ""
-                        ],
-                        "sha256": [
-                            ""
-                        ],
                         "drs_uri": [
                             "drs://mock_tdr.lan/v1_6c87f0e1-509d-46a4-b845-7584df39263b_8b722e88-8103-49c1-b351-e64fa7c6ab37"
                         ],
@@ -2166,7 +2083,9 @@
             "sources": [
                 {
                     "id": "6c87f0e1-509d-46a4-b845-7584df39263b",
-                    "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0"
+                    "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot",
+                    "prefix": "/0",
+                    "type": "azul.terra.TDRSourceRef"
                 }
             ],
             "bundles": [
@@ -2190,7 +2109,9 @@
             ],
             "source": {
                 "id": "6c87f0e1-509d-46a4-b845-7584df39263b",
-                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0"
+                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot",
+                "prefix": "/0",
+                "type": "azul.terra.TDRSourceRef"
             },
             "contents": {
                 "activity_type": "Sequencing",
@@ -2247,7 +2168,8 @@
                         "biosample_id": "f9d40cf6-37b8-22f3-ce35-0dc614d2452b",
                         "anatomical_site": "~null",
                         "apriori_cell_type": [
-                            "~null"
+                            "bar",
+                            "foo"
                         ],
                         "biosample_type": "~null",
                         "disease": "~null",
@@ -2370,19 +2292,13 @@
                         "file_format": ".bam",
                         "file_size": 3306845592,
                         "file_size_": 3306845592,
-                        "file_md5sum": "fNn9e1SovzgOROk3BvH6LQ==",
+                        "file_md5sum": "7cd9fd7b54a8bf380e44e93706f1fa2d",
                         "reference_assembly": [
                             "~null"
                         ],
                         "file_name": "307500.merged.matefixed.sorted.markeddups.recal.bam",
                         "is_supplementary": 0,
                         "version": "2022-06-01T00:00:00.000000Z",
-                        "uuid": "3b17377b-16b1-431c-9967-e5d01fc5923f",
-                        "size": 3306845592,
-                        "size_": 3306845592,
-                        "name": "307500.merged.matefixed.sorted.markeddups.recal.bam",
-                        "crc32": "",
-                        "sha256": "",
                         "drs_uri": "drs://mock_tdr.lan/v1_6c87f0e1-509d-46a4-b845-7584df39263b_8b722e88-8103-49c1-b351-e64fa7c6ab37"
                     }
                 ]
@@ -2390,7 +2306,9 @@
             "document_id": "816e364e-1193-4e5b-a91a-14e4b009157c_826dea02-e274-affe-aabc-eb3db63ad068_2022-06-01T00:00:00.000000Z_exists",
             "source": {
                 "id": "6c87f0e1-509d-46a4-b845-7584df39263b",
-                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0"
+                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot",
+                "prefix": "/0",
+                "type": "azul.terra.TDRSourceRef"
             },
             "bundle_uuid": "826dea02-e274-affe-aabc-eb3db63ad068",
             "bundle_version": "2022-06-01T00:00:00.000000Z",
@@ -2444,7 +2362,8 @@
                         "biosample_id": "f9d40cf6-37b8-22f3-ce35-0dc614d2452b",
                         "anatomical_site": "~null",
                         "apriori_cell_type": [
-                            "~null"
+                            "bar",
+                            "foo"
                         ],
                         "biosample_type": "~null",
                         "disease": "~null",
@@ -2577,7 +2496,7 @@
                         "file_size": 213021639,
                         "file_size_": 213021639,
                         "file_md5sum": [
-                            "vuxgbuCqKZ/fkT9CWTFmIg=="
+                            "beec606ee0aa299fdf913f4259316622"
                         ],
                         "reference_assembly": [
                             "~null"
@@ -2590,24 +2509,6 @@
                         ],
                         "version": [
                             "2022-06-01T00:00:00.000000Z"
-                        ],
-                        "uuid": [
-                            "15b76f9c-6b46-433f-851d-34e89f1b9ba6"
-                        ],
-                        "size": [
-                            213021639
-                        ],
-                        "size_": [
-                            213021639
-                        ],
-                        "name": [
-                            "307500.merged.matefixed.sorted.markeddups.recal.g.vcf.gz"
-                        ],
-                        "crc32": [
-                            ""
-                        ],
-                        "sha256": [
-                            ""
                         ],
                         "drs_uri": [
                             "drs://mock_tdr.lan/v1_6c87f0e1-509d-46a4-b845-7584df39263b_1e269f04-4347-4188-b060-1dcc69e71d67"
@@ -2633,7 +2534,7 @@
                         "file_size": 3306845592,
                         "file_size_": 3306845592,
                         "file_md5sum": [
-                            "fNn9e1SovzgOROk3BvH6LQ=="
+                            "7cd9fd7b54a8bf380e44e93706f1fa2d"
                         ],
                         "reference_assembly": [
                             "~null"
@@ -2647,24 +2548,7 @@
                         "version": [
                             "2022-06-01T00:00:00.000000Z"
                         ],
-                        "uuid": [
-                            "3b17377b-16b1-431c-9967-e5d01fc5923f"
-                        ],
-                        "size": [
-                            3306845592
-                        ],
-                        "size_": [
-                            3306845592
-                        ],
-                        "name": [
-                            "307500.merged.matefixed.sorted.markeddups.recal.bam"
-                        ],
-                        "crc32": [
-                            ""
-                        ],
-                        "sha256": [
-                            ""
-                        ],
+
                         "drs_uri": [
                             "drs://mock_tdr.lan/v1_6c87f0e1-509d-46a4-b845-7584df39263b_8b722e88-8103-49c1-b351-e64fa7c6ab37"
                         ],
@@ -2676,7 +2560,9 @@
             "sources": [
                 {
                     "id": "6c87f0e1-509d-46a4-b845-7584df39263b",
-                    "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0"
+                    "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot",
+                    "prefix": "/0",
+                    "type": "azul.terra.TDRSourceRef"
                 }
             ],
             "bundles": [
@@ -2741,7 +2627,8 @@
                         "biosample_id": "f9d40cf6-37b8-22f3-ce35-0dc614d2452b",
                         "anatomical_site": "~null",
                         "apriori_cell_type": [
-                            "~null"
+                            "bar",
+                            "foo"
                         ],
                         "biosample_type": "~null",
                         "disease": "~null",
@@ -2864,19 +2751,13 @@
                         "file_format": ".vcf.gz",
                         "file_size": 213021639,
                         "file_size_": 213021639,
-                        "file_md5sum": "vuxgbuCqKZ/fkT9CWTFmIg==",
+                        "file_md5sum": "beec606ee0aa299fdf913f4259316622",
                         "reference_assembly": [
                             "~null"
                         ],
                         "file_name": "307500.merged.matefixed.sorted.markeddups.recal.g.vcf.gz",
                         "is_supplementary": 0,
                         "version": "2022-06-01T00:00:00.000000Z",
-                        "uuid": "15b76f9c-6b46-433f-851d-34e89f1b9ba6",
-                        "size": 213021639,
-                        "size_": 213021639,
-                        "name": "307500.merged.matefixed.sorted.markeddups.recal.g.vcf.gz",
-                        "crc32": "",
-                        "sha256": "",
                         "drs_uri": "drs://mock_tdr.lan/v1_6c87f0e1-509d-46a4-b845-7584df39263b_1e269f04-4347-4188-b060-1dcc69e71d67"
                     },
                     {
@@ -2891,19 +2772,13 @@
                         "file_format": ".bam",
                         "file_size": 3306845592,
                         "file_size_": 3306845592,
-                        "file_md5sum": "fNn9e1SovzgOROk3BvH6LQ==",
+                        "file_md5sum": "7cd9fd7b54a8bf380e44e93706f1fa2d",
                         "reference_assembly": [
                             "~null"
                         ],
                         "file_name": "307500.merged.matefixed.sorted.markeddups.recal.bam",
                         "is_supplementary": 0,
                         "version": "2022-06-01T00:00:00.000000Z",
-                        "uuid": "3b17377b-16b1-431c-9967-e5d01fc5923f",
-                        "size": 3306845592,
-                        "size_": 3306845592,
-                        "name": "307500.merged.matefixed.sorted.markeddups.recal.bam",
-                        "crc32": "",
-                        "sha256": "",
                         "drs_uri": "drs://mock_tdr.lan/v1_6c87f0e1-509d-46a4-b845-7584df39263b_8b722e88-8103-49c1-b351-e64fa7c6ab37"
                     }
                 ]
@@ -2911,7 +2786,9 @@
             "document_id": "826dea02-e274-4ffe-aabc-eb3db63ad068_826dea02-e274-affe-aabc-eb3db63ad068_2022-06-01T00:00:00.000000Z_exists",
             "source": {
                 "id": "6c87f0e1-509d-46a4-b845-7584df39263b",
-                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0"
+                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot",
+                "prefix": "/0",
+                "type": "azul.terra.TDRSourceRef"
             },
             "bundle_uuid": "826dea02-e274-affe-aabc-eb3db63ad068",
             "bundle_version": "2022-06-01T00:00:00.000000Z",
@@ -2920,7 +2797,7 @@
     },
     {
         "_index": "azul_v2_nadove4_test_replica",
-        "_id": "anvil_biosample_826dea02-e274-4ffe-aabc-eb3db63ad068_52f78e49c9a6e761dfd87e0d5e719d4e0099b80c",
+        "_id": "anvil_biosample_826dea02-e274-4ffe-aabc-eb3db63ad068_f32b94c9a42264f7b1e9869215ca648f75558b2e",
         "_score": 1.0,
         "_source": {
             "entity_id": "826dea02-e274-4ffe-aabc-eb3db63ad068",
@@ -2932,11 +2809,16 @@
             ],
             "source": {
                 "id": "6c87f0e1-509d-46a4-b845-7584df39263b",
-                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0"
+                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot",
+                "prefix": "/0",
+                "type": "azul.terra.TDRSourceRef"
             },
             "contents": {
                 "anatomical_site": null,
-                "apriori_cell_type": [],
+                "apriori_cell_type": [
+                    "bar",
+                    "foo"
+                ],
                 "biosample_id": "f9d40cf6-37b8-22f3-ce35-0dc614d2452b",
                 "biosample_type": null,
                 "datarepo_row_id": "826dea02-e274-4ffe-aabc-eb3db63ad068",
@@ -3010,7 +2892,8 @@
                             "~null"
                         ],
                         "apriori_cell_type": [
-                            "~null"
+                            "bar",
+                            "foo"
                         ],
                         "biosample_type": [
                             "~null"
@@ -3151,7 +3034,7 @@
                         "file_size": 213021639,
                         "file_size_": 213021639,
                         "file_md5sum": [
-                            "vuxgbuCqKZ/fkT9CWTFmIg=="
+                            "beec606ee0aa299fdf913f4259316622"
                         ],
                         "reference_assembly": [
                             "~null"
@@ -3164,24 +3047,6 @@
                         ],
                         "version": [
                             "2022-06-01T00:00:00.000000Z"
-                        ],
-                        "uuid": [
-                            "15b76f9c-6b46-433f-851d-34e89f1b9ba6"
-                        ],
-                        "size": [
-                            213021639
-                        ],
-                        "size_": [
-                            213021639
-                        ],
-                        "name": [
-                            "307500.merged.matefixed.sorted.markeddups.recal.g.vcf.gz"
-                        ],
-                        "crc32": [
-                            ""
-                        ],
-                        "sha256": [
-                            ""
                         ],
                         "drs_uri": [
                             "drs://mock_tdr.lan/v1_6c87f0e1-509d-46a4-b845-7584df39263b_1e269f04-4347-4188-b060-1dcc69e71d67"
@@ -3207,7 +3072,7 @@
                         "file_size": 3306845592,
                         "file_size_": 3306845592,
                         "file_md5sum": [
-                            "fNn9e1SovzgOROk3BvH6LQ=="
+                            "7cd9fd7b54a8bf380e44e93706f1fa2d"
                         ],
                         "reference_assembly": [
                             "~null"
@@ -3221,24 +3086,6 @@
                         "version": [
                             "2022-06-01T00:00:00.000000Z"
                         ],
-                        "uuid": [
-                            "3b17377b-16b1-431c-9967-e5d01fc5923f"
-                        ],
-                        "size": [
-                            3306845592
-                        ],
-                        "size_": [
-                            3306845592
-                        ],
-                        "name": [
-                            "307500.merged.matefixed.sorted.markeddups.recal.bam"
-                        ],
-                        "crc32": [
-                            ""
-                        ],
-                        "sha256": [
-                            ""
-                        ],
                         "drs_uri": [
                             "drs://mock_tdr.lan/v1_6c87f0e1-509d-46a4-b845-7584df39263b_8b722e88-8103-49c1-b351-e64fa7c6ab37"
                         ],
@@ -3250,7 +3097,9 @@
             "sources": [
                 {
                     "id": "6c87f0e1-509d-46a4-b845-7584df39263b",
-                    "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0"
+                    "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot",
+                    "prefix": "/0",
+                    "type": "azul.terra.TDRSourceRef"
                 }
             ],
             "bundles": [
@@ -3315,7 +3164,8 @@
                         "biosample_id": "f9d40cf6-37b8-22f3-ce35-0dc614d2452b",
                         "anatomical_site": "~null",
                         "apriori_cell_type": [
-                            "~null"
+                            "bar",
+                            "foo"
                         ],
                         "biosample_type": "~null",
                         "disease": "~null",
@@ -3438,19 +3288,13 @@
                         "file_format": ".vcf.gz",
                         "file_size": 213021639,
                         "file_size_": 213021639,
-                        "file_md5sum": "vuxgbuCqKZ/fkT9CWTFmIg==",
+                        "file_md5sum": "beec606ee0aa299fdf913f4259316622",
                         "reference_assembly": [
                             "~null"
                         ],
                         "file_name": "307500.merged.matefixed.sorted.markeddups.recal.g.vcf.gz",
                         "is_supplementary": 0,
                         "version": "2022-06-01T00:00:00.000000Z",
-                        "uuid": "15b76f9c-6b46-433f-851d-34e89f1b9ba6",
-                        "size": 213021639,
-                        "size_": 213021639,
-                        "name": "307500.merged.matefixed.sorted.markeddups.recal.g.vcf.gz",
-                        "crc32": "",
-                        "sha256": "",
                         "drs_uri": "drs://mock_tdr.lan/v1_6c87f0e1-509d-46a4-b845-7584df39263b_1e269f04-4347-4188-b060-1dcc69e71d67"
                     },
                     {
@@ -3465,19 +3309,13 @@
                         "file_format": ".bam",
                         "file_size": 3306845592,
                         "file_size_": 3306845592,
-                        "file_md5sum": "fNn9e1SovzgOROk3BvH6LQ==",
+                        "file_md5sum": "7cd9fd7b54a8bf380e44e93706f1fa2d",
                         "reference_assembly": [
                             "~null"
                         ],
                         "file_name": "307500.merged.matefixed.sorted.markeddups.recal.bam",
                         "is_supplementary": 0,
                         "version": "2022-06-01T00:00:00.000000Z",
-                        "uuid": "3b17377b-16b1-431c-9967-e5d01fc5923f",
-                        "size": 3306845592,
-                        "size_": 3306845592,
-                        "name": "307500.merged.matefixed.sorted.markeddups.recal.bam",
-                        "crc32": "",
-                        "sha256": "",
                         "drs_uri": "drs://mock_tdr.lan/v1_6c87f0e1-509d-46a4-b845-7584df39263b_8b722e88-8103-49c1-b351-e64fa7c6ab37"
                     }
                 ]
@@ -3485,7 +3323,9 @@
             "document_id": "826dea02-e274-affe-aabc-eb3db63ad068_826dea02-e274-affe-aabc-eb3db63ad068_2022-06-01T00:00:00.000000Z_exists",
             "source": {
                 "id": "6c87f0e1-509d-46a4-b845-7584df39263b",
-                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0"
+                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot",
+                "prefix": "/0",
+                "type": "azul.terra.TDRSourceRef"
             },
             "bundle_uuid": "826dea02-e274-affe-aabc-eb3db63ad068",
             "bundle_version": "2022-06-01T00:00:00.000000Z",
@@ -3506,7 +3346,9 @@
             ],
             "source": {
                 "id": "6c87f0e1-509d-46a4-b845-7584df39263b",
-                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0"
+                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot",
+                "prefix": "/0",
+                "type": "azul.terra.TDRSourceRef"
             },
             "contents": {
                 "datarepo_row_id": "939a4bd3-86ed-4a8a-81f4-fbe0ee673461",
@@ -3585,7 +3427,8 @@
                             "~null"
                         ],
                         "apriori_cell_type": [
-                            "~null"
+                            "bar",
+                            "foo"
                         ],
                         "biosample_type": [
                             "~null"
@@ -3718,7 +3561,7 @@
                         "file_size": 213021639,
                         "file_size_": 213021639,
                         "file_md5sum": [
-                            "vuxgbuCqKZ/fkT9CWTFmIg=="
+                            "beec606ee0aa299fdf913f4259316622"
                         ],
                         "reference_assembly": [
                             "~null"
@@ -3731,24 +3574,6 @@
                         ],
                         "version": [
                             "2022-06-01T00:00:00.000000Z"
-                        ],
-                        "uuid": [
-                            "15b76f9c-6b46-433f-851d-34e89f1b9ba6"
-                        ],
-                        "size": [
-                            213021639
-                        ],
-                        "size_": [
-                            213021639
-                        ],
-                        "name": [
-                            "307500.merged.matefixed.sorted.markeddups.recal.g.vcf.gz"
-                        ],
-                        "crc32": [
-                            ""
-                        ],
-                        "sha256": [
-                            ""
                         ],
                         "drs_uri": [
                             "drs://mock_tdr.lan/v1_6c87f0e1-509d-46a4-b845-7584df39263b_1e269f04-4347-4188-b060-1dcc69e71d67"
@@ -3774,7 +3599,7 @@
                         "file_size": 3306845592,
                         "file_size_": 3306845592,
                         "file_md5sum": [
-                            "fNn9e1SovzgOROk3BvH6LQ=="
+                            "7cd9fd7b54a8bf380e44e93706f1fa2d"
                         ],
                         "reference_assembly": [
                             "~null"
@@ -3788,24 +3613,6 @@
                         "version": [
                             "2022-06-01T00:00:00.000000Z"
                         ],
-                        "uuid": [
-                            "3b17377b-16b1-431c-9967-e5d01fc5923f"
-                        ],
-                        "size": [
-                            3306845592
-                        ],
-                        "size_": [
-                            3306845592
-                        ],
-                        "name": [
-                            "307500.merged.matefixed.sorted.markeddups.recal.bam"
-                        ],
-                        "crc32": [
-                            ""
-                        ],
-                        "sha256": [
-                            ""
-                        ],
                         "drs_uri": [
                             "drs://mock_tdr.lan/v1_6c87f0e1-509d-46a4-b845-7584df39263b_8b722e88-8103-49c1-b351-e64fa7c6ab37"
                         ],
@@ -3817,7 +3624,9 @@
             "sources": [
                 {
                     "id": "6c87f0e1-509d-46a4-b845-7584df39263b",
-                    "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0"
+                    "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot",
+                    "prefix": "/0",
+                    "type": "azul.terra.TDRSourceRef"
                 }
             ],
             "bundles": [
@@ -3882,7 +3691,8 @@
                         "biosample_id": "f9d40cf6-37b8-22f3-ce35-0dc614d2452b",
                         "anatomical_site": "~null",
                         "apriori_cell_type": [
-                            "~null"
+                            "bar",
+                            "foo"
                         ],
                         "biosample_type": "~null",
                         "disease": "~null",
@@ -4005,19 +3815,13 @@
                         "file_format": ".vcf.gz",
                         "file_size": 213021639,
                         "file_size_": 213021639,
-                        "file_md5sum": "vuxgbuCqKZ/fkT9CWTFmIg==",
+                        "file_md5sum": "beec606ee0aa299fdf913f4259316622",
                         "reference_assembly": [
                             "~null"
                         ],
                         "file_name": "307500.merged.matefixed.sorted.markeddups.recal.g.vcf.gz",
                         "is_supplementary": 0,
                         "version": "2022-06-01T00:00:00.000000Z",
-                        "uuid": "15b76f9c-6b46-433f-851d-34e89f1b9ba6",
-                        "size": 213021639,
-                        "size_": 213021639,
-                        "name": "307500.merged.matefixed.sorted.markeddups.recal.g.vcf.gz",
-                        "crc32": "",
-                        "sha256": "",
                         "drs_uri": "drs://mock_tdr.lan/v1_6c87f0e1-509d-46a4-b845-7584df39263b_1e269f04-4347-4188-b060-1dcc69e71d67"
                     },
                     {
@@ -4032,19 +3836,13 @@
                         "file_format": ".bam",
                         "file_size": 3306845592,
                         "file_size_": 3306845592,
-                        "file_md5sum": "fNn9e1SovzgOROk3BvH6LQ==",
+                        "file_md5sum": "7cd9fd7b54a8bf380e44e93706f1fa2d",
                         "reference_assembly": [
                             "~null"
                         ],
                         "file_name": "307500.merged.matefixed.sorted.markeddups.recal.bam",
                         "is_supplementary": 0,
                         "version": "2022-06-01T00:00:00.000000Z",
-                        "uuid": "3b17377b-16b1-431c-9967-e5d01fc5923f",
-                        "size": 3306845592,
-                        "size_": 3306845592,
-                        "name": "307500.merged.matefixed.sorted.markeddups.recal.bam",
-                        "crc32": "",
-                        "sha256": "",
                         "drs_uri": "drs://mock_tdr.lan/v1_6c87f0e1-509d-46a4-b845-7584df39263b_8b722e88-8103-49c1-b351-e64fa7c6ab37"
                     }
                 ]
@@ -4052,7 +3850,9 @@
             "document_id": "bfd991f2-2797-4083-972a-da7c6d7f1b2e_826dea02-e274-affe-aabc-eb3db63ad068_2022-06-01T00:00:00.000000Z_exists",
             "source": {
                 "id": "6c87f0e1-509d-46a4-b845-7584df39263b",
-                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0"
+                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot",
+                "prefix": "/0",
+                "type": "azul.terra.TDRSourceRef"
             },
             "bundle_uuid": "826dea02-e274-affe-aabc-eb3db63ad068",
             "bundle_version": "2022-06-01T00:00:00.000000Z",
@@ -4083,7 +3883,9 @@
             "replica_type": "anvil_donor",
             "source": {
                 "id": "6c87f0e1-509d-46a4-b845-7584df39263b",
-                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0"
+                "spec": "tdr:bigquery:gcp:test_anvil_project:anvil_snapshot",
+                "prefix": "/0",
+                "type": "azul.terra.TDRSourceRef"
             },
             "hub_ids": [
                 "15b76f9c-6b46-433f-851d-34e89f1b9ba6",

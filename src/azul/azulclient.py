@@ -8,9 +8,6 @@ from concurrent.futures import (
     Future,
     ThreadPoolExecutor,
 )
-from enum import (
-    auto,
-)
 import fnmatch
 from functools import (
     partial,
@@ -21,13 +18,13 @@ from pprint import (
 )
 from typing import (
     AbstractSet,
-    cast,
 )
 import uuid
 
 import attrs
 import requests
 from urllib3 import (
+    BaseHTTPResponse,
     HTTPResponse,
 )
 from urllib3.exceptions import (
@@ -37,11 +34,9 @@ from urllib3.exceptions import (
 from azul import (
     CatalogName,
     R,
+    cache,
     cached_property,
     config,
-)
-from azul.deployment import (
-    aws,
 )
 from azul.es import (
     ESClientFactory,
@@ -53,7 +48,7 @@ from azul.http import (
     HasCachedHttpClient,
 )
 from azul.indexer import (
-    SourceRef,
+    SourceConfig,
     SourceSpec,
 )
 from azul.indexer.index_queue_service import (
@@ -65,15 +60,15 @@ from azul.indexer.index_repository_service import (
 from azul.indexer.index_service import (
     IndexService,
 )
+from azul.indexer.mirror_service import (
+    BaseMirrorService,
+)
 from azul.plugins import (
     MetadataPlugin,
     RepositoryPlugin,
 )
 from azul.queues import (
-    Action,
     Queues,
-    SQSFifoMessage,
-    SQSMessage,
 )
 from azul.types import (
     JSON,
@@ -81,14 +76,6 @@ from azul.types import (
 )
 
 log = logging.getLogger(__name__)
-
-
-class MirrorAction(Action):
-    mirror_source = auto()
-    mirror_partition = auto()
-    mirror_file = auto()
-    mirror_part = auto()
-    finalize_file = auto()
 
 
 @attrs.frozen(kw_only=True)
@@ -117,18 +104,9 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
     def metadata_plugin(self, catalog: CatalogName) -> MetadataPlugin:
         return self.index_service.metadata_plugin(catalog)
 
-    def mirror_source_message(self,
-                              catalog: CatalogName,
-                              source: SourceRef
-                              ) -> SQSFifoMessage:
-        return SQSFifoMessage(
-            body={
-                'action': MirrorAction.mirror_source.to_json(),
-                'catalog': catalog,
-                'source': cast(JSON, source.to_json()),
-            },
-            group_id=source.id
-        )
+    @cache
+    def mirror_service(self, catalog: CatalogName) -> BaseMirrorService:
+        return BaseMirrorService(catalog=catalog)
 
     def local_reindex(self, catalog: CatalogName, prefix: str) -> int:
         service = self.index_repository_service
@@ -141,7 +119,7 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
                 'transaction_id': str(uuid.uuid4()),
                 'bundle_fqid': bundle_fqid.to_json()
             }
-            for source in map(plugin.resolve_source, config.sources(catalog))
+            for source in map(plugin.resolve_source, plugin.sources)
             for bundle_fqid in service.list_bundles(catalog, source, prefix)
         ]
         self.index(catalog, notifications)
@@ -156,7 +134,7 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
         missing = []
         indexed = 0
         total = 0
-        path = (catalog, 'delete' if delete else 'add')
+        path = (catalog, 'bundles')
         indexer_url = config.indexer_endpoint.set(path=path)
 
         def attempt(notification: JSON,
@@ -168,9 +146,12 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
             # We want to send the request with urllib3 directly but HMAC
             # signing is only available for Requests, so we need to prepare a
             # request, sign it and then unpack it again before calling urllib3.
-            request = requests.Request('POST', str(indexer_url), json=notification)
+            request = requests.Request(method='DELETE' if delete else 'POST',
+                                       url=str(indexer_url),
+                                       json=notification)
             request = request.prepare()
             self.sign(request)
+            result: BaseHTTPResponse | HTTPError
             try:
                 result = self._http_client.request(url=request.url,
                                                    method=request.method,
@@ -179,7 +160,7 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
             except HTTPError as e:
                 result = e
 
-            if isinstance(result, HTTPResponse) and result.status == 202:
+            if isinstance(result, BaseHTTPResponse) and result.status == 202:
                 log.info('Success notifying %s about %s, attempt %i.',
                          *log_args)
                 return notification, None
@@ -233,13 +214,15 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
     def matching_sources(self,
                          catalogs: Iterable[CatalogName],
                          globs: AbstractSet[str] = frozenset('*')
-                         ) -> dict[CatalogName, set[SourceSpec]]:
+                         ) -> dict[CatalogName, dict[SourceSpec, SourceConfig]]:
         result = {}
-        matched_globs = set()
+        matched_globs: set[str] = set()
         for catalog in catalogs:
             raw_specs = config.sources(catalog)
-            specs = set(self.repository_plugin(catalog).sources)
-            if '*' not in globs:
+            specs = dict(self.repository_plugin(catalog).sources)
+            if '*' in globs:
+                matched_globs.update(globs)
+            else:
                 matching_raw_specs: set[str] = set()
                 for glob in globs:
                     _matching_raw_specs = fnmatch.filter(raw_specs, glob)
@@ -248,7 +231,7 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
                         matched_globs.add(glob)
                         log.debug('Source glob %r matched sources %r in catalog %r',
                                   glob, _matching_raw_specs, catalog)
-                specs = {spec for spec in specs if str(spec) in matching_raw_specs}
+                specs = {spec: cfg for spec, cfg in specs.items() if str(spec) in matching_raw_specs}
             result[catalog] = specs
         unmatched_globs = globs - matched_globs
         if unmatched_globs:
@@ -256,13 +239,6 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
         assert any(result.values()), R(
             'No valid sources specified for any catalog')
         return result
-
-    def mirror_queue(self):
-        name = config.mirror_queue.name
-        return aws.sqs_queue(name)
-
-    def queue_mirror_messages(self, messages: Iterable[SQSMessage]) -> int:
-        return self.queues.send_messages(self.mirror_queue(), messages)
 
     def delete_all_indices(self, catalog: CatalogName):
         self.index_service.delete_indices(catalog)
@@ -383,16 +359,6 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
         queues = self.queues.get_queues([queue_name])
         length, _ = self.queues.get_queue_lengths(queues)
         return length == 0
-
-    def remote_mirror(self, catalog: CatalogName, sources: Iterable[SourceRef]):
-
-        def message(source: SourceRef):
-            log.info('Mirroring files in source %r from catalog %r',
-                     str(source.spec), catalog)
-            return self.mirror_source_message(catalog, source)
-
-        messages = map(message, sources)
-        self.queue_mirror_messages(messages)
 
     def _get_non_empty_fail_queues(self) -> set[str]:
         return {

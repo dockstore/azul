@@ -1,6 +1,3 @@
-from abc import (
-    ABCMeta,
-)
 from collections.abc import (
     Iterable,
     Mapping,
@@ -11,7 +8,6 @@ from concurrent.futures.thread import (
 )
 from contextlib import (
     contextmanager,
-    nullcontext,
 )
 import csv
 import gzip
@@ -28,6 +24,7 @@ from random import (
     Random,
     randint,
 )
+import re
 import sys
 import tempfile
 import threading
@@ -38,7 +35,6 @@ from typing import (
     ContextManager,
     IO,
     Protocol,
-    TypedDict,
     cast,
 )
 from unittest import (
@@ -76,7 +72,6 @@ from openapi_spec_validator import (
 import opensearchpy
 import requests
 import urllib3
-import urllib3.request
 
 from azul import (
     CatalogName,
@@ -87,6 +82,7 @@ from azul import (
     config,
     drs,
     false,
+    mutable_furl,
 )
 from azul.auth import (
     OAuth2,
@@ -100,6 +96,7 @@ from azul.chalice import (
 )
 from azul.collections import (
     alist,
+    lookup,
 )
 from azul.csp import (
     CSP,
@@ -114,10 +111,12 @@ from azul.es import (
     ESClientFactory,
 )
 from azul.http import (
+    HttpClient,
     http_client,
 )
 from azul.indexer import (
     Prefix,
+    SourceConfig,
     SourceRef,
     SourceSpec,
     SourcedBundleFQID,
@@ -125,9 +124,6 @@ from azul.indexer import (
 from azul.indexer.document import (
     EntityReference,
     EntityType,
-)
-from azul.indexer.index_queue_service import (
-    IndexAction,
 )
 from azul.indexer.index_service import (
     IndexExistsAndDiffersException,
@@ -151,6 +147,7 @@ from azul.oauth2 import (
     OAuth2Client,
 )
 from azul.plugins import (
+    File,
     MetadataPlugin,
     RepositoryPlugin,
 )
@@ -211,20 +208,13 @@ class ReadableFileObject(Protocol):
     def seek(self, amount: int) -> Any: ...
 
 
-class FileInnerEntity(TypedDict):
-    uuid: str
-    version: str
-    name: str
-    size: int
-
-
 GET = 'GET'
 HEAD = 'HEAD'
 PUT = 'PUT'
 POST = 'POST'
 
 
-class IntegrationTestCase(AzulTestCase, metaclass=ABCMeta):
+class IntegrationTestCase(AzulTestCase):
     min_bundles = 32
 
     @cached_property
@@ -248,11 +238,20 @@ class IntegrationTestCase(AzulTestCase, metaclass=ABCMeta):
 
     def setUp(self) -> None:
         super().setUp()
+        pinned_seed = only(
+            int(m.group(1))
+            for flag in config.it_flags
+            if (m := re.fullmatch(r'seed=(.*)', flag)) is not None
+        )
+        if pinned_seed is None:
+            self.random_seed = randint(0, sys.maxsize)
+            log.info('Using random seed %r', self.random_seed)
+        else:
+            self.random_seed = pinned_seed
+            log.info('Using pinned seed %r', self.random_seed)
         # All random operations should be made using this seed so that test
         # results are deterministically reproducible
-        self.random_seed = randint(0, sys.maxsize)
         self.random = Random(self.random_seed)
-        log.info('Using random seed %r', self.random_seed)
 
     @cached_property
     def _tdr_client(self) -> TDRClient:
@@ -292,19 +291,20 @@ class IntegrationTestCase(AzulTestCase, metaclass=ABCMeta):
             if config.is_tdr_enabled(catalog)
         }
         managed_access_sources = {catalog: set() for catalog in config.catalogs}
-        for catalog, specs in configured_sources.items():
-            for spec in specs:
+        for catalog, sources in configured_sources.items():
+            for spec, _ in sources.items():
                 source_id = one(id for id, name in all_sources.items() if name == spec.name)
                 if source_id not in public_sources:
-                    ref = TDRSourceRef(id=source_id, spec=spec)
+                    ref = TDRSourceRef(id=source_id, spec=spec, prefix=None)
                     managed_access_sources[catalog].add(ref)
         return managed_access_sources
 
     def _select_source(self,
                        catalog: CatalogName,
                        *,
-                       public: bool | None = None
-                       ) -> SourceRef | None:
+                       public: bool | None = None,
+                       mirror: bool = False,
+                       ) -> tuple[SourceRef, SourceConfig] | None:
         """
         Choose an indexed source at random.
 
@@ -316,10 +316,18 @@ class IntegrationTestCase(AzulTestCase, metaclass=ABCMeta):
                        public sources. If false, choose a non-public source, or
                        return `None` if the catalog contains no non-public
                        sources.
+
+        :param mirror: If true, choose a source where the `no_mirror` flag is
+                       not present, or return `None` if the catalog contains no
+                       such source. If false, choose a source regardless of
+                       whether this flag is present.
         """
         plugin = self.repository_plugin(catalog)
-        sources = set(plugin.sources)
-        if public is not None:
+        sources = plugin.sources
+
+        if public is None:
+            ma_sources = set()
+        else:
             ma_sources = {
                 source.spec
                 # This would raise a KeyError during the can bundle script test
@@ -327,19 +335,29 @@ class IntegrationTestCase(AzulTestCase, metaclass=ABCMeta):
                 # it's actually needed
                 for source in self.managed_access_sources_by_catalog[catalog]
             }
-            self.assertIsSubset(ma_sources, sources)
-            if public is True:
-                sources -= ma_sources
+            self.assertIsSubset(ma_sources, sources.keys())
+
+        def _filter(source: tuple[SourceSpec, SourceConfig]) -> bool:
+            if public is None:
+                valid = True
+            elif public is True:
+                valid = source[0] not in ma_sources
             elif public is False:
-                sources &= ma_sources
+                valid = source[0] in ma_sources
             else:
                 assert False, public
+            if mirror:
+                valid &= source[1].mirror
+            return valid
+
+        sources = dict(filter(_filter, sources.items()))
+
         if len(sources) == 0:
             assert public is False, 'An IT catalog must contain at least one public source'
             return None
         else:
-            source = self.random.choice(sorted(sources))
-            return plugin.resolve_source(source)
+            source, cfg = self.random.choice(sorted(sources.items()))
+            return plugin.resolve_source(source), cfg
 
 
 class IndexingIntegrationTest(IntegrationTestCase):
@@ -354,7 +372,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
     #: IT-specific retries are configured explicitly for each request, no matter
     #: which client is used, in the :py:meth:`_get_url_unchecked` method.
     #:
-    _plain_http: urllib3.request.RequestMethods
+    _plain_http: HttpClient
 
     #: Depending on the authorization context, this is either the same client as
     #: the one refered to by the attribute above, or a client that sends an
@@ -362,7 +380,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
     #: IT-specific retries are configured explicitly for each request, no matter
     #: which client is used, in the :py:meth:`_get_url_unchecked` method.
     #:
-    _http: urllib3.request.RequestMethods
+    _http: HttpClient
 
     def setUp(self) -> None:
         super().setUp()
@@ -440,7 +458,10 @@ class IndexingIntegrationTest(IntegrationTestCase):
             ma_source: SourceRef | None
 
         flags = config.it_flags
-        index, delete = ['no_' + flag not in flags for flag in ['index', 'delete']]
+        index, delete, mirror = [
+            'no_' + flag not in flags
+            for flag in ['index', 'delete', 'mirror']
+        ]
 
         self._assert_queues_empty(config.indexer_fail_queue_names)
         if index:
@@ -449,23 +470,31 @@ class IndexingIntegrationTest(IntegrationTestCase):
             log.warning('Will skip indexing due to overriding IT flag.')
 
         catalogs: list[Catalog] = []
-        for catalog in config.integration_test_catalogs:
+        for catalog in config.integration_test_catalogs.values():
             if index:
-                public_source = self._select_source(catalog, public=True)
-                ma_source = self._select_source(catalog, public=False)
+                public_source, _ = self._select_source(
+                    catalog.name,
+                    public=True,
+                    # If test_mirroring is run for the catalog, ensure that the
+                    # source is not flagged as no_mirror so that we can test
+                    # downloading a mirrored file
+                    mirror=mirror and self._mirror_service(catalog.name).may_mirror()
+                )
+                ma_source = self._select_source(catalog.name, public=False)
+                if ma_source is not None:
+                    ma_source = ma_source[0]
                 sources = alist(public_source, ma_source)
-                notifications, fqids = self._prepare_notifications(catalog, sources)
+                notifications, fqids = self._prepare_notifications(catalog.name, sources)
             else:
                 with self._service_account_credentials:
-                    fqids = self._get_indexed_bundles(catalog)
+                    fqids = self._get_indexed_bundles(catalog.name)
                 indexed_sources = {fqid.source for fqid in fqids}
-                # FIXME: Improve equality and interning semantics for source ref and spec
-                #        https://github.com/DataBiosphere/azul/issues/6778
-                ma_source_ids = {s.id for s in self.managed_access_sources_by_catalog[catalog]}
+                ma_sources = self.managed_access_sources_by_catalog[catalog.name]
+                ma_source_ids = {s.id for s in ma_sources}
                 public_source = one(s for s in indexed_sources if s.id not in ma_source_ids)
                 ma_source = only(s for s in indexed_sources if s.id in ma_source_ids)
                 notifications = []
-            catalogs.append(Catalog(name=catalog,
+            catalogs.append(Catalog(name=catalog.name,
                                     bundles=fqids,
                                     notifications=notifications,
                                     public_source=public_source,
@@ -491,6 +520,9 @@ class IndexingIntegrationTest(IntegrationTestCase):
                                       public_source=catalog.public_source,
                                       ma_source=catalog.ma_source)
 
+        if mirror and config.enable_mirroring:
+            self._test_mirroring(delete=delete)
+
         if index and delete:
             # FIXME: Test delete notifications
             #        https://github.com/DataBiosphere/azul/issues/3548
@@ -502,9 +534,6 @@ class IndexingIntegrationTest(IntegrationTestCase):
             log.warning('Will skip deletions due to overriding IT flag')
 
         self._test_other_endpoints()
-
-        if config.enable_mirroring:
-            self._test_mirroring(delete=delete)
 
     def _reset_indexer(self):
         # While it's OK to erase the integration test catalog, the queues are
@@ -586,13 +615,8 @@ class IndexingIntegrationTest(IntegrationTestCase):
                         responses.append(response)
                         return response
 
-                    is_anvil = config.is_anvil_enabled(catalog)
-                    with (
-                        mock.patch.object(self, '_get_url', new=get_url),
-                        # Include MA files to reduce the chances of an empty
-                        # manifest due to files not matching the filter
-                        self._service_account_credentials if is_anvil else nullcontext()
-                    ):
+                    with mock.patch.object(self, '_get_url', new=get_url):
+
                         # Make multiple identical concurrent requests to test
                         # the idempotence of manifest generation, and its
                         # resilience against DOS attacks.
@@ -601,9 +625,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
                             response = self._check_endpoint(PUT, '/manifest/files', args=args, fetch=fetch)
                             self._manifest_validators[format](catalog, response)
 
-                        # FIXME: Set number of workers back to 3
-                        #        https://github.com/DataBiosphere/azul/issues/6850
-                        num_workers = 1
+                        num_workers = 3
                         with ThreadPoolExecutor(max_workers=num_workers) as tpe:
                             results = list(tpe.map(worker, range(num_workers)))
 
@@ -659,12 +681,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
         supported_formats = self._manifest_formats(catalog)
         for format in [ManifestFormat.compact, ManifestFormat.curl]:
             if format in supported_formats:
-                with (
-                    self.subTest('manifest_tagging_race', catalog=catalog, format=format),
-                    # Include MA files in manifest to reduce our chances of
-                    # an empty manifest due to files not matching the filter
-                    self._service_account_credentials
-                ):
+                with self.subTest('manifest_tagging_race', catalog=catalog, format=format):
                     filters = self._manifest_filters(catalog)
                     manifest_url = config.service_endpoint.set(path='/manifest/files',
                                                                args=dict(catalog=catalog,
@@ -699,8 +716,8 @@ class IndexingIntegrationTest(IntegrationTestCase):
                             self._manifest_validators[format](catalog, response.data)
                             break
 
-                execution_ids = self._manifest_execution_ids(responses)
-                self.assertEqual(1, len(execution_ids))
+                    execution_ids = self._manifest_execution_ids(responses)
+                    self.assertEqual(1, len(execution_ids))
 
     def _manifest_execution_ids(self,
                                 responses: list[urllib3.HTTPResponse]
@@ -736,19 +753,36 @@ class IndexingIntegrationTest(IntegrationTestCase):
                 urls.append(furl(response.headers['Location']))
         return urls
 
-    def _get_one_inner_file(self, catalog: CatalogName) -> tuple[JSON, FileInnerEntity]:
+    def _get_one_mirrorable_file(self,
+                                 catalog: CatalogName
+                                 ) -> tuple[File, SourceRef, JSON]:
+        plugin = self.repository_plugin(catalog)
+        with self._public_service_account_credentials:
+            # This depends on the indexing test choosing a public source that
+            # is not flagged as no_mirror
+            outer_file, inner_file = self._get_one_inner_file(catalog)
+        # Order matters here because sha256 is present in the file response for
+        # AnVIL, but is always set to the empty string
+        file_digest = lookup(inner_file, 'file_md5sum', 'sha256')
+        source = one(outer_file['sources'])
+        # In principle, we could use the entire digest here, but Prefix only
+        # allows up to 8 chars because it can be used with UUIDs
+        prefix = Prefix(common=file_digest[:8], partition=0)
+        source = self._source_from_response(catalog, source)
+        # FIXME: Avoid use of plugin, instantiate file from hit instead
+        #        https://github.com/DataBiosphere/azul/issues/7615
+        files = plugin.list_files(source.with_prefix(prefix), prefix=prefix.common)
+        # Multiple files may have the same contents and therefore the same
+        # digest. In AnVIL snapshot `CMG_Sample_1_20230225_ANV5_20251203111`,
+        # *every* file has the same digest.
+        file = first(file for file in files if file.digest.value == file_digest)
+        return file, source, inner_file
+
+    def _get_one_inner_file(self, catalog: CatalogName) -> tuple[JSON, JSON]:
         outer_file = self._get_one_outer_file(catalog)
         inner_files: JSONs = outer_file['files']
         inner_file = one(inner_files)
-        # FIXME: Two AnVIL snapshots with null in anvil_file.file_size column
-        #        https://github.com/DataBiosphere/azul/issues/7243
-        if inner_file['size'] is None:
-            inner_file = dict(inner_file, size=1)
-        assert isinstance(inner_file['uuid'], str), inner_file
-        assert isinstance(inner_file['version'], str), inner_file
-        assert isinstance(inner_file['name'], str), inner_file
-        assert isinstance(inner_file['size'], int), inner_file
-        return outer_file, cast(FileInnerEntity, inner_file)
+        return outer_file, inner_file
 
     @cache
     def _get_one_outer_file(self, catalog: CatalogName) -> JSON:
@@ -770,13 +804,8 @@ class IndexingIntegrationTest(IntegrationTestCase):
         return one(hits)
 
     def _source_spec(self, catalog: CatalogName, entity: JSON) -> SourceSpec:
-        if config.is_hca_enabled(catalog):
-            field = 'sourceSpec'
-        elif config.is_anvil_enabled(catalog):
-            field = 'source_spec'
-        else:
-            assert False, catalog
-        return TDRSourceSpec.parse(one(entity['sources'])[field])
+        source = self._source_from_response(catalog, one(entity['sources']))
+        return source.spec
 
     def _file_size_facet(self, catalog: CatalogName) -> str:
         if config.is_hca_enabled(catalog):
@@ -1118,41 +1147,51 @@ class IndexingIntegrationTest(IntegrationTestCase):
     def _test_repository_files(self, catalog: CatalogName):
         with self.subTest('repository_files', catalog=catalog):
             outer_file, inner_file = self._get_one_inner_file(catalog)
-            source = self._source_spec(catalog, outer_file)
-            file_uuid, file_version = inner_file['uuid'], inner_file['version']
-            endpoint_url = config.service_endpoint
-            file_url = endpoint_url.set(path=f'/fetch/repository/files/{file_uuid}',
-                                        args=dict(catalog=catalog,
-                                                  version=file_version))
-            response = self._get_url_unchecked(GET, file_url)
-            if response.status == 404:
-                response = json.loads(response.data)
-                # Phantom files lack DRS URIs and cannot be downloaded
-                self.assertEqual('NotFoundError', response['Code'])
-                self.assertEqual(response['Message'],
-                                 f'File {file_uuid!r} with version {file_version!r} '
-                                 f'was found in catalog {catalog!r}, '
-                                 f'however no download is currently available')
+            file_url = inner_file['azul_url']
+            if file_url:
+                source = self._source_spec(catalog, outer_file)
+                self._test_file_download(source, inner_file)
             else:
-                self.assertEqual(200, response.status)
-                response = json.loads(response.data)
-                while response['Status'] != 302:
-                    self.assertEqual(301, response['Status'])
-                    self.assertNotIn('Retry-After', response)
-                    response = self._get_url_json(GET, furl(response['Location']))
-                self.assertNotIn('Retry-After', response)
-                response = self._get_url(GET, furl(response['Location']), stream=True)
-                self._validate_file_response(response, source, inner_file)
+                # Phantom files lack DRS URIs and cannot be downloaded
+                self.assertIsNone(file_url, inner_file)
+                self.assertEqual('lungmap', config.catalogs[catalog].atlas, inner_file)
 
-    def _file_ext(self, file: FileInnerEntity) -> str:
+    def _test_file_download(self, source: SourceSpec, file: JSON) -> mutable_furl | None:
+        file_url = furl(file['azul_url'])
+        # FIXME: Use _check_endpoint() instead
+        #        https://github.com/DataBiosphere/azul/issues/7373
+        self.assertEqual(file_url.path.segments[0], 'repository')
+        file_url.path.segments.insert(0, 'fetch')
+        response = self._get_url_unchecked(GET, file_url)
+        if response.status == 401:
+            msg = json.loads(response.data)['Message']
+            prefix = 'Unexpected response from '
+            self.assertEqual(prefix, msg[:len(prefix)])
+            self.assertNotIn(str(config.tdr_service_url), msg)
+            return None
+        else:
+            self.assertEqual(200, response.status)
+            response = json.loads(response.data)
+            while response['Status'] != 302:
+                self.assertEqual(301, response['Status'])
+                self.assertNotIn('Retry-After', response)
+                response = self._get_url_json(GET, furl(response['Location']))
+            self.assertNotIn('Retry-After', response)
+            final_file_url = furl(response['Location'])
+            response = self._get_url(GET, final_file_url, stream=True)
+            self._validate_file_response(response, source, file)
+            return final_file_url
+
+    def _file_ext(self, file: JSON) -> str:
         # We believe that the file extension is a more reliable indicator than
         # the `format` metadata field. Note that this method preserves multipart
         # extensions and includes the leading '.', so the extension of
         # "foo.fastq.gz" is ".fastq.gz" instead of "gz"
-        suffixes = PurePath(file['name']).suffixes
+        file_name = lookup(file, 'file_name', 'name')
+        suffixes = PurePath(file_name).suffixes
         return ''.join(suffixes).lower()
 
-    def _validate_file_content(self, content: ReadableFileObject, file: FileInnerEntity):
+    def _validate_file_content(self, content: ReadableFileObject, file: JSON):
         file_ext = self._file_ext(file)
         if file_ext == '.fastq':
             self._validate_fastq_content(content)
@@ -1160,12 +1199,13 @@ class IndexingIntegrationTest(IntegrationTestCase):
             with gzip.open(content) as buf:
                 self._validate_fastq_content(buf)
         else:
-            self.assertEqual(1 if file['size'] > 0 else 0, len(content.read(1)))
+            file_size = lookup(file, 'file_size', 'size')
+            self.assertEqual(1 if file_size > 0 else 0, len(content.read(1)))
 
     def _validate_file_response(self,
                                 response: urllib3.HTTPResponse,
                                 source: SourceSpec,
-                                file: FileInnerEntity):
+                                file: JSON):
         """
         Note: The response object must have been obtained with stream=True
         """
@@ -1184,15 +1224,16 @@ class IndexingIntegrationTest(IntegrationTestCase):
     def _test_drs(self,
                   catalog: CatalogName,
                   source: SourceSpec,
-                  file: FileInnerEntity
+                  file: JSON
                   ) -> None:
         repository_plugin = self.azul_client.repository_plugin(catalog)
-        drs = repository_plugin.drs_client()
+        file_uuid = lookup(file, 'document_id', 'uuid')
+        drs_uri = f'drs://{config.api_lambda_domain("service")}/{file_uuid}'
+        drs_object = repository_plugin.drs_object(drs_uri)
         for access_method in AccessMethod:
             with self.subTest('drs', catalog=catalog, access_method=AccessMethod.https):
-                log.info('Resolving file %r with DRS using %r', file['uuid'], access_method)
-                drs_uri = f'drs://{config.api_lambda_domain("service")}/{file["uuid"]}'
-                access = drs.get_object(drs_uri, access_method=access_method)
+                log.info('Resolving file %r with DRS using %r', file_uuid, access_method)
+                access = drs_object.get(access_method)
                 self.assertIsNone(access.headers)
                 if access.method is AccessMethod.https:
                     response = self._get_url(GET, furl(access.url), stream=True)
@@ -1203,14 +1244,15 @@ class IndexingIntegrationTest(IntegrationTestCase):
                 else:
                     self.fail(access_method)
 
-    def _test_dos(self, catalog: CatalogName, file: FileInnerEntity):
+    def _test_dos(self, catalog: CatalogName, file: JSON):
         with self.subTest('dos', catalog=catalog):
-            log.info('Resolving file %s with DOS', file['uuid'])
+            file_uuid = lookup(file, 'document_id', 'uuid')
+            log.info('Resolving file %s with DOS', file_uuid)
             response = self._check_endpoint(method=GET,
-                                            path=drs.dos_object_url_path(file['uuid']),
+                                            path=drs.dos_object_url_path(file_uuid),
                                             args=dict(catalog=catalog))
             json_data = json.loads(response)['data_object']
-            file_url = first(json_data['urls'])['url']
+            file_url = first(json_data['urls'])['azul_url']
             while True:
                 with self._get_url(method=GET,
                                    url=file_url,
@@ -1263,7 +1305,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
             source = plugin.partition_source_for_indexing(catalog, source)
             # Some partitions may be empty, but we include them anyway to
             # ensure test coverage for handling multiple partitions per source
-            for prefix in source.spec.prefix.partition_prefixes():
+            for prefix in source.prefix.partition_prefixes():
                 partition = repository_service.list_bundles(catalog, source, prefix)
                 bundle_fqids.update(partition)
                 message = queue_service.index_partition_message(catalog, source, prefix)
@@ -1273,11 +1315,18 @@ class IndexingIntegrationTest(IntegrationTestCase):
         # some notifications may end up being sent three or more times.
         num_duplicates = len(bundle_fqids) // 2
         duplicate_bundles = [
-            queue_service.index_bundle_message(IndexAction.add, catalog, bundle.to_json())
+            queue_service.index_bundle_message(catalog, bundle.to_json())
             for bundle in self.random.choices(sorted(bundle_fqids), k=num_duplicates)
         ]
         notifications.extend(duplicate_bundles)
         return notifications, bundle_fqids
+
+    def _source_from_response(self, catalog: CatalogName, source_json: JSON) -> SourceRef:
+        special_fields = self.metadata_plugin(catalog).special_fields
+        source = dict(id=source_json[special_fields.source_id.name_in_hit],
+                      spec=source_json[special_fields.source_spec.name_in_hit],
+                      prefix=source_json[special_fields.source_prefix.name_in_hit])
+        return self.repository_plugin(catalog).source_ref_cls.from_json(source)
 
     def _get_indexed_bundles(self,
                              catalog: CatalogName,
@@ -1286,14 +1335,16 @@ class IndexingIntegrationTest(IntegrationTestCase):
         indexed_fqids = set()
         hits = self._get_entities(catalog, 'bundles', filters)
         special_fields = self.metadata_plugin(catalog).special_fields
+        bundle_uuid_field = special_fields.bundle_uuid.name_in_hit
+        bundle_version_field = special_fields.bundle_version.name_in_hit
         for hit in hits:
             source, bundle = one(hit['sources']), one(hit['bundles'])
-            source = dict(id=source[special_fields.source_id],
-                          spec=source[special_fields.source_spec])
-            source = self.repository_plugin(catalog).source_ref_cls.from_json(source)
-            bundle_fqid = SourcedBundleFQID(uuid=bundle[special_fields.bundle_uuid],
-                                            version=bundle[special_fields.bundle_version],
-                                            source=source)
+            source = self._source_from_response(catalog, source)
+            bundle_fqid = SourcedBundleFQID(
+                uuid=bundle[bundle_uuid_field],
+                version=bundle[bundle_version_field],
+                source=source
+            )
             indexed_fqids.add(bundle_fqid)
         return indexed_fqids
 
@@ -1382,7 +1433,8 @@ class IndexingIntegrationTest(IntegrationTestCase):
                       filters: JSON | None = None
                       ) -> MutableJSONs:
         entities = []
-        size = 100
+        indices = self.metadata_plugin(catalog).exposed_indices
+        size = min(100, indices[entity_type].max_page_size)
         params = dict(catalog=catalog,
                       size=str(size),
                       filters=json.dumps(filters if filters else {}))
@@ -1480,6 +1532,8 @@ class IndexingIntegrationTest(IntegrationTestCase):
         """
 
         special_fields = self.metadata_plugin(catalog).special_fields
+        source_id_field = special_fields.source_id.name_in_hit
+        accessible_field = special_fields.accessible.name_in_hit
         bundle_type = self._bundle_type(catalog)
         project_type = self._project_type(catalog)
 
@@ -1487,15 +1541,15 @@ class IndexingIntegrationTest(IntegrationTestCase):
         for accessible in None, False, True:
             with self.subTest(accessible=accessible):
                 filters = None if accessible is None else {
-                    special_fields.accessible: {'is': [accessible]}
+                    special_fields.accessible.name: {'is': [accessible]}
                 }
                 hits = self._get_entities(catalog, project_type, filters=filters)
                 if accessible is None:
                     unfiltered_hits = hits
                 for hit in hits:
-                    source_id = one(hit['sources'])[special_fields.source_id]
+                    source_id = one(hit['sources'])[source_id_field]
                     source_accessible = {public_source.id: True, ma_source.id: False}[source_id]
-                    hit_accessible = one(hit[project_type])[special_fields.accessible]
+                    hit_accessible = one(hit[project_type])[accessible_field]
                     self.assertEqual(source_accessible, hit_accessible, hit['entryId'])
                     if accessible is not None:
                         self.assertEqual(accessible, hit_accessible)
@@ -1506,7 +1560,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
         self.assertEqual(hit_source_ids, {public_source.id})
 
         source_filter = {
-            special_fields.source_id: {
+            special_fields.source_id.name: {
                 'is': [ma_source.id]
             }
         }
@@ -1536,12 +1590,12 @@ class IndexingIntegrationTest(IntegrationTestCase):
         special_fields = self.metadata_plugin(catalog).special_fields
         with self._service_account_credentials:
             files = self._get_entities(catalog, 'files', filters={
-                special_fields.source_id: {
+                special_fields.source_id.name: {
                     'is': [ma_source.id]
                 }
             })
         managed_access_file_urls = {
-            one(file['files'])['url']
+            one(file['files'])['azul_url']
             for file in files
         }
         file_url = furl(self.random.choice(sorted(managed_access_file_urls)))
@@ -1587,7 +1641,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
 
         def bundle_uuids(hit: JSON) -> set[str]:
             return {
-                bundle[special_fields.bundle_uuid]
+                bundle[special_fields.bundle_uuid.name_in_hit]
                 for bundle in hit['bundles']
             }
 
@@ -1596,7 +1650,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
             for file in files
             if len(file['sources']) == 1
         ))
-        filters = {special_fields.source_id: {'is': [public_source.id]}}
+        filters = {special_fields.source_id.name: {'is': [public_source.id]}}
         params = {'size': 1, 'catalog': catalog, 'filters': json.dumps(filters)}
         files_url = furl(url=endpoint, path='index/files', args=params)
         response = self._get_url_json(GET, files_url)
@@ -1605,7 +1659,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
         all_bundles = {public_bundle, *managed_access_bundles}
 
         filters = {
-            special_fields.bundle_uuid: {
+            special_fields.bundle_uuid.name: {
                 'is': list(all_bundles)
             }
         }
@@ -1668,7 +1722,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
             manifest_url = furl(url=endpoint, path='/manifest/files', args={
                 'catalog': catalog,
                 'format': format.value,
-                'filters': json.dumps({special_fields.bundle_uuid: {'is': list(bundles)}})
+                'filters': json.dumps({special_fields.bundle_uuid.name: {'is': list(bundles)}})
             })
             content = BytesIO(self._get_url_content(PUT, manifest_url))
             return {
@@ -1689,7 +1743,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
             # Create a single-file curl manifest and verify that the OAuth2
             # token is present on the command line
             managed_access_file_id = one(self.random.choice(files)['files'])['uuid']
-            filters = {'fileId': {'is': [managed_access_file_id]}}
+            filters = {metadata_plugin.special_fields.file_uuid.name: {'is': [managed_access_file_id]}}
             manifest_url.set(args=dict(catalog=catalog,
                                        filters=json.dumps(filters),
                                        format='curl'))
@@ -1710,15 +1764,21 @@ class IndexingIntegrationTest(IntegrationTestCase):
             for command_line in command_lines:
                 self.assertIn(expected_auth_header, command_line)
 
+    def _mirror_service(self, catalog: CatalogName) -> BaseMirrorService:
+        return self.azul_client.mirror_service(catalog)
+
     def _test_mirroring(self, *, delete: bool):
-        with self.subTest('mirror_files'):
+        with self.subTest('mirroring'):
             catalogs = [
-                c.name
-                for c in config.catalogs.values()
-                if c.is_integration_test_catalog and c.atlas == 'hca'
+                catalog.name
+                for catalog in config.catalogs.values()
+                if (
+                    catalog.is_integration_test_catalog
+                    and self._mirror_service(catalog.name).may_mirror()
+                )
             ]
             sources_by_catalog = {
-                catalog: [self._select_source(catalog, public=True)]
+                catalog: [self._select_source(catalog, public=True, mirror=True)]
                 for catalog in catalogs
             }
 
@@ -1728,16 +1788,34 @@ class IndexingIntegrationTest(IntegrationTestCase):
                     # since each IT catalog currently uses the same mirror
                     # prefix and bucket
                     for catalog in catalogs:
-                        BaseMirrorService(catalog=catalog).delete_it_files()
+                        self._mirror_service(catalog=catalog).delete_it_files()
 
             self._assert_queues_empty([config.mirror_queue.name,
                                        config.mirror_queue.to_fail.name])
             _delete()
-            for _ in range(2):
+
+            indexed_files: dict[File, tuple[SourceRef, JSON]] = {}
+            with self.subTest('mirror_sources_and_files'):
                 for catalog, sources in sources_by_catalog.items():
-                    self.azul_client.remote_mirror(catalog, sources)
-                self.azul_client.wait_for_mirroring()
-                self._assert_queues_empty([config.mirror_queue.to_fail.name])
+                    mirror_service = self._mirror_service(catalog)
+                    repository_file, source, file_response = self._get_one_mirrorable_file(catalog)
+                    indexed_files[repository_file] = source, file_response
+                    for _ in range(2):
+                        mirror_service.mirror_sources(sources)
+                        mirror_service.mirror_file(source, repository_file)
+                        self.azul_client.wait_for_mirroring()
+                        self._assert_queues_empty([config.mirror_queue.to_fail.name])
+
+                with self.subTest('download_mirrored_files'):
+                    for repository_file, (source, file_response) in indexed_files.items():
+                        digest = repository_file.digest
+                        expected_url = furl(scheme='https', host='s3.amazonaws.com', path=[
+                            aws.mirror_bucket, '_it', 'file', f'{digest.value}.{digest.type}',
+                        ])
+                        actual_url = self._test_file_download(source.spec, file_response)
+                        self.assertIsNotNone(actual_url)
+                        actual_url.set(args=None)
+                        self.assertEqual(expected_url, actual_url)
             _delete()
 
 
@@ -1810,7 +1888,7 @@ class AzulChaliceLocalIntegrationTest(AzulTestCase):
     catalog = first(config.integration_test_catalogs)
 
     def test_local_chalice_index_endpoints(self):
-        url = str(self.url.copy().set(path='index/files',
+        url = str(self.url.copy().set(path='repository/sources',
                                       query=dict(catalog=self.catalog)))
         response = requests.get(url)
         self.assertEqual(200, response.status_code, response.content)
@@ -1887,12 +1965,15 @@ class CanBundleScriptIntegrationTest(IntegrationTestCase):
         mock_catalog = config.Catalog(name='canned-it',
                                       atlas='hca',
                                       internal=True,
+                                      mirror_limit=None,
                                       plugins={
                                           'metadata': config.Catalog.Plugin(name='hca'),
                                           'repository': config.Catalog.Plugin(name='canned'),
                                       },
                                       sources={
-                                          'https://github.com/HumanCellAtlas/schema-test-data/tree/master/tests:/0'
+                                          'https://github.com/HumanCellAtlas/schema-test-data/tree/master/tests': {
+                                              'mirror': False
+                                          },
                                       })
         with mock.patch.object(Config,
                                'catalogs',
@@ -1902,7 +1983,7 @@ class CanBundleScriptIntegrationTest(IntegrationTestCase):
             self._test_catalog(mock_catalog)
 
     def bundle_fqid(self, catalog: CatalogName) -> SourcedBundleFQID:
-        source = self._select_source(catalog)
+        source, _ = self._select_source(catalog)
         # The plugin will raise an exception if the source lacks a prefix
         source = source.with_prefix(Prefix.of_everything)
         bundle_fqids = self.azul_client.index_repository_service.list_bundles(catalog, source, prefix='')
@@ -1998,41 +2079,37 @@ class ResponseHeadersTest(AzulTestCase):
             '/swagger/swagger-initializer.js': short_cache,
             '/swagger/swagger-ui.css': long_cache,
             '/openapi.json': short_cache,
-            '/oauth2_redirect': no_cache,
             '/health/basic': no_cache
         }
         for endpoint in (config.service_endpoint, config.indexer_endpoint):
             for path, cache_control in test_cases.items():
                 with self.subTest(endpoint=endpoint, path=path):
-                    if path == '/oauth2_redirect' and endpoint == config.indexer_endpoint:
-                        pass  # no oauth2 endpoint on indexer Lambda
-                    else:
-                        response = requests.get(str(endpoint / path))
-                        response.raise_for_status()
-                        actual_csp = response.headers['Content-Security-Policy']
-                        parsed_csp = CSP.parse(actual_csp)
-                        parsed_csp.validate()
-                        nonce = parsed_csp.nonce()
-                        # We only expect a CSP nonce for specific endpoints.
-                        self.assertIs(nonce is None, path != '/oauth2_redirect')
-                        expected_headers = {
-                            # The fact that most headers are hard-coded in
-                            # security_headers() gives us license to use that
-                            # method here to compose the expected value, even
-                            # though it constitutes code under test. There is
-                            # not much that can break in that method, and even
-                            # if one of the literals in it had an error, that
-                            # error would likely be repeated in a literal here.
-                            **AzulChaliceApp.security_headers(),
-                            'Cache-Control': cache_control,
-                            # The random nonce in the actual CSP makes it hard
-                            # to compose an expected value for it. Instead, we
-                            # parse and validate the actual CSP, then serialize
-                            # it again and interpolate the result into the
-                            # expected value.
-                            'Content-Security-Policy': str(parsed_csp)
-                        }
-                        self.assertIsSubset(expected_headers.items(), response.headers.items())
+                    response = requests.get(str(endpoint / path))
+                    response.raise_for_status()
+                    actual_csp = response.headers['Content-Security-Policy']
+                    parsed_csp = CSP.parse(actual_csp)
+                    parsed_csp.validate()
+                    nonce = parsed_csp.nonce()
+                    # Currently, we don't expect a CSP nonce in our endpoints.
+                    self.assertIs(nonce, None)
+                    expected_headers = {
+                        # The fact that most headers are hard-coded in
+                        # security_headers() gives us license to use that
+                        # method here to compose the expected value, even
+                        # though it constitutes code under test. There is
+                        # not much that can break in that method, and even
+                        # if one of the literals in it had an error, that
+                        # error would likely be repeated in a literal here.
+                        **AzulChaliceApp.security_headers(),
+                        'Cache-Control': cache_control,
+                        # The random nonce in the actual CSP makes it hard
+                        # to compose an expected value for it. Instead, we
+                        # parse and validate the actual CSP, then serialize
+                        # it again and interpolate the result into the
+                        # expected value.
+                        'Content-Security-Policy': str(parsed_csp)
+                    }
+                    self.assertIsSubset(expected_headers.items(), response.headers.items())
 
     def test_default_4xx_response_headers(self):
         for endpoint in (config.service_endpoint, config.indexer_endpoint):

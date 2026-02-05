@@ -1,4 +1,4 @@
-https://github.com/googleapis/google-resumable-media-python/LICENSE
+https://github.com/googleapis/google-resumable-media-python/blob/HEAD/LICENSE
 
 
                                  Apache License

@@ -1,7 +1,7 @@
 from abc import (
     ABCMeta,
+    abstractmethod,
 )
-import cgi
 from collections import (
     defaultdict,
 )
@@ -68,6 +68,9 @@ from azul.collections import (
     compose_keys,
     none_safe_tuple_key,
 )
+from azul.http import (
+    parse_header,
+)
 from azul.indexer import (
     Prefix,
     SimpleSourceSpec,
@@ -133,6 +136,7 @@ from indexer import (
 )
 from service import (
     DocumentCloningTestCase,
+    MirrorTestCase,
     StorageServiceTestCase,
     WebServiceTestCase,
 )
@@ -246,38 +250,27 @@ class CannedManifestTestCase(CannedFileTestCase):
 class ManifestTestCase(WebServiceTestCase,
                        StorageServiceTestCase,
                        CannedManifestTestCase,
+                       MirrorTestCase,
                        metaclass=ABCMeta):
 
     def setUp(self):
         super().setUp()
         self.addPatch(patch.object(PagedManifestGenerator, 'page_size', 1))
+        self.addPatch(patch.dict(os.environ,
+                                 azul_git_commit='9347432ab0da43c73409ac7fd3edfe29cf3ae678',
+                                 azul_git_dirty=str(False)))
         self._setup_indices()
-        self._setup_git_commit()
 
     def tearDown(self):
         self._teardown_indices()
-        self._teardown_git_commit()
         super().tearDown()
 
     def _filters(self, filters: FiltersJSON) -> Filters:
         return Filters(explicit=filters, source_ids={self.source.id})
 
-    def _setup_git_commit(self):
-        """
-        Set git variables required to derive the manifest object key
-        """
-        assert 'azul_git_commit' not in os.environ
-        assert 'azul_git_dirty' not in os.environ
-        os.environ['azul_git_commit'] = '9347432ab0da43c73409ac7fd3edfe29cf3ae678'
-        os.environ['azul_git_dirty'] = 'False'
-
-    def _teardown_git_commit(self):
-        os.environ.pop('azul_git_commit')
-        os.environ.pop('azul_git_dirty')
-
     @property
     def _service(self):
-        return ManifestService(self.storage_service, self.app_module.app.file_url)
+        return ManifestService(self.storage_service, self._app.file_url)
 
     def _get_manifest(self,
                       format: ManifestFormat,
@@ -341,13 +334,22 @@ class ManifestTestCase(WebServiceTestCase,
                         path=file_id,
                         args=adict(version=version)))
 
+    def _mirror_uri(self, digest: str) -> str:
+        return f's3://{self.mirror_bucket}/file/{digest}.{self._digest_type()}'
+
+    @abstractmethod
+    def _digest_type(self) -> str:
+        raise NotImplementedError
+
     @property
     def _drs_domain(self) -> str:
         return config.drs_domain or config.api_lambda_domain('service')
 
 
-class DCP1ManifestTestCase(ManifestTestCase, DCP1CannedBundleTestCase):
-    pass
+class DCP1ManifestTestCase(DCP1CannedBundleTestCase, ManifestTestCase):
+
+    def _digest_type(self) -> str:
+        return 'sha256'
 
 
 class TestManifests(DCP1ManifestTestCase):
@@ -504,11 +506,15 @@ class TestManifests(DCP1ManifestTestCase):
              self._drs_uri('f2b6c6f0-8d25-4aae-b255-1974cc110cfe',
                            '2018-09-14T12:33:43.720332Z')),
 
-            ('file_url',
+            ('file_azul_url',
              self._file_url('5f9b45af-9a26-4b16-a785-7f2d1053dd7c',
                             '2018-09-14T12:33:47.012715Z'),
              self._file_url('f2b6c6f0-8d25-4aae-b255-1974cc110cfe',
                             '2018-09-14T12:33:43.720332Z')),
+
+            ('file_mirror_uri',
+             self._mirror_uri('2f6866c4ede92123f90dd15fb180fac56e33309b8fd3f4f52f263ed2f8af2f16'),
+             self._mirror_uri('3125f2f86092798b85be93fbc66f4e733e9aec0929b558589c06929627115582')),
 
             ('cell_suspension.provenance.document_id',
              '',
@@ -626,8 +632,9 @@ class TestManifests(DCP1ManifestTestCase):
                                      metadata=metadata,
                                      links=links))
 
+        special_fields = self._metadata_plugin.special_fields
         filters = {
-            'fileId': {
+            special_fields.file_uuid.name: {
                 'is': [
                     '5f9b45af-9a26-4b16-a785-7f2d1053dd7c',
                     'f2b6c6f0-8d25-4aae-b255-1974cc110cfe'
@@ -653,8 +660,8 @@ class TestManifests(DCP1ManifestTestCase):
                 'file_uuid': 'c1c4a2bc-b5fb-4083-af64-f5dec70d7f9d',
                 'file_drs_uri': self._drs_uri('c1c4a2bc-b5fb-4083-af64-f5dec70d7f9d',
                                               '2018-10-10T03:10:37.983672Z'),
-                'file_url': self._file_url('c1c4a2bc-b5fb-4083-af64-f5dec70d7f9d',
-                                           '2018-10-10T03:10:37.983672Z'),
+                'file_azul_url': self._file_url('c1c4a2bc-b5fb-4083-af64-f5dec70d7f9d',
+                                                '2018-10-10T03:10:37.983672Z'),
                 'specimen_from_organism.organ': 'brain'
             },
             # Related files from zarray store
@@ -664,8 +671,8 @@ class TestManifests(DCP1ManifestTestCase):
                 'file_uuid': '54541cc5-9010-425b-9037-22e43948c97c',
                 'file_drs_uri': self._drs_uri('54541cc5-9010-425b-9037-22e43948c97c',
                                               '2018-10-10T03:10:38.239541Z'),
-                'file_url': self._file_url('54541cc5-9010-425b-9037-22e43948c97c',
-                                           '2018-10-10T03:10:38.239541Z'),
+                'file_azul_url': self._file_url('54541cc5-9010-425b-9037-22e43948c97c',
+                                                '2018-10-10T03:10:38.239541Z'),
                 'specimen_from_organism.organ': 'brain'
             },
             {
@@ -674,8 +681,8 @@ class TestManifests(DCP1ManifestTestCase):
                 'file_uuid': '66b8f976-6f1e-45b3-bd97-069658c3c847',
                 'file_drs_uri': self._drs_uri('66b8f976-6f1e-45b3-bd97-069658c3c847',
                                               '2018-10-10T03:10:38.474167Z'),
-                'file_url': self._file_url('66b8f976-6f1e-45b3-bd97-069658c3c847',
-                                           '2018-10-10T03:10:38.474167Z'),
+                'file_azul_url': self._file_url('66b8f976-6f1e-45b3-bd97-069658c3c847',
+                                                '2018-10-10T03:10:38.474167Z'),
                 'specimen_from_organism.organ': 'brain'
             },
             {
@@ -684,8 +691,8 @@ class TestManifests(DCP1ManifestTestCase):
                 'file_uuid': 'ac05d7fb-d6b9-4ab1-8c04-6211450dbb62',
                 'file_drs_uri': self._drs_uri('ac05d7fb-d6b9-4ab1-8c04-6211450dbb62',
                                               '2018-10-10T03:10:38.714461Z'),
-                'file_url': self._file_url('ac05d7fb-d6b9-4ab1-8c04-6211450dbb62',
-                                           '2018-10-10T03:10:38.714461Z'),
+                'file_azul_url': self._file_url('ac05d7fb-d6b9-4ab1-8c04-6211450dbb62',
+                                                '2018-10-10T03:10:38.714461Z'),
                 'specimen_from_organism.organ': 'brain'
             },
             {
@@ -694,8 +701,8 @@ class TestManifests(DCP1ManifestTestCase):
                 'file_uuid': '0c518a52-f315-4ea2-beed-1c9d8f2d802b',
                 'file_drs_uri': self._drs_uri('0c518a52-f315-4ea2-beed-1c9d8f2d802b',
                                               '2018-10-10T03:10:39.039270Z'),
-                'file_url': self._file_url('0c518a52-f315-4ea2-beed-1c9d8f2d802b',
-                                           '2018-10-10T03:10:39.039270Z'),
+                'file_azul_url': self._file_url('0c518a52-f315-4ea2-beed-1c9d8f2d802b',
+                                                '2018-10-10T03:10:39.039270Z'),
                 'specimen_from_organism.organ': 'brain'
             },
             {
@@ -704,8 +711,8 @@ class TestManifests(DCP1ManifestTestCase):
                 'file_uuid': '136108ab-277e-47a4-acc3-1feed8fb2f25',
                 'file_drs_uri': self._drs_uri('136108ab-277e-47a4-acc3-1feed8fb2f25',
                                               '2018-10-10T03:10:39.426609Z'),
-                'file_url': self._file_url('136108ab-277e-47a4-acc3-1feed8fb2f25',
-                                           '2018-10-10T03:10:39.426609Z'),
+                'file_azul_url': self._file_url('136108ab-277e-47a4-acc3-1feed8fb2f25',
+                                                '2018-10-10T03:10:39.426609Z'),
                 'specimen_from_organism.organ': 'brain'
             },
             {
@@ -714,8 +721,8 @@ class TestManifests(DCP1ManifestTestCase):
                 'file_uuid': '0bef5419-739c-4a2c-aedb-43754d55d51c',
                 'file_drs_uri': self._drs_uri('0bef5419-739c-4a2c-aedb-43754d55d51c',
                                               '2018-10-10T03:10:39.642846Z'),
-                'file_url': self._file_url('0bef5419-739c-4a2c-aedb-43754d55d51c',
-                                           '2018-10-10T03:10:39.642846Z'),
+                'file_azul_url': self._file_url('0bef5419-739c-4a2c-aedb-43754d55d51c',
+                                                '2018-10-10T03:10:39.642846Z'),
                 'specimen_from_organism.organ': 'brain'
             },
             {
@@ -724,8 +731,8 @@ class TestManifests(DCP1ManifestTestCase):
                 'file_uuid': '3a5f7299-1aa1-4060-9631-212c29b4d807',
                 'file_drs_uri': self._drs_uri('3a5f7299-1aa1-4060-9631-212c29b4d807',
                                               '2018-10-10T03:10:39.899615Z'),
-                'file_url': self._file_url('3a5f7299-1aa1-4060-9631-212c29b4d807',
-                                           '2018-10-10T03:10:39.899615Z'),
+                'file_azul_url': self._file_url('3a5f7299-1aa1-4060-9631-212c29b4d807',
+                                                '2018-10-10T03:10:39.899615Z'),
                 'specimen_from_organism.organ': 'brain'
             },
             {
@@ -734,8 +741,8 @@ class TestManifests(DCP1ManifestTestCase):
                 'file_uuid': 'a8f0dc39-6019-4fc7-899d-4e34a48d03e5',
                 'file_drs_uri': self._drs_uri('a8f0dc39-6019-4fc7-899d-4e34a48d03e5',
                                               '2018-10-10T03:10:40.113268Z'),
-                'file_url': self._file_url('a8f0dc39-6019-4fc7-899d-4e34a48d03e5',
-                                           '2018-10-10T03:10:40.113268Z'),
+                'file_azul_url': self._file_url('a8f0dc39-6019-4fc7-899d-4e34a48d03e5',
+                                                '2018-10-10T03:10:40.113268Z'),
                 'specimen_from_organism.organ': 'brain'
             },
             {
@@ -744,8 +751,8 @@ class TestManifests(DCP1ManifestTestCase):
                 'file_uuid': '68ba4711-1447-42ac-aa40-9c0e4cda1666',
                 'file_drs_uri': self._drs_uri('68ba4711-1447-42ac-aa40-9c0e4cda1666',
                                               '2018-10-10T03:10:40.583439Z'),
-                'file_url': self._file_url('68ba4711-1447-42ac-aa40-9c0e4cda1666',
-                                           '2018-10-10T03:10:40.583439Z'),
+                'file_azul_url': self._file_url('68ba4711-1447-42ac-aa40-9c0e4cda1666',
+                                                '2018-10-10T03:10:40.583439Z'),
                 'specimen_from_organism.organ': 'brain'
             },
             {
@@ -754,8 +761,8 @@ class TestManifests(DCP1ManifestTestCase):
                 'file_uuid': '27e66328-e337-4bcd-ba15-7893ecaf841f',
                 'file_drs_uri': self._drs_uri('27e66328-e337-4bcd-ba15-7893ecaf841f',
                                               '2018-10-10T03:10:40.801631Z'),
-                'file_url': self._file_url('27e66328-e337-4bcd-ba15-7893ecaf841f',
-                                           '2018-10-10T03:10:40.801631Z'),
+                'file_azul_url': self._file_url('27e66328-e337-4bcd-ba15-7893ecaf841f',
+                                                '2018-10-10T03:10:40.801631Z'),
                 'specimen_from_organism.organ': 'brain'
             },
             {
@@ -764,8 +771,8 @@ class TestManifests(DCP1ManifestTestCase):
                 'file_uuid': '2ab1a516-ef36-41b6-a78f-513361658feb',
                 'file_drs_uri': self._drs_uri('2ab1a516-ef36-41b6-a78f-513361658feb',
                                               '2018-10-10T03:10:40.958708Z'),
-                'file_url': self._file_url('2ab1a516-ef36-41b6-a78f-513361658feb',
-                                           '2018-10-10T03:10:40.958708Z'),
+                'file_azul_url': self._file_url('2ab1a516-ef36-41b6-a78f-513361658feb',
+                                                '2018-10-10T03:10:40.958708Z'),
                 'specimen_from_organism.organ': 'brain'
             },
             {
@@ -774,8 +781,8 @@ class TestManifests(DCP1ManifestTestCase):
                 'file_uuid': '351970aa-bc4c-405e-a274-be9e08e42e98',
                 'file_drs_uri': self._drs_uri('351970aa-bc4c-405e-a274-be9e08e42e98',
                                               '2018-10-10T03:10:41.135992Z'),
-                'file_url': self._file_url('351970aa-bc4c-405e-a274-be9e08e42e98',
-                                           '2018-10-10T03:10:41.135992Z'),
+                'file_azul_url': self._file_url('351970aa-bc4c-405e-a274-be9e08e42e98',
+                                                '2018-10-10T03:10:41.135992Z'),
                 'specimen_from_organism.organ': 'brain'
             }
         ]
@@ -909,7 +916,7 @@ class TestManifests(DCP1ManifestTestCase):
         with patch.object(manifest_service, 'datetime') as mock_datetime:
             mock_datetime.now.return_value = datetime(1985, 10, 25, 1, 21)
             for format in [ManifestFormat.compact]:
-                for filters, expected_name in [
+                cases = [
                     # For a single project, the content disposition file name should
                     # be the project name followed by the date and time
                     (
@@ -921,13 +928,14 @@ class TestManifests(DCP1ManifestTestCase):
                     # a pair of deterministically derived v5 UUIDs.
                     (
                         {'project': {'is': ['Single of human pancreas', 'Mouse Melanoma']}},
-                        'hca-manifest-20d97863-d8cf-54f3-8575-0f9593d3d7ef.4bc67e84-4873-591f-b524-a5fe4ec215eb'
+                        'hca-manifest-89bc9973-de91-5fc4-9c6a-8c1f547d45c6.4bc67e84-4873-591f-b524-a5fe4ec215eb'
                     ),
                     (
                         {},
-                        'hca-manifest-c3cf398e-1927-5aae-ba2a-81d8d1800b2d.4bc67e84-4873-591f-b524-a5fe4ec215eb'
+                        'hca-manifest-832a257c-5540-567b-bcb6-260d2e374508.4bc67e84-4873-591f-b524-a5fe4ec215eb'
                     )
-                ]:
+                ]
+                for filters, expected_name in cases:
                     with self.subTest(filters=filters, format=format):
                         manifest, num_partitions = self._get_manifest_object(format, filters)
                         self.assertFalse(manifest.was_cached)
@@ -1037,8 +1045,9 @@ class TestManifestCache(DCP1ManifestTestCase):
                         else:
                             _time_until_object_expires.assert_called_once()
                         _time_until_object_expires.reset_mock()
-                        header = response.headers['Content-Disposition']
-                        value, params = cgi.parse_header(header)
+                        name = 'Content-Disposition'
+                        value = response.headers[name]
+                        value, params = parse_header(name, value)
                         self.assertEqual('attachment', value)
                         file_names[filter_project_id].append(params['filename'])
             with self.subTest(bundle_fqid=bundle_fqid.uuid[0:8]):
@@ -1067,7 +1076,7 @@ class TestManifestCache(DCP1ManifestTestCase):
         self._index_canned_bundle(original_fqid)
         filters = self._filters({'project': {'is': ['Single of human pancreas']}})
         old_keys = {}
-        service = ManifestService(self.storage_service, self.app_module.app.file_url)
+        service = ManifestService(self.storage_service, self._app.file_url)
 
         def manifest_generator(format: ManifestFormat) -> ManifestGenerator:
             generator_cls = ManifestGenerator.cls_for_format(format)
@@ -1249,7 +1258,7 @@ class TestManifestResponse(DCP1ManifestTestCase):
                 self.assertEqual(object_url, furl(response.headers['location']))
                 self.assertEqual('text/plain', response.headers['Content-Type'])
 
-        for format in self.app_module.app.metadata_plugin.manifest_formats:
+        for format in self._metadata_plugin.manifest_formats:
             for fetch in True, False:
                 with self.subTest(format=format, fetch=fetch):
                     test(format=format, fetch=fetch)
@@ -1276,6 +1285,9 @@ class TestManifestPartitioning(DCP1ManifestTestCase, DocumentCloningTestCase):
 
 class AnvilManifestTestCase(ManifestTestCase, AnvilCannedBundleTestCase):
 
+    def _digest_type(self) -> str:
+        return 'md5'
+
     @property
     def _drs_domain(self) -> str:
         return self.mock_tdr_service_url.netloc
@@ -1284,9 +1296,9 @@ class AnvilManifestTestCase(ManifestTestCase, AnvilCannedBundleTestCase):
     def bundles(cls) -> list[SourcedBundleFQID]:
         return [
             cls.bundle_fqid(uuid='2370f948-2783-aeb6-afea-e022897f4dcf'),
-            cls.bundle_fqid(uuid='c2711e94-9966-a0ef-88be-88caf3e8a29b'),
+            cls.bundle_fqid(uuid='595c469e-604d-ab34-af39-f5b9f5d61818'),
             cls.bundle_fqid(uuid='826dea02-e274-affe-aabc-eb3db63ad068'),
-            cls.bundle_fqid(uuid='6b35f59c-d33d-abf7-9ba0-c7b3a0ca82f3')
+            cls.bundle_fqid(uuid='f4b39881-d519-ab6f-99a0-7cc5089caee6'),
         ]
 
     source_id_filters: FiltersJSON = {
@@ -1325,7 +1337,7 @@ class AnvilManifestTestCase(ManifestTestCase, AnvilCannedBundleTestCase):
                     expect_relations = (
                         enable_relations
                         and expect_orphans
-                        and not self.source.spec.prefix.common
+                        and not self.source.prefix.common
                     )
                     expected_manifest = self._expected_pfb_manifest(expect_orphans, expect_relations)
                     expected_schema, expected_entities = expected_manifest
@@ -1381,7 +1393,7 @@ class TestAnvilManifests(AnvilManifestTestCase):
         expected = [
             (
                 'bundles.bundle_uuid',
-                'c2711e94-9966-a0ef-88be-88caf3e8a29b',
+                '595c469e-604d-ab34-af39-f5b9f5d61818',
                 '826dea02-e274-affe-aabc-eb3db63ad068',
                 '826dea02-e274-affe-aabc-eb3db63ad068'
             ),
@@ -1399,9 +1411,9 @@ class TestAnvilManifests(AnvilManifestTestCase):
             ),
             (
                 'sources.source_spec',
-                'tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0',
-                'tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0',
-                'tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0'
+                'tdr:bigquery:gcp:test_anvil_project:anvil_snapshot',
+                'tdr:bigquery:gcp:test_anvil_project:anvil_snapshot',
+                'tdr:bigquery:gcp:test_anvil_project:anvil_snapshot'
             ),
             (
                 'datasets.document_id',
@@ -1592,8 +1604,8 @@ class TestAnvilManifests(AnvilManifestTestCase):
             (
                 'biosamples.apriori_cell_type',
                 '',
-                '',
-                ''
+                'bar || foo',
+                'bar || foo'
             ),
             (
                 'biosamples.biosample_type',
@@ -1699,9 +1711,9 @@ class TestAnvilManifests(AnvilManifestTestCase):
             ),
             (
                 'files.file_md5sum',
-                'S/GBrRjzZAQYqh3rdiPYzA==',
-                'vuxgbuCqKZ/fkT9CWTFmIg==',
-                'fNn9e1SovzgOROk3BvH6LQ=='
+                '4bf181ad18f3640418aa1deb7623d8cc',
+                'beec606ee0aa299fdf913f4259316622',
+                '7cd9fd7b54a8bf380e44e93706f1fa2d'
             ),
             (
                 'files.reference_assembly',
@@ -1722,28 +1734,22 @@ class TestAnvilManifests(AnvilManifestTestCase):
                 'False'
             ),
             (
-                'files.crc32',
-                '',
-                '',
-                ''
-            ),
-            (
-                'files.sha256',
-                '',
-                '',
-                ''
-            ),
-            (
                 'files.drs_uri',
                 self._drs_uri('v1_6c87f0e1-509d-46a4-b845-7584df39263b_1fab11f5-7eab-4318-9a58-68d8d06e0715'),
                 self._drs_uri('v1_6c87f0e1-509d-46a4-b845-7584df39263b_1e269f04-4347-4188-b060-1dcc69e71d67'),
                 self._drs_uri('v1_6c87f0e1-509d-46a4-b845-7584df39263b_8b722e88-8103-49c1-b351-e64fa7c6ab37')
             ),
             (
-                'files.azul_file_url',
+                'files.azul_url',
                 self._file_url('6b0f6c0f-5d80-4242-accb-840921351cd5', self.version),
                 self._file_url('15b76f9c-6b46-433f-851d-34e89f1b9ba6', self.version),
                 self._file_url('3b17377b-16b1-431c-9967-e5d01fc5923f', self.version)
+            ),
+            (
+                'files.azul_mirror_uri',
+                self._mirror_uri('4bf181ad18f3640418aa1deb7623d8cc'),
+                self._mirror_uri('beec606ee0aa299fdf913f4259316622'),
+                self._mirror_uri('7cd9fd7b54a8bf380e44e93706f1fa2d'),
             )
         ]
         self._assert_tsv(expected, response)
@@ -1832,13 +1838,16 @@ class TestVerbatimJSONLManifestPartitioningBySource(DCP1ManifestTestCase):
     sources_by_bundle_uuid = {
         '3ac62c33-93e1-56b4-b857-59497f5d942d':
             DSSSourceRef(id='706cc417-9ed1-4c09-8341-0df38e374423',
-                         spec=SimpleSourceSpec.parse('eggs:/1')),
+                         spec=SimpleSourceSpec.parse('eggs'),
+                         prefix=Prefix.parse('/1')),
         '97f0cc83-f0ac-417a-8a29-221c77debde8':
             DSSSourceRef(id='d0024443-bddf-4d3e-b4c8-6a3a1b23e8cf',
-                         spec=SimpleSourceSpec.parse('bacon:/2')),
+                         spec=SimpleSourceSpec.parse('bacon'),
+                         prefix=Prefix.parse('/2')),
         '4b03c1ce-9df1-5cd5-a8e4-48a2fe095081':
             DSSSourceRef(id='22213a35-5c8e-4bad-bcb9-d4b7740c7165',
-                         spec=SimpleSourceSpec.parse('sausage:/3')),
+                         spec=SimpleSourceSpec.parse('sausage'),
+                         prefix=Prefix.parse('/3')),
     }
 
     @classmethod

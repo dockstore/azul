@@ -37,11 +37,14 @@ from furl import (
 from azul import (
     R,
     cached_property,
+    config,
 )
 from azul.collections import (
+    LookupDefault,
     OrderedSet,
     adict,
     dict_merge,
+    lookup,
 )
 
 from azul.indexer.document import (
@@ -57,10 +60,6 @@ from humancellatlas.data.metadata.age_range import (
 )
 from humancellatlas.data.metadata.datetime import (
     parse_jsonschema_date_time,
-)
-from humancellatlas.data.metadata.lookup import (
-    LookupDefault,
-    lookup,
 )
 
 # A few helpful type aliases
@@ -104,6 +103,8 @@ class ManifestEntry:
 
 
 valid_schema_domains = ['schema.humancellatlas.org']
+if not config.deployment.is_stable:
+    valid_schema_domains.append('schema.staging.data.humancellatlas.org')
 
 
 @dataclass(init=False)

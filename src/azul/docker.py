@@ -567,9 +567,14 @@ class Repository:
         except KeyError:
             return self._decode_auth(config['auths'][auth_server_url]['auth'])
         else:
-            command = 'docker-credential-' + creds_store
-            output = subprocess.check_output(args=[command, 'get'],
-                                             input=auth_server_url.encode('ascii'))
+            command = [('docker-credential-' + creds_store), 'get']
+            input = auth_server_url.encode('ascii')
+            log.info('Running %r with input %r', command, input)
+            process = subprocess.run(args=command, stdout=subprocess.PIPE, input=input)
+            output = process.stdout
+            assert process.returncode == 0, R(
+                f'Command {command} failed with status code {process.returncode}',
+                output, 'You may need to login into Docker Desktop')
             credentials = json.loads(output)
             return credentials['Username'], credentials['Secret']
 

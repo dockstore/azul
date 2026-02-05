@@ -27,6 +27,7 @@ from furl import (
 from more_itertools import (
     flatten,
     stagger,
+    unzip,
 )
 
 from azul import (
@@ -292,8 +293,7 @@ def emit(t: T, target_branch: str):
             },
             iif(t is not T.backport, {
                 'type': 'p',
-                'content': f'Connected {t.issues}: #0000'
-
+                'content': f'Linked {t.issues}: #0000'
             }),
             {
                 'type': 'h1',
@@ -302,6 +302,14 @@ def emit(t: T, target_branch: str):
             {
                 'type': 'h2',
                 'content': 'Author'
+            },
+            {
+                'type': 'cli',
+                'content': 'PR is assigned to the author'
+            },
+            {
+                'type': 'cli',
+                'content': 'Status of PR is *In progress*'
             },
             iif(t is T.default, {
                 'type': 'cli',
@@ -324,42 +332,45 @@ def emit(t: T, target_branch: str):
             iif(t is not t.backport, {
                 'type': 'cli',
                 'content': {
-                    T.default: 'On ZenHub, PR is connected to all issues it (partially) resolves',
-                    T.upgrade: 'On ZenHub, PR is connected to the upgrade issue it resolves',
-                    T.hotfix: 'On ZenHub, PR is connected to the issue it hotfixes',
-                    T.promotion: 'On ZenHub, PR is connected to the promotion issue it resolves',
+                    T.default: 'PR is linked to all issues it (partially) resolves',
+                    T.upgrade: 'PR is linked to the upgrade issue it resolves',
+                    T.hotfix: 'PR is linked to the issue it hotfixes',
+                    T.promotion: 'PR is linked to the promotion issue it resolves',
                     T.backport: None
                 }[t]
             }),
+            {
+                'type': 'cli',
+                'content': f'Status of linked {t.issues} is ' + (
+                    '*In progress*'
+                    if t is not T.backport else
+                    '*Stable*'
+                )
+            },
             iif(t not in (T.backport, T.upgrade), {
                 'type': 'cli',
-                'content': f'PR description links to connected {t.issues}'
+                'content': f'PR description links to linked {t.issues}'
             }),
             iif(t is T.promotion, {
                 'type': 'cli',
-                'content': 'Title of connected issue matches `Promotion yyyy-mm-dd`'
+                'content': 'Title of linked issue matches `Promotion yyyy-mm-dd`'
             }),
             {
                 'type': 'cli',
                 'content': {
-                    t.default: 'PR title matches<footnote title/> that of a connected issue',
-                    t.promotion: f'PR title starts with title of connected issue '
+                    t.default: 'PR title matches<footnote title/> that of a linked issue',
+                    t.promotion: f'PR title starts with title of linked issue '
                                  f'followed by ` {target_branch}`',
                     t.hotfix: f'PR title is `Hotfix {target_branch}: ` '
-                              f'followed by title of connected issue',
-                    t.upgrade: 'PR title matches `Upgrade dependencies yyyy-mm-dd`',
+                              f'followed by title of linked issue',
+                    t.upgrade: 'PR title matches `Upgrade software dependencies yyyy-mm-dd`',
                     t.backport: 'PR title contains the 7-digit SHA1 of the backported commits'
                 }[t],
                 'alt': iif(t is t.default, "or comment in PR explains why they're different", None)
             },
             iif(t is not T.backport, {
                 'type': 'cli',
-                'content': f'PR title references {t.issues('all', 'the')} connected {t.issues}'
-            }),
-            iif(t is T.promotion, {
-                'type': 'cli',
-                'content': 'The promoted issues are part of the same sprint as the connected '
-                           'issue'
+                'content': f'PR title references {t.issues('all', 'the')} linked {t.issues}'
             }),
             *(
                 [
@@ -378,7 +389,7 @@ def emit(t: T, target_branch: str):
             *iif(t is T.default, [
                 {
                     'type': 'cli',
-                    'content': 'For each connected issue, there is at least one commit whose title '
+                    'content': 'For each linked issue, there is at least one commit whose title '
                                'references that issue'
                 },
                 {
@@ -397,39 +408,18 @@ def emit(t: T, target_branch: str):
                 {
                     'type': 'cli',
                     'content': 'This PR is labeled `partial`',
-                    'alt': 'or completely resolves all connected issues'
+                    'alt': 'or completely resolves all linked issues'
                 },
                 {
                     'type': 'cli',
-                    'content': 'This PR partially resolves each of the connected issues',
+                    'content': 'This PR partially resolves each of the linked issues',
                     'alt': 'or does not have the `partial` label'
-                }
-            ]),
-            *iif(t is T.default, [
-                {
-                    'type': 'h2',
-                    'content': 'Author (chains)'
-                },
-                {
-                    'type': 'cli',
-                    'content': 'This PR is blocked by previous PR in the chain',
-                    'alt': 'or is not chained to another PR'
-                },
-                {
-                    'type': 'cli',
-                    'content': 'The blocking PR is labeled `base`',
-                    'alt': 'or this PR is not chained to another PR'
-                },
-                {
-                    'type': 'cli',
-                    'content': 'This PR is labeled `chained`',
-                    'alt': 'or is not chained to another PR'
                 }
             ]),
             *iif(t in (T.default, T.promotion), [
                 {
                     'type': 'h2',
-                    'content': 'Author (reindex, API changes)'
+                    'content': 'Author (reindex)'
                 },
                 iif(t is T.default, {
                     'type': 'cli',
@@ -466,8 +456,12 @@ def emit(t: T, target_branch: str):
                 },
                 *iif(t is T.default, [
                     {
+                        'type': 'h2',
+                        'content': 'Author (API changes)'
+                    },
+                    {
                         'type': 'cli',
-                        'content': 'This PR and its connected issues are labeled `API`',
+                        'content': 'This PR and its linked issues are labeled `API`',
                         'alt': 'or this PR does not modify a REST API'
                     },
                     {
@@ -545,12 +539,14 @@ def emit(t: T, target_branch: str):
                         },
                         {
                             'type': 'cli',
-                            'content': 'Reverted the temporary hotfixes for any connected issues',
+                            'content': 'Reverted the temporary hotfixes for any linked issues',
                             'alt': 'or the none of the stable branches (' +
                                    join_grammatically(list(map(bq, T.promotion.target_branches))) +
-                                   ') have temporary hotfixes for any of the issues connected to this PR'
+                                   ') have temporary hotfixes for any of the issues linked to this PR'
                         }
-                    ] if t is T.default else [
+                    ]
+                    if t is T.default else
+                    [
                         {
                             'type': 'cli',
                             'content': 'Added `h` tag to commit title',
@@ -570,8 +566,10 @@ def emit(t: T, target_branch: str):
                             'content': 'This PR is labeled `partial`',
                             'alt': 'or represents a permanent hotfix'
                         },
-                    ] if t is T.hotfix else [
-                    ]),
+                    ]
+                    if t is T.hotfix else
+                    []
+                ),
             ]),
             {
                 'type': 'h2',
@@ -586,11 +584,18 @@ def emit(t: T, target_branch: str):
                                ),
                                f'Rebased PR branch on `{target_branch}`, squashed fixups from prior reviews')
             },
-            *iif(t is not T.promotion, [
+            *iif(target_branch == 'develop' or t is T.hotfix, [
                 {
                     'type': 'cli',
                     'content': 'Ran `make requirements_update`',
-                    'alt': 'or this PR does not modify `requirements*.txt`, `common.mk`, `Makefile` and `Dockerfile`'
+                    'alt': 'or this PR does not modify ' + join_grammatically(list(map(bq, [
+                        'Dockerfile',
+                        'environment',
+                        'requirements*.txt',
+                        'common.mk',
+                        'Makefile',
+                        'environment.boot',
+                    ])), last_joiner=' or ')
                 },
                 {
                     'type': 'cli',
@@ -602,7 +607,7 @@ def emit(t: T, target_branch: str):
                     'content': 'This PR is labeled `reqs`',
                     'alt': 'or does not modify `requirements*.txt`'
                 },
-                iif(t in (T.default, T.upgrade), {
+                iif(t not in (T.backport, T.hotfix), {
                     'type': 'cli',
                     'content': '`make integration_test` passes in personal deployment',
                     'alt': 'or this PR does not modify functionality that could affect the IT outcome'
@@ -610,30 +615,47 @@ def emit(t: T, target_branch: str):
             ]),
             *iif(t is T.default, [
                 {
+                    'type': 'cli',
+                    'content': 'PR is awaiting requested review from a peer'
+                },
+                {
+                    'type': 'cli',
+                    'content': 'Status of PR is *Review requested*'
+                },
+                {
+                    'type': 'cli',
+                    'content': 'PR is assigned to only the peer and the author'
+                },
+                {
                     'type': 'h2',
                     'content': 'Peer reviewer (after approval)'
+                },
+                {
+                    'type': 'p',
+                    'content': 'Note that after requesting changes, the PR '
+                               'must be assigned to only the author.'
                 },
                 {
                     'type': 'cli',
                     'content': 'Actually approved the PR'
                 },
-                {
-                    'type': 'cli',
-                    'content': 'PR is not a draft'
-                },
-                {
-                    'type': 'cli',
-                    'content': 'Ticket is in *Review requested* column'
-                },
-                {
-                    'type': 'cli',
-                    'content': 'PR is awaiting requested review from system administrator'
-                },
-                {
-                    'type': 'cli',
-                    'content': 'PR is assigned to only the system administrator'
-                }
             ]),
+            {
+                'type': 'cli',
+                'content': 'PR is not a draft'
+            },
+            {
+                'type': 'cli',
+                'content': 'PR is awaiting requested review from system administrator'
+            },
+            {
+                'type': 'cli',
+                'content': 'Status of PR is *Review requested*'
+            },
+            {
+                'type': 'cli',
+                'content': 'PR is assigned to only the system administrator and the author'
+            },
             {
                 'type': 'h2',
                 'content': 'System administrator (after approval)'
@@ -644,16 +666,16 @@ def emit(t: T, target_branch: str):
             },
             iif(t is T.default, {
                 'type': 'cli',
-                'content': 'Labeled connected issues as `demo` or `no demo`'
+                'content': 'Labeled linked issues as `demo` or `no demo`'
             }),
             iif(t is T.upgrade, {
                 'type': 'cli',
-                'content': 'Labeled connected issue as `no demo`'
+                'content': 'Labeled linked issue as `no demo`'
             }),
             iif(t is T.default, {
                 'type': 'cli',
-                'content': 'Commented on connected issues about demo expectations',
-                'alt': 'or all connected issues are labeled `no demo`'
+                'content': 'Commented on linked issues about demo expectations',
+                'alt': 'or all linked issues are labeled `no demo`'
             }),
             iif(t is not T.upgrade, {
                 'type': 'cli',
@@ -671,21 +693,21 @@ def emit(t: T, target_branch: str):
                 'type': 'cli',
                 'content': 'PR title is appropriate as title of merge commit'
             }),
-            iif(t is T.default, {
-                'type': 'cli',
-                'content': '`N reviews` label is accurate'
-            }),
             {
                 'type': 'cli',
-                'content': f'Moved connected {t.issues} to *Approved* column'
+                'content': '`N reviews` label is accurate'
             },
             {
                 'type': 'cli',
-                'content': 'PR is assigned to only the operator'
+                'content': 'Status of PR is *Approved*'
+            },
+            {
+                'type': 'cli',
+                'content': 'PR is assigned to only the operator and the author'
             },
             {
                 'type': 'h2',
-                'content': 'Operator (before pushing merge the commit)'
+                'content': 'Operator'
             },
             *iif(t is T.default, [
                 {
@@ -695,7 +717,7 @@ def emit(t: T, target_branch: str):
                 {
                     'type': 'cli',
                     'content': 'Checked that demo expectations are clear',
-                    'alt': 'or all connected issues are labeled `no demo`'
+                    'alt': 'or all linked issues are labeled `no demo`'
                 }
             ]),
             iif(t not in (T.promotion, T.backport), {
@@ -711,6 +733,10 @@ def emit(t: T, target_branch: str):
                 'content': 'Pushed PR branch to GitHub'
             },
             *iif(t.needs_shared_deploy, [
+                {
+                    'type': 'h2',
+                    'content': 'Operator (deploy `.shared` and `.gitlab` components)'
+                },
                 *flatten([
                     [
                         {
@@ -750,12 +776,12 @@ def emit(t: T, target_branch: str):
                 },
                 {
                     'type': 'cli',
-                    'content': 'PR is assigned to only the system administrator',
+                    'content': 'PR is assigned to only the system administrator and the author',
                     'alt': 'or this PR is not labeled `deploy:gitlab`'
                 },
                 {
                     'type': 'h2',
-                    'content': 'System administrator'
+                    'content': 'System administrator (post-deploy of `.gitlab` component)'
                 },
                 *[
                     {
@@ -769,11 +795,13 @@ def emit(t: T, target_branch: str):
                 ],
                 {
                     'type': 'cli',
-                    'content': 'PR is assigned to only the operator',
+                    'content': 'PR is assigned to only the operator and the author',
                 },
+            ]),
+            *iif(t not in (T.hotfix, T.backport), [
                 {
                     'type': 'h2',
-                    'content': 'Operator (before pushing merge the commit)'
+                    'content': 'Operator (deploy runner image)'
                 },
                 *[
                     {
@@ -785,17 +813,23 @@ def emit(t: T, target_branch: str):
                         'alt': 'or this PR is not labeled `deploy:runner`'
                     }
                     for d in t.target_deployments(target_branch)
-                ],
+                ]
             ]),
-            iif(t.has_sandbox_for(target_branch), {
-                'type': 'cli',
-                'content': 'Added `sandbox` label',
-                'alt': iif(t is T.upgrade, None, 'or PR is labeled `no sandbox`')
-            }),
-            # zip() is used to interleave the steps for each deployment so
+            *iif(t.has_sandbox_for(target_branch), [
+                {
+                    'type': 'h2',
+                    'content': 'Operator (sandbox build)'
+                },
+                {
+                    'type': 'cli',
+                    'content': 'Added `sandbox` label',
+                    'alt': iif(t is T.upgrade, None, 'or PR is labeled `no sandbox`')
+                }
+            ]),
+            # unzip() is used to interleave the steps for each deployment so
             # that first, step 1 is done for all deployments, then step 2
             # for all of them, and so on.
-            *flatten(zip(*(
+            *flatten(unzip(
                 [
                     {
                         'type': 'cli',
@@ -812,12 +846,12 @@ def emit(t: T, target_branch: str):
                         'content': f'Reviewed build logs for anomalies in `{s}` deployment',
                         'alt': iif(t is T.upgrade, None, 'or PR is labeled `no sandbox`')
                     },
-                    *iif(t is T.default, [
+                    *iif(t is not T.upgrade, [
                         {
                             'type': 'cli',
                             'content': f'Deleted unreferenced indices in `{s}`',
                             'alt': f'or this PR does not remove catalogs '
-                                   f'or otherwise causes unreferenced indices in `{d}`'
+                                   f'or otherwise causes unreferenced indices in `{s}`'
                         },
                         {
                             'type': 'cli',
@@ -833,7 +867,11 @@ def emit(t: T, target_branch: str):
                 ]
                 for i, (d, s) in enumerate(t.target_deployments(target_branch).items())
                 if s is not None
-            ))),
+            )),
+            {
+                'type': 'h2',
+                'content': 'Operator (merge the branch)'
+            },
             {
                 'type': 'cli',
                 'content': 'All status checks passed and the PR is mergeable'
@@ -855,17 +893,6 @@ def emit(t: T, target_branch: str):
                            'but only included `p` if the PR is also labeled `partial`',
                            'but excluded any `p` tags')
             },
-            iif(t in (T.default, T.upgrade, T.hotfix), {
-                'type': 'cli',
-                'content': iif(t is t.hotfix,
-                               'Moved connected issue to *Merged stable* column in ZenHub',
-                               f'Moved connected {t.issues} to *Merged lower* column in ZenHub')
-            }),
-            iif(target_branch == 'develop' and t is not T.backport, {
-                'type': 'cli',
-                'content': 'Moved blocked issues to *Triage*',
-                'alt': f'or no issues are blocked on the connected {t.issues}'
-            }),
             iif(t is T.upgrade,
                 {
                     'type': 'cli',
@@ -878,28 +905,19 @@ def emit(t: T, target_branch: str):
                 'type': 'cli',
                 'content': 'Pushed merge commit to GitHub'
             },
-            *iif(t is T.default, [
-                {
-                    'type': 'h2',
-                    'content': 'Operator (chain shortening)'
-                },
-                *[
-                    {
-                        'type': 'cli',
-                        'content': content,
-                        'alt': 'or this PR is not labeled `base`'
-                    }
-                    for content in [
-                        f'Changed the target branch of the blocked PR to {bq(target_branch)}',
-                        'Removed the `chained` label from the blocked PR',
-                        'Removed the blocking relationship from the blocked PR',
-                        'Removed the `base` label from this PR'
-                    ]
-                ]
-            ]),
+            {
+                'type': 'cli',
+                'content': f'Status of PR is '
+                           f'*Merged {'lower' if target_branch == 'develop' else 'stable'}*'
+            },
+            iif(target_branch == 'develop' and t is not T.backport, {
+                'type': 'cli',
+                'content': 'Status of blocked issues is *Triage*',
+                'alt': f'or no issues are blocked on the linked {t.issues}'
+            }),
             {
                 'type': 'h2',
-                'content': 'Operator (after pushing the merge commit)'
+                'content': 'Operator (main build)'
             },
             *[
                 {
@@ -936,6 +954,10 @@ def emit(t: T, target_branch: str):
                 'type': 'cli',
                 'content': 'Deleted PR branch from GitHub'
             },
+            {
+                'type': 'cli',
+                'content': 'PR is assigned to only the operator'
+            },
             *(
                 {
                     'type': 'cli',
@@ -944,29 +966,50 @@ def emit(t: T, target_branch: str):
                 for d, s in t.target_deployments(target_branch).items()
                 if s is not None
             ),
-            *iif(t is T.promotion, [
-                {
-                    'type': 'cli',
-                    'content': 'Moved connected issue to *Merged stable* column on ZenHub'
-                },
-                {
-                    'type': 'cli',
-                    'content': 'Moved promoted issues from *Merged lower* to *Merged stable* column on ZenHub'
-                },
-                {
-                    'type': 'cli',
-                    'content': 'Moved promoted issues from *Lower* to *Stable* column on ZenHub'
-                }
-            ]),
+            *(
+                [
+                    {
+                        'type': 'cli',
+                        'content': f'Status of linked {t.issues} is ' + (
+                            '*Lower*' + iif(t is not T.upgrade, ', or *Triage*, if PR is partial')
+                            if target_branch == 'develop' and t is not T.backport else
+                            '*Stable*'
+                        )
+                    }
+                ]
+                if t is not T.promotion else
+                [
+                    {
+                        'type': 'cli',
+                        'content': 'Status of linked issue is *Stable*'
+                    },
+                    {
+                        'type': 'cli',
+                        'content': 'Status of promoted<footnote promoted/> PRs is *Merged stable*'
+                    },
+                    {
+                        'type': 'cli',
+                        'content': 'Status of promoted<footnote promoted/> issues is *Stable*'
+                    },
+                    {
+                        'type': 'p',
+                        'content': '<footnote promoted/> Promoted issues and PRs are referenced in '
+                                   'the titles of the commits that the promotion branch introduces to '
+                                   'the stable branch. Prior to the promotion, the status of promoted '
+                                   'issues (PRs) is *Lower* (*Merged lower*). Promoted PRs in status '
+                                   '*Done* do not need to be moved.'
+                    }
+                ]
+            ),
             *iif(t in (T.default, T.hotfix, T.promotion), [
                 {
                     'type': 'h2',
                     'content': 'Operator (reindex)'
                 },
-                # zip() is used to interleave the steps for each deployment so
+                # unzip() is used to interleave the steps for each deployment so
                 # that first, step 1 is done for all deployments, then step 2
                 # for all of them, and so on.
-                *flatten(zip(*(
+                *flatten(unzip(
                     [
                         *[
                             {
@@ -997,7 +1040,7 @@ def emit(t: T, target_branch: str):
                         ]
                     ]
                     for d, s in t.target_deployments(target_branch).items()
-                ))),
+                )),
                 *[
                     {
                         'type': 'cli',
@@ -1031,6 +1074,36 @@ def emit(t: T, target_branch: str):
                     'content': 'Created backport PR and linked to it in a comment on this PR'
                 })
             ]),
+            *iif(t in (T.default, T.hotfix, T.promotion), [
+                {
+                    'type': 'h2',
+                    'content': 'Operator (mirroring)'
+                },
+                # unzip() is used to interleave the steps for each deployment so
+                # that first, step 1 is done for all deployments, then step 2
+                # for all of them, and so on.
+                *flatten(unzip(
+                    [
+                        *[
+                            {
+                                'type': 'cli',
+                                'content': f'{action} in `{d}`',
+                                'alt': (
+                                    'or neither this PR nor a failed, prior promotion requires it'
+                                    if t is T.hotfix else
+                                    f'or this PR does not require mirroring `{d}`'
+                                )
+                            }
+                            for action in [
+                                'Started mirroring',
+                                'Checked for, triaged and possibly requeued messages in mirror fail queue',
+                                'Emptied mirror fail queue'
+                            ]
+                        ]
+                    ]
+                    for d, s in t.target_deployments(target_branch).items()
+                ))
+            ]),
             {
                 'type': 'h2',
                 'content': 'Operator'
@@ -1045,7 +1118,7 @@ def emit(t: T, target_branch: str):
                     'content': 'Ran `scripts/export_inspector_findings.py` against `anvildev`, imported results '
                                'to [Google Sheet](https://docs.google.com/spreadsheets/d/'
                                '1RWF7g5wRKWPGovLw4jpJGX_XMi8aWLXLOvvE5rxqgH8) and posted screenshot of '
-                               'relevant<footnote relevant/> findings as a comment on the connected issue.'
+                               'relevant<footnote relevant/> findings as a comment on the linked issue.'
                 }
             ]),
             *iif(target_branch == 'develop' and t is not T.backport, [

@@ -1,46 +1,58 @@
-import json
 from typing import (
     Any,
     Callable,
     Mapping,
 )
 
-import attr
+import attrs
 from chalice import (
     BadRequestError as BRE,
     NotFoundError,
 )
 
 from azul import (
+    CatalogName,
     R,
     RequirementError,
     config,
 )
-from azul.chalice import (
-    AppController,
+from azul.auth import (
+    Authentication,
 )
 from azul.service import (
     FileUrlFunc,
+    Filters,
     FiltersJSON,
+    parse_filters,
+)
+from azul.service.source_controller import (
+    SourceController,
 )
 from azul.strings import (
     pluralize,
 )
 
 
-@attr.s(auto_attribs=True, frozen=True, kw_only=True)
-class ServiceAppController(AppController):
+@attrs.frozen(kw_only=True)
+class ServiceAppController(SourceController):
     file_url_func: FileUrlFunc
 
+    def get_filters(self,
+                    catalog: CatalogName,
+                    authentication: Authentication | None,
+                    filters: str | None = None
+                    ) -> Filters:
+        return Filters(explicit=self._parse_filters(filters),
+                       source_ids=self._list_source_ids(catalog, authentication))
+
     def _parse_filters(self, filters: str | None) -> FiltersJSON:
-        """
-        Parses a string with Azul filters in JSON syntax. Handles default cases
-        where filters are None or '{}'.
-        """
-        if filters is None:
-            return {}
-        else:
-            return json.loads(filters)
+        try:
+            return parse_filters(filters)
+        except AssertionError as e:
+            if R.caused(e):
+                raise R.propagate(e, BRE)
+            else:
+                raise
 
 
 def validate_catalog(catalog):

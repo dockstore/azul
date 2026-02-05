@@ -2,6 +2,7 @@ import logging
 import time
 from typing import (
     NoReturn,
+    Self,
 )
 import urllib
 import urllib.parse
@@ -31,13 +32,11 @@ from azul.collections import (
 from azul.deployment import (
     aws,
 )
-from azul.drs import (
-    DRSClient,
-)
 from azul.http import (
     HasCachedHttpClient,
 )
 from azul.indexer import (
+    Prefix,
     SimpleSourceSpec,
     SourceRef,
     SourcedBundleFQID,
@@ -66,11 +65,12 @@ class DSSSourceRef(SourceRef[SimpleSourceSpec]):
     namespace: UUID = UUID('6925391e-6519-41d9-879f-c6307eb83c1c')
 
     @classmethod
-    def for_dss_source(cls, source: str):
+    def for_dss_source(cls, source: str, prefix: str) -> Self:
         # We hash the endpoint instead of using it verbatim to distinguish them
         # within a document, which is helpful for testing.
         spec = SimpleSourceSpec.parse(source)
-        return cls(id=cls.id_from_spec(spec), spec=spec)
+        prefix = Prefix.parse(prefix)
+        return cls(id=cls.id_from_spec(spec), spec=spec, prefix=prefix)
 
     @classmethod
     def id_from_spec(cls, spec: SimpleSourceSpec) -> str:
@@ -108,17 +108,17 @@ class Plugin(RepositoryPlugin[
     def _lookup_source_id(self, spec: SimpleSourceSpec) -> str:
         return DSSSourceRef.id_from_spec(spec)
 
-    def count_bundles(self, source: SimpleSourceSpec) -> NoReturn:
+    def count_bundles(self, source: DSSSourceRef) -> NoReturn:
         assert False, 'DSS is EOL'
 
-    def count_files(self, source: SimpleSourceSpec) -> NoReturn:
+    def count_files(self, source: DSSSourceRef) -> NoReturn:
         assert False, 'DSS is EOL'
 
     def list_sources(self,
                      authentication: Authentication | None
                      ) -> list[DSSSourceRef]:
         return [
-            DSSSourceRef(id=self._lookup_source_id(spec), spec=spec)
+            DSSSourceRef(id=self._lookup_source_id(spec), spec=spec, prefix=None)
             for spec in self.sources
         ]
 
@@ -194,12 +194,6 @@ class Plugin(RepositoryPlugin[
         url.path.add(['files', file_uuid])
         url.query.add(adict(version=file_version, replica=replica, token=token))
         return str(url)
-
-    def drs_client(self,
-                   authentication: Authentication | None = None
-                   ) -> DRSClient:
-        assert authentication is None, type(authentication)
-        return DRSClient(http_client=self._http_client)
 
     def file_download_class(self) -> type[RepositoryFileDownload]:
         return DSSFileDownload

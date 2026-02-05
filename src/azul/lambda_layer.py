@@ -110,6 +110,12 @@ class DependenciesLayer:
     @cached_property
     def object_key(self):
         sha1 = hashlib.sha1()
+        # The `chalice package` command automatically includes Chalice's own
+        # __init__.py and app.py. We need to include them in the hash or else
+        # we risk ignoring changes to those files.
+        import chalice.app
+        for module in [chalice, chalice.app]:
+            sha1.update(file_sha1(getattr(module, '__file__')).encode())
         for path in Path(config.chalice_bin).iterdir():
             sha1.update(file_sha1(path).encode())
         return f'azul/{config.deployment_stage}/{config.lambda_layer_key}/{sha1.hexdigest()}.zip'

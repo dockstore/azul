@@ -11,9 +11,6 @@ from itertools import (
 import json
 import logging
 import math
-from threading import (
-    RLock,
-)
 from typing import (
     Any,
     ClassVar,
@@ -31,9 +28,15 @@ from azul import (
     config,
 )
 from azul.attrs import (
+    DiscriminatingPolymorphicSerializableAttrs,
     SerializableAttrs,
 )
+from azul.indexer.field import (
+    FieldTypes,
+    pass_thru_str,
+)
 from azul.json import (
+    DynamicPolymorphicSerializable,
     Parseable,
 )
 from azul.types import (
@@ -73,6 +76,13 @@ class BundleFQID(SerializableAttrs):
     def _nucleus(self) -> tuple[str, str]:
         return self.uuid.lower(), self.version.lower()
 
+    @classmethod
+    def field_types(cls) -> FieldTypes:
+        return {
+            'uuid': pass_thru_str,
+            'version': pass_thru_str,
+        }
+
     # We can't use attrs' generated implementation because it always
     # considers operands with different types to be unequal, regardless of
     # their inheritance relationships or how their attributes are annotated
@@ -88,7 +98,8 @@ class BundleFQID(SerializableAttrs):
         >>> b1 == b2
         True
 
-        >>> s1 = SourceRef(id='x', spec=SimpleSourceSpec.parse('y:/0'))
+        >>> p = Prefix.parse('/0')
+        >>> s1 = SourceRef(id='x', spec=SimpleSourceSpec.parse('y'), prefix=p)
         >>> sb1 = SourcedBundleFQID(uuid='a', version='b', source=s1)
         >>> sb2 = SourcedBundleFQID(uuid='a', version='b', source=s1)
         >>> sb1 == sb2
@@ -97,7 +108,7 @@ class BundleFQID(SerializableAttrs):
         >>> b1 == sb1
         True
 
-        >>> s2 = SourceRef(id='w', spec=SimpleSourceSpec.parse('z:/0'))
+        >>> s2 = SourceRef(id='w', spec=SimpleSourceSpec.parse('z'), prefix=p)
         >>> sb3 = SourcedBundleFQID(uuid='a', version='b', source=s2)
         >>> b1 == sb3
         True
@@ -107,8 +118,8 @@ class BundleFQID(SerializableAttrs):
         Traceback (most recent call last):
         ...
         AssertionError: (('a', 'b'),
-        SourceRef(id='x', spec=SimpleSourceSpec(prefix=Prefix(common='', partition=0), name='y')),
-        SourceRef(id='w', spec=SimpleSourceSpec(prefix=Prefix(common='', partition=0), name='z')))
+        SourceRef(id='x', spec=SimpleSourceSpec(name='y'), prefix=Prefix(common='', partition=0)),
+        SourceRef(id='w', spec=SimpleSourceSpec(name='z'), prefix=Prefix(common='', partition=0)))
         """
         if isinstance(other, BundleFQID):
             same_bundle = self._nucleus() == other._nucleus()
@@ -168,7 +179,7 @@ class BundleFQID(SerializableAttrs):
 
 
 @attrs.frozen(kw_only=True)
-class Prefix:
+class Prefix(Parseable):
     common: str = ''
     partition: int
     of_everything: ClassVar['Prefix']
@@ -202,6 +213,16 @@ class Prefix:
         Traceback (most recent call last):
         ...
         AssertionError: R('Prefix source cannot end in a delimiter', 'aa/', '/')
+
+        >>> Prefix.parse('8F53/0')
+        Traceback (most recent call last):
+        ...
+        azul.uuids.InvalidUUIDPrefixError: '8F53' is not a valid UUID prefix.
+
+        >>> Prefix.parse('https:foo.edu/0')
+        Traceback (most recent call last):
+        ...
+        azul.uuids.InvalidUUIDPrefixError: 'https:foo.edu' is not a valid UUID prefix.
 
         >>> Prefix.parse('8f538f53/1').partition_prefixes() # doctest: +NORMALIZE_WHITESPACE
         Traceback (most recent call last):
@@ -239,38 +260,40 @@ class Prefix:
         return cls(common=entry, partition=partition)
 
     @classmethod
-    def for_main_deployment(cls, num_subgraphs: int) -> Self:
+    def for_main_deployment(cls, num_elements: int, partition_size: int) -> Self:
         """
-        A prefix that is expected to rarely exceed 8192 subgraphs per partition
+        A prefix that divides a source containing the given number of elements
+        (subgraphs, files, …) into partitions that rarely exceed the given size.
 
-        >>> str(Prefix.for_main_deployment(0))
+        >>> n = 8192
+
+        >>> str(Prefix.for_main_deployment(0, n))
         Traceback (most recent call last):
         ...
         ValueError: math domain error
 
-        >>> str(Prefix.for_main_deployment(1))
+        >>> str(Prefix.for_main_deployment(1, n))
         '/0'
 
         >>> cases = [-1, 0, 1, 2]
 
-        >>> n = 8192
-        >>> [str(Prefix.for_main_deployment(n + i)) for i in cases]
+        >>> [str(Prefix.for_main_deployment(n + i, n)) for i in cases]
         ['/0', '/0', '/1', '/1']
 
         Sources with this many bundles are very rare, so we have a generous
         margin of error surrounding this cutoff point
 
-        >>> n = 8192 * 16
-        >>> [str(Prefix.for_main_deployment(n + i)) for i in cases]
+        >>> m = n * 16
+        >>> [str(Prefix.for_main_deployment(m + i, n)) for i in cases]
         ['/1', '/1', '/2', '/2']
         """
-        partition = cls._prefix_length(num_subgraphs, 8192)
+        partition = cls._prefix_length(num_elements, partition_size)
         return cls(common='', partition=partition)
 
     @classmethod
-    def for_lesser_deployment(cls, num_subgraphs: int) -> Self:
+    def for_lesser_deployment(cls, num_elements: int) -> Self:
         """
-        A prefix that yields an average of approximately 24 subgraphs per
+        A prefix that yields an average of approximately 24 elements per
         source, using an experimentally derived heuristic formula designed to
         minimize manual adjustment of the computed common prefixes. The
         partition prefix length is always 1, even though some partitions may be
@@ -294,9 +317,9 @@ class Prefix:
         >>> [str(Prefix.for_lesser_deployment(n + i)) for i in cases]
         ['e/1', 'f/1', '00/1', '10/1']
         """
-        digits = f'{num_subgraphs - 1:x}'[::-1]
-        length = cls._prefix_length(num_subgraphs, 64)
-        assert length < len(digits), num_subgraphs
+        digits = f'{num_elements - 1:x}'[::-1]
+        length = cls._prefix_length(num_elements, 64)
+        assert length < len(digits), num_elements
         return cls(common=digits[:length], partition=1)
 
     @classmethod
@@ -384,6 +407,14 @@ class Prefix:
 Prefix.of_everything = Prefix.parse('/0')
 
 
+@attrs.frozen(kw_only=True)
+class SourceConfig(SerializableAttrs):
+    """
+    Configuration on how to index or mirror a specific source.
+    """
+    mirror: bool
+
+
 @attrs.frozen(kw_only=True, order=True)
 class SourceSpec(Parseable, metaclass=ABCMeta):
     """
@@ -392,63 +423,6 @@ class SourceSpec(Parseable, metaclass=ABCMeta):
     are structured might want to implement this abstract class. Plugins that
     have simple unstructured names may want to use :class:`SimpleSourceSpec`.
     """
-
-    # FIXME: Improve equality and interning semantics for source ref and spec
-    #        https://github.com/DataBiosphere/azul/issues/6778
-    prefix: Prefix | None
-
-    @classmethod
-    def parse_prefix_only(cls, spec: str) -> Prefix | None:
-        """
-        Parse only the prefix component of a string representation of a
-        `SourceSpec.` To parse the entire spec, use :meth:`parse`. A return
-        value of `None` indicates that no prefix is configured for the spec.
-
-        >>> SourceSpec.parse_prefix_only('foo:/0')
-        Prefix(common='', partition=0)
-
-        >>> SourceSpec.parse_prefix_only('foo:') is None
-        True
-
-        >>> SourceSpec.parse_prefix_only('foo')
-        Traceback (most recent call last):
-        ...
-        AssertionError: R('Invalid source specification', 'foo')
-        """
-        _, prefix = cls._parse(spec)
-        return prefix
-
-    @classmethod
-    @abstractmethod
-    def parse(cls, spec: str) -> Self:
-        raise NotImplementedError
-
-    @classmethod
-    def _parse(cls, spec: str) -> tuple[str, Prefix | None]:
-        rest, sep, prefix = spec.rpartition(':')
-        assert sep != '', R('Invalid source specification', spec)
-        prefix = Prefix.parse(prefix) if prefix else None
-        return rest, prefix
-
-    @property
-    def _prefix_str(self) -> str:
-        return '' if self.prefix is None else str(self.prefix)
-
-    @abstractmethod
-    def __str__(self) -> str:
-        raise NotImplementedError
-
-    def eq_ignoring_prefix(self, other: Self) -> bool:
-        """
-        >>> p = SimpleSourceSpec.parse
-
-        >>> p('foo:4/0').eq_ignoring_prefix(p('foo:42/0'))
-        True
-
-        >>> p('foo:4/0').eq_ignoring_prefix(p('bar:4/0'))
-        False
-        """
-        return self == attrs.evolve(other, prefix=self.prefix)
 
 
 @attrs.frozen(kw_only=True)
@@ -461,128 +435,56 @@ class SimpleSourceSpec(SourceSpec):
     @classmethod
     def parse(cls, spec: str) -> Self:
         """
-        >>> SimpleSourceSpec.parse('https://foo.edu:12/0') # doctest: +NORMALIZE_WHITESPACE
-        SimpleSourceSpec(prefix=Prefix(common='12',
-                                       partition=0),
-                         name='https://foo.edu')
-
-        >>> SimpleSourceSpec.parse('foo')
-        Traceback (most recent call last):
-        ...
-        AssertionError: R('Invalid source specification', 'foo')
-
-        >>> SimpleSourceSpec.parse('foo:8F53/0')
-        Traceback (most recent call last):
-        ...
-        azul.uuids.InvalidUUIDPrefixError: '8F53' is not a valid UUID prefix.
-
-        >>> SimpleSourceSpec.parse('https:foo.edu/0')
-        Traceback (most recent call last):
-        ...
-        azul.uuids.InvalidUUIDPrefixError: 'foo.edu' is not a valid UUID prefix.
+        >>> SimpleSourceSpec.parse('https://foo.edu') # doctest: +NORMALIZE_WHITESPACE
+        SimpleSourceSpec(name='https://foo.edu')
         """
-        name, prefix = cls._parse(spec)
-        self = cls(prefix=prefix, name=name)
+        self = cls(name=spec)
         assert spec == str(self), spec
         return self
 
     def __str__(self) -> str:
         """
-        >>> s = 'foo:bar/baz:/0'
-        >>> s == str(SimpleSourceSpec.parse(s))
-        True
-
-        >>> s = 'foo:bar/baz:12/0'
-        >>> s == str(SimpleSourceSpec.parse(s))
-        True
-
-        >>> s = 'foo:bar/baz:12/2'
+        >>> s = 'foo:bar/baz'
         >>> s == str(SimpleSourceSpec.parse(s))
         True
         """
-        return f'{self.name}:{self._prefix_str}'
+        return self.name
 
 
 @attrs.frozen(kw_only=True, order=True)
-class SourceRef[SOURCE_SPEC: SourceSpec](SerializableAttrs,
-                                         SupportsLessAndGreaterThan):
+class SourceRef[SOURCE_SPEC: SourceSpec](
+    DiscriminatingPolymorphicSerializableAttrs,
+    DynamicPolymorphicSerializable,
+    SupportsLessAndGreaterThan
+):
     """
     A reference to a repository source containing bundles to index. A repository
     has at least one source. A source is primarily referenced by its ID but we
     drag the spec along to 1) avoid repeatedly looking it up and 2) ensure that
     the mapping between the two doesn't change while we index a source.
 
-    Instances of this class are interned: within a Python interpreter process,
-    there will only ever be one instance of this class for any given ID and
-    spec. There may be an instance of a subclass of this class that has the same
-    ID and spec as an instance of this class or another subclass of this class.
-
-    FIXME: Improve equality and interning semantics for source ref and spec
-           https://github.com/DataBiosphere/azul/issues/6778
-
     Note to plugin implementers: Since the source ID can't be assumed to be
     globally unique, plugins should subclass this class, even if the subclass
     body is empty.
 
-    >>> spec = SimpleSourceSpec(name='', prefix=(Prefix(partition=0)))
-    >>> list(sorted([
-    ...     SourceRef(id='d', spec=spec),
-    ...     SourceRef(id='a', spec=spec),
-    ... ]))
+    >>> spec = SimpleSourceSpec(name='')
+    >>> prefix = Prefix(partition=0)
+    >>> sorted([
+    ...     SourceRef(id='d', spec=spec, prefix=prefix),
+    ...     SourceRef(id='a', spec=spec, prefix=prefix),
+    ... ])
     ... # doctest: +NORMALIZE_WHITESPACE
-    [SourceRef(id='a', spec=SimpleSourceSpec(prefix=Prefix(common='', partition=0), name='')),
-    SourceRef(id='d', spec=SimpleSourceSpec(prefix=Prefix(common='', partition=0), name=''))]
+    [SourceRef(id='a', spec=SimpleSourceSpec(name=''), prefix=Prefix(common='', partition=0)),
+    SourceRef(id='d', spec=SimpleSourceSpec(name=''), prefix=Prefix(common='', partition=0))]
 
     """
     id: str = attrs.field(order=str.lower)
     spec: SOURCE_SPEC = attrs.field(order=False)
+    prefix: Prefix | None = attrs.field(order=False)
 
-    _lookup: ClassVar[dict[tuple[type['SourceRef'], str, SourceSpec], 'SourceRef']] = {}
-    _lookup_lock = RLock()
-
-    def __new__(cls, *, id: str, spec: SOURCE_SPEC) -> Self:
-        """
-        Interns instances by their ID and spec. Two different sources may still
-        use the same ID or spec.
-
-        FIXME: Improve equality and interning semantics for source ref and spec
-               https://github.com/DataBiosphere/azul/issues/6778
-
-        >>> class S(SourceRef): pass
-        >>> a, b  = SimpleSourceSpec.parse('a:/0'), SimpleSourceSpec.parse('b:/0')
-
-        >>> S(id='1', spec=a) is S(id='1', spec=a)
-        True
-
-        >>> S(id='1', spec=a) is S(id='2', spec=a)
-        False
-
-        >>> S(id='1', spec=b) # doctest: +NORMALIZE_WHITESPACE
-        S(id='1', spec=SimpleSourceSpec(prefix=Prefix(common='',
-                                                      partition=0),
-                                        name='b'))
-
-        Interning is done per class:
-
-        >>> class T(S): pass
-        >>> T(id='1', spec=a) is S(id='1', spec=a)
-        False
-
-        >>> T(id='1', spec=a) == S(id='1', spec=a)
-        False
-        """
-        with cls._lookup_lock:
-            lookup = cls._lookup
-            try:
-                self = lookup[cls, id, spec]
-            except KeyError:
-                self = super().__new__(cls)
-                cls.__init__(self, id=id, spec=spec)
-                lookup[cls, id, spec] = self
-            assert isinstance(self, cls)
-            assert self.id == id
-            assert self.spec == spec, (self.spec, spec)
-            return self
+    @classmethod
+    def discriminator(cls) -> str:
+        return 'type'
 
     @classmethod
     def spec_cls(cls) -> type[SOURCE_SPEC]:
@@ -592,25 +494,35 @@ class SourceRef[SOURCE_SPEC: SourceSpec](SerializableAttrs,
         return cast(type[SOURCE_SPEC], spec_cls)
 
     def with_prefix(self, prefix: Prefix) -> Self:
-        return attrs.evolve(self, spec=attrs.evolve(self.spec, prefix=prefix))
+        return attrs.evolve(self, prefix=prefix)
+
+    @classmethod
+    def field_types(cls) -> FieldTypes:
+        return {
+            'id': pass_thru_str,
+            'spec': pass_thru_str,
+            'prefix': pass_thru_str,
+            cls.discriminator(): pass_thru_str,
+        }
 
 
 @attrs.frozen(kw_only=True, eq=False)
 class SourcedBundleFQID[SOURCE_REF: SourceRef](BundleFQID):
     """
-    >>> spec = SimpleSourceSpec(name='', prefix=(Prefix(partition=0)))
-    >>> list(sorted([
-    ...     SourcedBundleFQID(uuid='d', version='e', source=SourceRef(id='1', spec=spec)),
-    ...     SourcedBundleFQID(uuid='a', version='c', source=SourceRef(id='2', spec=spec)),
-    ...     SourcedBundleFQID(uuid='a', version='b', source=SourceRef(id='3', spec=spec)),
-    ... ]))
+    >>> spec = SimpleSourceSpec(name='')
+    >>> prefix = Prefix(partition=0)
+    >>> sorted([
+    ...     SourcedBundleFQID(uuid='d', version='e', source=SourceRef(id='1', spec=spec, prefix=prefix)),
+    ...     SourcedBundleFQID(uuid='a', version='c', source=SourceRef(id='2', spec=spec, prefix=prefix)),
+    ...     SourcedBundleFQID(uuid='a', version='b', source=SourceRef(id='3', spec=spec, prefix=prefix)),
+    ... ])
     ... # doctest: +NORMALIZE_WHITESPACE
     [SourcedBundleFQID(uuid='a', version='b',
-        source=SourceRef(id='3', spec=SimpleSourceSpec(prefix=Prefix(common='', partition=0), name=''))),
+        source=SourceRef(id='3', spec=SimpleSourceSpec(name=''), prefix=Prefix(common='', partition=0))),
     SourcedBundleFQID(uuid='a', version='c',
-        source=SourceRef(id='2', spec=SimpleSourceSpec(prefix=Prefix(common='', partition=0), name=''))),
+        source=SourceRef(id='2', spec=SimpleSourceSpec(name=''), prefix=Prefix(common='', partition=0))),
     SourcedBundleFQID(uuid='d', version='e',
-        source=SourceRef(id='1', spec=SimpleSourceSpec(prefix=Prefix(common='', partition=0), name='')))]
+        source=SourceRef(id='1', spec=SimpleSourceSpec(name=''), prefix=Prefix(common='', partition=0)))]
     """
 
     source: SOURCE_REF
@@ -676,17 +588,20 @@ class Bundle[BUNDLE_FQID: BundleFQID](SerializableAttrs, metaclass=ABCMeta):
 class BundlePartition(UUIDPartition):
     """
     A binary partitioning of the UUIDs of outer entities in a bundle.
+
+    >>> BundlePartition.root
+    BundlePartition(prefix_length=0, prefix=0, group=4)
     """
 
+    #: We use the fifth group because the first group may not produce a random
+    #: distribution of the entities in some types of bundles. For example, all
+    #: entity UUIDs in an AnVIL replica bundle share a specifc batch prefix.
+    #:
+    group: int = 4
+
     #: 512 caused timeouts writing contributions, even in the retry Lambda
+    #:
     max_partition_size: ClassVar[int] = 256
 
     def divisions(self, num_entities: int) -> int:
         return math.ceil(num_entities / self.max_partition_size)
-
-    def __attrs_post_init__(self):
-        super().__attrs_post_init__()
-        # Most bits in a v4 or v5 UUID are pseudo-random, including the leading
-        # 32 bits but those are followed by a couple of deterministic ones.
-        # For simplicity, we'll limit ourselves to 2 ** 32 leaf partitions.
-        assert self.prefix_length <= 32, R('Too many partitions', self.prefix_length)

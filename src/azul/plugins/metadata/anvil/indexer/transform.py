@@ -22,6 +22,7 @@ from typing import (
     Callable,
     Collection,
     Iterable,
+    Iterator,
     Self,
 )
 from uuid import (
@@ -82,9 +83,14 @@ from azul.strings import (
     pluralize,
 )
 from azul.types import (
+    AnyMutableJSON,
     JSON,
     MutableJSON,
     MutableJSONs,
+    json_element_mappings,
+    json_sequence_of_optional_strings,
+    json_sorted,
+    json_str,
 )
 
 log = logging.getLogger(__name__)
@@ -93,7 +99,7 @@ EntityRefsByType = dict[EntityType, set[EntityReference]]
 
 
 @attr.s(auto_attribs=True, kw_only=True, frozen=True)
-class LinkedEntities:
+class LinkedEntities(Iterable[EntityReference]):
     origin: EntityReference
     ancestors: EntityRefsByType
     descendants: EntityRefsByType
@@ -101,7 +107,7 @@ class LinkedEntities:
     def __getitem__(self, item: EntityType) -> set[EntityReference]:
         return self.ancestors[item] | self.descendants[item]
 
-    def __iter__(self) -> Iterable[EntityReference]:
+    def __iter__(self) -> Iterator[EntityReference]:
         for entities in self.ancestors.values():
             yield from entities
         for entities in self.descendants.values():
@@ -156,6 +162,7 @@ class BaseTransformer(Transformer, metaclass=ABCMeta):
 
     @classmethod
     def aggregator(cls, entity_type) -> EntityAggregator:
+        agg_cls: type[EntityAggregator]
         if entity_type == 'activities':
             agg_cls = ActivityAggregator
         elif entity_type == 'biosamples':
@@ -313,13 +320,6 @@ class BaseTransformer(Transformer, metaclass=ABCMeta):
             'is_supplementary': null_bool,
             # Not in schema
             'version': null_str,
-            # FIXME: Redundant file fields for AnVIL are no longer needed
-            #        https://github.com/DataBiosphere/azul/issues/7005
-            'uuid': null_str,
-            'size': null_int,
-            'name': null_str,
-            'crc32': null_str,
-            'sha256': null_str,
             'drs_uri': null_str
         }
 
@@ -332,32 +332,34 @@ class BaseTransformer(Transformer, metaclass=ABCMeta):
 
     def _range(self, entity: EntityReference, *field_prefixes: str) -> MutableJSON:
         metadata = self.bundle.entities[entity]
-
-        def get_bound(field_name: str) -> float | None:
-            val = metadata[field_name]
-            return None if val is None else float(val)
-
         return {
             field_prefix: {
-                'gte': get_bound(field_prefix + '_lower_bound'),
-                'lte': get_bound(field_prefix + '_upper_bound')
+                'gte': metadata[field_prefix + '_lower_bound'],
+                'lte': metadata[field_prefix + '_upper_bound']
             }
             for field_prefix in field_prefixes
         }
 
     def _entity(self,
-                entity: EntityReference,
+                ref: EntityReference,
                 field_types: FieldTypes,
                 **additional_fields
                 ) -> MutableJSON:
-        metadata = self.bundle.entities[entity]
-        field_values = ChainMap(metadata,
-                                {'document_id': entity.entity_id},
-                                additional_fields)
-        return {
-            field: field_values[field]
-            for field in field_types
-        }
+        metadata = self.bundle.entities[ref]
+        entity: MutableJSON = {}
+        for field in field_types:
+            value: AnyMutableJSON
+            if field == 'document_id':
+                value = ref.entity_id
+            else:
+                try:
+                    value = metadata[field]
+                except KeyError:
+                    value = additional_fields[field]
+            if isinstance(value, list):
+                value = json_sorted(json_sequence_of_optional_strings(value))
+            entity[field] = value
+        return entity
 
     def _entities(self,
                   factory: Callable[[EntityReference], MutableJSON],
@@ -407,12 +409,7 @@ class BaseTransformer(Transformer, metaclass=ABCMeta):
         return self._entity(donor, self._donor_types())
 
     def _file(self, file: EntityReference) -> MutableJSON:
-        metadata = self.bundle.entities[file]
-        return self._entity(file,
-                            self._file_types(),
-                            size=metadata['file_size'],
-                            name=metadata['file_name'],
-                            uuid=file.entity_id)
+        return self._entity(file, self._file_types())
 
     def _only_dataset(self) -> EntityReference:
         try:
@@ -426,14 +423,14 @@ class BaseTransformer(Transformer, metaclass=ABCMeta):
             anvil_schema,
         )
         return {
-            table['name']
-            for table in anvil_schema['tables']
-            if table['name'].endswith('activity')
+            json_str(table['name'])
+            for table in json_element_mappings(anvil_schema['tables'])
+            if json_str(table['name']).endswith('activity')
         }
 
     @classmethod
     def inner_entity_id(cls, entity_type: EntityType, entity: JSON) -> EntityID:
-        return entity['document_id']
+        return json_str(entity['document_id'])
 
     @classmethod
     def reconcile_inner_entities(cls,
@@ -472,7 +469,9 @@ class BaseTransformer(Transformer, metaclass=ABCMeta):
     @classmethod
     @cache
     def _complete_dataset_keys(cls) -> AbstractSet[str]:
-        return cls.field_types()['datasets'].keys()
+        field_types = cls.field_types()['datasets']
+        assert isinstance(field_types, dict), field_types
+        return field_types.keys()
 
 
 class SingletonTransformer(BaseTransformer, metaclass=ABCMeta):

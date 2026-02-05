@@ -290,11 +290,11 @@ Updating the AMI for GitLab instances
 
 As part of the upgrades isssue, operators must check for updates to the AMI for
 the root volume of the EC2 instance running GitLab. We use a hardened — to the
-requirements of the CIS Amazon Linux 2 benchmark — variant of Amazon's Linux 2
-AMI. The license to use the AMI for an EC2 instance is sold by CIS as a
-subscription on the AWS Marketplace:
+requirements of the CIS Hardened Image Level 1 on Amazon Linux 2023. The license
+to use the AMI for an EC2 instance is sold by CIS as a subscription on the AWS
+Marketplace:
 
-https://aws.amazon.com/marketplace/pp/prodview-wv574yqgjv6jg
+https://aws.amazon.com/marketplace/pp/prodview-fqqp6ebucarnm
 
 The license costs $0.024 per instance/hour. Every AWS account must subscribe
 separately.
@@ -313,7 +313,7 @@ component, say, ``_select dev.gitlab`` and run
 
     aws ec2 describe-images \
             --owners aws-marketplace \
-            --filters="Name=name,Values=*abcfcbaf-134e-4639-a7b4-fd285b9fcf0a*" \
+            --filters="Name=name,Values=*prod-fvm47vekg24oc*" \
         | jq -r '.Images[] | .CreationDate+"\t"+.ImageId+"\t"+.Name' \
         | sort \
         | tail -1
@@ -363,20 +363,20 @@ dependencies listed in ``requirements.txt`` and ``requirements.dev.txt`` against
 the Package tool window, where the dependency indicates of an available version.
 When updating:
 
- * Update to the latest mature release (a release with a high patch number or
-   where the most recent patch release is at least a couple of months old) and go
-   backward if problems occur.
+- Update to the latest mature release (a release with a high patch number or
+  where the most recent patch release is at least a couple of months old) and go
+  backward if problems occur.
 
-  * Document each of these problems with a dedicated FIXME, with its respective
-    ticket & reference, when non-trivial code base changes are necessary due to
-    a package version upgrade.
+- Document each of these problems with a dedicated FIXME, with its respective
+  ticket & reference, when non-trivial code base changes are necessary due to a
+  package version upgrade.
 
-  * Reference the GitHub link in a comment beside the conflictive package.
+- Reference the GitHub link in a comment beside the conflictive package.
 
- * If updating a package causes a trivial change or a dismissable warning when
-   including a FIXME (e.g., deprecation warnings), it should be done on its own
-   commit, to easily identify the dependencies forcing the change and the given
-   resolution.
+- If updating a package causes a trivial change or a dismissable warning when
+  including a FIXME (e.g., deprecation warnings), it should be done on its own
+  commit, to easily identify the dependencies forcing the change and the given
+  resolution.
 
 Note, a way to display all available versions of a given package in a concise
 way, is to pretend to install a non-existing version from a terminal console
@@ -467,19 +467,27 @@ Updating the Swagger UI
 
 Operators should regularly check for available updates to the Swagger UI. The
 current version used by Azul is hardcoded in ``scripts/update_swagger.py``. The
-upstream source is located here:
-
-https://github.com/swagger-api/swagger-ui/tree/master/dist
+latest upstream version is available as the `latest release tag`_.
 
 Scheduled upgrade PR's should only include minor and hotfix updates to the
 Swagger UI. If a new major version is available, open a new issue instead. To
 perform the update, edit the ``tag`` variable in the ``update_swagger`` script
-and run it. If there are nontrivial changes to the ``swagger-initializer.js`` or
-``oauth2-redirect.html`` files, cancel the update and open a new issue instead.
-Otherwise, forward any changes to those two files to their respective mustache
-template files, and commit the changes to the script and all modified files in
-the ``swagger/`` directory. The commit message must include the new tag, as well
-as a link to the upstream source in the commit body, e.g.::
+and run it. The script copies the files from the `dist directory`_, but at the
+specified version, which may be different on the master `branch`, which the link
+points to.
+
+.. _latest release tag: https://github.com/swagger-api/swagger-ui/releases/latest
+
+.. _dist directory: https://github.com/swagger-api/swagger-ui/tree/master/dist
+
+If, after running the script, there are nontrivial changes to the
+``swagger-initializer.js`` or ``oauth2-redirect.html`` files, cancel the update
+and open a new issue instead. You may need to try updating to an older,
+intermediate version. Forward trivial changes to those two files to their
+respective Mustache template copies, and commit the changes to the script and
+all modified files in the ``swagger/`` directory. The commit message must
+include the new tag, as well as a link to the upstream source in the commit
+body, e.g.::
 
     Update Swagger UI to v<release version> (#issue-number)
 
@@ -690,7 +698,7 @@ you can simply jump to `Launching ZAP`_.
    temporarily blocked by the system, you will need to configure the maximum
    rate of requests that ZAP will send out. From the app menu bar, select
    *Tools*, then *Options*, then *Network*, then *Rate Limit*. Add and enable a
-   three request per second rule for the match string ``anvilprod.org``, and
+   three request per second rule for the match string ``anvilproject.org``, and
    another rule for the match string ``humancellatlas.org``.
 
 #. With the *Options* window open, select *Check for Updates* from the list of
@@ -735,17 +743,26 @@ session`_ and run a scan. After your scan has completed and you have generated
 a report, close the ZAP application, and then repeat the steps above to start
 each additional scan with a fresh authentication token.
 
-.. _`create a new session`: #zap-sessions
+.. _`create a new session`: #zap-context-and-sessions
 
-ZAP Sessions
-""""""""""""
+ZAP Context and Sessions
+""""""""""""""""""""""""
 
-With the ZAP application open, you must start a new session prior to running a
-new scan. Failure to do so can pollute the scan results with the findings from
-the previous scan. A new session is created each time you launch ZAP, or
-alternatively, to manually open a new session, from the app menu bar select
-*File*, and then *New Session*.
+With the ZAP application open, and prior to running any scan, start a new
+session and import `azul-zap-scan.context`_ from the azul-private repo.
+Failure to do so will pollute the scan results with known false positives and
+findings from the previous scan. A new session is created each time you launch
+ZAP. Alternatively, to manually open a new session, select *File* from the
+application menu bar, and then select *New Session*.
 
+To import the context file select *File* from the application menu bar, followed
+by *Import Context…* and then proceed to find the `azul-zap-scan.context`_ file
+and click *Open*. Confirm the context is *In Scope* by double-clicking the newly
+imported context and ensuring the checkmark is present in the *In Scope*
+checkbox. After clicking *OK*, a red dot will be shown in the icon next to the
+entry labeled *Azul Context*. Lastly, delete the ``Default Context`` by
+right-clicking it and selecting the *Delete* option.
+˚
 If you are prompted with options to persist the ZAP session, select the *No, I
 do not want to persis this session at this moment in time* option and click
 *Start*.
@@ -753,6 +770,7 @@ do not want to persis this session at this moment in time* option and click
 You may now continue with either a `Data Portal / Browser scan`_ or `Azul
 Indexer / Service API scan`_.
 
+.. _`azul-zap-scan.context`: https://github.com/DataBiosphere/azul-private/blob/main/azul-zap-scan.context
 .. _`Portal / Browser scan`: #running-a-portal-browser-scan
 .. _`Azul Indexer / Service API scan`: #running-an-azul-indexer-service-api-scan
 

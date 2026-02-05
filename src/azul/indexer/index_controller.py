@@ -20,9 +20,6 @@ from azul import (
     cached_property,
     config,
 )
-from azul.azulclient import (
-    AzulClient,
-)
 from azul.chalice import (
     LambdaMetric,
 )
@@ -62,41 +59,43 @@ class IndexController(ActionController[IndexAction]):
     def index_queue_service(self) -> IndexQueueService:
         return IndexQueueService()
 
-    @cached_property
-    def client(self) -> AzulClient:
-        return AzulClient()
-
     @property
     def actions_are_fifo(self) -> bool:
         return False
 
+    @property
+    def action_cls(self) -> type[IndexAction]:
+        return IndexAction
+
     def handlers(self) -> dict[str, Any]:
         @self.app.route(
-            '/{catalog}/{action}',
-            methods=['POST'],
+            '/{catalog}/bundles',
+            methods=['POST', 'DELETE'],
             spec={
                 'tags': ['Indexing'],
                 'summary': 'Notify the indexer to perform an action on a bundle',
                 'description': fd('''
-                    Queue a bundle for addition to or deletion from the index.
+                    Queue a bundle for addition to, or deletion from, the index.
+                    The POST method is ued for additions, the DELETE method for
+                    deletions.
 
-                    The request must be authenticated using HMAC via the ``signature``
-                    header. Each Azul deployment has its own unique HMAC key. The HMAC
-                    components are the request method, request path, and the SHA256
-                    digest of the request body.
+                    The request must be authenticated using HMAC via the
+                    ``signature`` header. Each Azul deployment has its own
+                    unique HMAC key. The HMAC components are the request method,
+                    request path, and the SHA256 digest of the request body.
 
-                    A valid HMAC header proves that the client is in possession of the
-                    secret HMAC key and that the request wasn't tampered with while
-                    travelling between client and service, even though the latter is not
-                    strictly necessary considering that TLS is used to encrypt the
-                    entire exchange. Internal clients can obtain the secret key from the
-                    environment they are running in, and that they share with the
-                    service. External clients must have been given the secret key. The
-                    now-defunct DSS was such an external client. The Azul indexer
-                    provided the HMAC secret to DSS when it registered with DSS to be
-                    notified about bundle additions/deletions. These days only internal
-                    clients use this endpoint.
-                '''),
+                    A valid HMAC header proves that the client is in possession
+                    of the secret HMAC key and that the request wasn't tampered
+                    with while travelling between client and service, even
+                    though the latter is not strictly necessary considering that
+                    TLS is used to encrypt the entire exchange. Internal clients
+                    can obtain the secret key from the environment they are
+                    running in, and that they share with the service. External
+                    clients must have been given the secret key. The now-defunct
+                    DSS was such an external client. The Azul indexer provided
+                    the HMAC secret to DSS when it registered with DSS to be
+                    notified about bundle additions/deletions. These days only
+                    internal clients use this endpoint. '''),
                 'requestBody': {
                     'description': 'Contents of the notification',
                     'required': True,
@@ -115,9 +114,6 @@ class IndexController(ActionController[IndexAction]):
                     params.path('catalog',
                                 schema.enum(*config.catalogs),
                                 description='The name of the catalog to notify.'),
-                    params.path('action',
-                                schema.enum(IndexAction.add.name, IndexAction.delete.name),
-                                description='Which action to perform.'),
                     params.header('signature',
                                   str,
                                   description='HMAC authentication signature.')
@@ -135,11 +131,11 @@ class IndexController(ActionController[IndexAction]):
                 }
             }
         )
-        def post_notification(catalog: CatalogName, action: str):
+        def index_bundle(catalog: CatalogName):
             """
             Receive a notification event and queue it for indexing or deletion.
             """
-            return self.handle_notification(catalog, action)
+            return self.index_bundle(catalog)
 
         @self.app.metric_alarm(metric=LambdaMetric.errors,
                                threshold=int(config.contribution_concurrency(retry=False) * 2 / 3),
@@ -191,7 +187,7 @@ class IndexController(ActionController[IndexAction]):
                                threshold=int(config.contribution_concurrency(retry=True) * 1 / 4),
                                period=5 * 60)
         @self.app.metric_alarm(metric=LambdaMetric.throttles,
-                               threshold=int(31760 / config.contribution_concurrency(retry=True)),
+                               threshold=int(39700 / config.contribution_concurrency(retry=True)),
                                period=5 * 60)
         @self.app.on_sqs_message(
             queue=config.notifications_queue.to_retry.name,
@@ -202,7 +198,7 @@ class IndexController(ActionController[IndexAction]):
 
         return locals()
 
-    def handle_notification(self, catalog: CatalogName, action: str):
+    def index_bundle(self, catalog: CatalogName):
         request = self.current_request
         if isinstance(request.authentication, HMACAuthentication):
             assert request.authentication.identity() is not None
@@ -215,14 +211,15 @@ class IndexController(ActionController[IndexAction]):
             log.info('Received notification %r for catalog %r', notification, catalog)
             self._validate_notification(notification)
             service = self.index_queue_service
-            message = service.index_bundle_message(self._load_action(action),
-                                                   catalog,
+            delete = request.method == 'DELETE'
+            message = service.index_bundle_message(catalog,
                                                    notification['bundle_fqid'],
-                                                   BundlePartition.root)
+                                                   BundlePartition.root,
+                                                   delete=delete)
             service.queue_notification(message, retry=False)
             return chalice.app.Response(body='', status_code=http.HTTPStatus.ACCEPTED)
         else:
-            raise UnauthorizedError()
+            raise UnauthorizedError('Expecting HMAC authentication')
 
     def _validate_notification(self, notification):
         try:

@@ -15,6 +15,7 @@ import azul.drs
 import azul.dss
 import azul.exceptions
 import azul.files
+import azul.functions
 import azul.http
 import azul.indexer
 import azul.indexer.aggregate
@@ -40,9 +41,9 @@ import azul.plugins.metadata.hca.service.contributor_matrices
 import azul.plugins.repository.canned
 import azul.plugins.repository.tdr_hca
 import azul.service.app_controller
+import azul.service.download_controller
 import azul.service.drs_controller
 import azul.service.manifest_service
-import azul.service.repository_controller
 import azul.strings
 import azul.terra
 import azul.terraform
@@ -79,6 +80,7 @@ def load_tests(_loader,
         azul.dss,
         azul.exceptions,
         azul.files,
+        azul.functions,
         azul.http,
         azul.indexer,
         azul.indexer.aggregate,
@@ -97,9 +99,9 @@ def load_tests(_loader,
         azul.plugins.repository.tdr_hca,
         azul.plugins.metadata.hca.indexer.transform,
         azul.service.app_controller,
+        azul.service.download_controller,
         azul.service.drs_controller,
         azul.service.manifest_service,
-        azul.service.repository_controller,
         azul.strings,
         azul.terra,
         azul.terraform,
@@ -123,5 +125,5 @@ def load_tests(_loader,
 
 if __name__ == '__main__':
     setUpModule()
-    runner = unittest.TextTestRunner()
+    runner = unittest.TextTestRunner(verbosity=2)
     runner.run(load_tests(None, unittest.TestSuite(), None))

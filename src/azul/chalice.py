@@ -26,7 +26,6 @@ from urllib.parse import (
 )
 
 import attrs
-import chalice
 from chalice import (
     Chalice,
     ChaliceViewError,
@@ -34,6 +33,7 @@ from chalice import (
 from chalice.app import (
     BadRequestError,
     CaseInsensitiveMapping,
+    EventSourceHandler,
     HeadersType,
     MultiDict,
     NotFoundError,
@@ -103,6 +103,10 @@ class AzulRequest(Request):
     authentication: Authentication | None
 
 
+class TerraTimeoutError(ChaliceViewError):
+    STATUS_CODE = 307
+
+
 # For some reason Chalice does not define an exception for the 410 status code
 class GoneError(ChaliceViewError):
     STATUS_CODE = 410
@@ -153,6 +157,7 @@ class AzulChaliceApp(Chalice):
         # Middleware is invoked in order of registration
         self.register_middleware(self._logging_middleware, 'http')
         self.register_middleware(self._security_headers_middleware, 'http')
+        self.register_middleware(self._retry_after, 'http')
         self.register_middleware(self._api_gateway_context_middleware, 'http')
         self.register_middleware(self._authentication_middleware, 'http')
 
@@ -258,6 +263,31 @@ class AzulChaliceApp(Chalice):
         response.headers['Cache-Control'] = cache_control
         return response
 
+    def _retry_after(self, event, get_response):
+        """
+        Add a retry-after header to the response based on its type.
+        """
+        response = get_response(event)
+        if response.status_code == 503:
+            response.headers.setdefault('Retry-After', '30')
+        # We return a 307 to indicate that the client should retry the request
+        # when it failed due to an internal request to Terra timing out. We do
+        # this instead of a 503 to avoid the Data Browser from displaying an
+        # error, and avoid a CloudWatch alarm (5XX) from being raised. The
+        # retry-after response header is given a value of zero since the client
+        # already waited over five seconds for the request to time out.
+        elif response.status_code == 307:
+            response.headers.setdefault('Retry-After', '0')
+            if event.query_params is None:
+                args = None
+            else:
+                assert isinstance(event.query_params, MultiDict)
+                args = {k: event.query_params.getlist(k) for k in event.query_params}
+            url = furl(self.base_url, path=event.context['path'], args=args)
+            assert 'Location' not in response.headers, response.headers
+            response.headers['Location'] = str(url)
+        return response
+
     def _http_cache_for(self, seconds: int):
         """
         The HTTP Cache-Control response header value that will cause the
@@ -323,7 +353,7 @@ class AzulChaliceApp(Chalice):
             if not interactive:
                 require(bool(methods), 'Must list methods with interactive=False')
                 self.non_interactive_routes.update((path, method) for method in methods)
-            spec = deep_dict_merge(spec, self.default_specs())
+            spec = deep_dict_merge(self.default_specs(), spec, override=True)
             chalice_decorator = super().route(path, methods=methods, **kwargs)
 
             def decorator(view_func):
@@ -467,7 +497,7 @@ class AzulChaliceApp(Chalice):
         info = json.dumps(info, cls=self._LogJSONEncoder)
         log.info('Received %s request for %r, with %s.',
                  request.context['httpMethod'], request.context['path'], info)
-        log.info(http_body_log_message('request', request.json_body))
+        log.info(http_body_log_message('request', request.raw_body))
 
     def _log_response(self, response: Response) -> None:
         info = {
@@ -598,7 +628,7 @@ class AzulChaliceApp(Chalice):
         period: int
 
         def __call__(self, f):
-            assert isinstance(f, chalice.app.EventSourceHandler), f
+            assert isinstance(f, EventSourceHandler), f
             try:
                 metric_alarms = getattr(f, 'metric_alarms')
             except AttributeError:
@@ -612,6 +642,14 @@ class AzulChaliceApp(Chalice):
             return f'{self.tf_function_resource_name}_{self.metric.name}'
 
     @property
+    def event_source_handlers(self) -> dict[str, EventSourceHandler]:
+        return {
+            handler_name: handler
+            for handler_name, handler in self.handler_map.items()
+            if isinstance(handler, EventSourceHandler)
+        }
+
+    @property
     def metric_alarms(self) -> Iterator[metric_alarm]:
         for metric in LambdaMetric:
             # The api_handler lambda functions (indexer & service) aren't
@@ -619,22 +657,19 @@ class AzulChaliceApp(Chalice):
             # first.
             for_errors = metric is LambdaMetric.errors
             alarm = self.metric_alarm(metric=metric,
-                                      threshold=1 if for_errors else 0,
-                                      period=24 * 60 * 60 if for_errors else 5 * 60)
+                                      threshold=0,
+                                      period=60 * 60 if for_errors else 5 * 60)
             yield alarm.bind(self)
-        for handler_name, handler in self.handler_map.items():
-            if isinstance(handler, chalice.app.EventSourceHandler):
-                try:
-                    metric_alarms = getattr(handler, 'metric_alarms')
-                except AttributeError:
-                    metric_alarms = (
-                        self.metric_alarm(metric=metric,
-                                          threshold=0,
-                                          period=5 * 60)
-                        for metric in LambdaMetric
-                    )
-                for metric_alarm in metric_alarms:
-                    yield metric_alarm.bind(self, handler_name)
+        for handler_name, handler in self.event_source_handlers.items():
+            try:
+                metric_alarms = getattr(handler, 'metric_alarms')
+            except AttributeError:
+                metric_alarms = (
+                    self.metric_alarm(metric=metric, threshold=0, period=5 * 60)
+                    for metric in LambdaMetric
+                )
+            for metric_alarm in metric_alarms:
+                yield metric_alarm.bind(self, handler_name)
 
     # noinspection PyPep8Naming
     @attrs.frozen
@@ -650,20 +685,25 @@ class AzulChaliceApp(Chalice):
         num_retries: int
 
         def __call__(self, f):
-            assert isinstance(f, chalice.app.EventSourceHandler), f
+            assert isinstance(f, EventSourceHandler), f
             setattr(f, 'retry', self)
             return f
 
     @property
     def retries(self) -> Iterator[retry]:
-        for handler_name, handler in self.handler_map.items():
-            if isinstance(handler, chalice.app.EventSourceHandler):
-                try:
-                    retry = getattr(handler, 'retry')
-                except AttributeError:
-                    pass
-                else:
-                    yield retry.bind(self, handler_name)
+        for handler_name, handler in self.event_source_handlers.items():
+            try:
+                retry = getattr(handler, 'retry')
+            except AttributeError:
+                pass
+            else:
+                yield retry.bind(self, handler_name)
+
+    @property
+    def tf_function_resource_names(self) -> Iterator[str]:
+        yield self.unqualified_app_name
+        for handler_name in self.event_source_handlers:
+            yield f'{self.unqualified_app_name}_{handler_name}'
 
     def default_routes(self):
 
@@ -723,7 +763,7 @@ class AzulChaliceApp(Chalice):
             file_name = 'swagger-initializer.js.template.mustache'
             template = self.load_static_resource('swagger', file_name)
             base_url = self.base_url
-            redirect_url = furl(base_url).add(path='oauth2_redirect')
+            redirect_url = furl(base_url).add(path='swagger/oauth2-redirect.html')
             openapi_spec = furl(base_url).add(path='openapi.json')
             body = chevron.render(template, {
                 'OPENAPI_SPEC': json.dumps(str(openapi_spec.path)),
@@ -822,7 +862,7 @@ class AzulChaliceApp(Chalice):
         )
         def version():
             return {
-                'git': config.lambda_git_status
+                'git': config.git_status
             }
 
         @self.route(
@@ -857,14 +897,39 @@ class AzulChaliceApp(Chalice):
         return locals()
 
     def default_specs(self):
+        retry_after = format_description('''
+            Clients should wait the number of seconds specified in the
+            Retry-After response header and then retry the request.
+        ''')
+        do_not_retry = format_description('''
+            It is unlikely that a retry will be successful until the problem is
+            resolved by an operator.
+        ''')
         return {
             'responses': {
+                '400': {
+                    'description': 'Bad request. The request was rejected due '
+                                   'to malformed parameters. It must not be '
+                                   'retried without modification.'
+                },
+                '429': {
+                    'description': 'Too many requests. ' + retry_after
+                },
+                '500': {
+                    'description': 'Internal application error. ' + do_not_retry
+                },
+                '502': {
+                    'description': 'Bad gateway. The frontend server received '
+                                   'an invalid response from the backend '
+                                   'server. ' + do_not_retry
+                },
+                '503': {
+                    'description': 'Service unavailable. ' + retry_after
+                },
                 '504': {
-                    'description': format_description('''
-                        Request timed out. When handling this response, clients
-                        should wait the number of seconds specified in the
-                        `Retry-After` header and then retry the request.
-                    ''')
+                    'description': 'Gateway timeout. The frontend server did '
+                                   'not receive a timely response from the '
+                                   'backend server. ' + do_not_retry
                 }
             }
         }

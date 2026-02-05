@@ -116,10 +116,10 @@ trail_alarms = [
 
 # The deployment and/or backup of the GitLab instance requires a reboot, which
 # can interrupt an ongoing ClamAV scan. Since scans are run twice a day, we set
-# the alarm period to 24 hours (maximum allowed by CloudWatch) to allow enough
-# time for the next scan to complete following an interrupted scan.
+# the alarm period to 36 hours to allow enough time for the next scan to
+# complete following an interrupted scan.
 #
-clam_alarm_period = 24 * 60 * 60
+clam_alarm_period = 36 * 60 * 60
 
 tf_config = {
     'data': {
@@ -538,46 +538,41 @@ tf_config = {
             **{
                 a.name: {
                     'alarm_name': config.qualified_resource_name(a.name, suffix='.alarm'),
-                    'comparison_operator': 'GreaterThanThreshold',
-                    'evaluation_periods': 1,
+                    'namespace': 'LogMetrics',
                     'metric_name': '${aws_cloudwatch_log_metric_filter.'
                                    '%s.metric_transformation[0].name}' % a.name,
-                    'namespace': 'LogMetrics',
                     'statistic': a.statistic,
-                    'treat_missing_data': 'notBreaching',
+                    'comparison_operator': 'GreaterThanThreshold',
                     'threshold': a.threshold,
+                    'evaluation_periods': 1,
                     # The CIS documentation does not specify a period. 5 minutes is
                     # the default value when creating the alarm via the console UI.
                     'period': a.period,
+                    'datapoints_to_alarm': 1,
                     'alarm_actions': ['${aws_sns_topic.monitoring.arn}'],
-                    'ok_actions': ['${aws_sns_topic.monitoring.arn}']
+                    'ok_actions': ['${aws_sns_topic.monitoring.arn}'],
+                    'treat_missing_data': 'notBreaching',
                 }
                 for a in trail_alarms
             },
             'clam_fail': {
                 'alarm_name': config.qualified_resource_name('clam_fail', suffix='.alarm'),
-                'comparison_operator': 'GreaterThanThreshold',
-                'evaluation_periods': 1,
+                'namespace': 'LogMetrics',
                 'metric_name': '${aws_cloudwatch_log_metric_filter.'
                                '%s.metric_transformation[0].name}' % 'clam_fail',
-                'namespace': 'LogMetrics',
                 'statistic': 'Sum',
-                'treat_missing_data': 'notBreaching',
+                'comparison_operator': 'GreaterThanThreshold',
                 'threshold': 0,
+                'evaluation_periods': 1,
                 'period': clam_alarm_period,
+                'datapoints_to_alarm': 1,
                 'alarm_actions': ['${aws_sns_topic.monitoring.arn}'],
-                'ok_actions': ['${aws_sns_topic.monitoring.arn}']
+                'ok_actions': ['${aws_sns_topic.monitoring.arn}'],
+                'treat_missing_data': 'notBreaching',
             },
             **{
                 resource_name: {
                     'alarm_name': config.qualified_resource_name(resource_name, suffix='.alarm'),
-                    'comparison_operator': 'LessThanThreshold',
-                    'threshold': 1,
-                    'datapoints_to_alarm': 1,
-                    'evaluation_periods': 1,
-                    'treat_missing_data': 'breaching',
-                    'alarm_actions': ['${aws_sns_topic.monitoring.arn}'],
-                    'ok_actions': ['${aws_sns_topic.monitoring.arn}'],
                     # CloudWatch uses an unconfigurable "evaluation range" when missing
                     # data is involved. In practice this means that an alarm on the
                     # absence of logs with an evaluation window of ten minutes would
@@ -586,21 +581,28 @@ tf_config = {
                     # value of zero and avoid the need for the evaluation range.
                     'metric_query': [
                         {
+                            'id': 'log_count_raw',
+                            'metric': {
+                                'namespace': 'LogMetrics',
+                                'metric_name': '${aws_cloudwatch_log_metric_filter.'
+                                               '%s.metric_transformation[0].name}' % resource_name,
+                                'stat': 'Sum',
+                                'period': period,
+                            }
+                        },
+                        {
                             'id': 'log_count_filled',
                             'expression': 'FILL(log_count_raw, 0)',
                             'return_data': True
-                        },
-                        {
-                            'id': 'log_count_raw',
-                            'metric': {
-                                'metric_name': '${aws_cloudwatch_log_metric_filter.'
-                                               '%s.metric_transformation[0].name}' % resource_name,
-                                'namespace': 'LogMetrics',
-                                'period': period,
-                                'stat': 'Sum',
-                            }
                         }
-                    ]
+                    ],
+                    'comparison_operator': 'LessThanThreshold',
+                    'threshold': 1,
+                    'evaluation_periods': 1,
+                    'datapoints_to_alarm': 1,
+                    'alarm_actions': ['${aws_sns_topic.monitoring.arn}'],
+                    'ok_actions': ['${aws_sns_topic.monitoring.arn}'],
+                    'treat_missing_data': 'breaching',
                 } for resource_name, period in [
                     ('trail_logs', 10 * 60),
                     ('clamscan', clam_alarm_period),

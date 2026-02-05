@@ -6,7 +6,6 @@ from typing import (
 import chalice
 
 from azul import (
-    JSON,
     cached_property,
     config,
 )
@@ -39,6 +38,7 @@ from azul.openapi import (
     format_description as fd,
 )
 from azul.types import (
+    JSON,
     not_none,
 )
 
@@ -53,7 +53,7 @@ spec: JSON = {
         # changes and reset the minor version to zero. Otherwise, increment only
         # the minor version for backwards compatible changes. A backwards
         # compatible change is one that does not require updates to clients.
-        'version': '3.3',
+        'version': '3.4',
         'description': fd('''
             This is the internal API for Azul's indexer component.
         ''')

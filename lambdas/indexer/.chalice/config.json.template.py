@@ -1,6 +1,9 @@
 from azul import (
     config,
 )
+from azul.indexer.mirror_service import (
+    FilePart,
+)
 from azul.modules import (
     load_app_module,
 )
@@ -40,7 +43,7 @@ emit({
                 },
                 indexer.contribute_retry.name: {
                     'reserved_concurrency': config.contribution_concurrency(retry=True),
-                    'lambda_memory_size': 4096,  # FIXME https://github.com/DataBiosphere/azul/issues/2902
+                    'lambda_memory_size': 256 if config.is_anvil_enabled() else 1024,
                     'lambda_timeout': config.contribution_lambda_timeout(retry=True),
                     **chalice.vpc_lambda_config(app_name)
                 },
@@ -52,14 +55,20 @@ emit({
                 },
                 indexer.aggregate_retry.name: {
                     'reserved_concurrency': config.aggregation_concurrency(retry=True),
-                    'lambda_memory_size': 6500,
+                    'lambda_memory_size': 2048 if config.is_anvil_enabled() else 3009,
                     'lambda_timeout': config.aggregation_lambda_timeout(retry=True),
                     **chalice.vpc_lambda_config(app_name)
                 },
                 **(
                     {
-                        indexer.forward_alb_logs.name: chalice.vpc_lambda_config(app_name),
-                        indexer.forward_s3_logs.name: chalice.vpc_lambda_config(app_name),
+                        indexer.forward_alb_logs.name: {
+                            'lambda_memory_size': 160,
+                            **chalice.vpc_lambda_config(app_name),
+                        },
+                        indexer.forward_s3_logs.name: {
+                            'lambda_memory_size': 160,
+                            **chalice.vpc_lambda_config(app_name),
+                        }
                     }
                     if config.enable_log_forwarding else
                     {}
@@ -68,7 +77,7 @@ emit({
                     {
                         indexer.mirror.name: {
                             'reserved_concurrency': config.mirroring_concurrency,
-                            'lambda_memory_size': 512,
+                            'lambda_memory_size': int(FilePart.default_size / 2 ** 20) + 256,
                             'lambda_timeout': config.mirror_lambda_timeout
                             # No VPC for this function so as to avoid paying for
                             # NAT Gateway traffic
@@ -78,7 +87,7 @@ emit({
                     {}
                 ),
                 indexer.update_health_cache.name: {
-                    'lambda_memory_size': 128,
+                    'lambda_memory_size': 160,
                     'lambda_timeout': config.health_cache_lambda_timeout,
                     **chalice.vpc_lambda_config(app_name)
                 }

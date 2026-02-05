@@ -3,297 +3,285 @@
         "id": null,
         "name": "Metadata",
         "object": {
-            "misc": {},
             "nodes": [
                 {
+                    "name": "anvil_activity",
+                    "ontology_reference": "",
+                    "values": {},
                     "links": [
                         {
-                            "dst": "anvil_file",
                             "multiplicity": "MANY_TO_ONE",
+                            "dst": "anvil_file",
                             "name": "from_activity.used_file_id_to_file.file_id"
                         },
                         {
-                            "dst": "anvil_file",
                             "multiplicity": "MANY_TO_ONE",
+                            "dst": "anvil_file",
                             "name": "from_activity.generated_file_id_to_file.file_id"
                         },
                         {
-                            "dst": "anvil_biosample",
                             "multiplicity": "MANY_TO_ONE",
+                            "dst": "anvil_biosample",
                             "name": "from_activity.used_biosample_id_to_biosample.biosample_id"
                         }
                     ],
-                    "name": "anvil_activity",
-                    "ontology_reference": "",
-                    "properties": [],
-                    "values": {}
+                    "properties": []
                 },
                 {
+                    "name": "anvil_alignmentactivity",
+                    "ontology_reference": "",
+                    "values": {},
                     "links": [
                         {
-                            "dst": "anvil_file",
                             "multiplicity": "MANY_TO_ONE",
+                            "dst": "anvil_file",
                             "name": "from_alignmentactivity.used_file_id_to_file.file_id"
                         },
                         {
-                            "dst": "anvil_file",
                             "multiplicity": "MANY_TO_ONE",
+                            "dst": "anvil_file",
                             "name": "from_alignmentactivity.generated_file_id_to_file.file_id"
                         }
                     ],
-                    "name": "anvil_alignmentactivity",
-                    "ontology_reference": "",
-                    "properties": [],
-                    "values": {}
+                    "properties": []
                 },
                 {
-                    "links": [],
                     "name": "anvil_antibody",
                     "ontology_reference": "",
-                    "properties": [],
-                    "values": {}
+                    "values": {},
+                    "links": [],
+                    "properties": []
                 },
                 {
+                    "name": "anvil_assayactivity",
+                    "ontology_reference": "",
+                    "values": {},
                     "links": [
                         {
-                            "dst": "anvil_antibody",
                             "multiplicity": "MANY_TO_ONE",
+                            "dst": "anvil_antibody",
                             "name": "from_assayactivity.antibody_id_to_antibody.antibody_id"
                         },
                         {
-                            "dst": "anvil_file",
                             "multiplicity": "MANY_TO_ONE",
+                            "dst": "anvil_file",
                             "name": "from_assayactivity.generated_file_id_to_file.file_id"
                         },
                         {
-                            "dst": "anvil_biosample",
                             "multiplicity": "MANY_TO_ONE",
+                            "dst": "anvil_biosample",
                             "name": "from_assayactivity.used_biosample_id_to_biosample.biosample_id"
                         }
                     ],
-                    "name": "anvil_assayactivity",
-                    "ontology_reference": "",
-                    "properties": [],
-                    "values": {}
+                    "properties": []
                 },
                 {
+                    "name": "anvil_biosample",
+                    "ontology_reference": "",
+                    "values": {},
                     "links": [
                         {
-                            "dst": "anvil_donor",
                             "multiplicity": "MANY_TO_ONE",
+                            "dst": "anvil_donor",
                             "name": "from_biosample.donor_id_to_donor.donor_id"
                         },
                         {
-                            "dst": "anvil_dataset",
                             "multiplicity": "MANY_TO_ONE",
+                            "dst": "anvil_dataset",
                             "name": "from_biosample.part_of_dataset_id_to_dataset.dataset_id"
                         }
                     ],
-                    "name": "anvil_biosample",
-                    "ontology_reference": "",
-                    "properties": [],
-                    "values": {}
+                    "properties": []
                 },
                 {
-                    "links": [],
                     "name": "anvil_dataset",
                     "ontology_reference": "",
-                    "properties": [],
-                    "values": {}
+                    "values": {},
+                    "links": [],
+                    "properties": []
                 },
                 {
+                    "name": "anvil_diagnosis",
+                    "ontology_reference": "",
+                    "values": {},
                     "links": [
                         {
-                            "dst": "anvil_donor",
                             "multiplicity": "MANY_TO_ONE",
+                            "dst": "anvil_donor",
                             "name": "from_diagnosis.donor_id_to_donor.donor_id"
                         }
                     ],
-                    "name": "anvil_diagnosis",
-                    "ontology_reference": "",
-                    "properties": [],
-                    "values": {}
+                    "properties": []
                 },
                 {
+                    "name": "anvil_donor",
+                    "ontology_reference": "",
+                    "values": {},
                     "links": [
                         {
-                            "dst": "anvil_dataset",
                             "multiplicity": "MANY_TO_ONE",
+                            "dst": "anvil_dataset",
                             "name": "from_donor.part_of_dataset_id_to_dataset.dataset_id"
                         }
                     ],
-                    "name": "anvil_donor",
-                    "ontology_reference": "",
-                    "properties": [],
-                    "values": {}
+                    "properties": []
                 },
                 {
-                    "links": [],
                     "name": "anvil_file",
                     "ontology_reference": "",
-                    "properties": [],
-                    "values": {}
+                    "values": {},
+                    "links": [],
+                    "properties": []
                 },
                 {
+                    "name": "anvil_project",
+                    "ontology_reference": "",
+                    "values": {},
                     "links": [
                         {
-                            "dst": "anvil_dataset",
                             "multiplicity": "MANY_TO_ONE",
+                            "dst": "anvil_dataset",
                             "name": "from_project.generated_dataset_id_to_dataset.dataset_id"
                         }
                     ],
-                    "name": "anvil_project",
-                    "ontology_reference": "",
-                    "properties": [],
-                    "values": {}
+                    "properties": []
                 },
                 {
+                    "name": "anvil_sequencingactivity",
+                    "ontology_reference": "",
+                    "values": {},
                     "links": [
                         {
-                            "dst": "anvil_file",
                             "multiplicity": "MANY_TO_ONE",
+                            "dst": "anvil_file",
                             "name": "from_sequencingactivity.generated_file_id_to_file.file_id"
                         },
                         {
-                            "dst": "anvil_biosample",
                             "multiplicity": "MANY_TO_ONE",
+                            "dst": "anvil_biosample",
                             "name": "from_sequencingactivity.used_biosample_id_to_biosample.biosample_id"
                         }
                     ],
-                    "name": "anvil_sequencingactivity",
-                    "ontology_reference": "",
-                    "properties": [],
-                    "values": {}
+                    "properties": []
                 },
                 {
+                    "name": "anvil_variantcallingactivity",
+                    "ontology_reference": "",
+                    "values": {},
                     "links": [
                         {
-                            "dst": "anvil_file",
                             "multiplicity": "MANY_TO_ONE",
+                            "dst": "anvil_file",
                             "name": "from_variantcallingactivity.used_file_id_to_file.file_id"
                         },
                         {
-                            "dst": "anvil_file",
                             "multiplicity": "MANY_TO_ONE",
+                            "dst": "anvil_file",
                             "name": "from_variantcallingactivity.generated_file_id_to_file.file_id"
                         }
                     ],
-                    "name": "anvil_variantcallingactivity",
-                    "ontology_reference": "",
-                    "properties": [],
-                    "values": {}
+                    "properties": []
                 },
                 {
+                    "name": "duos_dataset_registration",
+                    "ontology_reference": "",
+                    "values": {},
                     "links": [
                         {
-                            "dst": "anvil_dataset",
                             "multiplicity": "ONE_TO_ONE",
+                            "dst": "anvil_dataset",
                             "name": ""
                         }
                     ],
-                    "name": "duos_dataset_registration",
-                    "ontology_reference": "",
-                    "properties": [],
-                    "values": {}
+                    "properties": []
                 },
                 {
-                    "links": [],
                     "name": "non_schema_orphan_table",
                     "ontology_reference": "",
-                    "properties": [],
-                    "values": {}
+                    "values": {},
+                    "links": [],
+                    "properties": []
                 }
-            ]
+            ],
+            "misc": {}
         },
         "relations": []
     },
     {
-        "id": "DUOS-000000",
-        "name": "duos_dataset_registration",
-        "object": {
-            "dataset_id": "52ee7665-7033-63f2-a8d9-ce8e32666739",
-            "description": "Study description from DUOS",
-            "duos_id": "DUOS-000000",
-            "version": "2022-06-01T00:00:00.000000Z"
-        },
-        "relations": [
-            {
-                "dst_name": "anvil_dataset",
-                "dst_id": "52ee7665-7033-63f2-a8d9-ce8e32666739"
-            }
-        ]
-    },
-    {
-        "id": "a60c5138-3749-f7cb-8714-52d389ad5231",
+        "id": "18b3be87-e26b-4376-0d8d-c1e370e90e07",
         "name": "anvil_sequencingactivity",
         "object": {
             "activity_type": "Sequencing",
             "assay_type": [],
             "data_modality": [],
-            "datarepo_row_id": "816e364e-1193-4e5b-a91a-14e4b009157c",
+            "datarepo_row_id": "1509ef40-d1ba-440d-b298-16b7c173dcd4",
             "generated_file_id": [
-                "8b722e88-8103-49c1-b351-e64fa7c6ab37"
+                "1e269f04-4347-4188-b060-1dcc69e71d67"
             ],
-            "sequencingactivity_id": "a60c5138-3749-f7cb-8714-52d389ad5231",
+            "sequencingactivity_id": "18b3be87-e26b-4376-0d8d-c1e370e90e07",
             "source_datarepo_row_ids": [
-                "sequencing:a6c663c7-6f26-4ed2-af9d-48e9c709a22b"
+                "sequencing:d4f6c0c4-1e11-438e-8218-cfea63b8b051"
             ],
+            "source_datarepo_snapshot_id": "6c87f0e1-509d-46a4-b845-7584df39263b",
             "used_biosample_id": [
                 "f9d40cf6-37b8-22f3-ce35-0dc614d2452b"
             ]
         },
         "relations": [
             {
-                "dst_name": "anvil_file",
-                "dst_id": "8b722e88-8103-49c1-b351-e64fa7c6ab37"
+                "dst_id": "1e269f04-4347-4188-b060-1dcc69e71d67",
+                "dst_name": "anvil_file"
             },
             {
-                "dst_name": "anvil_biosample",
-                "dst_id": "f9d40cf6-37b8-22f3-ce35-0dc614d2452b"
+                "dst_id": "f9d40cf6-37b8-22f3-ce35-0dc614d2452b",
+                "dst_name": "anvil_biosample"
             }
         ]
     },
     {
-        "id": "28ed0f3a-157b-417b-a05a-48f57f9d3a34",
-        "name": "non_schema_orphan_table",
+        "id": "1e269f04-4347-4188-b060-1dcc69e71d67",
+        "name": "anvil_file",
         "object": {
-            "datarepo_row_id": "28ed0f3a-157b-417b-a05a-48f57f9d3a34",
-            "non_schema_column": "eggs",
-            "version": "2022-06-01T00:00:00.000000Z"
+            "data_modality": [],
+            "datarepo_row_id": "15b76f9c-6b46-433f-851d-34e89f1b9ba6",
+            "drs_uri": "drs://mock_tdr.lan/v1_6c87f0e1-509d-46a4-b845-7584df39263b_1e269f04-4347-4188-b060-1dcc69e71d67",
+            "file_format": ".vcf.gz",
+            "file_id": "1e269f04-4347-4188-b060-1dcc69e71d67",
+            "file_md5sum": "beec606ee0aa299fdf913f4259316622",
+            "file_name": "307500.merged.matefixed.sorted.markeddups.recal.g.vcf.gz",
+            "file_ref": "drs://mock_tdr.lan/v1_6c87f0e1-509d-46a4-b845-7584df39263b_1e269f04-4347-4188-b060-1dcc69e71d67",
+            "file_size": 213021639,
+            "is_supplementary": false,
+            "reference_assembly": [],
+            "source_datarepo_row_ids": [
+                "file_inventory:81d16471-97ac-48fe-99a0-73d9ec62c2c0"
+            ],
+            "source_datarepo_snapshot_id": "6c87f0e1-509d-46a4-b845-7584df39263b"
         },
         "relations": []
     },
     {
-        "id": "f9d40cf6-37b8-22f3-ce35-0dc614d2452b",
-        "name": "anvil_biosample",
+        "id": "1e2bd7e5-f45e-a391-daea-7c060be76acd",
+        "name": "anvil_donor",
         "object": {
-            "anatomical_site": null,
-            "apriori_cell_type": [],
-            "biosample_id": "f9d40cf6-37b8-22f3-ce35-0dc614d2452b",
-            "biosample_type": null,
-            "datarepo_row_id": "826dea02-e274-4ffe-aabc-eb3db63ad068",
-            "disease": null,
-            "donor_age_at_collection_lower_bound": null,
-            "donor_age_at_collection_unit": null,
-            "donor_age_at_collection_upper_bound": null,
-            "donor_id": [
-                "1e2bd7e5-f45e-a391-daea-7c060be76acd"
-            ],
-            "part_of_dataset_id": [
-                "52ee7665-7033-63f2-a8d9-ce8e32666739"
+            "datarepo_row_id": "bfd991f2-2797-4083-972a-da7c6d7f1b2e",
+            "donor_id": "1e2bd7e5-f45e-a391-daea-7c060be76acd",
+            "genetic_ancestry": [],
+            "organism_type": "redacted-ACw+6ecI",
+            "part_of_dataset_id": "52ee7665-7033-63f2-a8d9-ce8e32666739",
+            "phenotypic_sex": "redacted-JfQ0b3xG",
+            "reported_ethnicity": [
+                "redacted-NSkwDycK"
             ],
             "source_datarepo_row_ids": [
-                "sample:98048c3b-2525-4090-94fd-477de31f2608"
-            ]
+                "subject:c23887a0-20c1-44e4-a09e-1c5dfdc2d0ef"
+            ],
+            "source_datarepo_snapshot_id": "6c87f0e1-509d-46a4-b845-7584df39263b"
         },
         "relations": [
             {
-                "dst_name": "anvil_donor",
-                "dst_id": "1e2bd7e5-f45e-a391-daea-7c060be76acd"
-            },
-            {
-                "dst_name": "anvil_dataset",
-                "dst_id": "52ee7665-7033-63f2-a8d9-ce8e32666739"
+                "dst_id": "52ee7665-7033-63f2-a8d9-ce8e32666739",
+                "dst_name": "anvil_dataset"
             }
         ]
     },
@@ -306,7 +294,7 @@
             "drs_uri": "drs://mock_tdr.lan/v1_6c87f0e1-509d-46a4-b845-7584df39263b_1fab11f5-7eab-4318-9a58-68d8d06e0715",
             "file_format": ".txt",
             "file_id": "1fab11f5-7eab-4318-9a58-68d8d06e0715",
-            "file_md5sum": "S/GBrRjzZAQYqh3rdiPYzA==",
+            "file_md5sum": "4bf181ad18f3640418aa1deb7623d8cc",
             "file_name": "CCDG_13607_B01_GRM_WGS_2019-02-19_chr15.recalibrated_variants.annotated.coding.txt",
             "file_ref": "drs://mock_tdr.lan/v1_6c87f0e1-509d-46a4-b845-7584df39263b_1fab11f5-7eab-4318-9a58-68d8d06e0715",
             "file_size": 15079345,
@@ -314,7 +302,79 @@
             "reference_assembly": [],
             "source_datarepo_row_ids": [
                 "file_inventory:04ff3af2-0543-4ea6-830a-d31b957fa2ee"
-            ]
+            ],
+            "source_datarepo_snapshot_id": "6c87f0e1-509d-46a4-b845-7584df39263b"
+        },
+        "relations": []
+    },
+    {
+        "id": "25ff8d32-18c9-fc3e-020a-5de20d35d906",
+        "name": "anvil_diagnosis",
+        "object": {
+            "datarepo_row_id": "939a4bd3-86ed-4a8a-81f4-fbe0ee673461",
+            "diagnosis_age_lower_bound": null,
+            "diagnosis_age_unit": null,
+            "diagnosis_age_upper_bound": null,
+            "diagnosis_id": "25ff8d32-18c9-fc3e-020a-5de20d35d906",
+            "disease": [
+                "redacted-g50ublm/"
+            ],
+            "donor_id": "1e2bd7e5-f45e-a391-daea-7c060be76acd",
+            "onset_age_lower_bound": null,
+            "onset_age_unit": null,
+            "onset_age_upper_bound": null,
+            "phenopacket": [],
+            "phenotype": [
+                "redacted-acSYHZUr"
+            ],
+            "source_datarepo_row_ids": [
+                "subject:c23887a0-20c1-44e4-a09e-1c5dfdc2d0ef"
+            ],
+            "source_datarepo_snapshot_id": "6c87f0e1-509d-46a4-b845-7584df39263b"
+        },
+        "relations": [
+            {
+                "dst_id": "1e2bd7e5-f45e-a391-daea-7c060be76acd",
+                "dst_name": "anvil_donor"
+            }
+        ]
+    },
+    {
+        "id": "28ed0f3a-157b-417b-a05a-48f57f9d3a34",
+        "name": "non_schema_orphan_table",
+        "object": {
+            "datarepo_row_id": "28ed0f3a-157b-417b-a05a-48f57f9d3a34",
+            "non_schema_column": "eggs",
+            "source_datarepo_snapshot_id": "6c87f0e1-509d-46a4-b845-7584df39263b",
+            "version": "2022-06-01T00:00:00.000000Z"
+        },
+        "relations": []
+    },
+    {
+        "id": "52ee7665-7033-63f2-a8d9-ce8e32666739",
+        "name": "anvil_dataset",
+        "object": {
+            "consent_group": [
+                "DS-BDIS"
+            ],
+            "data_modality": [],
+            "data_use_permission": [
+                "DS-BDIS"
+            ],
+            "datarepo_row_id": "2370f948-2783-4eb6-afea-e022897f4dcf",
+            "dataset_id": "52ee7665-7033-63f2-a8d9-ce8e32666739",
+            "owner": [
+                "Debbie Nickerson"
+            ],
+            "principal_investigator": [],
+            "registered_identifier": [
+                "phs000693"
+            ],
+            "source_datarepo_row_ids": [
+                "workspace_attributes:7a22b629-9d81-4e4d-9297-f9e44ed760bc"
+            ],
+            "source_datarepo_snapshot_id": "6c87f0e1-509d-46a4-b845-7584df39263b",
+            "title": "ANVIL_CMG_UWASH_DS_BDIS"
         },
         "relations": []
     },
@@ -340,165 +400,13 @@
             ],
             "source_datarepo_row_ids": [
                 "subject:c23887a0-20c1-44e4-a09e-1c5dfdc2d0ef"
-            ]
+            ],
+            "source_datarepo_snapshot_id": "6c87f0e1-509d-46a4-b845-7584df39263b"
         },
         "relations": [
             {
-                "dst_name": "anvil_donor",
-                "dst_id": "1e2bd7e5-f45e-a391-daea-7c060be76acd"
-            }
-        ]
-    },
-    {
-        "id": "18b3be87-e26b-4376-0d8d-c1e370e90e07",
-        "name": "anvil_sequencingactivity",
-        "object": {
-            "activity_type": "Sequencing",
-            "assay_type": [],
-            "data_modality": [],
-            "datarepo_row_id": "1509ef40-d1ba-440d-b298-16b7c173dcd4",
-            "generated_file_id": [
-                "1e269f04-4347-4188-b060-1dcc69e71d67"
-            ],
-            "sequencingactivity_id": "18b3be87-e26b-4376-0d8d-c1e370e90e07",
-            "source_datarepo_row_ids": [
-                "sequencing:d4f6c0c4-1e11-438e-8218-cfea63b8b051"
-            ],
-            "used_biosample_id": [
-                "f9d40cf6-37b8-22f3-ce35-0dc614d2452b"
-            ]
-        },
-        "relations": [
-            {
-                "dst_name": "anvil_file",
-                "dst_id": "1e269f04-4347-4188-b060-1dcc69e71d67"
-            },
-            {
-                "dst_name": "anvil_biosample",
-                "dst_id": "f9d40cf6-37b8-22f3-ce35-0dc614d2452b"
-            }
-        ]
-    },
-    {
-        "id": "25ff8d32-18c9-fc3e-020a-5de20d35d906",
-        "name": "anvil_diagnosis",
-        "object": {
-            "datarepo_row_id": "939a4bd3-86ed-4a8a-81f4-fbe0ee673461",
-            "diagnosis_age_lower_bound": null,
-            "diagnosis_age_unit": null,
-            "diagnosis_age_upper_bound": null,
-            "diagnosis_id": "25ff8d32-18c9-fc3e-020a-5de20d35d906",
-            "disease": [
-                "redacted-g50ublm/"
-            ],
-            "donor_id": "1e2bd7e5-f45e-a391-daea-7c060be76acd",
-            "onset_age_lower_bound": null,
-            "onset_age_unit": null,
-            "onset_age_upper_bound": null,
-            "phenopacket": [],
-            "phenotype": [
-                "redacted-acSYHZUr"
-            ],
-            "source_datarepo_row_ids": [
-                "subject:c23887a0-20c1-44e4-a09e-1c5dfdc2d0ef"
-            ]
-        },
-        "relations": [
-            {
-                "dst_name": "anvil_donor",
-                "dst_id":"1e2bd7e5-f45e-a391-daea-7c060be76acd"
-            }
-        ]
-    },
-    {
-        "id": "52ee7665-7033-63f2-a8d9-ce8e32666739",
-        "name": "anvil_dataset",
-        "object": {
-            "consent_group": [
-                "DS-BDIS"
-            ],
-            "data_modality": [],
-            "data_use_permission": [
-                "DS-BDIS"
-            ],
-            "datarepo_row_id": "2370f948-2783-4eb6-afea-e022897f4dcf",
-            "dataset_id": "52ee7665-7033-63f2-a8d9-ce8e32666739",
-            "owner": [
-                "Debbie Nickerson"
-            ],
-            "principal_investigator": [],
-            "registered_identifier": [
-                "phs000693"
-            ],
-            "source_datarepo_row_ids": [
-                "workspace_attributes:7a22b629-9d81-4e4d-9297-f9e44ed760bc"
-            ],
-            "title": "ANVIL_CMG_UWASH_DS_BDIS"
-        },
-        "relations": []
-    },
-    {
-        "id": "9687b86d-a2ae-a083-b910-a16bcbef1ba4",
-        "name": "non_schema_orphan_table",
-        "object": {
-            "datarepo_row_id": "9687b86d-a2ae-a083-b910-a16bcbef1ba4",
-            "non_schema_column": "spam",
-            "version": "2022-06-01T00:00:00.000000Z"
-        },
-        "relations": []
-    },
-    {
-        "id": "9db5952c-c454-49d9-8a62-5abb026701c0",
-        "name": "non_schema_orphan_table",
-        "object": {
-            "datarepo_row_id": "9db5952c-c454-49d9-8a62-5abb026701c0",
-            "non_schema_column": "baked beans",
-            "version": "2022-06-01T00:00:00.000000Z"
-        },
-        "relations": []
-    },
-    {
-        "id": "1e269f04-4347-4188-b060-1dcc69e71d67",
-        "name": "anvil_file",
-        "object": {
-            "data_modality": [],
-            "datarepo_row_id": "15b76f9c-6b46-433f-851d-34e89f1b9ba6",
-            "drs_uri": "drs://mock_tdr.lan/v1_6c87f0e1-509d-46a4-b845-7584df39263b_1e269f04-4347-4188-b060-1dcc69e71d67",
-            "file_format": ".vcf.gz",
-            "file_id": "1e269f04-4347-4188-b060-1dcc69e71d67",
-            "file_md5sum": "vuxgbuCqKZ/fkT9CWTFmIg==",
-            "file_name": "307500.merged.matefixed.sorted.markeddups.recal.g.vcf.gz",
-            "file_ref": "drs://mock_tdr.lan/v1_6c87f0e1-509d-46a4-b845-7584df39263b_1e269f04-4347-4188-b060-1dcc69e71d67",
-            "file_size": 213021639,
-            "is_supplementary": false,
-            "reference_assembly": [],
-            "source_datarepo_row_ids": [
-                "file_inventory:81d16471-97ac-48fe-99a0-73d9ec62c2c0"
-            ]
-        },
-        "relations": []
-    },
-    {
-        "id": "1e2bd7e5-f45e-a391-daea-7c060be76acd",
-        "name": "anvil_donor",
-        "object": {
-            "datarepo_row_id": "bfd991f2-2797-4083-972a-da7c6d7f1b2e",
-            "donor_id": "1e2bd7e5-f45e-a391-daea-7c060be76acd",
-            "genetic_ancestry": [],
-            "organism_type": "redacted-ACw+6ecI",
-            "part_of_dataset_id": "52ee7665-7033-63f2-a8d9-ce8e32666739",
-            "phenotypic_sex": "redacted-JfQ0b3xG",
-            "reported_ethnicity": [
-                "redacted-NSkwDycK"
-            ],
-            "source_datarepo_row_ids": [
-                "subject:c23887a0-20c1-44e4-a09e-1c5dfdc2d0ef"
-            ]
-        },
-        "relations": [
-            {
-                "dst_name": "anvil_dataset",
-                "dst_id": "52ee7665-7033-63f2-a8d9-ce8e32666739"
+                "dst_id": "1e2bd7e5-f45e-a391-daea-7c060be76acd",
+                "dst_name": "anvil_donor"
             }
         ]
     },
@@ -511,7 +419,7 @@
             "drs_uri": "drs://mock_tdr.lan/v1_6c87f0e1-509d-46a4-b845-7584df39263b_8b722e88-8103-49c1-b351-e64fa7c6ab37",
             "file_format": ".bam",
             "file_id": "8b722e88-8103-49c1-b351-e64fa7c6ab37",
-            "file_md5sum": "fNn9e1SovzgOROk3BvH6LQ==",
+            "file_md5sum": "7cd9fd7b54a8bf380e44e93706f1fa2d",
             "file_name": "307500.merged.matefixed.sorted.markeddups.recal.bam",
             "file_ref": "drs://mock_tdr.lan/v1_6c87f0e1-509d-46a4-b845-7584df39263b_8b722e88-8103-49c1-b351-e64fa7c6ab37",
             "file_size": 3306845592,
@@ -519,8 +427,117 @@
             "reference_assembly": [],
             "source_datarepo_row_ids": [
                 "file_inventory:9658d94a-511d-4b49-82c3-d0cb07e0cff2"
-            ]
+            ],
+            "source_datarepo_snapshot_id": "6c87f0e1-509d-46a4-b845-7584df39263b"
         },
         "relations": []
+    },
+    {
+        "id": "9687b86d-a2ae-a083-b910-a16bcbef1ba4",
+        "name": "non_schema_orphan_table",
+        "object": {
+            "datarepo_row_id": "9687b86d-a2ae-a083-b910-a16bcbef1ba4",
+            "non_schema_column": "spam",
+            "source_datarepo_snapshot_id": "6c87f0e1-509d-46a4-b845-7584df39263b",
+            "version": "2022-06-01T00:00:00.000000Z"
+        },
+        "relations": []
+    },
+    {
+        "id": "9db5952c-c454-49d9-8a62-5abb026701c0",
+        "name": "non_schema_orphan_table",
+        "object": {
+            "datarepo_row_id": "9db5952c-c454-49d9-8a62-5abb026701c0",
+            "non_schema_column": "baked beans",
+            "source_datarepo_snapshot_id": "6c87f0e1-509d-46a4-b845-7584df39263b",
+            "version": "2022-06-01T00:00:00.000000Z"
+        },
+        "relations": []
+    },
+    {
+        "id": "DUOS-000000",
+        "name": "duos_dataset_registration",
+        "object": {
+            "dataset_id": "52ee7665-7033-63f2-a8d9-ce8e32666739",
+            "description": "Study description from DUOS",
+            "duos_id": "DUOS-000000",
+            "source_datarepo_snapshot_id": "6c87f0e1-509d-46a4-b845-7584df39263b",
+            "version": "2022-06-01T00:00:00.000000Z"
+        },
+        "relations": [
+            {
+                "dst_id": "52ee7665-7033-63f2-a8d9-ce8e32666739",
+                "dst_name": "anvil_dataset"
+            }
+        ]
+    },
+    {
+        "id": "a60c5138-3749-f7cb-8714-52d389ad5231",
+        "name": "anvil_sequencingactivity",
+        "object": {
+            "activity_type": "Sequencing",
+            "assay_type": [],
+            "data_modality": [],
+            "datarepo_row_id": "816e364e-1193-4e5b-a91a-14e4b009157c",
+            "generated_file_id": [
+                "8b722e88-8103-49c1-b351-e64fa7c6ab37"
+            ],
+            "sequencingactivity_id": "a60c5138-3749-f7cb-8714-52d389ad5231",
+            "source_datarepo_row_ids": [
+                "sequencing:a6c663c7-6f26-4ed2-af9d-48e9c709a22b"
+            ],
+            "source_datarepo_snapshot_id": "6c87f0e1-509d-46a4-b845-7584df39263b",
+            "used_biosample_id": [
+                "f9d40cf6-37b8-22f3-ce35-0dc614d2452b"
+            ]
+        },
+        "relations": [
+            {
+                "dst_id": "8b722e88-8103-49c1-b351-e64fa7c6ab37",
+                "dst_name": "anvil_file"
+            },
+            {
+                "dst_id": "f9d40cf6-37b8-22f3-ce35-0dc614d2452b",
+                "dst_name": "anvil_biosample"
+            }
+        ]
+    },
+    {
+        "id": "f9d40cf6-37b8-22f3-ce35-0dc614d2452b",
+        "name": "anvil_biosample",
+        "object": {
+            "anatomical_site": null,
+            "apriori_cell_type": [
+                "foo",
+                "bar"
+            ],
+            "biosample_id": "f9d40cf6-37b8-22f3-ce35-0dc614d2452b",
+            "biosample_type": null,
+            "datarepo_row_id": "826dea02-e274-4ffe-aabc-eb3db63ad068",
+            "disease": null,
+            "donor_age_at_collection_lower_bound": null,
+            "donor_age_at_collection_unit": null,
+            "donor_age_at_collection_upper_bound": null,
+            "donor_id": [
+                "1e2bd7e5-f45e-a391-daea-7c060be76acd"
+            ],
+            "part_of_dataset_id": [
+                "52ee7665-7033-63f2-a8d9-ce8e32666739"
+            ],
+            "source_datarepo_row_ids": [
+                "sample:98048c3b-2525-4090-94fd-477de31f2608"
+            ],
+            "source_datarepo_snapshot_id": "6c87f0e1-509d-46a4-b845-7584df39263b"
+        },
+        "relations": [
+            {
+                "dst_id": "1e2bd7e5-f45e-a391-daea-7c060be76acd",
+                "dst_name": "anvil_donor"
+            },
+            {
+                "dst_id": "52ee7665-7033-63f2-a8d9-ce8e32666739",
+                "dst_name": "anvil_dataset"
+            }
+        ]
     }
 ]

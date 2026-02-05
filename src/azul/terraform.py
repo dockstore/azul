@@ -652,15 +652,17 @@ class Chalice:
         # Sort in reverse so that keys that are prefixes of other keys go last
         rev_ref_map = sorted(ref_map.items(), reverse=True)
 
-        def patch_refs(v: AnyMutableJSON) -> AnyMutableJSON:
+        def patch_refs[T: AnyMutableJSON](v: T) -> T:
             if isinstance(v, dict):
-                return {k: patch_refs(v) for k, v in json_dict(v).items()}
+                return type(v)((k, patch_refs(v)) for k, v in json_dict(v).items())
             elif isinstance(v, list):
-                return list(map(patch_refs, v))
+                return type(v)(map(patch_refs, v))
             elif isinstance(v, str):
+                r: str = v
                 for old_ref, new_ref in rev_ref_map:
-                    v = v.replace(old_ref, new_ref)
-                return v
+                    r = r.replace(old_ref, new_ref)
+                assert isinstance(r, type(v))
+                return r
             else:
                 return v
 
@@ -741,6 +743,9 @@ class Chalice:
         data = json_dict(tf_config['data'])
         locals = json_dict(tf_config['locals'])
 
+        def resource_items(resource_type: str) -> Iterable[tuple[str, MutableJSON]]:
+            return json_item_dicts(resources[resource_type])
+
         # null_data_source has been deprecated and locals should be used instead.
         # However, the data sources defined underneath it aren't actually used
         # anywhere so we can just delete the entry.
@@ -755,10 +760,13 @@ class Chalice:
                 '${aws_vpc_endpoint.%s.id}' % app_name
             ]
 
-        functions = json_item_dicts(json_dict(resources['aws_lambda_function']))
-        for _, resource in functions:
+        for resource_name, resource in resource_items('aws_lambda_function'):
             assert 'layers' not in resource
             resource['layers'] = ['${aws_lambda_layer_version.dependencies.arn}']
+            # Publishing a new Lambda function version each time lets us perform
+            # an atomic update of the function, avoiding a race condition
+            # between the update of the function's configuration and its code.
+            resource['publish'] = True
             env = config.es_endpoint_env(
                 es_endpoint=(
                     aws.es_endpoint
@@ -776,17 +784,83 @@ class Chalice:
             resource['source_code_hash'] = '${filebase64sha256("%s")}' % package_zip
             resource['filename'] = package_zip
 
+        # Replace any references to unqualified function ARNs in the OpenAPI
+        # spec emitted by Chalice with references to the alias.
+        #
+        def alias_ref(v: str) -> str:
+            return v.replace('${aws_lambda_function', '${aws_lambda_alias')
+
+        def alias_invoke_arns[T: AnyMutableJSON](v: T) -> T:
+            if isinstance(v, dict):
+                return type(v)((k, alias_invoke_arns(v)) for k, v in v.items())
+            elif isinstance(v, list):
+                return type(v)(map(alias_invoke_arns, v))
+            elif isinstance(v, str) and v.endswith('.invoke_arn}'):
+                r = alias_ref(v)
+                assert isinstance(r, type(v))
+                return r
+            else:
+                return v
+
+        openapi_spec = json_dict(json.loads(json_str(locals[app_name])))
+        openapi_spec = alias_invoke_arns(openapi_spec)
+
+        # Replace any references to unqualified function ARNs in the resources
+        # emitted by Chalice with references to the alias.
+        #
+        # There are two ways for a aws_lambda_permission resource to reference a
+        # Lambda function alias: as a suffix, by appending the alias name to the
+        # function ARN in the `function_name` property, or by setting the
+        # `qualifier` property of the aws_lambda_permission resource to the
+        # alias name. Unfortunately, the suffix reference is silently converted
+        # to the `qualifier` property and Terraform treats this conversion as
+        # drift, resulting in perpetually non-empty plans. To avoid the drift,
+        # we use the second method directly.
+        #
+        for resource_name, resource in resource_items('aws_lambda_permission'):
+            alias = alias_ref(json_str(resource['function_name']))
+            assert alias.endswith('.arn}'), alias
+            assert 'qualifier' not in resource
+            resource['qualifier'] = alias.replace('.arn', '.name')
+
+        # Patch any remaining resources with properties holding function ARNs
+        # with the ARN of the corresponding alias.
+        #
+        def alias_property(property_name: str, resource: MutableJSON):
+            alias = alias_ref(json_str(resource[property_name]))
+            resource[property_name] = alias
+
+        for resource_name, resource in resource_items('aws_cloudwatch_event_target'):
+            alias_property('arn', resource)
+
+        resource_type = 'aws_lambda_event_source_mapping'
+        if app_name == 'indexer':
+            for resource_name, resource in resource_items(resource_type):
+                alias_property('function_name', resource)
+        else:
+            assert resource_type not in resources
+
+        resource_type = 'aws_s3_bucket_notification'
+        if config.enable_log_forwarding and app_name == 'indexer':
+            for resource_name, resource in resource_items(resource_type):
+                for notified_function in json_element_dicts(resource['lambda_function']):
+                    alias_property('lambda_function_arn', notified_function)
+        else:
+            assert resource_type not in resources
+
+        # Pre-create a CloudWatch log group for every Lambda function so that
+        # we can set the log retention explicitly.
+        #
         assert 'aws_cloudwatch_log_group' not in resources
-        functions = json_item_dicts(resources['aws_lambda_function'])
         resources['aws_cloudwatch_log_group'] = {
             f'{resource_name}_lambda': {
                 'name': f'/aws/lambda/{resource['function_name']}',
                 'retention_in_days': config.audit_log_retention_days
             }
-            for resource_name, resource in functions
+            for resource_name, resource in resource_items('aws_lambda_function')
         }
 
-        for resource_type, argument in [
+        for resource_type, property_name in [
             ('aws_cloudwatch_event_rule', 'name'),
             ('aws_cloudwatch_event_target', 'target_id')
         ]:
@@ -794,11 +868,12 @@ class Chalice:
             # need them to be prefixed with `azul-` to allow for limiting the
             # scope of certain IAM permissions for Gitlab and, more importantly,
             # the deployment stage so these resources are segregated by deployment.
-            for _, resource in json_item_dicts(resources[resource_type]):
-                function_name, _, suffix = json_str(resource[argument]).partition('-')
+            for resource_name, resource in resource_items(resource_type):
+                unqualified = json_str(resource[property_name])
+                function_name, _, suffix = unqualified.partition('-')
                 assert suffix == 'event', suffix
                 assert function_name, function_name
-                resource[argument] = config.qualified_resource_name(function_name)
+                resource[property_name] = config.qualified_resource_name(function_name)
 
         # Chalice-generated S3 bucket notifications include the bucket name in
         # the resource name, resulting in an invalid resource name when the
@@ -806,29 +881,30 @@ class Chalice:
         # (https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucketnamingrules.html),
         # so replacing the periods with underscores results in valid resource
         # names while retaining the correlation with bucket names.
-        try:
-            bucket_notifications = resources['aws_s3_bucket_notification']
-        except KeyError:
-            pass
-        else:
-            resources['aws_s3_bucket_notification'] = {
+        #
+        resource_type = 'aws_s3_bucket_notification'
+        if config.enable_log_forwarding and app_name == 'indexer':
+            bucket_notifications = resources[resource_type]
+            resources[resource_type] = {
                 key.replace('.', '_'): value
                 for key, value in json_item_dicts(bucket_notifications)
             }
             # To prevent a race condition by Terraform, we make the bucket
             # notifications depend on the related aws_lambda_permission.
-            permissions_by_function = defaultdict(set)
-            permissions = resources['aws_lambda_permission']
-            for permission_name, permission in json_item_dicts(permissions):
-                function_ref = permission['function_name']
-                permissions_by_function[function_ref].add(permission_name)
-            for _, notification in json_item_dicts(resources['aws_s3_bucket_notification']):
+            permissions = defaultdict(set)
+            for permission_name, permission in resource_items('aws_lambda_permission'):
+                alias = alias_ref(json_str(permission['function_name']))
+                permissions[alias].add(permission_name)
+            permissions = dict(permissions)
+            for resource_name, notification in resource_items(resource_type):
                 assert 'depends_on' not in notification, notification
                 notification['depends_on'] = [
                     f'aws_lambda_permission.{permission_name}'
                     for function in json_element_dicts(notification['lambda_function'])
-                    for permission_name in permissions_by_function[function['lambda_function_arn']]
+                    for permission_name in permissions[json_str(function['lambda_function_arn'])]
                 ]
+        else:
+            assert resource_type not in resources
 
         # The fix for https://github.com/aws/chalice/issues/1237 introduced the
         # create_before_destroy hack and it may have helped but has far-ranging
@@ -867,7 +943,6 @@ class Chalice:
         # default responses for the API, so we use these extensions for that
         # purpose, too.
         #
-        openapi_spec = json.loads(json_str(locals[app_name]))
         rest_apis = json_dict(resources['aws_api_gateway_rest_api'])
         rest_api = json_dict(rest_apis[app_name])
         assert 'minimum_compression_size' not in rest_api, rest_api
@@ -881,32 +956,38 @@ class Chalice:
         #
         # https://docs.aws.amazon.com/apigateway/latest/developerguide/request-response-data-mappings.html#mapping-response-parameters
         #
-        security_headers = {
+        security_headers: MutableJSON = {
             f'gatewayresponse.header.{k}': f"'{v}'"
             for k, v in AzulChaliceApp.security_headers().items()
         }
-        assert 'aws_api_gateway_gateway_response' not in resources, resources
-        openapi_spec['x-amazon-apigateway-gateway-responses'] = (
-            {
-                f'DEFAULT_{response_type}': {
-                    'responseParameters': security_headers
-                } for response_type in ['4XX', '5XX']
-            } | {
+        default_responses: MutableJSON = {
+            f'DEFAULT_{response_type}': {'responseParameters': security_headers}
+            for response_type in ['4XX', '5XX']
+        }
+        error_responses: MutableJSON = {
+            **{
                 response_type: {
+                    'statusCode': '429',
                     'responseParameters': {
                         **security_headers,
-                        'gatewayresponse.header.Retry-After': "'10'"
-                    },
-                    'responseTemplates': {
-                        "application/json": json.dumps({
-                            'message': '504 Gateway Timeout. Wait the number of '
-                                       'seconds specified in the `Retry-After` '
-                                       'header before retrying the request.'
-                        })
+                        'gatewayresponse.header.Retry-After': "'30'"
                     }
-                } for response_type in ['INTEGRATION_TIMEOUT', 'INTEGRATION_FAILURE']
+                } for response_type in ['QUOTA_EXCEEDED', 'THROTTLED']
+            },
+            'INTEGRATION_FAILURE': {
+                'statusCode': '502',
+                'responseParameters': security_headers,
+                'responseTemplates': {
+                    "application/json": json.dumps({
+                        'message': '502 Bad Gateway. The server was unable '
+                                   'to complete your request.'
+                    })
+                }
             }
-        )
+        }
+        gateway_responses = error_responses | default_responses
+        assert 'aws_api_gateway_gateway_response' not in resources, resources
+        openapi_spec['x-amazon-apigateway-gateway-responses'] = gateway_responses
         locals[app_name] = json.dumps(openapi_spec)
 
         # Replace the hard-coded ARN emitted by Chalice with a resource
@@ -915,11 +996,20 @@ class Chalice:
         #
         if app_name == 'indexer':
             event_source_mappings = resources['aws_lambda_event_source_mapping']
-            for _, resource in json_item_dicts(event_source_mappings):
-                _, _, resource_name = json_str(resource['event_source_arn']).rpartition(':')
+            for resource_name, resource in json_item_dicts(event_source_mappings):
+                arn = json_str(resource['event_source_arn'])
+                _, _, resource_name = arn.rpartition(':')
                 suffix = '.fifo' if resource_name.endswith('.fifo') else ''
                 sqs_name, _ = config.unqualified_resource_name(resource_name, suffix)
                 resource['event_source_arn'] = f'${{aws_sqs_queue.{sqs_name}.arn}}'
+
+        # Ensure that the Lambda permissions for the previous aliases aren't
+        # deleted until after the permissions for the new aliases have been
+        # created.
+        #
+        for resource_name, resource in resource_items('aws_lambda_permission'):
+            assert 'lifecycle' not in resource, (resource_name, resource)
+            resource['lifecycle'] = {'create_before_destroy': True}
 
         return {
             'resource': resources,

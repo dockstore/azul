@@ -1,3 +1,10 @@
+from abc import (
+    ABCMeta,
+    abstractmethod,
+)
+from functools import (
+    singledispatchmethod,
+)
 import json
 import logging
 import math
@@ -5,10 +12,16 @@ import string
 import time
 from typing import (
     ClassVar,
+    Iterable,
+    Iterator,
     Protocol,
     Self,
-    Sequence,
-    TYPE_CHECKING,
+    final,
+)
+from uuid import (
+    UUID,
+    uuid4,
+    uuid5,
 )
 
 import attr
@@ -19,17 +32,22 @@ from furl import (
 
 from azul import (
     CatalogName,
-    JSON,
     R,
     cached_property,
     config,
+    json_mapping,
     mutable_furl,
 )
 from azul.attrs import (
     SerializableAttrs,
+    devolve,
+    serializable,
 )
 from azul.auth import (
     Authentication,
+)
+from azul.collections import (
+    alist,
 )
 from azul.deployment import (
     aws,
@@ -37,27 +55,44 @@ from azul.deployment import (
 from azul.digests import (
     Hasher,
     get_resumable_hasher,
+    hasher_from_json,
+    hasher_to_json,
 )
 from azul.drs import (
     AccessMethod,
 )
+from azul.functions import (
+    compose,
+)
 from azul.http import (
     HasCachedHttpClient,
+)
+from azul.indexer import (
+    SourceConfig,
+    SourceRef,
+    SourceSpec,
 )
 from azul.plugins import (
     File,
     RepositoryFileDownload,
     RepositoryPlugin,
 )
+from azul.queues import (
+    Action,
+    Queues,
+    SQSFifoMessage,
+)
+from azul.service.source_service import (
+    SourceService,
+)
 from azul.service.storage_service import (
-    StorageObjectNotFound,
+    StorageObjectExists,
     StorageService,
 )
-
-if TYPE_CHECKING:
-    from mypy_boto3_s3.service_resource import (
-        MultipartUpload,
-    )
+from azul.types import (
+    JSON,
+    json_element_strings,
+)
 
 log = logging.getLogger(__name__)
 
@@ -67,12 +102,14 @@ class FilePart(SerializableAttrs):
     """
     A part of a mirrored file
     """
+
     #: The part number, starting at 0 for the first part, unlike S3 API part
     #: numbers, which start at 1.
     #:
     index: int
 
     #: Offset of the first byte of this part, relative to the start of the file
+    #:
     offset: int
 
     #: The size of this part
@@ -82,34 +119,35 @@ class FilePart(SerializableAttrs):
     #: Various S3 quotas related to parts and part sizes
     #: https://docs.aws.amazon.com/AmazonS3/latest/userguide/qfacts.html
     #:
-    min_size: ClassVar[int] = 5 * 1024 ** 2
-    max_size: ClassVar[int] = 5 * 1024 ** 3
-    max_num_parts: ClassVar[int] = 10000
+    min_size: ClassVar[int] = aws.s3_min_part_size
+    max_size: ClassVar[int] = aws.s3_max_part_size
+    max_num_parts: ClassVar[int] = aws.s3_max_num_parts
 
-    #: We observe a download rate of ~14 MB/s. Download time should ideally be
-    #: 1/4 of the Lambda timeout. Since we track the ETag of each part in SQS
-    #: messages, message size becomes another constraint: we observe ETags to be
-    #: 32 byte hexadecimal strings which, if represented in a JSON array, take
-    #: up 35 bytes per item, 36 if the comma is followed by a space. With a
-    #: maximum SQS message size of 256 KiB, we can store approximately 7280
-    #: ETags in an SQS messages, so the largest file we can mirror using a part
-    #: size of 256 MiB is 1.5 TiB.
+    #: In experiments, we observed a download rate of ~25 MB/s for an AWS Lambda
+    #: function downloading from GCS. To leave room for network impairments or
+    #: other partial outages, the normal download time for a single part should
+    #: be one third of the Lambda function timeout. Also, we heuristically
+    #: decided for the part size to not exceed 1 GiB in size in stable
+    #: deployments, or 256 MiB in elsewhere.
     #:
-    default_size: ClassVar[int] = 256 * 1024 ** 2
+    default_size: ClassVar[int] = min(
+        1024 ** 3 if config.deployment.is_stable else 256 * 1024 ** 2,
+        int(config.mirror_lambda_timeout * 25 * 1024 ** 2 / 3)
+    )
+
+    assert min_size <= default_size <= max_size
 
     @classmethod
-    def first(cls, file: File, part_size: int) -> Self:
+    def first(cls, file: File) -> Self:
         """
         The first part of the given file, using the given part size.
         """
         assert file.size is not None, R(
             'File size unknown', file)
-        assert cls.min_size <= part_size <= cls.max_size, R(
-            'Invalid part size', part_size)
-        part_count = math.ceil(file.size / part_size)
+        part_count = math.ceil(file.size / cls.default_size)
         assert part_count <= cls.max_num_parts, R(
-            'Part size is too small for this file', part_size, file)
-        return cls(index=0, offset=0, size=min(part_size, file.size))
+            'Too many parts', part_count, cls.default_size, file)
+        return cls(index=0, offset=0, size=min(cls.default_size, file.size))
 
     def next(self, file: File) -> Self | None:
         """
@@ -147,9 +185,157 @@ class MirrorFileDownload(RepositoryFileDownload):
         pass
 
 
+class SchemaUrlFunc(Protocol):
+
+    def __call__(self, *, schema_name: str, version: int) -> mutable_furl: ...
+
+
+@attrs.frozen(kw_only=True)
+class MirrorAction(Action, metaclass=ABCMeta):
+    catalog: CatalogName
+
+    #: When performing a mirror action results in more secondary actions, this
+    #: field should be copied from the action being performed to those secondary
+    #: actions. When constructing primary actions, this field should be omitted
+    #: so that the default is used. The indirection via a class method for the
+    #: default factory allows for easy patching during unit tests.
+    #:
+    operation_id: str = attrs.field(factory=lambda: MirrorAction._operation_id())
+
+    @classmethod
+    def _operation_id(cls):
+        return str(uuid4())
+
+    @property
+    @abstractmethod
+    def group_id(self) -> tuple[str, ...]:
+        """
+        The SQS FIFO message group ID of a message about this action. Messages
+        in different groups can be handled in parallel. Messages in the same
+        group are handled serially. Use this property to prevent concurrent
+        actions against a particular resource, by making the ID of that resource
+        the group ID of those actions.
+        """
+        raise NotImplementedError
+
+    @property
+    def dedup_id(self) -> tuple[str, ...]:
+        """
+        The SQS message deduplication ID to use for a message about this action.
+        If two messages with the same deduplication ID are sent within 5 min or
+        less of each other, the second message will be discarded silently. Use
+        this property to avoid redundant work.
+        """
+        # Since different catalogs may be configured to handle the same file in
+        # different ways, we can't conflate two messages that only differ in
+        # the catalog they are targetting.
+        return str(type(self)), self.catalog, self.operation_id
+
+    def to_sqs(self) -> SQSFifoMessage:
+        return SQSFifoMessage(body=json_mapping(self.to_json()),
+                              group_id=self._make_id(self.group_id),
+                              dedup_id=self._make_id(self.dedup_id))
+
+    dedup_uuid_namespace = UUID('cb3a5301-5ad4-44f4-9020-cd34e7c61d3e')
+
+    def _make_id(self, id: tuple[str, ...]) -> str:
+        joiner = ':'
+        assert not any(joiner in s for s in id)
+        return str(uuid5(self.dedup_uuid_namespace, joiner.join(id)))
+
+
+@attrs.frozen(kw_only=True)
+class MirrorSourceAction(MirrorAction):
+    source: SourceRef
+
+    @property
+    def group_id(self) -> tuple[str, ...]:
+        return self.source.id,
+
+    @property
+    def dedup_id(self) -> tuple[str, ...]:
+        return *super().dedup_id, self.source.id
+
+
+@attrs.frozen(kw_only=True)
+class MirrorPartitionAction(MirrorSourceAction):
+    prefix: str
+
+    @property
+    def group_id(self) -> tuple[str, ...]:
+        return *super().group_id, self.prefix
+
+    @property
+    def dedup_id(self) -> tuple[str, ...]:
+        return *super().dedup_id, self.prefix
+
+
+@attrs.frozen(kw_only=True)
+class MirrorFileAction(MirrorPartitionAction):
+    file: File
+
+    @property
+    @final
+    def group_id(self) -> tuple[str, ...]:
+        # This method is final because we need to serialize all actions that
+        # target a specific file in the mirror bucket.
+        digest = self.file.digest
+        return digest.type, digest.value
+
+    @property
+    def dedup_id(self) -> tuple[str, ...]:
+        return *super().dedup_id, self.file.uuid,
+
+
+@attrs.frozen(kw_only=True)
+class FileUpload(SerializableAttrs):
+    upload_id: str
+    etags: list[str] = serializable(to_json=list,
+                                    from_json=compose(list, json_element_strings))
+    hasher: Hasher = serializable(to_json=hasher_to_json,
+                                  from_json=hasher_from_json)
+
+    def copy(self) -> Self:
+        return attrs.evolve(self,
+                            etags=self.etags.copy(),
+                            hasher=self.hasher.copy())
+
+
+@attrs.frozen(kw_only=True)
+class MultiPartUploadAction(MirrorFileAction):
+    upload: FileUpload
+
+
+@attrs.frozen(kw_only=True)
+class MirrorPartAction(MultiPartUploadAction):
+    part: FilePart
+
+    @property
+    def dedup_id(self) -> tuple[str, ...]:
+        return *super().dedup_id, str(self.part.index)
+
+
+class FinalizeFileAction(MultiPartUploadAction):
+    pass
+
+
 @attrs.frozen(kw_only=True, slots=False)
 class BaseMirrorService:
+    """
+    Service for queuing mirroring work, e.g., sending action messages, and
+    reading mirrored files. The most prominent reader of mirrored files is the
+    service app.
+    """
+
     catalog: CatalogName
+
+    @cached_property
+    def _queues(self) -> Queues:
+        return Queues()
+
+    @cached_property
+    def _repository_plugin(self) -> RepositoryPlugin:
+        return RepositoryPlugin.load(self.catalog).create(self.catalog)
 
     @cached_property
     def _storage(self) -> StorageService:
@@ -158,44 +344,152 @@ class BaseMirrorService:
             bucket = aws.mirror_bucket
         return StorageService(bucket)
 
-    def get_mirror_url(self, file: File) -> str:
-        return self._storage.get_presigned_url(key=self.mirror_object_key(file),
+    def may_mirror_files_from_source(self, source_spec: SourceSpec) -> bool:
+        """
+        Test whether it makes sense to request the mirroring of files from the
+        given source. If this method returns True, files from the source may or
+        may not be mirrored. If this method returns False, the service will
+        definitely refuse to mirror all files from the source.
+        """
+        if self.may_mirror():
+            plugin = self._repository_plugin
+            source_config = plugin.sources[source_spec]
+            return source_config.mirror
+        else:
+            return False
+
+    def may_mirror(self, file_size: int = 0) -> bool:
+        """
+        Test whether it makes sense to request the mirroring of files from the
+        current catalog if they are of the given size or larger. If this method
+        returns True, such files may or may not be mirrored. If this method
+        returns False, the service will definitely refuse to mirror such files,
+        although it may accept smaller files.
+        """
+        if config.enable_mirroring:
+            max_size = config.catalogs[self.catalog].mirror_limit
+            return max_size is None or file_size <= max_size
+        else:
+            return False
+
+    def mirror_sources(self, sources: Iterable[tuple[SourceRef, SourceConfig]]):
+        if self.may_mirror():
+            def actions():
+                for source, source_config in sources:
+                    if source_config.mirror:
+                        log.info('Mirroring files in source %r from catalog %r',
+                                 str(source.spec), self.catalog)
+                        yield MirrorSourceAction(catalog=self.catalog, source=source)
+                    else:
+                        log.info('Not mirroring any files in source %r from catalog %r because '
+                                 'mirroring is explicitly disabled',
+                                 str(source.spec), self.catalog)
+
+            self._queue_actions(actions())
+        else:
+            log.info('Not mirroring any files in catalog %r because the file '
+                     'size limit is negative', self.catalog)
+
+    def mirror_file(self, source: SourceRef, file: File):
+        def actions():
+            yield MirrorFileAction(catalog=self.catalog,
+                                   source=source,
+                                   prefix='',
+                                   file=file)
+
+        self._queue_actions(actions())
+
+    def _mirror_queue(self):
+        name = config.mirror_queue.name
+        return aws.sqs_queue(name)
+
+    def _queue_actions(self, actions: Iterator[MirrorAction]) -> int:
+        rate_limit = float(aws.sqs_fifo_rate_limit)
+        if config.is_in_lambda:
+            rate_limit /= config.mirroring_concurrency
+        return self._queues.send_messages(self._mirror_queue(),
+                                          map(MirrorAction.to_sqs, actions),
+                                          rate_limit=rate_limit)
+
+    #: Since we track the ETags of all parts of a multipart file in SQS
+    #: messages, the maximum file size is primarily constrained by the SQS
+    #: message size. We observe ETags to be 32-byte hexadecimal strings which,
+    #: if represented in a JSON array, take up 35 bytes per item, 36 if the
+    #: comma is followed by a space. This limits the number of ETags we can
+    #: store in a message, while leaving room for 64 KiB of other information,
+    #: and thereby also limits the maximum size of files we can mirror.
+    #:
+    max_file_size = (
+        FilePart.default_size
+        * (aws.sqs_max_message_size - 64 * 1024) / 36
+    )
+
+    # We should be able to copy files 1.5 TiB in size or larger. Currently, the
+    # largest file in the open-access datasets for AnVIL is 1.3 TiB.
+    #
+    assert 1.5 * 1024 ** 4 <= max_file_size
+
+    def mirror_uri(self,
+                   source: SourceSpec,
+                   file_cls: type[File],
+                   file_json: JSON
+                   ) -> str | None:
+        """
+        Return the the URI of the mirror copy of the given file from the current
+        catalog. If this method returns None, the file was not mirrored, and no
+        such URI exists. Otherwise, a mirror copy of the file may or may not
+        exist under the returned URI.
+
+        :param source: The source of the file
+
+        :param file_cls: The type of the file. This parameter is needed in order
+                         to avoid deserializing a file from a source that was
+                         configured to not be mirrored because the file metadata
+                         in that source is incomplete or broken
+
+        :param file_json: the index representation of the file
+        """
+        if self.may_mirror_files_from_source(source):
+            file = file_cls.from_index(file_json)
+            if self.may_mirror(0 if file.size is None else file.size):
+                return str(furl(scheme='s3',
+                                netloc=self._storage.bucket_name,
+                                path=self._file_object_key(file)))
+            else:
+                return None
+        else:
+            return None
+
+    def mirror_url(self, file: File) -> str:
+        return self._storage.get_presigned_url(object_key=self._file_object_key(file),
                                                file_name=file.name,
                                                content_type=file.content_type)
 
-    def _get_info(self, file: File) -> JSON | None:
-        key = self.info_object_key(file)
-        try:
-            content = self._storage.get(key)
-        except StorageObjectNotFound:
-            return None
-        else:
-            json_content = json.loads(content)
-            content_type = json_content['content-type']
-            if content_type != file.content_type:
-                # FIXME: Content type in mirror info objects inconsistent with index
-                #        https://github.com/DataBiosphere/azul/issues/7193
-                log.warning('Conflicting content type %r for file %r', content_type, file)
-            return json_content
+    def info_exists(self, file: File) -> bool:
+        return self._storage.object_exists(self._info_object_key(file))
+
+    def _file_exists(self, file: File) -> bool:
+        return self._storage.object_exists(self._file_object_key(file))
 
     info_prefix, file_prefix = 'info', 'file'
 
-    def mirror_object_key(self, file: File) -> str:
-        return self._file_key(self.file_prefix, file)
+    def _info_object_key(self, file: File) -> str:
+        return self._object_key(self.info_prefix, file, extension='.json')
 
-    def info_object_key(self, file: File) -> str:
-        return self._file_key(self.info_prefix, file, extension='.json')
+    def _file_object_key(self, file: File) -> str:
+        return self._object_key(self.file_prefix, file)
 
-    def info_exists(self, file: File) -> bool:
-        return self._get_info(file) is not None
+    def _object_key(self, prefix: str, file: File, *, extension: str = '') -> str:
+        digest = file.digest
+        digest_value = digest.value.lower()
+        assert all(c in string.hexdigits for c in digest_value), R(
+            'Expected a hexadecimal digest', digest)
+        mirror_prefix = self._mirror_prefix
+        return f'{mirror_prefix}{prefix}/{digest_value}.{digest.type}{extension}'
 
-    def file_exists(self, file: File) -> bool:
-        try:
-            self._storage.head(self.mirror_object_key(file))
-        except StorageObjectNotFound:
-            return False
-        else:
-            return True
+    @cached_property
+    def _mirror_prefix(self) -> str:
+        return '_it/' if self.catalog in config.integration_test_catalogs else ''
 
     def delete_it_files(self):
         """
@@ -209,40 +503,25 @@ class BaseMirrorService:
             'Not an IT catalog', self.catalog)
         prefix = self._mirror_prefix
         assert len(prefix) > 1 and prefix.endswith('/'), prefix
-        keys = self._storage.list(prefix)
-        assert len(keys) <= 300, R('Too many objects', len(keys))
-        self._storage.delete(keys, batch_size=100)
-
-    @cached_property
-    def _mirror_prefix(self) -> str:
-        return '_it/' if self.catalog in config.integration_test_catalogs else ''
-
-    def _file_key(self,
-                  prefix: str,
-                  file: File,
-                  *,
-                  extension: str = ''
-                  ) -> str:
-        digest = file.digest
-        digest_value = digest.value.lower()
-        assert all(c in string.hexdigits for c in digest_value), R(
-            'Expected a hexadecimal digest', digest)
-        mirror_prefix = self._mirror_prefix
-        return f'{mirror_prefix}{prefix}/{digest_value}.{digest.type}{extension}'
-
-
-class SchemaUrlFunc(Protocol):
-
-    def __call__(self,
-                 *,
-                 schema_name: str,
-                 version: int
-                 ) -> mutable_furl: ...
+        object_keys = self._storage.list_objects(prefix)
+        assert len(object_keys) <= 300, R('Too many objects', len(object_keys))
+        self._storage.delete_objects(object_keys, batch_size=100)
 
 
 @attrs.frozen(kw_only=True, slots=False)
 class MirrorService(BaseMirrorService, HasCachedHttpClient):
-    schema_url_func: SchemaUrlFunc
+    """
+    Service that carries out mirroring work. Requires a mechanism to compose
+    schema URLs. This function is currently offered by the indexer app, so
+    another way to view this service class is as an encapsulation of the
+    mirroring work done by the indexer app.
+    """
+
+    _schema_url_func: SchemaUrlFunc
+
+    @cached_property
+    def _source_service(self) -> SourceService:
+        return SourceService()
 
     # We don't store the mirrored files' actual content type(s) in S3's
     # `Content-Type` metadata because a single file object may store the
@@ -255,99 +534,202 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
     # value in the `Content-Type` metadata. We haven't found an efficient way to
     # update the content type of an existing object without copying its data.
     #
-    file_object_content_type = 'application/octet-stream'
+    _file_object_content_type = 'application/octet-stream'
 
-    @cached_property
-    def repository_plugin(self) -> RepositoryPlugin:
-        return RepositoryPlugin.load(self.catalog).create(self.catalog)
+    def mirror(self, action: MirrorAction):
+        assert action.catalog == self.catalog, R(
+            'Action references unexpected catalog', action, self.catalog)
+        self._queue_actions(self._mirror(action))
 
-    def mirror_file(self, file: File):
+    @singledispatchmethod
+    def _mirror(self, a: MirrorAction):
+        raise NotImplementedError
+
+    @_mirror.register
+    def _(self, a: MirrorSourceAction) -> Iterator[MirrorAction]:
+        assert a.source.id in self._list_public_source_ids(), R(
+            'Cannot mirror non-public source', a.source)
+        plugin = self._repository_plugin
+        # The desired partition size depends on the maximum number of messages
+        # we can send in one Lambda invocation, because queueing the individual
+        # mirror_file messages turns out to dominate the running time of
+        # handling a mirror_source message.
+        partition_size = min(plugin.max_partition_size, int(
+            aws.sqs_fifo_rate_limit  # max. # of SendMessage calls per second
+            * Queues.batch_size  # number of messages per call
+            * config.mirror_lambda_timeout  # max. duration of the invocation
+            / config.mirroring_concurrency  # number of concurrent invocations
+            / 2  # safety margin
+        ))
+        source = plugin.partition_source_for_mirroring(a.catalog,
+                                                       a.source,
+                                                       partition_size)
+        prefix = source.prefix
+        assert prefix is not None, source
+        log.info('Queueing %d partitions of source %r in catalog %r',
+                 prefix.num_partitions, str(source.spec), a.catalog)
+
+        for partition in prefix.partition_prefixes():
+            yield devolve(MirrorPartitionAction, a, source=source, prefix=partition)
+
+    def _list_public_source_ids(self) -> set[str]:
+        return self._source_service.list_source_ids(self.catalog, authentication=None)
+
+    @_mirror.register
+    def _(self, a: MirrorPartitionAction) -> Iterator[MirrorAction]:
+        plugin = self._repository_plugin
+        files = plugin.list_files(a.source, a.prefix)
+        for file in files:
+            assert file.size is not None, R('File size unknown', file)
+            assert file.size <= self.max_file_size, R(
+                'File too big', file, self.max_file_size)
+            if self.may_mirror(file.size):
+                yield devolve(MirrorFileAction, a, file=file)
+            else:
+                log.info('Not mirroring file to save cost: %r', file)
+        log.info('Queued %d files in partition %r of source %r in catalog %r',
+                 len(files), a.prefix, str(a.source), a.catalog)
+
+    @_mirror.register
+    def _(self, a: MirrorFileAction) -> Iterator[MirrorAction]:
+        assert a.file.size is not None, R('File size unknown', a.file)
+        if self.info_exists(a.file):
+            log.info('File is already mirrored, skipping upload: %r', a.file)
+            self._update_info(a.file)
+        elif self._file_exists(a.file):
+            assert False, R('File object is already present', a.file)
+        else:
+            part_size = FilePart.default_size
+            if a.file.size <= part_size:
+                log.info('Mirroring file via standard upload: %r', a.file)
+                self._mirror_file(a.file)
+                log.info('Successfully mirrored file via standard upload: %r', a.file)
+            else:
+                log.info('Mirroring file via multi-part upload: %r', a.file)
+                upload = self._create_upload(a.file)
+                next_part = self._mirror_first_part(a.file, upload)
+                yield devolve(MirrorPartAction, a, upload=upload, part=next_part)
+
+    def _mirror_file(self, file: File):
         """
         Upload the file in a single request. For larger files, use
         :meth:`begin_mirroring_file` instead.
         """
-        file_content = self._download(file)
-        self._storage.put(object_key=self.mirror_object_key(file),
-                          data=file_content,
-                          content_type=self.file_object_content_type,
-                          overwrite=False)
         hasher = get_resumable_hasher(file.digest.type)
+        file_content = self._download(file)
         hasher.update(file_content)
         self._verify_digest(file, hasher)
+        self._storage.put_object(object_key=self._file_object_key(file),
+                                 data=file_content,
+                                 content_type=self._file_object_content_type,
+                                 overwrite=False)
         self._put_info(file)
 
-    def begin_mirroring_file(self, file: File) -> str:
-        """
-        Initiate a multipart upload of the file's content and return the upload
-        ID.
-        """
-        storage = self._storage
-        key = self.mirror_object_key(file)
-        upload = storage.create_multipart_upload(object_key=key,
-                                                 content_type=self.file_object_content_type)
-        return upload.id
+    def _create_upload(self, file: File) -> FileUpload:
+        object_key = self._file_object_key(file)
+        content_type = self._file_object_content_type
+        upload_id = self._storage.create_multipart_upload(object_key=object_key,
+                                                          content_type=content_type)
+        return FileUpload(upload_id=upload_id,
+                          hasher=get_resumable_hasher(file.digest.type),
+                          etags=[])
 
-    def mirror_file_part(self,
-                         file: File,
-                         part: FilePart,
-                         upload_id: str,
-                         hasher: Hasher
-                         ) -> str:
-        """
-        Upload a part of a file to a multipart upload begun with
-        :meth:`begin_mirroring_file` and return the uploaded part's ETag.
-        The provided hasher is mutated to incorporated the part's content.
-        """
-        upload = self._get_upload(file, upload_id)
-        file_content = self._download(file, part)
-        hasher.update(file_content)
-        return self._storage.upload_multipart_part(file_content,
-                                                   part.index + 1,
-                                                   upload)
+    def _mirror_first_part(self, file: File, upload: FileUpload) -> FilePart:
+        first_part = FilePart.first(file)
+        next_part = self._mirror_part(file, upload, first_part)
+        # We shouldn't have started an MP upload for only one part
+        assert next_part is not None
+        return next_part
 
-    def finish_mirroring_file(self,
-                              *,
-                              file: File,
-                              upload_id: str,
-                              etags: Sequence[str],
-                              hasher: Hasher
-                              ):
-        """
-        Complete a multipart upload begun with :meth:`begin_mirroring_file`.
-        """
-        upload = self._get_upload(file, upload_id)
-        self._storage.complete_multipart_upload(upload,
-                                                etags,
-                                                overwrite=False)
-        self._verify_digest(file, hasher)
-        self._get_info(file)
-        self._put_info(file)
+    def _mirror_part(self,
+                     file: File,
+                     upload: FileUpload,
+                     part: FilePart
+                     ) -> FilePart | None:
+        log.info('Uploading part #%d of file %r', part.index, file)
+        content = self._download(file, part)
+        upload.hasher.update(content)
+        etag = self._storage.upload_multipart_part(object_key=self._file_object_key(file),
+                                                   upload_id=upload.upload_id,
+                                                   part_number=part.index + 1,
+                                                   buffer=content)
+        upload.etags.append(etag)
+        next_part = part.next(file)
+        return next_part
 
-    def info_object(self, file: File) -> JSON:
+    @_mirror.register
+    def _(self, a: MirrorPartAction) -> Iterator[MirrorAction]:
+        # Some upload field values are mutable so we should make a copy
+        upload = a.upload.copy()
+        next_part = self._mirror_part(a.file, upload, a.part)
+        if next_part is None:
+            log.info('Uploaded all %d parts for file %r', len(upload.etags), a.file)
+            yield devolve(FinalizeFileAction, a, upload=upload)
+        else:
+            yield devolve(MirrorPartAction, a, upload=upload, part=next_part)
+
+    @_mirror.register
+    def _(self, a: FinalizeFileAction) -> Iterator[MirrorAction]:
+        assert len(a.upload.etags) > 0
+        self._verify_digest(a.file, a.upload.hasher)
+        object_key = self._file_object_key(a.file)
+        try:
+            self._storage.complete_multipart_upload(object_key=object_key,
+                                                    upload_id=a.upload.upload_id,
+                                                    etags=a.upload.etags,
+                                                    overwrite=False)
+        except StorageObjectExists:
+            log.info('Discarding redundant upload %r of %r', a.upload.upload_id, a.file)
+            self._storage.abort_multipart_upload(object_key=object_key,
+                                                 upload_id=a.upload.upload_id)
+        self._put_info(a.file)
+        log.info('Successfully mirrored file via multi-part upload: %r', a.file)
+        return iter(())
+
+    def _info(self, file: File) -> JSON:
         return {
-            'content-type': file.content_type,
-            '$schema': str(self.schema_url_func(schema_name='info', version=1))
+            'content-type': alist(file.content_type),
+            '$schema': str(self._schema_url_func(schema_name='info', version=2))
         }
 
-    def _put_info(self, file: File):
-        key = self.info_object_key(file)
-        content = self.info_object(file)
-        self._storage.put(object_key=key,
-                          data=json.dumps(content).encode(),
-                          content_type='application/json')
+    def _update_info(self, file: File):
+        content_type = file.content_type
+        if content_type is not None:
 
-    def _get_repository_url(self, file: File) -> furl:
+            def update(data: bytes) -> bytes:
+                json_content = json.loads(data)
+                content_types = json_content['content-type']
+                if isinstance(content_types, list):
+                    content_types = set(content_types)
+                else:
+                    content_types = set()
+                content_types.add(content_type)
+                json_content['content-type'] = sorted(content_types)
+                return json.dumps(json_content).encode()
+
+            key = self._info_object_key(file)
+            self._storage.update_object(key, update)
+
+    def _put_info(self, file: File):
+        object_key = self._info_object_key(file)
+        info = self._info(file)
+        self._storage.put_object(object_key=object_key,
+                                 data=json.dumps(info).encode(),
+                                 content_type='application/json',
+                                 overwrite=False)
+
+    def _repository_url(self, file: File) -> furl:
         assert config.is_tdr_enabled(self.catalog), R(
             'Only TDR catalogs are supported', self.catalog)
         assert file.drs_uri is not None, R(
             'File cannot be downloaded', file)
-        drs = self.repository_plugin.drs_client(authentication=None)
-        access = drs.get_object(file.drs_uri, AccessMethod.gs)
+        object = self._repository_plugin.drs_object(file.drs_uri)
+        access = object.get(AccessMethod.gs)
         assert access.method is AccessMethod.https, access
         return furl(access.url)
 
     def _download(self, file: File, part: FilePart | None = None) -> bytes:
-        download_url = self._get_repository_url(file)
+        url = self._repository_url(file)
         start = time.time()
         if part is None:
             headers = {}
@@ -359,24 +741,15 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
             expected_status = 206
         # Ideally we would stream the response, but boto only supports uploading
         # from streams that are seekable.
-        response = self._http_client.request('GET',
-                                             str(download_url),
-                                             headers=headers)
+        response = self._http_client.request('GET', str(url), headers=headers)
         if response.status == expected_status:
+            actual_size = len(response.data)
             log.info('Downloaded %d bytes in %.3fs from file %r',
-                     size, time.time() - start, file)
+                     actual_size, time.time() - start, file)
+            assert actual_size == size, R(f'Expected {size} bytes, got {actual_size}')
             return response.data
         else:
             raise RuntimeError('Unexpected response from repository', response.status)
-
-    def _get_upload(self,
-                    file: File,
-                    upload_id: str
-                    ) -> 'MultipartUpload':
-        storage = self._storage
-        key = self.mirror_object_key(file)
-        return storage.load_multipart_upload(object_key=key,
-                                             upload_id=upload_id)
 
     def _verify_digest(self, file: File, hasher: Hasher):
         expected_digest = file.digest

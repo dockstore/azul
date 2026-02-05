@@ -24,7 +24,6 @@ from chalice import (
     Response,
     UnauthorizedError,
 )
-import chevron
 from furl import (
     furl,
 )
@@ -49,15 +48,11 @@ from azul.auth import (
 from azul.collections import (
     OrderedSet,
 )
-from azul.csp import (
-    CSP,
-)
 from azul.drs import (
     AccessMethod,
 )
 from azul.health import (
     HealthApp,
-    HealthController,
 )
 from azul.indexer.document import (
     EntityType,
@@ -90,6 +85,9 @@ from azul.service.app_controller import (
 )
 from azul.service.catalog_controller import (
     CatalogController,
+)
+from azul.service.download_controller import (
+    DownloadController,
 )
 from azul.service.drs_controller import (
     DRSController,
@@ -126,7 +124,7 @@ spec = {
         # changes and reset the minor version to zero. Otherwise, increment only
         # the minor version for backwards compatible changes. A backwards
         # compatible change is one that does not require updates to clients.
-        'version': '13.0',
+        'version': '15.1',
         'description': fd(f'''
             # Overview
 
@@ -304,16 +302,16 @@ class ServiceApp(HealthApp):
         return DRSController(app=self, file_url_func=self.file_url)
 
     @cached_property
-    def health_controller(self) -> HealthController:
-        return HealthController(app=self, lambda_name=self.unqualified_app_name)
-
-    @cached_property
     def catalog_controller(self) -> CatalogController:
         return CatalogController(app=self, file_url_func=self.file_url)
 
     @cached_property
     def repository_controller(self) -> RepositoryController:
         return RepositoryController(app=self, file_url_func=self.file_url)
+
+    @cached_property
+    def download_controller(self) -> DownloadController:
+        return DownloadController(app=self, file_url_func=self.file_url)
 
     @cached_property
     def manifest_controller(self) -> ManifestController:
@@ -351,7 +349,7 @@ class ServiceApp(HealthApp):
 
     @property
     def synthetic_fields(self) -> Sequence[str]:
-        return self.metadata_plugin.special_fields.accessible,
+        return self.metadata_plugin.special_fields.accessible.name,
 
     def __init__(self):
         super().__init__(app_name=config.service_name,
@@ -454,57 +452,6 @@ configure_app_logging(app, log)
 globals().update(app.default_routes())
 
 
-@app.route(
-    '/oauth2_redirect',
-    enabled=config.google_oauth2_client_id is not None,
-    cache_control='no-store',
-    interactive=False,
-    spec={
-        'summary': 'Destination endpoint for Google OAuth 2.0 redirects',
-        'tags': ['Auxiliary'],
-        'responses': {
-            '200': {
-                'description': fd('''
-                    The response body is HTML page with a script that extracts
-                    the access token and redirects back to the Swagger UI.
-                ''')
-            }
-        }
-    }
-)
-def oauth2_redirect():
-    file_name = 'oauth2-redirect.html.template.mustache'
-    template = app.load_static_resource('swagger', file_name)
-    nonce = CSP.new_nonce()
-    html = chevron.render(template, {
-        'CSP_NONCE': json.dumps(nonce)
-    })
-    csp = CSP.for_azul(nonce)
-    return Response(status_code=200,
-                    headers={
-                        'Content-Type': 'text/html',
-                        'Content-Security-Policy': str(csp)
-                    },
-                    body=html)
-
-
-def validate_repository_search(entity_type: EntityType,
-                               params: Mapping[str, str],
-                               **validators):
-    validate_params(params, **{
-        'catalog': validate_catalog,
-        'filters': validate_filters,
-        'order': validate_order,
-        'search_after': partial(validate_json_param, 'search_after'),
-        'search_after_uid': str,
-        'search_before': partial(validate_json_param, 'search_before'),
-        'search_before_uid': str,
-        'size': partial(validate_size, entity_type),
-        'sort': validate_field,
-        **validators
-    })
-
-
 def validate_entity_type(entity_type: str):
     entity_types = app.metadata_plugin.exposed_indices.keys()
     if entity_type not in entity_types:
@@ -534,6 +481,11 @@ def validate_filters(filters):
     if type(filters) is not dict:
         raise BRE('The `filters` parameter must be a dictionary')
     field_types = app.repository_controller.field_types(app.catalog)
+    special_fields = app.metadata_plugin.special_fields
+    accessibility_fields = {
+        special_fields.source_id.name,
+        special_fields.accessible.name
+    }
     for field, filter_ in filters.items():
         validate_field(field, include_synthetic=True)
         try:
@@ -542,8 +494,7 @@ def validate_filters(filters):
             raise BRE(f'The `filters` parameter entry for `{field}` '
                       f'must be a single-item dictionary')
         else:
-            special_fields = app.metadata_plugin.special_fields
-            if field in (special_fields.source_id, special_fields.accessible):
+            if field in accessibility_fields:
                 valid_relations = ('is',)
                 disallow_null = True
             else:
@@ -676,7 +627,7 @@ deprecated_spec = {
                 **responses.json_content(
                     # The custom return type annotation is an experiment. Please
                     # don't adopt this just yet elsewhere in the program.
-                    signature(app.catalog_controller.list_catalogs).return_annotation
+                    one(signature(app.catalog_controller.list_catalogs).return_annotation.__metadata__)
                 )
             }
         }
@@ -999,14 +950,24 @@ def repository_search(entity_type: str, entity_id: str | None = None) -> JSON:
     request = app.current_request
     query_params = request.query_params or {}
     _hoist_parameters(query_params, request)
-    validate_repository_search(entity_type, query_params)
+    validate_params(query_params,
+                    catalog=validate_catalog,
+                    filters=validate_filters,
+                    order=validate_order,
+                    search_after=partial(validate_json_param, 'search_after'),
+                    search_after_uid=str,
+                    search_before=partial(validate_json_param, 'search_before'),
+                    search_before_uid=str,
+                    size=partial(validate_size, entity_type),
+                    sort=validate_field)
     validate_entity_type(entity_type)
-    return app.repository_controller.search(catalog=app.catalog,
-                                            entity_type=entity_type,
-                                            item_id=entity_id,
-                                            filters=query_params.get('filters'),
-                                            pagination=app.get_pagination(entity_type),
-                                            authentication=request.authentication)
+    response = app.repository_controller.search(catalog=app.catalog,
+                                                entity_type=entity_type,
+                                                item_id=entity_id,
+                                                filters=query_params.get('filters'),
+                                                pagination=app.get_pagination(entity_type),
+                                                authentication=request.authentication)
+    return '' if request.method == 'HEAD' else response
 
 
 def _hoist_parameters(query_params, request):
@@ -1088,9 +1049,10 @@ def get_summary():
                     catalog=validate_catalog)
     filters = query_params.get('filters', '{}')
     validate_filters(filters)
-    return app.repository_controller.summary(catalog=app.catalog,
-                                             filters=filters,
-                                             authentication=request.authentication)
+    response = app.repository_controller.summary(catalog=app.catalog,
+                                                 filters=filters,
+                                                 authentication=request.authentication)
+    return '' if request.method == 'HEAD' else response
 
 
 def manifest_route(*, fetch: bool, initiate: bool):
@@ -1592,12 +1554,12 @@ def _repository_files(file_uuid: str, fetch: bool) -> MutableJSON:
     #        https://github.com/DataBiosphere/azul/issues/2682
 
     catalog = app.catalog
-    return app.repository_controller.download_file(catalog=catalog,
-                                                   fetch=fetch,
-                                                   file_uuid=file_uuid,
-                                                   query_params=query_params,
-                                                   headers=headers,
-                                                   authentication=request.authentication)
+    return app.download_controller.download_file(catalog=catalog,
+                                                 fetch=fetch,
+                                                 file_uuid=file_uuid,
+                                                 query_params=query_params,
+                                                 headers=headers,
+                                                 authentication=request.authentication)
 
 
 @app.route(

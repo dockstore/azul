@@ -11,6 +11,8 @@ from azul import (
 )
 from azul.args import (
     AzulArgumentHelpFormatter,
+    get_catalogs,
+    get_sources,
 )
 from azul.azulclient import (
     AzulClient,
@@ -57,23 +59,17 @@ parser.add_argument('--local',
 parser.add_argument('--catalogs',
                     nargs='+',
                     metavar='NAME',
-                    default=[
-                        catalog.name
-                        for catalog in config.catalogs.values()
-                        if not catalog.is_integration_test_catalog
-                    ]
-                    if config.current_catalog is None else
-                    [
-                        config.catalogs[config.current_catalog].name
-                    ],
                     choices=config.catalogs,
-                    help='The names of the catalogs to reindex.')
+                    help='Limit reindexing to a subset of the configured catalogs. If no values are passed, this '
+                         'argument will be set from the environment variable ``azul_current_catalog``. If that '
+                         'variable is unset, all non-IT catalogs will be used.')
 parser.add_argument('--sources',
-                    default=config.current_sources,
                     nargs='+',
                     help='Limit reindexing to a subset of the configured sources. '
                          'Supports shell-style wildcards to match multiple sources per argument. '
-                         'Must be * for local reindexing i.e., if --local is given.')
+                         'Must be * for local reindexing i.e., if --local is given. If no values are passed, this '
+                         'argument will be set from the environment variable ``azul_current_sources``. If that '
+                         'variable is unset, all sources in the selected catalogs will be used.')
 parser.add_argument('--delete',
                     default=False,
                     action='store_true',
@@ -128,7 +124,9 @@ def main(argv: list[str]):
 
     azul = AzulClient(num_workers=args.num_workers)
 
-    source_globs = set(args.sources)
+    catalogs = get_catalogs(args.catalogs)
+    source_globs = get_sources(args.sources)
+
     every_source = '*' in source_globs
     deindex = args.deindex or (args.delete and not every_source)
     delete = args.delete and every_source
@@ -146,7 +144,7 @@ def main(argv: list[str]):
         parser.error('--deindex is incompatible with --create and --delete.')
         assert False
 
-    sources_by_catalog = azul.matching_sources(args.catalogs, source_globs)
+    sources_by_catalog = azul.matching_sources(catalogs, source_globs)
     azul.require_no_failures_before()
 
     if deindex:
@@ -154,7 +152,7 @@ def main(argv: list[str]):
             if sources:
                 azul.deindex(catalog, sources)
 
-    azul.reset_indexer(args.catalogs,
+    azul.reset_indexer(catalogs,
                        purge_queues=args.purge,
                        delete_indices=delete,
                        create_indices=args.create or args.index and delete)
@@ -182,7 +180,7 @@ def main(argv: list[str]):
         if args.wait:
             if num_notifications == 0:
                 log.warning('No notifications for prefix %r and catalogs %r were sent',
-                            args.prefix, args.catalogs)
+                            args.prefix, catalogs)
             else:
                 azul.wait_for_indexer()
                 azul.require_no_failures_after()

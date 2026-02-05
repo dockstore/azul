@@ -3,12 +3,9 @@ from collections.abc import (
 )
 import json
 import os
-from typing import (
-    Optional,
-)
 
 
-def env() -> Mapping[str, Optional[str]]:
+def env() -> Mapping[str, str | None]:
     """
     Returns a dictionary that maps environment variable names to values. The
     values are either None or strings. String values can contain references to
@@ -47,15 +44,16 @@ def env() -> Mapping[str, Optional[str]]:
         #   'name': {
         #       'atlas': 'bar',
         #       'internal': True,
+        #       'mirror_limit': -1,
         #       'plugins': {
         #           plugin_type: {'name'=plugin_package},
         #           plugin_type: {'name'=plugin_package},
         #           ...
         #       }
-        #       'sources': [
-        #                   source,
-        #                   ...
-        #       ]
+        #       'sources': {
+        #           source: {}
+        #           ...
+        #       }
         #   },
         #   ...
         # }
@@ -68,6 +66,11 @@ def env() -> Mapping[str, Optional[str]]:
         # `plugin_package` denotes the concrete implementation of how to fulfill
         # that purpose.
         #
+        # Files larger than `mirror_limit` will not be mirrored for that
+        # catalog. This property may be absent or null, in which case all files
+        # will be mirrored for that catalog, or negative, in which case no files
+        # will be mirrored for that catalog.
+        #
         # The first catalog listed is the default catalog.
         #
         # A source represents a TDR snapshot or canned staging area to index.
@@ -76,42 +79,15 @@ def env() -> Mapping[str, Optional[str]]:
         # source = TDR source | canned source | DSS source;
         #
         # TDR source = 'tdr:', Google Cloud project name,
-        #              ':', TDR dataset or snapshot name,
-        #              ':', [ prefix ],
-        #              '/', partition prefix length ;
+        #              ':', TDR dataset or snapshot name
         #
         # canned source = 'https://github.com',
         #                 '/', owner,
         #                 '/', repo,
         #                 '/tree/', ref,
-        #                 ['/', path],
-        #                 ':', [ prefix ],
-        #                 '/', partition prefix length ;
+        #                 ['/', path]
         #
-        # DSS sources = 'dss.data.humancellatlas.org/v1',
-        #               ':', [ prefix ],
-        #               '/', partition prefix length ;
-        #
-        # The `prefix` is an optional string of hexadecimal digits constraining
-        # the set of indexed subgraphs from the source. A subgraph will be
-        # indexed if its UUID begins with the `prefix`. The default `prefix` is
-        # the empty string.
-        #
-        # The partition prefix length is an integer that is used to further
-        # partition the set of indexed subgraphs. Each partition is assigned a
-        # prefix of `partition prefix length` hexadecimal digits. A subgraph
-        # belongs to a partition if its UUID starts with the overall `prefix`
-        # followed by the partition's prefix. The number of partitions of a
-        # source is therefore `16 ** partition prefix length`. Partition
-        # prefixes that are too long result in many small or even empty
-        # partitions and waste some amount of resources. Partition prefixes that
-        # are too short result in few large partitions that could exceed the
-        # memory and running time limitations of the AWS Lambda function that
-        # processes them. If in doubt err on the side of too many small
-        # partitions.
-        #
-        # The `partition prefix length` plus the length of `prefix` must not
-        # exceed 8.
+        # DSS source = 'dss.data.humancellatlas.org/v1',
         #
         # `ref` can be a branch, tag, or commit SHA. If `ref` contains special
         # characters like `/`, '?` or `#` they must be URL-encoded.
@@ -240,7 +216,7 @@ def env() -> Mapping[str, Optional[str]]:
         # `gitlab` components, as well as building and pushing the executor
         # image (see terraform/gitlab/runner/Dockerfile for how).
         #
-        'azul_docker_version': '28.3.3',
+        'azul_docker_version': '29.1.5',
 
         # The version of Python used throughout the system.
         #
@@ -254,7 +230,7 @@ def env() -> Mapping[str, Optional[str]]:
         # and committing the resulting changes. It also requires redeploying the
         # `shared` component.
         #
-        'azul_python_version': '3.12.11',
+        'azul_python_version': '3.13.11',
 
         # The version of Terraform used throughout the system.
         #
@@ -268,18 +244,7 @@ def env() -> Mapping[str, Optional[str]]:
         # `make -C terraform update_schema`, and committing the resulting
         # changes.
         #
-        'azul_terraform_version': '1.12.2',
-
-        # When building the Azul image on a FIPS mode enabled system (e.g.
-        # GitLab), this variable should be set to `/proc/sys/crypto`, the path
-        # where a `fips_enabled` file will be mounted. This is required for the
-        # command `apt-get update` to succeed which would otherwise fail on
-        # Debian bookworm with FIPS mode enabled.
-        #
-        # FIXME: Remove azul_proc_sys_crypto
-        #        https://github.com/DataBiosphere/azul/issues/6675
-        #
-        'azul_proc_sys_crypto': '/tmp',
+        'azul_terraform_version': '1.13.5',
 
         # A dictionary mapping the short name of each Docker image used in Azul
         # to its fully qualified name. Note that a change to any of the image
@@ -296,36 +261,36 @@ def env() -> Mapping[str, Optional[str]]:
             # See `azul_python_version` above about what actions are required
             # after modifying this entry.
             'python': {
-                'ref': 'docker.io/library/python:{azul_python_version}-slim-bookworm',
+                'ref': 'docker.io/library/python:{azul_python_version}-slim-trixie',
                 'url': 'https://hub.docker.com/_/python',
             },
             'pycharm': {
-                'ref': 'docker.io/ucscgi/azul-pycharm:2024.3.6-59',
+                'ref': 'docker.io/ucscgi/azul-pycharm:2025.2.6-72',
                 'url': 'https://hub.docker.com/repository/docker/ucscgi/azul-pycharm',
                 'is_custom': True
             },
             'opensearch': {
-                'ref': 'docker.io/opensearchproject/opensearch:2.19.3',
+                'ref': 'docker.io/opensearchproject/opensearch:2.19.4',
                 'url': 'https://hub.docker.com/r/opensearchproject/opensearch',
                 'is_custom': False
             },
             'bigquery_emulator': {
-                'ref': 'docker.io/ucscgi/azul-bigquery-emulator:0.4.4-41',
+                'ref': 'docker.io/ucscgi/azul-bigquery-emulator:0.4.4-53',
                 'url': 'https://hub.docker.com/repository/docker/ucscgi/azul-bigquery-emulator',
                 'is_custom': True
             },
             # Updating any of the four images below additionally requires
             # redeploying the `gitlab` TF component.
             'clamav': {
-                'ref': 'docker.io/clamav/clamav:1.4.3-51',
+                'ref': 'docker.io/clamav/clamav:1.5.1-23',
                 'url': 'https://hub.docker.com/r/clamav/clamav'
             },
             'gitlab': {
-                'ref': 'docker.io/gitlab/gitlab-ce:18.2.2-ce.0',
+                'ref': 'docker.io/gitlab/gitlab-ce:18.8.2-ce.0',
                 'url': 'https://hub.docker.com/r/gitlab/gitlab-ce'
             },
             'gitlab_runner': {
-                'ref': 'docker.io/gitlab/gitlab-runner:ubuntu-v18.2.1',
+                'ref': 'docker.io/gitlab/gitlab-runner:ubuntu-v18.8.0',
                 'url': 'https://hub.docker.com/r/gitlab/gitlab-runner'
             },
             'dind': {
@@ -935,6 +900,14 @@ def env() -> Mapping[str, Optional[str]]:
         # not covering any changes to the indexer, since indexing will be
         # skipped.
         #
+        # To supress IT coverage of the mirroring functionality in Azul, include
+        # the 'no_mirror' flag.
+        #
+        # To pin the random seed used by the IT, include the 'seed=12345' flag,
+        # replacing 12345 with the integer seed you'd like to use. The IT logs
+        # the seed, so running the IT again with the seed pinned should produce
+        # the same test results.
+        #
         'azul_it_flags': None,
 
         # Wether to enable bot control in AWS WAF. Setting this to 1 will enable
@@ -943,5 +916,11 @@ def env() -> Mapping[str, Optional[str]]:
         # $1 per one million requests above ten million requests. The blocking
         # only applies to URLs disallowed via robots.txt.
         #
-        'azul_waf_bot_control': '0'
+        'azul_waf_bot_control': '0',
+
+        # The maximum allowed percentage of blocked requests (number of blocked
+        # requests, divided by the number of all requests, times 100) for a
+        # configured period before a metric alarm is tripped.
+        #
+        'azul_waf_blocked_alarm_threshold': '50'
     }

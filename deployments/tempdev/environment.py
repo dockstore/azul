@@ -4,61 +4,83 @@ from collections.abc import (
 import json
 from typing import (
     Literal,
-    Optional,
 )
 
 pop = 1  # remove snapshot
+no_mirror = 2  # do not mirror files from snapshot (redundant for managed access snapshots)
+
+type DatasetName = str
+type SourceSpec = str
+type SourceConfig = dict[str, str | int | float | bool | None]
+type SourceItem = tuple[SourceSpec, SourceConfig]
 
 
-def mksrc(source_type: Literal['bigquery', 'parquet'],
-          google_project,
-          snapshot,
-          flags: int = 0,
-          /,
-          prefix: str = ''
-          ) -> tuple[str, str | None]:
-    project = '_'.join(snapshot.split('_')[1:-3])
-    assert flags <= pop
-    source = None if flags & pop else ':'.join([
-        'tdr',
-        source_type,
-        'gcp',
-        google_project,
-        snapshot,
-        prefix
-    ])
-    return project, source
+def source(google_project: str,
+           snapshot: str,
+           flags: int = 0,
+           ) -> tuple[DatasetName, SourceItem | None]:
+    assert len(google_project) == 8, google_project
+    google_project = 'datarepo-dev-' + google_project
+    assert not snapshot.startswith('ANVIL_'), snapshot
+    snapshot = 'ANVIL_' + snapshot
+    return _source('bigquery', google_project, snapshot, flags)
 
 
-def mkdelta(items: list[tuple[str, str]]) -> dict[str, str]:
+def _source(source_type: Literal['bigquery', 'parquet'],
+            google_project,
+            snapshot,
+            flags: int = 0,
+            ) -> tuple[DatasetName, SourceItem | None]:
+    dataset = '_'.join(snapshot.split('_')[1:-3])
+    assert flags <= pop | no_mirror
+    source = None if flags & pop else (
+        ':'.join([
+            'tdr',
+            source_type,
+            'gcp',
+            google_project,
+            snapshot,
+        ]),
+        {
+            'mirror': not (flags & no_mirror),
+        }
+    )
+    return dataset, source
+
+
+def delta(items: list[tuple[DatasetName, SourceItem | None]]
+          ) -> dict[DatasetName, SourceItem | None]:
     result = dict(items)
     assert len(items) == len(result), 'collisions detected'
     assert list(result.keys()) == sorted(result.keys()), 'input not sorted'
     return result
 
 
-def mklist(catalog: dict[str, str]) -> list[str]:
-    return list(filter(None, catalog.values()))
+def condense(catalog: dict[DatasetName, SourceItem | None]
+             ) -> dict[SourceSpec, SourceConfig]:
+    return dict(filter(None, catalog.values()))
 
 
-def mkdict(previous_catalog: dict[str, str],
-           num_expected: int,
-           delta: dict[str, str]
-           ) -> dict[str, str]:
+def union(previous_catalog: dict[DatasetName, SourceItem | None],
+          num_expected: int,
+          delta: dict[DatasetName, SourceItem | None],
+          ) -> dict[DatasetName, SourceItem | None]:
     catalog = previous_catalog | delta
-    num_actual = len(mklist(catalog))
+    num_actual = len(condense(catalog))
     assert num_expected == num_actual, (num_expected, num_actual)
     return catalog
 
 
-anvil_sources = mkdict({}, 3, mkdelta([
-    mksrc('bigquery', 'datarepo-dev-e53e74aa', 'ANVIL_1000G_2019_Dev_20230609_ANV5_202306121732'),
-    mksrc('bigquery', 'datarepo-dev-42c70e6a', 'ANVIL_CCDG_Sample_1_20230228_ANV5_202302281520'),
-    mksrc('bigquery', 'datarepo-dev-97ad270b', 'ANVIL_CMG_Sample_1_20230225_ANV5_202302281509')
+anvil_sources = union({}, 3, delta([
+    # FIXME: Files from 1000G snapshot in anvildev can't be mirrored
+    #        https://github.com/DataBiosphere/azul/issues/7634
+    source('e53e74aa', '1000G_2019_Dev_20230609_ANV5_202306121732', no_mirror),
+    source('42c70e6a', 'CCDG_Sample_1_20230228_ANV5_202302281520'),
+    source('dd576076', 'CMG_Sample_1_20230225_ANV5_202512031111')
 ]))
 
 
-def env() -> Mapping[str, Optional[str]]:
+def env() -> Mapping[str, str | None]:
     """
     Returns a dictionary that maps environment variable names to values. The
     values are either None or strings. String values can contain references to
@@ -94,14 +116,15 @@ def env() -> Mapping[str, Optional[str]]:
 
         'AZUL_CATALOGS': json.dumps({
             f'{catalog}{suffix}': dict(atlas=atlas,
-                                       internal=internal,
+                                       internal=is_it,
+                                       mirror_limit=it_mirror_limit if is_it else mirror_limit,
                                        plugins=dict(metadata=dict(name='anvil'),
                                                     repository=dict(name='tdr_anvil')),
-                                       sources=list(filter(None, sources.values())))
-            for atlas, catalog, sources in [
-                ('anvil', 'anvil', anvil_sources),
+                                       sources=condense(sources))
+            for atlas, catalog, sources, mirror_limit, it_mirror_limit, in [
+                ('anvil', 'anvil', anvil_sources, int(1.5 * 1024 ** 3), int(1.5 * 1024 ** 3)),
             ]
-            for suffix, internal in [
+            for suffix, is_it in [
                 ('', False),
                 ('-it', True)
             ]
@@ -135,4 +158,6 @@ def env() -> Mapping[str, Optional[str]]:
         'AZUL_DEPLOYMENT_INCARNATION': '1',
 
         'AZUL_GOOGLE_OAUTH2_CLIENT_ID': '807674395527-erth0gf1m7qme5pe6bu384vpdfjh06dg.apps.googleusercontent.com',
+
+        'AZUL_ENABLE_MIRRORING': '1',
     }

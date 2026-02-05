@@ -5,9 +5,6 @@ mirroring bucket.
 import argparse
 import logging
 import sys
-from typing import (
-    Iterable,
-)
 
 from azul import (
     CatalogName,
@@ -16,12 +13,10 @@ from azul import (
 )
 from azul.args import (
     AzulArgumentHelpFormatter,
+    get_sources,
 )
 from azul.azulclient import (
     AzulClient,
-)
-from azul.indexer import (
-    SourceRef,
 )
 from azul.logging import (
     configure_script_logging,
@@ -44,24 +39,28 @@ def mirror_catalog(azul: AzulClient,
         source.spec: source
         for source in plugin.list_sources(authentication=None)
     }
-    source_refs: Iterable[SourceRef]
     # When the user doesn't specify a source or provides "*" as a source glob,
     # we implicitly filter out managed-access sources. This lets us assert that
     # all sources matching the provided globs are public, without forcing the
     # user to manually specify every public source.
     if '*' in source_globs:
-        source_refs = public_sources_by_spec.values()
+        source_specs = azul.repository_plugin(catalog).sources
+        source_refs = {
+            source: source_specs[spec]
+            for spec, source in public_sources_by_spec.items()
+        }
     else:
         source_specs = azul.matching_sources([catalog], source_globs)[catalog]
         try:
             source_refs = {
-                public_sources_by_spec[spec]
-                for spec in source_specs
+                public_sources_by_spec[spec]: cfg
+                for spec, cfg in source_specs.items()
             }
         except KeyError as e:
             assert False, R(
                 'Cannot mirror managed-access source', e.args[0])
-    azul.remote_mirror(catalog, source_refs)
+    azul.mirror_service(catalog).mirror_sources(source_refs.items())
+
     if wait:
         azul.wait_for_mirroring()
         assert azul.is_queue_empty(fail_queue), R(
@@ -77,11 +76,12 @@ def main(args):
                         default=config.default_catalog,
                         help='The name of the catalog to mirror.')
     parser.add_argument('--sources',
-                        default=config.current_sources,
                         nargs='+',
                         help='Limit mirroring to a subset of the configured sources. '
                              'Supports shell-style wildcards to match multiple sources per argument. '
-                             'All sources must be public.')
+                             'All sources must be public. If no values are passed, this argument will be set from the '
+                             'environment variable ``azul_current_sources``. If that variable is unset, all sources in '
+                             'the selected catalog will be used.')
     parser.add_argument('--mirror',
                         action='store_true',
                         help='Mirror files in the specified catalog and sources')
@@ -99,7 +99,7 @@ def main(args):
     if args.purge:
         azul.queues.purge_mirror()
     if args.mirror:
-        mirror_catalog(azul, args.catalog, set(args.sources), args.wait)
+        mirror_catalog(azul, args.catalog, get_sources(args.sources), args.wait)
 
 
 if __name__ == '__main__':

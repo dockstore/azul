@@ -11,10 +11,8 @@ from concurrent.futures import (
 )
 import json
 import logging
-from typing import (
-    TYPE_CHECKING,
-)
 
+import attrs
 from more_itertools import (
     first,
     one,
@@ -31,6 +29,12 @@ from azul import (
     CatalogName,
     cache,
     config,
+)
+from azul.indexer import (
+    SourceSpec,
+)
+from azul.indexer.mirror_service import (
+    BaseMirrorService,
 )
 from azul.plugins import (
     File,
@@ -53,7 +57,6 @@ from azul.service.elasticsearch_service import (
     _ElasticsearchStage,
 )
 from azul.types import (
-    AnyMutableJSON,
     JSON,
     MutableJSON,
 )
@@ -70,11 +73,35 @@ class EntityNotFoundError(Exception):
         super().__init__(f"Can't find an entity in {entity_type} with an uuid, {entity_id}.")
 
 
+@attrs.frozen(auto_attribs=True, kw_only=True)
 class SearchResponseStage(_ElasticsearchStage[ResponseTriple, MutableJSON],
                           metaclass=ABCMeta):
+    service: 'RepositoryService'
+    file_url_func: FileUrlFunc
 
     def prepare_request(self, request: Search) -> Search:
         return request
+
+    @property
+    def repository_plugin(self) -> RepositoryPlugin:
+        return self.service.repository_plugin(self.catalog)
+
+    def _file_url(self, *, uuid: str, version: str, drs_uri: str | None) -> str | None:
+        plugin = self.repository_plugin
+        if drs_uri is None and plugin.file_download_class().needs_drs_uri:
+            # Don't emit a download URL if a DRS URI is needed for downloading a
+            # file, but none is available
+            return None
+        else:
+            return str(self.file_url_func(catalog=self.catalog,
+                                          fetch=False,
+                                          file_uuid=uuid,
+                                          version=version))
+
+    def _file_mirror_uri(self, source: SourceSpec, file: JSON) -> str | None:
+        file_cls = self.plugin.file_class
+        mirror_service = self.service.mirror_service(self.catalog)
+        return mirror_service.mirror_uri(source, file_cls, file)
 
 
 class SummaryResponseStage(ElasticsearchStage[JSON, MutableJSON],
@@ -92,8 +119,8 @@ class SummaryResponseStage(ElasticsearchStage[JSON, MutableJSON],
 class RepositoryService(ElasticsearchService):
 
     @cache
-    def repository_plugin(self, catalog: CatalogName) -> RepositoryPlugin:
-        return RepositoryPlugin.load(catalog).create(catalog)
+    def mirror_service(self, catalog: CatalogName) -> BaseMirrorService:
+        return BaseMirrorService(catalog=catalog)
 
     def search(self,
                *,
@@ -124,56 +151,15 @@ class RepositoryService(ElasticsearchService):
                                 filters=filters,
                                 pagination=pagination,
                                 aggregate=item_id is None,
-                                entity_type=entity_type)
+                                entity_type=entity_type,
+                                file_url_func=file_url_func)
 
         special_fields = self.metadata_plugin(catalog).special_fields
         for hit in response['hits']:
             entity = one(hit[entity_type])
-            source_id = one(hit['sources'])[special_fields.source_id]
-            entity[special_fields.accessible] = source_id in filters.source_ids
-
-        def inject_file_urls(node: AnyMutableJSON, *path: str) -> None:
-            if node is None:
-                pass
-            elif isinstance(node, (str, int, float, bool)):
-                pass
-            elif isinstance(node, list):
-                for child in node:
-                    inject_file_urls(child, *path)
-            elif isinstance(node, dict):
-                if path:
-                    try:
-                        next_node = node[path[0]]
-                    except KeyError:
-                        # Not all node trees will match the given path. (e.g. a
-                        # response from the 'files' index won't have a
-                        # 'matrices' in its 'hits[].projects' inner entities.
-                        pass
-                    else:
-                        inject_file_urls(next_node, *path[1:])
-                else:
-                    try:
-                        version = node['version']
-                        uuid = node['uuid']
-                        drs_uri = node['drs_uri']
-                    except KeyError:
-                        for child in node.values():
-                            inject_file_urls(child, *path)
-                    else:
-                        plugin = self.repository_plugin(catalog)
-                        if drs_uri is None and plugin.file_download_class().needs_drs_uri:
-                            node['url'] = None
-                        else:
-                            node['url'] = str(file_url_func(catalog=catalog,
-                                                            fetch=False,
-                                                            file_uuid=uuid,
-                                                            version=version))
-            else:
-                assert False
-
-        inject_file_urls(response['hits'], 'projects', 'contributedAnalyses')
-        inject_file_urls(response['hits'], 'projects', 'matrices')
-        inject_file_urls(response['hits'], 'files')
+            source_id = one(hit['sources'])[special_fields.source_id.name_in_hit]
+            accessible = source_id in filters.source_ids
+            entity[special_fields.accessible.name_in_hit] = accessible
 
         if item_id is not None:
             response = one(response['hits'], too_short=EntityNotFoundError(entity_type, item_id))
@@ -185,7 +171,8 @@ class RepositoryService(ElasticsearchService):
                 entity_type: str,
                 aggregate: bool,
                 filters: Filters,
-                pagination: Pagination
+                pagination: Pagination,
+                file_url_func: FileUrlFunc
                 ) -> MutableJSON:
         """
         This function does the whole transformation process. It takes the path
@@ -209,13 +196,14 @@ class RepositoryService(ElasticsearchService):
         plugin = self.metadata_plugin(catalog)
         field_mapping = plugin.field_mapping
 
-        for facet in filters.explicit.keys():
-            if facet != plugin.special_fields.accessible and facet not in field_mapping:
-                raise BadArgumentException(f'Unable to filter by undefined facet {facet}.')
+        for field in filters.explicit.keys():
+            accessible_field = plugin.special_fields.accessible.name
+            if field != accessible_field and field not in field_mapping:
+                raise BadArgumentException(f'Unable to filter by undefined field {field}.')
 
-        facet = pagination.sort
-        if facet not in field_mapping:
-            raise BadArgumentException(f'Unable to sort by undefined facet {facet}.')
+        field = pagination.sort
+        if field not in field_mapping:
+            raise BadArgumentException(f'Unable to sort by undefined field {field}.')
 
         chain = self.create_chain(catalog=catalog,
                                   entity_type=entity_type,
@@ -238,11 +226,10 @@ class RepositoryService(ElasticsearchService):
                                 filters=filters).wrap(chain)
 
         response_stage_cls = plugin.search_response_stage
-        if TYPE_CHECKING:  # work around https://youtrack.jetbrains.com/issue/PY-44728
-            response_stage_cls = SearchResponseStage
         chain = response_stage_cls(service=self,
                                    catalog=catalog,
-                                   entity_type=entity_type).wrap(chain)
+                                   entity_type=entity_type,
+                                   file_url_func=file_url_func).wrap(chain)
 
         request = self.create_request(catalog, entity_type)
         request = chain.prepare_request(request)
@@ -333,8 +320,10 @@ class RepositoryService(ElasticsearchService):
         :return: The inner `files` entity or None if the catalog does not
                  contain information about the specified data file
         """
+        plugin = self.metadata_plugin(catalog)
+        file_uuid_field = plugin.special_fields.file_uuid
         filters = filters.update({
-            'fileId': {'is': [file_uuid]},
+            file_uuid_field.name: {'is': [file_uuid]},
             **(
                 {'fileVersion': {'is': [file_version]}}
                 if file_version is not None else
@@ -354,7 +343,6 @@ class RepositoryService(ElasticsearchService):
         request = self.create_request(catalog, entity_type)
         request = chain.prepare_request(request)
 
-        plugin = self.metadata_plugin(catalog)
         if file_version is None:
             field_path = dotted(plugin.field_mapping['fileVersion'])
             request.sort({field_path: dict(order='desc')})
@@ -371,7 +359,7 @@ class RepositoryService(ElasticsearchService):
             assert file_version is None, len(hits)
 
         file = one(first(hits)['contents']['files'])
-        file = plugin.file_class.from_hit(file)
+        file = plugin.file_class.from_index(file)
         if file_version is not None:
             assert file_version == file.version
         return file

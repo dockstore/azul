@@ -37,7 +37,8 @@ def main(args):
     invalid_sources: list[JSON] = list()
 
     azul = AzulClient(num_workers=1)
-    sources_by_catalog = azul.matching_sources(args.catalogs, set(args.sources))
+    sources = {'*'} if args.sources is None else set(args.sources)
+    sources_by_catalog = azul.matching_sources(args.catalogs, sources)
     previous_sources: set[TDRSourceSpec] = set()
     for catalog, sources in sources_by_catalog.items():
         plugin = azul.repository_plugin(catalog)

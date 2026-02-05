@@ -13,11 +13,11 @@ from unittest.mock import (
     call,
     patch,
 )
+from uuid import (
+    uuid4,
+)
 
 import attrs
-from chalice.app import (
-    BadRequestError,
-)
 from more_itertools import (
     one,
 )
@@ -27,9 +27,23 @@ from moto import (
 from opensearchpy import (
     TransportError,
 )
+from requests import (
+    Request,
+    Response,
+    Session,
+)
 
+from app_test_case import (
+    LocalAppTestCase,
+)
 from azul import (
     config,
+)
+from azul.deployment import (
+    aws,
+)
+from azul.hmac import (
+    SignatureHelper,
 )
 from azul.indexer import (
     BundlePartition,
@@ -41,7 +55,6 @@ from azul.indexer.index_controller import (
     IndexController,
 )
 from azul.indexer.index_queue_service import (
-    IndexAction,
     IndexQueueService,
 )
 from azul.indexer.index_repository_service import (
@@ -53,6 +66,9 @@ from azul.indexer.index_service import (
 from azul.logging import (
     configure_test_logging,
     get_test_logger,
+)
+from azul.plugins import (
+    RepositoryPlugin,
 )
 from azul.plugins.repository.tdr import (
     TDRBundleFQID,
@@ -68,12 +84,14 @@ from azul.types import (
     JSON,
 )
 from azul_test_case import (
+    DCP1TestCase,
     DCP2TestCase,
 )
 from indexer.test_indexer import (
     DCP2IndexerTestCase,
 )
 from sqs_test_case import (
+    SqsTestCase,
     WorkQueueTestCase,
 )
 
@@ -88,7 +106,7 @@ def setUpModule():
 @mock_aws
 class TestIndexController(DCP2IndexerTestCase, WorkQueueTestCase):
     source = DCP2TestCase.source.with_prefix(
-        attrs.evolve(DCP2TestCase.source.spec.prefix,
+        attrs.evolve(DCP2TestCase.source.prefix,
                      partition=0)
     )
 
@@ -125,18 +143,20 @@ class TestIndexController(DCP2IndexerTestCase, WorkQueueTestCase):
                                        notification='bar',
                                        catalog=self.catalog))
         ]
-        self.assertRaises(BadRequestError, self.controller.contribute, event)
+        self.assertRaises(KeyError, self.controller.contribute, event)
 
+    @patch.object(RepositoryPlugin, 'partition_source_for_indexing')
     @patch.object(TDRPlugin, 'resolve_source')
-    def test_remote_reindex(self, resolve_source):
+    def test_remote_reindex(self, resolve_source, partition_source):
         source = self.source
-        resolve_source.return_value = source
+        resolve_source.return_value = attrs.evolve(source, prefix=None)
+        partition_source.return_value = source
         plugin = self.index_repository_service.repository_plugin(self.catalog)
         plugin._assert_source(source)
         self._create_mock_queues(config.indexer_queue_names)
-        self.queue_service.remote_reindex(self.catalog, {str(source.spec)})
+        self.queue_service.remote_reindex(self.catalog, [source.spec])
         messages = one(self._read_queue(self.queue_service.notifications_queue()))
-        expected_notification = dict(action='reindex',
+        expected_notification = dict(action='IndexPartitionAction',
                                      catalog=self.catalog,
                                      source=source.to_json(),
                                      prefix='')
@@ -153,7 +173,10 @@ class TestIndexController(DCP2IndexerTestCase, WorkQueueTestCase):
             self.controller.contribute(event)
 
         messages = one(self._read_queue(self.queue_service.notifications_queue()))
-        expected_source = dict(id=source.id, spec=str(source.spec))
+        expected_source = dict(id=source.id,
+                               spec=str(source.spec),
+                               prefix=str(source.prefix),
+                               type=source.cls_to_json())
         source = messages['bundle_fqid']['source']
         self.assertEqual(expected_source, source)
 
@@ -186,10 +209,7 @@ class TestIndexController(DCP2IndexerTestCase, WorkQueueTestCase):
 
         # Synthesize initial notifications
         messages = [
-            self.queue_service.index_bundle_message(IndexAction.add,
-                                                    self.catalog,
-                                                    fqid.to_json()
-                                                    ).body
+            self.queue_service.index_bundle_message(self.catalog, fqid.to_json()).body
             for fqid in fqids
         ]
 
@@ -309,3 +329,133 @@ class TestIndexController(DCP2IndexerTestCase, WorkQueueTestCase):
         for tally in tallies:
             insort(entities[tally['entity_type']], tally['num_contributions'])
         return entities
+
+
+class TestIndexerApp(LocalAppTestCase, DCP1TestCase, SqsTestCase):
+
+    @classmethod
+    def app_name(cls) -> str:
+        return 'indexer'
+
+    @mock_aws
+    def test_successful_notifications(self):
+        self._create_mock_notifications_queue()
+        body = {
+            'bundle_fqid': {
+                'uuid': 'bb2365b9-5a5b-436f-92e3-4fc6d86a9efd',
+                'version': '2018-03-28T13:55:26.044Z'
+            }
+        }
+        for delete in False, True:
+            with self.subTest(delete=delete):
+                response = self._test(body, delete=delete, valid_hmac_key=True)
+                self.assertEqual(202, response.status_code)
+                self.assertEqual('', response.text)
+
+    @mock_aws
+    def test_invalid_notifications(self):
+        bodies = {
+            'Missing notification entry: bundle_fqid': {},
+            'Missing notification entry: bundle_fqid.uuid': {
+                'bundle_fqid': {
+                    'version': '2018-03-28T13:55:26.044Z'
+                }
+            },
+            "Invalid type: uuid: <class 'NoneType'> (should be str)": {
+                'bundle_fqid': {
+                    'uuid': None,
+                    'version': '2018-03-28T13:55:26.044Z'
+                }
+            },
+            'Missing notification entry: bundle_fqid.version': {
+                'bundle_fqid': {
+                    'uuid': 'bb2365b9-5a5b-436f-92e3-4fc6d86a9efd'
+                }
+            },
+            "Invalid type: version: <class 'NoneType'> (should be str)": {
+                'bundle_fqid': {
+                    'uuid': 'bb2365b9-5a5b-436f-92e3-4fc6d86a9efd',
+                    'version': None
+                }
+            },
+            'Invalid syntax: }9fccaed8-cdbc-445e-a3a0-6edc11f4b73f{ (should be a UUID)': {
+                'bundle_fqid': {
+                    'uuid': '}9fccaed8-cdbc-445e-a3a0-6edc11f4b73f{',
+                    'version': '2019-12-31T00:00:00.000Z'
+                }
+            },
+            'Invalid syntax: bundle_version can not be empty': {
+                'bundle_fqid': {
+                    'uuid': str(uuid4()),
+                    'version': ''
+                }
+            }
+        }
+        for delete in False, True:
+            for expected_message, body in bodies.items():
+                with self.subTest(delete=delete, expected_message=expected_message):
+                    response = self._test(body, delete=delete, valid_hmac_key=True)
+                    expected_response = {
+                        'Code': 'BadRequestError',
+                        'Message': expected_message
+                    }
+                    self.assertEqual(400, response.status_code)
+                    self.assertEqual(expected_response, response.json())
+
+    @mock_aws
+    def test_unauthorized_notification(self):
+        self._create_mock_notifications_queue()
+        body = {
+            'bundle_fqid': {
+                'uuid': str(uuid4()),
+                'version': 'SomeBundleVersion'
+            }
+        }
+        for delete in False, True:
+            with self.subTest(delete=delete):
+                response = self._test(body, delete=delete, valid_hmac_key=False)
+                self.assertEqual(401, response.status_code)
+
+    def test_invalid_catalog(self):
+        for delete in False, True:
+            with self.subTest(delete=delete):
+                with patch.object(self, 'catalog', '-'):
+                    response = self._test({}, delete=delete, valid_hmac_key=True)
+                    expected_response = {
+                        'Code': 'BadRequestError',
+                        'Message': "('Catalog name is invalid', '-')"
+                    }
+                    self.assertEqual(400, response.status_code)
+                    self.assertEqual(expected_response, response.json())
+
+    def test_invalid_auth(self):
+        for delete in False, True:
+            with self.subTest(delete=delete):
+                request = self._prepare_request({}, delete=delete)
+                request.headers['Authorization'] = 'Bearer foo'
+                with Session() as session:
+                    response = session.send(request.prepare())
+                self.assertEqual(401, response.status_code)
+                expected_response = {
+                    'Code': 'UnauthorizedError',
+                    'Message': 'Expecting HMAC authentication'
+                }
+                self.assertEqual(expected_response, response.json())
+
+    def _test(self, body: JSON, *, delete: bool, valid_hmac_key: bool) -> Response:
+        request = self._prepare_request(body, delete)
+        with patch.object(aws, 'get_hmac_key_and_id') as get_hmac_key_and_id:
+            get_hmac_key_and_id.return_value = b'good key', 'the id'
+            hmac_support = SignatureHelper()
+            if valid_hmac_key:
+                return hmac_support.sign_and_send(request)
+            else:
+                with patch.object(hmac_support, 'resolve_private_key') as p:
+                    p.return_value = b'bad key'
+                    return hmac_support.sign_and_send(request)
+
+    def _prepare_request(self, body: JSON, delete: bool) -> Request:
+        url = self.base_url.set(path=(self.catalog, 'bundles'))
+        method = 'DELETE' if delete else 'POST'
+        request = Request(method=method, url=str(url), json=body)
+        return request

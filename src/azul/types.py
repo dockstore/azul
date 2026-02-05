@@ -14,14 +14,18 @@ from typing import (
     Optional,
     Protocol,
     TypeAliasType,
+    TypeGuard,
     TypeVar,
+    TypedDict,
     Union,
+    cast,
     get_args,
     get_origin,
 )
 
 from azul.collections import (
     OrderedSet,
+    none_safe_key,
 )
 
 
@@ -73,12 +77,42 @@ def json_item_mappings(vs: AnyJSON) -> Iterable[tuple[str, JSON]]:
         yield k, json_mapping(v)
 
 
+def json_item_sequences(vs: AnyJSON) -> Iterable[tuple[str, JSONArray]]:
+    for k, v in json_mapping(vs).items():
+        yield k, json_sequence(v)
+
+
 def json_element_mappings(vs: AnyJSON) -> Iterable[JSON]:
     return map(json_mapping, json_sequence(vs))
 
 
+def json_sequence_of_mappings(vs: AnyJSON) -> JSONs:
+    vs = json_sequence(vs)
+    assert json_elements_are_mappings(vs)
+    return vs
+
+
+def json_elements_are_mappings(vs: JSONArray) -> TypeGuard[JSONs]:
+    for v in vs:
+        json_mapping(v)
+    return True
+
+
+def json_elements_are_optional_strings(vs: JSONArray
+                                       ) -> TypeGuard[Sequence[str | None]]:
+    for v in vs:
+        optional(json_str, v)
+    return True
+
+
 def json_element_strings(vs: AnyJSON) -> Iterable[str]:
     return map(json_str, json_sequence(vs))
+
+
+def json_sequence_of_optional_strings(vs: AnyJSON) -> Sequence[str | None]:
+    vs = json_sequence(vs)
+    assert json_elements_are_optional_strings(vs)
+    return vs
 
 
 def json_dict(v: AnyMutableJSON) -> MutableJSON:
@@ -100,29 +134,89 @@ def json_element_dicts(vs: AnyMutableJSON) -> Iterable[MutableJSON]:
     return map(json_dict, json_list(vs))
 
 
+def json_list_of_dicts(vs: AnyMutableJSON) -> MutableJSONs:
+    vs = json_list(vs)
+    assert json_elements_are_dicts(vs)
+    return vs
+
+
+def json_elements_are_dicts(vs: MutableJSONArray) -> TypeGuard[MutableJSONs]:
+    for v in vs:
+        json_dict(v)
+    return True
+
+
+def json_dict_of_dicts(vs: MutableJSON) -> dict[str, MutableJSON]:
+    assert json_items_are_dicts(vs)
+    return vs
+
+
+def json_items_are_dicts(vs: MutableJSON) -> TypeGuard[dict[str, MutableJSON]]:
+    for v in vs.values():
+        json_dict(v)
+    return True
+
+
+def json_sorted(vs: Iterable[PrimitiveJSON]) -> MutableJSONArray:
+    return sorted(vs, key=none_safe_key(none_last=True))
+
+
 def json_str(v: AnyMutableJSON | AnyJSON) -> str:
+    return any_str(v)
+
+
+def any_str(v: Any) -> str:
     assert isinstance(v, str), type(v)
     return v
 
 
 def json_int(v: AnyMutableJSON | AnyJSON) -> int:
+    return any_int(v)
+
+
+def any_int(v: Any) -> int:
     assert isinstance(v, int), type(v)
     return v
 
 
 def json_float(v: AnyMutableJSON | AnyJSON) -> float:
+    return any_float(v)
+
+
+def any_float(v: Any) -> float:
     assert isinstance(v, float), type(v)
     return v
 
 
 def json_bool(v: AnyMutableJSON | AnyJSON) -> bool:
+    return any_bool(v)
+
+
+def any_bool(v: Any) -> bool:
     assert isinstance(v, bool), type(v)
     return v
 
 
 def json_none(v: AnyMutableJSON | AnyJSON) -> None:
+    return any_none(v)
+
+
+def any_none(v: Any) -> None:
     assert v is None, type(v)
     return v
+
+
+class JSONTypedDict(TypedDict):
+    """
+    Use this as a base class for TypedDict's that are also JSON.
+    """
+    pass
+
+
+def json_untyped_dict(v: JSONTypedDict) -> MutableJSON:
+    # FIXME: json_untyped_dict is unsafe
+    #        https://github.com/DataBiosphere/azul/issues/7381
+    return cast(MutableJSON, v)
 
 
 class LambdaContext:

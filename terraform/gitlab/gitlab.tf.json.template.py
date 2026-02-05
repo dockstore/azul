@@ -27,7 +27,6 @@ from azul.docker import (
 )
 from azul.strings import (
     departition,
-    double_quote as dq,
     join_lines as jl,
     join_words as jw,
     single_quote as sq,
@@ -245,10 +244,10 @@ runner_image, _ = resolve_docker_image_for_pull('gitlab_runner')
 # For instructions on finding the latest CIS-hardened AMI, see "Updating the AMI
 # for GitLab instances" section in OPERATOR.rst.
 #
-# CIS Amazon Linux 2 Kernel 5.10 Benchmark - Level 1 - v07 -abcfcbaf-134e-4639-a7b4-fd285b9fcf0a
+# CIS Amazon Linux 2023 Benchmark - Level 1 - v01 -prod-fvm47vekg24oc
 #
 ami_id = {
-    'us-east-1': 'ami-05697d3e8a6a5fa8d'
+    'us-east-1': 'ami-0167fe970417faf1d'
 }
 
 gitlab_mount = '/mnt/gitlab'
@@ -1615,7 +1614,8 @@ emit_tf({} if config.terraform_component != 'gitlab' else {
                         'docker',
                         'amazon-cloudwatch-agent',
                         'amazon-ecr-credential-helper',
-                        'dracut-fips',
+                        'crypto-policies',
+                        'crypto-policies-scripts',
                         (
                             'https://s3.amazonaws.com'
                             '/ec2-downloads-windows/SSMAgent/latest/linux_amd64'
@@ -1623,7 +1623,14 @@ emit_tf({} if config.terraform_component != 'gitlab' else {
                         )
                     ],
                     'ssh_authorized_keys': [] if config.deployment.is_stable else operator_keys,
+                    'ssh_genkeytypes': ['rsa', 'dsa', 'ecdsa'],
                     'bootcmd': [
+                        '; '.join([
+                            'until [ -b /dev/nvme1n1 ]',
+                            'do echo "/dev/nvme1n1 does not exist, sleeping 1s"',
+                            'sleep 1',
+                            'done'
+                        ]),
                         [
                             'cloud-init-per',
                             'once',
@@ -1768,31 +1775,6 @@ emit_tf({} if config.terraform_component != 'gitlab' else {
                                 'ExecStartPre=-/usr/bin/docker stop gitlab',
                                 'ExecStartPre=-/usr/bin/docker rm gitlab',
                                 'ExecStartPre=/usr/bin/docker pull ' + str(gitlab_image),
-                                # The hardened AMI contains some code that
-                                # creates a default nftables ruleset at boot
-                                # time, in order to satisfy some CIS control, I
-                                # believe. Also at boot time, Docker creates a
-                                # competing iptables ruleset using the
-                                # `iptables` command, which is symlinked to the
-                                # `iptables-legacy` alternative. The result was
-                                # that the GitLab web app provided by this
-                                # container was not reachable from outside the
-                                # host. I tried switching to the `iptables-nft`
-                                # alternative and that prevented the creation of
-                                # a competing iptables ruleset, with only the
-                                # nftables ruleset present, but the webapp
-                                # remained unreachable. I assume this is because
-                                # the nftables ruleset had both the rules from
-                                # the hardened AMI code and those created by
-                                # Docker, still contradicting each other. For
-                                # the time being, we will simply delete the
-                                # default nftables ruleset. This is acceptable
-                                # because even without any firewall rules, the
-                                # the EC2 instance has no public IP and is
-                                # protected by EC2 security groups, which serve
-                                # the same purpose as firewall rules in the
-                                # guest OS.
-                                'ExecStartPre=/sbin/nft flush ruleset',
                                 # FIXME: Re-enable FIPS mode in GitLab container
                                 #        https://github.com/DataBiosphere/azul/issues/7218
                                 f'ExecStartPre=/bin/mkdir -p {gitlab_mount}/etc',
@@ -1884,10 +1866,10 @@ emit_tf({} if config.terraform_component != 'gitlab' else {
                                     str(clamav_image),
                                     '/bin/sh',
                                     '-c',
-                                    dq(
+                                    sq(
                                         'freshclam',
                                         '&& echo freshclam succeeded',
-                                        '|| (echo freshclam failed; false)',
+                                        '|| (echo freshclam "failed"; false)',
                                         '&& clamscan',
                                         '--recursive',
                                         '--infected',  # Only print infected files
@@ -1900,7 +1882,7 @@ emit_tf({} if config.terraform_component != 'gitlab' else {
                                         '--exclude-dir=^/scan/dev',
                                         '/scan',
                                         '&& echo clamscan succeeded',
-                                        '|| (echo clamscan failed; false)'
+                                        '|| (echo clamscan "failed"; false)'
                                     )
                                 ),
                                 '[Install]',
@@ -2194,8 +2176,7 @@ emit_tf({} if config.terraform_component != 'gitlab' else {
                     ],
                     'runcmd': [
                         ['systemctl', 'daemon-reload'],
-                        ['dracut', '-f'],
-                        ['/sbin/grubby', '--update-kernel=ALL', '--args="fips=1"'],
+                        ['fips-mode-setup', '--enable'],
                         [
                             'sed',
                             '--in-place',
@@ -2225,12 +2206,23 @@ emit_tf({} if config.terraform_component != 'gitlab' else {
                             '-c', 'file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json',
                             '-s'  # restart agent afterwards
                         ],
-                        ['yum', '-y', 'update'],
                         ['systemctl', 'enable', '--now', 'amazon-ssm-agent.service']
                     ],
-                    # Reboot to realize the added kernel parameter the changed sshd configuration
+                    'package_update': True,
+                    'package_upgrade': True,
+                    'package_reboot_if_required': True,
                     'power_state': {
-                        'mode': 'reboot'
+                        'mode': 'reboot',
+                        # A bug in Amazon's AMI causes a 'condition' to be added
+                        # to the effective cloud-init config. That condition
+                        # depends on the creation of a file that is never
+                        # created (/run/cloud-init-selinux-reboot), except when
+                        # Amazon's cc_selinux.py has to modify the SELinux
+                        # configuration, which by default, it does not. Luckily,
+                        # our cloud-init config takes precedence, so we can just
+                        # override the condition here.
+                        'condition': True,
+                        'message': 'Rebooting to finalize FIPS-mode setup and possibly other things',
                     },
                 }, indent=2),
                 'tags': {
@@ -2242,12 +2234,8 @@ emit_tf({} if config.terraform_component != 'gitlab' else {
             **{
                 'gitlab_' + resource: {
                     'alarm_name': config.qualified_resource_name('gitlab_' + resource),
-                    'comparison_operator': 'GreaterThanOrEqualToThreshold',
-                    'datapoints_to_alarm': periods,
-                    'evaluation_periods': periods,
-                    'period': 60 * 10,
-                    'metric_name': metric,
                     'namespace': 'CWAgent',
+                    'metric_name': metric,
                     'dimensions': dimensions | {
                         # Instead of using 'InstanceId' here, we use a custom
                         # dimension that has been appended to each metric. This
@@ -2258,12 +2246,16 @@ emit_tf({} if config.terraform_component != 'gitlab' else {
                         'InstanceName': 'azul-gitlab'
                     },
                     'statistic': stat,
+                    'comparison_operator': 'GreaterThanOrEqualToThreshold',
                     'threshold': threshold,
-                    'treat_missing_data': 'missing',
+                    'evaluation_periods': periods,
+                    'period': 60 * 10,
+                    'datapoints_to_alarm': periods,
                     **{
                         state + '_actions': ['${data.aws_sns_topic.monitoring.arn}']
                         for state in ('insufficient_data', 'alarm', 'ok')
                     },
+                    'treat_missing_data': 'missing',
                 } for resource, metric, periods, stat, threshold, dimensions in
                 [
                     # FIXME: Add `mem_used_percent` alarm

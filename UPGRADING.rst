@@ -20,6 +20,143 @@ reverted. This is all fairly informal and loosely defined. Hopefully we won't
 have too many entries in this file.
 
 
+#6675 Docker build with Bookworm base image fails on GL
+=======================================================
+
+These changes make the ``fips_enabled`` file obsolete, which was previously not
+commited due to its entry in the ``.gitignore`` file. Remove it from your clones
+of ``azul``.
+
+
+#7128 Add support for HCA atlas (partial)
+=========================================
+
+In your personal HCA deployments, add the following snapshots to the ``dcp3``
+catalog:
+
+- ``8c4e43fb…``
+- ``8f1f653d…``
+- ``aca93e28…``
+- ``c0518445…``
+- ``c4e11369…``
+- ``edc54c5d…``
+
+As always, use the sandbox deployment's ``environment.py`` as a model when
+upgrading personal deployments.
+
+
+#7617 Index one snapshot from upcoming lm10 release in `dev`
+============================================================
+
+In your personal HCA deployments:
+
+- Remove the ``lungmap`` catalog
+- Add the snapshot for project ``fdadee7e…`` to the ``lm2`` catalog
+
+As always, use the sandbox deployment's ``environment.py`` as a model when
+upgrading personal deployments.
+
+
+#7214 Enable mirroring in anvildev and anvilbox
+===============================================
+
+In your AnVIL personal deployments' ``environment.py`` files:
+
+1. Set ``AZUL_ENABLE_MIRRORING`` to ``'1'``
+2. Set the ``anvil`` catalog's ``mirror_limit`` property to ``int(1.5 * 1024 ** 3)``
+3. Add the ``no_mirror`` flag to source ``1000G_2019_Dev_20230609_ANV5_202306121732``
+
+As always, use the sandbox deployment's ``environment.py`` as a model when
+upgrading personal deployments.
+
+
+#7543 No mirror-able sources in anvildev/anvilbox
+=================================================
+
+In your AnVIL personal deployments' ``environment.py`` files, update the list of
+sources for the ``anvil`` catalog using the anvilbox deployment's
+``environment.py`` as a model. Redeploy and reindex your deployments after
+updating their configuration.
+
+
+#7571 Add new snapshot to dcp3 on HCA dev
+=========================================
+
+Operator
+--------
+
+Perform a targeted reindex of snapshot
+``datarepo-dev-b46086a9.hca_dev_51f02950ee254f4b8d0759aa99bb3498__20210827_20230215``
+is ``sandbox`` and ``dev``.
+
+Everyone
+--------
+
+In your HCA personal deployments' ``environment.py`` files, add the new snapshot
+to the sources for catalog ``dcp3``, bringing the total number of sources to
+105. Then perform a targeted reindex of that snapshot.
+
+
+#7066 Configure mirroring per catalog and source
+================================================
+
+In your personal deployments' ``environment.py`` file(s):
+
+1. Rename the loop variable ``internal`` to ``is_it``.
+
+2. Set the value of the ``pop`` flag to ``1``.
+
+3. Rename to type alias ``ProjectName`` to ``DatasetName``.
+
+4. In AnVIL deployments, rename the local variable ``project`` in the functions
+   ``mksrc`` and ``mkdelta`` to ``google_project`` and ``dataset`` respectively.
+
+5. Rename the following functions: ``bqsrc`` (AnVIL deployments only),
+   ``mksrc``, ``mkdelta``, ``mklist``, and ``mkdict``.
+
+6. Update the type annotations for those functions.
+
+7. Update the definitions of ``source`` and ``condense``.
+
+8. Insert the ``mirror_limit`` property in the definition of
+   ``AZUL_CATALOGS``.
+
+As always, use the sandbox deployment's ``environment.py`` as a model when
+upgrading personal deployments.
+
+
+#7468 Update Swagger to v5.29.4
+===============================
+
+Everyone
+--------
+
+In the Google Cloud Console under *APIs & Services* -> *Credentials*, locate the
+OAuth 2.0 clients belonging to your personal deployments and update each
+client's *Authorized redirect URIs* setting by replacing ``/oauth2_redirect``
+with ``/swagger/oauth2-redirect.html``. For a more details see section 3.2.2 of
+our README.
+
+Operator
+--------
+
+Follow the steps above for all shared deployments.
+
+
+#7305 Separate prefix from source specs
+=======================================
+
+In your personal deployments' ``environment.py`` files:
+
+1. Update the type annotations for ``bqsrc``, ``mksrc``, ``mkdelta``, ``mklist``,
+   ``mkdict``, and ``env``.
+
+2. Remove the ``prefix`` parameter and its uses from ``bqsrc`` and ``mksrc``.
+
+As always, use the sandbox deployment's ``environment.py`` as a model when
+upgrading personal deployments.
+
+
 #6779 Switch ES domain to OpenSearch 2.19
 =========================================
 

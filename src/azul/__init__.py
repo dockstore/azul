@@ -24,11 +24,14 @@ import shlex
 from typing import (
     Any,
     BinaryIO,
+    Callable,
     ClassVar,
+    Hashable,
     IO,
     Literal,
     NotRequired,
     Self,
+    TYPE_CHECKING,
     TextIO,
     TypedDict,
     final,
@@ -63,9 +66,10 @@ from azul.types import (
     JSON,
     MutableJSON,
     json_bool,
+    json_int,
     json_mapping,
-    json_sequence,
     json_str,
+    optional,
 )
 from azul.vendored.frozendict import (
     frozendict,
@@ -81,7 +85,19 @@ cached_property = azul.caching.CachedProperty
 
 lru_cache = functools.lru_cache
 
-cache = functools.cache
+if TYPE_CHECKING:
+    # Work around https://github.com/python/typeshed/issues/15139
+    @final
+    class CacheWrapper[_T]:
+
+        def __call__(self, *args: Hashable, **kwargs: Hashable) -> _T:
+            ...
+
+
+    def cache[_T](f: Callable[..., _T], /) -> CacheWrapper[_T]:  # noqa: E303
+        ...
+else:
+    cache = functools.cache
 
 
 def cache_per_thread(f, /):
@@ -91,7 +107,7 @@ def cache_per_thread(f, /):
 #: A type alias for annotating the return value of methods that return a
 #: ``furl`` instance that can be modified without side effects in the object
 #: whose method returned it.
-#
+#:
 mutable_furl = furl
 
 
@@ -168,7 +184,7 @@ class Config:
     See `environment` for documentation of these settings.
     """
 
-    @property
+    @cached_property
     def environ(self):
         return ChainMap(os.environ, self._outsourced_environ)
 
@@ -378,7 +394,7 @@ class Config:
         else:
             return None
 
-    def sources(self, catalog: CatalogName) -> Set[str]:
+    def sources(self, catalog: CatalogName) -> Mapping[str, JSON]:
         return self.catalogs[catalog].sources
 
     @property
@@ -743,7 +759,7 @@ class Config:
         else:
             return self.service_endpoint
 
-    def lambda_names(self) -> list[str]:
+    def app_names(self) -> list[str]:
         return ['indexer', 'service']
 
     @property
@@ -760,13 +776,15 @@ class Config:
     def service_function_name(self, handler_name: str | None = None):
         return self._function_name('service', handler_name)
 
-    def _function_name(self, lambda_name: str, handler_name: str | None):
+    def _function_name(self, app_name: str, handler_name: str | None):
         if handler_name is None:
-            return self.qualified_resource_name(lambda_name)
+            return self.qualified_resource_name(app_name)
         else:
             # FIXME: Eliminate hardcoded separator
             #        https://github.com/databiosphere/azul/issues/2964
-            return self.qualified_resource_name(lambda_name, suffix='-' + handler_name)
+            return self.qualified_resource_name(app_name, suffix='-' + handler_name)
+
+    active_function_alias_name = 'active'
 
     qualifier_re = re.compile(r'[a-z][a-z0-9]{1,16}')
 
@@ -873,7 +891,7 @@ class Config:
     class Catalog:
         """
         >>> plugins = dict(metadata=dict(name='hca'), repository=dict(name='tdr_hca'))
-        >>> kwargs = dict(atlas='hca', plugins=plugins, sources=[])
+        >>> kwargs = dict(atlas='hca', plugins=plugins, sources={})
         >>> c = Config.Catalog.from_json
 
         >>> c(name='dcp', spec=dict(internal=False, **kwargs))
@@ -881,9 +899,10 @@ class Config:
         Config.Catalog(name='dcp',
                        atlas='hca',
                        internal=False,
+                       mirror_limit=None,
                        plugins={'metadata': Config.Catalog.Plugin(name='hca'),
                                 'repository': Config.Catalog.Plugin(name='tdr_hca')},
-                       sources=set())
+                       sources={})
 
         >>> c(name='dcp-it', spec=dict(internal=True, **kwargs)).is_integration_test_catalog
         True
@@ -916,8 +935,9 @@ class Config:
         name: str
         atlas: str
         internal: bool
+        mirror_limit: int | None
         plugins: Mapping[str, Plugin]
-        sources: Set[str]
+        sources: Mapping[str, JSON]
 
         _it_catalog_suffix: ClassVar[str] = '-it'
 
@@ -979,11 +999,16 @@ class Config:
                 plugin_type: cls.Plugin.from_json(json_mapping(plugin_spec))
                 for plugin_type, plugin_spec in json_mapping(spec['plugins']).items()
             }
+            sources = {
+                source_spec: json_mapping(source_config)
+                for source_spec, source_config in json_mapping(spec['sources']).items()
+            }
             return cls(name=name,
                        atlas=json_str(spec['atlas']),
                        internal=json_bool(spec['internal']),
+                       mirror_limit=optional(json_int, spec.get('mirror_limit')),
                        plugins=plugins,
-                       sources=set(map(json_str, json_sequence(spec['sources']))))
+                       sources=sources)
 
         @classmethod
         def validate_name(cls, catalog):
@@ -1264,10 +1289,20 @@ class Config:
 
     @property
     def _git_status_env(self) -> dict[str, str]:
-        return {'azul_git_' + k: str(v) for k, v in self.git_status.items()}
+        return {'azul_git_' + k: str(v) for k, v in self._git_status.items()}
 
     @property
     def git_status(self) -> GitStatus:
+        try:
+            return {
+                'commit': self.environ['azul_git_commit'],
+                'dirty': str_to_bool(self.environ['azul_git_dirty'])
+            }
+        except KeyError:
+            return self._git_status
+
+    @property
+    def _git_status(self) -> GitStatus:
         import git
         repo = git.Repo(self.project_root)
         return {
@@ -1276,31 +1311,24 @@ class Config:
         }
 
     @property
-    def lambda_git_status(self) -> GitStatus:
+    def _aws_account_name_env(self) -> dict[str, str]:
         return {
-            'commit': self.environ['azul_git_commit'],
-            'dirty': str_to_bool(self.environ['azul_git_dirty'])
-        }
-
-    @property
-    def _aws_account_name(self) -> dict[str, str]:
-        return {
-            'azul_aws_account_name': self.aws_account_name
+            'azul_aws_account_name': self._aws_account_name
         }
 
     @property
     def aws_account_name(self) -> str:
-        """
-        When in invoked in a Lambda context, this method will retrieve the AWS
-        account name from the Lambda environment, avoiding a round trip to IAM.
-        """
-        if self.is_in_lambda:
+        try:
             return self.environ['azul_aws_account_name']
-        else:
-            from azul.deployment import (
-                aws,
-            )
-            return aws.account_name
+        except KeyError:
+            return self._aws_account_name
+
+    @property
+    def _aws_account_name(self):
+        from azul.deployment import (
+            aws,
+        )
+        return aws.account_name
 
     @property
     def is_in_lambda(self) -> bool:
@@ -1309,14 +1337,14 @@ class Config:
     @property
     def lambda_env(self) -> dict[str, str]:
         """
-        A dictionary with the environment variables to be used by a deployed AWS
-        Lambda function or `chalice local`. Only includes those variables that
-        don't need to be outsourced.
+        A dictionary containing the environment variables to be used by a
+        deployed AWS Lambda function, `chalice local` or tests inheriting from
+        LocalAppTestCase. Only includes variables that are not outsourced.
         """
         return (
             self._lambda_env(outsource=False)
             | self._git_status_env
-            | self._aws_account_name
+            | self._aws_account_name_env
             | self._deployment_env
         )
 
@@ -1330,7 +1358,7 @@ class Config:
 
     #: A set of names of other environment variables to export to the Lambda
     #: function environment, in addition to those starting in `AZUL_`
-
+    #:
     lambda_env_variables = frozenset([
         'GOOGLE_PROJECT'
     ])
@@ -1656,11 +1684,15 @@ class Config:
         return self.qualified_resource_name('sources_cache_by_auth')
 
     @property
-    def current_sources(self) -> list[str]:
-        sources = self.environ.get('azul_current_sources', '*')
-        sources = shlex.split(sources)
-        assert bool(sources), R('Sources cannot be empty', sources)
-        return sources
+    def current_sources(self) -> list[str] | None:
+        try:
+            sources = self.environ['azul_current_sources']
+        except KeyError:
+            return None
+        else:
+            sources = shlex.split(sources)
+            assert bool(sources), R('Sources cannot be empty', sources)
+            return sources
 
     terms_aggregation_size = 99999
 
@@ -1770,12 +1802,15 @@ class Config:
 
     blocked_user_agents_custom_regex_term = 'blocked_user_agents_custom'
 
+    aws_ip_reputation_list_term = 'aws_amazon_ip_reputation_list'
+
     #: The WAF rules whose matching requests will neither be logged in the WAF
     #: log group, nor trip the corresponding Cloudwatch alarm
     #:
     waf_rules_not_logged = [
         blocked_v4_ips_term,
-        blocked_user_agents_regex_term
+        blocked_user_agents_regex_term,
+        aws_ip_reputation_list_term
     ]
 
     waf_rate_rule_name = 'rate_limit'
@@ -1805,12 +1840,14 @@ class Config:
                 'Invalid period', self)
 
     #: The rate limit per IP before WAF starts rejecting requests
+    #:
     waf_rate_limit = RateLimit(name='rate_limit',
                                value=1000,
                                period=5 * 60,
                                retry_after=30)
 
     #: The rate limit per IP before a CloudWatch alarm is raised
+    #:
     waf_rate_limit_alarm = evolve(waf_rate_limit,
                                   name='rate_limit_alarm',
                                   value=waf_rate_limit.value * 2)
@@ -1822,21 +1859,20 @@ class Config:
                                          period=10 * 60,
                                          retry_after=30)
 
-    #: The rate limit for file download requests
+    #: The rate limit for file download requests.
     #:
-    #: We aim for a global limit of 60 file downloads per 10 minutes. Based on
-    #: an observed average of 2.9 distinct IPs concurrently downloading files
-    #: in any 10-minute window, the maximum per-IP request rate we can allow is
-    #: 20/10min, or 10/5min.
+    #: Now that most files are mirrored, we can serve them at the general rate.
     #:
-    waf_rate_limit_files = RateLimit(name='rate_limit_files',
-                                     value=10,
-                                     period=5 * 60,
-                                     retry_after=30)
+    waf_rate_limit_files = evolve(waf_rate_limit,
+                                  name='rate_limit_files')
 
     @property
     def waf_bot_control(self) -> bool:
         return self._boolean(self.environ['azul_waf_bot_control'])
+
+    @property
+    def waf_blocked_alarm_threshold(self) -> int:
+        return int(self.environ['azul_waf_blocked_alarm_threshold'])
 
     @property
     def vpc_cidr(self) -> str:
@@ -1962,6 +1998,10 @@ class R:
                 return f'{class_name}({message!r})'
             case args:
                 return class_name + repr(args)
+
+    @final
+    def __eq__(self, other: object):
+        return isinstance(other, R) and self.args == other.args
 
 
 @deprecated("Use 'assert False, R(…)' instead", category=None)

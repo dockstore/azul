@@ -1,4 +1,4 @@
-https://github.com/noahmorrison/chevron/LICENSE
+https://github.com/noahmorrison/chevron/blob/HEAD/LICENSE
 
 The MIT License (MIT)
 

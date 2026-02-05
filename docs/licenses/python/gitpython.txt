@@ -1,4 +1,4 @@
-https://github.com/gitpython-developers/GitPython/LICENSE
+https://github.com/gitpython-developers/GitPython/blob/HEAD/LICENSE
 
 Copyright (C) 2008, 2009 Michael Trier and contributors
 All rights reserved.

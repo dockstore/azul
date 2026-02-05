@@ -28,6 +28,10 @@ check_python: check_venv
   		echo -e "\nPATH lookup yields a 'pip' executable from outside the virtualenv\n"; \
 		false; \
 	fi
+	@if ! python -c 'pass'; then \
+		echo -e "\nPython failed. This is most likely an issue with envhook.py aka sitecustomize.\n"; \
+		false; \
+	fi
 	@if ! python -c "import sys, os; \
 		             p = lambda v: tuple(map(int, v.split('.'))); \
 		             v = os.environ['azul_python_version']; \
@@ -49,7 +53,7 @@ check_python: check_venv
 	@if ! python -c "import sys; \
                      from chalice import chalice_version as v; \
 		             p = lambda v: tuple(map(int, v.split('.'))); \
-		             sys.exit(0 if p(v) == p('1.31.3') else 1)"; then \
+		             sys.exit(0 if p(v) == p('1.32.0') else 1)"; then \
 		echo -e "\nLooks like chalice is out of date. Please run 'make requirements'\n"; \
 		false; \
 	fi

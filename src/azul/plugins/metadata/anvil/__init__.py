@@ -31,14 +31,18 @@ from azul.indexer.document import (
     DocumentType,
     EntityType,
     FieldPath,
+    FieldPathElement,
     IndexName,
 )
 from azul.plugins import (
     DocumentSlice,
+    FieldName,
     File,
+    InverseFieldMapping,
     ManifestConfig,
     MetadataPlugin,
     Sorting,
+    SpecialField,
     SpecialFields,
 )
 from azul.plugins.metadata.anvil.bundle import (
@@ -75,6 +79,14 @@ from azul.types import (
     JSON,
     MutableJSON,
     MutableJSONs,
+    json_bool,
+    json_element_mappings,
+    json_element_strings,
+    json_int,
+    json_list,
+    json_mapping,
+    json_str,
+    optional,
 )
 
 
@@ -85,7 +97,7 @@ class Plugin(MetadataPlugin[AnvilBundle]):
         return dict(
             activities=Sorting(field_name='activities.activity_id'),
             biosamples=Sorting(field_name='biosamples.biosample_id'),
-            bundles=Sorting(field_name=self.special_fields.bundle_uuid),
+            bundles=Sorting(field_name=self.special_fields.bundle_uuid.name),
             datasets=Sorting(field_name='datasets.dataset_id'),
             donors=Sorting(field_name='donors.donor_id'),
             files=Sorting(field_name='files.file_id'),
@@ -133,7 +145,7 @@ class Plugin(MetadataPlugin[AnvilBundle]):
                     }
                 }
 
-            mapping['dynamic_templates'].extend([
+            json_list(mapping['dynamic_templates']).extend([
                 range_mapping('biosample_age_range', 'contents.biosamples.donor_age_at_collection'),
                 range_mapping('diagnosis_age_range', 'contents.diagnoses.diagnosis_age'),
                 range_mapping('diagnosis_onset_age_range', 'contents.diagnoses.diagnosis_onset_age')
@@ -141,7 +153,7 @@ class Plugin(MetadataPlugin[AnvilBundle]):
         return mapping
 
     @property
-    def _field_mapping(self) -> MetadataPlugin._FieldMapping:
+    def _field_mapping(self) -> InverseFieldMapping:
         common_fields = [
             'document_id',
             'source_datarepo_row_ids'
@@ -151,14 +163,14 @@ class Plugin(MetadataPlugin[AnvilBundle]):
             'bundles': {
                 # These field paths have a brittle coupling that must be
                 # maintained to the field lookups in `self.manifest_config`.
-                'uuid': self.special_fields.bundle_uuid,
-                'version': self.special_fields.bundle_version
+                'uuid': self.special_fields.bundle_uuid.name,
+                'version': self.special_fields.bundle_version.name
             },
             'sources': {
                 # These field paths have a brittle coupling that must be
                 # maintained to the field lookups in `self.manifest_config`.
-                'id': self.special_fields.source_id,
-                'spec': self.special_fields.source_spec
+                'id': self.special_fields.source_id.name,
+                'spec': self.special_fields.source_spec.name
             },
             'contents': {
                 'datasets': {
@@ -240,8 +252,6 @@ class Plugin(MetadataPlugin[AnvilBundle]):
                             'file_name',
                             'is_supplementary',
                             # Not in schema
-                            'crc32',
-                            'sha256',
                             'drs_uri',
                         ]
                     },
@@ -252,19 +262,19 @@ class Plugin(MetadataPlugin[AnvilBundle]):
                     **{
                         # Not in schema
                         'version': 'fileVersion',
-                        'uuid': 'fileId',
                     }
                 }
             }
         }
 
-    @property
-    def special_fields(self) -> SpecialFields:
-        return SpecialFields(source_id='source_id',
-                             source_spec='source_spec',
-                             bundle_uuid='bundle_uuid',
-                             bundle_version='bundle_version',
-                             root_entity_id='datasets.dataset_id')
+    special_fields = SpecialFields(
+        source_id=SpecialField.symmetric('source_id'),
+        source_spec=SpecialField.symmetric('source_spec'),
+        source_prefix=SpecialField.symmetric('source_prefix'),
+        bundle_uuid=SpecialField.symmetric('bundle_uuid'),
+        bundle_version=SpecialField.symmetric('bundle_version'),
+        file_uuid=SpecialField(name='files.document_id', name_in_hit='document_id')
+    )
 
     @property
     def root_entity_type(self) -> str:
@@ -298,31 +308,31 @@ class Plugin(MetadataPlugin[AnvilBundle]):
 
     @property
     def manifest_config(self) -> ManifestConfig:
+        result: dict[FieldPath, dict[FieldPathElement, FieldName | None]]
         result = defaultdict(dict)
 
         # Note that there is a brittle coupling that must be maintained between
         # the fields listed here and those used in `self._field_mapping`.
-        fields_to_omit_from_manifest = [
+        fields_to_omit_from_manifest: list[FieldPath] = [
             ('contents', 'activities', 'activity_table'),
             # We omit the `duos_id` field from manifests since there is only one
             # DUOS bundle per dataset, and that bundle only contributes to outer
             # entities of the `datasets` type, not to entities of the other
             # types, such as files, which the manifest is generated from.
             ('contents', 'datasets', 'duos_id'),
-            ('contents', 'files', 'uuid'),
             ('contents', 'files', 'version'),
         ]
 
         # Furthermore, renamed values should match the field's path in a
         # response hit from the `/index/files` endpoint.
-        fields_to_rename_in_manifest = {
+        fields_to_rename_in_manifest: dict[FieldPath, str] = {
             ('bundles', 'uuid'): 'bundles.bundle_uuid',
             ('bundles', 'version'): 'bundles.bundle_version',
             ('sources', 'id'): 'sources.source_id',
             ('sources', 'spec'): 'sources.source_spec',
         }
 
-        def recurse(mapping: MetadataPlugin._FieldMapping, path: FieldPath):
+        def recurse(mapping: InverseFieldMapping, path: FieldPath):
             for path_element, name_or_type in mapping.items():
                 new_path = (*path, path_element)
                 if isinstance(name_or_type, dict):
@@ -346,42 +356,48 @@ class Plugin(MetadataPlugin[AnvilBundle]):
         # The file URL is synthesized from the `uuid` and `version` fields.
         # Above, we already configured these two fields to be omitted from the
         # manifest since they are not informative to the user.
-        result[('contents', 'files')]['file_url'] = 'files.azul_file_url'
+        result[('contents', 'files')]['file_url'] = 'files.azul_url'
+        result[('contents', 'files')]['file_mirror_uri'] = 'files.azul_mirror_uri'
         return result
 
     primary_keys_by_table = {
-        table['name']: one(table['primaryKey'])
-        for table in anvil_schema['tables']
+        table['name']: one(json_element_strings(table['primaryKey']))
+        for table in json_element_mappings(anvil_schema['tables'])
     }
 
     foreign_keys_by_table = {
-        table['name']: [
-            (r['to']['table'], r['from']['column'])
-            for r in anvil_schema['relationships']
-            if r['from']['table'] == table['name']
+        json_str(table['name']): [
+            (
+                json_str(json_mapping(r['to'])['table']),
+                json_str(json_mapping(r['from'])['column'])
+            )
+            for r in json_element_mappings(anvil_schema['relationships'])
+            if json_mapping(r['from'])['table'] == table['name']
         ]
-        for table in anvil_schema['tables']
+        for table in json_element_mappings(anvil_schema['tables'])
     }
 
     def verbatim_pfb_entity_id(self, replica: JSON) -> str:
         replica_type = replica['replica_type']
+        contents = json_mapping(replica['contents'])
         try:
             primary_key = self.primary_keys_by_table[replica_type]
         except KeyError:
             if replica_type == 'duos_dataset_registration':
-                return replica['contents']['duos_id']
+                return json_str(contents['duos_id'])
             else:
                 return super().verbatim_pfb_entity_id(replica)
         else:
-            return replica['contents'][primary_key]
+            return json_str(contents[primary_key])
 
     def verbatim_pfb_relations(self, replica: JSON) -> list[tuple[str, str]]:
-        table_name, contents = replica['replica_type'], replica['contents']
+        table_name = json_str(replica['replica_type'])
+        contents = json_mapping(replica['contents'])
         try:
             foreign_keys = self.foreign_keys_by_table[table_name]
         except KeyError:
             if table_name == 'duos_dataset_registration':
-                return [('anvil_dataset', contents['dataset_id'])]
+                return [('anvil_dataset', json_str(contents['dataset_id']))]
             else:
                 return super().verbatim_pfb_relations(replica)
         else:
@@ -408,22 +424,22 @@ class Plugin(MetadataPlugin[AnvilBundle]):
             if replica_type == 'duos_dataset_registration' else
             [
                 {
-                    'dst': r['to']['table'],
-                    'name': r['name'],
+                    'dst': json_str(json_mapping(r['to'])['table']),
+                    'name': json_str(r['name']),
                     # Each link is between a foreign key and a primary key.
                     # Primary keys are unique within their own table, but
                     # multiple rows in other tables can reference them.
                     'multiplicity': 'MANY_TO_ONE',
                 }
-                for r in anvil_schema['relationships']
-                if r['from']['table'] == replica_type
+                for r in json_element_mappings(anvil_schema['relationships'])
+                if json_mapping(r['from'])['table'] == replica_type
             ]
         )
 
     def verbatim_pfb_schema(self, replicas: list[JSON]) -> list[JSON]:
         table_schemas_by_name = {
-            schema['name']: schema
-            for schema in anvil_schema['tables']
+            json_str(schema['name']): schema
+            for schema in json_element_mappings(anvil_schema['tables'])
         }
         non_schema_replicas = [
             r for r in replicas
@@ -434,7 +450,7 @@ class Plugin(MetadataPlugin[AnvilBundle]):
         entity_schemas = super().verbatim_pfb_schema(non_schema_replicas)
         # For the rest, use the AnVIL schema as the basis of the PFB schema
         for table_name, table_schema in table_schemas_by_name.items():
-            field_schemas = [
+            field_schemas: MutableJSONs = [
                 self._pfb_schema_from_anvil_column(table_name=table_name,
                                                    column_name='datarepo_row_id',
                                                    anvil_datatype='string',
@@ -444,13 +460,13 @@ class Plugin(MetadataPlugin[AnvilBundle]):
                 field_schemas.append(self._pfb_schema_from_anvil_column(table_name=table_name,
                                                                         column_name='drs_uri',
                                                                         anvil_datatype='string'))
-            for column_schema in table_schema['columns']:
+            for column_schema in json_element_mappings(table_schema['columns']):
                 field_schemas.append(
                     self._pfb_schema_from_anvil_column(table_name=table_name,
-                                                       column_name=column_schema['name'],
-                                                       anvil_datatype=column_schema['datatype'],
-                                                       is_array=column_schema['array_of'],
-                                                       is_optional=not column_schema['required'])
+                                                       column_name=json_str(column_schema['name']),
+                                                       anvil_datatype=json_str(column_schema['datatype']),
+                                                       is_array=json_bool(column_schema['array_of']),
+                                                       is_optional=json_bool(not column_schema['required']))
                 )
 
             field_schemas.sort(key=itemgetter('name'))
@@ -468,7 +484,7 @@ class Plugin(MetadataPlugin[AnvilBundle]):
                                       anvil_datatype: str,
                                       is_array: bool = False,
                                       is_optional: bool = True,
-                                      ) -> AnyMutableJSON:
+                                      ) -> MutableJSON:
         _anvil_to_pfb_types = {
             'boolean': 'boolean',
             'float': 'double',
@@ -476,7 +492,7 @@ class Plugin(MetadataPlugin[AnvilBundle]):
             'string': 'string',
             'fileref': 'string'
         }
-        type_ = _anvil_to_pfb_types[anvil_datatype]
+        type_: AnyMutableJSON = _anvil_to_pfb_types[anvil_datatype]
         if is_optional:
             type_ = ['null', type_]
         if is_array:
@@ -524,13 +540,13 @@ class AnvilFile(File):
     md5: str
 
     @classmethod
-    def from_hit(cls, hit: JSON) -> Self:
-        return cls(uuid=hit['document_id'],
-                   version=hit['version'],
-                   name=hit['file_name'],
-                   size=hit['file_size'],
-                   drs_uri=hit['drs_uri'],
-                   md5=hit['file_md5sum'])
+    def from_index(cls, hit: JSON) -> Self:
+        return cls(uuid=json_str(hit['document_id']),
+                   version=json_str(hit['version']),
+                   name=json_str(hit['file_name']),
+                   size=json_int(hit['file_size']),
+                   drs_uri=optional(json_str, hit['drs_uri']),
+                   md5=json_str(hit['file_md5sum']))
 
     @property
     def digest(self) -> Digest:

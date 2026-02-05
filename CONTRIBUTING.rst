@@ -888,11 +888,6 @@ Commit title tags
   - ``r``: the commit represents a change that requires reindexing a deployment
     after that commit is deployed there.
 
-  - ``R``: the commit requires running ``make requirements`` after switching a
-    working copy to a branch that includes that commit
-
-  - ``M/N``: number of parts and ordinal of part in `Split commits`_
-
   - ``h``: the commit is a temporary hotfix. These commit should be reverted
      before the commit that provides a permanent fix is merged.
 
@@ -902,6 +897,9 @@ Commit title tags
 
   - ``A``: the commit modifies the Azul service API in a way that is likely to
     break existing clients (changing or removing functionality)
+
+  - ``R``: the commit requires running ``make requirements`` after switching a
+    working copy to a branch that includes that commit
 
   - ``p``: the commit only partially addresses the issues it references. A
     commit referencing more than one issue must not resolve some of those issues
@@ -913,6 +911,8 @@ Commit title tags
     ``p`` tag in such a title applies to all of them uniformly. Merge commits
     for promotions, backports, GitLab updates and hotfixes don't mention the
     ``p`` tag in their titles.
+
+  - ``M/N``: number of parts and ordinal of part in `Split commits`_
 
 * Tags must appear in a title in the order they are defined above, as in
   ``[u r R 1/2]``. This ensures that more consequential tags appear earlier.
@@ -1024,15 +1024,26 @@ Squashing previous fixups
 Assigning PRs
 -------------
 
-* The author of a PR may request reviews from anyone at any time. Once the
-  author considers a PR ready to land (be merged into the base branch), the
-  author rebases the branch, assigns the PR to the reviewer, the *primary
-  reviewer* and requests a review from that person. Note that assigning a PR
-  and requesting a review are different actions on the Github UI.
+* PRs remain assigned to the author from the time they are opened, up until they
+  are successfully merged and deployed.
 
-* If a PR is assigned to someone (typically the primary reviewer), only the
-  assignee may push to the PR branch. If a PR is assigned to no one, only the
-  author may push to the PR branch.
+* The author of a PR may request reviews from anyone at any time. To do so, the
+  author rebases the branch, assigns the PR to the reviewer (either a peer or
+  the system administrator, while leaving themselves assigned) and requests a
+  review from that person. Note that assigning a PR and requesting a review are
+  different actions in the Github UI.
+
+* Once the system administrator approves the PR, they remove their assignment,
+  assign the PR to the operator instead, all while the author remains assigned.
+
+* If a PR is assigned to someone other than the author, e.g., a reviewer or the
+  operator, only that person may push to the PR branch, even if the PR is also
+  still assigned to the author. The author may push to the PR branch if and only
+  if they are the sole assignee.
+
+The above changes in a PR's assignment during its lifetime are described in more
+detail by checklist items in the PR's description.
+
 
 Rewriting history
 -----------------

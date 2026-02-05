@@ -1,4 +1,4 @@
-https://github.com/certifi/python-certifi/LICENSE
+https://github.com/certifi/python-certifi/blob/HEAD/LICENSE
 
 This package contains a modified version of ca-bundle.crt:
 

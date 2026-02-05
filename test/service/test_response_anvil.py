@@ -1,13 +1,16 @@
 import requests
 
-from azul import (
-    JSON,
+from azul.deployment import (
+    aws,
 )
 from azul.logging import (
     configure_test_logging,
 )
 from azul.plugins.repository.tdr_anvil import (
     TDRAnvilBundleFQID,
+)
+from azul.types import (
+    JSON,
 )
 from indexer.test_anvil import (
     AnvilIndexerTestCase,
@@ -48,7 +51,8 @@ class TestAnvilResponse(AnvilIndexerTestCase, WebServiceTestCase):
                         'entryId': '1509ef40-d1ba-440d-b298-16b7c173dcd4',
                         'sources': [
                             {
-                                'source_spec': 'tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0',
+                                'source_prefix': '/0',
+                                'source_spec': 'tdr:bigquery:gcp:test_anvil_project:anvil_snapshot',
                                 'source_id': '6c87f0e1-509d-46a4-b845-7584df39263b'
                             }
                         ],
@@ -118,7 +122,8 @@ class TestAnvilResponse(AnvilIndexerTestCase, WebServiceTestCase):
                         'entryId': '816e364e-1193-4e5b-a91a-14e4b009157c',
                         'sources': [
                             {
-                                'source_spec': 'tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0',
+                                'source_prefix': '/0',
+                                'source_spec': 'tdr:bigquery:gcp:test_anvil_project:anvil_snapshot',
                                 'source_id': '6c87f0e1-509d-46a4-b845-7584df39263b'
                             }
                         ],
@@ -315,7 +320,8 @@ class TestAnvilResponse(AnvilIndexerTestCase, WebServiceTestCase):
                         'entryId': '826dea02-e274-4ffe-aabc-eb3db63ad068',
                         'sources': [
                             {
-                                'source_spec': 'tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0',
+                                'source_prefix': '/0',
+                                'source_spec': 'tdr:bigquery:gcp:test_anvil_project:anvil_snapshot',
                                 'source_id': '6c87f0e1-509d-46a4-b845-7584df39263b'
                             }
                         ],
@@ -338,7 +344,7 @@ class TestAnvilResponse(AnvilIndexerTestCase, WebServiceTestCase):
                                 'source_datarepo_row_ids': ['sample:98048c3b-2525-4090-94fd-477de31f2608'],
                                 'biosample_id': 'f9d40cf6-37b8-22f3-ce35-0dc614d2452b',
                                 'anatomical_site': None,
-                                'apriori_cell_type': [None],
+                                'apriori_cell_type': ['bar', 'foo'],
                                 'biosample_type': None,
                                 'disease': None,
                                 'donor_age_at_collection_unit': None,
@@ -532,8 +538,9 @@ class TestAnvilResponse(AnvilIndexerTestCase, WebServiceTestCase):
                         'files': [],
                         'sources': [
                             {
+                                'source_prefix': '/0',
                                 'source_id': '6c87f0e1-509d-46a4-b845-7584df39263b',
-                                'source_spec': 'tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0'
+                                'source_spec': 'tdr:bigquery:gcp:test_anvil_project:anvil_snapshot'
                             }
                         ]
                     },
@@ -605,8 +612,9 @@ class TestAnvilResponse(AnvilIndexerTestCase, WebServiceTestCase):
                         ],
                         'sources': [
                             {
+                                'source_prefix': '/0',
                                 'source_id': '6c87f0e1-509d-46a4-b845-7584df39263b',
-                                'source_spec': 'tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0'
+                                'source_spec': 'tdr:bigquery:gcp:test_anvil_project:anvil_snapshot'
                             }
                         ]
                     }
@@ -773,7 +781,8 @@ class TestAnvilResponse(AnvilIndexerTestCase, WebServiceTestCase):
                         'entryId': '2370f948-2783-4eb6-afea-e022897f4dcf',
                         'sources': [
                             {
-                                'source_spec': 'tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0',
+                                'source_prefix': '/0',
+                                'source_spec': 'tdr:bigquery:gcp:test_anvil_project:anvil_snapshot',
                                 'source_id': '6c87f0e1-509d-46a4-b845-7584df39263b'
                             }
                         ],
@@ -989,7 +998,8 @@ class TestAnvilResponse(AnvilIndexerTestCase, WebServiceTestCase):
                         'entryId': 'bfd991f2-2797-4083-972a-da7c6d7f1b2e',
                         'sources': [
                             {
-                                'source_spec': 'tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0',
+                                'source_prefix': '/0',
+                                'source_spec': 'tdr:bigquery:gcp:test_anvil_project:anvil_snapshot',
                                 'source_id': '6c87f0e1-509d-46a4-b845-7584df39263b'
                             }
                         ],
@@ -1194,7 +1204,8 @@ class TestAnvilResponse(AnvilIndexerTestCase, WebServiceTestCase):
                         'entryId': '15b76f9c-6b46-433f-851d-34e89f1b9ba6',
                         'sources': [
                             {
-                                'source_spec': 'tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0',
+                                'source_prefix': '/0',
+                                'source_spec': 'tdr:bigquery:gcp:test_anvil_project:anvil_snapshot',
                                 'source_id': '6c87f0e1-509d-46a4-b845-7584df39263b'
                             }
                         ],
@@ -1253,23 +1264,18 @@ class TestAnvilResponse(AnvilIndexerTestCase, WebServiceTestCase):
                                 'data_modality': [None],
                                 'file_format': '.vcf.gz',
                                 'file_size': 213021639,
-                                'file_md5sum': 'vuxgbuCqKZ/fkT9CWTFmIg==',
+                                'file_md5sum': 'beec606ee0aa299fdf913f4259316622',
                                 'reference_assembly': [None],
                                 'file_name': '307500.merged.matefixed.sorted.markeddups.recal.g.vcf.gz',
                                 'is_supplementary': False,
-                                'version': self.version,
-                                'uuid': '15b76f9c-6b46-433f-851d-34e89f1b9ba6',
-                                'size': 213021639,
-                                'name': '307500.merged.matefixed.sorted.markeddups.recal.g.vcf.gz',
-                                'crc32': '',
-                                'sha256': '',
                                 'accessible': True,
                                 'drs_uri': f'drs://{self._drs_domain_name}/v1_6c87f0e1-509d-46a4-b845-7584df39263b_'
                                            f'1e269f04-4347-4188-b060-1dcc69e71d67',
-                                'url': str(self.base_url.set(
+                                'azul_url': str(self.base_url.set(
                                     path='/repository/files/15b76f9c-6b46-433f-851d-34e89f1b9ba6',
                                     args=dict(catalog='test', version=self.version)
-                                ))
+                                )),
+                                'azul_mirror_uri': f's3://{aws.mirror_bucket}/file/beec606ee0aa299fdf913f4259316622.md5'
                             }
                         ]
                     },
@@ -1277,7 +1283,8 @@ class TestAnvilResponse(AnvilIndexerTestCase, WebServiceTestCase):
                         'entryId': '3b17377b-16b1-431c-9967-e5d01fc5923f',
                         'sources': [
                             {
-                                'source_spec': 'tdr:bigquery:gcp:test_anvil_project:anvil_snapshot:/0',
+                                'source_prefix': '/0',
+                                'source_spec': 'tdr:bigquery:gcp:test_anvil_project:anvil_snapshot',
                                 'source_id': '6c87f0e1-509d-46a4-b845-7584df39263b'
                             }
                         ],
@@ -1336,23 +1343,18 @@ class TestAnvilResponse(AnvilIndexerTestCase, WebServiceTestCase):
                                 'data_modality': [None],
                                 'file_format': '.bam',
                                 'file_size': 3306845592,
-                                'file_md5sum': 'fNn9e1SovzgOROk3BvH6LQ==',
+                                'file_md5sum': '7cd9fd7b54a8bf380e44e93706f1fa2d',
                                 'reference_assembly': [None],
                                 'file_name': '307500.merged.matefixed.sorted.markeddups.recal.bam',
                                 'is_supplementary': False,
-                                'version': self.version,
-                                'uuid': '3b17377b-16b1-431c-9967-e5d01fc5923f',
-                                'size': 3306845592,
-                                'name': '307500.merged.matefixed.sorted.markeddups.recal.bam',
-                                'crc32': '',
-                                'sha256': '',
                                 'accessible': True,
                                 'drs_uri': f'drs://{self._drs_domain_name}/v1_6c87f0e1-509d-46a4-b845-7584df39263b_'
                                            f'8b722e88-8103-49c1-b351-e64fa7c6ab37',
-                                'url': str(self.base_url.set(
+                                'azul_url': str(self.base_url.set(
                                     path='/repository/files/3b17377b-16b1-431c-9967-e5d01fc5923f',
                                     args=dict(catalog='test', version=self.version)
-                                ))
+                                )),
+                                'azul_mirror_uri': f's3://{aws.mirror_bucket}/file/7cd9fd7b54a8bf380e44e93706f1fa2d.md5'
                             }
                         ]
                     }

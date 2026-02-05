@@ -9,6 +9,7 @@ from typing import (
 
 from azul import (
     CatalogName,
+    R,
     cache_per_thread,
     cached_property,
     config,
@@ -76,17 +77,17 @@ class TerraValidator:
         all_sources: set[TDRSourceSpec] = set()
         with ThreadPoolExecutor(max_workers=8) as tpe:
             for catalog in self.catalogs:
-                catalog_sources = self.repository_plugin(catalog).sources
+                catalog_sources = self.repository_plugin(catalog).sources.keys()
                 for source in catalog_sources - all_sources:
                     futures.append(tpe.submit(self.verify_source, catalog, source))
                 all_sources |= catalog_sources
+            exceptions = []
             for completed_future in as_completed(futures):
                 futures.remove(completed_future)
                 e = completed_future.exception()
                 if e is not None:
-                    for running_future in futures:
-                        running_future.cancel()
-                    raise e
+                    exceptions.append(e)
+        assert exceptions == [], R('Exception(s) in worker thread(s)', exceptions)
 
     def verify_source(self,
                       catalog: CatalogName,
@@ -96,12 +97,11 @@ class TerraValidator:
         ref = plugin.resolve_source(source_spec)
         log.info('TDR client is authorized for API access to %s.', source_spec)
         if config.deployment.is_main:
-            if source_spec.prefix is not None:
-                require(source_spec.prefix.common == '', source_spec)
+            assert ref.prefix is None, ref
             self.tdr.check_bigquery_access(source_spec)
         else:
             ref = plugin.partition_source_for_indexing(catalog, ref)
-            subgraph_count = plugin.count_bundles(ref.spec)
+            subgraph_count = plugin.count_bundles(ref)
             require(subgraph_count > 0, 'Common prefix is too long', ref.spec)
             require(subgraph_count <= 512, 'Common prefix is too short', ref.spec)
 

@@ -20,7 +20,7 @@ from opensearchpy import (
 )
 import requests
 import requests.auth
-import urllib3.request
+import urllib3
 
 from azul import (
     config,
@@ -28,6 +28,9 @@ from azul import (
 )
 from azul.deployment import (
     aws,
+)
+from azul.http import (
+    HttpClient,
 )
 from azul.logging import (
     es_log,
@@ -132,7 +135,7 @@ class AzulConnection(Connection):
         es_log.log(log_level, http_body_log_message('response', response))
 
 
-class AWSAuthHttpClient(urllib3.request.RequestMethods):
+class AWSAuthHttpClient(HttpClient):
     """
     Decorates a urllib3 HTTPConnectionPool instance so that requests are
     signed with AWS's Signature Version 4 flavor of HMAC.
@@ -151,7 +154,7 @@ class AWSAuthHttpClient(urllib3.request.RequestMethods):
                 body: bytes | None = None,
                 headers: Mapping[str, str] | None = None,
                 **kwargs
-                ) -> urllib3.HTTPResponse:
+                ) -> urllib3.BaseHTTPResponse:
         # self._http_auth is an instance of BotoAWSRequestsAuth, a subclass of
         # AuthBase from the Requests library. To use that instance with urllib3
         # directly, we need to prepare a Requests request object, sign it with

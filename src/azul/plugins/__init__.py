@@ -10,7 +10,6 @@ from inspect import (
     isabstract,
 )
 from typing import (
-    AbstractSet,
     Callable,
     ClassVar,
     Iterable,
@@ -24,17 +23,21 @@ from typing import (
 )
 
 import attrs
+from furl import (
+    furl,
+)
 from more_itertools import (
     one,
 )
 
 from azul import (
     CatalogName,
+    R,
     cached_property,
     config,
 )
 from azul.attrs import (
-    SerializableAttrs,
+    DiscriminatingPolymorphicSerializableAttrs,
 )
 from azul.chalice import (
     Authentication,
@@ -43,11 +46,17 @@ from azul.digests import (
     Digest,
 )
 from azul.drs import (
-    DRSClient,
+    CompactDRSURI,
+    DRSObject,
+    DRSURI,
+    HostBasedDRSURI,
+    IdentifiersDotOrgClient,
+    UnauthenticatedDRSClient,
 )
 from azul.indexer import (
     Bundle,
     Prefix,
+    SourceConfig,
     SourceRef,
     SourceSpec,
     SourcedBundleFQID,
@@ -63,6 +72,9 @@ from azul.indexer.document import (
 from azul.indexer.transform import (
     ReplicaTransformer,
     Transformer,
+)
+from azul.json import (
+    DynamicPolymorphicSerializable,
 )
 from azul.types import (
     JSON,
@@ -87,9 +99,27 @@ if TYPE_CHECKING:
         SummaryResponseStage,
     )
 
+#: Field names are used to reference fields in requests to the service, e.g.,
+#: when clients specify which fields to filter and sort documents by. They are
+#: also used as keys in the termFacets part of a response but only for the
+#: fields for which a facet is defined. Field names have to be unique, but
+#: different plugins may use different conventions to disambiguate them, such as
+#: prefixing the field name with the entity type, either separated by a dot or
+#: using a case transition (camel case).
+#:
 FieldName = str
 
+#: The bijective mapping between field names and field paths.
+#:
 FieldMapping = Mapping[FieldName, FieldPath]
+
+#: The inverse of the field mapping. It is a less verbose representation in
+#: which field paths manifest as the keys in nested dictionaries.
+#:
+type InverseFieldMapping = Mapping[
+    FieldPathElement,
+    FieldName | InverseFieldMapping
+]
 
 ColumnMapping = Mapping[FieldPathElement, FieldName | None]
 ManifestConfig = Mapping[FieldPath, ColumnMapping]
@@ -136,6 +166,27 @@ class Sorting:
 
 
 @attrs.frozen(auto_attribs=True, kw_only=True)
+class SpecialField:
+    """
+    See :py:class:`SpecialFields`.
+    """
+
+    #: The standalone name of the field, as it appears in filters, the `sort`
+    #: request parameter and in the `termFacets` part of a service response.
+    #:
+    name: FieldName
+
+    #: The name of the field in an inner entity, as it appears in the `hit`
+    #: part of a service response.
+    #:
+    name_in_hit: str  # we currently have no alias for this type of occurrence
+
+    @classmethod
+    def symmetric(cls, name: str) -> Self:
+        return cls(name=name, name_in_hit=name)
+
+
+@attrs.frozen(auto_attribs=True, kw_only=True)
 class SpecialFields:
     """
     Azul defines a number of fields in each /index/{entity_type} response that
@@ -146,16 +197,15 @@ class SpecialFields:
 
     It is an incomplete abstraction in that it does not express the name of the
     inner entity the field is a property of in the /index/{entity_type}
-    response. In that way, the values of the attributes of instances of this
-    class are more akin to a facet name, rather than a field name. However, not
-    every field represented here is actually a facet.
+    response.
     """
-    accessible: ClassVar[FieldName] = 'accessible'
-    source_id: FieldName
-    source_spec: FieldName
-    bundle_uuid: FieldName
-    bundle_version: FieldName
-    root_entity_id: FieldName
+    accessible: ClassVar[SpecialField] = SpecialField.symmetric('accessible')
+    source_id: SpecialField
+    source_spec: SpecialField
+    source_prefix: SpecialField
+    bundle_uuid: SpecialField
+    bundle_version: SpecialField
+    file_uuid: SpecialField
 
 
 class ManifestFormat(Enum):
@@ -296,7 +346,7 @@ class MetadataPlugin[BUNDLE: Bundle](Plugin[BUNDLE]):
             }
         }
 
-    range_mapping = {
+    range_mapping: MutableJSON = {
         # A float (single precision IEEE-754) can represent all integers up to
         # 16,777,216. If we used float values for organism ages in seconds, we
         # would not be able to accurately represent an organism age of
@@ -386,19 +436,14 @@ class MetadataPlugin[BUNDLE: Bundle](Plugin[BUNDLE]):
         """
         raise NotImplementedError
 
-    #: See :meth:`_field_mapping`
-    _FieldMapping2 = Mapping[FieldPathElement, FieldName]
-    _FieldMapping1 = Mapping[FieldPathElement, FieldName | _FieldMapping2]
-    _FieldMapping = Mapping[FieldPathElement, FieldName | _FieldMapping1]
-
     @cached_property
     def field_mapping(self) -> FieldMapping:
         """
-        Maps a field's name in the service response to the field's path in
-        Elasticsearch index documents.
+        Maps a field's name, as used in service requests for filtering or
+        sorting, to the field's path in index documents.
         """
 
-        def invert(v: MetadataPlugin._FieldMapping,
+        def invert(v: InverseFieldMapping,
                    *path: FieldPathElement
                    ) -> Iterable[tuple[FieldName, FieldPath]]:
             if isinstance(v, dict):
@@ -420,7 +465,7 @@ class MetadataPlugin[BUNDLE: Bundle](Plugin[BUNDLE]):
 
     @property
     @abstractmethod
-    def _field_mapping(self) -> _FieldMapping:
+    def _field_mapping(self) -> InverseFieldMapping:
         """
         An inverted and more compact representation of the field mapping. It is
         made up of nested dictionaries where each key is an element in a field's
@@ -428,6 +473,19 @@ class MetadataPlugin[BUNDLE: Bundle](Plugin[BUNDLE]):
         key represents the element in the path, or a dictionary otherwise.
         """
         raise NotImplementedError
+
+    def field_name_for_path(self, path: FieldPath) -> FieldName:
+        """
+        Given the path of a response field, return the name of the field as it
+        would need to be referenced in requests, e.g. for filtering or sorting
+        by that field.
+        """
+        value: InverseFieldMapping | FieldName = self._field_mapping
+        for element in path:
+            assert isinstance(value, Mapping), R('Path too long', path, element, value)
+            value = value[element]
+        assert isinstance(value, FieldName), R('Path too short', path, value)
+        return value
 
     @property
     @abstractmethod
@@ -469,7 +527,7 @@ class MetadataPlugin[BUNDLE: Bundle](Plugin[BUNDLE]):
 
     @property
     def facets(self) -> Sequence[str]:
-        return [self.special_fields.source_id]
+        return [self.special_fields.source_id.name]
 
     @property
     @abstractmethod
@@ -547,11 +605,14 @@ class MetadataPlugin[BUNDLE: Bundle](Plugin[BUNDLE]):
         raise NotImplementedError
 
 
+# FIXME: Maybe remove the defaults after enabling mypy's disallow_any_generics
+#        https://github.com/DataBiosphere/azul/issues/7495
+
 @attrs.frozen(auto_attribs=True, kw_only=True)
-class RepositoryPlugin[BUNDLE: Bundle,
-                       SOURCE_SPEC: SourceSpec,
-                       SOURCE_REF: SourceRef,
-                       BUNDLE_FQID: SourcedBundleFQID](
+class RepositoryPlugin[BUNDLE: Bundle = Bundle[SourcedBundleFQID],
+                       SOURCE_SPEC: SourceSpec = SourceSpec,
+                       SOURCE_REF: SourceRef = SourceRef[SourceSpec],
+                       BUNDLE_FQID: SourcedBundleFQID = SourcedBundleFQID](
     Plugin[BUNDLE]
 ):
     catalog: CatalogName
@@ -568,28 +629,20 @@ class RepositoryPlugin[BUNDLE: Bundle,
         return cls(catalog=catalog)
 
     @cached_property
-    def sources(self) -> AbstractSet[SOURCE_SPEC]:
+    def sources(self) -> Mapping[SOURCE_SPEC, SourceConfig]:
         """
         The sources the plugin is configured to read metadata from.
         """
-        return frozenset(map(self.parse_source, config.sources(self.catalog)))
+        return {
+            self.parse_source(source_spec): SourceConfig.from_json(source_config)
+            for source_spec, source_config in config.sources(self.catalog).items()
+        }
 
     def _assert_source(self, source: SOURCE_REF):
         """
         Assert that the given source is present in the plugin configuration.
         """
-        assert source.spec.prefix is not None, source
-        for configured_spec in self.sources:
-            if configured_spec == source.spec:
-                break
-            # Most configured sources lack an explicit prefix
-            elif configured_spec.eq_ignoring_prefix(source.spec):
-                assert configured_spec.prefix is None, (configured_spec, source)
-                break
-            else:
-                continue
-        else:
-            assert False, (self.sources, source)
+        assert source.spec in self.sources, (source, self.sources)
 
     def _assert_partition(self, source: SOURCE_REF, prefix: str):
         """
@@ -597,7 +650,8 @@ class RepositoryPlugin[BUNDLE: Bundle,
         source's configured prefix.
         """
         validate_uuid_prefix(prefix)
-        assert prefix in source.spec.prefix, (source.spec, prefix)
+        assert source.prefix is not None, source
+        assert prefix in source.prefix, (source, prefix)
 
     @abstractmethod
     def list_sources(self,
@@ -660,7 +714,7 @@ class RepositoryPlugin[BUNDLE: Bundle,
         spec_cls = ref_cls.spec_cls()
         assert isinstance(spec, spec_cls), spec
         id = self._lookup_source_id(spec)
-        return ref_cls(id=id, spec=spec)
+        return ref_cls(id=id, spec=spec, prefix=None)
 
     @abstractmethod
     def _lookup_source_id(self, spec: SOURCE_SPEC) -> str:
@@ -671,7 +725,7 @@ class RepositoryPlugin[BUNDLE: Bundle,
         raise NotImplementedError
 
     @abstractmethod
-    def count_bundles(self, source: SOURCE_SPEC) -> int:
+    def count_bundles(self, source: SOURCE_REF) -> int:
         """
         The total number of subgraphs in the given source. The source's prefix
         may be None, indicating that the source hasn't been partitioned yet and
@@ -680,13 +734,21 @@ class RepositoryPlugin[BUNDLE: Bundle,
         raise NotImplementedError
 
     @abstractmethod
-    def count_files(self, source: SOURCE_SPEC) -> int:
+    def count_files(self, source: SOURCE_REF) -> int:
         """
         The total number of files in the given source. The source's prefix
         may be None, indicating that the source hasn't been partitioned yet and
         that this method should count all files in the source.
         """
         raise NotImplementedError
+
+    # Sanity-check the partition size. We know the upper bound
+    # caused some mirror Lambda invocations to time out. The lower
+    # bound is hypothetical. It'll likely still work for mirroring,
+    # but we'd like to know if partitions get that small. For
+    # indexing, the partition size is fixed at the upper bound.
+    min_partition_size: ClassVar[int] = 512
+    max_partition_size: ClassVar[int] = 8192
 
     def partition_source_for_indexing(self,
                                       catalog: CatalogName,
@@ -697,32 +759,37 @@ class RepositoryPlugin[BUNDLE: Bundle,
         an updated copy of the source with a heuristically computed prefix that
         should be appropriate for indexing in the given catalog.
         """
-        return self._partition_source(catalog, source, self.count_bundles)
+        partition_size = self.max_partition_size
+        return self._partition_source(catalog, source, self.count_bundles, partition_size)
 
     def partition_source_for_mirroring(self,
                                        catalog: CatalogName,
-                                       source: SOURCE_REF
+                                       source: SOURCE_REF,
+                                       partition_size: int,
                                        ) -> SOURCE_REF:
         """
         If the source already has a prefix, return the source. Otherwise, return
         an updated copy of the source with a heuristically computed prefix that
         should be appropriate for mirroring in the given catalog.
         """
-        return self._partition_source(catalog, source, self.count_files)
+        return self._partition_source(catalog, source, self.count_files, partition_size)
 
     def _partition_source(self,
                           catalog: CatalogName,
                           source: SOURCE_REF,
-                          counter: Callable[[SOURCE_SPEC], int]
+                          counter: Callable[[SOURCE_REF], int],
+                          partition_size: int
                           ) -> SOURCE_REF:
-        if source.spec.prefix is None:
-            count = counter(source.spec)
+        if source.prefix is None:
+            count = counter(source)
             is_main = config.deployment.is_main
             is_it = catalog in config.integration_test_catalogs
             # We use the "lesser" heuristic during IT to keep the cost and
             # performance of the tests within reasonable limits
             if is_main and not is_it:
-                prefix = Prefix.for_main_deployment(count)
+                assert partition_size >= self.min_partition_size, partition_size
+                assert partition_size <= self.max_partition_size, partition_size
+                prefix = Prefix.for_main_deployment(count, partition_size)
             else:
                 prefix = Prefix.for_lesser_deployment(count)
             return source.with_prefix(prefix)
@@ -771,16 +838,36 @@ class RepositoryPlugin[BUNDLE: Bundle,
 
         raise NotImplementedError
 
-    @abstractmethod
-    def drs_client(self,
+    def drs_object(self,
+                   drs_uri: str,
                    authentication: Authentication | None = None
-                   ) -> DRSClient:
+                   ) -> DRSObject:
         """
         Returns a DRS client that uses the given authentication with requests to
         the DRS server. If a concrete subclass doesn't support authentication,
         it should assert that the argument is ``None``.
         """
-        raise NotImplementedError
+        assert authentication is None, type(authentication)
+        drs_url = self._resolve_drs_uri(drs_uri)
+        return self._unauthenticated_drs.drs_object(drs_url)
+
+    def _resolve_drs_uri(self, drs_uri: str) -> furl:
+        drs_uri = DRSURI.parse(drs_uri)
+        if isinstance(drs_uri, CompactDRSURI):
+            drs_url = drs_uri.to_url(self._identifiers_dot_org)
+        elif isinstance(drs_uri, HostBasedDRSURI):
+            drs_url = drs_uri.to_url()
+        else:
+            assert False
+        return drs_url
+
+    @cached_property
+    def _unauthenticated_drs(self) -> UnauthenticatedDRSClient:
+        return UnauthenticatedDRSClient()
+
+    @cached_property
+    def _identifiers_dot_org(self) -> IdentifiersDotOrgClient:
+        return IdentifiersDotOrgClient()
 
     @abstractmethod
     def file_download_class(self) -> type['RepositoryFileDownload']:
@@ -795,7 +882,9 @@ class RepositoryPlugin[BUNDLE: Bundle,
 
 
 @attrs.frozen(auto_attribs=True, kw_only=True)
-class File(SerializableAttrs, metaclass=ABCMeta):
+class File(DiscriminatingPolymorphicSerializableAttrs,
+           DynamicPolymorphicSerializable,
+           metaclass=ABCMeta):
     """
     A reference to a data file in the repository.
     """
@@ -828,7 +917,7 @@ class File(SerializableAttrs, metaclass=ABCMeta):
 
     @classmethod
     @abstractmethod
-    def from_hit(cls, hit: JSON) -> Self:
+    def from_index(cls, hit: JSON) -> Self:
         """
         Instantiate this class from an entity aggregate document retrieved from
         Elasticsearch.
@@ -839,6 +928,10 @@ class File(SerializableAttrs, metaclass=ABCMeta):
     @abstractmethod
     def digest(self) -> Digest:
         raise NotImplementedError
+
+    @classmethod
+    def discriminator(cls) -> str:
+        return 'type'
 
 
 @attrs.define(auto_attribs=True, kw_only=True)

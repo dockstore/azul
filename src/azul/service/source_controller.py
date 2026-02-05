@@ -13,18 +13,13 @@ from azul.auth import (
     Authentication,
 )
 from azul.chalice import (
+    AppController,
     BadGatewayError,
-    ServiceUnavailableError,
+    TerraTimeoutError,
 )
 from azul.http import (
     LimitedTimeoutException,
     TooManyRequestsException,
-)
-from azul.service import (
-    Filters,
-)
-from azul.service.app_controller import (
-    ServiceAppController,
 )
 from azul.service.source_service import (
     SourceService,
@@ -36,7 +31,7 @@ from azul.types import (
 log = logging.getLogger(__name__)
 
 
-class SourceController(ServiceAppController):
+class SourceController(AppController):
 
     @cached_property
     def _source_service(self) -> SourceService:
@@ -51,7 +46,7 @@ class SourceController(ServiceAppController):
         except PermissionError:
             raise UnauthorizedError
         except LimitedTimeoutException as e:
-            raise ServiceUnavailableError(*e.args)
+            raise TerraTimeoutError(*e.args)
         except TooManyRequestsException as e:
             raise TooManyRequestsError(*e.args)
         else:
@@ -79,16 +74,8 @@ class SourceController(ServiceAppController):
         except PermissionError:
             raise UnauthorizedError
         except LimitedTimeoutException as e:
-            raise ServiceUnavailableError(*e.args)
+            raise TerraTimeoutError(*e.args)
         except TooManyRequestsException as e:
             raise TooManyRequestsError(*e.args)
         else:
             return source_ids
-
-    def get_filters(self,
-                    catalog: CatalogName,
-                    authentication: Authentication | None,
-                    filters: str | None = None
-                    ) -> Filters:
-        return Filters(explicit=self._parse_filters(filters),
-                       source_ids=self._list_source_ids(catalog, authentication))

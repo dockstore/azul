@@ -54,7 +54,12 @@ def write_schema(schema: JSON) -> None:
             Instead, update the script and run `make anvil_schema`
             """
         '''))
-        f.write('\nanvil_schema = ')
+        f.write(dedent('''
+            from azul.types import (
+                JSON,
+            )
+        '''))
+        f.write('\nanvil_schema: JSON = ')
         # FIXME: Format AnVIL schema using reprlib #6292
         #        https://github.com/DataBiosphere/azul/issues/6292
         f.write(json.dumps(schema, indent=4)

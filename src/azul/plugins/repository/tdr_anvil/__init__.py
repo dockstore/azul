@@ -1,4 +1,7 @@
-﻿import datetime
+﻿from collections import (
+    defaultdict,
+)
+import datetime
 from enum import (
     Enum,
 )
@@ -11,6 +14,7 @@ from typing import (
     AbstractSet,
     Callable,
     Iterable,
+    Mapping,
 )
 import uuid
 
@@ -209,14 +213,25 @@ class TDRAnvilBundle(AnvilBundle[TDRAnvilBundleFQID], TDRBundle):
             drs_uri = row['file_ref']
             # Validate URI syntax
             DRSURI.parse(drs_uri)
-            metadata.update(drs_uri=drs_uri,
-                            sha256='',
-                            crc32='')
+            metadata.update(drs_uri=drs_uri)
         target[entity] = metadata
 
     def add_links(self, links: Iterable[EntityLink]):
         self.links.update(links)
-        EntityLink.group_by_activity(self.links)
+        # Merge links that share the same (non-null) activity
+        groups_by_activity: dict[EntityReference, set[EntityLink]] = defaultdict(set)
+        for link in self.links:
+            if link.activity is not None:
+                groups_by_activity[link.activity].add(link)
+        for activity, group in groups_by_activity.items():
+            if len(group) > 1:
+                self.links -= group
+                merged_link = EntityLink(
+                    inputs=frozenset.union(*[link.inputs for link in group]),
+                    activity=activity,
+                    outputs=frozenset.union(*[link.outputs for link in group])
+                )
+                self.links.add(merged_link)
 
 
 class Plugin(TDRPlugin[TDRAnvilBundle, TDRAnvilBundleFQID]):
@@ -244,30 +259,30 @@ class Plugin(TDRPlugin[TDRAnvilBundle, TDRAnvilBundleFQID]):
                               self.batch_uuid_version,
                               self.bundle_uuid_version)
 
-    def count_files(self, source: TDRSourceSpec) -> int:
+    def count_files(self, source: TDRSourceRef) -> int:
         prefix = '' if source.prefix is None else source.prefix.common
         assert prefix == prefix.lower(), source
         query = f'''
         SELECT COUNT(*) AS count
-        FROM {backtick(self._full_table_name(source, 'anvil_file'))}
+        FROM {backtick(self._full_table_name(source.spec, 'anvil_file'))}
         WHERE STARTS_WITH(LOWER(file_md5sum), {prefix!r})
         '''
         return one(self._run_sql(query))['count']
 
-    def count_bundles(self, source: TDRSourceSpec) -> int:
+    def count_bundles(self, source: TDRSourceRef) -> int:
         prefix = '' if source.prefix is None else source.prefix.common
         assert prefix == prefix.lower(), source
         primary_count = one(self._run_sql(f'''
             SELECT COUNT(*) AS count
-            FROM {backtick(self._full_table_name(source, BundleType.primary.value))}
+            FROM {backtick(self._full_table_name(source.spec, BundleType.primary.value))}
             WHERE STARTS_WITH(LOWER(datarepo_row_id), {prefix!r})
         '''))['count']
         duos_count = 0 if config.duos_service_url is None else one(self._run_sql(f'''
             SELECT COUNT(*) AS count
-            FROM {backtick(self._full_table_name(source, BundleType.duos.value))}
+            FROM {backtick(self._full_table_name(source.spec, BundleType.duos.value))}
             WHERE STARTS_WITH(LOWER(datarepo_row_id), {prefix!r})
         '''))['count']
-        sizes_by_table = self._batch_tables(source, prefix)
+        sizes_by_table = self._batch_tables(source.spec, prefix)
         batched_count = sum(batch_size for (_, batch_size) in sizes_by_table.values())
         return primary_count + duos_count + batched_count
 
@@ -335,7 +350,17 @@ class Plugin(TDRPlugin[TDRAnvilBundle, TDRAnvilBundleFQID]):
         batch = self._get_batch(source.spec,
                                 'anvil_file',
                                 prefix,
-                                key_column='file_md5sum')
+                                key_column=self._column_from_64_to_hex('file_md5sum'))
+
+        def missing_md5(row: BigQueryRow) -> bool:
+            missing = row['file_md5sum'] is None
+            if missing:
+                # FIXME: Files from 1000G snapshot in anvildev can't be mirrored
+                #        https://github.com/DataBiosphere/azul/issues/7634
+                assert source.spec.name == 'ANVIL_1000G_2019_Dev_20230609_ANV5_202306121732', R(
+                    'File lacks MD5 digest', source, dict(row))
+            return missing
+
         return [
             AnvilFile(uuid=ref.entity_id,
                       name=row['file_name'],
@@ -344,6 +369,7 @@ class Plugin(TDRPlugin[TDRAnvilBundle, TDRAnvilBundleFQID]):
                       md5=row['file_md5sum'],
                       drs_uri=row['file_ref'])
             for ref, row in batch
+            if not missing_md5(row)
         ]
 
     def _emulate_bundle(self, bundle_fqid: TDRAnvilBundleFQID) -> TDRAnvilBundle:
@@ -423,7 +449,7 @@ class Plugin(TDRPlugin[TDRAnvilBundle, TDRAnvilBundleFQID]):
                     GROUP BY ROLLUP ({repeat('p{i}')})
                 )
                 GROUP BY batch_prefix_length
-                ORDER BY ABS({target_size} - average_batch_size)
+                ORDER BY ABS({target_size} - average_batch_size), batch_prefix_length
                 LIMIT 1
             )
         )''' for table_name in table_names)
@@ -924,17 +950,23 @@ class Plugin(TDRPlugin[TDRAnvilBundle, TDRAnvilBundleFQID]):
         else:
             return []
 
-    _schema_columns = {
-        table['name']: [column['name'] for column in table['columns']]
-        for table in anvil_schema['tables']
-    }
+    @cached_property
+    def _schema_columns_by_table(self) -> Mapping[str, AbstractSet[str]]:
+        columns_by_table = {}
+        for table in anvil_schema['tables']:
+            table_name = table['name']
+            column_names = {column['name'] for column in table['columns']}
+            column_names.add('datarepo_row_id')
+            if table_name == 'anvil_file':
+                column = 'file_md5sum'
+                column_names.remove(column)
+                column_names.add(f'{self._column_from_64_to_hex(column)} AS {column}')
+            columns_by_table[table_name] = column_names
+        return columns_by_table
 
-    def _columns(self, table_name: str) -> set[str]:
-        try:
-            columns = self._schema_columns[table_name]
-        except KeyError:
-            return {'*'}
-        else:
-            columns = set(columns)
-            columns.add('datarepo_row_id')
-            return columns
+    def _columns(self, table_name: str) -> AbstractSet[str]:
+        # Include all columns for replicas of non-schema tables
+        return self._schema_columns_by_table.get(table_name, {'*'})
+
+    def _column_from_64_to_hex(self, column: str) -> str:
+        return f'TO_HEX(FROM_BASE64({column}))'

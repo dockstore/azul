@@ -59,11 +59,12 @@ class TestPagination(DCP1CannedBundleTestCase, DocumentCloningTestCase):
 
         index_size_ = 0
         for index_size, page_sizes in page_sizes_by_index_size.items():
+            file_uuid_field = self._metadata_plugin.special_fields.file_uuid.name
             self._add_docs(index_size - index_size_)
             for page_size in page_sizes:
                 for sort_field, sort_path, sort_unique in [
                     ('entryId', ['entryId'], True),
-                    ('fileId', ['files', 0, 'uuid'], True),
+                    (file_uuid_field, ['files', 0, 'uuid'], True),
                     ('fileName', ['files', 0, 'name'], False)
                 ]:
                     for reverse in False, True:
@@ -145,4 +146,4 @@ class TestPagination(DCP1CannedBundleTestCase, DocumentCloningTestCase):
         self.assertEqual(expected_lengths, page_lengths)
         self.assertEqual(index_size, sum(page_lengths))
         values = list(chain.from_iterable(page.values for page in pages))
-        self.assertEqual(values, list(sorted(unique(values), reverse=reverse)))
+        self.assertEqual(values, sorted(unique(values), reverse=reverse))

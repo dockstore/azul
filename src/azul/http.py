@@ -2,6 +2,8 @@ import logging
 import sys
 import time
 from typing import (
+    Any,
+    ClassVar,
     Self,
 )
 
@@ -10,12 +12,14 @@ from furl import (
     furl,
 )
 import urllib3
+import urllib3._request_methods
+import urllib3.connection
 import urllib3.connectionpool
 import urllib3.exceptions
-import urllib3.request
 
 from azul import (
     R,
+    cache,
     cached_property,
     config,
     require,
@@ -24,7 +28,7 @@ from azul.logging import (
     http_body_log_message,
 )
 
-HttpClient = urllib3.request.RequestMethods
+HttpClient = urllib3._request_methods.RequestMethods
 
 
 class HttpClientDecorator(HttpClient):
@@ -41,7 +45,7 @@ class HttpClientDecorator(HttpClient):
         super().__init__(headers)
         self._inner = inner
 
-    def urlopen(self, *args, **kwargs) -> urllib3.HTTPResponse:
+    def urlopen(self, *args, **kwargs) -> urllib3.BaseHTTPResponse:
         return self._inner.urlopen(*args, **kwargs)
 
     def delegate[T: HttpClient](self, cls: type[T]) -> T | None:
@@ -72,15 +76,49 @@ class LoggingHttpClient(HttpClientDecorator):
         super().__init__(inner, headers)
         self._log = log
 
+        # As a request is being prepared by the various layers of urllib3,
+        # requests headers may being added, in addition to the ones supplied by
+        # the client. To ensure that all headers are logged, we'd therefore need
+        # to log them at the innermost layer. To get at that layer we need to
+        # dynamically subclass the connection pool class for each of the two
+        # schemes and make the pool manager use those subclasses when creating
+        # new pools. The dynamic subclasses inherit a static mixin that actually
+        # logs the headers. We need to use subclassing because we don't have any
+        # connection pool instances yet and the only place where we can stash
+        # the logger instance is in a class attribute. There is one subclass per
+        # scheme and logger instance, and since there is typically one logger
+        # instance per client module, the class duplication is manageable at two
+        # subclasses per client module. The alternative approach would have been
+        # to monkey patch the ``_new_pool`` factory method in the pool manager
+        # instance but I felt the subclassing approach is more transparent. The
+        # subclass name is prefixed with the logger name.
+        #
+        pool_manager = self.delegate(urllib3.PoolManager)
+        attribute_name = 'pool_classes_by_scheme'
+        # Use setattr to appease mypy, as the stubs don't declare the attribute.
+        attribute_value = getattr(pool_manager, attribute_name)
+        setattr(pool_manager, attribute_name, attribute_value | {
+            scheme: self._pool_cls(log, scheme)
+            for scheme in ['http', 'https']
+        })
+
+    @classmethod
+    @cache
+    def _pool_cls(cls, log: logging.Logger, scheme: str) -> type:
+        proto = scheme.upper()
+        return type(
+            f'{log.name}.Logging{proto}ConnectionPool',
+            (_LoggingConnectionPool, getattr(urllib3, f'{proto}ConnectionPool')),
+            {'_log': log}
+        )
+
     def urlopen(self, method, url, *args, body=None, **kwargs) -> urllib3.HTTPResponse:
         log = self._log
         log.info('Making %s request to %r', method, url)
-        if config.debug > 1:
-            log.debug('… with keyword args %r', kwargs)
         log.info(http_body_log_message('request', body))
-        start = time.time()
+        start = time.monotonic()
         response = super().urlopen(method, url, *args, body=body, **kwargs)
-        duration = time.time() - start
+        duration = time.monotonic() - start
         assert isinstance(response, urllib3.HTTPResponse), type(response)
         log.info('Got %s response after %.3fs from %s to %s',
                  response.status, duration, method, url)
@@ -95,6 +133,26 @@ class LoggingHttpClient(HttpClientDecorator):
         self._log.info(message, *args)
 
 
+class _LoggingConnectionPool(urllib3.connectionpool.HTTPConnectionPool):
+    _log: ClassVar[logging.Logger]
+
+    def _make_request(self, *args, **kwargs) -> Any:
+        log = self._log
+        headers = kwargs.get('headers')
+        if headers is None or len(headers) == 0:
+            log.info('… without request headers')
+        else:
+            # urllib3's HTTPHeaderDict.items() can yield multiple entries for
+            # the same key, or a key only different in case
+            headers = [
+                (k, 'REDACTED' if k.lower() == 'authorization' else v)
+                for k, v in headers.items()
+            ]
+            log.info('… with request headers %r', headers)
+        # The stubs for urllib3 v1.x don't declare any protected methods
+        return super()._make_request(*args, **kwargs)  # type: ignore[misc]
+
+
 class DisableCrossHostRedirectClient(HttpClientDecorator):
     """
     A client that disables the "custom cross-host redirect logic" (quoting the
@@ -102,7 +160,7 @@ class DisableCrossHostRedirectClient(HttpClientDecorator):
     To enable the logic, simply pass ``redirect=True`` to the urlopen() method.
     """
 
-    def urlopen(self, method, url, *args, **kwargs) -> urllib3.HTTPResponse:
+    def urlopen(self, method, url, *args, **kwargs) -> urllib3.BaseHTTPResponse:
         kwargs.setdefault('redirect', False)
         return super().urlopen(method, url, *args, **kwargs)
 
@@ -189,7 +247,7 @@ class _LimitedRetry(urllib3.Retry):
                    other=retries,
                    status_forcelist={500, 502, 503},
                    raise_on_status=True)
-        self.start = time.time()
+        self.start = time.monotonic()
         self.retries = retries
         self.timeout = timeout
         return self
@@ -202,7 +260,7 @@ class _LimitedRetry(urllib3.Retry):
         if super().is_exhausted():
             return True
         else:
-            elapsed = time.time() - self.start
+            elapsed = time.monotonic() - self.start
             return self.retries == 0 and elapsed > .01 or elapsed >= self.timeout
 
     def new(self, **kwargs) -> Self:
@@ -230,7 +288,7 @@ class LimitedRetryHttpClient(HttpClientDecorator):
     def retries(self) -> int:
         return 0 if self._timing_is_restricted else 2
 
-    def urlopen(self, method, url, *args, **kwargs) -> urllib3.HTTPResponse:
+    def urlopen(self, method, url, *args, **kwargs) -> urllib3.BaseHTTPResponse:
         timeout, retries = self.timeout, self.retries
         require('retries' not in kwargs, "Argument 'retries' is disallowed")
         retry = _LimitedRetry.create(retries=retries, timeout=timeout)
@@ -242,6 +300,10 @@ class LimitedRetryHttpClient(HttpClientDecorator):
                                        timeout=timeout / (1 + retries),
                                        **kwargs)
         except (urllib3.exceptions.TimeoutError, urllib3.exceptions.MaxRetryError):
+            # Any wrapped instance of LoggingHttpClient may not have had a
+            # chance to log anything the response, so we hope that the exception
+            # captures enough information about the cause.
+            logging.warning('Exception during request or response', exc_info=True)
             raise LimitedTimeoutException(url, timeout)
         else:
             if response.status in retry.status_forcelist:
@@ -252,7 +314,7 @@ class LimitedRetryHttpClient(HttpClientDecorator):
 
 class Propagate429HttpClient(HttpClientDecorator):
 
-    def urlopen(self, method, url, *args, **kwargs) -> urllib3.HTTPResponse:
+    def urlopen(self, method, url, *args, **kwargs) -> urllib3.BaseHTTPResponse:
         response = super().urlopen(method, url, *args, **kwargs)
         if response.status == 429:
             raise TooManyRequestsException(url)
@@ -321,7 +383,7 @@ class StatusRetryHttpClient(HttpClientDecorator):
                 *args,
                 retries: urllib3.Retry | None = None,
                 **kwargs
-                ) -> urllib3.HTTPResponse:
+                ) -> urllib3.BaseHTTPResponse:
         """
         The ``retries`` argument, if specified, must be ``None`` or an instance
         of ``urllib3.Retry`` that has the ``status`` attribute set to an integer
@@ -370,11 +432,10 @@ class StatusRetryHttpClient(HttpClientDecorator):
                     num_retries -= 1
                     if retries.respect_retry_after_header:
                         try:
-                            retry_after = response.headers['Retry-After']
+                            retry_after = int(response.headers['Retry-After'])
                         except KeyError:
                             pass
                         else:
-                            retry_after = int(retry_after)
                             if logging_client is not None:
                                 logging_client.log('Sleeping %ds to honor Retry-After header', retry_after)
                             time.sleep(retry_after)
@@ -386,3 +447,52 @@ class StatusRetryHttpClient(HttpClientDecorator):
                         return response
             else:
                 return response
+
+
+def parse_header(name: str, value: str) -> tuple[str, dict[str, str]]:
+    """
+    Parse a MIME-related HTTP header, like ``content-type`` or
+    ``content-disposition`` into the mandatory part of the header's value and a
+    dictionary with an entry for each optional parameter in that value.
+
+    >>> parse_header('content-type', 'text/html; charset=utf-8')
+    ('text/html', {'charset': 'utf-8'})
+
+    >>> parse_header('content-type', 'application/json; charset=utf-8; foo=bar')
+    ('application/json', {'charset': 'utf-8', 'foo': 'bar'})
+
+    >>> parse_header('content-type', 'text/html')
+    ('text/html', {})
+
+    >>> parse_header('content-disposition', 'attachment; filename="document.pdf"')
+    ('attachment', {'filename': 'document.pdf'})
+
+    >>> parse_header('content-disposition', 'attachment; name="foo.pdf"; name="bar.pdf"')
+    Traceback (most recent call last):
+    ...
+    AssertionError: R('Duplicate parameters', [('name', 'foo.pdf'), ('name', 'bar.pdf')])
+
+    >>> parse_header('content-disposition', '')
+    Traceback (most recent call last):
+    ...
+    AssertionError: R('Empty arguments are disallowed', 'content-disposition', '')
+
+    >>> parse_header('content-type', 'text:charset=utf-8')
+    Traceback (most recent call last):
+    ...
+    AssertionError: R('Unparsable header format', 'text:charset=utf-8')
+    """
+    assert '' not in (name, value), R(
+        'Empty arguments are disallowed', name, value)
+    from email.message import (
+        Message,
+    )
+    m = Message()
+    m[name] = value
+    params = m.get_params(header=name)
+    assert isinstance(params, list)
+    key, delimiter = params.pop(0)
+    assert delimiter == '', R('Unparsable header format', value)
+    params_dict = dict(params)
+    assert len(params_dict) == len(params), R('Duplicate parameters', params)
+    return key, params_dict

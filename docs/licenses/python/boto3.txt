@@ -1,4 +1,4 @@
-https://github.com/boto/boto3/LICENSE
+https://github.com/boto/boto3/blob/HEAD/LICENSE
 
 
                                  Apache License

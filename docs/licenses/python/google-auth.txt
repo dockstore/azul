@@ -1,4 +1,4 @@
-https://github.com/googleapis/google-auth-library-python/LICENSE
+https://github.com/googleapis/google-auth-library-python/blob/HEAD/LICENSE
 
                                  Apache License
                            Version 2.0, January 2004

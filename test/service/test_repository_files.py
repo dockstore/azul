@@ -43,7 +43,7 @@ from azul.deployment import (
 from azul.drs import (
     Access,
     AccessMethod,
-    DRSClient,
+    DRSObject,
 )
 from azul.http import (
     http_client,
@@ -94,7 +94,7 @@ def setUpModule():
 class RepositoryFilesTestCase(LocalAppTestCase, metaclass=ABCMeta):
 
     @classmethod
-    def lambda_name(cls) -> str:
+    def app_name(cls) -> str:
         return 'service'
 
     def chalice_config(self):
@@ -168,10 +168,8 @@ class TestRepositoryFilesWithTDR(DCP2TestCase, RepositoryFilesTestCase):
                                              'X-Goog-SignedHeaders': 'host',
                                              'X-Goog-Signature': 'SOMESIGNATURE',
                                          })
-                    with mock.patch.object(DRSClient,
-                                           'get_object',
-                                           return_value=Access(method=AccessMethod.https,
-                                                               url=str(pre_signed_gs))):
+                    access = Access(method=AccessMethod.https, url=str(pre_signed_gs))
+                    with mock.patch.object(DRSObject, 'get', return_value=access):
                         response = client.request('GET', str(azul_url), redirect=False)
                         self.assertEqual(200 if fetch else 302, response.status)
                         if fetch:
@@ -191,11 +189,11 @@ class TestRepositoryFilesWithTDR(DCP2TestCase, RepositoryFilesTestCase):
             self.assertEqual(response.status, 404)
 
     mock_source_names = ['mock_snapshot_1', 'mock_snapshot_2']
-    make_mock_source_spec = 'tdr:bigquery:gcp:mock:{}:/2'.format
+    make_mock_source_spec = 'tdr:bigquery:gcp:mock:{}'.format
 
     @classmethod
     def _sources(cls):
-        return set(map(cls.make_mock_source_spec, cls.mock_source_names))
+        return {cls.make_mock_source_spec(n): {'mirror': True} for n in cls.mock_source_names}
 
     @mock.patch.object(TDRClient, 'snapshot_names_by_id')
     @mock.patch.object(TDRClient, 'validate', new=MagicMock())
@@ -424,7 +422,7 @@ class TestRepositoryFilesWithMirroring(DCP2TestCase,
         mirror_service = MirrorService(catalog=self.catalog,
                                        schema_url_func=MagicMock())
         with mock.patch.object(MirrorService, '_download', return_value=file_content):
-            mirror_service.mirror_file(file)
+            mirror_service._mirror_file(file)
         self.assertTrue(mirror_service.info_exists(file))
 
         client = http_client(log)
@@ -438,7 +436,7 @@ class TestRepositoryFilesWithMirroring(DCP2TestCase,
         self.assertEqual('https', signed_url.scheme)
         self.assertEqual(f'{self.mirror_bucket}.s3.{config.region}.amazonaws.com',
                          signed_url.netloc)
-        self.assertEqual('/' + mirror_service.mirror_object_key(file),
+        self.assertEqual('/' + mirror_service._file_object_key(file),
                          str(signed_url.path))
         self.assertEqual(f'attachment;filename="{file.name}"',
                          signed_url.args.get('response-content-disposition'))

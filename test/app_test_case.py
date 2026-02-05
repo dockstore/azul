@@ -24,6 +24,9 @@ from azul import (
     config,
     mutable_furl,
 )
+from azul.chalice import (
+    AzulChaliceApp,
+)
 from azul.logging import (
     get_test_logger,
 )
@@ -75,11 +78,11 @@ class LocalAppTestCase(CatalogTestCase, metaclass=ABCMeta):
 
     @classmethod
     @abstractmethod
-    def lambda_name(cls) -> str:
+    def app_name(cls) -> str:
         """
-        Return the name of the AWS Lambda function to start locally. Must match
-        the name of a subdirectory of ${project_root}/lambdas. Subclasses must
-        override this to select which AWS Lambda function to start locally.
+        Return the name of the application to start locally. Must match the name
+        of a directory in ${project_root}/lambdas. Subclasses must override this
+        method.
         """
         raise NotImplementedError
 
@@ -100,16 +103,25 @@ class LocalAppTestCase(CatalogTestCase, metaclass=ABCMeta):
         # app modules from different lambdas loaded by different concrete
         # subclasses. It does, however, violate this one invariant:
         # `sys.modules[module.__name__] == module`
-        cls.app_module = load_app_module(cls.lambda_name())
+        cls._app_module = load_app_module(cls.app_name())
 
     @classmethod
     def tearDownClass(cls):
-        cls.app_module = None
+        cls._app_module = None
         super().tearDownClass()
+
+    @property
+    def _app(self) -> AzulChaliceApp:
+        app = self._app_module.app
+        assert isinstance(app, AzulChaliceApp)
+        return app
 
     def setUp(self):
         super().setUp()
-        self.server_thread = ChaliceServerThread(self.app_module.app, self.chalice_config(), 'localhost', 0)
+        self.server_thread = ChaliceServerThread(app=self._app,
+                                                 config=self.chalice_config(),
+                                                 host='localhost',
+                                                 port=0)
         self.server_thread.start()
         deadline = time.time() + 10
         while True:

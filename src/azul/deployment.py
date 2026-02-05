@@ -211,6 +211,12 @@ class AWS:
     def s3_resource(self) -> 'S3ServiceResource':
         return self.resource('s3', azul_logging=True)
 
+    #: https://docs.aws.amazon.com/AmazonS3/latest/dev/qfacts.html
+    #:
+    s3_min_part_size = 5 * 1024 ** 2
+    s3_max_part_size = 5 * 1024 ** 3
+    s3_max_num_parts = 10000
+
     @property
     def securityhub(self) -> 'SecurityHubClient':
         return self.client('securityhub')
@@ -744,6 +750,20 @@ class AWS:
     @_cache
     def sqs_queue(self, queue_name: str) -> 'Queue':
         return self.sqs_resource.get_queue_by_name(QueueName=queue_name)
+
+    #: The maximum number of SendMessage, ReceiveMessage, or DeleteMessage API
+    #: calls per second supported for normal-throughput (as opposed to high-
+    #: throughput) FIFO queues.
+    #:
+    #: https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/quotas-messages.html
+    #:
+    sqs_fifo_rate_limit = 300
+
+    #: In 2025, the message size limit was increased from 256 KiB to 1 MiB.
+    #:
+    #: https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/quotas-messages.html
+    #:
+    sqs_max_message_size = 1 * 1024 ** 2
 
 
 aws = AWS()

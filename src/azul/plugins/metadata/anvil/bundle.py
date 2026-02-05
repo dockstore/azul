@@ -1,8 +1,8 @@
 from abc import (
     ABCMeta,
 )
-from collections import (
-    defaultdict,
+from functools import (
+    total_ordering,
 )
 from itertools import (
     chain,
@@ -32,6 +32,8 @@ from azul.indexer.document import (
 )
 from azul.types import (
     MutableJSON,
+    json_element_mappings,
+    json_element_strings,
 )
 
 # AnVIL snapshots do not use UUIDs for primary/foreign keys. This type alias
@@ -42,20 +44,23 @@ from azul.types import (
 Key = str
 
 
-@attrs.frozen(kw_only=True)
+@attrs.frozen(kw_only=True, order=True)
 class KeyReference(SerializableAttrs):
     key: Key
     entity_type: EntityType
 
 
 def ref_set_field():
-    return serializable(attrs.field(),
-                        from_json=lambda x: frozenset(map(EntityReference.parse, x)),
-                        to_json=lambda x: sorted(map(str, x)))
+    return serializable(
+        from_json=lambda x: frozenset(map(EntityReference.parse,
+                                          json_element_strings(x))),
+        to_json=lambda x: sorted(map(str, x))
+    )
 
 
+@total_ordering
 @attrs.frozen(kw_only=True, order=False)
-class Link[REF: EntityReference | KeyReference](SerializableAttrs):
+class Link[REF: (EntityReference, KeyReference)](SerializableAttrs):
     inputs: frozenset[REF] = ref_set_field()
     activity: REF | None = None
     outputs: frozenset[REF] = ref_set_field()
@@ -63,23 +68,6 @@ class Link[REF: EntityReference | KeyReference](SerializableAttrs):
     @property
     def all_entities(self) -> frozenset[REF]:
         return self.inputs | self.outputs | aset(self.activity)
-
-    @classmethod
-    def group_by_activity(cls, links: set[Self]):
-        """
-        Merge links that share the same (non-null) activity.
-        """
-        groups_by_activity: Mapping[KeyReference, set[Self]] = defaultdict(set)
-        for link in links:
-            if link.activity is not None:
-                groups_by_activity[link.activity].add(link)
-        for activity, group in groups_by_activity.items():
-            if len(group) > 1:
-                links -= group
-                merged_link = cls(inputs=frozenset.union(*[link.inputs for link in group]),
-                                  activity=activity,
-                                  outputs=frozenset.union(*[link.outputs for link in group]))
-                links.add(merged_link)
 
     def __lt__(self, other: Self) -> bool:
         return min(self.inputs) < min(other.inputs)
@@ -110,7 +98,7 @@ class AnvilBundle[BUNDLE_FQID: SourcedBundleFQID](Bundle[BUNDLE_FQID],
     entities: dict[EntityReference, MutableJSON] = attrs.field(factory=dict)
     links: set[EntityLink] = serializable(
         attrs.field(factory=set),
-        from_json=lambda x: set(EntityLink.from_json(v) for v in x),
+        from_json=lambda x: set(map(EntityLink.from_json, json_element_mappings(x))),
         to_json=lambda x: [v.to_json() for v in sorted(x)]
     )
     orphans: dict[EntityReference, MutableJSON] = attrs.field(factory=dict)

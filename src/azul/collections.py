@@ -7,6 +7,9 @@ from collections.abc import (
     Mapping,
     MutableSet,
 )
+from enum import (
+    Enum,
+)
 from functools import (
     partial,
 )
@@ -24,6 +27,7 @@ from typing import (
     Self,
     TypeVar,
     Union,
+    cast,
     overload,
 )
 
@@ -51,62 +55,97 @@ def dict_merge(dicts: Iterable[Mapping]) -> dict:
 # noinspection PyPep8Naming
 class deep_dict_merge[K, V](dict):
     """
-    Recursively merge the given dictionaries. If more than one dictionary
-    contains a given key, and all values associated with this key are themselves
-    dictionaries, then the value present in the result is the recursive merging
-    of those nested dictionaries.
-
-    >>> deep_dict_merge({0: 1}, {1: 0})
-    {0: 1, 1: 0}
-
-    To merge all dictionaries in an iterable, use this form:
-
-    >>> deep_dict_merge.from_iterable([{0: 1}, {1: 0}])
-    {0: 1, 1: 0}
-
-    >>> deep_dict_merge({0: {'a': 1}}, {0: {'b': 2}})
-    {0: {'a': 1, 'b': 2}}
-
-    Key collisions where either value is not a dictionary raise an exception,
-    unless the values compare equal to each other, in which case the entries
-    from *earlier* dictionaries takes precedence. This behavior is the opposite
-    of `dict_merge`, where later entries take precedence.
-
-    >>> deep_dict_merge({0: 1}, {0: 2})
-    Traceback (most recent call last):
-    ...
-    ValueError: 1 != 2
-
-    >>> l1, l2 = [], []
-    >>> d = deep_dict_merge({0: l1}, {0: l2})
-    >>> d
-    {0: []}
-    >>> id(d[0]) == id(l1)
-    True
+    Recursively merge the given mappings into a single dictionary.
 
     >>> deep_dict_merge()
     {}
+    >>> deep_dict_merge({})
+    {}
+    >>> deep_dict_merge({}, {})
+    {}
+    >>> deep_dict_merge({0: 1}, {})
+    {0: 1}
+    >>> deep_dict_merge({0: 1}, {1: 0})
+    {0: 1, 1: 0}
+
+    If more than one mapping contains a given key, the corresponding value in
+    the result is determined as follows:
+
+    A) If all values associated with that key are equal, the first of these
+       values is used.
+
+       >>> deep_dict_merge({0: 1}, {0: True})
+       {0: 1}
+       >>> l1, l2 = [], []
+       >>> d = deep_dict_merge({0: l1}, {0: l2})
+       >>> d
+       {0: []}
+       >>> id(d[0]) == id(l1)
+       True
+
+    B) Otherwise, if all values are themselves mappings, these nested mappings
+       are merged recursively.
+
+       >>> deep_dict_merge({0: {'a': 1}}, {0: {'b': 2}})
+       {0: {'a': 1, 'b': 2}}
+
+    C) Otherwise, if none of the values are mappings, either an exception is
+       raised, or, if `override` is true, the last of the values is used.
+
+       >>> deep_dict_merge({0: 1}, {0: 2})
+       Traceback (most recent call last):
+       ...
+       ValueError: ('Conflicting values', 1, 2)
+
+       >>> deep_dict_merge({0: 1}, {0: 2}, override=True)
+       {0: 2}
+
+    D) In all other cases (some, but not all of the values are mappings) an
+       exception is raised.
+
+       >>> deep_dict_merge({0: 1}, {0: {2: 3}})
+       Traceback (most recent call last):
+       ...
+       ValueError: ('Can only merge mappings', 1, {2: 3})
+
+    To merge all mappings in an iterable, use this form:
+
+    >>> deep_dict_merge.from_iterable([{0: 1}, {1: 0}])
+    {0: 1, 1: 0}
+    >>> deep_dict_merge.from_iterable([{0: 1}, {0: 2}], override=True)
+    {0: 2}
     """
 
-    def __init__(self, *maps: Mapping[K, V]):
+    def __init__(self, *maps: Mapping[K, V], override: bool = False):
         super().__init__()
-        self.merge(maps)
+        self.override = override
+        self._merge(maps)
 
     @classmethod
-    def from_iterable(cls, maps: Iterable[Mapping[K, V]], /) -> Self:
-        self = cls()
-        self.merge(maps)
+    def from_iterable(cls, maps: Iterable[Mapping[K, V]],
+                      /,
+                      *,
+                      override: bool = False) -> Self:
+        self = cls(override=override)
+        self._merge(maps)
         return self
 
-    def merge(self, maps: Iterable[Mapping[K, V]]):
+    def _merge(self, maps: Iterable[Mapping[K, V]]):
         for m in maps:
             for k, v2 in m.items():
                 v1 = self.setdefault(k, v2)
                 if v1 != v2:
-                    if isinstance(v1, Mapping) and isinstance(v2, Mapping):
-                        self[k] = type(self)(v1, v2)
-                    else:
-                        raise ValueError(f'{v1!r} != {v2!r}')
+                    match isinstance(v1, Mapping), isinstance(v2, Mapping):
+                        case True, True:
+                            # Cast is safe, mypy just isn't smart enough to infer that
+                            self[k] = type(self)(v1, cast(Mapping, v2), override=self.override)
+                        case False, False:
+                            if self.override:
+                                self[k] = v2
+                            else:
+                                raise ValueError('Conflicting values', v1, v2)
+                        case _:
+                            raise ValueError('Can only merge mappings', v1, v2)
 
 
 def explode_dict[K, V](d: Mapping[K, Union[V, list[V], set[V], tuple[V]]]
@@ -551,3 +590,77 @@ class OrderedSet[K](MutableSet[K]):
 
 def singleton[T](x: T) -> frozenset[T]:
     return frozenset((x,))
+
+
+class LookupDefault(Enum):
+    RAISE = 0
+
+
+def lookup[K, V](d: Mapping[K, V],
+                 k: K,
+                 *ks: K,
+                 default: V | LookupDefault | None = LookupDefault.RAISE
+                 ) -> V | None:
+    """
+    Look up a value in the specified dictionary given one or more candidate
+    keys.
+
+    This function raises a key error for the first (!) key if none of the keys
+    are present and the `default` keyword argument absent. If the `default`
+    keyword argument is present (None is a valid default), this function returns
+    that argument instead of raising an KeyError in that case. This is notably
+    different to dict.get() whose default default is `None`. This function does
+    not have a default default.
+
+    If the first key is present, return its value ...
+
+    >>> lookup({1:2}, 1)
+    2
+
+    ... and ignore the other keys.
+
+    >>> lookup({1:2}, 1, 3)
+    2
+
+    If the first key is absent, try the fallbacks.
+
+    >>> lookup({1:2}, 3, 1)
+    2
+
+    If the key isn't present, raise a KeyError referring to that key.
+
+    >>> lookup({1:2}, 3)
+    Traceback (most recent call last):
+    ...
+    KeyError: 3
+
+    If neither the first key nor the fallbacks are present, raise a KeyError
+    referring to the first key.
+
+    >>> lookup({1:2}, 3, 4)
+    Traceback (most recent call last):
+    ...
+    KeyError: 3
+
+    If the key isn't present but a default was passed, return the default.
+
+    >>> lookup({1:2}, 3, default=4)
+    4
+
+    None is a valid default.
+
+    >>> lookup({1:2}, 3, 4, default=None) is None
+    True
+    """
+    try:
+        return d[k]
+    except KeyError:
+        for k in ks:
+            try:
+                return d[k]
+            except KeyError:
+                pass
+        if default is LookupDefault.RAISE:
+            raise
+        else:
+            return default

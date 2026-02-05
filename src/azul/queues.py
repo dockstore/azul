@@ -14,9 +14,6 @@ from concurrent.futures import (
 from datetime import (
     datetime,
 )
-from enum import (
-    Enum,
-)
 from itertools import (
     chain,
     islice,
@@ -46,9 +43,12 @@ from more_itertools import (
 )
 
 from azul import (
-    R,
     cached_property,
     config,
+)
+from azul.attrs import (
+    DiscriminatingPolymorphicSerializableAttrs,
+    SerializableAttrs,
 )
 from azul.deployment import (
     aws,
@@ -57,16 +57,15 @@ from azul.files import (
     write_file_atomically,
 )
 from azul.json import (
-    Serializable,
+    StaticRegisteredPolymorphicSerializable,
 )
 from azul.lambdas import (
-    Lambdas,
+    LambdaFunctions,
 )
 from azul.modules import (
     load_app_module,
 )
 from azul.types import (
-    AnyJSON,
     JSON,
     json_mapping,
     json_str,
@@ -86,8 +85,8 @@ if TYPE_CHECKING:
     )
 
 
-@attrs.frozen(kw_only=True)
-class SQSMessage:
+@attrs.frozen(kw_only=True, repr=False)
+class SQSMessage(SerializableAttrs):
     body: JSON
 
     #: Approximate number of times this message has been received, or None if
@@ -112,6 +111,11 @@ class SQSMessage:
         return cls(id=json_str(record.to_dict()['messageId']),
                    body=json.loads(record.body),
                    attempts=int(json_str(attributes['ApproximateReceiveCount'])))
+
+    def __repr__(self) -> str:
+        # We profusely log instances of this class, so we would like their
+        # logged form to benefit from CloudWatch's automatic parsing of JSON
+        return json.dumps(self.to_json())
 
 
 @attrs.frozen(kw_only=True)
@@ -194,16 +198,38 @@ class Queues:
         self._cleanup_messages(queue, messages)
         return messages
 
-    def send_messages(self, queue: 'Queue', messages: Iterable[SQSMessage]) -> int:
+    def send_messages(self,
+                      queue: 'Queue',
+                      messages: Iterable[SQSMessage],
+                      rate_limit: float | None = None,
+                      log_level: int = logging.DEBUG
+                      ) -> int:
         num_messages = 0
         for batch in chunked(messages, self.batch_size):
             entries = [message.to_batch_entry(i) for i, message in enumerate(batch)]
+            start = time.time()
             queue.send_messages(Entries=entries)
+            for message in batch:
+                self._log_queued_message(message, log_level)
+            if rate_limit is not None:
+                period = 1 / rate_limit
+                time_spent = time.time() - start
+                time_to_sleep = period - time_spent
+                if time_to_sleep > 0:
+                    log.debug('Sleeping %.3fs to avoid SQS rate limit', time_to_sleep)
+                    time.sleep(time_to_sleep)
             num_messages += len(batch)
         return num_messages
 
-    def send_message(self, queue: 'Queue', message: SQSMessage):
+    def send_message(self,
+                     queue: 'Queue',
+                     message: SQSMessage,
+                     log_level: int = logging.DEBUG):
         queue.send_message(**message.to_entry())
+        self._log_queued_message(message, log_level)
+
+    def _log_queued_message(self, message: SQSMessage, log_level: int):
+        log.log(log_level, 'Queued message %r', message)
 
     def _cleanup_messages(self, queue: 'Queue', messages: Iterable['Message']):
         message_batches = list(more_itertools.chunked(messages, self.batch_size))
@@ -246,8 +272,12 @@ class Queues:
                          queue: 'Queue'):
         for message_batch in message_batches:
             response = queue.delete_messages(
-                Entries=[dict(Id=message.message_id,
-                              ReceiptHandle=message.receipt_handle) for message in message_batch])
+                Entries=[
+                    dict(Id=message.message_id,
+                         ReceiptHandle=message.receipt_handle)
+                    for message in message_batch
+                ]
+            )
             if len(response['Successful']) != len(message_batch):
                 raise RuntimeError(f'Failed to delete messages: {response!r}')
 
@@ -486,21 +516,27 @@ class Queues:
             time.sleep(3)
             queue.reload()
 
-    def _manage_sqs_push(self, function_name: str, queue: 'Queue', enable: bool):
+    def _manage_sqs_push(self,
+                         *,
+                         function: str,
+                         alias: str,
+                         queue: 'Queue',
+                         enable: bool):
         lambda_ = aws.lambda_
-        response = lambda_.list_event_source_mappings(FunctionName=function_name,
+        partial_arn = f'{function}:{alias}'
+        response = lambda_.list_event_source_mappings(FunctionName=partial_arn,
                                                       EventSourceArn=queue.attributes['QueueArn'])
         mapping_uuid = one(response['EventSourceMappings'])['UUID']
 
         def update_():
             log.info('%s push from %r to lambda function %r',
-                     'Enabling' if enable else 'Disabling', queue.url, function_name)
+                     'Enabling' if enable else 'Disabling', queue.url, function)
             lambda_.update_event_source_mapping(UUID=mapping_uuid, Enabled=enable)
 
         state = one(response['EventSourceMappings'])['State']
         while True:
             log.info('Push from %r to lambda function %r is in state %r.',
-                     queue.url, function_name, state)
+                     queue.url, function, state)
             if state in ('Disabling', 'Enabling', 'Updating'):
                 pass
             elif state == 'Enabled':
@@ -554,17 +590,21 @@ class Queues:
                     if queue_name == config.notifications_queue.name:
                         # Prevent new notifications from being added
                         submit(self._manage_lambda, config.indexer_name, enable)
-                    submit(self._manage_sqs_push, function, queue, enable)
+                    submit(self._manage_sqs_push,
+                           function=function,
+                           alias=config.active_function_alias_name,
+                           queue=queue,
+                           enable=enable)
             self._handle_futures(futures)
             futures = [tpe.submit(self._wait_for_queue_idle, queue) for queue in queues.values()]
             self._handle_futures(futures)
 
     def _manage_lambda(self, function_name: str, enable: bool):
-        self._lambdas.manage_lambda(function_name, enable)
+        self._functions.manage_function(function_name, enable)
 
     @cached_property
-    def _lambdas(self) -> Lambdas:
-        return Lambdas()
+    def _functions(self) -> LambdaFunctions:
+        return LambdaFunctions()
 
     def _handle_futures(self, futures: Iterable[Future]):
         errors = []
@@ -577,15 +617,14 @@ class Queues:
             raise RuntimeError(errors)
 
 
-class Action(Serializable, Enum):
+class Action(DiscriminatingPolymorphicSerializableAttrs,
+             StaticRegisteredPolymorphicSerializable):
+    """
+    Represents a unit of pending work. Actions are persisted as the bodies of
+    queue messages. We may even use the terms *message* and *action*
+    interchangeably.
+    """
 
     @classmethod
-    def from_json(cls, action: AnyJSON) -> Self:
-        assert isinstance(action, str), R('Action is not a string', type(action))
-        try:
-            return cls[action]
-        except KeyError:
-            assert False, R('Invalid action', action)
-
-    def to_json(self) -> str:
-        return self.name
+    def discriminator(cls) -> str:
+        return 'action'

@@ -11,8 +11,11 @@ from typing import (
     Self,
     overload,
 )
-
-import attr
+from attrs import (
+    define,
+    evolve,
+    frozen,
+)
 from more_itertools import (
     one,
 )
@@ -27,7 +30,6 @@ from azul.enums import (
 )
 from azul.indexer import (
     BundleFQID,
-    SimpleSourceSpec,
     SourceRef,
 )
 from azul.indexer.field import (
@@ -59,7 +61,7 @@ type EntityID = str
 type EntityType = str
 
 
-@attr.s(frozen=True, auto_attribs=True, kw_only=True, slots=True)
+@frozen(kw_only=True, order=True)
 class EntityReference(Parseable):
     entity_type: EntityType
     entity_id: EntityID
@@ -73,7 +75,7 @@ class EntityReference(Parseable):
         return cls(entity_type=entity_type, entity_id=entity_id)
 
 
-@attr.s(frozen=True, auto_attribs=True, kw_only=True, slots=True)
+@frozen(kw_only=True)
 class CataloguedEntityReference(EntityReference):
     catalog: CatalogName
 
@@ -96,7 +98,7 @@ class DocumentType(Enum):
         return f'<{self.__class__.__name__}.{self._name_}>'
 
 
-@attr.s(frozen=True, kw_only=True, auto_attribs=True)
+@frozen(kw_only=True)
 class IndexName:
     """
     The name of an Elasticsearch index used by an Azul deployment, parsed into
@@ -408,7 +410,7 @@ class IndexName:
 type CataloguedDocumentCoordinates = DocumentCoordinates[CataloguedEntityReference]
 
 
-@attr.s(frozen=True, auto_attribs=True, kw_only=True, slots=True)
+@frozen(kw_only=True)
 class DocumentCoordinates[E: EntityReference](metaclass=ABCMeta):
     """
     The coordinates of a document ultimately define two strings: 1) the name of
@@ -485,13 +487,13 @@ class DocumentCoordinates[E: EntityReference](metaclass=ABCMeta):
         else:
             assert catalog is not None
             entity = CataloguedEntityReference.for_entity(catalog, self.entity)
-            return attr.evolve(self, entity=entity)
+            return evolve(self, entity=entity)
 
 
 type CataloguedContributionCoordinates = ContributionCoordinates[CataloguedEntityReference]
 
 
-@attr.s(frozen=True, auto_attribs=True, kw_only=True, slots=True)
+@frozen(kw_only=True)
 class ContributionCoordinates[E: EntityReference](DocumentCoordinates[E]):
     """
     Coordinates of contribution documents. Contributions originate from a
@@ -550,7 +552,7 @@ class ContributionCoordinates[E: EntityReference](DocumentCoordinates[E]):
         ))
 
 
-@attr.s(frozen=True, auto_attribs=True, kw_only=True, slots=True)
+@frozen(kw_only=True)
 class AggregateCoordinates(DocumentCoordinates[CataloguedEntityReference]):
     """
     Coordinates of aggregate documents. Aggregate coordinates always carry a
@@ -581,7 +583,7 @@ class AggregateCoordinates(DocumentCoordinates[CataloguedEntityReference]):
 type CataloguedReplicaCoordinates = ReplicaCoordinates[CataloguedEntityReference]
 
 
-@attr.s(frozen=True, auto_attribs=True, kw_only=True, slots=True)
+@frozen(kw_only=True)
 class ReplicaCoordinates[E: EntityReference](DocumentCoordinates[E]):
     """
     Coordinates of replica documents. Replicas are content-addressed, so these
@@ -627,7 +629,13 @@ class ReplicaCoordinates[E: EntityReference](DocumentCoordinates[E]):
         return f'replica of {self.entity}'
 
 
+#: The elements of a field path (see below)
+#:
 FieldPathElement = str
+
+#: The path to a field in an index document. The first (last) element in the
+#: path is the key into the outermost (innermost) dictionary in that document.
+#:
 FieldPath = tuple[FieldPathElement, ...]
 
 InternalVersion = tuple[int, int]
@@ -648,7 +656,7 @@ class OpType(Enum):
     update = auto()
 
 
-@attr.s(frozen=False, kw_only=True, auto_attribs=True)
+@define(kw_only=True)
 class Document[C: DocumentCoordinates](metaclass=ABCMeta):
     needs_translation: ClassVar[bool] = True
 
@@ -922,11 +930,7 @@ class Document[C: DocumentCoordinates](metaclass=ABCMeta):
         return body
 
 
-class DocumentSource(SourceRef[SimpleSourceSpec]):
-    pass
-
-
-@attr.s(frozen=False, kw_only=True, auto_attribs=True)
+@define(kw_only=True)
 class Contribution[E: EntityReference](Document[ContributionCoordinates[E]]):
 
     @classmethod
@@ -935,7 +939,7 @@ class Contribution[E: EntityReference](Document[ContributionCoordinates[E]]):
 
     # This narrows the type declared in the superclass. See comment there.
     contents: JSON
-    source: DocumentSource
+    source: SourceRef
 
     #: The op_type attribute will change to OpType.index if writing
     #: to Elasticsearch fails with 409
@@ -977,7 +981,7 @@ class Contribution[E: EntityReference](Document[ContributionCoordinates[E]]):
         self = super().from_json(coordinates=coordinates,
                                  document=document,
                                  version=version,
-                                 source=DocumentSource.from_json(document['source']),
+                                 source=SourceRef.from_json(document['source']),
                                  **kwargs)
         assert self.coordinates.document_id == document['document_id']
         assert self.coordinates.bundle.uuid == document['bundle_uuid']
@@ -1005,9 +1009,9 @@ class Contribution[E: EntityReference](Document[ContributionCoordinates[E]]):
                     bundle_deleted=self.coordinates.deleted)
 
 
-@attr.s(frozen=False, kw_only=True, auto_attribs=True)
+@define(kw_only=True)
 class Aggregate(Document[AggregateCoordinates]):
-    sources: set[DocumentSource]
+    sources: set[SourceRef]
     bundles: list[BundleFQID] | None
     num_contributions: int
 
@@ -1024,14 +1028,8 @@ class Aggregate(Document[AggregateCoordinates]):
         return {
             **super().field_types(field_types),
             'num_contributions': pass_thru_int,
-            'sources': {
-                'id': pass_thru_str,
-                'spec': pass_thru_str
-            },
-            'bundles': {
-                'uuid': pass_thru_str,
-                'version': pass_thru_str,
-            }
+            'sources': SourceRef.field_types(),
+            'bundles': BundleFQID.field_types()
         }
 
     @classmethod
@@ -1042,7 +1040,8 @@ class Aggregate(Document[AggregateCoordinates]):
                   version: InternalVersion | None,
                   **kwargs
                   ) -> Self:
-        sources = set(map(DocumentSource.from_json, json_sequence(document['sources'])))
+        sources: set[SourceRef] = set(map(SourceRef.from_json,
+                                          json_sequence(document['sources'])))
         bundles = optional(json_sequence, document.get('bundles'))
         bundles = None if bundles is None else list(map(BundleFQID.from_json, bundles))
         num_contributions = json_int(document['num_contributions'])
@@ -1059,8 +1058,7 @@ class Aggregate(Document[AggregateCoordinates]):
     def mandatory_source_fields(cls) -> list[str]:
         return super().mandatory_source_fields() + [
             'num_contributions',
-            'sources.id',
-            'sources.spec'
+            *(f'sources.{f}' for f in SourceRef.field_types().keys())
         ]
 
     def to_json(self) -> JSON:
@@ -1087,7 +1085,7 @@ class Aggregate(Document[AggregateCoordinates]):
         raise NotImplementedError
 
 
-@attr.s(frozen=False, kw_only=True, auto_attribs=True)
+@define(kw_only=True)
 class Replica[E: EntityReference](Document[ReplicaCoordinates[E]]):
     """
     A verbatim copy of a metadata document
@@ -1109,7 +1107,7 @@ class Replica[E: EntityReference](Document[ReplicaCoordinates[E]]):
 
     contents: JSON
 
-    source: DocumentSource
+    source: SourceRef
 
     hub_ids: list[EntityID]
 

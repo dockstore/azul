@@ -23,6 +23,7 @@ from furl import (
 
 from azul import (
     cache_per_thread,
+    config,
     require,
 )
 from azul.auth import (
@@ -35,7 +36,7 @@ from azul.bigquery import (
 )
 from azul.drs import (
     AccessMethod,
-    DRSClient,
+    DRSObject,
 )
 from azul.indexer import (
     Bundle,
@@ -130,7 +131,8 @@ class TDRPlugin[TDR_BUNDLE: TDRBundle,
         }
         return [
             TDRSourceRef(id=id,
-                         spec=configured_specs_by_name[name])
+                         spec=configured_specs_by_name[name],
+                         prefix=None)
             for name, id in snapshot_ids_by_name.items()
         ]
 
@@ -176,13 +178,6 @@ class TDRPlugin[TDR_BUNDLE: TDRBundle,
                                   type(authentication))
         return tdr
 
-    @classmethod
-    @cache_per_thread
-    def _drs_client(cls,
-                    authentication: Authentication | None = None
-                    ) -> DRSClient:
-        return cls._user_authenticated_tdr(authentication).drs_client()
-
     def _lookup_source_id(self, spec: TDRSourceSpec) -> str:
         return self.tdr.lookup_source(spec)
 
@@ -208,10 +203,19 @@ class TDRPlugin[TDR_BUNDLE: TDRBundle,
     def _emulate_bundle(self, bundle_fqid: TDRBundleFQID) -> TDR_BUNDLE:
         raise NotImplementedError
 
-    def drs_client(self,
+    def drs_object(self,
+                   drs_uri: str,
                    authentication: Authentication | None = None
-                   ) -> DRSClient:
-        return self._drs_client(authentication)
+                   ) -> DRSObject:
+        drs_url = self._resolve_drs_uri(drs_uri)
+        tdr_url = config.tdr_service_url
+        # Authenticate only if the DRS server is TDR so that we don't leak user
+        # or service account tokens to untrusted servers.
+        if (drs_url.scheme, drs_url.host) == (tdr_url.scheme, tdr_url.host):
+            drs_client = self._user_authenticated_tdr(authentication)
+        else:
+            drs_client = self._unauthenticated_drs
+        return drs_client.drs_object(drs_url)
 
     def file_download_class(self) -> type[RepositoryFileDownload]:
         return TDRFileDownload
@@ -269,9 +273,8 @@ class TDRFileDownload(RepositoryFileDownload):
             assert self.location is None, self
             assert self.retry_after is None, self
         else:
-            drs_client = plugin.drs_client(authentication)
-            access = drs_client.get_object(self.file.drs_uri,
-                                           access_method=AccessMethod.gs)
+            drs_client = plugin.drs_object(self.file.drs_uri, authentication)
+            access = drs_client.get(access_method=AccessMethod.gs)
             require(access.method is AccessMethod.https, access.method)
             require(access.headers is None, access.headers)
             signed_url = access.url

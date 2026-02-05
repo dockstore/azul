@@ -1,4 +1,4 @@
-https://github.com/getsentry/responses/LICENSE
+https://github.com/getsentry/responses/blob/HEAD/LICENSE
 
                               Apache License
                         Version 2.0, January 2004

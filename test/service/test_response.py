@@ -11,7 +11,6 @@ from itertools import (
 import json
 import os
 from typing import (
-    Optional,
     Self,
     cast,
 )
@@ -43,8 +42,12 @@ from azul import (
 from azul.collections import (
     none_safe_key,
 )
+from azul.deployment import (
+    aws,
+)
 from azul.indexer import (
     BundleFQID,
+    Prefix,
     SourcedBundleFQID,
 )
 from azul.indexer.document import (
@@ -62,8 +65,6 @@ from azul.logging import (
 )
 from azul.plugins import (
     FieldPath,
-    MetadataPlugin,
-    SpecialFields,
 )
 from azul.plugins.metadata.hca import (
     HCABundle,
@@ -137,6 +138,10 @@ class TestIndexResponse(IndexResponseTestCase):
         cls._teardown_indices()
         super().tearDownClass()
 
+    @property
+    def file_url_func(self):
+        return self._app.file_url
+
     def _get_hits(self, entity_type: str, entity_id: str):
         """
         Fetches hits from ES instance searching for a particular entity ID
@@ -160,6 +165,16 @@ class TestIndexResponse(IndexResponseTestCase):
     @cached_property
     def _index_service(self):
         return IndexService()
+
+    @property
+    def _repository_service(self):
+        return self._app.repository_controller.service
+
+    def _response_stage(self, entity_type: str) -> HCASearchResponseStage:
+        return HCASearchResponseStage(service=self._repository_service,
+                                      entity_type=entity_type,
+                                      catalog=self.catalog,
+                                      file_url_func=self.file_url_func)
 
     @property
     def paginations(self):
@@ -195,153 +210,159 @@ class TestIndexResponse(IndexResponseTestCase):
         """
         hits = [
             {
-                "bundles": [
+                'bundles': [
                     {
-                        "bundleUuid": "aaa96233-bf27-44c7-82df-b4dc15ad4d9d",
-                        "bundleVersion": "2018-11-02T11:33:44.698028Z"
+                        'bundleUuid': 'aaa96233-bf27-44c7-82df-b4dc15ad4d9d',
+                        'bundleVersion': '2018-11-02T11:33:44.698028Z'
                     }
                 ],
-                "cellLines": [
+                'cellLines': [
 
                 ],
-                "cellSuspensions": [
+                'cellSuspensions': [
                     {
-                        "organ": ["pancreas"],
-                        "organPart": ["islet of Langerhans"],
-                        "selectedCellType": [None],
-                        "totalCells": 1,
-                        "totalCellsRedundant": 0,
+                        'organ': ['pancreas'],
+                        'organPart': ['islet of Langerhans'],
+                        'selectedCellType': [None],
+                        'totalCells': 1,
+                        'totalCellsRedundant': 0,
                     }
                 ],
-                "donorOrganisms": [
+                'donorOrganisms': [
                     {
-                        "biologicalSex": ["female"],
-                        "disease": ['normal'],
-                        "developmentStage": [None],
-                        "genusSpecies": ["Australopithecus"],
-                        "id": ["DID_scRSq06"],
-                        "donorCount": 1,
-                        "organismAge": [{"value": "38", "unit": "year"}],
-                        "organismAgeRange": [[1198368000.0, 1198368000.0]],
+                        'biologicalSex': ['female'],
+                        'disease': ['normal'],
+                        'developmentStage': [None],
+                        'genusSpecies': ['Australopithecus'],
+                        'id': ['DID_scRSq06'],
+                        'donorCount': 1,
+                        'organismAge': [{'value': '38', 'unit': 'year'}],
+                        'organismAgeRange': [[1198368000.0, 1198368000.0]],
                     }
                 ],
-                "entryId": "0c5ac7c0-817e-40d4-b1b1-34c3d5cfecdb",
-                "files": [
+                'entryId': '0c5ac7c0-817e-40d4-b1b1-34c3d5cfecdb',
+                'files': [
                     {
-                        "contentDescription": [None],
-                        "format": "fastq.gz",
-                        "matrixCellCount": None,
-                        "isIntermediate": None,
-                        "name": "SRR3562915_1.fastq.gz",
-                        "sha256": "77337cb51b2e584b5ae1b99db6c163b988cbc5b894dda2f5d22424978c3bfc7a",
-                        "size": 195142097,
-                        "fileSource": None,
-                        "drs_uri": f"drs://{self._drs_domain_name}/"
-                                   f"7b07f99e-4a8a-4ad0-bd4f-db0d7a00c7bb?version=2018-11-02T11%3A33%3A44.698028Z",
-                        "uuid": "7b07f99e-4a8a-4ad0-bd4f-db0d7a00c7bb",
-                        "version": "2018-11-02T11:33:44.698028Z"
+                        'contentDescription': [None],
+                        'format': 'fastq.gz',
+                        'matrixCellCount': None,
+                        'isIntermediate': None,
+                        'name': 'SRR3562915_1.fastq.gz',
+                        'sha256': '77337cb51b2e584b5ae1b99db6c163b988cbc5b894dda2f5d22424978c3bfc7a',
+                        'size': 195142097,
+                        'fileSource': None,
+                        'azul_url': f'{self.base_url}/repository/files/'
+                                    f'7b07f99e-4a8a-4ad0-bd4f-db0d7a00c7bb'
+                                    f'?catalog=test&version=2018-11-02T11%3A33%3A44.698028Z',
+                        'azul_mirror_uri': f's3://{aws.mirror_bucket}/file/'
+                                           f'77337cb51b2e584b5ae1b99db6c163b988cbc5b894dda2f5d22424978c3bfc7a.sha256',
+                        'drs_uri': f'drs://{self._drs_domain_name}/'
+                                   f'7b07f99e-4a8a-4ad0-bd4f-db0d7a00c7bb?version=2018-11-02T11%3A33%3A44.698028Z',
+                        'uuid': '7b07f99e-4a8a-4ad0-bd4f-db0d7a00c7bb',
+                        'version': '2018-11-02T11:33:44.698028Z'
                     }
                 ],
-                "organoids": [
+                'organoids': [
 
                 ],
-                "projects": [
+                'projects': [
                     {
-                        "laboratory": ["John Dear"],
-                        "projectId": ["e8642221-4c2c-4fd7-b926-a68bce363c88"],
-                        "projectShortname": ["Single of human pancreas"],
-                        "projectTitle": ["Single cell transcriptome patterns."],
-                        "bionetworkName": [None],
-                        "isTissueAtlasProject": [False],
-                        "tissueAtlas": [],
-                        "estimatedCellCount": None,
-                        "dataUseRestriction": [None],
-                        "duosId": [None],
+                        'laboratory': ['John Dear'],
+                        'projectId': ['e8642221-4c2c-4fd7-b926-a68bce363c88'],
+                        'projectShortname': ['Single of human pancreas'],
+                        'projectTitle': ['Single cell transcriptome patterns.'],
+                        'bionetworkName': [None],
+                        'isTissueAtlasProject': [False],
+                        'tissueAtlas': [],
+                        'estimatedCellCount': None,
+                        'dataUseRestriction': [None],
+                        'duosId': [None],
                     }
                 ],
-                "protocols": [
+                'protocols': [
                     {
-                        "libraryConstructionApproach": ["Smart-seq2"],
-                        "nucleicAcidSource": ["single cell"],
+                        'libraryConstructionApproach': ['Smart-seq2'],
+                        'nucleicAcidSource': ['single cell'],
                     },
                     {
-                        "instrumentManufacturerModel": ["Illumina NextSeq 500"],
-                        "pairedEnd": [True],
+                        'instrumentManufacturerModel': ['Illumina NextSeq 500'],
+                        'pairedEnd': [True],
                     }
                 ],
-                "samples": [
+                'samples': [
                     {
-                        "sampleEntityType": ["specimens"],
-                        "effectiveOrgan": ['pancreas'],
-                        "disease": ["normal"],
-                        "id": ["DID_scRSq06_pancreas"],
-                        "organ": ["pancreas"],
-                        "organPart": ["islet of Langerhans"],
-                        "preservationMethod": [None],
-                        "source": [
-                            "specimen_from_organism",
+                        'sampleEntityType': ['specimens'],
+                        'effectiveOrgan': ['pancreas'],
+                        'disease': ['normal'],
+                        'id': ['DID_scRSq06_pancreas'],
+                        'organ': ['pancreas'],
+                        'organPart': ['islet of Langerhans'],
+                        'preservationMethod': [None],
+                        'source': [
+                            'specimen_from_organism',
                         ],
                     }
                 ],
-                "sources": [{
-                    "sourceId": self.source.id,
-                    "sourceSpec": str(self.source.spec)
+                'sources': [{
+                    'sourceId': self.source.id,
+                    'sourcePrefix': str(self.source.prefix),
+                    'sourceSpec': str(self.source.spec)
                 }],
-                "specimens": [
+                'specimens': [
                     {
-                        "disease": ["normal"],
-                        "id": ["DID_scRSq06_pancreas"],
-                        "organ": ["pancreas"],
-                        "organPart": ["islet of Langerhans"],
-                        "preservationMethod": [None],
-                        "source": [
-                            "specimen_from_organism",
+                        'disease': ['normal'],
+                        'id': ['DID_scRSq06_pancreas'],
+                        'organ': ['pancreas'],
+                        'organPart': ['islet of Langerhans'],
+                        'preservationMethod': [None],
+                        'source': [
+                            'specimen_from_organism',
                         ],
                     }
                 ],
-                "dates": [
+                'dates': [
                     {
-                        "aggregateLastModifiedDate": None,
-                        "aggregateSubmissionDate": None,
-                        "aggregateUpdateDate": None,
-                        "lastModifiedDate": "2018-11-02T10:35:07.705000Z",
-                        "submissionDate": "2018-11-02T10:03:39.600000Z",
-                        "updateDate": "2018-11-02T10:35:07.705000Z",
+                        'aggregateLastModifiedDate': None,
+                        'aggregateSubmissionDate': None,
+                        'aggregateUpdateDate': None,
+                        'lastModifiedDate': '2018-11-02T10:35:07.705000Z',
+                        'submissionDate': '2018-11-02T10:03:39.600000Z',
+                        'updateDate': '2018-11-02T10:35:07.705000Z',
                     }
                 ]
             }
         ]
         responses = [
             {
-                "hits": hits,
-                "pagination": {
-                    "count": 2,
-                    "order": "desc",
-                    "pages": 1,
-                    "next": None,
-                    "previous": None,
-                    "size": 5,
-                    "sort": "entryId",
-                    "total": 2
+                'hits': hits,
+                'pagination': {
+                    'count': 2,
+                    'order': 'desc',
+                    'pages': 1,
+                    'next': None,
+                    'previous': None,
+                    'size': 5,
+                    'sort': 'entryId',
+                    'total': 2
                 },
-                "termFacets": {}
+                'termFacets': {}
             },
             {
-                "hits": hits,
-                "pagination": {
-                    "count": 2,
-                    "order": "desc",
-                    "pages": 1,
-                    "next": str(self.base_url.set(path='/index/files',
+                'hits': hits,
+                'pagination': {
+                    'count': 2,
+                    'order': 'desc',
+                    'pages': 1,
+                    'next': str(self.base_url.set(path='/index/files',
                                                   args=dict(size=5,
                                                             search_after='cbb998ce-ddaf-34fa-e163-d14b399c6b34',
                                                             search_after_uid='meta%2332'))),
-                    "previous": None,
-                    "size": 5,
-                    "sort": "entryId",
-                    "total": 2
+                    'previous': None,
+                    'size': 5,
+                    'sort': 'entryId',
+                    'total': 2
                 },
-                "termFacets": {}
+                'termFacets': {}
             }
         ]
         for n in 0, 1:
@@ -349,9 +370,7 @@ class TestIndexResponse(IndexResponseTestCase):
                 # FIXME: Use response from `/index/files` to validate
                 #        https://github.com/DataBiosphere/azul/issues/2970
                 hits = self._get_hits('files', '0c5ac7c0-817e-40d4-b1b1-34c3d5cfecdb')
-                stage = HCASearchResponseStage(service=self.index_service,
-                                               entity_type='files',
-                                               catalog=self.catalog)
+                stage = self._response_stage('files')
                 response = stage.process_response((hits, self.paginations[n], {}))
                 self.assertElasticEqual(responses[n], response)
 
@@ -362,9 +381,7 @@ class TestIndexResponse(IndexResponseTestCase):
         # FIXME: Use response from `/index/samples` to validate
         #        https://github.com/DataBiosphere/azul/issues/2970
         hits = self._get_hits('samples', 'a21dc760-a500-4236-bcff-da34a0e873d2')
-        stage = HCASearchResponseStage(service=self.index_service,
-                                       entity_type='samples',
-                                       catalog=self.catalog)
+        stage = self._response_stage('samples')
         response = stage.process_response((hits, self.paginations[0], {}))
 
         for hit in response['hits']:
@@ -372,38 +389,38 @@ class TestIndexResponse(IndexResponseTestCase):
             self.assertNotIn('files', hit)
 
     canned_aggs = {
-        "organ": {
-            "doc_count": 21,
-            "untagged": {
-                "doc_count": 0
+        'organ': {
+            'doc_count': 21,
+            'untagged': {
+                'doc_count': 0
             },
-            "myTerms": {
-                "doc_count_error_upper_bound": 0,
-                "sum_other_doc_count": 0,
-                "buckets": [
+            'myTerms': {
+                'doc_count_error_upper_bound': 0,
+                'sum_other_doc_count': 0,
+                'buckets': [
                     {
-                        "key": "silver",
-                        "doc_count": 11
+                        'key': 'silver',
+                        'doc_count': 11
                     },
                     {
-                        "key": "teal",
-                        "doc_count": 10
+                        'key': 'teal',
+                        'doc_count': 10
                     }
                 ]
             }
         },
-        "disease": {
-            "doc_count": 21,
-            "untagged": {
-                "doc_count": 12
+        'disease': {
+            'doc_count': 21,
+            'untagged': {
+                'doc_count': 12
             },
-            "myTerms": {
-                "doc_count_error_upper_bound": 0,
-                "sum_other_doc_count": 0,
-                "buckets": [
+            'myTerms': {
+                'doc_count_error_upper_bound': 0,
+                'sum_other_doc_count': 0,
+                'buckets': [
                     {
-                        "key": "silver",
-                        "doc_count": 9
+                        'key': 'silver',
+                        'doc_count': 9
                     }
                 ]
             }
@@ -419,38 +436,36 @@ class TestIndexResponse(IndexResponseTestCase):
         """
         # FIXME: Use response from `/index/files` to validate
         #        https://github.com/DataBiosphere/azul/issues/2970
-        stage = HCASearchResponseStage(service=self.index_service,
-                                       entity_type='files',
-                                       catalog=self.catalog)
+        stage = self._response_stage('files')
         facets = stage.make_facets(self.canned_aggs)
         expected_output = {
-            "organ": {
-                "terms": [
+            'organ': {
+                'terms': [
                     {
-                        "term": "silver",
-                        "count": 11
+                        'term': 'silver',
+                        'count': 11
                     },
                     {
-                        "term": "teal",
-                        "count": 10
+                        'term': 'teal',
+                        'count': 10
                     }
                 ],
-                "total": 21,
-                "type": "terms"
+                'total': 21,
+                'type': 'terms'
             },
-            "disease": {
-                "terms": [
+            'disease': {
+                'terms': [
                     {
-                        "term": "silver",
-                        "count": 9
+                        'term': 'silver',
+                        'count': 9
                     },
                     {
-                        "term": None,
-                        "count": 12
+                        'term': None,
+                        'count': 12
                     }
                 ],
-                "total": 21,
-                "type": "terms"
+                'total': 21,
+                'type': 'terms'
             }
         }
         self.assertElasticEqual(facets, expected_output)
@@ -463,226 +478,225 @@ class TestIndexResponse(IndexResponseTestCase):
         # FIXME: Use response from `/index/projects` to validate
         #        https://github.com/DataBiosphere/azul/issues/2970
         hits = self._get_hits('projects', 'e8642221-4c2c-4fd7-b926-a68bce363c88')
-        stage = HCASearchResponseStage(service=self.index_service,
-                                       entity_type='projects',
-                                       catalog=self.catalog)
+        stage = self._response_stage('projects')
         response = stage.process_response((hits, self.paginations[0], self.canned_aggs))
 
         expected_response = {
-            "hits": [
+            'hits': [
                 {
-                    "cellLines": [
+                    'cellLines': [
 
                     ],
-                    "cellSuspensions": [
+                    'cellSuspensions': [
                         {
-                            "organ": ["pancreas"],
-                            "organPart": ["islet of Langerhans"],
-                            "selectedCellType": [None],
-                            "totalCells": 1,
-                            "totalCellsRedundant": 0,
+                            'organ': ['pancreas'],
+                            'organPart': ['islet of Langerhans'],
+                            'selectedCellType': [None],
+                            'totalCells': 1,
+                            'totalCellsRedundant': 0,
                         }
                     ],
-                    "donorOrganisms": [
+                    'donorOrganisms': [
                         {
-                            "biologicalSex": ["female"],
-                            "disease": ['normal'],
-                            "developmentStage": [None],
-                            "genusSpecies": ["Australopithecus"],
-                            "id": ["DID_scRSq06"],
-                            "donorCount": 1,
-                            "organismAge": [{"value": "38", "unit": "year"}],
-                            "organismAgeRange": [[1198368000.0, 1198368000.0]],
+                            'biologicalSex': ['female'],
+                            'disease': ['normal'],
+                            'developmentStage': [None],
+                            'genusSpecies': ['Australopithecus'],
+                            'id': ['DID_scRSq06'],
+                            'donorCount': 1,
+                            'organismAge': [{'value': '38', 'unit': 'year'}],
+                            'organismAgeRange': [[1198368000.0, 1198368000.0]],
                         }
                     ],
-                    "entryId": "e8642221-4c2c-4fd7-b926-a68bce363c88",
-                    "fileTypeSummaries": [
+                    'entryId': 'e8642221-4c2c-4fd7-b926-a68bce363c88',
+                    'fileTypeSummaries': [
                         {
-                            "contentDescription": [None],
-                            "count": 2,
-                            "format": "fastq.gz",
-                            "matrixCellCount": None,
-                            "isIntermediate": None,
-                            "fileSource": [None],
-                            "totalSize": 385472253.0
+                            'contentDescription': [None],
+                            'count': 2,
+                            'format': 'fastq.gz',
+                            'matrixCellCount': None,
+                            'isIntermediate': None,
+                            'fileSource': [None],
+                            'totalSize': 385472253.0
                         }
                     ],
-                    "organoids": [
+                    'organoids': [
                     ],
-                    "projects": [
+                    'projects': [
                         {
-                            "contributors": [
+                            'contributors': [
                                 {
-                                    "contactName": "Matthew,,Green",
-                                    "correspondingContributor": False,
-                                    "email": "hewgreen@ebi.ac.uk",
-                                    "institution": "Farmers Trucks",
-                                    "laboratory": "John Dear",
-                                    "projectRole": "Human Cell Atlas wrangler"
+                                    'contactName': 'Matthew,,Green',
+                                    'correspondingContributor': False,
+                                    'email': 'hewgreen@ebi.ac.uk',
+                                    'institution': 'Farmers Trucks',
+                                    'laboratory': 'John Dear',
+                                    'projectRole': 'Human Cell Atlas wrangler'
                                 },
                                 {
-                                    "contactName": "Martin, Enge",
-                                    "correspondingContributor": None,
-                                    "email": "martin.enge@gmail.com",
-                                    "institution": "University",
-                                    "laboratory": None,
-                                    "projectRole": None
+                                    'contactName': 'Martin, Enge',
+                                    'correspondingContributor': None,
+                                    'email': 'martin.enge@gmail.com',
+                                    'institution': 'University',
+                                    'laboratory': None,
+                                    'projectRole': None
                                 },
                                 {
-                                    "contactName": "Laura,,Huerta",
-                                    "correspondingContributor": False,
-                                    "email": "lauhuema@ebi.ac.uk",
-                                    "institution": "Farmers Trucks",
-                                    "laboratory": "John Dear",
-                                    "projectRole": "external curator"
+                                    'contactName': 'Laura,,Huerta',
+                                    'correspondingContributor': False,
+                                    'email': 'lauhuema@ebi.ac.uk',
+                                    'institution': 'Farmers Trucks',
+                                    'laboratory': 'John Dear',
+                                    'projectRole': 'external curator'
                                 }
                             ],
-                            "laboratory": ["John Dear"],
-                            "projectDescription": "As organisms age, cells accumulate genetic and epigenetic changes "
-                                                  "that eventually lead to impaired organ function or catastrophic "
-                                                  "failure such as cancer. Here we describe a single-cell "
-                                                  "transcriptome analysis of 2544 human pancreas cells from donors, "
-                                                  "spanning six decades of life. We find that islet cells from older "
-                                                  "donors have increased levels of disorder as measured both by noise "
-                                                  "in the transcriptome and by the number of cells which display "
-                                                  "inappropriate hormone expression, revealing a transcriptional "
-                                                  "instability associated with aging. By analyzing the spectrum of "
-                                                  "somatic mutations in single cells from previously-healthy donors, "
-                                                  "we find a specific age-dependent mutational signature "
-                                                  "characterized by C to A and C to G transversions, indicators of "
-                                                  "oxidative stress, which is absent in single cells from human brain "
-                                                  "tissue or in a tumor cell line. Cells carrying a high load of such "
-                                                  "mutations also express higher levels of stress and senescence "
-                                                  "markers, including FOS, JUN, and the cytoplasmic superoxide "
-                                                  "dismutase SOD1, markers previously linked to pancreatic diseases "
-                                                  "with substantial age-dependent risk, such as type 2 diabetes "
-                                                  "mellitus and adenocarcinoma. Thus, our single-cell approach "
-                                                  "unveils gene expression changes and somatic mutations acquired in "
-                                                  "aging human tissue, and identifies molecular pathways induced by "
-                                                  "these genetic changes that could influence human disease. Also, "
-                                                  "our results demonstrate the feasibility of using single-cell "
-                                                  "RNA-seq data from primary cells to derive meaningful insights into "
-                                                  "the genetic processes that operate on aging human tissue and to "
-                                                  "determine which molecular mechanisms are coordinated with these "
-                                                  "processes. Examination of single cells from primary human pancreas "
-                                                  "tissue",
-                            "projectId": "e8642221-4c2c-4fd7-b926-a68bce363c88",
-                            "projectShortname": "Single of human pancreas",
-                            "projectTitle": "Single cell transcriptome patterns.",
-                            "publications": [
+                            'laboratory': ['John Dear'],
+                            'projectDescription': 'As organisms age, cells accumulate genetic and epigenetic changes '
+                                                  'that eventually lead to impaired organ function or catastrophic '
+                                                  'failure such as cancer. Here we describe a single-cell '
+                                                  'transcriptome analysis of 2544 human pancreas cells from donors, '
+                                                  'spanning six decades of life. We find that islet cells from older '
+                                                  'donors have increased levels of disorder as measured both by noise '
+                                                  'in the transcriptome and by the number of cells which display '
+                                                  'inappropriate hormone expression, revealing a transcriptional '
+                                                  'instability associated with aging. By analyzing the spectrum of '
+                                                  'somatic mutations in single cells from previously-healthy donors, '
+                                                  'we find a specific age-dependent mutational signature '
+                                                  'characterized by C to A and C to G transversions, indicators of '
+                                                  'oxidative stress, which is absent in single cells from human brain '
+                                                  'tissue or in a tumor cell line. Cells carrying a high load of such '
+                                                  'mutations also express higher levels of stress and senescence '
+                                                  'markers, including FOS, JUN, and the cytoplasmic superoxide '
+                                                  'dismutase SOD1, markers previously linked to pancreatic diseases '
+                                                  'with substantial age-dependent risk, such as type 2 diabetes '
+                                                  'mellitus and adenocarcinoma. Thus, our single-cell approach '
+                                                  'unveils gene expression changes and somatic mutations acquired in '
+                                                  'aging human tissue, and identifies molecular pathways induced by '
+                                                  'these genetic changes that could influence human disease. Also, '
+                                                  'our results demonstrate the feasibility of using single-cell '
+                                                  'RNA-seq data from primary cells to derive meaningful insights into '
+                                                  'the genetic processes that operate on aging human tissue and to '
+                                                  'determine which molecular mechanisms are coordinated with these '
+                                                  'processes. Examination of single cells from primary human pancreas '
+                                                  'tissue',
+                            'projectId': 'e8642221-4c2c-4fd7-b926-a68bce363c88',
+                            'projectShortname': 'Single of human pancreas',
+                            'projectTitle': 'Single cell transcriptome patterns.',
+                            'publications': [
                                 {
-                                    "doi": "10.1016/j.cell.2017.09.004",
-                                    "officialHcaPublication": None,
-                                    "publicationTitle": "Single-Cell Analysis of Human Pancreas Reveals "
-                                                        "Transcriptional Signatures of Aging and Somatic Mutation "
-                                                        "Patterns.",
-                                    "publicationUrl": "https://www.ncbi.nlm.nih.gov/pubmed/28965763"
+                                    'doi': '10.1016/j.cell.2017.09.004',
+                                    'officialHcaPublication': None,
+                                    'publicationTitle': 'Single-Cell Analysis of Human Pancreas Reveals '
+                                                        'Transcriptional Signatures of Aging and Somatic Mutation '
+                                                        'Patterns.',
+                                    'publicationUrl': 'https://www.ncbi.nlm.nih.gov/pubmed/28965763'
                                 }
                             ],
-                            "supplementaryLinks": [
+                            'supplementaryLinks': [
                                 'https://www.ebi.ac.uk/gxa/sc/experiments/E-GEOD-81547/Results'
                             ],
-                            "estimatedCellCount": None,
-                            "matrices": {},
-                            "contributedAnalyses": {},
-                            "bionetworkName": [None],
-                            "tissueAtlas": [],
-                            "isTissueAtlasProject": False,
-                            "accessions": [],
-                            "dataUseRestriction": None,
-                            "duosId": None,
+                            'estimatedCellCount': None,
+                            'matrices': {},
+                            'contributedAnalyses': {},
+                            'bionetworkName': [None],
+                            'tissueAtlas': [],
+                            'isTissueAtlasProject': False,
+                            'accessions': [],
+                            'dataUseRestriction': None,
+                            'duosId': None,
                         }
                     ],
-                    "protocols": [
+                    'protocols': [
                         {
-                            "libraryConstructionApproach": ["Smart-seq2"],
-                            "nucleicAcidSource": ["single cell"],
+                            'libraryConstructionApproach': ['Smart-seq2'],
+                            'nucleicAcidSource': ['single cell'],
                         },
                         {
-                            "instrumentManufacturerModel": ["Illumina NextSeq 500"],
-                            "pairedEnd": [True],
+                            'instrumentManufacturerModel': ['Illumina NextSeq 500'],
+                            'pairedEnd': [True],
                         }
                     ],
-                    "samples": [
+                    'samples': [
                         {
-                            "sampleEntityType": ["specimens"],
-                            "effectiveOrgan": ["pancreas"],
-                            "disease": ["normal"],
-                            "id": ["DID_scRSq06_pancreas"],
-                            "organ": ["pancreas"],
-                            "organPart": ["islet of Langerhans"],
-                            "preservationMethod": [None],
-                            "source": [
-                                "specimen_from_organism"
+                            'sampleEntityType': ['specimens'],
+                            'effectiveOrgan': ['pancreas'],
+                            'disease': ['normal'],
+                            'id': ['DID_scRSq06_pancreas'],
+                            'organ': ['pancreas'],
+                            'organPart': ['islet of Langerhans'],
+                            'preservationMethod': [None],
+                            'source': [
+                                'specimen_from_organism'
                             ],
                         }
                     ],
-                    "sources": [{
-                        "sourceId": self.source.id,
-                        "sourceSpec": str(self.source.spec)
+                    'sources': [{
+                        'sourceId': self.source.id,
+                        'sourcePrefix': str(self.source.prefix),
+                        'sourceSpec': str(self.source.spec)
                     }],
-                    "specimens": [
+                    'specimens': [
                         {
-                            "disease": ["normal"],
-                            "id": ["DID_scRSq06_pancreas"],
-                            "organ": ["pancreas"],
-                            "organPart": ["islet of Langerhans"],
-                            "preservationMethod": [None],
-                            "source": [
-                                "specimen_from_organism"
+                            'disease': ['normal'],
+                            'id': ['DID_scRSq06_pancreas'],
+                            'organ': ['pancreas'],
+                            'organPart': ['islet of Langerhans'],
+                            'preservationMethod': [None],
+                            'source': [
+                                'specimen_from_organism'
                             ],
                         }
                     ],
-                    "dates": [
+                    'dates': [
                         {
-                            "aggregateLastModifiedDate": "2018-11-02T10:35:07.705000Z",
-                            "aggregateSubmissionDate": "2018-11-02T10:02:12.133000Z",
-                            "aggregateUpdateDate": "2018-11-02T10:35:07.705000Z",
-                            "lastModifiedDate": "2018-11-02T10:07:39.499000Z",
-                            "submissionDate": "2018-11-02T10:02:12.133000Z",
-                            "updateDate": "2018-11-02T10:07:39.499000Z",
+                            'aggregateLastModifiedDate': '2018-11-02T10:35:07.705000Z',
+                            'aggregateSubmissionDate': '2018-11-02T10:02:12.133000Z',
+                            'aggregateUpdateDate': '2018-11-02T10:35:07.705000Z',
+                            'lastModifiedDate': '2018-11-02T10:07:39.499000Z',
+                            'submissionDate': '2018-11-02T10:02:12.133000Z',
+                            'updateDate': '2018-11-02T10:07:39.499000Z',
                         }
                     ]
                 }
             ],
-            "pagination": {
-                "count": 2,
-                "order": "desc",
-                "pages": 1,
-                "next": None,
-                "previous": None,
-                "size": 5,
-                "sort": "entryId",
-                "total": 2
+            'pagination': {
+                'count': 2,
+                'order': 'desc',
+                'pages': 1,
+                'next': None,
+                'previous': None,
+                'size': 5,
+                'sort': 'entryId',
+                'total': 2
             },
-            "termFacets": {
-                "disease": {
-                    "terms": [
+            'termFacets': {
+                'disease': {
+                    'terms': [
                         {
-                            "count": 9,
-                            "term": "silver"
+                            'count': 9,
+                            'term': 'silver'
                         },
                         {
-                            "count": 12,
-                            "term": None
+                            'count': 12,
+                            'term': None
                         }
                     ],
-                    "total": 21,
-                    "type": "terms"
+                    'total': 21,
+                    'type': 'terms'
                 },
-                "organ": {
-                    "terms": [
+                'organ': {
+                    'terms': [
                         {
-                            "count": 11,
-                            "term": "silver"
+                            'count': 11,
+                            'term': 'silver'
                         },
                         {
-                            "count": 10,
-                            "term": "teal"
+                            'count': 10,
+                            'term': 'teal'
                         }
                     ],
-                    "total": 21,
-                    "type": "terms"
+                    'total': 21,
+                    'type': 'terms'
                 }
             }
         }
@@ -697,218 +711,217 @@ class TestIndexResponse(IndexResponseTestCase):
         # FIXME: Use response from `/index/projects` to validate
         #        https://github.com/DataBiosphere/azul/issues/2970
         hits = self._get_hits('projects', '627cb0ba-b8a1-405a-b58f-0add82c3d635')
-        stage = HCASearchResponseStage(service=self.index_service,
-                                       entity_type='projects',
-                                       catalog=self.catalog)
+        stage = self._response_stage('projects')
         response = stage.process_response((hits, self.paginations[0], {}))
         expected_hits = [
             {
-                "cellLines": [
+                'cellLines': [
 
                 ],
-                "cellSuspensions": [
+                'cellSuspensions': [
                     {
-                        "organ": ["brain"],
-                        "organPart": ["amygdala"],
-                        "selectedCellType": [None],
-                        "totalCells": 10001,
-                        "totalCellsRedundant": 0,
+                        'organ': ['brain'],
+                        'organPart': ['amygdala'],
+                        'selectedCellType': [None],
+                        'totalCells': 10001,
+                        'totalCellsRedundant': 0,
                     }
                 ],
-                "donorOrganisms": [
+                'donorOrganisms': [
                     {
-                        "biologicalSex": ["male"],
-                        "disease": ['H syndrome'],
-                        "developmentStage": ["human adult stage"],
-                        "genusSpecies": ["Homo sapiens"],
-                        "id": ["donor_ID_1"],
-                        "donorCount": 1,
-                        "organismAge": [{"value": "20", "unit": "year"}],
-                        "organismAgeRange": [[630720000.0, 630720000.0]],
+                        'biologicalSex': ['male'],
+                        'disease': ['H syndrome'],
+                        'developmentStage': ['human adult stage'],
+                        'genusSpecies': ['Homo sapiens'],
+                        'id': ['donor_ID_1'],
+                        'donorCount': 1,
+                        'organismAge': [{'value': '20', 'unit': 'year'}],
+                        'organismAgeRange': [[630720000.0, 630720000.0]],
                     }
                 ],
-                "entryId": "627cb0ba-b8a1-405a-b58f-0add82c3d635",
-                "fileTypeSummaries": [
+                'entryId': '627cb0ba-b8a1-405a-b58f-0add82c3d635',
+                'fileTypeSummaries': [
                     {
-                        "contentDescription": [None],
-                        "count": 1,
-                        "format": "bai",
-                        "matrixCellCount": None,
-                        "isIntermediate": None,
-                        "fileSource": ['DCP/2 Analysis'],
-                        "totalSize": 2395616.0
+                        'contentDescription': [None],
+                        'count': 1,
+                        'format': 'bai',
+                        'matrixCellCount': None,
+                        'isIntermediate': None,
+                        'fileSource': ['DCP/2 Analysis'],
+                        'totalSize': 2395616.0
                     },
                     {
-                        "contentDescription": [None],
-                        "count": 1,
-                        "format": "bam",
-                        "matrixCellCount": None,
-                        "isIntermediate": None,
-                        "fileSource": ['DCP/2 Analysis'],
-                        "totalSize": 55840108
+                        'contentDescription': [None],
+                        'count': 1,
+                        'format': 'bam',
+                        'matrixCellCount': None,
+                        'isIntermediate': None,
+                        'fileSource': ['DCP/2 Analysis'],
+                        'totalSize': 55840108
                     },
                     {
-                        "contentDescription": [None],
-                        "count": 1,
-                        "format": "csv",
-                        "matrixCellCount": None,
-                        "isIntermediate": None,
-                        "fileSource": ['DCP/2 Analysis'],
-                        "totalSize": 665
+                        'contentDescription': [None],
+                        'count': 1,
+                        'format': 'csv',
+                        'matrixCellCount': None,
+                        'isIntermediate': None,
+                        'fileSource': ['DCP/2 Analysis'],
+                        'totalSize': 665
                     },
                     {
-                        "contentDescription": [None],
-                        "count": 1,
-                        "format": "unknown",
-                        "matrixCellCount": None,
-                        "isIntermediate": None,
-                        "fileSource": ['DCP/2 Analysis'],
-                        "totalSize": 2645006
+                        'contentDescription': [None],
+                        'count': 1,
+                        'format': 'unknown',
+                        'matrixCellCount': None,
+                        'isIntermediate': None,
+                        'fileSource': ['DCP/2 Analysis'],
+                        'totalSize': 2645006
                     },
                     {
-                        "contentDescription": [None],
-                        "count": 2,
-                        "format": "mtx",
-                        "matrixCellCount": None,
-                        "isIntermediate": None,
-                        "fileSource": ['DCP/2 Analysis'],
-                        "totalSize": 6561141
+                        'contentDescription': [None],
+                        'count': 2,
+                        'format': 'mtx',
+                        'matrixCellCount': None,
+                        'isIntermediate': None,
+                        'fileSource': ['DCP/2 Analysis'],
+                        'totalSize': 6561141
                     },
                     {
-                        "contentDescription": [None],
-                        "count": 3,
-                        "format": "fastq.gz",
-                        "matrixCellCount": None,
-                        "isIntermediate": None,
-                        "fileSource": [None],
-                        "totalSize": 44668092
+                        'contentDescription': [None],
+                        'count': 3,
+                        'format': 'fastq.gz',
+                        'matrixCellCount': None,
+                        'isIntermediate': None,
+                        'fileSource': [None],
+                        'totalSize': 44668092
                     },
                     {
-                        "contentDescription": [None],
-                        "count": 3,
-                        "format": "h5",
-                        "matrixCellCount": None,
-                        "isIntermediate": None,
-                        "fileSource": ['DCP/2 Analysis'],
-                        "totalSize": 5573714
+                        'contentDescription': [None],
+                        'count': 3,
+                        'format': 'h5',
+                        'matrixCellCount': None,
+                        'isIntermediate': None,
+                        'fileSource': ['DCP/2 Analysis'],
+                        'totalSize': 5573714
                     },
                     {
-                        "contentDescription": [None],
-                        "count": 4,
-                        "format": "tsv",
-                        "matrixCellCount": None,
-                        "isIntermediate": None,
-                        "fileSource": ['DCP/2 Analysis'],
-                        "totalSize": 15872628
+                        'contentDescription': [None],
+                        'count': 4,
+                        'format': 'tsv',
+                        'matrixCellCount': None,
+                        'isIntermediate': None,
+                        'fileSource': ['DCP/2 Analysis'],
+                        'totalSize': 15872628
                     }
                 ],
-                "organoids": [
+                'organoids': [
 
                 ],
-                "projects": [
+                'projects': [
                     {
-                        "contributors": [
+                        'contributors': [
                             {
-                                "contactName": "John,D,Doe. ",
-                                "correspondingContributor": False,
-                                "email": "dummy@email.com",
-                                "institution": "EMBL-EBI",
-                                "laboratory": "Department of Biology",
-                                "projectRole": "principal investigator"
+                                'contactName': 'John,D,Doe. ',
+                                'correspondingContributor': False,
+                                'email': 'dummy@email.com',
+                                'institution': 'EMBL-EBI',
+                                'laboratory': 'Department of Biology',
+                                'projectRole': 'principal investigator'
                             }
                         ],
-                        "laboratory": ["Department of Biology"],
-                        "projectDescription": "Contains a small file set from the dataset: 4k PBMCs from a "
-                                              "Healthy Donor, a Single Cell Gene Expression Dataset by Cell "
-                                              "Ranger 2.1.0. Peripheral blood mononuclear cells (PBMCs) were "
-                                              "taken from a healthy donor (same donor as pbmc8k). PBMCs are "
-                                              "primary cells with relatively small amounts of RNA (~1pg "
-                                              "RNA/cell). Data/Analysis can be found here "
-                                              "https://support.10xgenomics.com/single-cell-gene-expression/datasets"
-                                              "/2.1.0/pbmc4k and all data is licensed under the creative commons "
-                                              "attribution license (https://creativecommons.org/licenses/by/4.0/). "
-                                              "This test also contains extensive metadata for browser testing. "
-                                              "Metadata is fabricated.",
-                        "projectId": "627cb0ba-b8a1-405a-b58f-0add82c3d635",
-                        "projectShortname": "staging/10x/2019-02-14T18:29:38Z",
-                        "projectTitle": "10x 1 Run Integration Test",
-                        "publications": [
+                        'laboratory': ['Department of Biology'],
+                        'projectDescription': 'Contains a small file set from the dataset: 4k PBMCs from a '
+                                              'Healthy Donor, a Single Cell Gene Expression Dataset by Cell '
+                                              'Ranger 2.1.0. Peripheral blood mononuclear cells (PBMCs) were '
+                                              'taken from a healthy donor (same donor as pbmc8k). PBMCs are '
+                                              'primary cells with relatively small amounts of RNA (~1pg '
+                                              'RNA/cell). Data/Analysis can be found here '
+                                              'https://support.10xgenomics.com/single-cell-gene-expression/datasets'
+                                              '/2.1.0/pbmc4k and all data is licensed under the creative commons '
+                                              'attribution license (https://creativecommons.org/licenses/by/4.0/). '
+                                              'This test also contains extensive metadata for browser testing. '
+                                              'Metadata is fabricated.',
+                        'projectId': '627cb0ba-b8a1-405a-b58f-0add82c3d635',
+                        'projectShortname': 'staging/10x/2019-02-14T18:29:38Z',
+                        'projectTitle': '10x 1 Run Integration Test',
+                        'publications': [
                             {
-                                "doi": "10.1016/j.cell.2016.07.054",
-                                "officialHcaPublication": None,
-                                "publicationTitle": "A title of a publication goes here.",
-                                "publicationUrl": "https://europepmc.org"
+                                'doi': '10.1016/j.cell.2016.07.054',
+                                'officialHcaPublication': None,
+                                'publicationTitle': 'A title of a publication goes here.',
+                                'publicationUrl': 'https://europepmc.org'
                             }
                         ],
-                        "supplementaryLinks": [None],
-                        "estimatedCellCount": None,
-                        "matrices": {},
-                        "contributedAnalyses": {},
-                        "isTissueAtlasProject": False,
-                        "bionetworkName": [None],
-                        "tissueAtlas": [],
-                        "accessions": [
-                            {"namespace": "array_express", "accession": "E-AAAA-00"},
-                            {"namespace": "geo_series", "accession": "GSE00000"},
-                            {"namespace": "insdc_project", "accession": "SRP000000"},
-                            {"namespace": "insdc_project", "accession": "SRP000001"},
-                            {"namespace": "insdc_study", "accession": "PRJNA000000"},
+                        'supplementaryLinks': [None],
+                        'estimatedCellCount': None,
+                        'matrices': {},
+                        'contributedAnalyses': {},
+                        'isTissueAtlasProject': False,
+                        'bionetworkName': [None],
+                        'tissueAtlas': [],
+                        'accessions': [
+                            {'namespace': 'array_express', 'accession': 'E-AAAA-00'},
+                            {'namespace': 'geo_series', 'accession': 'GSE00000'},
+                            {'namespace': 'insdc_project', 'accession': 'SRP000000'},
+                            {'namespace': 'insdc_project', 'accession': 'SRP000001'},
+                            {'namespace': 'insdc_study', 'accession': 'PRJNA000000'},
                         ],
-                        "dataUseRestriction": None,
-                        "duosId": None,
+                        'dataUseRestriction': None,
+                        'duosId': None,
                     }
                 ],
-                "protocols": [
+                'protocols': [
                     {
-                        "workflow": ['cellranger_v1.0.2'],
+                        'workflow': ['cellranger_v1.0.2'],
                     },
                     {
-                        "libraryConstructionApproach": ["10X v2 sequencing"],
-                        "nucleicAcidSource": [None],
+                        'libraryConstructionApproach': ['10X v2 sequencing'],
+                        'nucleicAcidSource': [None],
                     },
                     {
-                        "instrumentManufacturerModel": ["Illumina HiSeq 2500"],
-                        "pairedEnd": [False],
+                        'instrumentManufacturerModel': ['Illumina HiSeq 2500'],
+                        'pairedEnd': [False],
                     }
                 ],
-                "samples": [
+                'samples': [
                     {
-                        "sampleEntityType": ["specimens"],
-                        "effectiveOrgan": ["brain"],
-                        "disease": ["H syndrome"],
-                        "id": ["specimen_ID_1"],
-                        "organ": ["brain"],
-                        "organPart": ["amygdala"],
-                        "preservationMethod": [None],
-                        "source": [
-                            "specimen_from_organism"
+                        'sampleEntityType': ['specimens'],
+                        'effectiveOrgan': ['brain'],
+                        'disease': ['H syndrome'],
+                        'id': ['specimen_ID_1'],
+                        'organ': ['brain'],
+                        'organPart': ['amygdala'],
+                        'preservationMethod': [None],
+                        'source': [
+                            'specimen_from_organism'
                         ],
                     }
                 ],
-                "sources": [{
-                    "sourceId": self.source.id,
-                    "sourceSpec": str(self.source.spec)
+                'sources': [{
+                    'sourceId': self.source.id,
+                    'sourcePrefix': str(self.source.prefix),
+                    'sourceSpec': str(self.source.spec)
                 }],
-                "specimens": [
+                'specimens': [
                     {
-                        "disease": ["H syndrome"],
-                        "id": ["specimen_ID_1"],
-                        "organ": ["brain"],
-                        "organPart": ["amygdala"],
-                        "preservationMethod": [None],
-                        "source": [
-                            "specimen_from_organism"
+                        'disease': ['H syndrome'],
+                        'id': ['specimen_ID_1'],
+                        'organ': ['brain'],
+                        'organPart': ['amygdala'],
+                        'preservationMethod': [None],
+                        'source': [
+                            'specimen_from_organism'
                         ],
                     }
                 ],
-                "dates": [
+                'dates': [
                     {
-                        "aggregateLastModifiedDate": "2019-02-14T19:19:57.464000Z",
-                        "aggregateSubmissionDate": "2019-02-14T18:29:42.531000Z",
-                        "aggregateUpdateDate": "2019-02-14T19:19:57.464000Z",
-                        "lastModifiedDate": "2019-02-14T18:29:48.555000Z",
-                        "submissionDate": "2019-02-14T18:29:42.531000Z",
-                        "updateDate": "2019-02-14T18:29:48.555000Z",
+                        'aggregateLastModifiedDate': '2019-02-14T19:19:57.464000Z',
+                        'aggregateSubmissionDate': '2019-02-14T18:29:42.531000Z',
+                        'aggregateUpdateDate': '2019-02-14T19:19:57.464000Z',
+                        'lastModifiedDate': '2019-02-14T18:29:48.555000Z',
+                        'submissionDate': '2019-02-14T18:29:42.531000Z',
+                        'updateDate': '2019-02-14T18:29:48.555000Z',
                     }
                 ]
             }
@@ -919,12 +932,10 @@ class TestIndexResponse(IndexResponseTestCase):
         # FIXME: Use response from `/index/projects` to validate
         #        https://github.com/DataBiosphere/azul/issues/2970
         hits = self._get_hits('projects', '250aef61-a15b-4d97-b8b4-54bb997c1d7d')
-        stage = HCASearchResponseStage(service=self.index_service,
-                                       entity_type='projects',
-                                       catalog=self.catalog)
+        stage = self._response_stage('projects')
         response = stage.process_response((hits, self.paginations[0], {}))
         cell_suspension = one(response['hits'][0]['cellSuspensions'])
-        self.assertEqual(["Plasma cells"], cell_suspension['selectedCellType'])
+        self.assertEqual(['Plasma cells'], cell_suspension['selectedCellType'])
 
     def test_response_stage_projects_cell_line(self):
         """
@@ -933,9 +944,7 @@ class TestIndexResponse(IndexResponseTestCase):
         # FIXME: Use response from `/index/projects` to validate
         #        https://github.com/DataBiosphere/azul/issues/2970
         hits = self._get_hits('projects', 'c765e3f9-7cfc-4501-8832-79e5f7abd321')
-        stage = HCASearchResponseStage(service=self.index_service,
-                                       entity_type='projects',
-                                       catalog=self.catalog)
+        stage = self._response_stage('projects')
         response = stage.process_response((hits, self.paginations[0], {}))
         expected_cell_lines = {
             'id': ['cell_line_Day7_hiPSC-CM_BioRep2', 'cell_line_GM18517'],
@@ -962,9 +971,7 @@ class TestIndexResponse(IndexResponseTestCase):
         # FIXME: Use response from `/index/files` to validate
         #        https://github.com/DataBiosphere/azul/issues/2970
         hits = self._get_hits('files', '4015da8b-18d8-4f3c-b2b0-54f0b77ae80a')
-        stage = HCASearchResponseStage(service=self.index_service,
-                                       entity_type='files',
-                                       catalog=self.catalog)
+        stage = self._response_stage('files')
         response = stage.process_response((hits, self.paginations[0], {}))
         expected_file = {
             'contentDescription': ['RNA sequence'],
@@ -975,6 +982,11 @@ class TestIndexResponse(IndexResponseTestCase):
             'sha256': '709fede4736213f0f71ae4d76719fd51fa402a9112582a4c52983973cb7d7e47',
             'size': 22819025,
             'fileSource': None,
+            'azul_url': f'{self.base_url}/repository/files/'
+                        f'a8b8479d-cfa9-4f74-909f-49552439e698'
+                        f'?catalog=test&version=2019-10-09T17%3A22%3A51.560099Z',
+            'azul_mirror_uri': f's3://{aws.mirror_bucket}/file/'
+                               f'709fede4736213f0f71ae4d76719fd51fa402a9112582a4c52983973cb7d7e47.sha256',
             'drs_uri': f'drs://{self._drs_domain_name}/'
                        f'a8b8479d-cfa9-4f74-909f-49552439e698?version=2019-10-09T17%3A22%3A51.560099Z',
             'uuid': 'a8b8479d-cfa9-4f74-909f-49552439e698',
@@ -992,7 +1004,7 @@ class TestIndexResponse(IndexResponseTestCase):
                 response_json = response.json()
                 # Verify default sort field is set correctly
                 self.assertEqual(response_json['pagination']['sort'],
-                                 self.app_module.app.metadata_plugin.exposed_indices[entity_type].field_name)
+                                 self._metadata_plugin.exposed_indices[entity_type].field_name)
                 # Verify all fields in the response that are lists of primitives are sorted
                 for hit in response_json['hits']:
                     self._verify_sorted_lists(hit)
@@ -1010,8 +1022,8 @@ class TestIndexResponse(IndexResponseTestCase):
                     else:
                         self.assertGreater(len(hit['files']), 0)
                     for file in hit['files']:
-                        self.assertIn('url', file.keys())
-                        actual_url = urlparse(file['url'])
+                        self.assertIn('azul_url', file.keys())
+                        actual_url = urlparse(file['azul_url'])
                         actual_query_vars = {k: one(v) for k, v in parse_qs(actual_url.query).items()}
                         self.assertEqual(url.netloc, actual_url.netloc)
                         self.assertEqual(url.scheme, actual_url.scheme)
@@ -1023,7 +1035,7 @@ class TestIndexResponse(IndexResponseTestCase):
         """
         Test response when using a filter with a None value
         """
-        test_data_values = [["normal"], [None], ["normal", None]]
+        test_data_values = [['normal'], [None], ['normal', None]]
         for test_data in test_data_values:
             with self.subTest(test_data=test_data):
                 params = self._params(size=10, filters={'specimenDisease': {'is': test_data}})
@@ -1120,6 +1132,7 @@ class TestIndexResponse(IndexResponseTestCase):
         Test that sample(s) in the response contain values matching values in
         the source cellLine/organoid/specimen
         """
+        accessible_field = self._metadata_plugin.special_fields.accessible.name_in_hit
         for entity_type in 'projects', 'samples', 'files', 'bundles':
             with self.subTest(entity_type=entity_type):
                 url = self.base_url.set(path=('index', entity_type), args=self._params())
@@ -1134,7 +1147,7 @@ class TestIndexResponse(IndexResponseTestCase):
                                 if key not in [
                                     'sampleEntityType',
                                     'effectiveOrgan',
-                                    SpecialFields.accessible,
+                                    accessible_field,
                                 ]:
                                     if isinstance(val, list):
                                         for one_val in val:
@@ -1152,8 +1165,8 @@ class TestIndexResponse(IndexResponseTestCase):
         self.assertEqual(len(self.bundles()), len(indexed_bundles))
         special_fields = self.index_service.metadata_plugin(self.catalog).special_fields
         actual_bundles = {
-            self.bundle_fqid(uuid=bundle[special_fields.bundle_uuid],
-                             version=bundle[special_fields.bundle_version])
+            self.bundle_fqid(uuid=bundle[special_fields.bundle_uuid.name_in_hit],
+                             version=bundle[special_fields.bundle_version.name_in_hit])
             for hit in response['hits']
             for bundle in hit['bundles']
         }
@@ -1168,27 +1181,27 @@ class TestIndexResponse(IndexResponseTestCase):
         test_hits = [
             [
                 {
-                    "biologicalSex": [
-                        "male",
-                        "female"
+                    'biologicalSex': [
+                        'male',
+                        'female'
                     ],
-                    "developmentStage": [None],
-                    "disease": ['normal'],
-                    "genusSpecies": [
-                        "Homo sapiens"
+                    'developmentStage': [None],
+                    'disease': ['normal'],
+                    'genusSpecies': [
+                        'Homo sapiens'
                     ],
-                    "id": [
-                        "HPSI0314i-hoik",
-                        "HPSI0214i-wibj",
-                        "HPSI0314i-sojd",
-                        "HPSI0214i-kucg"
+                    'id': [
+                        'HPSI0314i-hoik',
+                        'HPSI0214i-wibj',
+                        'HPSI0314i-sojd',
+                        'HPSI0214i-kucg'
                     ],
-                    "donorCount": 4,
-                    "organismAge": [
-                        {"value": "45-49", "unit": "year"},
-                        {"value": "65-69", "unit": "year"}
+                    'donorCount': 4,
+                    'organismAge': [
+                        {'value': '45-49', 'unit': 'year'},
+                        {'value': '65-69', 'unit': 'year'}
                     ],
-                    "organismAgeRange": [
+                    'organismAgeRange': [
                         [gte0, lte0],
                         [gte1, lte1]
                     ],
@@ -1196,27 +1209,27 @@ class TestIndexResponse(IndexResponseTestCase):
             ],
             [
                 {
-                    "biologicalSex": [
-                        "male",
-                        "female"
+                    'biologicalSex': [
+                        'male',
+                        'female'
                     ],
-                    "developmentStage": [None],
-                    "disease": ['normal'],
-                    "genusSpecies": [
-                        "Homo sapiens"
+                    'developmentStage': [None],
+                    'disease': ['normal'],
+                    'genusSpecies': [
+                        'Homo sapiens'
                     ],
-                    "id": [
-                        "HPSI0314i-hoik",
-                        "HPSI0214i-wibj",
-                        "HPSI0314i-sojd",
-                        "HPSI0214i-kucg"
+                    'id': [
+                        'HPSI0314i-hoik',
+                        'HPSI0214i-wibj',
+                        'HPSI0314i-sojd',
+                        'HPSI0214i-kucg'
                     ],
-                    "donorCount": 4,
-                    "organismAge": [
-                        {"value": "40-44", "unit": "year"},
-                        {"value": "55-59", "unit": "year"}
+                    'donorCount': 4,
+                    'organismAge': [
+                        {'value': '40-44', 'unit': 'year'},
+                        {'value': '55-59', 'unit': 'year'}
                     ],
-                    "organismAgeRange": [
+                    'organismAgeRange': [
                         [gte2, lte2],
                         [gte3, lte3]
                     ],
@@ -2156,6 +2169,7 @@ class TestIndexResponse(IndexResponseTestCase):
         }
 
         def _test(entity_type: str, expect_empty: bool, expect_accessible: bool):
+            accessible_field = self._metadata_plugin.special_fields.accessible.name_in_hit
             with self.subTest(entity_type=entity_type, access=expect_accessible):
                 url = str(self.base_url.set(path=('index', entity_type)))
                 response = requests.get(url)
@@ -2167,7 +2181,7 @@ class TestIndexResponse(IndexResponseTestCase):
                     self.assertGreater(len(hits), 0)
                     for hit in hits:
                         entity = one(hit[entity_type])
-                        self.assertEqual(expect_accessible, entity[SpecialFields.accessible])
+                        self.assertEqual(expect_accessible, entity[accessible_field])
 
         for entity_type in filtered_entity_types:
             _test(entity_type, expect_empty=False, expect_accessible=True)
@@ -2188,7 +2202,7 @@ class TestIndexResponse(IndexResponseTestCase):
             self.assertEqual(200, response.status_code)
             return response.json()
 
-        for nested_properties, expected_projects in [
+        cases = [
             (
                 dict(namespace='array_express', accession='E-AAAA-00'),
                 {'627cb0ba-b8a1-405a-b58f-0add82c3d635'}
@@ -2208,7 +2222,8 @@ class TestIndexResponse(IndexResponseTestCase):
                     '88ec040b-8705-4f77-8f41-f81e57632f7d'
                 }
             )
-        ]:
+        ]
+        for nested_properties, expected_projects in cases:
             with self.subTest(nested_properties=nested_properties):
                 response = request_accessions(nested_properties)
                 actual_projects = {
@@ -2229,7 +2244,9 @@ class TestIndexResponse(IndexResponseTestCase):
         commit = 'a9eb85ea214a6cfa6882f4be041d5cce7bee3e45'
         for dirty in True, False:
             with self.subTest(is_repo_dirty=dirty):
-                with mock.patch.dict(os.environ, azul_git_commit=commit, azul_git_dirty=str(dirty)):
+                with mock.patch.dict(os.environ,
+                                     azul_git_commit=commit,
+                                     azul_git_dirty=str(dirty)):
                     url = self.base_url.set(path='/version')
                     response = requests.get(str(url))
                     response.raise_for_status()
@@ -2579,8 +2596,8 @@ class TestSchemaTestDataCannedBundle(IndexResponseTestCase):
 
 @attr.s(auto_attribs=True, frozen=True)
 class CellCounts:
-    estimated_cell_count: Optional[int]
-    total_cells: dict[str, Optional[int]]
+    estimated_cell_count: int | None
+    total_cells: dict[str, int | None]
 
     @classmethod
     def from_response(cls, hit: JSON) -> Self:
@@ -2787,8 +2804,8 @@ class TestProjectMatrices(IndexResponseTestCase):
 
     def params(self,
                project_id: str,
-               facet: Optional[str] = None,
-               value: Optional[str] = None) -> JSON:
+               facet: str | None = None,
+               value: str | None = None) -> JSON:
         return {
             'filters': json.dumps(
                 {
@@ -2797,8 +2814,10 @@ class TestProjectMatrices(IndexResponseTestCase):
                 }
             ),
             'catalog': self.catalog,
-            'size': min(sorting.max_page_size
-                        for sorting in self.app_module.app.metadata_plugin.exposed_indices.values())
+            'size': min(
+                sorting.max_page_size
+                for sorting in self._metadata_plugin.exposed_indices.values()
+            )
         }
 
     def test_file_source_facet(self):
@@ -2947,10 +2966,13 @@ class TestProjectMatrices(IndexResponseTestCase):
                                                     path='bd98f428-881e-501a-ac16-24f27a68ce2f',
                                                     args=dict(version='2021-02-11T23:11:45.000000Z')
                                                 )),
-                                                'url': str(self.base_url.set(
+                                                'azul_url': str(self.base_url.set(
                                                     path='/repository/files/bd98f428-881e-501a-ac16-24f27a68ce2f',
                                                     args=dict(catalog='test', version='2021-02-11T23:11:45.000000Z')
-                                                ))
+                                                )),
+                                                'azul_mirror_uri': f's3://{aws.mirror_bucket}/file/'
+                                                                   f'6a6483c2e78da77017e912a4d350f141'
+                                                                   f'bda1ec7b269f20ca718b55145ee5c83c.sha256'
                                             }
                                         ]
                                     }
@@ -2979,10 +3001,13 @@ class TestProjectMatrices(IndexResponseTestCase):
                                                     path='538faa28-3235-5e4b-a998-5672e2d964e8',
                                                     args=dict(version='2020-12-03T10:39:17.144517Z')
                                                 )),
-                                                'url': str(self.base_url.set(
+                                                'azul_url': str(self.base_url.set(
                                                     path='/repository/files/538faa28-3235-5e4b-a998-5672e2d964e8',
                                                     args=dict(catalog='test', version='2020-12-03T10:39:17.144517Z')
-                                                ))
+                                                )),
+                                                'azul_mirror_uri': f's3://{aws.mirror_bucket}/file/'
+                                                                   f'edb8e0139fece9702d89ae5fe7f761c4'
+                                                                   f'1c291ef6a71129c6420857e025228a24.sha256',
                                             },
                                             {
                                                 # Supplementary file, source from submitter_id
@@ -3001,10 +3026,13 @@ class TestProjectMatrices(IndexResponseTestCase):
                                                     path='6c142250-567c-5b63-bd4f-0d78499863f8',
                                                     args=dict(version='2020-12-03T10:39:17.144517Z')
                                                 )),
-                                                'url': str(self.base_url.set(
+                                                'azul_url': str(self.base_url.set(
                                                     path='/repository/files/6c142250-567c-5b63-bd4f-0d78499863f8',
                                                     args=dict(catalog='test', version='2020-12-03T10:39:17.144517Z')
-                                                ))
+                                                )),
+                                                'azul_mirror_uri': f's3://{aws.mirror_bucket}/file/'
+                                                                   f'cb1467f4d23a2429b4928943b51652b3'
+                                                                   f'2edb949099250d28cf400d13074f5440.sha256',
                                             },
                                             {
                                                 # Supplementary file, source from submitter_id
@@ -3023,10 +3051,13 @@ class TestProjectMatrices(IndexResponseTestCase):
                                                     path='8d2ba1c1-bc9f-5c2a-a74d-fe5e09bdfb18',
                                                     args=dict(version='2020-12-03T10:39:17.144517Z')
                                                 )),
-                                                'url': str(self.base_url.set(
+                                                'azul_url': str(self.base_url.set(
                                                     path='/repository/files/8d2ba1c1-bc9f-5c2a-a74d-fe5e09bdfb18',
                                                     args=dict(catalog='test', version='2020-12-03T10:39:17.144517Z')
-                                                ))
+                                                )),
+                                                'azul_mirror_uri': f's3://{aws.mirror_bucket}/file/'
+                                                                   f'724b2c0ddf33c662b362179bc6ca90cd'
+                                                                   f'866b99b340d061463c35d27cfd5a23c5.sha256',
                                             }
                                         ]
                                     }
@@ -3064,10 +3095,13 @@ class TestProjectMatrices(IndexResponseTestCase):
                                                     path='87f31102-ebbc-5875-abdf-4fa5cea48e8d',
                                                     args=dict(version='2021-02-10T16:56:40.419579Z')
                                                 )),
-                                                'url': str(self.base_url.set(
+                                                'azul_url': str(self.base_url.set(
                                                     path='/repository/files/87f31102-ebbc-5875-abdf-4fa5cea48e8d',
                                                     args=dict(catalog='test', version='2021-02-10T16:56:40.419579Z')
-                                                ))
+                                                )),
+                                                'azul_mirror_uri': f's3://{aws.mirror_bucket}/file/'
+                                                                   f'331bd925c08539194eb06e197a1238e1'
+                                                                   f'306c3b7876b6fe13548d03824cc4b68b.sha256',
                                             },
                                             {
                                                 # Supplementary file, source from submitter_id
@@ -3086,10 +3120,13 @@ class TestProjectMatrices(IndexResponseTestCase):
                                                     path='733318e0-19c2-51e8-9ad6-d94ad562dd46',
                                                     args=dict(version='2021-02-10T16:56:40.419579Z')
                                                 )),
-                                                'url': str(self.base_url.set(
+                                                'azul_url': str(self.base_url.set(
                                                     path='/repository/files/733318e0-19c2-51e8-9ad6-d94ad562dd46',
                                                     args=dict(catalog='test', version='2021-02-10T16:56:40.419579Z')
-                                                ))
+                                                )),
+                                                'azul_mirror_uri': f's3://{aws.mirror_bucket}/file/'
+                                                                   f'cb7beb6f4e8c684e41d25aa4dc1294dc'
+                                                                   f'b1e070e87f9ed852463bf651d511a36b.sha256',
                                             },
                                             {
                                                 # Supplementary file, source from submitter_id
@@ -3108,10 +3145,13 @@ class TestProjectMatrices(IndexResponseTestCase):
                                                     path='c59e2de5-01fe-56eb-be56-679ed14161bf',
                                                     args=dict(version='2021-02-10T16:56:40.419579Z')
                                                 )),
-                                                'url': str(self.base_url.set(
+                                                'azul_url': str(self.base_url.set(
                                                     path='/repository/files/c59e2de5-01fe-56eb-be56-679ed14161bf',
                                                     args=dict(catalog='test', version='2021-02-10T16:56:40.419579Z')
-                                                ))
+                                                )),
+                                                'azul_mirror_uri': f's3://{aws.mirror_bucket}/file/'
+                                                                   f'6372732e9fe9b8d58c8be8df88ea439d'
+                                                                   f'5c68ee9bb02e3d472c94633fadf782a1.sha256',
                                             },
                                             {
                                                 # Supplementary file, source from submitter_id
@@ -3130,10 +3170,13 @@ class TestProjectMatrices(IndexResponseTestCase):
                                                     path='68bda896-3b3e-5f2a-9212-f4030a0f37e2',
                                                     args=dict(version='2021-02-10T16:56:40.419579Z')
                                                 )),
-                                                'url': str(self.base_url.set(
+                                                'azul_url': str(self.base_url.set(
                                                     path='/repository/files/68bda896-3b3e-5f2a-9212-f4030a0f37e2',
                                                     args=dict(catalog='test', version='2021-02-10T16:56:40.419579Z')
-                                                ))
+                                                )),
+                                                'azul_mirror_uri': f's3://{aws.mirror_bucket}/file/'
+                                                                   f'f1458913c223553d09966ff94f0ed3d8'
+                                                                   f'7e7cdfce21904f32943d70f691d8f7a0.sha256',
                                             },
                                             {
                                                 # Supplementary file, source from submitter_id
@@ -3152,10 +3195,13 @@ class TestProjectMatrices(IndexResponseTestCase):
                                                     path='0c5ab869-da2d-5c11-b4ae-f978a052899f',
                                                     args=dict(version='2021-02-10T16:56:40.419579Z')
                                                 )),
-                                                'url': str(self.base_url.set(
+                                                'azul_url': str(self.base_url.set(
                                                     path='/repository/files/0c5ab869-da2d-5c11-b4ae-f978a052899f',
                                                     args=dict(catalog='test', version='2021-02-10T16:56:40.419579Z')
-                                                ))
+                                                )),
+                                                'azul_mirror_uri': f's3://{aws.mirror_bucket}/file/'
+                                                                   f'053074e25a96a463c081e38bcd02662b'
+                                                                   f'a1536dd0cb71411bd111b8a2086a03e1.sha256',
                                             },
                                             {
                                                 # Supplementary file, source from submitter_id
@@ -3174,10 +3220,13 @@ class TestProjectMatrices(IndexResponseTestCase):
                                                     path='cade4593-bfba-56ed-80ab-080d0de7d5a4',
                                                     args=dict(version='2021-02-10T16:56:40.419579Z')
                                                 )),
-                                                'url': str(self.base_url.set(
+                                                'azul_url': str(self.base_url.set(
                                                     path='/repository/files/cade4593-bfba-56ed-80ab-080d0de7d5a4',
                                                     args=dict(catalog='test', version='2021-02-10T16:56:40.419579Z')
-                                                ))
+                                                )),
+                                                'azul_mirror_uri': f's3://{aws.mirror_bucket}/file/'
+                                                                   f'1c57cba1ade259fc9ec56b914b507507'
+                                                                   f'd75ccbf6ddeebf03ba00c922c30e0c6e.sha256',
                                             },
                                             {
                                                 # Supplementary file, source from submitter_id
@@ -3196,10 +3245,13 @@ class TestProjectMatrices(IndexResponseTestCase):
                                                     path='5b465aad-0981-5152-b468-e615e20f5884',
                                                     args=dict(version='2021-02-10T16:56:40.419579Z')
                                                 )),
-                                                'url': str(self.base_url.set(
+                                                'azul_url': str(self.base_url.set(
                                                     path='/repository/files/5b465aad-0981-5152-b468-e615e20f5884',
                                                     args=dict(catalog='test', version='2021-02-10T16:56:40.419579Z')
-                                                ))
+                                                )),
+                                                'azul_mirror_uri': f's3://{aws.mirror_bucket}/file/'
+                                                                   f'af3ea779ca01a2ba65f9415720a44648'
+                                                                   f'ef28a6ed73c9ec30e54ed4ba9895f590.sha256',
                                             },
                                             {
                                                 # Supplementary file, source from submitter_id
@@ -3218,10 +3270,13 @@ class TestProjectMatrices(IndexResponseTestCase):
                                                     path='b905c8be-2e2d-592c-8481-3eb7a87c6484',
                                                     args=dict(version='2021-02-10T16:56:40.419579Z')
                                                 )),
-                                                'url': str(self.base_url.set(
+                                                'azul_url': str(self.base_url.set(
                                                     path='/repository/files/b905c8be-2e2d-592c-8481-3eb7a87c6484',
                                                     args=dict(catalog='test', version='2021-02-10T16:56:40.419579Z')
-                                                ))
+                                                )),
+                                                'azul_mirror_uri': f's3://{aws.mirror_bucket}/file/'
+                                                                   f'4f515b8fbbec8bfbc72c8c0d656897ee'
+                                                                   f'37bfa30bab6eb50fdc641924227be674.sha256',
                                             }
                                         ]
                                     }
@@ -3558,15 +3613,18 @@ class TestUnpopulatedIndexResponse(IndexResponseTestCase):
         # the `accessible` term facet, so we must perform the same replacement
         # before the list of facets can be used to verify the contents of the
         # response.
-        plugin: MetadataPlugin = self.app_module.app.metadata_plugin
+        plugin = self._metadata_plugin
         facets = list(plugin.facets)
         special_fields = plugin.special_fields
-        facets[facets.index(special_fields.source_id)] = special_fields.accessible
+        source_id_field = special_fields.source_id
+        accessible_field = special_fields.accessible
+        facet_index = facets.index(source_id_field.name)
+        facets[facet_index] = accessible_field.name
         return facets
 
     @property
     def field_mapping(self) -> Mapping[str, FieldPath]:
-        return self.app_module.app.metadata_plugin.field_mapping
+        return self._metadata_plugin.field_mapping
 
     def entity_types(self) -> list[str]:
         return [
@@ -3582,7 +3640,7 @@ class TestUnpopulatedIndexResponse(IndexResponseTestCase):
                                         args=dict(order='asc'))
                 response = requests.get(str(url))
                 response.raise_for_status()
-                sort_field = self.app_module.app.metadata_plugin.exposed_indices[entity_type].field_name
+                sort_field = self._metadata_plugin.exposed_indices[entity_type].field_name
                 expected_response = {
                     'hits': [],
                     'pagination': {
@@ -3623,7 +3681,7 @@ class TestListCatalogsResponse(DCP1CannedBundleTestCase, LocalAppTestCase):
     maxDiff = None
 
     @classmethod
-    def lambda_name(cls) -> str:
+    def app_name(cls) -> str:
         return 'service'
 
     def test(self):
@@ -3660,7 +3718,7 @@ class TestListCatalogsResponse(DCP1CannedBundleTestCase, LocalAppTestCase):
                         'repository': {
                             'name': 'dss',
                             'sources': [
-                                'https://fake_dss_instance/v1:/2'
+                                'https://fake_dss_instance/v1'
                             ],
                         }
                     }
@@ -3685,7 +3743,9 @@ class TestResponseWithDCP2Cans(DCP2CannedBundleTestCase, WebServiceTestCase):
     def bundles(cls) -> list[SourcedBundleFQID]:
         return [
             cls.bundle_fqid(uuid='1b6d8348-d6e9-406a-aa6a-7ee886e52bf9',
-                            version='2019-09-24T09:35:06.958773Z')
+                            version='2019-09-24T09:35:06.958773Z'),
+            cls.bundle_fqid(uuid='f34d4883-429a-4260-9b1b-9c1e9844c80b',
+                            version='2022-08-23T17:25:02.565000Z')
         ]
 
     def test_tdr_sources(self):
@@ -3695,10 +3755,14 @@ class TestResponseWithDCP2Cans(DCP2CannedBundleTestCase, WebServiceTestCase):
         response_json = response.json()
         plugin = self.index_service.metadata_plugin(self.catalog)
         special_fields = plugin.special_fields
+        id_field = special_fields.source_id.name_in_hit
+        spec_field = special_fields.source_spec.name_in_hit
+        prefix_field = special_fields.source_prefix.name_in_hit
         for hit in response_json['hits']:
             source = one(hit['sources'])
-            source = TDRSourceRef(id=source[special_fields.source_id],
-                                  spec=TDRSourceSpec.parse(source[special_fields.source_spec]))
+            source = TDRSourceRef(id=source[id_field],
+                                  spec=TDRSourceSpec.parse(source[spec_field]),
+                                  prefix=Prefix.parse(source[prefix_field]))
             self.assertEqual(self.source, source)
 
     def get_file(self, entry_id: str) -> JSON:
@@ -3717,10 +3781,55 @@ class TestResponseWithDCP2Cans(DCP2CannedBundleTestCase, WebServiceTestCase):
                                         netloc=self.mock_tdr_service_url.netloc,
                                         path=f'v1_{self.source.id}_9d6f268f-f484-5381-9095-f0998fa0c961'))
 
-            self.assertEqual(expected_url, file['url'])
+            self.assertEqual(expected_url, file['azul_url'])
             self.assertEqual(expected_drs_uri, file['drs_uri'])
 
         with self.subTest(phantom=True):
             file = self.get_file('c343a47d-683f-571d-99c4-1331841b4e63')
-            self.assertIsNone(file['url'])
+            self.assertIsNone(file['azul_url'])
             self.assertIsNone(file['drs_uri'])
+
+    def test_contributed_analyses_matrix(self):
+        self.maxDiff = None
+        project_id = '9b876d31-0739-4e96-9846-f76e6a427279'
+        url = self.base_url.set(path=('index', 'projects', project_id))
+        response = requests.get(str(url))
+        response.raise_for_status()
+        response_json = response.json()
+        project = one(response_json['projects'])
+        file_url = str(self.base_url.set(
+            path='/repository/files/780846a0-dbc5-4bdc-ab3a-0da14b3ed551',
+            args=dict(
+                catalog='test',
+                version='2022-07-26T00:16:47.748000Z'
+            )
+        ))
+        mirror_uri = (f's3://{aws.mirror_bucket}/file/'
+                      f'649c45bd2f01b028c974c7e2a9604b9cf564d8afcf528eb299eaf3d7fe92bae3.sha256')
+        expected_file = {
+            'contentDescription': ['Count matrix', 'Feature table'],
+            'format': 'csv.gz',
+            'isIntermediate': False,
+            'name': 'GSE180878_Li_Brugge_10XscRNAseq_GeneCellMatrix_RNAcounts_human.csv.gz',
+            'sha256': '649c45bd2f01b028c974c7e2a9604b9cf564d8afcf528eb299eaf3d7fe92bae3',
+            'size': 107958959,
+            'fileSource': None,
+            'uuid': '780846a0-dbc5-4bdc-ab3a-0da14b3ed551',
+            'version': '2022-07-26T00:16:47.748000Z',
+            'matrixCellCount': None,
+            'drs_uri': 'drs://data.terra.bio/v1'
+                       '_541cc0bb-c54f-4a7e-8cdd-1a70cbd2f20c'
+                       '_596c26ba-2c35-4396-8c7c-50c825eb4e75',
+            'azul_url': file_url,
+            'azul_mirror_uri': mirror_uri,
+        }
+        expected_tree = {
+            'genusSpecies': {'Homo sapiens': {
+                'developmentStage': {'human adult stage': {
+                    'organ': {'breast': {
+                        'libraryConstructionApproach': {"10x 3' v2": [expected_file]}
+                    }}
+                }}
+            }}
+        }
+        self.assertEqual(expected_tree, project['contributedAnalyses'])

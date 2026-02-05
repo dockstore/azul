@@ -1,4 +1,4 @@
-https://github.com/gruns/orderedmultidict/LICENSE.md
+https://github.com/gruns/orderedmultidict/blob/HEAD/LICENSE.md
 
 Build Amazing Things.
 

@@ -181,8 +181,9 @@ def waf_match_path(path_regex: str) -> JSON:
 def add_waf_blocked_alarm(resources: JSON) -> JSON:
     """
     Add a metric alarm that trips if the ratio between blocked and overall
-    requests goes above 25%. Note that requests blocked by rules listed in
-    :py:attr:`Config.waf_rules_not_logged` are not considered.
+    requests goes above a deployment-specific threshold. Note that requests
+    blocked by rules listed in :py:attr:`Config.waf_rules_not_logged` are not
+    considered for the alarm.
     """
     if not config.enable_monitoring:
         return resources
@@ -214,38 +215,38 @@ def add_waf_blocked_alarm(resources: JSON) -> JSON:
             'aws_cloudwatch_metric_alarm': {
                 'waf_blocked': {
                     'alarm_name': config.qualified_resource_name('waf_blocked'),
-                    'comparison_operator': 'GreaterThanThreshold',
-                    'threshold': 25,  # percent blocked of total requests in a period
-                    'evaluation_periods': 4,
-                    'datapoints_to_alarm': 4,
-                    'treat_missing_data': 'notBreaching',
-                    'alarm_actions': ['${data.aws_sns_topic.monitoring.arn}'],
-                    'ok_actions': ['${data.aws_sns_topic.monitoring.arn}'],
                     'metric_query': [
-                        {
-                            'id': 'waf',
-                            'label': 'Percentage of blocked requests',
-                            'expression': expression,
-                            'return_data': 'true',
-                        },
                         *(
                             {
                                 'id': f'm{i}',
                                 'metric': {
                                     'namespace': 'AWS/WAFV2',
                                     'metric_name': metric,
-                                    'period': 15 * 60,
-                                    'stat': 'Sum',
                                     'dimensions': {
                                         'WebACL': '${aws_wafv2_web_acl.api_gateway.name}',
                                         'Region': config.region,
                                         'Rule': rule
-                                    }
+                                    },
+                                    'stat': 'Sum',
+                                    'period': 60 * 60,  # one hour
                                 }
                             }
                             for i, (metric, rule) in enumerate(metrics)
-                        )
-                    ]
+                        ),
+                        {
+                            'id': 'waf',
+                            'label': 'Percentage of blocked requests',
+                            'expression': expression,
+                            'return_data': 'true',
+                        }
+                    ],
+                    'comparison_operator': 'GreaterThanThreshold',
+                    'threshold': config.waf_blocked_alarm_threshold,
+                    'evaluation_periods': 1,
+                    'datapoints_to_alarm': 1,
+                    'alarm_actions': ['${data.aws_sns_topic.monitoring.arn}'],
+                    'ok_actions': ['${data.aws_sns_topic.monitoring.arn}'],
+                    'treat_missing_data': 'notBreaching',
                 }
             }
         }
@@ -480,7 +481,7 @@ emit_tf({
                                 }
                             },
                             {
-                                'name': 'aws_amazon_ip_reputation_list',
+                                'name': config.aws_ip_reputation_list_term,
                                 'statement': {
                                     'managed_rule_group_statement': {
                                         'name': 'AWSManagedRulesAmazonIpReputationList',
@@ -491,7 +492,7 @@ emit_tf({
                                     'none': {}
                                 },
                                 'visibility_config': {
-                                    'metric_name': 'aws_amazon_ip_reputation_list',
+                                    'metric_name': config.aws_ip_reputation_list_term,
                                     'sampled_requests_enabled': True,
                                     'cloudwatch_metrics_enabled': True
                                 }
@@ -763,10 +764,38 @@ emit_tf({
                 retry.tf_function_resource_name: {
                     'function_name': '${aws_lambda_function.%s.function_name}'
                                      % retry.tf_function_resource_name,
+                    'qualifier': '${aws_lambda_alias.%s.name}'
+                                 % retry.tf_function_resource_name,
                     'maximum_retry_attempts': retry.num_retries
                 }
                 for app in apps
                 for retry in app.chalice.retries
+            },
+            'aws_lambda_alias': {
+                resource_name: {
+                    'name': config.active_function_alias_name,
+                    'function_name': '${aws_lambda_function.%s.function_name}' % resource_name,
+                    'function_version': '${aws_lambda_function.%s.version}' % resource_name
+                }
+                for app in apps
+                for resource_name in app.chalice.tf_function_resource_names
+            },
+            'terraform_data': {
+                resource_name: {
+                    'triggers_replace': ['${aws_lambda_alias.%s.function_version}' % resource_name],
+                    'provisioner': {
+                        'local-exec': {
+                            'command': ' '.join([
+                                'python',
+                                f'{config.project_root}/scripts/delete_older_function_versions.py',
+                                '--function-name ${aws_lambda_alias.%s.function_name}' % resource_name,
+                                '--function-version ${aws_lambda_alias.%s.function_version}' % resource_name
+                            ])
+                        }
+                    }
+                }
+                for app in apps
+                for resource_name in app.chalice.tf_function_resource_names
             }
         }),
         *(

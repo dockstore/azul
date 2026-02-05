@@ -627,10 +627,11 @@ These steps are performed once per deployment (multiple times per project).
 4. For *Name*, enter `azul-{stage}` where stage is the name of the deployment
 
 5. Add an entry to *Authorized JavaScript origins* and enter the output from
-   `python3 -m azul config.service_endpoint`
+   `python -m azul config.service_endpoint`
 
-6. Add an entry to *Authorized redirect URIs*. Append `/oauth2_redirect` to the
-    value of the previous field and enter the resulting value.
+6. Add an entry to *Authorized redirect URIs*. Append
+   `/swagger/oauth2-redirect.html` to the value of the previous field and enter
+   the resulting value.
    
 7. Click *Create*
 
@@ -874,7 +875,10 @@ but they will be empty.
    `deployments/.active/.terraform.{$AWS_PROFILE}/terraform.tfstate`.
 
 
-# 4. Running indexer or service locally
+# 4. Running system components locally
+
+
+## 4.1 Running indexer or service locally
 
 While this method *does* run the service or indexer locally on your machine, it
 still requires that the cloud resources used by them are already deployed.
@@ -897,9 +901,37 @@ PyCharm recently added a feature that allows you to attach a debugger: From the
 main menu choose *Run*, *Attach to local process* and select the `chalice`
 process.
 
+## 4.2 Running the Data Browser locally
+
+Follow the steps in the [Data Browser's README] to install the prerequisites
+and launch a local version of the Data Browser's server.
+
+[Data Browser's README]: https://github.com/DataBiosphere/data-browser/blob/main/README.md
+
+The argument you specify in the launch command controls which deployment of Azul
+the server will connect to (e.g. `dev:hca-dcp` for the HCA `dev` deployment).
+To connect to another Azul deployment, see the list of site configs in the
+`/site-config` folder. To connect to a personal deployment of Azul, temporarily
+modify a related site config (e.g. `/site-config/hca-dcp/dev/config.ts` for an
+HCA-based personal deployment), set the `CATALOG` and `DATA_URL` properties to
+values matching your personal deployment, and then launch the Data Browser's
+server with the modified config specified.
+
+Note that when run locally, the Data Browser will make duplicate requests to
+Azul on every page load. This is due to React being run in dev mode with
+StrictMode enabled. To disable this behavior, modify `/next.config.mjs` and set
+the `reactStrictMode` property to false.
+
 
 # 5. Troubleshooting
 
+
+## `Error... googleapi: Error 403: Policy update access denied., forbidden` during `make deploy` or `make -C terraform destroy`
+
+The management of certain Google IAM-related resources requires ``Owner``
+permissions in the deployment's Google Cloud project. If you observe 403
+Forbidden errors when trying to create/edit/destroy these resources, contact the
+system administrator and request to be temporarily promoted to ``Owner``.
 
 ## `Error: Invalid index` during `make deploy`
 

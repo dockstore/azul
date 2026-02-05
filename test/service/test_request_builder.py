@@ -18,9 +18,9 @@ from azul.logging import (
 )
 from azul.plugins import (
     FieldPath,
+    InverseFieldMapping,
     ManifestConfig,
     MetadataPlugin,
-    SpecialFields,
 )
 from azul.plugins.metadata.hca import (
     Plugin,
@@ -57,19 +57,10 @@ class TestRequestBuilder(DCP1CannedBundleTestCase, WebServiceTestCase):
         def metadata_plugin(self, catalog: CatalogName) -> MetadataPlugin:
             return self.plugin
 
-    # The mock plugin
     class MockPlugin(Plugin):
 
         @property
-        def special_fields(self) -> SpecialFields:
-            return SpecialFields(source_id='sourceId',
-                                 source_spec='sourceSpec',
-                                 bundle_uuid='bundleUuid',
-                                 bundle_version='bundleVersion',
-                                 root_entity_id='projectId')
-
-        @property
-        def _field_mapping(self) -> MetadataPlugin._FieldMapping:
+        def _field_mapping(self) -> InverseFieldMapping:
             return {
                 'default_factory': {},
                 'entity_id': 'entity_id',
