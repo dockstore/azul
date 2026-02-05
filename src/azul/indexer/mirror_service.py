@@ -624,7 +624,7 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
                                  data=file_content,
                                  content_type=self._file_object_content_type,
                                  overwrite=False)
-        self._put_info(file)
+        self._create_info(file)
 
     def _create_upload(self, file: File) -> FileUpload:
         object_key = self._file_object_key(file)
@@ -683,7 +683,7 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
             log.info('Discarding redundant upload %r of %r', a.upload.upload_id, a.file)
             self._storage.abort_multipart_upload(object_key=object_key,
                                                  upload_id=a.upload.upload_id)
-        self._put_info(a.file)
+        self._create_info(a.file)
         log.info('Successfully mirrored file via multi-part upload: %r', a.file)
         return iter(())
 
@@ -710,7 +710,7 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
         key = self._info_object_key(file)
         self._storage.update_object(key, update)
 
-    def _put_info(self, file: File):
+    def _create_info(self, file: File):
         object_key = self._info_object_key(file)
         info = self._info(file)
         self._storage.put_object(object_key=object_key,
