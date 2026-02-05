@@ -46,9 +46,6 @@ from azul.attrs import (
 from azul.auth import (
     Authentication,
 )
-from azul.collections import (
-    alist,
-)
 from azul.deployment import (
     aws,
 )
@@ -91,7 +88,6 @@ from azul.service.storage_service import (
 )
 from azul.types import (
     JSON,
-    MutableJSON,
     json_element_strings,
 )
 
@@ -687,25 +683,33 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
         log.info('Successfully mirrored file via multi-part upload: %r', a.file)
         return iter(())
 
-    def _info(self, file: File) -> MutableJSON:
+    def _info(self, file: File, old_info: JSON | None = None) -> JSON:
+        content_types: set[str] = set()
+        content_type = 'content-type'
+        if old_info is not None:
+            old_content_types = old_info[content_type]
+            if old_content_types is None:
+                # Info objects in AnVIL are invalid against their schema
+                # https://github.com/DataBiosphere/azul/issues/7675
+                pass
+            elif isinstance(old_content_types, str):
+                # Content type in mirror info objects inconsistent with index
+                # https://github.com/DataBiosphere/azul/issues/7193
+                pass
+            elif isinstance(old_content_types, list):
+                content_types.update(json_element_strings(old_content_types))
+            else:
+                assert False, type(old_content_types)
+        if file.content_type is not None:
+            content_types.add(file.content_type)
         return {
-            'content-type': alist(file.content_type),
+            content_type: sorted(content_types),
             '$schema': str(self._schema_url_func(schema_name='info', version=2))
         }
 
     def _update_info(self, file: File):
-        new_info = self._info(file)
-
         def update(data: bytes) -> bytes:
-            old_info = json.loads(data)
-            content_types = old_info['content-type']
-            if isinstance(content_types, list):
-                content_types = set(content_types)
-            else:
-                content_types = set()
-            content_types.update(json_element_strings(new_info['content-type']))
-            new_info['content-type'] = sorted(content_types)
-            return json.dumps(new_info).encode()
+            return json.dumps(self._info(file, json.loads(data))).encode()
 
         key = self._info_object_key(file)
         self._storage.update_object(key, update)
