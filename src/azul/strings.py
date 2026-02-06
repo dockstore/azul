@@ -9,7 +9,7 @@ from more_itertools import (
 )
 
 from azul import (
-    reject,
+    R,
 )
 
 
@@ -282,9 +282,9 @@ def delimit(s: str, delimiter: str) -> str:
     >>> delimit("foo's", "'")
     Traceback (most recent call last):
     ...
-    azul.RequirementError: ("'", 'must not occur in', "foo's")
+    AssertionError: R("'", 'must not occur in', "foo's")
     """
-    reject(delimiter in s, delimiter, 'must not occur in', s)
+    assert delimiter not in s, R(delimiter, 'must not occur in', s)
     return delimiter + s + delimiter
 
 
@@ -302,7 +302,7 @@ def back_quote(*words: str) -> str:
     >>> back_quote('foo`s')
     Traceback (most recent call last):
     ...
-    azul.RequirementError: ('`', 'must not occur in', 'foo`s')
+    AssertionError: R('`', 'must not occur in', 'foo`s')
     """
     return delimit(join_words(*words), '`')
 
@@ -321,7 +321,7 @@ def single_quote(*words: str) -> str:
     >>> single_quote("foo", "bar's")
     Traceback (most recent call last):
     ...
-    azul.RequirementError: ("'", 'must not occur in', "foo bar's")
+    AssertionError: R("'", 'must not occur in', "foo bar's")
     """
     return delimit(join_words(*words), "'")
 
@@ -340,6 +340,6 @@ def double_quote(*words: str) -> str:
     >>> double_quote('foo', 'b"a"r')
     Traceback (most recent call last):
     ...
-    azul.RequirementError: ('"', 'must not occur in', 'foo b"a"r')
+    AssertionError: R('"', 'must not occur in', 'foo b"a"r')
     """
     return delimit(join_words(*words), '"')
