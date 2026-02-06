@@ -648,6 +648,13 @@ def env() -> Mapping[str, str | None]:
         #
         'azul_gitlab_access_token': None,
 
+        # The filesystem UUID of the EBS volume attached to the GitLab EC2
+        # instance. This variable is only used in the `.gitlab` component. For
+        # additional info, see section 8.5 of the README (Storage) and the
+        # comments in `terraform/gitlab/gitlab.tf.json.template.py`.
+        #
+        'azul_gitlab_data_volume_id': None,
+
         # The name of the user owning the token in `azul_gitlab_access_token`.
         #
         'azul_gitlab_user': None,

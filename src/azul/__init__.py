@@ -1672,6 +1672,10 @@ class Config:
         return self.environ.get('azul_gitlab_access_token')
 
     @property
+    def gitlab_data_volume_id(self) -> str | None:
+        return self.environ.get('azul_gitlab_data_volume_id')
+
+    @property
     def lambda_layer_key(self) -> str:
         return 'lambda_layers'
 
