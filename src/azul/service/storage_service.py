@@ -145,7 +145,8 @@ class StorageService:
     def update_object(self,
                       object_key: str,
                       updater: Callable[[bytes], bytes],
-                      max_attempts: int = 10
+                      *,
+                      max_attempts: int = 10,
                       ):
         """
         Updates the contents of an object, based on its existing contents, while
