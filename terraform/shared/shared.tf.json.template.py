@@ -12,7 +12,6 @@ from azul.deployment import (
     aws,
 )
 from azul.strings import (
-    delimit,
     parenthesize as _parens,
 )
 from azul.terraform import (
@@ -28,8 +27,8 @@ def _curly(s: str) -> str:
     return _parens(s, '{}')
 
 
-def _padded_curly(s: str) -> str:
-    return _curly(delimit(s, ' '))
+def _curly_padded(s: str) -> str:
+    return _curly((f' {s} '))
 
 
 def _or(*terms: str) -> str:
@@ -38,6 +37,10 @@ def _or(*terms: str) -> str:
 
 def _and(*terms: str) -> str:
     return ' && '.join(map(_parens, terms))
+
+
+def _and_no_parens(*terms: str) -> str:
+    return ' && '.join(terms)
 
 
 class CloudTrailAlarm(NamedTuple):
@@ -74,7 +77,7 @@ trail_alarms = [
     # https://docs.aws.amazon.com/securityhub/latest/userguide/cloudwatch-controls.html#cloudwatch-3
     CloudTrailAlarm(name='console_no_mfa',
                     statistic='Sum',
-                    filter_pattern=_padded_curly(
+                    filter_pattern=_curly_padded(
                         _and(
                             '$.eventName = "ConsoleLogin"',
                             '$.additionalEventData.MFAUsed != "Yes"',
@@ -87,7 +90,7 @@ trail_alarms = [
     CloudTrailAlarm(name='root_usage',
                     statistic='Sum',
                     filter_pattern=_curly(
-                        _and(
+                        _and_no_parens(
                             '$.userIdentity.type="Root"',
                             '$.userIdentity.invokedBy NOT EXISTS',
                             '$.eventType !="AwsServiceEvent"'
