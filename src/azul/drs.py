@@ -29,7 +29,7 @@ from furl import (
 from more_itertools import (
     one,
 )
-import urllib3.request
+import urllib3
 
 from azul import (
     R,
@@ -38,6 +38,7 @@ from azul import (
 )
 from azul.http import (
     HasCachedHttpClient,
+    HttpClient,
     LimitedRetryHttpClient,
     Propagate429HttpClient,
 )
@@ -290,7 +291,7 @@ class CompactDRSURI(DRSURI):
 
 class _BaseClient(HasCachedHttpClient):
 
-    def _create_http_client(self) -> urllib3.request.RequestMethods:
+    def _create_http_client(self) -> HttpClient:
         return Propagate429HttpClient(
             LimitedRetryHttpClient(
                 super()._create_http_client()
@@ -355,7 +356,7 @@ class IdentifiersDotOrgClient(_BaseClient):
 
 @attr.s(auto_attribs=True, kw_only=True, frozen=True)
 class DRSObject:
-    _http_client: urllib3.request.RequestMethods
+    _http_client: HttpClient
     _url: furl
 
     def get(self, access_method: AccessMethod = AccessMethod.https) -> Access:
@@ -428,12 +429,12 @@ class DRSObject:
             else:
                 raise DRSStatusException(url, response)
 
-    def _request(self, url: furl) -> urllib3.HTTPResponse:
+    def _request(self, url: furl) -> urllib3.BaseHTTPResponse:
         return self._http_client.request('GET', str(url), redirect=False)
 
 
 class DRSStatusException(Exception):
 
-    def __init__(self, url: furl, response: urllib3.HTTPResponse) -> None:
+    def __init__(self, url: furl, response: urllib3.BaseHTTPResponse) -> None:
         super().__init__(f'Unexpected response from {url}',
                          response.status, response.data)

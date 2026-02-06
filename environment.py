@@ -276,7 +276,7 @@ def env() -> Mapping[str, str | None]:
                 'url': 'https://hub.docker.com/_/python',
             },
             'pycharm': {
-                'ref': 'docker.io/ucscgi/azul-pycharm:2025.2.6-71',
+                'ref': 'docker.io/ucscgi/azul-pycharm:2025.2.6-72',
                 'url': 'https://hub.docker.com/repository/docker/ucscgi/azul-pycharm',
                 'is_custom': True
             },
@@ -286,22 +286,22 @@ def env() -> Mapping[str, str | None]:
                 'is_custom': False
             },
             'bigquery_emulator': {
-                'ref': 'docker.io/ucscgi/azul-bigquery-emulator:0.4.4-52',
+                'ref': 'docker.io/ucscgi/azul-bigquery-emulator:0.4.4-53',
                 'url': 'https://hub.docker.com/repository/docker/ucscgi/azul-bigquery-emulator',
                 'is_custom': True
             },
             # Updating any of the four images below additionally requires
             # redeploying the `gitlab` TF component.
             'clamav': {
-                'ref': 'docker.io/clamav/clamav:1.5.1-19',
+                'ref': 'docker.io/clamav/clamav:1.5.1-23',
                 'url': 'https://hub.docker.com/r/clamav/clamav'
             },
             'gitlab': {
-                'ref': 'docker.io/gitlab/gitlab-ce:18.7.1-ce.0',
+                'ref': 'docker.io/gitlab/gitlab-ce:18.8.2-ce.0',
                 'url': 'https://hub.docker.com/r/gitlab/gitlab-ce'
             },
             'gitlab_runner': {
-                'ref': 'docker.io/gitlab/gitlab-runner:ubuntu-v18.7.2',
+                'ref': 'docker.io/gitlab/gitlab-runner:ubuntu-v18.8.0',
                 'url': 'https://hub.docker.com/r/gitlab/gitlab-runner'
             },
             'dind': {
@@ -919,5 +919,11 @@ def env() -> Mapping[str, str | None]:
         # $1 per one million requests above ten million requests. The blocking
         # only applies to URLs disallowed via robots.txt.
         #
-        'azul_waf_bot_control': '0'
+        'azul_waf_bot_control': '0',
+
+        # The maximum allowed percentage of blocked requests (number of blocked
+        # requests, divided by the number of all requests, times 100) for a
+        # configured period before a metric alarm is tripped.
+        #
+        'azul_waf_blocked_alarm_threshold': '50'
     }

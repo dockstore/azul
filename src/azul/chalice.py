@@ -103,6 +103,10 @@ class AzulRequest(Request):
     authentication: Authentication | None
 
 
+class TerraTimeoutError(ChaliceViewError):
+    STATUS_CODE = 307
+
+
 # For some reason Chalice does not define an exception for the 410 status code
 class GoneError(ChaliceViewError):
     STATUS_CODE = 410
@@ -153,7 +157,7 @@ class AzulChaliceApp(Chalice):
         # Middleware is invoked in order of registration
         self.register_middleware(self._logging_middleware, 'http')
         self.register_middleware(self._security_headers_middleware, 'http')
-        self.register_middleware(self._retry_503, 'http')
+        self.register_middleware(self._retry_after, 'http')
         self.register_middleware(self._api_gateway_context_middleware, 'http')
         self.register_middleware(self._authentication_middleware, 'http')
 
@@ -259,13 +263,29 @@ class AzulChaliceApp(Chalice):
         response.headers['Cache-Control'] = cache_control
         return response
 
-    def _retry_503(self, event, get_response):
+    def _retry_after(self, event, get_response):
         """
-        Add a retry-after header to 503 responses
+        Add a retry-after header to the response based on its type.
         """
         response = get_response(event)
         if response.status_code == 503:
             response.headers.setdefault('Retry-After', '30')
+        # We return a 307 to indicate that the client should retry the request
+        # when it failed due to an internal request to Terra timing out. We do
+        # this instead of a 503 to avoid the Data Browser from displaying an
+        # error, and avoid a CloudWatch alarm (5XX) from being raised. The
+        # retry-after response header is given a value of zero since the client
+        # already waited over five seconds for the request to time out.
+        elif response.status_code == 307:
+            response.headers.setdefault('Retry-After', '0')
+            if event.query_params is None:
+                args = None
+            else:
+                assert isinstance(event.query_params, MultiDict)
+                args = {k: event.query_params.getlist(k) for k in event.query_params}
+            url = furl(self.base_url, path=event.context['path'], args=args)
+            assert 'Location' not in response.headers, response.headers
+            response.headers['Location'] = str(url)
         return response
 
     def _http_cache_for(self, seconds: int):
@@ -896,7 +916,7 @@ class AzulChaliceApp(Chalice):
                     'description': 'Too many requests. ' + retry_after
                 },
                 '500': {
-                    'description': 'Internal server error. ' + do_not_retry
+                    'description': 'Internal application error. ' + do_not_retry
                 },
                 '502': {
                     'description': 'Bad gateway. The frontend server received '
