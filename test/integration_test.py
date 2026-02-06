@@ -71,7 +71,6 @@ from openapi_spec_validator import (
 import opensearchpy
 import requests
 import urllib3
-import urllib3.request
 
 from azul import (
     CatalogName,
@@ -111,6 +110,7 @@ from azul.es import (
     ESClientFactory,
 )
 from azul.http import (
+    HttpClient,
     http_client,
 )
 from azul.indexer import (
@@ -362,7 +362,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
     #: IT-specific retries are configured explicitly for each request, no matter
     #: which client is used, in the :py:meth:`_get_url_unchecked` method.
     #:
-    _plain_http: urllib3.request.RequestMethods
+    _plain_http: HttpClient
 
     #: Depending on the authorization context, this is either the same client as
     #: the one refered to by the attribute above, or a client that sends an
@@ -370,7 +370,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
     #: IT-specific retries are configured explicitly for each request, no matter
     #: which client is used, in the :py:meth:`_get_url_unchecked` method.
     #:
-    _http: urllib3.request.RequestMethods
+    _http: HttpClient
 
     def setUp(self) -> None:
         super().setUp()

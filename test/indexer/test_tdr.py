@@ -10,6 +10,7 @@ from operator import (
     attrgetter,
 )
 from typing import (
+    Any,
     Callable,
     ClassVar,
     Generic,
@@ -37,6 +38,13 @@ from google.auth.credentials import (
 )
 from google.cloud import (
     bigquery,
+)
+from google.cloud._helpers import (
+    _datetime_from_microseconds,
+)
+from google.cloud.bigquery._helpers import (
+    CellDataParser,
+    _not_null,
 )
 from google.oauth2.service_account import (
     Credentials as ServiceAccountCredentials,
@@ -194,6 +202,53 @@ class TDRPluginTestCase(TDRTestCase,
                                                '--dataset=' + cls.source.spec.name
                                            ])
         cls._patch_tdr_client()
+        cls._patch_timestamp_conversion()
+
+    @classmethod
+    def _patch_timestamp_conversion(cls):
+        """
+        BigQueryEmulator returns a TIMESTAMP column as a string with the decimal
+        representation of a real number of seconds since 1970 with microsecond
+        precision in the decimal part. It does so even though the BigQuery
+        Python API specifies the 'formatOptions.useInt64Timestamp' option along
+        most requests which should trigger these columns to be returned as a
+        string with the decimal representation of a 64-bit integer number of
+        microseconds since 1970. The fact that the emulator seems to ignore that
+        option breaks the API when it's trying to parse the string.
+
+        https://github.com/goccy/bigquery-emulator/issues/32#issuecomment-2661687330
+        """
+
+        def timestamp_to_py(self, value, field):
+            if _not_null(value, field):
+                us = cls._float_seconds_to_int_microseconds(value)
+                return _datetime_from_microseconds(us)
+            else:
+                return None
+
+        cls.addClassPatch(mock.patch.object(CellDataParser,
+                                            'timestamp_to_py',
+                                            new=timestamp_to_py))
+
+    @classmethod
+    def _float_seconds_to_int_microseconds(cls, value) -> int | Any:
+        """
+        >>> f = TDRPluginTestCase._float_seconds_to_int_microseconds
+        >>> f('0')
+        0
+
+        >>> f('1769204298.1')
+        1769204298100000
+
+        >>> f('1769204298.999999')
+        1769204298999999
+
+        Loss of microsecond precision in year 2242 (note last digit)
+
+        >>> f('8589934592.000001')
+        8589934592000002
+        """
+        return int(float(value) * 10 ** 6)
 
     def _make_mock_tables(self, source: TDRSourceRef) -> None:
         can = self._load_canned_file_version(uuid=source.id,
