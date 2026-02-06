@@ -46,9 +46,6 @@ from azul.attrs import (
 from azul.auth import (
     Authentication,
 )
-from azul.collections import (
-    alist,
-)
 from azul.deployment import (
     aws,
 )
@@ -623,7 +620,7 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
                                  data=file_content,
                                  content_type=self._file_object_content_type,
                                  overwrite=False)
-        self._put_info(file)
+        self._create_info(file)
 
     def _create_upload(self, file: File) -> FileUpload:
         object_key = self._file_object_key(file)
@@ -682,35 +679,42 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
             log.info('Discarding redundant upload %r of %r', a.upload.upload_id, a.file)
             self._storage.abort_multipart_upload(object_key=object_key,
                                                  upload_id=a.upload.upload_id)
-        self._put_info(a.file)
+        self._create_info(a.file)
         log.info('Successfully mirrored file via multi-part upload: %r', a.file)
         return iter(())
 
-    def _info(self, file: File) -> JSON:
+    def _info(self, file: File, old_info: JSON | None = None) -> JSON:
+        content_types: set[str] = set()
+        content_type = 'content-type'
+        if old_info is not None:
+            old_content_types = old_info[content_type]
+            if old_content_types is None:
+                # Info objects in AnVIL are invalid against their schema
+                # https://github.com/DataBiosphere/azul/issues/7675
+                pass
+            elif isinstance(old_content_types, str):
+                # Content type in mirror info objects inconsistent with index
+                # https://github.com/DataBiosphere/azul/issues/7193
+                pass
+            elif isinstance(old_content_types, list):
+                content_types.update(json_element_strings(old_content_types))
+            else:
+                assert False, type(old_content_types)
+        if file.content_type is not None:
+            content_types.add(file.content_type)
         return {
-            'content-type': alist(file.content_type),
+            content_type: sorted(content_types),
             '$schema': str(self._schema_url_func(schema_name='info', version=2))
         }
 
     def _update_info(self, file: File):
-        content_type = file.content_type
-        if content_type is not None:
+        def update(data: bytes) -> bytes:
+            return json.dumps(self._info(file, json.loads(data))).encode()
 
-            def update(data: bytes) -> bytes:
-                json_content = json.loads(data)
-                content_types = json_content['content-type']
-                if isinstance(content_types, list):
-                    content_types = set(content_types)
-                else:
-                    content_types = set()
-                content_types.add(content_type)
-                json_content['content-type'] = sorted(content_types)
-                return json.dumps(json_content).encode()
+        key = self._info_object_key(file)
+        self._storage.update_object(key, update)
 
-            key = self._info_object_key(file)
-            self._storage.update_object(key, update)
-
-    def _put_info(self, file: File):
+    def _create_info(self, file: File):
         object_key = self._info_object_key(file)
         info = self._info(file)
         self._storage.put_object(object_key=object_key,
