@@ -65,12 +65,25 @@ def conformance_pack(name: str) -> str:
 trail_alarms = [
     # [CloudWatch.2] Ensure a log metric filter and alarm exist for unauthorized API calls
     # https://docs.aws.amazon.com/securityhub/latest/userguide/cloudwatch-controls.html#cloudwatch-2
+    #
+    # Note that this event the filter pattern intentionally deviates from what
+    # the control mandates.
+    #
     CloudTrailAlarm(name='api_unauthorized',
                     statistic='Sum',
                     filter_pattern=_curly(
-                        _or(
-                            '$.errorCode = "*UnauthorizedOperation"',
-                            '$.errorCode = "AccessDenied*"'
+                        _and(
+                            _or(
+                                '$.errorCode = "*UnauthorizedOperation"',
+                                '$.errorCode = "AccessDenied*"'
+                            ),
+                            _or(
+                                '$.userIdentity.invokedBy NOT EXISTS',
+                                _and(
+                                    '$.userIdentity.invokedBy != "config.amazonaws.com"',
+                                    '$.userIdentity.invokedBy != "resource-explorer-2.amazonaws.com"'
+                                )
+                            )
                         )
                     )),
     # [CloudWatch.3] Ensure a log metric filter and alarm exist for Management Console sign-in without MFA
