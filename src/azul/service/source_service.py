@@ -57,6 +57,13 @@ class SourceService:
                         catalog: CatalogName,
                         authentication: Authentication | None
                         ) -> set[str]:
+        """
+        List source IDs in the underlying repository that are accessible using
+        the provided authentication. Source IDs may be included even if they are
+        not included in the given catalog. May require a roundtrip to the
+        underlying repository, but results are cached in DynamoDB for a short
+        time.
+        """
         plugin = self._repository_plugin(catalog)
 
         cache_key = (
@@ -77,6 +84,10 @@ class SourceService:
                      catalog: CatalogName,
                      authentication: Authentication | None
                      ) -> Iterable[SourceRef]:
+        """
+        List sources in the given catalog that are accessible using the provided
+        authentication. May require a roundtrip to the underlying repository.
+        """
         return self._repository_plugin(catalog).list_sources(authentication)
 
     table_name = config.dynamo_sources_cache_table_name
