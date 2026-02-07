@@ -108,8 +108,8 @@ class TDRPlugin[TDR_BUNDLE: TDRBundle,
             if authentication is None or tdr.is_registered():
                 raise
             else:
-                # Fall back to anonymous access if the request is authenticated
-                # using an unregistered account.
+                log.info('Falling back to default authentication because the '
+                         'request included credentials from an unregistered account')
                 tdr = self._user_authenticated_tdr(None)
                 return tdr_callback(tdr)
 
