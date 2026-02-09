@@ -411,7 +411,7 @@ class CatalogTestCase(AzulUnitTestCase, metaclass=ABCMeta):
     @classmethod
     def _patch_configured_sources(cls):
         cls.addClassPatch(patch.object(SourceService,
-                                       'configured_public_sources',
+                                       'public_sources',
                                        new_callable=PropertyMock,
                                        return_value={cls.catalog: [cls.source]}))
 

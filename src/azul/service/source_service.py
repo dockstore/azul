@@ -141,7 +141,7 @@ class SourceService:
         return int(time())
 
     @cached_property
-    def configured_public_sources(self) -> Mapping[CatalogName, Iterable[SourceRef]]:
+    def public_sources(self) -> Mapping[CatalogName, Iterable[SourceRef]]:
         """
         The set of all sources included in any catalog in the current
         deployment that are accessible to the public service account. When
@@ -169,5 +169,5 @@ class SourceService:
     def configured_public_sources_for_outsourcing(self) -> JSON:
         return {
             catalog: [source.to_json() for source in sources]
-            for catalog, sources in self.configured_public_sources.items()
+            for catalog, sources in self.public_sources.items()
         }
