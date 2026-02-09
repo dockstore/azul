@@ -74,7 +74,7 @@ class TestConfiguredSources(AzulUnitTestCase):
 
         class MockPlugin:
 
-            def list_accessible_sources(self, authentication):
+            def list_sources(self, authentication):
                 assert authentication is None, authentication
                 return TestConfiguredSources.public_sources
 

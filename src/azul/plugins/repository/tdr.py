@@ -122,16 +122,16 @@ class TDRPlugin[TDR_BUNDLE: TDRBundle,
         # found a trustworthy, reusable implementation.
         return longest_common_prefix(spec.name for spec in self.sources)
 
-    def list_accessible_sources(self,
-                                authentication: Authentication | None
-                                ) -> list[TDRSourceRef]:
+    def list_sources(self,
+                     authentication: Authentication | None
+                     ) -> list[TDRSourceRef]:
         names_by_id = self._auth_fallback(authentication,
                                           lambda tdr: tdr.snapshot_names_by_id(filter=self._common_source_filter))
         return self._match_sources(names_by_id)
 
-    def list_accessible_source_ids(self,
-                                   authentication: Authentication | None
-                                   ) -> set[str]:
+    def list_source_ids(self,
+                        authentication: Authentication | None
+                        ) -> set[str]:
         return self._auth_fallback(authentication,
                                    lambda tdr: tdr.snapshot_ids())
 

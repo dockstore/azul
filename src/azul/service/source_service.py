@@ -59,10 +59,10 @@ class SourceService:
     def repository_plugin(self, catalog: CatalogName) -> RepositoryPlugin:
         return RepositoryPlugin.load(catalog).create(catalog)
 
-    def list_accessible_source_ids(self,
-                                   catalog: CatalogName,
-                                   authentication: Authentication | None
-                                   ) -> set[str]:
+    def list_source_ids(self,
+                        catalog: CatalogName,
+                        authentication: Authentication | None
+                        ) -> set[str]:
         """
         List source IDs in the underlying repository that are accessible using
         the provided authentication. Source IDs may be included even if they are
@@ -82,19 +82,19 @@ class SourceService:
         try:
             source_ids = set(json_element_strings(self._get(cache_key)))
         except CacheMiss:
-            source_ids = plugin.list_accessible_source_ids(authentication)
+            source_ids = plugin.list_source_ids(authentication)
             self._put(cache_key, list(source_ids))
         return source_ids
 
-    def list_accessible_sources(self,
-                                catalog: CatalogName,
-                                authentication: Authentication | None
-                                ) -> Iterable[SourceRef]:
+    def list_sources(self,
+                     catalog: CatalogName,
+                     authentication: Authentication | None
+                     ) -> Iterable[SourceRef]:
         """
         List sources in the given catalog that are accessible using the provided
         authentication. May require a roundtrip to the underlying repository.
         """
-        return self.repository_plugin(catalog).list_accessible_sources(authentication)
+        return self.repository_plugin(catalog).list_sources(authentication)
 
     table_name = config.dynamo_sources_cache_table_name
 
@@ -157,8 +157,8 @@ class SourceService:
             public_sources = set()
             for catalog in config.catalogs.values():
                 if not catalog.is_integration_test_catalog:
-                    public_sources.update(self.list_accessible_sources(catalog.name,
-                                                                       authentication=None))
+                    public_sources.update(self.list_sources(catalog.name,
+                                                            authentication=None))
             return public_sources
         else:
             return [
