@@ -101,4 +101,4 @@ class TestConfiguredSources(DCP2TestCase):
             test()
 
         self.assertEqual(*outsourced)
-        self.assertEqual([{self.source}] * 2, actuals)
+        self.assertEqual([{self.catalog: [self.source]}] * 2, actuals)

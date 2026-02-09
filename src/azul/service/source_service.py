@@ -5,6 +5,7 @@ from time import (
 )
 from typing import (
     Iterable,
+    Mapping,
 )
 
 from azul import (
@@ -29,9 +30,9 @@ from azul.plugins import (
 )
 from azul.types import (
     AnyJSON,
-    JSONs,
-    json_element_mappings,
+    JSON,
     json_element_strings,
+    json_item_sequences,
 )
 
 log = logging.getLogger(__name__)
@@ -140,7 +141,7 @@ class SourceService:
         return int(time())
 
     @cached_property
-    def configured_public_sources(self) -> Iterable[SourceRef]:
+    def configured_public_sources(self) -> Mapping[CatalogName, Iterable[SourceRef]]:
         """
         The set of all sources included in any catalog in the current
         deployment that are accessible to the public service account. When
@@ -154,21 +155,19 @@ class SourceService:
             with open_resource('public_sources.json') as f:
                 public_sources = json.load(f)
         except NotInLambdaContextException:
-            public_sources = set()
-            for catalog in config.catalogs.values():
-                if not catalog.is_integration_test_catalog:
-                    public_sources.update(self.list_sources(catalog.name,
-                                                            authentication=None))
-            return public_sources
+            return {
+                catalog.name: self.list_sources(catalog.name, authentication=None)
+                for catalog in config.catalogs.values()
+            }
         else:
             return {
-                SourceRef.from_json(source)
-                for source in json_element_mappings(public_sources)
+                catalog: [SourceRef.from_json(source) for source in sources]
+                for catalog, sources in json_item_sequences(public_sources)
             }
 
     @property
-    def configured_public_sources_for_outsourcing(self) -> JSONs:
-        return [
-            source.to_json()
-            for source in self.configured_public_sources
-        ]
+    def configured_public_sources_for_outsourcing(self) -> JSON:
+        return {
+            catalog: [source.to_json() for source in sources]
+            for catalog, sources in self.configured_public_sources.items()
+        }

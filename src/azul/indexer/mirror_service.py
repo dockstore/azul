@@ -358,7 +358,7 @@ class BaseMirrorService:
             if source_config.mirror:
                 is_public = any(
                     source_spec == source.spec
-                    for source in self._source_service.configured_public_sources
+                    for source in self._source_service.configured_public_sources[self.catalog]
                 )
                 return is_public
             else:
