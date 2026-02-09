@@ -712,7 +712,7 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
             return json.dumps(self._info(file, json.loads(data))).encode()
 
         key = self._info_object_key(file)
-        self._storage.update_object(key, update)
+        self._storage.update_object(key, update, content_type='application/json')
 
     def _create_info(self, file: File):
         object_key = self._info_object_key(file)

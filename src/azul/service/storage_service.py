@@ -145,28 +145,37 @@ class StorageService:
     def update_object(self,
                       object_key: str,
                       updater: Callable[[bytes], bytes],
-                      max_attempts: int = 10
+                      *,
+                      max_attempts: int = 10,
+                      content_type: str | None = None,
                       ):
         """
-        Updates the contents of an object, based on its existing contents, while
-        ensuring that concurrent updates are not overwritten. Expects a callback
-        that returns the desired contents of the object given its current
-        contents. If the callback ever returns its argument unchanged, no
-        further writes will be attempted. If the object does not exist at any
-        point during the update, StorageObjectNotFound is raised.
+        Updates the contents and/or content type of an object, based on its
+        existing contents, while ensuring that concurrent updates are not
+        overwritten. Expects a callback that returns the desired contents of the
+        object given its current contents. If the callback returns its argument
+        unchanged and the specified content type is None or matches the current
+        content type, no further writes will be attempted. If the object does
+        not exist at any point during the update, StorageObjectNotFound is
+        raised.
         """
         for i in range(max_attempts):
             response = self._get_object(object_key)
             etag = response['ETag']
             data = response['Body'].read()
+            if content_type is None:
+                content_type = response['ContentType']
             new_data = updater(data)
-            if new_data == data:
+            if new_data == data and content_type == response['ContentType']:
                 log.info('Object contents of %r is already up to date during attempt #%r/%r.',
                          object_key, i + 1, max_attempts)
                 break
             else:
                 try:
-                    self.put_object(object_key=object_key, data=new_data, etag=etag)
+                    self.put_object(object_key=object_key,
+                                    data=new_data,
+                                    etag=etag,
+                                    content_type=content_type)
                 except botocore.exceptions.ClientError as e:
                     error = e.response['Error']
                     code, condition = error['Code'], error.get('Condition')
