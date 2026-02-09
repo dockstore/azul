@@ -96,13 +96,6 @@ class SourceService:
         """
         return self.repository_plugin(catalog).list_accessible_sources(authentication)
 
-    def list_sources(self, catalog_name: CatalogName) -> Iterable[SourceRef]:
-        """
-        List sources in the given catalog that are accessible to the indexer.
-        May require a roundtrip to the underlying repository.
-        """
-        return self.repository_plugin(catalog_name).list_sources()
-
     table_name = config.dynamo_sources_cache_table_name
 
     key_attribute = 'identity'
