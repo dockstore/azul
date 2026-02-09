@@ -84,7 +84,7 @@ class TestConfiguredSources(DCP2TestCase):
         def test():
             service = SourceService()
             actuals.append(service.public_sources)
-            outsourced.append(service.configured_public_sources_for_outsourcing)
+            outsourced.append(service.public_sources_for_outsourcing)
             mock_open_resource.assert_called_once()
 
         target = SourceService.__module__ + '.open_resource'

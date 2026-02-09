@@ -166,7 +166,7 @@ class SourceService:
             }
 
     @property
-    def configured_public_sources_for_outsourcing(self) -> JSON:
+    def public_sources_for_outsourcing(self) -> JSON:
         return {
             catalog: [source.to_json() for source in sources]
             for catalog, sources in self.public_sources.items()
