@@ -58,7 +58,7 @@ class TestSourceCache(DynamoDBTestCase):
             service._get(key)
 
 
-class TestConfiguredSources(DCP2TestCase):
+class TestPublicSources(DCP2TestCase):
 
     @classmethod
     def _patch_public_sources(cls):
