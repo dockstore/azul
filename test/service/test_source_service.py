@@ -61,7 +61,7 @@ class TestSourceCache(DynamoDBTestCase):
 class TestConfiguredSources(DCP2TestCase):
 
     @classmethod
-    def _patch_configured_sources(cls):
+    def _patch_public_sources(cls):
         pass  # don't call super so that code under test isn't patched
 
     @classmethod

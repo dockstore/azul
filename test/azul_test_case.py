@@ -364,7 +364,7 @@ class CatalogTestCase(AzulUnitTestCase, metaclass=ABCMeta):
         cls._patch_catalogs()
         cls._patch_replicas_enabled()
         cls._patch_deployment()
-        cls._patch_configured_sources()
+        cls._patch_public_sources()
 
     @classmethod
     def _patch_catalogs(cls):
@@ -409,7 +409,7 @@ class CatalogTestCase(AzulUnitTestCase, metaclass=ABCMeta):
                                        return_value=config.deployment.test_name))
 
     @classmethod
-    def _patch_configured_sources(cls):
+    def _patch_public_sources(cls):
         cls.addClassPatch(patch.object(SourceService,
                                        'public_sources',
                                        new_callable=PropertyMock,
