@@ -17,16 +17,13 @@ from mypy_boto3_dynamodb.literals import (
 from azul import (
     NotInLambdaContextException,
 )
-from azul.plugins.repository.dss import (
-    DSSSourceRef,
-)
 from azul.service.source_service import (
     Expired,
     NotFound,
     SourceService,
 )
 from azul_test_case import (
-    AzulUnitTestCase,
+    DCP2TestCase,
 )
 from dynamodb_test_case import (
     DynamoDBTestCase,
@@ -61,12 +58,11 @@ class TestSourceCache(DynamoDBTestCase):
             service._get(key)
 
 
-class TestConfiguredSources(AzulUnitTestCase):
-    public_sources = [
-        DSSSourceRef.for_dss_source('foo', '/0'),
-        DSSSourceRef.for_dss_source('bar', '/1')
-    ]
-    public_sources_for_outsourcing = [s.to_json() for s in public_sources]
+class TestConfiguredSources(DCP2TestCase):
+
+    @classmethod
+    def _patch_configured_sources(cls):
+        pass  # don't call super so that code under test isn't patched
 
     @classmethod
     def setUpClass(cls) -> None:
@@ -76,26 +72,33 @@ class TestConfiguredSources(AzulUnitTestCase):
 
             def list_sources(self, authentication):
                 assert authentication is None, authentication
-                return TestConfiguredSources.public_sources
+                return [cls.source]
 
         cls.addClassPatch(mock.patch.object(SourceService,
                                             'repository_plugin',
                                             return_value=MockPlugin()))
 
-    @mock.patch('azul.service.source_service.open_resource',
-                side_effect=NotInLambdaContextException(''))
-    def test_outside_lambda(self, open_resource):
-        self._test()
-        open_resource.assert_called_once()
+    def test(self):
+        actuals, outsourced = [], []
 
-    @mock.patch('azul.service.source_service.open_resource',
-                new_callable=mock.mock_open,
-                read_data=json.dumps(public_sources_for_outsourcing))
-    def test_inside_lambda(self, open_resource):
-        self._test()
-        open_resource.assert_called_once()
+        def test():
+            service = SourceService()
+            actuals.append(service.configured_public_sources)
+            outsourced.append(service.configured_public_sources_for_outsourcing)
+            mock_open_resource.assert_called_once()
 
-    def _test(self):
-        service = SourceService()
-        self.assertEqual(sorted(self.public_sources),
-                         sorted(service.configured_public_sources))
+        target = SourceService.__module__ + '.open_resource'
+
+        with mock.patch(target,
+                        side_effect=NotInLambdaContextException('')
+                        ) as mock_open_resource:
+            test()
+
+        with mock.patch(target,
+                        new_callable=mock.mock_open,
+                        read_data=json.dumps(outsourced[0])
+                        ) as mock_open_resource:
+            test()
+
+        self.assertEqual(*outsourced)
+        self.assertEqual([{self.source}] * 2, actuals)
