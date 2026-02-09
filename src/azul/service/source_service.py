@@ -31,6 +31,7 @@ from azul.types import (
     AnyJSON,
     JSONs,
     json_element_mappings,
+    json_element_strings,
 )
 
 log = logging.getLogger(__name__)
@@ -79,7 +80,7 @@ class SourceService:
         assert not any(joiner in c for c in cache_key), cache_key
         cache_key = joiner.join(cache_key)
         try:
-            source_ids = set(self._get(cache_key))
+            source_ids = set(json_element_strings(self._get(cache_key)))
         except CacheMiss:
             source_ids = plugin.list_accessible_source_ids(authentication)
             self._put(cache_key, list(source_ids))
