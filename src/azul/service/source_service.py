@@ -29,7 +29,7 @@ from azul.plugins import (
 )
 from azul.types import (
     AnyJSON,
-    AnyMutableJSON,
+    JSONs,
     json_element_mappings,
 )
 
@@ -173,7 +173,7 @@ class SourceService:
             ]
 
     @property
-    def configured_public_sources_for_outsourcing(self) -> AnyMutableJSON:
+    def configured_public_sources_for_outsourcing(self) -> JSONs:
         return [
             source.to_json()
             for source in self.configured_public_sources
