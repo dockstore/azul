@@ -180,7 +180,12 @@ class TestRepositoryFilesWithTDR(DCP2TestCase, RepositoryFilesTestCase):
             self.assertEqual(response.status, 404)
 
 
-class TestListSources(DCP2TestCase, RepositoryFilesTestCase):
+class TestListSources(DCP2TestCase, LocalAppTestCase):
+
+    @classmethod
+    def app_name(cls) -> str:
+        return 'service'
+
     mock_source_names = ['mock_snapshot_1', 'mock_snapshot_2']
     make_mock_source_spec = 'tdr:bigquery:gcp:mock:{}'.format
 
