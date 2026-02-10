@@ -161,10 +161,10 @@ class SourceService:
                                                             authentication=None))
             return public_sources
         else:
-            return [
+            return {
                 SourceRef.from_json(source)
                 for source in json_element_mappings(public_sources)
-            ]
+            }
 
     @property
     def configured_public_sources_for_outsourcing(self) -> JSONs:
