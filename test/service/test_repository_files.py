@@ -255,27 +255,7 @@ class TestListSources(DCP2TestCase, RepositoryFilesTestCase):
 class TestRepositoryFilesWithDSS(DCP1TestCase,
                                  RepositoryFilesTestCase,
                                  S3TestCase):
-    # These are the credentials defined in
-    #
-    # moto.instance_metadata.responses.InstanceMetadataResponse
-    #
-    # which, for reasons yet to be determined, is used on Travis but not when I
-    # run this locally. Maybe it's the absence of ~/.aws/credentials. The
-    # credentials that @mock_sts provides look more realistic but boto3's STS
-    # credential provider would be skipped on CI because the lack of
-    # ~/.aws/credentials there implies that AssumeRole credentials aren't
-    # configured, causing boto3 to default to use credentials from mock instance
-    # metadata.
-    #
-    mock_access_key_id = 'test-key'  # @mock_sts uses AKIAIOSFODNN7EXAMPLE
-    mock_secret_access_key = 'test-secret-key'  # @mock_sts uses wJalrXUtnFEMI/K7MDENG/bPxRfiCYzEXAMPLEKEY
-    mock_session_token = 'test-session-token'  # @mock_sts token starts with AQoEXAMPLEH4aoAH0gNCAPyJxz4BlCFFxWNE1OPTgk
-
     @patch.object(BaseMirrorService, 'info_exists', new=Mock(return_value=False))
-    @patch.dict(os.environ,
-                AWS_ACCESS_KEY_ID=mock_access_key_id,
-                AWS_SECRET_ACCESS_KEY=mock_secret_access_key,
-                AWS_SESSION_TOKEN=mock_session_token)
     @patch.object(type(config), 'dss_direct_access_role')
     def test_repository_files(self, dss_direct_access_role):
         dss_direct_access_role.return_value = None
@@ -393,10 +373,10 @@ class TestRepositoryFilesWithDSS(DCP1TestCase,
 
                                 args = {
                                     'response-content-disposition': f'attachment;filename={file_name}',
-                                    'AWSAccessKeyId': self.mock_access_key_id,
+                                    'AWSAccessKeyId': self.mock_boto_credentials.access_key,
                                     'Signature': signature,
                                     'Expires': expires,
-                                    'x-amz-security-token': self.mock_session_token
+                                    'x-amz-security-token': self.mock_boto_credentials.token
                                 }
                                 re_pre_signed_s3_url = furl(url=f'https://{bucket_name}.s3.amazonaws.com',
                                                             path=key,

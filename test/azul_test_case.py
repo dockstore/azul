@@ -273,6 +273,14 @@ class AzulUnitTestCase(AzulTestCase):
                                      AZUL_AWS_ACCOUNT_ID=moto.core.models.DEFAULT_ACCOUNT_ID,
                                      azul_aws_account_name=cls._aws_account_name))
 
+    # These must match what `moto` uses to mock the instance metadata
+    # response (see InstanceMetadataResponse.metadata_response() in
+    # moto.instance_metadata.responses).
+
+    mock_boto_credentials = Credentials(access_key='test-key',
+                                        secret_key='test-secret-key',
+                                        token='test-session-token')
+
     @classmethod
     def _patch_aws_credentials(cls):
         # Discard cached Boto3/botocore clients, resources and sessions
@@ -294,21 +302,16 @@ class AzulUnitTestCase(AzulTestCase):
         # test to leak into a mocked use of boto3. The latter was the reason for
         # https://github.com/DataBiosphere/azul/issues/668.
 
-        def dummy_get_credentials(_self):
-            # These must match what `moto` uses to mock the instance metadata
-            # response (see InstanceMetadataResponse.metadata_response() in
-            # moto.instance_metadata.responses).
-            return Credentials(access_key='test-key',
-                               secret_key='test-secret-key',
-                               token='test-session-token')
+        def mock_get_credentials(_self):
+            return cls.mock_boto_credentials
 
         cls.addClassPatch(patch.object(botocore.session.Session,
                                        'get_credentials',
-                                       dummy_get_credentials))
+                                       mock_get_credentials))
 
         cls.addClassPatch(patch.object(boto3.session.Session,
                                        'get_credentials',
-                                       dummy_get_credentials))
+                                       mock_get_credentials))
 
     # We almost certainly won't have access to this region
     _aws_test_region = 'us-gov-west-1'
