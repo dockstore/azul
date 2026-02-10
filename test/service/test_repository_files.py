@@ -200,7 +200,10 @@ class TestListSources(DCP2TestCase, RepositoryFilesTestCase):
 
     @classmethod
     def _sources(cls):
-        return {cls.make_mock_source_spec(n): {'mirror': True} for n in cls.mock_source_names}
+        return {
+            cls.make_mock_source_spec(n): {'mirror': True}
+            for n in cls.mock_source_names
+        }
 
     @mock.patch.object(TDRClient, 'snapshot_names_by_id')
     @mock.patch.object(TDRClient, 'validate', new=MagicMock())
