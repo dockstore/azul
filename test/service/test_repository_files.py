@@ -4,7 +4,6 @@ from abc import (
 import hashlib
 import io
 import json
-import os
 import time
 from typing import (
     Union,
@@ -115,17 +114,12 @@ class RepositoryFilesTestCase(LocalAppTestCase, metaclass=ABCMeta):
 
 class TestRepositoryFilesWithTDR(DCP2TestCase, RepositoryFilesTestCase):
 
-    @patch.object(SourceService, '_put', new=MagicMock())
-    @patch.object(SourceService, '_get')
     @patch.object(BaseMirrorService, 'info_exists', new=Mock(return_value=False))
-    @patch.dict(os.environ,
-                AZUL_TDR_SERVICE_URL=str(DCP2TestCase.mock_tdr_service_url))
     @patch.object(TerraClient,
                   '_http_client',
                   AuthorizedHttp(MagicMock(),
                                  urllib3.PoolManager(ca_certs=certifi.where())))
-    def test_repository_files(self, mock_get_cached_sources):
-        mock_get_cached_sources.return_value = []
+    def test_repository_files(self):
         client = http_client(log)
 
         file_uuid = '701c9a63-23da-4978-946b-7576b6ad088a'
