@@ -255,10 +255,10 @@ class TestListSources(DCP2TestCase, RepositoryFilesTestCase):
 class TestRepositoryFilesWithDSS(DCP1TestCase,
                                  RepositoryFilesTestCase,
                                  S3TestCase):
+
     @patch.object(BaseMirrorService, 'info_exists', new=Mock(return_value=False))
-    @patch.object(type(config), 'dss_direct_access_role')
-    def test_repository_files(self, dss_direct_access_role):
-        dss_direct_access_role.return_value = None
+    @patch.object(type(config), 'dss_direct_access_role', new=Mock(return_value=None))
+    def test_repository_files(self):
         self.maxDiff = None
         key = ('blobs/6929799f227ae5f0b3e0167a6cf2bd683db097848af6ccde6329185212598779'
                '.f2237ad0a776fd7057eb3d3498114c85e2f521d7'
