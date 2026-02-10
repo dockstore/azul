@@ -191,9 +191,7 @@ class TestListSources(DCP2TestCase, RepositoryFilesTestCase):
             for n in cls.mock_source_names
         }
 
-    @patch.object(SourceService, '_put', new=MagicMock())
     @patch.object(SourceService, '_get')
-    @patch.object(BaseMirrorService, 'info_exists', new=Mock(return_value=False))
     @patch.object(TDRClient, 'snapshot_names_by_id')
     @patch.object(TDRClient, 'validate', new=MagicMock())
     def test_list_sources(self,
