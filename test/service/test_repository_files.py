@@ -11,6 +11,7 @@ from typing import (
 )
 from unittest.mock import (
     MagicMock,
+    Mock,
     patch,
 )
 
@@ -116,9 +117,7 @@ class TestRepositoryFilesWithTDR(DCP2TestCase, RepositoryFilesTestCase):
 
     @patch.object(SourceService, '_put', new=MagicMock())
     @patch.object(SourceService, '_get')
-    @patch.object(BaseMirrorService,
-                  'info_exists',
-                  new=MagicMock(return_value=False))
+    @patch.object(BaseMirrorService, 'info_exists', new=Mock(return_value=False))
     @patch.dict(os.environ,
                 AZUL_TDR_SERVICE_URL=str(DCP2TestCase.mock_tdr_service_url))
     @patch.object(TerraClient,
@@ -200,9 +199,7 @@ class TestListSources(DCP2TestCase, RepositoryFilesTestCase):
 
     @patch.object(SourceService, '_put', new=MagicMock())
     @patch.object(SourceService, '_get')
-    @patch.object(BaseMirrorService,
-                  'info_exists',
-                  new=MagicMock(return_value=False))
+    @patch.object(BaseMirrorService, 'info_exists', new=Mock(return_value=False))
     @patch.object(TDRClient, 'snapshot_names_by_id')
     @patch.object(TDRClient, 'validate', new=MagicMock())
     def test_list_sources(self,
@@ -274,9 +271,7 @@ class TestRepositoryFilesWithDSS(DCP1TestCase,
     mock_secret_access_key = 'test-secret-key'  # @mock_sts uses wJalrXUtnFEMI/K7MDENG/bPxRfiCYzEXAMPLEKEY
     mock_session_token = 'test-session-token'  # @mock_sts token starts with AQoEXAMPLEH4aoAH0gNCAPyJxz4BlCFFxWNE1OPTgk
 
-    @patch.object(BaseMirrorService,
-                  'info_exists',
-                  new=MagicMock(return_value=False))
+    @patch.object(BaseMirrorService, 'info_exists', new=Mock(return_value=False))
     @patch.dict(os.environ,
                 AWS_ACCESS_KEY_ID=mock_access_key_id,
                 AWS_SECRET_ACCESS_KEY=mock_secret_access_key,
