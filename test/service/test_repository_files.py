@@ -119,7 +119,7 @@ class TestRepositoryFilesWithTDR(DCP2TestCase, RepositoryFilesTestCase):
                   '_http_client',
                   AuthorizedHttp(MagicMock(),
                                  urllib3.PoolManager(ca_certs=certifi.where())))
-    def test_repository_files(self):
+    def test(self):
         client = http_client(log)
 
         file_uuid = '701c9a63-23da-4978-946b-7576b6ad088a'
@@ -194,10 +194,7 @@ class TestListSources(DCP2TestCase, RepositoryFilesTestCase):
     @patch.object(SourceService, '_get')
     @patch.object(TDRClient, 'snapshot_names_by_id')
     @patch.object(TDRClient, 'validate', new=MagicMock())
-    def test_list_sources(self,
-                          mock_list_snapshots,
-                          mock_get_cached_sources,
-                          ):
+    def test(self, mock_list_snapshots, mock_get_cached_sources):
         # Includes extra sources to check that the endpoint only returns results
         # for the current catalog
         extra_sources = ['foo', 'bar']
@@ -250,7 +247,7 @@ class TestRepositoryFilesWithDSS(DCP1TestCase,
 
     @patch.object(BaseMirrorService, 'info_exists', new=Mock(return_value=False))
     @patch.object(type(config), 'dss_direct_access_role', new=Mock(return_value=None))
-    def test_repository_files(self):
+    def test(self):
         self.maxDiff = None
         key = ('blobs/6929799f227ae5f0b3e0167a6cf2bd683db097848af6ccde6329185212598779'
                '.f2237ad0a776fd7057eb3d3498114c85e2f521d7'
@@ -380,7 +377,7 @@ class TestRepositoryFilesWithMirroring(DCP2TestCase,
                                        RepositoryFilesTestCase,
                                        MirrorTestCase):
 
-    def test_repository_files(self):
+    def test(self):
         file_content = b'Contents of foo'
         file_uuid = '701c9a63-23da-4978-946b-7576b6ad088a'
         file_version = '2018-09-12T12:11:54.054628Z'
