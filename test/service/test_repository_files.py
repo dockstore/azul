@@ -114,13 +114,13 @@ class RepositoryFilesTestCase(LocalAppTestCase, metaclass=ABCMeta):
         self.assertEqual(sorted(a.args.allitems()), sorted(b.args.allitems()))
 
 
-@mock.patch.object(SourceService, '_put', new=MagicMock())
-@mock.patch.object(SourceService, '_get')
-@mock.patch.object(BaseMirrorService,
-                   'info_exists',
-                   new=MagicMock(return_value=False))
 class TestRepositoryFilesWithTDR(DCP2TestCase, RepositoryFilesTestCase):
 
+    @mock.patch.object(SourceService, '_put', new=MagicMock())
+    @mock.patch.object(SourceService, '_get')
+    @mock.patch.object(BaseMirrorService,
+                       'info_exists',
+                       new=MagicMock(return_value=False))
     @mock.patch.dict(os.environ,
                      AZUL_TDR_SERVICE_URL=str(DCP2TestCase.mock_tdr_service_url))
     @mock.patch.object(TerraClient,
@@ -189,11 +189,6 @@ class TestRepositoryFilesWithTDR(DCP2TestCase, RepositoryFilesTestCase):
             self.assertEqual(response.status, 404)
 
 
-@mock.patch.object(SourceService, '_put', new=MagicMock())
-@mock.patch.object(SourceService, '_get')
-@mock.patch.object(BaseMirrorService,
-                   'info_exists',
-                   new=MagicMock(return_value=False))
 class TestListSources(DCP2TestCase, RepositoryFilesTestCase):
     mock_source_names = ['mock_snapshot_1', 'mock_snapshot_2']
     make_mock_source_spec = 'tdr:bigquery:gcp:mock:{}'.format
@@ -205,6 +200,11 @@ class TestListSources(DCP2TestCase, RepositoryFilesTestCase):
             for n in cls.mock_source_names
         }
 
+    @mock.patch.object(SourceService, '_put', new=MagicMock())
+    @mock.patch.object(SourceService, '_get')
+    @mock.patch.object(BaseMirrorService,
+                       'info_exists',
+                       new=MagicMock(return_value=False))
     @mock.patch.object(TDRClient, 'snapshot_names_by_id')
     @mock.patch.object(TDRClient, 'validate', new=MagicMock())
     def test_list_sources(self,
@@ -257,9 +257,6 @@ class TestListSources(DCP2TestCase, RepositoryFilesTestCase):
             _test(authenticate=False, cache=False)
 
 
-@mock.patch.object(BaseMirrorService,
-                   'info_exists',
-                   new=MagicMock(return_value=False))
 class TestRepositoryFilesWithDSS(DCP1TestCase,
                                  RepositoryFilesTestCase,
                                  S3TestCase):
@@ -279,6 +276,9 @@ class TestRepositoryFilesWithDSS(DCP1TestCase,
     mock_secret_access_key = 'test-secret-key'  # @mock_sts uses wJalrXUtnFEMI/K7MDENG/bPxRfiCYzEXAMPLEKEY
     mock_session_token = 'test-session-token'  # @mock_sts token starts with AQoEXAMPLEH4aoAH0gNCAPyJxz4BlCFFxWNE1OPTgk
 
+    @mock.patch.object(BaseMirrorService,
+                       'info_exists',
+                       new=MagicMock(return_value=False))
     @mock.patch.dict(os.environ,
                      AWS_ACCESS_KEY_ID=mock_access_key_id,
                      AWS_SECRET_ACCESS_KEY=mock_secret_access_key,
