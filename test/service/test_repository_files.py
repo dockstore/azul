@@ -188,6 +188,13 @@ class TestRepositoryFilesWithTDR(DCP2TestCase, RepositoryFilesTestCase):
                 response = client.request('GET', str(azul_url), redirect=False)
             self.assertEqual(response.status, 404)
 
+
+@mock.patch.object(SourceService, '_put', new=MagicMock())
+@mock.patch.object(SourceService, '_get')
+@mock.patch.object(BaseMirrorService,
+                   'info_exists',
+                   new=MagicMock(return_value=False))
+class TestListSources(DCP2TestCase, RepositoryFilesTestCase):
     mock_source_names = ['mock_snapshot_1', 'mock_snapshot_2']
     make_mock_source_spec = 'tdr:bigquery:gcp:mock:{}'.format
 
