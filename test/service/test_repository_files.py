@@ -194,7 +194,7 @@ class TestListSources(DCP2TestCase, RepositoryFilesTestCase):
     @patch.object(SourceService, '_get')
     @patch.object(TDRClient, 'snapshot_names_by_id')
     @patch.object(TDRClient, 'validate', new=MagicMock())
-    def test(self, mock_list_snapshots, mock_get_cached_sources):
+    def test(self, mock_tdr_client__snapshot_names_by_id, mock_source_service__get):
         # Includes extra sources to check that the endpoint only returns results
         # for the current catalog
         extra_sources = ['foo', 'bar']
@@ -202,7 +202,7 @@ class TestListSources(DCP2TestCase, RepositoryFilesTestCase):
             str(i): source_name
             for i, source_name in enumerate(self.mock_source_names + extra_sources)
         }
-        mock_list_snapshots.return_value = mock_source_names_by_id
+        mock_tdr_client__snapshot_names_by_id.return_value = mock_source_names_by_id
         client = http_client(log)
         azul_url = furl(url=self.base_url,
                         path='/repository/sources',
@@ -230,11 +230,11 @@ class TestListSources(DCP2TestCase, RepositoryFilesTestCase):
                     ]
                 })
 
-        mock_get_cached_sources.return_value = list(mock_source_names_by_id.keys())
+        mock_source_service__get.return_value = list(mock_source_names_by_id.keys())
         _test(authenticate=True, cache=True)
         _test(authenticate=False, cache=True)
-        mock_get_cached_sources.return_value = None
-        mock_get_cached_sources.side_effect = NotFound('foo_token')
+        mock_source_service__get.return_value = None
+        mock_source_service__get.side_effect = NotFound('foo_token')
         with patch('azul.terra.TDRClient.snapshot_ids',
                    return_value=mock_source_names_by_id.keys() | {'not_indexed'}):
             _test(authenticate=True, cache=False)
