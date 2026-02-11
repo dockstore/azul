@@ -25,7 +25,6 @@ from app_test_case import (
     LocalAppTestCase,
 )
 from azul import (
-    JSON,
     NotInLambdaContextException,
 )
 from azul.http import (
@@ -167,15 +166,12 @@ class TestListSources(DCP2TestCase, LocalAppTestCase):
                         path='/repository/sources',
                         query_params=dict(catalog=self.catalog))
 
-        def _list_sources(headers) -> JSON:
-            response = client.request('GET', str(azul_url), headers=headers)
-            self.assertEqual(response.status, 200)
-            return json.loads(response.data)
-
         def _test(*, authenticate: bool, cache: bool):
             with self.subTest(authenticate=authenticate, cache=cache):
-                response = _list_sources({'Authorization': 'Bearer foo_token'}
-                                         if authenticate else {})
+                headers = {'Authorization': 'Bearer foo_token'} if authenticate else {}
+                response = client.request('GET', str(azul_url), headers=headers)
+                self.assertEqual(response.status, 200)
+                response = json.loads(response.data)
                 self.assertEqual(response, {
                     'sources': [
                         {
