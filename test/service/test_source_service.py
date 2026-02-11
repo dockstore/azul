@@ -171,7 +171,7 @@ class TestListSources(DCP2TestCase, LocalAppTestCase):
                 headers = {'Authorization': 'Bearer foo_token'} if authenticate else {}
                 response = client.request('GET', str(azul_url), headers=headers)
                 self.assertEqual(response.status, 200)
-                response = json.loads(response.data)
+                actual = json.loads(response.data)
                 expected = {
                     'sources': [
                         {
@@ -182,7 +182,7 @@ class TestListSources(DCP2TestCase, LocalAppTestCase):
                         if name not in self.extra_sources
                     ]
                 }
-                self.assertEqual(expected, response)
+                self.assertEqual(expected, actual)
 
         mock_source_service__get.return_value = list(self.source_names_by_id.keys())
         _test(authenticate=True, cache=True)
