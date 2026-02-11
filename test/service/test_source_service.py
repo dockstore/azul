@@ -168,9 +168,7 @@ class TestListSources(DCP2TestCase, LocalAppTestCase):
                         query_params=dict(catalog=self.catalog))
 
         def _list_sources(headers) -> JSON:
-            response = client.request('GET',
-                                      str(azul_url),
-                                      headers=headers)
+            response = client.request('GET', str(azul_url), headers=headers)
             self.assertEqual(response.status, 200)
             return json.loads(response.data)
 
