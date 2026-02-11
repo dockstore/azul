@@ -182,7 +182,7 @@ class TestListSources(DCP2TestCase, LocalAppTestCase):
                         if name not in self.extra_sources
                     ]
                 }
-                self.assertEqual(response, expected)
+                self.assertEqual(expected, response)
 
         mock_source_service__get.return_value = list(self.source_names_by_id.keys())
         _test(authenticate=True, cache=True)
