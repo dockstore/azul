@@ -142,6 +142,14 @@ class TestListSources(DCP2TestCase, LocalAppTestCase):
     mock_source_names = ['mock_snapshot_1', 'mock_snapshot_2']
     make_mock_source_spec = 'tdr:bigquery:gcp:mock:{}'.format
 
+    # Includes extra sources to check that the endpoint only returns results
+    # for the current catalog
+    extra_sources = ['foo', 'bar']
+    mock_source_names_by_id = {
+        str(i): source_name
+        for i, source_name in enumerate(mock_source_names + extra_sources)
+    }
+
     @classmethod
     def _sources(cls):
         return {
@@ -153,14 +161,7 @@ class TestListSources(DCP2TestCase, LocalAppTestCase):
     @patch.object(TDRClient, 'snapshot_names_by_id')
     @patch.object(TDRClient, 'validate', new=MagicMock())
     def test(self, mock_tdr_client__snapshot_names_by_id, mock_source_service__get):
-        # Includes extra sources to check that the endpoint only returns results
-        # for the current catalog
-        extra_sources = ['foo', 'bar']
-        mock_source_names_by_id = {
-            str(i): source_name
-            for i, source_name in enumerate(self.mock_source_names + extra_sources)
-        }
-        mock_tdr_client__snapshot_names_by_id.return_value = mock_source_names_by_id
+        mock_tdr_client__snapshot_names_by_id.return_value = self.mock_source_names_by_id
         client = http_client(log)
         azul_url = furl(url=self.base_url,
                         path='/repository/sources',
@@ -183,17 +184,17 @@ class TestListSources(DCP2TestCase, LocalAppTestCase):
                             'sourceId': id,
                             'sourceSpec': str(TDRSourceSpec.parse(self.make_mock_source_spec(name)))
                         }
-                        for id, name in mock_source_names_by_id.items()
-                        if name not in extra_sources
+                        for id, name in self.mock_source_names_by_id.items()
+                        if name not in self.extra_sources
                     ]
                 })
 
-        mock_source_service__get.return_value = list(mock_source_names_by_id.keys())
+        mock_source_service__get.return_value = list(self.mock_source_names_by_id.keys())
         _test(authenticate=True, cache=True)
         _test(authenticate=False, cache=True)
         mock_source_service__get.return_value = None
         mock_source_service__get.side_effect = NotFound('foo_token')
         with patch('azul.terra.TDRClient.snapshot_ids',
-                   return_value=mock_source_names_by_id.keys() | {'not_indexed'}):
+                   return_value=self.mock_source_names_by_id.keys() | {'not_indexed'}):
             _test(authenticate=True, cache=False)
             _test(authenticate=False, cache=False)
