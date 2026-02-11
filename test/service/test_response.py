@@ -2170,7 +2170,8 @@ class TestIndexResponse(IndexResponseTestCase):
 
         def _test(entity_type: str, expect_empty: bool, expect_accessible: bool):
             accessible_field = self._metadata_plugin.special_fields.accessible.name_in_hit
-            with self.subTest(entity_type=entity_type, access=expect_accessible):
+            with self.subTest(entity_type=entity_type,
+                              expect_accessible=expect_accessible):
                 url = str(self.base_url.set(path=('index', entity_type)))
                 response = requests.get(url)
                 self.assertEqual(200, response.status_code)
