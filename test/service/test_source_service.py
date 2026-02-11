@@ -172,7 +172,7 @@ class TestListSources(DCP2TestCase, LocalAppTestCase):
                 response = client.request('GET', str(azul_url), headers=headers)
                 self.assertEqual(response.status, 200)
                 response = json.loads(response.data)
-                self.assertEqual(response, {
+                expected = {
                     'sources': [
                         {
                             'sourceId': id,
@@ -181,7 +181,8 @@ class TestListSources(DCP2TestCase, LocalAppTestCase):
                         for id, name in self.source_names_by_id.items()
                         if name not in self.extra_sources
                     ]
-                })
+                }
+                self.assertEqual(response, expected)
 
         mock_source_service__get.return_value = list(self.source_names_by_id.keys())
         _test(authenticate=True, cache=True)
