@@ -768,4 +768,4 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
         actual_digest_value = hasher.hexdigest()
         assert expected_digest.value == actual_digest_value, R(
             'File digest value does not match its contents',
-            expected_digest, file)
+            actual_digest_value, file)
