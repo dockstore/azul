@@ -77,7 +77,7 @@ emit({
                     {
                         indexer.mirror.name: {
                             'reserved_concurrency': config.mirroring_concurrency,
-                            'lambda_memory_size': int(FilePart.default_size / 2 ** 20) + 256,
+                            'lambda_memory_size': int(FilePart.default_size / 2 ** 20) * 2,
                             'lambda_timeout': config.mirror_lambda_timeout
                             # No VPC for this function so as to avoid paying for
                             # NAT Gateway traffic
