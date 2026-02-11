@@ -21,6 +21,9 @@ from azul import (
     R,
     config,
 )
+from azul.deployment import (
+    aws,
+)
 from azul.http import (
     http_client,
 )
@@ -31,6 +34,7 @@ from azul.indexer.mirror_controller import (
     MirrorController,
 )
 from azul.indexer.mirror_service import (
+    FilePart,
     MirrorAction,
     MirrorService,
 )
@@ -43,6 +47,9 @@ from azul.logging import (
 )
 from azul.plugins.metadata.hca import (
     HCAFile,
+)
+from azul.queues import (
+    SQSFifoMessage,
 )
 from azul.service.source_service import (
     SourceService,
@@ -111,6 +118,11 @@ class TestMirrorController(DCP2TestCase,
 
     def _read_mirror_queue(self) -> MutableJSONs:
         return self._read_queue(self.service._mirror_queue())
+
+    def _send_mirror_message(self, body: JSON):
+        record = self._mock_sqs_record(body, fifo=True)
+        message = SQSFifoMessage.from_record(record)
+        self.queues.send_messages(self.service._mirror_queue(), [message])
 
     def _validate_file_contents(self, file: HCAFile, contents: bytes):
         response = self._s3.get_object(Bucket=self.mirror_bucket,
@@ -282,3 +294,28 @@ class TestMirrorController(DCP2TestCase,
             partition_message = self._test_mirror_source(source_message)
             with patch_mirror_limit(self._file.size):
                 self._test_mirror_partition(partition_message, [too_big, self._file])
+
+    def test_multi_part_upload(self):
+        self._create_mock_queues(config.mirror_queue_names)
+        min_size = aws.s3_min_part_size
+        file_size = min_size + 1
+
+        big_contents = self._file_contents + (b'0' * (file_size - len(self._file_contents)))
+        assert len(big_contents) == file_size
+        big_file = attrs.evolve(self._file,
+                                size=file_size,
+                                sha256=hashlib.sha256(big_contents).hexdigest())
+
+        def download(_self, _file, part: FilePart | None = None) -> bytes:
+            return big_contents[part.offset:part.offset + part.size]
+
+        # Skip over mirror_source and mirror_partition to keep things simple
+        self._send_mirror_message(self._mirror_file_message(big_file))
+        with patch.object(FilePart, 'default_size', new=min_size):
+            with patch.object(MirrorService, '_download', new=download):
+                for action in ['MirrorFileAction', 'MirrorPartAction', 'FinalizeFileAction']:
+                    message = one(self._read_mirror_queue())
+                    event = self._mirror_event(message)
+                    self.assertEqual(action, json.loads(one(event).body)['action'])
+                    self.mirror_controller.mirror(event)
+        self._validate_file_contents(big_file, big_contents)
