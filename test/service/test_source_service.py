@@ -8,6 +8,7 @@ from unittest import (
 )
 from unittest.mock import (
     MagicMock,
+    PropertyMock,
     patch,
 )
 
@@ -41,6 +42,7 @@ from azul.service.source_service import (
 )
 from azul.terra import (
     TDRClient,
+    TDRSourceRef,
     TDRSourceSpec,
 )
 from azul_test_case import (
@@ -111,7 +113,7 @@ class TestPublicSources(DCP2TestCase):
 
         def test():
             service = SourceService()
-            actuals.append(service.public_sources)
+            actuals.append(service._public_sources)
             outsourced.append(service.public_sources_for_outsourcing)
             mock_open_resource.assert_called_once()
 
@@ -155,6 +157,26 @@ class TestListSources(DCP2TestCase, LocalAppTestCase):
             cls.make_spec(n): {'mirror': True}
             for n in cls.source_names
         }
+
+    @classmethod
+    def _patch_public_sources(cls):
+        cls.addClassPatch(
+            patch.object(SourceService,
+                         '_public_sources',
+                         new_callable=PropertyMock,
+                         return_value=cls._sources_by_catalog())
+        )
+
+    @classmethod
+    def _sources_by_catalog(cls) -> dict[str, list[TDRSourceRef]]:
+        return {
+            cls.catalog: [
+                TDRSourceRef(id=id,
+                             spec=TDRSourceSpec.parse(cls.make_spec(name)),
+                             prefix=None)
+                for id, name in cls.source_names_by_id.items()
+                if name not in cls.extra_sources
+            ]}
 
     @patch.object(SourceService, '_get')
     @patch.object(TDRClient, 'snapshot_names_by_id')
