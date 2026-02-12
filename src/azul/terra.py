@@ -16,7 +16,6 @@ from time import (
 )
 from typing import (
     ClassVar,
-    Optional,
     Self,
 )
 
@@ -563,7 +562,7 @@ class TDRClient(SAMClient, DRSClient):
 
     def list_snapshots(self,
                        *,
-                       filter: Optional[str] = None
+                       filter: str | None = None
                        ) -> dict[str, str]:
         """
         List the TDR snapshots accessible to the current credentials.
