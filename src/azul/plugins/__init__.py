@@ -680,7 +680,7 @@ class RepositoryPlugin[BUNDLE: Bundle = Bundle[SourcedBundleFQID],
     @abstractmethod
     def list_sources(self,
                      authentication: Authentication | None
-                     ) -> Iterable[SOURCE_REF]:
+                     ) -> list[SOURCE_REF]:
         """
         The sources the plugin is configured to read metadata from that are
         accessible using the provided authentication. Retrieving this
