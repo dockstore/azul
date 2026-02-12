@@ -129,15 +129,19 @@ class TDRPlugin[TDR_BUNDLE: TDRBundle,
     def list_sources(self,
                      authentication: Authentication | None
                      ) -> list[TDRSourceRef]:
-        names_by_id = self._auth_fallback(authentication,
-                                          lambda tdr: tdr.snapshot_names_by_id(filter=self._common_source_filter))
+        def list_snapshots(tdr: TDRClient):
+            return tdr.snapshot_names_by_id(filter=self._common_source_filter)
+
+        names_by_id = self._auth_fallback(authentication, list_snapshots)
         return self._match_sources(names_by_id)
 
     def list_source_ids(self,
                         authentication: Authentication | None
                         ) -> set[str]:
-        return self._auth_fallback(authentication,
-                                   lambda tdr: tdr.snapshot_ids())
+        def list_snapshot_ids(tdr: TDRClient):
+            return tdr.snapshot_ids()
+
+        return self._auth_fallback(authentication, list_snapshot_ids)
 
     @property
     def tdr(self):
