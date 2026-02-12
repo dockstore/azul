@@ -701,6 +701,9 @@ class RepositoryPlugin[BUNDLE: Bundle = Bundle[SourcedBundleFQID],
         Retrieving this information may require a round-trip to the underlying
         repository. Implementations should raise PermissionError if the provided
         authentication is insufficient to access the repository.
+
+        The returned set may include the IDs of sources that the plugin is
+        not configured to read metadata from.
         """
         return {source.id for source in self.list_sources(authentication)}
 
