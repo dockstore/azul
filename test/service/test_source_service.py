@@ -179,10 +179,10 @@ class TestListSources(DCP2TestCase, LocalAppTestCase):
             ]}
 
     @patch.object(SourceService, '_get')
-    @patch.object(TDRClient, 'snapshot_names_by_id')
+    @patch.object(TDRClient, 'list_snapshots')
     @patch.object(TDRClient, 'validate', new=MagicMock())
-    def test(self, mock_tdr_client__snapshot_names_by_id, mock_source_service__get):
-        mock_tdr_client__snapshot_names_by_id.return_value = self.source_names_by_id
+    def test(self, mock_tdr_client__list_snapshots, mock_source_service__get):
+        mock_tdr_client__list_snapshots.return_value = self.source_names_by_id
         client = http_client(log)
         azul_url = furl(url=self.base_url,
                         path='/repository/sources',

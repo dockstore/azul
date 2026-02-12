@@ -274,7 +274,7 @@ class IntegrationTestCase(AzulTestCase):
                          f'been registered')
         # The unregistered service account should not have access to any sources
         with self.assertRaises(RequirementError) as cm:
-            tdr.snapshot_names_by_id()
+            tdr.list_snapshots()
         msg = str(cm.exception)
         expected_msg_prefix = f'The service account (SA) {email!r} is not authorized'
         self.assertEqual(expected_msg_prefix, msg[:len(expected_msg_prefix)])
@@ -283,8 +283,8 @@ class IntegrationTestCase(AzulTestCase):
     @cached_property
     def managed_access_sources_by_catalog(self
                                           ) -> dict[CatalogName, set[TDRSourceRef]]:
-        public_sources = self._public_tdr_client.snapshot_names_by_id()
-        all_sources = self._tdr_client.snapshot_names_by_id()
+        public_sources = self._public_tdr_client.list_snapshots()
+        all_sources = self._tdr_client.list_snapshots()
         configured_sources = {
             catalog: self.repository_plugin(catalog).sources
             for catalog in config.integration_test_catalogs
@@ -433,8 +433,8 @@ class IndexingIntegrationTest(IntegrationTestCase):
         for page_size in 1, 2:
             with self.subTest(page_size=page_size):
                 with mock.patch.object(TDRClient, 'page_size', page_size):
-                    paged_snapshots = self._tdr_client.snapshot_names_by_id(filter=filter)
-                snapshots = self._tdr_client.snapshot_names_by_id(filter=filter)
+                    paged_snapshots = self._tdr_client.list_snapshots(filter=filter)
+                snapshots = self._tdr_client.list_snapshots(filter=filter)
                 self.assertLess(len(snapshots), 20)
                 # Show that multiple pages were fetched, via the pigeonhole
                 # principle, and under the assumption that the TDR client

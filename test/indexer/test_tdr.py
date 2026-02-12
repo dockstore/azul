@@ -522,7 +522,7 @@ class TestTDRSourceList(AzulUnitTestCase):
             # to ensure that the proper authorization headers are being sent
             # when nothing is mocked.
             with self._patch_urlopen(new=self._mock_tdr_enumerate_snapshots(tdr_client)):
-                self.assertEqual(tdr_client.snapshot_names_by_id(), expected_snapshots)
+                self.assertEqual(tdr_client.list_snapshots(), expected_snapshots)
 
     def test_list_snapshots_paging(self):
         for page_size in [1, 10]:
@@ -561,7 +561,7 @@ class TestTDRSourceList(AzulUnitTestCase):
                                 self.assertEqual(page_size, tdr_client.page_size)
                                 with mock.patch.object(TerraClient, '_request') as _request:
                                     _request.side_effect = responses()
-                                    actual = tdr_client.snapshot_names_by_id(filter=filter)
+                                    actual = tdr_client.list_snapshots(filter=filter)
                             self.assertEqual(expected, actual)
                             num_expected_calls = max(1, num_full_pages + (1 if last_page_size else 0))
                             self.assertEqual(num_expected_calls, _request.call_count)

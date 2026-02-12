@@ -561,10 +561,10 @@ class TDRClient(SAMClient, DRSClient):
         response = self._check_response(endpoint, response)
         return set(json_dict(response['roleMap']).keys())
 
-    def snapshot_names_by_id(self,
-                             *,
-                             filter: Optional[str] = None
-                             ) -> dict[str, str]:
+    def list_snapshots(self,
+                       *,
+                       filter: Optional[str] = None
+                       ) -> dict[str, str]:
         """
         List the TDR snapshots accessible to the current credentials.
 
