@@ -745,8 +745,8 @@ class RepositoryPlugin[BUNDLE: Bundle = Bundle[SourcedBundleFQID],
     @abstractmethod
     def _lookup_source_id(self, spec: SOURCE_SPEC) -> str:
         """
-        Return the ID of the repository source with the specified name or raise
-        an exception if no such source exists.
+        Return the ID of the specified source or raise an exception if no such
+        source exists.
         """
         raise NotImplementedError
 
