@@ -139,7 +139,7 @@ class TDRPlugin[TDR_BUNDLE: TDRBundle,
                         authentication: Authentication | None
                         ) -> set[str]:
         def list_snapshot_ids(tdr: TDRClient):
-            return tdr.snapshot_ids()
+            return tdr.list_snapshot_ids()
 
         return self._auth_fallback(authentication, list_snapshot_ids)
 

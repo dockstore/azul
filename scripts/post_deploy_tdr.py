@@ -106,8 +106,8 @@ class TerraValidator:
             require(subgraph_count <= 512, 'Common prefix is too short', ref.spec)
 
     def verify_source_access(self) -> None:
-        public_snapshots = self.public_tdr.snapshot_ids()
-        all_snapshots = self.tdr.snapshot_ids()
+        public_snapshots = self.public_tdr.list_snapshot_ids()
+        all_snapshots = self.tdr.list_snapshot_ids()
         diff = public_snapshots - all_snapshots
         require(not diff,
                 'The public service account can access snapshots that the indexer '

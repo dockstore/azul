@@ -211,7 +211,7 @@ class TestListSources(DCP2TestCase, LocalAppTestCase):
         _test(authenticate=False, cache=True)
         mock_source_service__get.return_value = None
         mock_source_service__get.side_effect = NotFound('foo_token')
-        with patch('azul.terra.TDRClient.snapshot_ids',
+        with patch('azul.terra.TDRClient.list_snapshot_ids',
                    return_value=self.source_names_by_id.keys() | {'not_indexed'}):
             _test(authenticate=True, cache=False)
             _test(authenticate=False, cache=False)

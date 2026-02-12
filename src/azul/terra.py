@@ -551,7 +551,7 @@ class TDRClient(SAMClient, DRSClient):
 
     page_size: ClassVar[int] = 1000
 
-    def snapshot_ids(self) -> set[str]:
+    def list_snapshot_ids(self) -> set[str]:
         """
         List the IDs of the TDR snapshots accessible to the current credentials.
         Much faster than listing the snapshots' names.
