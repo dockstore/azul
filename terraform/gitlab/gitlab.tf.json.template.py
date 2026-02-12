@@ -250,6 +250,8 @@ ami_id = {
     'us-east-1': 'ami-07f8da7e8a9c81dee'
 }
 
+data_volume_device = '/dev/nvme1n1'
+
 gitlab_mount = '/mnt/gitlab'
 
 vpc_dns_servers = [
@@ -1608,7 +1610,7 @@ emit_tf({} if config.terraform_component != 'gitlab' else {
                 'user_data_replace_on_change': True,
                 'user_data': '#cloud-config\n' + yaml.dump({
                     'mounts': [
-                        ['/dev/nvme1n1', gitlab_mount, 'ext4', '']
+                        [data_volume_device, gitlab_mount, 'ext4', '']
                     ],
                     'packages': [
                         'docker',
@@ -1626,8 +1628,8 @@ emit_tf({} if config.terraform_component != 'gitlab' else {
                     'ssh_genkeytypes': ['rsa', 'dsa', 'ecdsa'],
                     'bootcmd': [
                         '; '.join([
-                            'until [ -b /dev/nvme1n1 ]',
-                            'do echo "/dev/nvme1n1 does not exist, sleeping 1s"',
+                            f'until [ -b {data_volume_device} ]',
+                            f'do echo "{data_volume_device} does not exist, sleeping 1s"',
                             'sleep 1',
                             'done'
                         ]),
