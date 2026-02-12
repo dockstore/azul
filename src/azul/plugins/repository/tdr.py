@@ -99,6 +99,11 @@ class TDRPlugin[TDR_BUNDLE: TDRBundle,
                        authentication: Authentication | None,
                        tdr_callback: Callable[[TDRClient], T]
                        ) -> T:
+        """
+        Terra rejects credentials for users are not registered with Terra's SAM.
+        This method invokes the given callback with the given credentials but
+        invokes the callback again if they are rejected for that reason.
+        """
         # The line below raises UnauthorizedError for invalid tokens. We don't
         # want to fall back to anonymous authentication in that case.
         tdr = self._user_authenticated_tdr(authentication)
@@ -108,8 +113,7 @@ class TDRPlugin[TDR_BUNDLE: TDRBundle,
             if authentication is None or tdr.is_registered():
                 raise
             else:
-                log.info('Falling back to default authentication because the '
-                         'request included credentials from an unregistered account')
+                log.info('Falling back to anonymous access')
                 tdr = self._user_authenticated_tdr(None)
                 return tdr_callback(tdr)
 
