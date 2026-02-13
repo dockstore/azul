@@ -38,6 +38,7 @@ class FrontMatter(TypedDict, total=False):
     type: str
     labels: list[str]
     assignees: list[str]
+    _priority: str
     _repository: str
     _start: str
     _period: str
@@ -70,6 +71,8 @@ class IssueTemplate:
                     else:
                         k, _, v = line.partition(':')
                         k, v = k.strip(), v.strip()
+                        if v.startswith('\\'):
+                            v = v[1:]
                         if k in ('assignees', 'labels'):
                             v = v.split(',')
                         front_matter[k] = v
@@ -155,16 +158,13 @@ class IssueTemplate:
     def create_issue(self, title_date: date) -> None:
         title = self.properties['title'] + ' ' + str(title_date)
         repository = self.properties.get('_repository', os.environ['GITHUB_REPO'])
-        command = [
-            'gh', 'issue', 'list',
+        results = self.gh_json(
+            'issue', 'list',
             f'--repo={repository}',
             f'--search=in:title "{title}"',
             '--json=number',
             '--limit=10',
-        ]
-        log.info('Running %r', command)
-        process = subprocess.run(command, check=True, stdout=subprocess.PIPE)
-        results = json.loads(process.stdout)
+        )
         issues = set(map(itemgetter('number'), results))
 
         if issues:
@@ -173,8 +173,7 @@ class IssueTemplate:
             type = self.properties.get('type')
             assert type is not None
             command = [
-                'gh', 'api',
-                '--method', 'POST',
+                'api', '--method', 'POST',
                 f'/repos/{repository}/issues',
                 '-H', 'Accept: application/vnd.github+json',
                 '-H', 'X-GitHub-Api-Version: 2022-11-28',
@@ -189,14 +188,12 @@ class IssueTemplate:
             for label in labels:
                 command.extend(['-f', f'labels[]={label}'])
             if self.dry_run:
-                log.info('Would run %r', command)
+                log.info('Would run %r', ['gh', *command])
             else:
-                log.info('Running %r …', command)
-                process = subprocess.run(command, check=True, stdout=subprocess.PIPE)
+                issue = self.gh_json(*command)
                 # If the current token lacks the necessary permissions, the GitHub
                 # CLI silently fails to apply the requested labels or assignees. We
                 # therefore need to verify those.
-                issue = json.loads(process.stdout)
                 url = issue['html_url']
                 log.info('… created %r, verifying labels and assignees …', url)
                 path = urllib.parse.urlparse(url).path.removeprefix('/')
@@ -209,7 +206,52 @@ class IssueTemplate:
                 assert set(labels) <= actual_labels, (labels, actual_labels)
                 actual_type = issue['type']['name']
                 assert type == actual_type, (type, actual_type)
-                log.info('Successfully created and verfied issue #%s', issue_number)
+                log.info('Successfully created and verified issue #%s', issue_number)
+                owner, _ = repository.split('/')
+                project = self.gh_json(
+                    'project', 'list',
+                    '--format', 'json',
+                    '--owner', owner,
+                    '--jq', '.projects[]|select(.title == "Azul")'
+                )
+                project_number = str(project['number'])
+                item = self.gh_json(
+                    'project', 'item-add', project_number,
+                    '--owner', owner,
+                    '--url', url,
+                    '--format', 'json'
+                )
+                item_id = item['id']
+                assert item_id, item
+                priority_field = self.gh_json(
+                    'project', 'field-list', project_number,
+                    '--format', 'json',
+                    '--owner', owner,
+                    '--jq', '.fields[]|select(.name == "Priority")'
+                )
+                priority_ids = {pf['name']: pf['id'] for pf in priority_field['options']}
+                priority = self.properties['_priority']
+                item = self.gh_json(
+                    'project', 'item-edit',
+                    '--id', item_id,
+                    '--field-id', priority_field['id'],
+                    '--project-id', project['id'],
+                    '--single-select-option-id', priority_ids[priority],
+                    '--format', 'json'
+                )
+                assert item['title'] == title, (title, item)
+                assert item['url'] == url, (url, item)
+                assert item['id'] == item_id, (item_id, item)
+
+    def gh_json(self, *args: str) -> dict:
+        """
+        Invoke the ``gh`` command with the given arguments and return the
+        resulting JSON output.
+        """
+        command = ['gh', *args]
+        log.info('Running %r', command)
+        process = subprocess.run(command, check=True, stdout=subprocess.PIPE)
+        return json.loads(process.stdout)
 
 
 def main(args):

@@ -1,4 +1,4 @@
-https://github.com/python-gitlab/python-gitlab/COPYING
+https://github.com/python-gitlab/python-gitlab/blob/HEAD/COPYING
 
                    GNU LESSER GENERAL PUBLIC LICENSE
                        Version 3, 29 June 2007

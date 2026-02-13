@@ -1,4 +1,4 @@
-https://github.com/mwilliamson/jq.py/LICENSE
+https://github.com/mwilliamson/jq.py/blob/HEAD/LICENSE
 
 Copyright (c) 2013, Michael Williamson
 All rights reserved.

@@ -1,4 +1,4 @@
-https://github.com/davedoesdev/dxf/LICENCE
+https://github.com/davedoesdev/dxf/blob/HEAD/LICENCE
 
 Copyright (c) 2015 David Halls <https://github.com/davedoesdev/>
 

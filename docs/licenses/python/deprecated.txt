@@ -1,4 +1,4 @@
-https://github.com/tantale/deprecated/LICENSE.rst
+https://github.com/laurent-laporte-pro/deprecated/blob/HEAD/LICENSE.rst
 
 The MIT License (MIT)
 

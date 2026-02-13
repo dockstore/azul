@@ -84,7 +84,6 @@ from azul.service.source_service import (
 )
 from azul.service.storage_service import (
     StorageObjectExists,
-    StorageObjectNotFound,
     StorageService,
 )
 from azul.types import (
@@ -464,30 +463,10 @@ class BaseMirrorService:
                                                content_type=file.content_type)
 
     def info_exists(self, file: File) -> bool:
-        return self._get_info(file) is not None
+        return self._storage.object_exists(self._info_object_key(file))
 
-    def file_exists(self, file: File) -> bool:
-        try:
-            self._storage.head_object(self._file_object_key(file))
-        except StorageObjectNotFound:
-            return False
-        else:
-            return True
-
-    def _get_info(self, file: File) -> JSON | None:
-        object_key = self._info_object_key(file)
-        try:
-            content = self._storage.get_object(object_key)
-        except StorageObjectNotFound:
-            return None
-        else:
-            json_content = json.loads(content)
-            content_type = json_content['content-type']
-            if content_type != file.content_type:
-                # FIXME: Content type in mirror info objects inconsistent with index
-                #        https://github.com/DataBiosphere/azul/issues/7193
-                log.warning('Conflicting content type %r for file %r', content_type, file)
-            return json_content
+    def _file_exists(self, file: File) -> bool:
+        return self._storage.object_exists(self._file_object_key(file))
 
     info_prefix, file_prefix = 'info', 'file'
 
@@ -613,7 +592,8 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
         assert a.file.size is not None, R('File size unknown', a.file)
         if self.info_exists(a.file):
             log.info('File is already mirrored, skipping upload: %r', a.file)
-        elif self.file_exists(a.file):
+            self._update_info(a.file)
+        elif self._file_exists(a.file):
             assert False, R('File object is already present', a.file)
         else:
             part_size = FilePart.default_size
@@ -640,7 +620,7 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
                                  data=file_content,
                                  content_type=self._file_object_content_type,
                                  overwrite=False)
-        self._put_info(file)
+        self._create_info(file)
 
     def _create_upload(self, file: File) -> FileUpload:
         object_key = self._file_object_key(file)
@@ -699,23 +679,48 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
             log.info('Discarding redundant upload %r of %r', a.upload.upload_id, a.file)
             self._storage.abort_multipart_upload(object_key=object_key,
                                                  upload_id=a.upload.upload_id)
-        self._get_info(a.file)
-        self._put_info(a.file)
+        self._create_info(a.file)
         log.info('Successfully mirrored file via multi-part upload: %r', a.file)
         return iter(())
 
-    def _info(self, file: File) -> JSON:
+    def _info(self, file: File, old_info: JSON | None = None) -> JSON:
+        content_types: set[str] = set()
+        content_type = 'content-type'
+        if old_info is not None:
+            old_content_types = old_info[content_type]
+            if old_content_types is None:
+                # Info objects in AnVIL are invalid against their schema
+                # https://github.com/DataBiosphere/azul/issues/7675
+                pass
+            elif isinstance(old_content_types, str):
+                # Content type in mirror info objects inconsistent with index
+                # https://github.com/DataBiosphere/azul/issues/7193
+                pass
+            elif isinstance(old_content_types, list):
+                content_types.update(json_element_strings(old_content_types))
+            else:
+                assert False, type(old_content_types)
+        if file.content_type is not None:
+            content_types.add(file.content_type)
         return {
-            'content-type': file.content_type,
-            '$schema': str(self._schema_url_func(schema_name='info', version=1))
+            content_type: sorted(content_types),
+            '$schema': str(self._schema_url_func(schema_name='info', version=2))
         }
 
-    def _put_info(self, file: File):
+    def _update_info(self, file: File):
+        def update(data: bytes) -> bytes:
+            return json.dumps(self._info(file, json.loads(data))).encode()
+
+        key = self._info_object_key(file)
+        self._storage.update_object(key, update, content_type='application/json')
+
+    def _create_info(self, file: File):
         object_key = self._info_object_key(file)
         info = self._info(file)
         self._storage.put_object(object_key=object_key,
                                  data=json.dumps(info).encode(),
-                                 content_type='application/json')
+                                 content_type='application/json',
+                                 overwrite=False)
 
     def _repository_url(self, file: File) -> furl:
         assert config.is_tdr_enabled(self.catalog), R(

@@ -1,4 +1,4 @@
-https://github.com/PyCQA/pyflakes/LICENSE
+https://github.com/PyCQA/pyflakes/blob/HEAD/LICENSE
 
 Copyright 2005-2011 Divmod, Inc.
 Copyright 2013-2014 Florent Xicluna

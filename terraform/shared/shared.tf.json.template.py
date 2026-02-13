@@ -11,6 +11,9 @@ from azul import (
 from azul.deployment import (
     aws,
 )
+from azul.strings import (
+    parenthesize as _parens,
+)
 from azul.terraform import (
     block_public_s3_bucket_access,
     emit_tf,
@@ -18,6 +21,26 @@ from azul.terraform import (
     set_empty_s3_bucket_lifecycle_config,
     vpc,
 )
+
+
+def _curly(s: str) -> str:
+    return _parens(s, '{}')
+
+
+def _curly_padded(s: str) -> str:
+    return _curly((f' {s} '))
+
+
+def _or(*terms: str) -> str:
+    return ' || '.join(map(_parens, terms))
+
+
+def _and(*terms: str) -> str:
+    return ' && '.join(map(_parens, terms))
+
+
+def _and_no_parens(*terms: str) -> str:
+    return ' && '.join(terms)
 
 
 class CloudTrailAlarm(NamedTuple):
@@ -42,76 +65,155 @@ def conformance_pack(name: str) -> str:
 trail_alarms = [
     # [CloudWatch.2] Ensure a log metric filter and alarm exist for unauthorized API calls
     # https://docs.aws.amazon.com/securityhub/latest/userguide/cloudwatch-controls.html#cloudwatch-2
+    #
+    # Note that this event the filter pattern intentionally deviates from what
+    # the control mandates.
+    #
     CloudTrailAlarm(name='api_unauthorized',
                     statistic='Sum',
-                    filter_pattern='{($.errorCode="*UnauthorizedOperation") || ($.errorCode="AccessDenied*")}'),
+                    filter_pattern=_curly(
+                        _and(
+                            _or(
+                                '$.errorCode = "*UnauthorizedOperation"',
+                                '$.errorCode = "AccessDenied*"'
+                            ),
+                            _or(
+                                '$.userIdentity.invokedBy NOT EXISTS',
+                                _and(
+                                    '$.userIdentity.invokedBy != "config.amazonaws.com"',
+                                    '$.userIdentity.invokedBy != "resource-explorer-2.amazonaws.com"'
+                                )
+                            )
+                        )
+                    )),
     # [CloudWatch.3] Ensure a log metric filter and alarm exist for Management Console sign-in without MFA
     # https://docs.aws.amazon.com/securityhub/latest/userguide/cloudwatch-controls.html#cloudwatch-3
     CloudTrailAlarm(name='console_no_mfa',
                     statistic='Sum',
-                    filter_pattern='{ ($.eventName = "ConsoleLogin") && ($.additionalEventData.MFAUsed != "Yes") && '
-                                   '($.userIdentity.type = "IAMUser") && '
-                                   '($.responseElements.ConsoleLogin = "Success") }'),
+                    filter_pattern=_curly_padded(
+                        _and(
+                            '$.eventName = "ConsoleLogin"',
+                            '$.additionalEventData.MFAUsed != "Yes"',
+                            '$.userIdentity.type = "IAMUser"',
+                            '$.responseElements.ConsoleLogin = "Success"'
+                        )
+                    )),
     # [CloudWatch.1] A log metric filter and alarm should exist for usage of the "root" user
     # https://docs.aws.amazon.com/securityhub/latest/userguide/cloudwatch-controls.html#cloudwatch-1
     CloudTrailAlarm(name='root_usage',
                     statistic='Sum',
-                    filter_pattern='{$.userIdentity.type="Root" && $.userIdentity.invokedBy NOT EXISTS && $.eventType '
-                                   '!="AwsServiceEvent"}'),
+                    filter_pattern=_curly(
+                        _and_no_parens(
+                            '$.userIdentity.type="Root"',
+                            '$.userIdentity.invokedBy NOT EXISTS',
+                            '$.eventType !="AwsServiceEvent"'
+                        )
+                    )),
     # [CloudWatch.4] Ensure a log metric filter and alarm exist for IAM policy changes
     # https://docs.aws.amazon.com/securityhub/latest/userguide/cloudwatch-controls.html#cloudwatch-4
     CloudTrailAlarm(name='iam_policy_change',
                     statistic='Sum',
-                    filter_pattern='{($.eventName=DeleteGroupPolicy) || ($.eventName=DeleteRolePolicy) || '
-                                   '($.eventName=DeleteUserPolicy) || ($.eventName=PutGroupPolicy) || '
-                                   '($.eventName=PutRolePolicy) || ($.eventName=PutUserPolicy) || '
-                                   '($.eventName=CreatePolicy) || ($.eventName=DeletePolicy) || '
-                                   '($.eventName=CreatePolicyVersion) || ($.eventName=DeletePolicyVersion) || '
-                                   '($.eventName=AttachRolePolicy) || ($.eventName=DetachRolePolicy) || '
-                                   '($.eventName=AttachUserPolicy) || ($.eventName=DetachUserPolicy) || '
-                                   '($.eventName=AttachGroupPolicy) || ($.eventName=DetachGroupPolicy)}'),
+                    filter_pattern=_curly(
+                        _or(
+                            '$.eventName=DeleteGroupPolicy',
+                            '$.eventName=DeleteRolePolicy',
+                            '$.eventName=DeleteUserPolicy',
+                            '$.eventName=PutGroupPolicy',
+                            '$.eventName=PutRolePolicy',
+                            '$.eventName=PutUserPolicy',
+                            '$.eventName=CreatePolicy',
+                            '$.eventName=DeletePolicy',
+                            '$.eventName=CreatePolicyVersion',
+                            '$.eventName=DeletePolicyVersion',
+                            '$.eventName=AttachRolePolicy',
+                            '$.eventName=DetachRolePolicy',
+                            '$.eventName=AttachUserPolicy',
+                            '$.eventName=DetachUserPolicy',
+                            '$.eventName=AttachGroupPolicy',
+                            '$.eventName=DetachGroupPolicy'
+                        )
+                    )),
     # [CloudWatch.5] Ensure a log metric filter and alarm exist for CloudTrail AWS Configuration changes
     # https://docs.aws.amazon.com/securityhub/latest/userguide/cloudwatch-controls.html#cloudwatch-5
     CloudTrailAlarm(name='cloudtrail_config_change',
                     statistic='Sum',
-                    filter_pattern='{($.eventName=CreateTrail) || ($.eventName=UpdateTrail) || '
-                                   '($.eventName=DeleteTrail) || ($.eventName=StartLogging) || '
-                                   '($.eventName=StopLogging)}'),
+                    filter_pattern=_curly(
+                        _or(
+                            '$.eventName=CreateTrail',
+                            '$.eventName=UpdateTrail',
+                            '$.eventName=DeleteTrail',
+                            '$.eventName=StartLogging',
+                            '$.eventName=StopLogging'
+                        )
+                    )),
     # [CloudWatch.8] Ensure a log metric filter and alarm exist for S3 bucket policy changes
     # https://docs.aws.amazon.com/securityhub/latest/userguide/cloudwatch-controls.html#cloudwatch-8
     CloudTrailAlarm(name='s3_policy_change',
                     statistic='Sum',
-                    filter_pattern='{($.eventSource=s3.amazonaws.com) && (($.eventName=PutBucketAcl) || '
-                                   '($.eventName=PutBucketPolicy) || ($.eventName=PutBucketCors) || '
-                                   '($.eventName=PutBucketLifecycle) || ($.eventName=PutBucketReplication) || '
-                                   '($.eventName=DeleteBucketPolicy) || ($.eventName=DeleteBucketCors) || '
-                                   '($.eventName=DeleteBucketLifecycle) || ($.eventName=DeleteBucketReplication))}'),
+                    filter_pattern=_curly(
+                        _and(
+                            '$.eventSource=s3.amazonaws.com',
+                            _or(
+                                '$.eventName=PutBucketAcl',
+                                '$.eventName=PutBucketPolicy',
+                                '$.eventName=PutBucketCors',
+                                '$.eventName=PutBucketLifecycle',
+                                '$.eventName=PutBucketReplication',
+                                '$.eventName=DeleteBucketPolicy',
+                                '$.eventName=DeleteBucketCors',
+                                '$.eventName=DeleteBucketLifecycle',
+                                '$.eventName=DeleteBucketReplication'
+                            )
+                        )
+                    )),
     # [CloudWatch.12] Ensure a log metric filter and alarm exist for changes to network gateways
     # https://docs.aws.amazon.com/securityhub/latest/userguide/cloudwatch-controls.html#cloudwatch-12
     CloudTrailAlarm(name='network_gateway_change',
                     statistic='Sum',
-                    filter_pattern='{($.eventName=CreateCustomerGateway) || ($.eventName=DeleteCustomerGateway) || '
-                                   '($.eventName=AttachInternetGateway) || ($.eventName=CreateInternetGateway) || '
-                                   '($.eventName=DeleteInternetGateway) || ($.eventName=DetachInternetGateway)}'),
+                    filter_pattern=_curly(
+                        _or(
+                            '$.eventName=CreateCustomerGateway',
+                            '$.eventName=DeleteCustomerGateway',
+                            '$.eventName=AttachInternetGateway',
+                            '$.eventName=CreateInternetGateway',
+                            '$.eventName=DeleteInternetGateway',
+                            '$.eventName=DetachInternetGateway'
+                        )
+                    )),
     # [CloudWatch.13] Ensure a log metric filter and alarm exist for route table changes
     # https://docs.aws.amazon.com/securityhub/latest/userguide/cloudwatch-controls.html#cloudwatch-13
     CloudTrailAlarm(name='route_table_change',
                     statistic='Sum',
-                    filter_pattern='{($.eventName=CreateRoute) || ($.eventName=CreateRouteTable) || '
-                                   '($.eventName=ReplaceRoute) || ($.eventName=ReplaceRouteTableAssociation) || '
-                                   '($.eventName=DeleteRouteTable) || ($.eventName=DeleteRoute) || '
-                                   '($.eventName=DisassociateRouteTable)}'),
+                    filter_pattern=_curly(
+                        _or(
+                            '$.eventName=CreateRoute',
+                            '$.eventName=CreateRouteTable',
+                            '$.eventName=ReplaceRoute',
+                            '$.eventName=ReplaceRouteTableAssociation',
+                            '$.eventName=DeleteRouteTable',
+                            '$.eventName=DeleteRoute',
+                            '$.eventName=DisassociateRouteTable'
+                        )
+                    )),
     # [CloudWatch.14] Ensure a log metric filter and alarm exist for VPC changes
     # https://docs.aws.amazon.com/securityhub/latest/userguide/cloudwatch-controls.html#cloudwatch-14
     CloudTrailAlarm(name='vpc_change',
                     statistic='Sum',
-                    filter_pattern='{($.eventName=CreateVpc) || ($.eventName=DeleteVpc) || '
-                                   '($.eventName=ModifyVpcAttribute) || ($.eventName=AcceptVpcPeeringConnection) || '
-                                   '($.eventName=CreateVpcPeeringConnection) || '
-                                   '($.eventName=DeleteVpcPeeringConnection) || '
-                                   '($.eventName=RejectVpcPeeringConnection) || ($.eventName=AttachClassicLinkVpc) || '
-                                   '($.eventName=DetachClassicLinkVpc) || ($.eventName=DisableVpcClassicLink) || '
-                                   '($.eventName=EnableVpcClassicLink)}'),
+                    filter_pattern=_curly(
+                        _or(
+                            '$.eventName=CreateVpc',
+                            '$.eventName=DeleteVpc',
+                            '$.eventName=ModifyVpcAttribute',
+                            '$.eventName=AcceptVpcPeeringConnection',
+                            '$.eventName=CreateVpcPeeringConnection',
+                            '$.eventName=DeleteVpcPeeringConnection',
+                            '$.eventName=RejectVpcPeeringConnection',
+                            '$.eventName=AttachClassicLinkVpc',
+                            '$.eventName=DetachClassicLinkVpc',
+                            '$.eventName=DisableVpcClassicLink',
+                            '$.eventName=EnableVpcClassicLink'
+                        )
+                    )),
 ]
 
 # The deployment and/or backup of the GitLab instance requires a reboot, which

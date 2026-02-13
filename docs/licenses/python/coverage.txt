@@ -1,4 +1,4 @@
-https://github.com/nedbat/coveragepy/LICENSE.txt
+https://github.com/coveragepy/coveragepy/blob/HEAD/LICENSE.txt
 
 
                                  Apache License

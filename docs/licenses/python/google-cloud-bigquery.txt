@@ -1,4 +1,4 @@
-https://github.com/googleapis/python-bigquery/LICENSE
+https://github.com/googleapis/python-bigquery/blob/HEAD/LICENSE
 
 
                                  Apache License

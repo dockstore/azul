@@ -1,4 +1,4 @@
-https://github.com/pyasn1/pyasn1-modules/LICENSE.txt
+https://github.com/pyasn1/pyasn1-modules/blob/HEAD/LICENSE.txt
 
 Copyright (c) 2005-2020, Ilya Etingof <etingof@gmail.com>
 All rights reserved.

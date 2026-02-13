@@ -10,11 +10,7 @@ SHELL ["/bin/bash", "-c"]
 # are updated.
 #
 ARG azul_image_version=1
-# FIXME: Remove mounting of fips_enabled
-#        https://github.com/DataBiosphere/azul/issues/6675
-ARG azul_proc_sys_crypto
-RUN --mount=type=bind,source=fips_enabled,target=${azul_proc_sys_crypto}/fips_enabled \
-    apt-get update \
+RUN apt-get update \
     && apt-get upgrade -y \
     && apt-get -y install build-essential curl unzip
 
@@ -50,10 +46,7 @@ RUN mkdir terraform \
 RUN install -m 0755 -d /etc/apt/keyrings
 COPY --chmod=0644 bin/keys/docker-apt-keyring.pgp /etc/apt/keyrings/docker.gpg
 ARG azul_docker_version
-# FIXME: Remove mounting of fips_enabled
-#        https://github.com/DataBiosphere/azul/issues/6675
-RUN --mount=type=bind,source=fips_enabled,target=${azul_proc_sys_crypto}/fips_enabled \
-    set -o pipefail \
+RUN set -o pipefail \
     && ( \
       echo "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" \
       | tee /etc/apt/sources.list.d/docker.list \

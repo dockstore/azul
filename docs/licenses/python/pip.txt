@@ -1,4 +1,4 @@
-https://github.com/pypa/pip/LICENSE.txt
+https://github.com/pypa/pip/blob/HEAD/LICENSE.txt
 
 Copyright (c) 2008-present The pip developers (see AUTHORS.txt file)
 

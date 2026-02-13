@@ -1,7 +1,6 @@
 https://www.sparklabs.com/company/legal/
 
 Viscosity End User License Agreement (EULA)
-
 By installing, operating, distributing, or otherwise using Viscosity you agree to the terms of this End User License Agreement. If you do not agree to the terms of this License Agreement, do not install or use Viscosity.
 
 1. LICENSE. Your rights and obligations with respect to the use of Viscosity are as follows. You may: (a) make copies of Viscosity for archival purposes, or copy Viscosity onto the hard disk of your computer and retain the original for archival purposes; and (b) use Viscosity in accordance with any additional permitted uses set forth below. You may not: (a) sublicense, rent, or lease any portion of Viscosity; reverse engineer, decompile, disassemble, modify, translate, make any attempt to discover the source code of Viscosity, or create derivative works from Viscosity; (b) use Viscosity in any manner not authorized by this license; nor (c) use Viscosity in any manner that contradicts any additional restrictions set forth below.
@@ -24,8 +23,9 @@ By installing, operating, distributing, or otherwise using Viscosity you agree t
 
 SparkLabs® and Viscosity® are registered trademarks of SparkLabs Pty Ltd. Any unauthorized use is expressly prohibited.
 
-Privacy Policy
 
+
+Privacy Policy
 We at SparkLabs are committed to maintaining the trust and confidence of the users of our software and of visitors to our website. We strongly support the right to privacy, and where possible we prefer to avoid collecting data from you.
 
 Our Privacy Policy is designed to give a transparent overview of the cases where we do collect data, why we collect it, how it is used, and how long it is kept for. By using our website or products, you consent to our Privacy Policy.
@@ -44,7 +44,7 @@ We retain data related to the purchase of a product as long as is legally requir
 
 SUPPORT AND CORRESPONDENCE
 
-We provide the ability to get in contact with us for product support, feedback, and for other general correspondence. When contacting us we will collect the email address (for emails or forum posts), username (if contacting us via our website forum or Twitter), and any information you provide. This information is used to resolve your support inquiry.
+We provide the ability to get in contact with us for product support, feedback, and for other general correspondence. When contacting us we will collect the email address (for emails or forum posts), username (if contacting us via our website forum or social media), and any information you provide. This information is used to resolve your support inquiry.
 
 We may elect to delete support emails shortly after they are resolved if we believe they contain highly sensitive data, for example if an email contains the credentials needed to access a user's VPN server. Other support emails and correspondence are retained indefinitely, however you may request we remove support emails you have sent.
 
@@ -129,8 +129,9 @@ This privacy policy may be updated or edited in the future. The most up-to-date 
 
 If you have any questions about our privacy policy or collection of data, please don't hesitate to get in touch via email with our support staff.
 
-GDPR Erasure Requests
 
+
+GDPR Erasure Requests
 As outlined in our Privacy Policy, we may collect certain personal data from you when using our website or products, such as when purchasing one of our products, making a support request, or subscribing to our newsletter. Under Article 17 of the GDPR individual citizens of the European Union (EU) have the right to have certain personal data erased, commonly known as the "right to be forgotten".
 
 This document outlines what personal data we can erase, how to submit an erasure request if you're an EU citizen and you'd like certain personal data permanently removed, and the timeframe you can expect for it to be processed.
@@ -181,8 +182,9 @@ We will reply to all erasure requests within 30 days. If further information or 
 
 When an erasure request is processed, all personal data it applies to is immediately and permanently deleted from our production systems. However please note that some of this data may temporarily persist in archived backup data for an additional period of time. For more information please refer to Backups section of our Privacy Policy.
 
-Refund Policy
 
+
+Refund Policy
 In certain instances you may be eligible for a refund if desired. We hope our products exceed your expectations, but in the rare instance they don't please read this document to ensure you understand our Refund Policy.
 
 As SparkLabs is based in NSW, Australia, we comply with the refund regulations of the NSW Fair Trading Act. Refund requests must be received in writing. Refunds will be given at the discretion of SparkLabs management.
@@ -196,3 +198,12 @@ Our products can be downloaded and used at no cost for a trial-period of 30-days
 We do understand that mistakes can be made, and generally we will try to refund a purchase regardless of the reason. However we do ask that customers make use of the 30-day trial period, and we reserve the right to adhere to the refund rules specified above.
 
 If a refund is given, the license serial/key for the purchase will be disabled.
+
+
+
+Security Reports
+If you are a security researcher who has found a vulnerability in our software, a report with the appropriate technical details can be sent to security@sparklabs.com. The validity of all reports are assessed before a response is sent, so please allow a few business days for a reply.
+
+Sadly we do not offer a bug bounty program. However we are greatly appreciative of all legitimate reports we receive. We always endeavour to properly credit all valid reports, including attribution and an appropriate link on our blog (unless anonymity is requested).
+
+Recently we’ve seen a rise in "beg bounty" reports. These are reports from malicious actors who hope to fool or extort a payment from a company with false or frivolous security reports. If you’re one of those people: we are a network and cyber security company and we have the technical skill to assess all reports for validity. We will not be fooled by "technobabble" or doctored reports. And no, there is no security issue with our DMARC/SPF DNS records (a common scam attempt). You are wasting our time and yours: you will not receive a payout or bug bounty. Extortive reports will be forwarded to authorities in an effort to help prevent similar attacks against other businesses.

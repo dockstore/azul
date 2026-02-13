@@ -1,4 +1,4 @@
-https://github.com/gorakhargosh/watchdog/LICENSE
+https://github.com/gorakhargosh/watchdog/blob/HEAD/LICENSE
 
 
                                  Apache License

@@ -1,4 +1,4 @@
-https://github.com/pallets/click/LICENSE.txt
+https://github.com/pallets/click/blob/HEAD/LICENSE.txt
 
 Copyright 2014 Pallets
 

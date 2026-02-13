@@ -27,7 +27,6 @@ from azul.docker import (
 )
 from azul.strings import (
     departition,
-    double_quote as dq,
     join_lines as jl,
     join_words as jw,
     single_quote as sq,
@@ -1867,10 +1866,10 @@ emit_tf({} if config.terraform_component != 'gitlab' else {
                                     str(clamav_image),
                                     '/bin/sh',
                                     '-c',
-                                    dq(
+                                    sq(
                                         'freshclam',
                                         '&& echo freshclam succeeded',
-                                        '|| (echo freshclam failed; false)',
+                                        '|| (echo freshclam "failed"; false)',
                                         '&& clamscan',
                                         '--recursive',
                                         '--infected',  # Only print infected files
@@ -1883,7 +1882,7 @@ emit_tf({} if config.terraform_component != 'gitlab' else {
                                         '--exclude-dir=^/scan/dev',
                                         '/scan',
                                         '&& echo clamscan succeeded',
-                                        '|| (echo clamscan failed; false)'
+                                        '|| (echo clamscan "failed"; false)'
                                     )
                                 ),
                                 '[Install]',
