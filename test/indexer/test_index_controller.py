@@ -463,3 +463,6 @@ class TestIndexerApp(LocalAppTestCase,
         method = 'DELETE' if delete else 'POST'
         request = Request(method=method, url=str(url), json=body)
         return request
+
+    def _create_mock_notifications_queue(self):
+        self._create_mock_queues([config.notifications_queue.name])

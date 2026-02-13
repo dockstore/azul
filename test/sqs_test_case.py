@@ -46,9 +46,6 @@ class SqsTestCase(AzulUnitTestCase):
             sqs.create_queue(QueueName=queue_name,
                              Attributes=dict(FifoQueue='true') if queue_name.endswith('.fifo') else {})
 
-    def _create_mock_notifications_queue(self):
-        self._create_mock_queues([config.notifications_queue.name])
-
 
 class WorkQueueTestCase(SqsTestCase):
 
