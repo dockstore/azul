@@ -16,6 +16,7 @@ from typing import (
     Iterator,
     Protocol,
     Self,
+    TYPE_CHECKING,
     final,
 )
 from uuid import (
@@ -90,6 +91,11 @@ from azul.types import (
     JSON,
     json_element_strings,
 )
+
+if TYPE_CHECKING:
+    from mypy_boto3_sqs.service_resource import (
+        Queue,
+    )
 
 log = logging.getLogger(__name__)
 
@@ -409,7 +415,7 @@ class BaseMirrorService:
 
         self._queue_actions(actions())
 
-    def _mirror_queue(self):
+    def _mirror_queue(self) -> 'Queue':
         name = config.mirror_queue.name
         return aws.sqs_queue(name)
 
