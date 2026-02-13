@@ -140,22 +140,22 @@ class TestListSources(DCP2TestCase, LocalAppTestCase):
     def app_name(cls) -> str:
         return 'service'
 
-    source_names = ['mock_snapshot_1', 'mock_snapshot_2']
-    make_spec = 'tdr:bigquery:gcp:mock:{}'.format
+    snapshot_names = ['mock_snapshot_1', 'mock_snapshot_2']
+    make_spec_str = 'tdr:bigquery:gcp:mock:{}'.format
 
     # Includes extra sources to check that the endpoint only returns results
     # for the current catalog
     extra_sources = ['foo', 'bar']
-    source_names_by_id = {
+    snapshots_by_id = {
         str(i): name
-        for i, name in enumerate(source_names + extra_sources)
+        for i, name in enumerate(snapshot_names + extra_sources)
     }
 
     @classmethod
     def _sources(cls):
         return {
-            cls.make_spec(n): {'mirror': True}
-            for n in cls.source_names
+            cls.make_spec_str(n): {'mirror': True}
+            for n in cls.snapshot_names
         }
 
     @classmethod
@@ -172,9 +172,9 @@ class TestListSources(DCP2TestCase, LocalAppTestCase):
         return {
             cls.catalog: [
                 TDRSourceRef(id=id,
-                             spec=TDRSourceSpec.parse(cls.make_spec(name)),
+                             spec=TDRSourceSpec.parse(cls.make_spec_str(name)),
                              prefix=None)
-                for id, name in cls.source_names_by_id.items()
+                for id, name in cls.snapshots_by_id.items()
                 if name not in cls.extra_sources
             ]}
 
@@ -182,7 +182,7 @@ class TestListSources(DCP2TestCase, LocalAppTestCase):
     @patch.object(TDRClient, 'list_snapshots')
     @patch.object(TDRClient, 'validate', new=MagicMock())
     def test(self, mock_tdr_client__list_snapshots, mock_source_service__get):
-        mock_tdr_client__list_snapshots.return_value = self.source_names_by_id
+        mock_tdr_client__list_snapshots.return_value = self.snapshots_by_id
         client = http_client(log)
         azul_url = furl(url=self.base_url,
                         path='/repository/sources',
@@ -198,20 +198,20 @@ class TestListSources(DCP2TestCase, LocalAppTestCase):
                     'sources': [
                         {
                             'sourceId': id,
-                            'sourceSpec': str(TDRSourceSpec.parse(self.make_spec(name)))
+                            'sourceSpec': str(TDRSourceSpec.parse(self.make_spec_str(name)))
                         }
-                        for id, name in self.source_names_by_id.items()
+                        for id, name in self.snapshots_by_id.items()
                         if name not in self.extra_sources
                     ]
                 }
                 self.assertEqual(expected, actual)
 
-        mock_source_service__get.return_value = list(self.source_names_by_id.keys())
+        mock_source_service__get.return_value = list(self.snapshots_by_id.keys())
         _test(authenticate=True, cache=True)
         _test(authenticate=False, cache=True)
         mock_source_service__get.return_value = None
         mock_source_service__get.side_effect = NotFound('foo_token')
         with patch('azul.terra.TDRClient.list_snapshot_ids',
-                   return_value=self.source_names_by_id.keys() | {'not_indexed'}):
+                   return_value=self.snapshots_by_id.keys() | {'not_indexed'}):
             _test(authenticate=True, cache=False)
             _test(authenticate=False, cache=False)
