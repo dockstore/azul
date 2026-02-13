@@ -9,7 +9,7 @@ from more_itertools import (
 )
 
 from azul import (
-    reject,
+    R,
 )
 
 
@@ -282,10 +282,71 @@ def delimit(s: str, delimiter: str) -> str:
     >>> delimit("foo's", "'")
     Traceback (most recent call last):
     ...
-    azul.RequirementError: ("'", 'must not occur in', "foo's")
+    AssertionError: R("'", 'must not occur in', "foo's")
     """
-    reject(delimiter in s, delimiter, 'must not occur in', s)
+    assert delimiter not in s, R(delimiter, 'must not occur in', s)
     return delimiter + s + delimiter
+
+
+def parenthesize(s: str, parens: str = "()"):
+    """
+    >>> parenthesize('foo')
+    '(foo)'
+
+    >>> parenthesize('(foo)')
+    '((foo))'
+
+    >>> parenthesize('foo)')
+    Traceback (most recent call last):
+    ...
+    AssertionError: R('Extra closing construct in input')
+
+    >>> parenthesize('(foo')
+    Traceback (most recent call last):
+    ...
+    AssertionError: R('Missing closing construct in input')
+
+    >>> parenthesize('foo)', '{}')
+    '{foo)}'
+
+    >>> parenthesize('foo', '{)')
+    '{foo)'
+
+    >>> parenthesize(123, '()')
+    Traceback (most recent call last):
+    ...
+    AssertionError: R('First argument must be string')
+
+    >>> parenthesize('foo', 123)
+    Traceback (most recent call last):
+    ...
+    AssertionError: R('Second argument must be string')
+
+    >>> parenthesize('foo', '(')
+    Traceback (most recent call last):
+    ...
+    AssertionError: R('Second argument must be two characters', '(')
+
+    >>> parenthesize('foo', '||')
+    Traceback (most recent call last):
+    ...
+    AssertionError: R('Second argument must be two different characters', '||')
+    """
+    assert isinstance(s, str), R('First argument must be string')
+    assert isinstance(parens, str), R('Second argument must be string')
+    assert len(parens) == 2, R('Second argument must be two characters', parens)
+    open, close = iter(parens)
+    assert open != close, R("Second argument must be two different characters", parens)
+
+    i = 0
+    for c in s:
+        if c == open:
+            i += 1
+        elif c == close:
+            i -= 1
+        assert i >= 0, R('Extra closing construct in input')
+    assert i == 0, R('Missing closing construct in input')
+    return open + s + close
 
 
 def back_quote(*words: str) -> str:
@@ -302,7 +363,7 @@ def back_quote(*words: str) -> str:
     >>> back_quote('foo`s')
     Traceback (most recent call last):
     ...
-    azul.RequirementError: ('`', 'must not occur in', 'foo`s')
+    AssertionError: R('`', 'must not occur in', 'foo`s')
     """
     return delimit(join_words(*words), '`')
 
@@ -321,7 +382,7 @@ def single_quote(*words: str) -> str:
     >>> single_quote("foo", "bar's")
     Traceback (most recent call last):
     ...
-    azul.RequirementError: ("'", 'must not occur in', "foo bar's")
+    AssertionError: R("'", 'must not occur in', "foo bar's")
     """
     return delimit(join_words(*words), "'")
 
@@ -340,6 +401,6 @@ def double_quote(*words: str) -> str:
     >>> double_quote('foo', 'b"a"r')
     Traceback (most recent call last):
     ...
-    azul.RequirementError: ('"', 'must not occur in', 'foo b"a"r')
+    AssertionError: R('"', 'must not occur in', 'foo b"a"r')
     """
     return delimit(join_words(*words), '"')

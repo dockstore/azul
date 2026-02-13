@@ -1,4 +1,4 @@
-https://github.com/googleapis/python-storage/LICENSE
+https://github.com/googleapis/python-storage/blob/HEAD/LICENSE
 
 
                                  Apache License

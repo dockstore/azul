@@ -1,4 +1,4 @@
-https://github.com/googleapis/python-api-core/LICENSE
+https://github.com/googleapis/python-api-core/blob/HEAD/LICENSE
 
 
                                  Apache License

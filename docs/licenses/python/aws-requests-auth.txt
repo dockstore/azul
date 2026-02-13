@@ -1,4 +1,4 @@
-https://github.com/davidmuller/aws-requests-auth/LICENSE
+https://github.com/davidmuller/aws-requests-auth/blob/HEAD/LICENSE
 
 Copyright (c) David Muller.
 All rights reserved.

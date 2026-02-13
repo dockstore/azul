@@ -1,4 +1,4 @@
-https://github.com/zopefoundation/zope.event/LICENSE.txt
+https://github.com/zopefoundation/zope.event/blob/HEAD/LICENSE.txt
 
 Zope Public License (ZPL) Version 2.1
 

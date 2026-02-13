@@ -1,6 +1,6 @@
 https://gitlab.com/gitlab-org/gitlab-foss/blob/master/LICENSE
 
-Copyright (c) 2011-present GitLab B.V.
+Copyright (c) 2011-present GitLab Inc.
 
 Portions of this software are licensed as follows:
 

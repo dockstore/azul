@@ -71,6 +71,7 @@ config: _client
 	@echo "<key>"
 	@cat $(EASYRSA_PKI)/private/$(client_cn).key
 	@echo "</key>"
+	@echo "#viscosity name azul-gitlab-$(AZUL_DEPLOYMENT_STAGE)-$(client_cn)"
 	@echo >&2
 	@echo "... done. You can now import the generated configuration to your OpenVPN client." >&2
 	@echo "On Ubuntu, this is done with" \

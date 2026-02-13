@@ -1,4 +1,4 @@
-https://github.com/eliben/pycparser/LICENSE
+https://github.com/eliben/pycparser/blob/HEAD/LICENSE
 
 pycparser -- A C parser in Python
 

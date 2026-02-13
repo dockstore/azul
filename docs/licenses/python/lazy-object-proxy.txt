@@ -1,8 +1,8 @@
-https://github.com/ionelmc/python-lazy-object-proxy/LICENSE
+https://github.com/ionelmc/python-lazy-object-proxy/blob/HEAD/LICENSE
 
 BSD 2-Clause License
 
-Copyright (c) 2014-2023, Ionel Cristian Mărieș. All rights reserved.
+Copyright (c) 2014-2025, Ionel Cristian Mărieș. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the
 following conditions are met:

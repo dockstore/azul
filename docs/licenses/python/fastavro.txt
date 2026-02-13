@@ -1,4 +1,4 @@
-https://github.com/fastavro/fastavro/LICENSE
+https://github.com/fastavro/fastavro/blob/HEAD/LICENSE
 
 MIT License
 

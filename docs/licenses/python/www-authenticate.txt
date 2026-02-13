@@ -1,4 +1,4 @@
-https://github.com/alexsdutton/www-authenticate/LICENSE
+https://github.com/alexsdutton/www-authenticate/blob/HEAD/LICENSE
 
 Copyright (c) 2015 Alexander Dutton.
 All rights reserved.

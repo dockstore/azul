@@ -216,7 +216,7 @@ def env() -> Mapping[str, str | None]:
         # `gitlab` components, as well as building and pushing the executor
         # image (see terraform/gitlab/runner/Dockerfile for how).
         #
-        'azul_docker_version': '28.5.2',
+        'azul_docker_version': '29.1.5',
 
         # The version of Python used throughout the system.
         #
@@ -245,17 +245,6 @@ def env() -> Mapping[str, str | None]:
         # changes.
         #
         'azul_terraform_version': '1.13.5',
-
-        # When building the Azul image on a FIPS mode enabled system (e.g.
-        # GitLab), this variable should be set to `/proc/sys/crypto`, the path
-        # where a `fips_enabled` file will be mounted. This is required for the
-        # command `apt-get update` to succeed which would otherwise fail on
-        # Debian bookworm with FIPS mode enabled.
-        #
-        # FIXME: Remove azul_proc_sys_crypto
-        #        https://github.com/DataBiosphere/azul/issues/6675
-        #
-        'azul_proc_sys_crypto': '/tmp',
 
         # A dictionary mapping the short name of each Docker image used in Azul
         # to its fully qualified name. Note that a change to any of the image
@@ -910,6 +899,14 @@ def env() -> Mapping[str, str | None]:
         # reuse the index from a prior run, and be significantly faster, albeit
         # not covering any changes to the indexer, since indexing will be
         # skipped.
+        #
+        # To supress IT coverage of the mirroring functionality in Azul, include
+        # the 'no_mirror' flag.
+        #
+        # To pin the random seed used by the IT, include the 'seed=12345' flag,
+        # replacing 12345 with the integer seed you'd like to use. The IT logs
+        # the seed, so running the IT again with the seed pinned should produce
+        # the same test results.
         #
         'azul_it_flags': None,
 

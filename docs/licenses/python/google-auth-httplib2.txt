@@ -1,4 +1,4 @@
-https://github.com/GoogleCloudPlatform/google-auth-library-python-httplib2/LICENSE
+https://github.com/GoogleCloudPlatform/google-auth-library-python-httplib2/blob/HEAD/LICENSE
 
                                  Apache License
                            Version 2.0, January 2004

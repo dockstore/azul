@@ -1,4 +1,4 @@
-https://github.com/boto/s3transfer/LICENSE.txt
+https://github.com/boto/s3transfer/blob/HEAD/LICENSE.txt
 
 
                                  Apache License

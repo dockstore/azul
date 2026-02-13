@@ -1,4 +1,4 @@
-https://github.com/youtype/botocore-stubs/LICENSE
+https://github.com/youtype/botocore-stubs/blob/HEAD/LICENSE
 
 MIT License
 

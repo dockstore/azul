@@ -144,15 +144,16 @@ def delete_unused_images(repository):
     expected_tags = set()
     for ref, gist in get_docker_image_gists().items():
         ref = TagImageRef.parse(ref)
-        expected_tags.add(ref.tag)
-        try:
-            parts = cast(IndexImageGist, gist)['parts']
-        except KeyError:
-            pass
-        else:
-            for platform in parts.keys():
-                platform = Platform.parse(platform)
-                expected_tags.add(make_platform_tag(ref.tag, platform))
+        if ref.name == repository:
+            expected_tags.add(ref.tag)
+            try:
+                parts = cast(IndexImageGist, gist)['parts']
+            except KeyError:
+                pass
+            else:
+                for platform in parts.keys():
+                    platform = Platform.parse(platform)
+                    expected_tags.add(make_platform_tag(ref.tag, platform))
 
     log.info('Listing images in repository %r', repository)
     paginator = aws.ecr.get_paginator('describe_images')

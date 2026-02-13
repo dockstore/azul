@@ -1,4 +1,4 @@
-https://github.com/youtype/types-s3transfer/LICENSE
+https://github.com/youtype/types-s3transfer/blob/HEAD/LICENSE
 
 MIT License
 

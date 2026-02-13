@@ -712,12 +712,23 @@ def resolve_docker_image_for_launch(alias: str) -> str:
         # For single-platform images, this is straight forward.
         assert image.id == cast(ImageGist, gist)['id']
     else:
-        # To determine the expected ID for images that are part of a multi-
-        # platform image aka "manifest list" aka "image index", we need to know
-        # what specific platform was pulled since we left it to Docker to
-        # determine the best match.
+        # When pulling multi-platform images into the `containerd` image store
+        # (which is the default for fresh installations of Docker 29 or newer),
+        # the ID of the pulled image is set to the digest of the manifest aka
+        # image index. On installations that still use the older `overlay2`
+        # image store, the ID of the pulled image is set to the config digest of
+        # the respective platform-specific image. For now, we'll accept either
+        # to support both image stores. For overlay2, we need to determine what
+        # specific platform was pulled since we left it to Docker to pick the
+        # best match.
+        gist = cast(IndexImageGist, gist)
+        if ref_to_pull.is_mirrored:
+            index_digest = gist['mirror_digest']
+        else:
+            index_digest = gist['digest']
         platform = Platform.from_json(image.attrs, config=True).normalize()
-        assert image.id == parts[str(platform)]['id']
+        config_digest = parts[str(platform)]['id']
+        assert image.id in (index_digest, config_digest), (image.id, gist)
     # Returning the image ID means that the container will be launched using
     # exactly the image we just pulled and verified.
     return image.id

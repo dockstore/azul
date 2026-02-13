@@ -312,40 +312,44 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                 equivalent_url: furl
                 equivalent_filters: FiltersJSON
 
-                iterations: list[JSON] = []
+                execution_inputs: list[JSON] = []
 
-                def mock_start_generation(*, start: int = 0, describe: int = 0):
-                    *rest, last = range(start, len(iterations))
+                def mock_start_execution(iteration: int):
                     _sfn.start_execution.side_effect = [
-                        *(execution_exists for _ in rest),
                         {
-                            'executionArn': execution_arns[last],
-                            'startDate': 1234
+                            'executionArn': execution_arns[iteration],
+                            'startDate': 1234 + iteration
                         }
                     ]
-                    *rest, last = range(describe, len(iterations))
+
+                def mock_start_execution_exists(iteration: int):
+                    _sfn.start_execution.side_effect = [
+                        execution_exists
+                    ]
+
+                def mock_describe_execution(*iterations: int):
                     _sfn.describe_execution.side_effect = [
                         {
                             'status': 'SUCCEEDED',
-                            'input': json.dumps(iterations[i]),
+                            'input': json.dumps(execution_inputs[i]),
                             'output': json.dumps(state)
                         }
-                        for i in rest
+                        for i in iterations
                     ]
 
-                def assert_start_generation(*, start: int = 0, describe: int = 0):
-                    indices = range(start, len(iterations))
+                def assert_start_execution(*iterations: int):
                     expected_calls = [
                         mock.call(stateMachineArn=machine_arn,
                                   name=execution_names[i],
-                                  input=json.dumps(iterations[-1]))
-                        for i in indices
+                                  input=json.dumps(execution_inputs[i]))
+                        for i in iterations
                     ]
                     self.assertEqual(expected_calls, _sfn.start_execution.mock_calls)
-                    indices = range(describe, len(iterations))
+
+                def assert_describe_execution(*iterations: int):
                     expected_calls = [
                         mock.call(executionArn=execution_arns[i])
-                        for i in indices[:-1]
+                        for i in iterations
                     ]
                     self.assertEqual(expected_calls, _sfn.describe_execution.mock_calls)
 
@@ -358,11 +362,11 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                 def put():
                     nonlocal url, state, token_url
                     get_cached_manifest.side_effect = not_found
-                    iterations.append(input)
-                    mock_start_generation()
+                    execution_inputs.append(input)
+                    mock_start_execution(0)
                     url = self._request('PUT', initial_url, expect=301)
                     assert_get_cached_manifest()
-                    assert_start_generation()
+                    assert_start_execution(0)
                     state = input
                     token_url = url
 
@@ -379,19 +383,19 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                     url = self._request('GET', url, expect=301)
                     get_manifest.return_value = partitions[1]
                     state = self._app_module.generate_manifest(state, None)
+                    assert_get_manifest(partition=0)
                     self.assertEqual(partitions[1],
                                      ManifestPartition.from_json(state['partition']))
-                    assert_get_manifest(partition=0)
-                    _sfn.describe_execution.assert_called_once()
+                    iteration = len(execution_inputs) - 1
+                    assert_describe_execution(iteration)
 
                 get_token_while_running()
 
                 # Follow the redirect. The StepFunction has finished but the
-                # output is not yet available due to eventual consistency.
-                # We observed this behaviour a few years ago, but it
-                # probably doesn't happen anymore. The output is most likely
-                # stored on S3 under the hood which strongly consistent a
-                # while back.
+                # output is not yet available due to eventual consistency. We
+                # did originally observe this behavior, but not anymore. Under
+                # the hood, the output is probably stored on S3 which became
+                # strongly consistent a few years ago.
                 #
                 @reset
                 def get_token_when_almost_done():
@@ -413,11 +417,9 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                     nonlocal url, state, key_url, final_url
                     get_manifest.return_value = manifest
                     state = self._app_module.generate_manifest(state, None)
-                    _sfn.describe_execution.return_value = {
-                        'status': 'SUCCEEDED',
-                        'input': json.dumps(input),
-                        'output': json.dumps(state)
-                    }
+                    assert_get_manifest(partition=1)
+                    iteration = len(execution_inputs) - 1
+                    mock_describe_execution(iteration)
                     if fetch and format is ManifestFormat.curl:
                         key_url = self.base_url.set(path=[*path, signed_manifest_key.encode()])
                         final_url = key_url
@@ -429,8 +431,7 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                     get_cached_manifest_with_key.return_value = manifest
                     url = self._request('GET', url, expect=302)
                     self.assertEqual(final_url, url)
-                    assert_get_manifest(partition=1)
-                    _sfn.describe_execution.assert_called_once()
+                    assert_describe_execution(iteration)
                     get_cached_manifest_with_key.assert_called_once_with(manifest_key)
 
                 get_token_when_done()
@@ -476,50 +477,42 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
 
                 modified_put()
 
-                # Expire the cached manifest and repeat the initial request
-                # with the insignificant difference. The repeated request
-                # should be considered valid and matching the completed step
-                # function execution. However, because the manifest is missing,
-                # the generation should be restarted with a new execution.
+                # Expire the cached manifest and repeat the initial request with
+                # the insignificant difference. The repeated request should be
+                # considered valid and matching the completed step function
+                # execution. A token corresponding for the already completed
+                # execution will be returned …
                 #
                 @reset
                 def modified_put_after_expiration():
-                    nonlocal url, state, token_url
+                    nonlocal url
                     get_cached_manifest.side_effect = not_found
-                    iterations.append(input)
-                    mock_start_generation()
+                    mock_start_execution_exists(0)
+                    mock_describe_execution(0)
                     url = self._request('PUT', equivalent_url, expect=301)
+                    self.assertEqual(token_url, url)
                     assert_get_cached_manifest()
-                    self.assertNotEqual(token_url, url)
-                    assert_get_cached_manifest()
-                    assert_start_generation()
-                    token_url = url
-                    state = input
+                    assert_start_execution(0)
+                    assert_describe_execution(0)
 
                 modified_put_after_expiration()
-                get_token_while_running()
-                get_token_when_almost_done()
 
-                # The StepFunction has finished but the output is has expired
-                # or was deleted. We expect yet another execution to restart
-                # the generation.
+                # … and when following the resulting, we expect yet another
+                # execution to restart the generation.
                 #
                 @reset
                 def get_stale_token_when_done():
                     nonlocal url, state, token_url
-                    get_manifest.return_value = manifest
-                    state = self._app_module.generate_manifest(state, None)
                     get_cached_manifest_with_key.side_effect = not_found
-                    previous_iteration = len(iterations)
-                    iterations.append(input)
-                    mock_start_generation(start=previous_iteration,
-                                          describe=previous_iteration - 1)
+                    execution_inputs.append(input)
+                    iteration = len(execution_inputs) - 1
+                    mock_start_execution(iteration)
+                    mock_describe_execution(iteration - 1)
                     url = self._request('GET', url, expect=301)
                     self.assertNotEqual(token_url, url)
-                    assert_get_manifest(partition=1)
                     get_cached_manifest_with_key.assert_called_once_with(manifest_key)
-                    assert_start_generation(start=previous_iteration,
-                                            describe=previous_iteration - 1)
+                    assert_start_execution(iteration)
+                    assert_describe_execution(iteration - 1)
                     token_url = url
                     state = input
 
