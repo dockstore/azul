@@ -712,20 +712,23 @@ def resolve_docker_image_for_launch(alias: str) -> str:
         # For single-platform images, this is straight forward.
         assert image.id == cast(ImageGist, gist)['id']
     else:
-        # To determine the expected ID for images that are part of a multi-
-        # platform image aka "manifest list" aka "image index", we need to know
-        # what specific platform was pulled since we left it to Docker to
-        # determine the best match.
-        platform = Platform.from_json(image.attrs, config=True).normalize()
-        # When pulling multi-platform images, Docker 29.x with the containerd
-        # image store (default for fresh installations) returns the manifest
-        # digest as image.id instead of the platform-specific config digest.
-        # We accept either to support both storage modes.
+        # When pulling multi-platform images into the `containerd` image store
+        # (which is the default for fresh installations of Docker 29 or newer),
+        # the ID of the pulled image is set to the digest of the manifest aka
+        # image index. On installations that still use the older `overlay2`
+        # image store, the ID of the pulled image is set to the config digest of
+        # the respective platform-specific image. For now, we'll accept either
+        # to support both image stores. For overlay2, we need to determine what
+        # specific platform was pulled since we left it to Docker to pick the
+        # best match.
+        gist = cast(IndexImageGist, gist)
         if ref_to_pull.is_mirrored:
-            image_digest = cast(IndexImageGist, gist)['mirror_digest']
+            index_digest = gist['mirror_digest']
         else:
-            image_digest = cast(IndexImageGist, gist)['digest']
-        assert image.id in (image_digest, parts[str(platform)]['id']), (image.id, gist)
+            index_digest = gist['digest']
+        platform = Platform.from_json(image.attrs, config=True).normalize()
+        config_digest = parts[str(platform)]['id']
+        assert image.id in (index_digest, config_digest), (image.id, gist)
     # Returning the image ID means that the container will be launched using
     # exactly the image we just pulled and verified.
     return image.id
