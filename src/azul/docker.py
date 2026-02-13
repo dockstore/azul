@@ -717,7 +717,15 @@ def resolve_docker_image_for_launch(alias: str) -> str:
         # what specific platform was pulled since we left it to Docker to
         # determine the best match.
         platform = Platform.from_json(image.attrs, config=True).normalize()
-        assert image.id == parts[str(platform)]['id']
+        # When pulling multi-platform images, Docker 29.x with the containerd
+        # image store (default for fresh installations) returns the manifest
+        # digest as image.id instead of the platform-specific config digest.
+        # We accept either to support both storage modes.
+        if ref_to_pull.is_mirrored:
+            image_digest = cast(IndexImageGist, gist)['mirror_digest']
+        else:
+            image_digest = cast(IndexImageGist, gist)['digest']
+        assert image.id in (image_digest, parts[str(platform)]['id']), (image.id, gist)
     # Returning the image ID means that the container will be launched using
     # exactly the image we just pulled and verified.
     return image.id
