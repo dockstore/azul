@@ -115,8 +115,8 @@ class TestMirrorController(DCP2TestCase,
     def _validate_file_contents(self, file: HCAFile, contents: bytes):
         response = self._s3.get_object(Bucket=self.mirror_bucket,
                                        Key=self.service._file_object_key(file))
-        mirrored_file_contents = response['Body'].read()
-        self.assertEqual(mirrored_file_contents, contents)
+        file_contents = response['Body'].read()
+        self.assertEqual(file_contents, contents)
 
     def test_mirroring(self):
         self._create_mock_queues(config.mirror_queue_names)
