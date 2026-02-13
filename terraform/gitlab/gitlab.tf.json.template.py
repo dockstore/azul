@@ -1631,7 +1631,7 @@ emit_tf({} if config.terraform_component != 'gitlab' else {
                             f'until [ -b {data_volume_device} ]',
                             f'do echo "{data_volume_device} does not exist, sleeping 1s"',
                             'sleep 1',
-                            'done'
+                            f'done && echo "Data volume attached to $(readlink -f {data_volume_device})"'
                         ]),
                         [
                             'cloud-init-per',
