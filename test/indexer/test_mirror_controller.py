@@ -258,7 +258,7 @@ class TestMirrorController(DCP2TestCase,
         self.assertEqual(sorted(set(content_types)), content_types)
         return content_types
 
-    def test_info_schema(self):
+    def test_info_schema_response(self):
         client = http_client(log)
         file = MagicMock(content_type='text/plain')
         info = self.service._info(file)
