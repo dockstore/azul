@@ -17,6 +17,7 @@ from time import (
 from typing import (
     ClassVar,
     Self,
+    TypedDict,
 )
 
 import attrs
@@ -99,6 +100,7 @@ from azul.strings import (
 from azul.types import (
     JSON,
     MutableJSON,
+    is_of_type,
     json_dict,
     json_int,
     json_list,
@@ -553,17 +555,19 @@ class TDRClient(SAMClient, DRSClient):
     def list_snapshot_ids(self) -> set[str]:
         """
         List the IDs of the TDR snapshots accessible to the current credentials.
-        Much faster than listing the snapshots' names.
+        We were told that this is much faster than listing the snapshots.
         """
         endpoint = self._repository_endpoint('snapshots', 'roleMap')
         response = self._request('GET', endpoint, headers={'Connection': 'close'})
         response = self._check_response(endpoint, response)
         return set(json_dict(response['roleMap']).keys())
 
-    def list_snapshots(self,
-                       *,
-                       filter: str | None = None
-                       ) -> dict[str, str]:
+    class Snapshot(TypedDict):
+        id: str
+        name: str
+        dataProject: str | None  # None for Azure-backed snapshots
+
+    def list_snapshots(self, *, filter: str | None = None) -> dict[str, Snapshot]:
         """
         List the TDR snapshots accessible to the current credentials.
 
@@ -595,10 +599,9 @@ class TDRClient(SAMClient, DRSClient):
             endpoint.set(args=args)
             response = self._request('GET', endpoint)
             response = self._check_response(endpoint, response)
-            snapshots.update({
-                json_str(snapshot['id']): json_str(snapshot['name'])
-                for snapshot in map(json_dict, json_list(response['items']))
-            })
+            for snapshot in json_list(response['items']):
+                assert is_of_type(snapshot, self.Snapshot)
+                snapshots[snapshot['id']] = snapshot
             after = len(snapshots)
             total = json_int(response['filteredTotal'])
             if after == total:

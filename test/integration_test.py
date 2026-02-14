@@ -293,7 +293,11 @@ class IntegrationTestCase(AzulTestCase):
         managed_access_sources = {catalog: set() for catalog in config.catalogs}
         for catalog, sources in configured_sources.items():
             for spec, _ in sources.items():
-                source_id = one(id for id, name in all_sources.items() if name == spec.name)
+                source_id = one(
+                    id
+                    for id, snapshot in all_sources.items()
+                    if snapshot['name'] == spec.name
+                )
                 if source_id not in public_sources:
                     ref = TDRSourceRef(id=source_id, spec=spec, prefix=None)
                     managed_access_sources[catalog].add(ref)

@@ -132,8 +132,17 @@ class TDRPlugin[TDR_BUNDLE: TDRBundle,
         def list_snapshots(tdr: TDRClient):
             return tdr.list_snapshots(filter=self._common_source_filter)
 
-        names_by_id = self._auth_fallback(authentication, list_snapshots)
-        return self._match_sources(names_by_id)
+        snapshots_by_id = self._auth_fallback(authentication, list_snapshots)
+
+        return [
+            TDRSourceRef(id=id,
+                         spec=TDRSourceSpec(name=snapshot['name'],
+                                            type=TDRSourceSpec.Type.bigquery,
+                                            domain=TDRSourceSpec.Domain.gcp,
+                                            subdomain=snapshot['dataProject']),
+                         prefix=None)
+            for id, snapshot in snapshots_by_id.items()
+        ]
 
     def list_source_ids(self,
                         authentication: Authentication | None

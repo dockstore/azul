@@ -31,6 +31,9 @@ from azul import (
 from azul.http import (
     http_client,
 )
+from azul.indexer import (
+    SourceConfig,
+)
 from azul.logging import (
     configure_test_logging,
     get_test_logger,
@@ -100,6 +103,13 @@ class TestPublicSources(DCP2TestCase):
 
         class MockPlugin:
 
+            @property
+            def sources(self):
+                return {
+                    TDRSourceSpec.parse(spec): SourceConfig.from_json(config)
+                    for spec, config in cls._sources().items()
+                }
+
             def list_sources(self, authentication):
                 assert authentication is None, authentication
                 return [cls.source]
@@ -141,13 +151,17 @@ class TestListSources(DCP2TestCase, LocalAppTestCase):
         return 'service'
 
     snapshot_names = ['mock_snapshot_1', 'mock_snapshot_2']
-    make_spec_str = 'tdr:bigquery:gcp:mock:{}'.format
+    make_spec_str = 'tdr:bigquery:gcp:mock-project:{}'.format
 
     # Includes extra sources to check that the endpoint only returns results
     # for the current catalog
     extra_sources = ['foo', 'bar']
     snapshots_by_id = {
-        str(i): name
+        str(i): {
+            'id': str(i),
+            'dataProject': 'mock-project',
+            'name': name
+        }
         for i, name in enumerate(snapshot_names + extra_sources)
     }
 
@@ -172,10 +186,10 @@ class TestListSources(DCP2TestCase, LocalAppTestCase):
         return {
             cls.catalog: [
                 TDRSourceRef(id=id,
-                             spec=TDRSourceSpec.parse(cls.make_spec_str(name)),
+                             spec=TDRSourceSpec.parse(cls.make_spec_str(snapshot['name'])),
                              prefix=None)
-                for id, name in cls.snapshots_by_id.items()
-                if name not in cls.extra_sources
+                for id, snapshot in cls.snapshots_by_id.items()
+                if snapshot['name'] not in cls.extra_sources
             ]}
 
     @patch.object(SourceService, '_get')
@@ -198,10 +212,10 @@ class TestListSources(DCP2TestCase, LocalAppTestCase):
                     'sources': [
                         {
                             'sourceId': id,
-                            'sourceSpec': self.make_spec_str(name)
+                            'sourceSpec': self.make_spec_str(snapshot['name'])
                         }
-                        for id, name in self.snapshots_by_id.items()
-                        if name not in self.extra_sources
+                        for id, snapshot in self.snapshots_by_id.items()
+                        if snapshot['name'] not in self.extra_sources
                     ]
                 }
                 self.assertEqual(expected, actual)

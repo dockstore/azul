@@ -11,6 +11,7 @@ from typing import (
 from azul import (
     CatalogName,
     NotInLambdaContextException,
+    R,
     cache,
     cached_property,
     config,
@@ -126,7 +127,29 @@ class SourceService:
                       catalog: CatalogName,
                       authentication: Authentication | None
                       ) -> Iterable[SourceRef]:
-        return self.repository_plugin(catalog).list_sources(authentication)
+        plugin = self.repository_plugin(catalog)
+        refs = plugin.list_sources(authentication)
+        specs = plugin.sources.keys()
+
+        specs_by_name = {spec.name: spec for spec in specs}
+        assert len(specs) == len(specs_by_name), R(
+            'Duplicate source names in catalog configuration', list(specs))
+
+        refs_by_name = {ref.spec.name: ref for ref in refs}
+        assert len(refs) == len(refs_by_name), R(
+            'Duplicate source names in repository', refs)
+
+        matching_refs = []
+        for ref in refs:
+            try:
+                spec = specs_by_name[ref.spec.name]
+            except KeyError:
+                pass
+            else:
+                assert spec == ref.spec, R('Misconfigured source', spec, ref)
+                matching_refs.append(ref)
+
+        return matching_refs
 
     table_name = config.dynamo_sources_cache_table_name
 

@@ -466,7 +466,8 @@ class TestTDRSourceList(AzulUnitTestCase):
     def _mock_snapshots(self, access_token: str) -> JSONs:
         return [{
             'id': 'foo',
-            'name': f'{access_token}_snapshot'
+            'name': f'{access_token}_snapshot',
+            'dataProject': 'mock_project'
         }]
 
     def _mock_tdr_enumerate_snapshots(self,
@@ -515,7 +516,7 @@ class TestTDRSourceList(AzulUnitTestCase):
                 with self._patch_urlopen(new=self._mock_google_oauth_tokeninfo()):
                     tdr_client = TDRClient.for_registered_user(OAuth2(token))
             expected_snapshots = {
-                snapshot['id']: snapshot['name']
+                snapshot['id']: snapshot
                 for snapshot in self._mock_snapshots(token)
             }
             # The patching here is deliberately "deep" into the implementation
@@ -536,13 +537,14 @@ class TestTDRSourceList(AzulUnitTestCase):
                             tdr_client = TDRClient.for_anonymous_user()
                             page_size = 1000
                             snapshots = [
-                                {'id': str(n), 'name': f'snapshot_{n}'}
+                                {
+                                    'id': str(n),
+                                    'name': f'snapshot_{n}',
+                                    'dataProject': 'mock-project'
+                                }
                                 for n in range(page_size * num_full_pages + last_page_size)
                             ]
-                            expected = {
-                                snapshot['id']: snapshot['name']
-                                for snapshot in snapshots
-                            }
+                            expected = {snapshot['id']: snapshot for snapshot in snapshots}
 
                             def responses():
                                 iterator = iter(snapshots)

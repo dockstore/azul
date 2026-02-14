@@ -653,40 +653,20 @@ class RepositoryPlugin[BUNDLE: Bundle = Bundle[SourcedBundleFQID],
         assert source.prefix is not None, source
         assert prefix in source.prefix, (source, prefix)
 
-    def _match_sources(self,
-                       source_names_by_id: Mapping[str, str]
-                       ) -> list[SOURCE_REF]:
-        """
-        Filter the given sources to only include sources that the plugin is
-        configured to read metadata from, and return a ``SourceRef`` instance
-        for each matching source.`
-        """
-        configured_specs_by_name = {spec.name: spec for spec in self.sources}
-        assert len(self.sources) == len(configured_specs_by_name), R(
-            'Source names are not unique', self.sources)
-        source_ids_by_name = {
-            name: id
-            for id, name in source_names_by_id.items()
-            if name in configured_specs_by_name
-        }
-        source_ref_cls = self.source_ref_cls
-        return [
-            source_ref_cls(id=id,
-                           spec=configured_specs_by_name[name],
-                           prefix=None)
-            for name, id in source_ids_by_name.items()
-        ]
-
     @abstractmethod
     def list_sources(self,
                      authentication: Authentication | None
                      ) -> list[SOURCE_REF]:
         """
-        The sources the plugin is configured to read metadata from that are
-        accessible using the provided authentication. Retrieving this
-        information may require a round-trip to the underlying repository.
-        Implementations should raise PermissionError if the provided
+        List the sources in the underlying repository that are accessible using
+        the provided authentication.
+
+        Retrieving this information may require a round-trip to the underlying
+        repository. Implementations should raise PermissionError if the provided
         authentication is insufficient to access the repository.
+
+        The returned set may include sources that the plugin is not configured
+        to read metadata from.
         """
         raise NotImplementedError
 
