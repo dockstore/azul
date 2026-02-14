@@ -332,6 +332,8 @@ class BaseMirrorService:
 
     catalog: CatalogName
 
+    info_schema_version = 2
+
     @cached_property
     def _queues(self) -> Queues:
         return Queues()
@@ -717,7 +719,8 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
             content_types.add(file.content_type)
         return {
             content_type: sorted(content_types),
-            '$schema': str(self._schema_url_func(schema_name='info', version=2))
+            '$schema': str(self._schema_url_func(schema_name='info',
+                                                 version=self.info_schema_version)),
         }
 
     def _update_info(self, file: File):
