@@ -198,7 +198,7 @@ class TestListSources(DCP2TestCase, LocalAppTestCase):
                     'sources': [
                         {
                             'sourceId': id,
-                            'sourceSpec': str(TDRSourceSpec.parse(self.make_spec_str(name)))
+                            'sourceSpec': self.make_spec_str(name)
                         }
                         for id, name in self.snapshots_by_id.items()
                         if name not in self.extra_sources
