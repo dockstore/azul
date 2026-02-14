@@ -19,6 +19,7 @@ from app_test_case import (
 )
 from azul import (
     R,
+    cached_property,
     config,
 )
 from azul.deployment import (
@@ -212,6 +213,8 @@ class TestMirrorController(DCP2TestCase,
         with patch.object(MirrorService, '_download', return_value=self._file_contents):
             self.mirror_controller.mirror(event)
         self._validate_file_contents(file, self._file_contents)
+        content_types = self._get_content_types_from_info_object(file)
+        self.assertEqual([file.content_type], content_types)
 
     def _test_corrupted_download(self, file_message):
         event = self._mirror_event(file_message)
@@ -250,9 +253,16 @@ class TestMirrorController(DCP2TestCase,
             else:
                 self.assertIn(content_type, new_content_types)
 
+    @cached_property
+    def _info_schema(self) -> JSON:
+        basename = f'v{self.service.info_schema_version}.json'
+        path = ['schemas', 'mirror', 'info', basename]
+        return json.loads(self._app.load_static_resource(*path))
+
     def _get_content_types_from_info_object(self, file) -> list[str]:
         service = self.service
         info = json.loads(service._storage.get_object(service._info_object_key(file)))
+        jsonschema.validate(info, self._info_schema)
         content_types = info['content-type']
         self.assertIsInstance(content_types, list)
         self.assertEqual(sorted(set(content_types)), content_types)
@@ -267,6 +277,10 @@ class TestMirrorController(DCP2TestCase,
         self.assertEqual(200, response.status, response.data)
         schema = json.loads(response.data)
         jsonschema.validate(info, schema)
+        # The $id field is injected into the response by the controller, and is
+        # not present in the serialized schema definition
+        self.assertEqual(schema_url, schema.pop('$id'))
+        self.assertEqual(self._info_schema, schema)
 
     def test_files_not_mirrored(self):
         self._create_mock_queues(config.mirror_queue_names)
