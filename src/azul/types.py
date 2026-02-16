@@ -3,6 +3,7 @@ from collections.abc import (
     Sequence,
 )
 from types import (
+    GenericAlias,
     UnionType,
     get_original_bases,
 )
@@ -11,16 +12,22 @@ from typing import (
     Callable,
     ForwardRef,
     Iterable,
+    List,
     Optional,
     Protocol,
     TypeAliasType,
     TypeGuard,
+    TypeIs,
     TypeVar,
     TypedDict,
     Union,
     cast,
     get_args,
     get_origin,
+)
+
+from more_itertools import (
+    one,
 )
 
 from azul.collections import (
@@ -576,3 +583,142 @@ class SupportsLessAndGreaterThan(Protocol):
     def __lt__(self, __other: Any) -> bool: ...
 
     def __gt__(self, __other: Any) -> bool: ...
+
+
+_UnionGenericAlias = type(Union[int, str])
+_GenericAlias = type(List[int])
+_TypedDictMeta = type(JSONTypedDict)
+
+# The following serves more of a documentary purpose than for static analysis.
+# We can't include the above three types in the definition, even thought we'd
+# like to, because they are determined at runtime. Note that UnionType and
+# others are defined the same way, and it appears that mypy supports only those
+# specific cases.
+#
+type TypeExpression = Union[
+    type,
+    TypeAliasType,
+    UnionType,
+    GenericAlias,
+]
+
+
+def check_type(type_expression: TypeExpression, value: Any) -> bool:
+    """
+    CAUTION: THIS IS A PROOF OF CONCEPT. IT MAY CHANGE OR GO AWAY IN THE FUTURE.
+
+    This function resembles the ``isinstance()`` built-in but additionally
+    supports type unions, type aliases, TypedDict and certain generic
+    collections (currently any mapping or iterable). TypedDict instances and
+    collections are checked recursively, and for every item, which is why this
+    function may be slow. If the second argument is a cyclic data structure,
+    this function may never return. Another difference to ``isinstance`` is that
+    the order of the arguments is swapped: the type comes first.
+
+    >>> check_type(list, [])
+    True
+
+    >>> check_type(list, {})
+    False
+
+    >>> check_type(list[str], [1])
+    False
+
+    >>> check_type(list[str], [''])
+    True
+
+    >>> type X[T] = dict[int, set[T] | list[T|None]]
+    >>> x = {1: {'a'}, 2: [None, 'b']}
+    >>> check_type(X[str], x)
+    True
+
+    >>> check_type(X[int], x)
+    False
+
+    Assign a type variable to the value of another type variable …
+
+    … of a different name:
+
+    >>> class D[S, T](TypedDict):
+    ...     x: X[S]
+    ...     y: T
+    >>> check_type(D[str, int], {'x': x, 'y': 42})
+    True
+
+    … of the same name:
+
+    >>> class D[T, S](TypedDict):
+    ...     x: X[T]
+    ...     y: S
+    >>> check_type(D[str, int], {'x': x, 'y': 42})
+    True
+
+    >>> class C(dict[str, int]): pass
+    >>> check_type(C, C({'x': 1}))
+    True
+    >>> check_type(C, {'x': 1})
+    False
+    """
+    return _check_type(type_expression, value, {})
+
+
+def _check_type(t: TypeExpression | TypeVar,
+                x: Any,
+                tvs: dict[str, TypeExpression]
+                ) -> bool:
+    """
+    :param t: the expected type of the value
+    :param x: the value to check
+    :param tvs: the values of any type variables ocurring in the first argument
+    """
+    if isinstance(t, TypeVar):
+        return _check_type(tvs[t.__name__], x, tvs)
+    elif isinstance(t, TypeAliasType):
+        return _check_type(t.__value__, x, tvs)
+    elif isinstance(t, (UnionType, _UnionGenericAlias)):
+        ats = get_args(t)
+        return any(_check_type(at, x, tvs) for at in ats)
+    elif isinstance(t, (GenericAlias, _GenericAlias)):
+        ot, ats = not_none(get_origin(t)), get_args(t)
+        tps = getattr(ot, '__type_params__', ())
+        if tps:
+            tvs = tvs | {
+                tp.__name__: tvs[at.__name__] if isinstance(at, TypeVar) else at
+                for tp, at in zip(tps, ats, strict=True)
+            }
+            return _check_type(ot, x, tvs)
+        elif _check_type(ot, x, tvs):
+            if issubclass(ot, Mapping):
+                assert isinstance(x, Mapping)
+                kt, vt = ats
+                return all(
+                    _check_type(kt, k, tvs) and _check_type(vt, v, tvs)
+                    for k, v in x.items()
+                )
+            elif issubclass(ot, Iterable):
+                assert isinstance(x, Iterable)
+                it = one(ats)
+                return all(_check_type(it, i, tvs) for i in x)
+            else:
+                assert False, ('Unsupported generic type', ot)
+        else:
+            return False
+    elif isinstance(t, _TypedDictMeta):
+        for k, vt in t.__annotations__.items():
+            try:
+                v = x[k]
+            except KeyError:
+                if k in t.__required_keys__:
+                    return False
+            else:
+                if not _check_type(vt, v, tvs):
+                    return False
+        return True
+    elif isinstance(t, type):
+        return isinstance(x, t)
+    else:
+        assert False, ('Unsupported type', t)
+
+
+def is_of_type[T](value: Any, typ: type[T]) -> TypeIs[T]:
+    return check_type(typ, value)
