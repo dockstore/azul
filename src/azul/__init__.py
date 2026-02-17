@@ -1894,6 +1894,10 @@ class Config:
     def mirror_bucket(self) -> str | None:
         return self.environ.get('AZUL_MIRROR_BUCKET')
 
+    @property
+    def enable_bundle_notifications(self):
+        return self._boolean(self.environ['AZUL_ENABLE_BUNDLE_NOTIFICATIONS'])
+
 
 config: Config = Config()  # yes, the type hint does help PyCharm
 

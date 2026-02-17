@@ -89,7 +89,7 @@ def setUpModule():
 type Patch = _patch | _patch_dict
 
 
-def patch_config(name: str, value: str) -> Patch:
+def patch_config(name: str, value: bool | int | str) -> Patch:
     return patch.object(Config, name, new=PropertyMock(return_value=value))
 
 
@@ -538,3 +538,14 @@ class AnvilTestCase(TDRTestCase):
                                                      repository=config.Catalog.Plugin(name='tdr_anvil')),
                                         sources={str(cls.source.spec): {'mirror': True}})
         }
+
+
+class BundleNotificationTestCase(AzulUnitTestCase, metaclass=ABCMeta):
+    """
+    A mixin for test cases that depend on bundle notifications being enabled
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.addClassPatch(patch_config('enable_bundle_notifications', True))
