@@ -75,6 +75,9 @@ from azul.plugins.metadata.hca.service.response import (
 from azul.service.elasticsearch_service import (
     ResponsePagination,
 )
+from azul.service.source_service import (
+    SourceService,
+)
 from azul.terra import (
     TDRSourceRef,
     TDRSourceSpec,
@@ -2170,7 +2173,8 @@ class TestIndexResponse(IndexResponseTestCase):
 
         def _test(entity_type: str, expect_empty: bool, expect_accessible: bool):
             accessible_field = self._metadata_plugin.special_fields.accessible.name_in_hit
-            with self.subTest(entity_type=entity_type, access=expect_accessible):
+            with self.subTest(entity_type=entity_type,
+                              expect_accessible=expect_accessible):
                 url = str(self.base_url.set(path=('index', entity_type)))
                 response = requests.get(url)
                 self.assertEqual(200, response.status_code)
@@ -2186,7 +2190,7 @@ class TestIndexResponse(IndexResponseTestCase):
         for entity_type in filtered_entity_types:
             _test(entity_type, expect_empty=False, expect_accessible=True)
 
-        with mock.patch('azul.plugins.repository.dss.Plugin.list_sources', return_value=[]):
+        with mock.patch.object(SourceService, 'list_source_ids', return_value=set()):
             for entity_type, is_filtered in filtered_entity_types.items():
                 _test(entity_type, expect_empty=is_filtered, expect_accessible=False)
 

@@ -68,6 +68,9 @@ from azul.plugins.repository.dss import (
 from azul.plugins.repository.tdr_hca import (
     TDRSourceRef,
 )
+from azul.service.source_service import (
+    SourceService,
+)
 from azul.terra import (
     TDRSourceSpec,
 )
@@ -270,6 +273,14 @@ class AzulUnitTestCase(AzulTestCase):
                                      AZUL_AWS_ACCOUNT_ID=moto.core.models.DEFAULT_ACCOUNT_ID,
                                      azul_aws_account_name=cls._aws_account_name))
 
+    # These must match what `moto` uses to mock the instance metadata
+    # response (see InstanceMetadataResponse.metadata_response() in
+    # moto.instance_metadata.responses).
+
+    mock_boto_credentials = Credentials(access_key='test-key',
+                                        secret_key='test-secret-key',
+                                        token='test-session-token')
+
     @classmethod
     def _patch_aws_credentials(cls):
         # Discard cached Boto3/botocore clients, resources and sessions
@@ -291,21 +302,16 @@ class AzulUnitTestCase(AzulTestCase):
         # test to leak into a mocked use of boto3. The latter was the reason for
         # https://github.com/DataBiosphere/azul/issues/668.
 
-        def dummy_get_credentials(_self):
-            # These must match what `moto` uses to mock the instance metadata
-            # response (see InstanceMetadataResponse.metadata_response() in
-            # moto.instance_metadata.responses).
-            return Credentials(access_key='test-key',
-                               secret_key='test-secret-key',
-                               token='test-session-token')
+        def mock_get_credentials(_self):
+            return cls.mock_boto_credentials
 
         cls.addClassPatch(patch.object(botocore.session.Session,
                                        'get_credentials',
-                                       dummy_get_credentials))
+                                       mock_get_credentials))
 
         cls.addClassPatch(patch.object(boto3.session.Session,
                                        'get_credentials',
-                                       dummy_get_credentials))
+                                       mock_get_credentials))
 
     # We almost certainly won't have access to this region
     _aws_test_region = 'us-gov-west-1'
@@ -361,6 +367,7 @@ class CatalogTestCase(AzulUnitTestCase, metaclass=ABCMeta):
         cls._patch_catalogs()
         cls._patch_replicas_enabled()
         cls._patch_deployment()
+        cls._patch_public_sources()
 
     @classmethod
     def _patch_catalogs(cls):
@@ -403,6 +410,13 @@ class CatalogTestCase(AzulUnitTestCase, metaclass=ABCMeta):
                                        'deployment_stage',
                                        new_callable=PropertyMock,
                                        return_value=config.deployment.test_name))
+
+    @classmethod
+    def _patch_public_sources(cls):
+        cls.addClassPatch(patch.object(SourceService,
+                                       '_public_sources',
+                                       new_callable=PropertyMock,
+                                       return_value={cls.catalog: [cls.source]}))
 
 
 class DSSTestCase(CatalogTestCase, metaclass=ABCMeta):

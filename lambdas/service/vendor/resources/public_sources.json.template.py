@@ -1,0 +1,1 @@
+../../../../resources/public_sources.json.template.py

@@ -46,9 +46,6 @@ from azul.attrs import (
 from azul.auth import (
     Authentication,
 )
-from azul.collections import (
-    alist,
-)
 from azul.deployment import (
     aws,
 )
@@ -333,9 +330,9 @@ class BaseMirrorService:
     def _queues(self) -> Queues:
         return Queues()
 
-    @cached_property
-    def _repository_plugin(self) -> RepositoryPlugin:
-        return RepositoryPlugin.load(self.catalog).create(self.catalog)
+    @property
+    def repository_plugin(self) -> RepositoryPlugin:
+        return self._source_service.repository_plugin(self.catalog)
 
     @cached_property
     def _storage(self) -> StorageService:
@@ -343,6 +340,10 @@ class BaseMirrorService:
         if bucket is None or self.catalog in config.integration_test_catalogs:
             bucket = aws.mirror_bucket
         return StorageService(bucket)
+
+    @cached_property
+    def _source_service(self) -> SourceService:
+        return SourceService()
 
     def may_mirror_files_from_source(self, source_spec: SourceSpec) -> bool:
         """
@@ -352,9 +353,18 @@ class BaseMirrorService:
         definitely refuse to mirror all files from the source.
         """
         if self.may_mirror():
-            plugin = self._repository_plugin
+            plugin = self.repository_plugin
             source_config = plugin.sources[source_spec]
-            return source_config.mirror
+            if source_config.mirror:
+                public_sources = self._source_service.list_sources(self.catalog,
+                                                                   authentication=None)
+                is_public = any(
+                    source_spec == source.spec
+                    for source in public_sources
+                )
+                return is_public
+            else:
+                return False
         else:
             return False
 
@@ -519,10 +529,6 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
 
     _schema_url_func: SchemaUrlFunc
 
-    @cached_property
-    def _source_service(self) -> SourceService:
-        return SourceService()
-
     # We don't store the mirrored files' actual content type(s) in S3's
     # `Content-Type` metadata because a single file object may store the
     # contents of multiple file metadata entities, which may declare different
@@ -547,9 +553,11 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
 
     @_mirror.register
     def _(self, a: MirrorSourceAction) -> Iterator[MirrorAction]:
-        assert a.source.id in self._list_public_source_ids(), R(
+        public_sources = self._source_service.list_source_ids(self.catalog,
+                                                              authentication=None)
+        assert a.source.id in public_sources, R(
             'Cannot mirror non-public source', a.source)
-        plugin = self._repository_plugin
+        plugin = self.repository_plugin
         # The desired partition size depends on the maximum number of messages
         # we can send in one Lambda invocation, because queueing the individual
         # mirror_file messages turns out to dominate the running time of
@@ -572,12 +580,9 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
         for partition in prefix.partition_prefixes():
             yield devolve(MirrorPartitionAction, a, source=source, prefix=partition)
 
-    def _list_public_source_ids(self) -> set[str]:
-        return self._source_service.list_source_ids(self.catalog, authentication=None)
-
     @_mirror.register
     def _(self, a: MirrorPartitionAction) -> Iterator[MirrorAction]:
-        plugin = self._repository_plugin
+        plugin = self.repository_plugin
         files = plugin.list_files(a.source, a.prefix)
         for file in files:
             assert file.size is not None, R('File size unknown', file)
@@ -623,7 +628,7 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
                                  data=file_content,
                                  content_type=self._file_object_content_type,
                                  overwrite=False)
-        self._put_info(file)
+        self._create_info(file)
 
     def _create_upload(self, file: File) -> FileUpload:
         object_key = self._file_object_key(file)
@@ -682,35 +687,42 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
             log.info('Discarding redundant upload %r of %r', a.upload.upload_id, a.file)
             self._storage.abort_multipart_upload(object_key=object_key,
                                                  upload_id=a.upload.upload_id)
-        self._put_info(a.file)
+        self._create_info(a.file)
         log.info('Successfully mirrored file via multi-part upload: %r', a.file)
         return iter(())
 
-    def _info(self, file: File) -> JSON:
+    def _info(self, file: File, old_info: JSON | None = None) -> JSON:
+        content_types: set[str] = set()
+        content_type = 'content-type'
+        if old_info is not None:
+            old_content_types = old_info[content_type]
+            if old_content_types is None:
+                # Info objects in AnVIL are invalid against their schema
+                # https://github.com/DataBiosphere/azul/issues/7675
+                pass
+            elif isinstance(old_content_types, str):
+                # Content type in mirror info objects inconsistent with index
+                # https://github.com/DataBiosphere/azul/issues/7193
+                pass
+            elif isinstance(old_content_types, list):
+                content_types.update(json_element_strings(old_content_types))
+            else:
+                assert False, type(old_content_types)
+        if file.content_type is not None:
+            content_types.add(file.content_type)
         return {
-            'content-type': alist(file.content_type),
+            content_type: sorted(content_types),
             '$schema': str(self._schema_url_func(schema_name='info', version=2))
         }
 
     def _update_info(self, file: File):
-        content_type = file.content_type
-        if content_type is not None:
+        def update(data: bytes) -> bytes:
+            return json.dumps(self._info(file, json.loads(data))).encode()
 
-            def update(data: bytes) -> bytes:
-                json_content = json.loads(data)
-                content_types = json_content['content-type']
-                if isinstance(content_types, list):
-                    content_types = set(content_types)
-                else:
-                    content_types = set()
-                content_types.add(content_type)
-                json_content['content-type'] = sorted(content_types)
-                return json.dumps(json_content).encode()
+        key = self._info_object_key(file)
+        self._storage.update_object(key, update, content_type='application/json')
 
-            key = self._info_object_key(file)
-            self._storage.update_object(key, update)
-
-    def _put_info(self, file: File):
+    def _create_info(self, file: File):
         object_key = self._info_object_key(file)
         info = self._info(file)
         self._storage.put_object(object_key=object_key,
@@ -723,7 +735,7 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
             'Only TDR catalogs are supported', self.catalog)
         assert file.drs_uri is not None, R(
             'File cannot be downloaded', file)
-        object = self._repository_plugin.drs_object(file.drs_uri)
+        object = self.repository_plugin.drs_object(file.drs_uri)
         access = object.get(AccessMethod.gs)
         assert access.method is AccessMethod.https, access
         return furl(access.url)

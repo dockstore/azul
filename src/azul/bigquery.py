@@ -42,7 +42,7 @@ def backtick(table_name: str) -> str:
     >>> backtick('foo-2.bar`s.my_table')
     Traceback (most recent call last):
     ...
-    azul.RequirementError: ('`', 'must not occur in', 'foo-2.bar`s.my_table')
+    AssertionError: R('`', 'must not occur in', 'foo-2.bar`s.my_table')
     """
     if table_name_re.fullmatch(table_name):
         return table_name
