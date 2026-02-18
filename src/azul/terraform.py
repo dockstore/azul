@@ -1011,6 +1011,23 @@ class Chalice:
             assert 'lifecycle' not in resource, (resource_name, resource)
             resource['lifecycle'] = {'create_before_destroy': True}
 
+        # Pin Lambda runtime to python:3.13.v76. When AWS automatically updated
+        # the runtime to 3.13v77, we observed a significant increase in memory
+        # usage, leading to mirroring failures.
+        #
+        resource_type = 'aws_lambda_runtime_management_config'
+        runtime_version = '1a6363019b274fc28ffbbec073e5ebf1a872c10c52269844a57c62e74063a49b'
+        runtime_version_configs: MutableJSON = {}
+        for resource_name, resource in resource_items('aws_lambda_function'):
+            runtime_version_configs[resource_name] = {
+                'function_name': '${aws_lambda_function.%s.function_name}' % resource_name,
+                'qualifier': '${aws_lambda_function.%s.version}' % resource_name,
+                'update_runtime_on': 'Manual',
+                'runtime_version_arn': 'arn:aws:lambda:us-east-1::runtime:' + runtime_version,
+            }
+        assert resource_type not in resources, resources
+        resources[resource_type] = runtime_version_configs
+
         return {
             'resource': resources,
             'data': data,
