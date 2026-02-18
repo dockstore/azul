@@ -783,13 +783,6 @@ class IndexingIntegrationTest(IntegrationTestCase):
         return file, source, inner_file
 
     def _get_one_file(self, catalog: CatalogName) -> tuple[JSON, JSON]:
-        outer_file = self._get_one_outer_file(catalog)
-        inner_files: JSONs = outer_file['files']
-        inner_file = one(inner_files)
-        return outer_file, inner_file
-
-    @cache
-    def _get_one_outer_file(self, catalog: CatalogName) -> JSON:
         # Try to filter for an easy-to-parse format to verify its contents
         file_size_facet = self._file_size_facet(catalog)
         for filters in [self._fastq_filter(catalog), {}]:
@@ -805,7 +798,10 @@ class IndexingIntegrationTest(IntegrationTestCase):
                 break
         else:
             self.fail('No files found')
-        return one(hits)
+        outer_file = one(hits)
+        inner_files: JSONs = outer_file['files']
+        inner_file = one(inner_files)
+        return outer_file, inner_file
 
     def _source_spec(self, catalog: CatalogName, entity: JSON) -> SourceSpec:
         source = self._source_from_response(catalog, one(entity['sources']))
