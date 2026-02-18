@@ -764,7 +764,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
         with self._public_service_account_credentials:
             # This depends on the indexing test choosing a public source that
             # is not flagged as no_mirror
-            outer_file, inner_file = self._get_one_inner_file(catalog)
+            outer_file, inner_file = self._get_one_file(catalog)
         # Order matters here because sha256 is present in the file response for
         # AnVIL, but is always set to the empty string
         file_digest = lookup(inner_file, 'file_md5sum', 'sha256')
@@ -782,7 +782,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
         file = first(file for file in files if file.digest.value == file_digest)
         return file, source, inner_file
 
-    def _get_one_inner_file(self, catalog: CatalogName) -> tuple[JSON, JSON]:
+    def _get_one_file(self, catalog: CatalogName) -> tuple[JSON, JSON]:
         outer_file = self._get_one_outer_file(catalog)
         inner_files: JSONs = outer_file['files']
         inner_file = one(inner_files)
@@ -856,7 +856,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
 
     def _test_dos_and_drs(self, catalog: CatalogName):
         if config.is_dss_enabled(catalog) and config.dss_direct_access:
-            outer_file, inner_file = self._get_one_inner_file(catalog)
+            outer_file, inner_file = self._get_one_file(catalog)
             source = self._source_spec(catalog, outer_file)
             self._test_dos(catalog, inner_file)
             self._test_drs(catalog, source, inner_file)
@@ -1150,7 +1150,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
 
     def _test_repository_files(self, catalog: CatalogName):
         with self.subTest('repository_files', catalog=catalog):
-            outer_file, inner_file = self._get_one_inner_file(catalog)
+            outer_file, inner_file = self._get_one_file(catalog)
             file_url = inner_file['azul_url']
             if file_url:
                 source = self._source_spec(catalog, outer_file)
