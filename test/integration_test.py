@@ -1411,7 +1411,8 @@ class IndexingIntegrationTest(IntegrationTestCase):
                                      ) -> None:
         entity_type = 'files'
         with self.subTest('single_entity', entity_type=entity_type, catalog=catalog):
-            entity_id = self._get_one_outer_file(catalog)['entryId']
+            outer_file, inner_file = self._get_one_file(catalog)
+            entity_id = outer_file['entryId']
             url = config.service_endpoint.set(path=('index', entity_type, entity_id),
                                               args=dict(catalog=catalog))
             hit = self._get_url_json(GET, url)
