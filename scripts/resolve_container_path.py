@@ -5,7 +5,7 @@ import sys
 
 import docker
 from more_itertools import (
-    one,
+    only,
 )
 
 from azul.logging import (
@@ -52,14 +52,17 @@ def resolve_container_path(container_path):
     except FileNotFoundError:
         log.info('Did not find %s', mountinfo_path)
     else:
-        api = docker.client.from_env().api
-        container_id = one(container_ids)
-        for mount in api.inspect_container(container_id)['Mounts']:
-            if container_path.startswith(mount['Destination']):
-                tail = os.path.relpath(container_path, mount['Destination'])
-                host_path = os.path.normpath(os.path.join(mount['Source'], tail))
-                log.info('Resolved %s to %s', container_path, host_path)
-                return host_path
+        container_id = only(container_ids)
+        if container_id is None:
+            log.info('Container ID not found in %s', mountinfo_path)
+        else:
+            api = docker.client.from_env().api
+            for mount in api.inspect_container(container_id)['Mounts']:
+                if container_path.startswith(mount['Destination']):
+                    tail = os.path.relpath(container_path, mount['Destination'])
+                    host_path = os.path.normpath(os.path.join(mount['Source'], tail))
+                    log.info('Resolved %s to %s', container_path, host_path)
+                    return host_path
     log.error('Failed to resolve container path %s', container_path)
     return None
 
