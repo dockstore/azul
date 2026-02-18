@@ -763,8 +763,12 @@ class IndexingIntegrationTest(IntegrationTestCase):
         plugin = self.repository_plugin(catalog)
         with self._public_service_account_credentials:
             # This depends on the indexing test choosing a public source that
-            # is not flagged as no_mirror
-            outer_file, inner_file = self._get_one_file(catalog)
+            # is not flagged as no_mirror. It's possible that we selected a
+            # source with no files below the mirror limit, in which case the
+            # test will fail. For now, we consider that to be an acceptable risk
+            # given the cost associated with mirroring larger files.
+            outer_file, inner_file = self._get_one_file(catalog,
+                                                        max_size=config.catalogs[catalog].mirror_limit)
         # Order matters here because sha256 is present in the file response for
         # AnVIL, but is always set to the empty string
         file_digest = lookup(inner_file, 'file_md5sum', 'sha256')
@@ -782,10 +786,20 @@ class IndexingIntegrationTest(IntegrationTestCase):
         file = first(file for file in files if file.digest.value == file_digest)
         return file, source, inner_file
 
-    def _get_one_file(self, catalog: CatalogName) -> tuple[JSON, JSON]:
+    def _get_one_file(self,
+                      catalog: CatalogName,
+                      *,
+                      max_size: int | None = None,
+                      ) -> tuple[JSON, JSON]:
         # Try to filter for an easy-to-parse format to verify its contents
         file_size_facet = self._file_size_facet(catalog)
         for filters in [self._fastq_filter(catalog), {}]:
+            if max_size is not None:
+                filters.update({
+                    file_size_facet: {
+                        'within': [[1, max_size]],
+                    }
+                })
             response = self._check_endpoint(method=GET,
                                             path='/index/files',
                                             args=dict(catalog=catalog,
