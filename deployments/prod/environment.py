@@ -1901,7 +1901,6 @@ def env() -> Mapping[str, str | None]:
             for atlas, catalog, sources, mirror_limit, it_mirror_limit in [
                 ('hca', 'dcp56', dcp56_sources, None, int(1.5 * 1024 ** 3)),
                 ('hca', 'dcp57', dcp57_sources, None, int(1.5 * 1024 ** 3)),
-                ('lungmap', 'lm9', lm9_sources, -1, -1),
                 ('lungmap', 'lm10', lm10_sources, -1, -1)
             ]
             for suffix, is_it in [

@@ -5,12 +5,16 @@ from time import (
 )
 from typing import (
     Iterable,
+    Mapping,
 )
 
 from azul import (
     CatalogName,
+    NotInLambdaContextException,
     cache,
+    cached_property,
     config,
+    open_resource,
 )
 from azul.auth import (
     Authentication,
@@ -26,6 +30,9 @@ from azul.plugins import (
 )
 from azul.types import (
     AnyJSON,
+    JSON,
+    json_element_strings,
+    json_item_sequences,
 )
 
 log = logging.getLogger(__name__)
@@ -50,14 +57,21 @@ class Expired(CacheMiss):
 class SourceService:
 
     @cache
-    def _repository_plugin(self, catalog: CatalogName) -> RepositoryPlugin:
+    def repository_plugin(self, catalog: CatalogName) -> RepositoryPlugin:
         return RepositoryPlugin.load(catalog).create(catalog)
 
     def list_source_ids(self,
                         catalog: CatalogName,
                         authentication: Authentication | None
                         ) -> set[str]:
-        plugin = self._repository_plugin(catalog)
+        """
+        List source IDs in the underlying repository that are accessible using
+        the provided authentication. Source IDs may be included even if they are
+        not included in the given catalog. May require a roundtrip to the
+        underlying repository, but results are cached in DynamoDB for a short
+        time.
+        """
+        plugin = self.repository_plugin(catalog)
 
         cache_key = (
             catalog,
@@ -67,7 +81,7 @@ class SourceService:
         assert not any(joiner in c for c in cache_key), cache_key
         cache_key = joiner.join(cache_key)
         try:
-            source_ids = set(self._get(cache_key))
+            source_ids = set(json_element_strings(self._get(cache_key)))
         except CacheMiss:
             source_ids = plugin.list_source_ids(authentication)
             self._put(cache_key, list(source_ids))
@@ -77,7 +91,11 @@ class SourceService:
                      catalog: CatalogName,
                      authentication: Authentication | None
                      ) -> Iterable[SourceRef]:
-        return self._repository_plugin(catalog).list_sources(authentication)
+        """
+        List sources in the given catalog that are accessible using the provided
+        authentication. May require a roundtrip to the underlying repository.
+        """
+        return self.repository_plugin(catalog).list_sources(authentication)
 
     table_name = config.dynamo_sources_cache_table_name
 
@@ -121,3 +139,35 @@ class SourceService:
 
     def _now(self) -> int:
         return int(time())
+
+    @cached_property
+    def public_sources(self) -> Mapping[CatalogName, Iterable[SourceRef]]:
+        """
+        The set of all sources included in any catalog in the current
+        deployment that are accessible to the public service account. When
+        invoked from a lambda function, this will never make a roundtrip to the
+        underlying repository. Unlike :meth:`list_sources`, if the public
+        service account gains or loses access to a source, that change will not
+        be reflected in the return value until the lambda function is
+        re-deployed.
+        """
+        try:
+            with open_resource('public_sources.json') as f:
+                public_sources = json.load(f)
+        except NotInLambdaContextException:
+            return {
+                catalog.name: self.list_sources(catalog.name, authentication=None)
+                for catalog in config.catalogs.values()
+            }
+        else:
+            return {
+                catalog: [SourceRef.from_json(source) for source in sources]
+                for catalog, sources in json_item_sequences(public_sources)
+            }
+
+    @property
+    def public_sources_for_outsourcing(self) -> JSON:
+        return {
+            catalog: [source.to_json() for source in sources]
+            for catalog, sources in self.public_sources.items()
+        }

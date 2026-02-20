@@ -653,6 +653,30 @@ class RepositoryPlugin[BUNDLE: Bundle = Bundle[SourcedBundleFQID],
         assert source.prefix is not None, source
         assert prefix in source.prefix, (source, prefix)
 
+    def _match_sources(self,
+                       source_names_by_id: Mapping[str, str]
+                       ) -> list[SOURCE_REF]:
+        """
+        Filter the given sources to only include sources that the plugin is
+        configured to read metadata from, and return a ``SourceRef`` instance
+        for each matching source.`
+        """
+        configured_specs_by_name = {spec.name: spec for spec in self.sources}
+        assert len(self.sources) == len(configured_specs_by_name), R(
+            'Source names are not unique', self.sources)
+        source_ids_by_name = {
+            name: id
+            for id, name in source_names_by_id.items()
+            if name in configured_specs_by_name
+        }
+        source_ref_cls = self.source_ref_cls
+        return [
+            source_ref_cls(id=id,
+                           spec=configured_specs_by_name[name],
+                           prefix=None)
+            for name, id in source_ids_by_name.items()
+        ]
+
     @abstractmethod
     def list_sources(self,
                      authentication: Authentication | None
@@ -671,9 +695,8 @@ class RepositoryPlugin[BUNDLE: Bundle = Bundle[SourcedBundleFQID],
                         ) -> set[str]:
         """
         List source IDs in the underlying repository that are accessible using
-        the provided authentication. Sources may be included even if they are
-        not configured to be read from. Subclasses should override this method
-        if it can be implemented more efficiently than `list_sources`.
+        the provided authentication. Subclasses should override this method
+        if it can be implemented more efficiently than :py:meth:`list_sources`.
 
         Retrieving this information may require a round-trip to the underlying
         repository. Implementations should raise PermissionError if the provided
