@@ -1015,6 +1015,9 @@ class Chalice:
         # the runtime to 3.13v77, we observed a significant increase in memory
         # usage, leading to mirroring failures.
         #
+        # FIXME: Remove pinned Lambda runtime version
+        #        https://github.com/DataBiosphere/azul/issues/7798
+        #
         resource_type = 'aws_lambda_runtime_management_config'
         runtime_version = '1a6363019b274fc28ffbbec073e5ebf1a872c10c52269844a57c62e74063a49b'
         runtime_version_configs: MutableJSON = {}
