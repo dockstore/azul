@@ -99,6 +99,11 @@ class TDRPlugin[TDR_BUNDLE: TDRBundle,
                        authentication: Authentication | None,
                        tdr_callback: Callable[[TDRClient], T]
                        ) -> T:
+        """
+        Terra rejects credentials for users are not registered with Terra's SAM.
+        This method invokes the given callback with the given credentials but
+        invokes the callback again if they are rejected for that reason.
+        """
         # The line below raises UnauthorizedError for invalid tokens. We don't
         # want to fall back to anonymous authentication in that case.
         tdr = self._user_authenticated_tdr(authentication)
@@ -108,8 +113,7 @@ class TDRPlugin[TDR_BUNDLE: TDRBundle,
             if authentication is None or tdr.is_registered():
                 raise
             else:
-                log.info('Falling back to default authentication because the '
-                         'request included credentials from an unregistered account')
+                log.info('Falling back to anonymous access')
                 tdr = self._user_authenticated_tdr(None)
                 return tdr_callback(tdr)
 
@@ -125,15 +129,28 @@ class TDRPlugin[TDR_BUNDLE: TDRBundle,
     def list_sources(self,
                      authentication: Authentication | None
                      ) -> list[TDRSourceRef]:
-        names_by_id = self._auth_fallback(authentication,
-                                          lambda tdr: tdr.snapshot_names_by_id(filter=self._common_source_filter))
-        return self._match_sources(names_by_id)
+        def list_snapshots(tdr: TDRClient):
+            return tdr.list_snapshots(filter=self._common_source_filter)
+
+        snapshots_by_id = self._auth_fallback(authentication, list_snapshots)
+
+        return [
+            TDRSourceRef(id=id,
+                         spec=TDRSourceSpec(name=snapshot['name'],
+                                            type=TDRSourceSpec.Type.bigquery,
+                                            domain=TDRSourceSpec.Domain.gcp,
+                                            subdomain=snapshot['dataProject']),
+                         prefix=None)
+            for id, snapshot in snapshots_by_id.items()
+        ]
 
     def list_source_ids(self,
                         authentication: Authentication | None
                         ) -> set[str]:
-        return self._auth_fallback(authentication,
-                                   lambda tdr: tdr.snapshot_ids())
+        def list_snapshot_ids(tdr: TDRClient):
+            return tdr.list_snapshot_ids()
+
+        return self._auth_fallback(authentication, list_snapshot_ids)
 
     @property
     def tdr(self):
