@@ -191,7 +191,7 @@ class MirrorFileDownload(RepositoryFileDownload):
 
 class SchemaUrlFunc(Protocol):
 
-    def __call__(self, *, schema_name: str, version: int) -> mutable_furl: ...
+    def __call__(self, *, name: str, version: int) -> mutable_furl: ...
 
 
 @attrs.frozen(kw_only=True)
@@ -723,7 +723,7 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
             content_types.add(file.content_type)
         return {
             content_type: sorted(content_types),
-            '$schema': str(self._schema_url_func(schema_name='info',
+            '$schema': str(self._schema_url_func(name='info',
                                                  version=self.info_schema_version)),
         }
 

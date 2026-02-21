@@ -1100,7 +1100,7 @@
                 ]
             }
         },
-        "/schemas/{facility}/{schema_name}/{version_and_extension}": {
+        "/schemas/{facility}/{name}/{version_and_extension}": {
             "get": {
                 "responses": {
                     "400": {
@@ -1163,7 +1163,7 @@
                         }
                     },
                     {
-                        "name": "schema_name",
+                        "name": "name",
                         "in": "path",
                         "required": true,
                         "schema": {
