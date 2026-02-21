@@ -39,7 +39,7 @@ google-cloud-storage==3.9.0
 google-crc32c==1.8.0
 google-resumable-media==2.8.0
 googleapis-common-protos==1.72.0
-greenlet==3.3.1
+greenlet==3.3.2
 grpc-google-iam-v1==0.14.3
 grpcio==1.78.1
 grpcio-status==1.78.1
@@ -76,7 +76,7 @@ mypy-boto3-secretsmanager==1.42.8
 mypy-boto3-securityhub==1.42.3
 mypy-boto3-sns==1.42.3
 mypy-boto3-sqs==1.42.3
-mypy-boto3-ssm==1.42.3
+mypy-boto3-ssm==1.42.54
 mypy-boto3-stepfunctions==1.42.3
 mypy-boto3-sts==1.42.3
 mypy_extensions==1.1.0
