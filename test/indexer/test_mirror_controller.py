@@ -255,9 +255,9 @@ class TestMirrorController(DCP2TestCase,
 
     @cached_property
     def _info_schema(self) -> JSON:
-        basename = f'v{self.service.info_schema_version}.json'
-        path = ['schemas', 'mirror', 'info', basename]
-        return json.loads(self._app.load_static_resource(*path))
+        version = self.service.info_schema_version
+        schema = self.mirror_controller.get_schema('mirror', 'info', version)
+        return schema
 
     def _get_content_types_from_info_object(self, file) -> list[str]:
         service = self.service
@@ -276,11 +276,32 @@ class TestMirrorController(DCP2TestCase,
         response = client.request('GET', schema_url)
         self.assertEqual(200, response.status, response.data)
         schema = json.loads(response.data)
-        jsonschema.validate(info, schema)
-        # The $id field is injected into the response by the controller, and is
-        # not present in the serialized schema definition
-        self.assertEqual(schema_url, schema.pop('$id'))
         self.assertEqual(self._info_schema, schema)
+        jsonschema.validate(info, schema)
+
+    def test_info_schema(self):
+        schema = self._info_schema
+        instance = {
+            'content-type': ['application/binary'],
+            '$schema': 'https://localhost/schemas/mirror/info/v2.json'
+        }
+        jsonschema.validate(instance, schema)
+        invalid_instances = [
+            {
+                'content-type': ['application/binary'],
+                '$schema': 'https://localhost/schemas/mirror/info/v0.json'
+            },
+            {
+                'content-type': 'application/binary',
+                '$schema': 'https://localhost/schemas/mirror/info/v3.json'
+            },
+            {
+                '$schema': 'https://localhost/schemas/mirror/info/v4.json'
+            }
+        ]
+        for instance in invalid_instances:
+            with self.assertRaises(jsonschema.exceptions.ValidationError):
+                jsonschema.validate(instance, schema)
 
     def test_files_not_mirrored(self):
         self._create_mock_queues(config.mirror_queue_names)
