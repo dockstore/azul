@@ -43,9 +43,6 @@ from attrs import (
     field,
     frozen,
 )
-from furl import (
-    furl,
-)
 from more_itertools import (
     first,
     one,
@@ -75,6 +72,15 @@ from azul.vendored.frozendict import (
     frozendict,
 )
 
+if TYPE_CHECKING:
+    from furl import (
+        _mutable_furl as mutable_furl,
+    )
+else:
+    from furl import (
+        furl as mutable_furl,
+    )
+
 log = _logging.getLogger(__name__)
 
 Netloc = tuple[str, int]
@@ -102,13 +108,6 @@ else:
 
 def cache_per_thread(f, /):
     return azul.caching.lru_cache_per_thread(maxsize=None)(f)
-
-
-#: A type alias for annotating the return value of methods that return a
-#: ``furl`` instance that can be modified without side effects in the object
-#: whose method returned it.
-#:
-mutable_furl = furl
 
 
 @final
@@ -411,20 +410,20 @@ class Config:
 
     @property
     def tdr_service_url(self) -> mutable_furl:
-        return furl(self.environ['AZUL_TDR_SERVICE_URL'])
+        return mutable_furl(self.environ['AZUL_TDR_SERVICE_URL'])
 
     @property
     def sam_service_url(self) -> mutable_furl:
-        return furl(self.environ['AZUL_SAM_SERVICE_URL'])
+        return mutable_furl(self.environ['AZUL_SAM_SERVICE_URL'])
 
     @property
     def duos_service_url(self) -> mutable_furl | None:
         url = self.environ.get('AZUL_DUOS_SERVICE_URL')
-        return None if url is None else furl(url)
+        return None if url is None else mutable_furl(url)
 
     @property
     def terra_service_url(self) -> mutable_furl:
-        return furl(self.environ['AZUL_TERRA_SERVICE_URL'])
+        return mutable_furl(self.environ['AZUL_TERRA_SERVICE_URL'])
 
     @property
     def dss_query_prefix(self) -> str:
@@ -742,7 +741,7 @@ class Config:
         return [self.drs_domain] if lambda_name == 'service' and self.drs_domain else []
 
     def lambda_endpoint(self, lambda_name: str) -> mutable_furl:
-        return furl(scheme='https', netloc=self.api_lambda_domain(lambda_name))
+        return mutable_furl(scheme='https', netloc=self.api_lambda_domain(lambda_name))
 
     @property
     def indexer_endpoint(self) -> mutable_furl:
@@ -755,7 +754,7 @@ class Config:
     @property
     def drs_endpoint(self) -> mutable_furl:
         if self.drs_domain:
-            return furl(scheme='https', netloc=self.drs_domain)
+            return mutable_furl(scheme='https', netloc=self.drs_domain)
         else:
             return self.service_endpoint
 

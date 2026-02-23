@@ -590,8 +590,8 @@ class TDRClient(SAMClient, DRSClient):
         snapshots = {}
         before = 0
         while True:
-            args = dict(offset=before,
-                        limit=self.page_size,
+            args = dict(offset=str(before),
+                        limit=str(self.page_size),
                         sort='created_date',
                         direction='asc')
             if filter is not None:
