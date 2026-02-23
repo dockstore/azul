@@ -423,6 +423,8 @@ class SourceSpec(Parseable, metaclass=ABCMeta):
     are structured might want to implement this abstract class. Plugins that
     have simple unstructured names may want to use :class:`SimpleSourceSpec`.
     """
+    #: The name of this source. Azul assumes this to be unique per catalog.
+    name: str
 
 
 @attrs.frozen(kw_only=True)
@@ -430,7 +432,6 @@ class SimpleSourceSpec(SourceSpec):
     """
     Default implementation for unstructured source names.
     """
-    name: str
 
     @classmethod
     def parse(cls, spec: str) -> Self:
@@ -465,7 +466,10 @@ class SourceRef[SOURCE_SPEC: SourceSpec](
 
     Note to plugin implementers: Since the source ID can't be assumed to be
     globally unique, plugins should subclass this class, even if the subclass
-    body is empty.
+    body is empty. Additionally, a subclass that overrides the constructor must
+    keep its signature compatible_ with that of :py:meth:`SourceRef.__init__`.
+
+    .. _compatible: https://mypy.readthedocs.io/en/stable/class_basics.html#overriding-statically-typed-methods
 
     >>> spec = SimpleSourceSpec(name='')
     >>> prefix = Prefix(partition=0)
