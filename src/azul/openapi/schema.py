@@ -263,6 +263,14 @@ def pattern(regex: str | re.Pattern, _type: Form = str) -> JSON:
     }
 
 
+def format(name: str, **kwargs) -> JSON:
+    return {
+        **schema(str),
+        'format': name,
+        **kwargs
+    }
+
+
 def default(default: PrimitiveJSON, /, form: Form = None) -> JSON:
     """
     Add a documented default value to the type schema.

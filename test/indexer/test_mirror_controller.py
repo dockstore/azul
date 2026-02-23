@@ -19,6 +19,7 @@ from app_test_case import (
 )
 from azul import (
     R,
+    cached_property,
     config,
 )
 from azul.deployment import (
@@ -212,6 +213,8 @@ class TestMirrorController(DCP2TestCase,
         with patch.object(MirrorService, '_download', return_value=self._file_contents):
             self.mirror_controller.mirror(event)
         self._validate_file_contents(file, self._file_contents)
+        content_types = self._get_content_types_from_info_object(file)
+        self.assertEqual([file.content_type], content_types)
 
     def _test_corrupted_download(self, file_message):
         event = self._mirror_event(file_message)
@@ -250,22 +253,55 @@ class TestMirrorController(DCP2TestCase,
             else:
                 self.assertIn(content_type, new_content_types)
 
+    @cached_property
+    def _info_schema(self) -> JSON:
+        version = self.service.info_schema_version
+        schema = self.mirror_controller.get_schema('mirror', 'info', version)
+        return schema
+
     def _get_content_types_from_info_object(self, file) -> list[str]:
         service = self.service
         info = json.loads(service._storage.get_object(service._info_object_key(file)))
+        jsonschema.validate(info, self._info_schema)
         content_types = info['content-type']
         self.assertIsInstance(content_types, list)
         self.assertEqual(sorted(set(content_types)), content_types)
         return content_types
 
-    def test_info_schema(self):
+    def test_info_schema_response(self):
         client = http_client(log)
         file = MagicMock(content_type='text/plain')
         info = self.service._info(file)
-        response = client.request('GET', info['$schema'])
+        schema_url = info['$schema']
+        response = client.request('GET', schema_url)
         self.assertEqual(200, response.status, response.data)
         schema = json.loads(response.data)
+        self.assertEqual(self._info_schema, schema)
         jsonschema.validate(info, schema)
+
+    def test_info_schema(self):
+        schema = self._info_schema
+        instance = {
+            'content-type': ['application/binary'],
+            '$schema': 'https://localhost/schemas/mirror/info/v2.json'
+        }
+        jsonschema.validate(instance, schema)
+        invalid_instances = [
+            {
+                'content-type': ['application/binary'],
+                '$schema': 'https://localhost/schemas/mirror/info/v0.json'
+            },
+            {
+                'content-type': 'application/binary',
+                '$schema': 'https://localhost/schemas/mirror/info/v3.json'
+            },
+            {
+                '$schema': 'https://localhost/schemas/mirror/info/v4.json'
+            }
+        ]
+        for instance in invalid_instances:
+            with self.assertRaises(jsonschema.exceptions.ValidationError):
+                jsonschema.validate(instance, schema)
 
     def test_files_not_mirrored(self):
         self._create_mock_queues(config.mirror_queue_names)

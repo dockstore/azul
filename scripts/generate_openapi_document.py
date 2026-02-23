@@ -61,7 +61,8 @@ def main():
         lambda_endpoint = furl('http://localhost')
         with patch.object(target=AzulChaliceApp,
                           attribute='base_url',
-                          new=lambda_endpoint):
+                          new_callable=PropertyMock,
+                          side_effect=lambda_endpoint.copy):
             app_module = load_app_module(app_name)
             assert app_module.app.base_url == lambda_endpoint
             app_spec = app_module.app.spec()
