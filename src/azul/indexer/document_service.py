@@ -2,6 +2,8 @@ from collections.abc import (
     Iterable,
 )
 from typing import (
+    Mapping,
+    Sequence,
     Type,
 )
 
@@ -26,6 +28,7 @@ from azul.indexer.field import (
     CataloguedFieldTypes,
     FieldType,
     FieldTypes,
+    FieldTypes1,
     Nested,
 )
 from azul.indexer.transform import (
@@ -37,8 +40,8 @@ from azul.plugins import (
     RepositoryPlugin,
 )
 from azul.types import (
-    AnyJSON,
     AnyMutableJSON,
+    JSON,
 )
 
 
@@ -86,19 +89,20 @@ class DocumentService:
 
         :param path: A tuple of keys to traverse document.
         """
-        field_types = self.field_types(catalog)
-        for element in path:
-            try:
-                field_types = field_types[element]
-            except (KeyError, TypeError) as e:
-                if isinstance(field_types, list):
-                    field_types = one(field_types)
-                if isinstance(field_types, Nested) and element == field_types.agg_property:
-                    field_types = field_types.properties[element]
-                else:
-                    raise type(e)('Path not represented in field_types', path)
-        if isinstance(field_types, list):
+        field_types: FieldTypes | FieldTypes1 = self.field_types(catalog)
+        elements = iter(path)
+        while isinstance(field_types, Mapping):
+            field_types = field_types[next(elements)]
+        if isinstance(field_types, Sequence):
             field_types = one(field_types)
+        if isinstance(field_types, Nested):
+            element = next(elements, None)
+            if element is not None:
+                assert element == field_types.agg_property, (element, field_types)
+                field_types = field_types.properties[element]
+        assert isinstance(field_types, FieldType), (path, field_types)
+        element = next(elements, None)
+        assert element is None, (element, field_types)
         return field_types
 
     def field_types(self, catalog: CatalogName) -> FieldTypes:
@@ -128,7 +132,7 @@ class DocumentService:
 
     def translate_fields(self,
                          catalog: CatalogName,
-                         doc: AnyJSON,
+                         doc: JSON,
                          *,
                          forward: bool,
                          allowed_paths: list[FieldPath] | None = None
