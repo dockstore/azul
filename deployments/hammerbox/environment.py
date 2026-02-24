@@ -1254,6 +1254,7 @@ anvil12_sources = union(anvil11_sources, 369, delta([
 anvil13_sources = union(anvil12_sources, 382, delta([
     source('1156aa70', 'ADOPT_PGx_Acute_Pain_GRU_R1_20260122_ANV5_202601222214'),
     source('48fde710', 'ADOPT_PGx_Acute_Pain_HMB_R1_20260122_ANV5_202601222221'),
+    source('6db4e098', 'CCDG_Baylor_CVD_ARIC_20231008_ANV5_202503171456', pop),
     source('f0697a02', 'CCDG_NYGC_NP_Autism_GASD_GRU_WGS_20260109_ANV5_202602021433'),
     source('0098f4fd', 'CCDG_NYGC_NP_Autism_SEARCHLIGHT_DS_WGS_20260109_ANV5_202601261720'),
     source('042b9f74', 'CCDG_NYGC_NP_Autism_SPARK_GRU_WGS_20260109_ANV5_202601261729'),
@@ -1265,6 +1266,7 @@ anvil13_sources = union(anvil12_sources, 382, delta([
     source('6c5111aa', 'GTEx_v11_hg38_20260126_ANV5_202601261749'),
     source('0a4ee218', 'HPRC_20260121_ANV5_202601222125'),
     source('042719c0', 'IGVF_GRU_PUB_NPU_R1_20260122_ANV5_202601222237'),
+    source('c2f121d2', 'IGVF_GRU_R1_20260219_ANV5_202602191350'),
     source('4e167035', 'OurHealth_GRU_R2_20260122_ANV5_202601222246'),
 ]))
 
