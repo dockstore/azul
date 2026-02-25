@@ -1010,7 +1010,7 @@ class Contribution[E: EntityReference](Document[ContributionCoordinates[E]]):
                     bundle_deleted=self.coordinates.deleted)
 
 
-CataloguedContribution = Contribution[CataloguedEntityReference]
+type CataloguedContribution = Contribution[CataloguedEntityReference]
 
 
 @define(kw_only=True)
