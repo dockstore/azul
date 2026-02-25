@@ -47,6 +47,7 @@ from azul.types import (
     json_dict,
     json_list,
     json_str,
+    not_none,
 )
 
 log = logging.getLogger(__name__)
@@ -57,8 +58,8 @@ def drs_object_uri(*,
                    path: Sequence[str],
                    params: Mapping[str, str]
                    ) -> mutable_furl:
-    assert ':' not in base_url.netloc
-    return furl(url=base_url, scheme='drs', path=path, args=params)
+    assert ':' not in not_none(base_url.netloc)
+    return mutable_furl(url=base_url, scheme='drs', path=path, args=params)
 
 
 def drs_object_url_path(*, object_id: str, access_id: str | None = None) -> str:
@@ -218,7 +219,7 @@ class HostBasedDRSURI(DRSURI):
         assert not parsed_uri.fragment, R('Fragment is disallowed in a DRS URI')
         path = parsed_uri.path.segments
         assert len(path) == 1, R('Invalid path', drs_uri)
-        return cls(server=parsed_uri.netloc, object_id=path[0])
+        return cls(server=not_none(parsed_uri.netloc), object_id=path[0])
 
     def to_url(self) -> furl:
         path = drs_object_url_path(object_id=self.object_id)
@@ -327,7 +328,7 @@ class IdentifiersDotOrgClient(_BaseClient):
         assert placeholder in url_pattern, R(
             'Missing accession placeholder in URL pattern', url_pattern)
         url = url_pattern.replace(placeholder, accession)
-        return furl(url)
+        return mutable_furl(url)
 
     _api_url = 'https://registry.api.identifiers.org/restApi/'
 
@@ -346,7 +347,7 @@ class IdentifiersDotOrgClient(_BaseClient):
         return json_str(resource['name']), json_str(resource['urlPattern'])
 
     def _api_request(self, path: str, **args) -> MutableJSON:
-        url = furl(self._api_url).add(path=path, args=args)
+        url = mutable_furl(self._api_url).add(path=path, args=args)
         response = self._http_client.request('GET', str(url))
         if response.status == 200:
             return json.loads(response.data)
@@ -413,7 +414,7 @@ class DRSObject:
             response = self._request(url)
             if response.status == 200:
                 response_data = json_dict(json.loads(response.data))
-                scheme = furl(response_data['url']).scheme
+                scheme = furl(json_str(response_data['url'])).scheme
                 assert scheme == access_method.scheme, R(
                     'Unexpected access URL scheme', scheme)
                 access_url = json_str(response_data['url'])

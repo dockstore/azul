@@ -425,14 +425,15 @@ class AzulChaliceApp(Chalice):
             else:
                 # Invocation via API Gateway
                 pass
-            self_url = furl(scheme=scheme, netloc=self.current_request.headers['host'])
+            self_url = mutable_furl(scheme=scheme,
+                                    netloc=self.current_request.headers['host'])
         else:
             assert False, self.current_request
         return self_url
 
     @property
     def is_running_locally(self) -> bool:
-        host = self.base_url.netloc.partition(':')[0]
+        host = not_none(self.base_url.netloc).partition(':')[0]
         return host in ('localhost', '127.0.0.1')
 
     def _register_spec(self,
@@ -763,8 +764,8 @@ class AzulChaliceApp(Chalice):
             file_name = 'swagger-initializer.js.template.mustache'
             template = self.load_static_resource('swagger', file_name)
             base_url = self.base_url
-            redirect_url = furl(base_url).add(path='swagger/oauth2-redirect.html')
-            openapi_spec = furl(base_url).add(path='openapi.json')
+            redirect_url = mutable_furl(base_url).add(path='swagger/oauth2-redirect.html')
+            openapi_spec = mutable_furl(base_url).add(path='openapi.json')
             body = chevron.render(template, {
                 'OPENAPI_SPEC': json.dumps(str(openapi_spec.path)),
                 'OAUTH2_CLIENT_ID': json.dumps(config.google_oauth2_client_id),
