@@ -11,6 +11,7 @@ from typing import (
     Self,
     overload,
 )
+
 from attrs import (
     define,
     evolve,
@@ -1009,6 +1010,9 @@ class Contribution[E: EntityReference](Document[ContributionCoordinates[E]]):
                     bundle_deleted=self.coordinates.deleted)
 
 
+CataloguedContribution = Contribution[CataloguedEntityReference]
+
+
 @define(kw_only=True)
 class Aggregate(Document[AggregateCoordinates]):
     sources: set[SourceRef]
@@ -1155,6 +1159,3 @@ class Replica[E: EntityReference](Document[ReplicaCoordinates[E]]):
             },
             'upsert': super()._body(field_types)
         }
-
-
-CataloguedContribution = Contribution[CataloguedEntityReference]
