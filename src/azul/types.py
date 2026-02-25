@@ -139,6 +139,11 @@ def json_item_dicts(vs: AnyMutableJSON) -> Iterable[tuple[str, MutableJSON]]:
         yield k, json_dict(v)
 
 
+def json_item_lists(vs: AnyMutableJSON) -> Iterable[tuple[str, MutableJSONArray]]:
+    for k, v in json_dict(vs).items():
+        yield k, json_list(v)
+
+
 def json_element_dicts(vs: AnyMutableJSON) -> Iterable[MutableJSON]:
     return map(json_dict, json_list(vs))
 
