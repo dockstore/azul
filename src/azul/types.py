@@ -93,6 +93,10 @@ def json_element_mappings(vs: AnyJSON) -> Iterable[JSON]:
     return map(json_mapping, json_sequence(vs))
 
 
+def json_element_strings(vs: AnyJSON) -> Iterable[str]:
+    return map(json_str, json_sequence(vs))
+
+
 def json_sequence_of_mappings(vs: AnyJSON) -> JSONs:
     vs = json_sequence(vs)
     assert json_elements_are_mappings(vs)
@@ -105,6 +109,12 @@ def json_elements_are_mappings(vs: JSONArray) -> TypeGuard[JSONs]:
     return True
 
 
+def json_sequence_of_optional_strings(vs: AnyJSON) -> Sequence[str | None]:
+    vs = json_sequence(vs)
+    assert json_elements_are_optional_strings(vs)
+    return vs
+
+
 def json_elements_are_optional_strings(vs: JSONArray
                                        ) -> TypeGuard[Sequence[str | None]]:
     for v in vs:
@@ -112,14 +122,6 @@ def json_elements_are_optional_strings(vs: JSONArray
     return True
 
 
-def json_element_strings(vs: AnyJSON) -> Iterable[str]:
-    return map(json_str, json_sequence(vs))
-
-
-def json_sequence_of_optional_strings(vs: AnyJSON) -> Sequence[str | None]:
-    vs = json_sequence(vs)
-    assert json_elements_are_optional_strings(vs)
-    return vs
 
 
 def json_dict(v: AnyMutableJSON) -> MutableJSON:
