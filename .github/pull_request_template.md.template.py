@@ -210,7 +210,9 @@ class T(Enum):
             *iif(self is T.upgrade, ['backup:gitlab'], [
                 'API',
                 'reindex:partial',
-                *('reindex:' + d for d in self.downstream_deployments(target_branch))
+                *('reindex:' + d for d in self.downstream_deployments(target_branch)),
+                'mirror:partial',
+                *('mirror:' + d for d in self.downstream_deployments(target_branch)),
             ])
         ])
 
@@ -450,6 +452,38 @@ def emit(t: T, target_branch: str):
                             'or carries none of the labels ') +
                         join_grammatically([
                             f'`reindex:{d}`'
+                            for d in t.affected_deployments(target_branch)
+                        ])
+                    )
+                },
+                {
+                    'type': 'h2',
+                    'content': 'Author (mirror)'
+                },
+                *[
+                    {
+                        'type': 'cli',
+                        'content': f'This PR is labeled `mirror:{d}`',
+                        'alt': f'or the changes introduced by it will not require mirroring of `{d}`'
+                    }
+                    for d in t.affected_deployments(target_branch)
+                ],
+                {
+                    'type': 'cli',
+                    'content': (
+                        'This PR is labeled `mirror:partial` and ' +
+                        'its description documents the specific mirroring procedure for ' +
+                        join_grammatically([
+                            f'`{d}`' for d in t.affected_deployments(target_branch)
+                        ])
+                    ),
+                    'alt': (
+                        'or requires a full mirroring ' +
+                        iif(len(t.affected_deployments(target_branch)) == 1,
+                            'or is not labeled',
+                            'or carries none of the labels ') +
+                        join_grammatically([
+                            f'`mirror:{d}`'
                             for d in t.affected_deployments(target_branch)
                         ])
                     )
@@ -716,6 +750,10 @@ def emit(t: T, target_branch: str):
                 },
                 {
                     'type': 'cli',
+                    'content': 'Checked `mirror:…` labels'
+                },
+                {
+                    'type': 'cli',
                     'content': 'Checked that demo expectations are clear',
                     'alt': 'or all linked issues are labeled `no demo`'
                 }
@@ -862,7 +900,17 @@ def emit(t: T, target_branch: str):
                             'type': 'cli',
                             'content': f'Checked for failures in `{s}`',
                             'alt': f'or this PR is not labeled `reindex:{d}`'
-                        }
+                        },
+                        {
+                            'type': 'cli',
+                            'content': f'Started mirroring in `{s}`',
+                            'alt': f'or this PR is not labeled `mirror:{d}`'
+                        },
+                        {
+                            'type': 'cli',
+                            'content': f'Checked for failures in `{s}`',
+                            'alt': f'or this PR is not labeled `mirror:{d}`'
+                        },
                     ])
                 ]
                 for i, (d, s) in enumerate(t.target_deployments(target_branch).items())
@@ -1089,9 +1137,9 @@ def emit(t: T, target_branch: str):
                                 'type': 'cli',
                                 'content': f'{action} in `{d}`',
                                 'alt': (
-                                    'or neither this PR nor a failed, prior promotion requires it'
+                                    f'or neither this PR nor a failed, prior promotion is labelled `mirror:{d}`'
                                     if t is T.hotfix else
-                                    f'or this PR does not require mirroring `{d}`'
+                                    f'or this PR is not labelled `mirror:{d}`'
                                 )
                             }
                             for action in [

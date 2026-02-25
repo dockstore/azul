@@ -68,6 +68,8 @@ Linked issue: #0000
 - [ ] Deleted unreferenced indices in `hammerbox` <sub>or this PR does not remove catalogs or otherwise causes unreferenced indices in `hammerbox`</sub>
 - [ ] Started reindex in `hammerbox` <sub>or this PR is not labeled `reindex:anvilprod`</sub>
 - [ ] Checked for failures in `hammerbox` <sub>or this PR is not labeled `reindex:anvilprod`</sub>
+- [ ] Started mirroring in `hammerbox` <sub>or this PR is not labeled `mirror:anvilprod`</sub>
+- [ ] Checked for failures in `hammerbox` <sub>or this PR is not labeled `mirror:anvilprod`</sub>
 
 
 ### Operator (merge the branch)
@@ -106,9 +108,9 @@ Linked issue: #0000
 
 ### Operator (mirroring)
 
-- [ ] Started mirroring in `anvilprod` <sub>or neither this PR nor a failed, prior promotion requires it</sub>
-- [ ] Checked for, triaged and possibly requeued messages in mirror fail queue in `anvilprod` <sub>or neither this PR nor a failed, prior promotion requires it</sub>
-- [ ] Emptied mirror fail queue in `anvilprod` <sub>or neither this PR nor a failed, prior promotion requires it</sub>
+- [ ] Started mirroring in `anvilprod` <sub>or neither this PR nor a failed, prior promotion is labelled `mirror:anvilprod`</sub>
+- [ ] Checked for, triaged and possibly requeued messages in mirror fail queue in `anvilprod` <sub>or neither this PR nor a failed, prior promotion is labelled `mirror:anvilprod`</sub>
+- [ ] Emptied mirror fail queue in `anvilprod` <sub>or neither this PR nor a failed, prior promotion is labelled `mirror:anvilprod`</sub>
 
 
 ### Operator
