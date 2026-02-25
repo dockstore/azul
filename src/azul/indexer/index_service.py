@@ -663,7 +663,9 @@ class IndexService(DocumentService):
         # For each entity and bundle, find the most recent contribution that is
         # not a deletion
         contributions_by_entity: dict[
-            CataloguedEntityReference, list[CataloguedContribution]] = defaultdict(list)
+            CataloguedEntityReference,
+            list[CataloguedContribution]
+        ] = defaultdict(list)
         for (entity, bundle_uuid), contributions in contributions_by_bundle.items():
             contributions = sorted(contributions,
                                    key=attrgetter('coordinates.bundle.version', 'coordinates.deleted'),
