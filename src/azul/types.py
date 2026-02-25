@@ -122,6 +122,11 @@ def json_elements_are_optional_strings(vs: JSONArray
     return True
 
 
+def json_items_are_sequences_of_mappings(vs: AnyJSON) -> TypeGuard[Mapping[str, JSONs]]:
+    vs = json_mapping(vs)
+    for v in vs.values():
+        assert json_elements_are_mappings(json_sequence(v))
+    return True
 
 
 def json_dict(v: AnyMutableJSON) -> MutableJSON:
