@@ -95,9 +95,9 @@ Linked issue: #0000
 
 ### Operator (mirroring)
 
-- [ ] Started mirroring in `prod` <sub>or neither this PR nor a failed, prior promotion requires it</sub>
-- [ ] Checked for, triaged and possibly requeued messages in mirror fail queue in `prod` <sub>or neither this PR nor a failed, prior promotion requires it</sub>
-- [ ] Emptied mirror fail queue in `prod` <sub>or neither this PR nor a failed, prior promotion requires it</sub>
+- [ ] Started mirroring in `prod` <sub>or neither this PR nor a failed, prior promotion is labelled `mirror:prod`</sub>
+- [ ] Checked for, triaged and possibly requeued messages in mirror fail queue in `prod` <sub>or neither this PR nor a failed, prior promotion is labelled `mirror:prod`</sub>
+- [ ] Emptied mirror fail queue in `prod` <sub>or neither this PR nor a failed, prior promotion is labelled `mirror:prod`</sub>
 
 
 ### Operator
