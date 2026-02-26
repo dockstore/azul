@@ -92,6 +92,8 @@ jobs:
           fail_ci_if_error: true
 
   coveralls:
+    # Temporarily disabled due to ongoing outage
+    if: false
     needs: 'test'
     runs-on: 'ubuntu-22.04'
     steps:
