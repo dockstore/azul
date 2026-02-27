@@ -562,7 +562,7 @@ class TDRClient(SAMClient, DRSClient):
         response = self._check_response(endpoint, response)
         return set(json_dict(response['roleMap']).keys())
 
-    class Snapshot(TypedDict):
+    class Snapshot(TypedDict, total=False):
         id: str
         name: str
         dataProject: str | None  # None for Azure-backed snapshots

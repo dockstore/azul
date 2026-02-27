@@ -741,7 +741,9 @@ def _check_type(t: TypeExpression | TypeVar,
                 else:
                     if not _check_type(vt, v, tvs):
                         return False
-        	return True
+            if t.__total__ and x.keys() - t.__annotations__.keys():
+                return False
+            return True
         else:
             return False
     elif t is int and isinstance(x, bool):
