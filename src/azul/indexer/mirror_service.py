@@ -16,6 +16,7 @@ from typing import (
     Iterator,
     Protocol,
     Self,
+    TYPE_CHECKING,
     final,
 )
 from uuid import (
@@ -90,6 +91,11 @@ from azul.types import (
     JSON,
     json_element_strings,
 )
+
+if TYPE_CHECKING:
+    from mypy_boto3_sqs.service_resource import (
+        Queue,
+    )
 
 log = logging.getLogger(__name__)
 
@@ -356,9 +362,11 @@ class BaseMirrorService:
             plugin = self.repository_plugin
             source_config = plugin.sources[source_spec]
             if source_config.mirror:
+                public_sources = self._source_service.list_sources(self.catalog,
+                                                                   authentication=None)
                 is_public = any(
                     source_spec == source.spec
-                    for source in self._source_service.public_sources[self.catalog]
+                    for source in public_sources
                 )
                 return is_public
             else:
@@ -407,7 +415,7 @@ class BaseMirrorService:
 
         self._queue_actions(actions())
 
-    def _mirror_queue(self):
+    def _mirror_queue(self) -> 'Queue':
         name = config.mirror_queue.name
         return aws.sqs_queue(name)
 
@@ -580,8 +588,7 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
 
     @_mirror.register
     def _(self, a: MirrorPartitionAction) -> Iterator[MirrorAction]:
-        plugin = self.repository_plugin
-        files = plugin.list_files(a.source, a.prefix)
+        files = self.repository_plugin.list_files(a.source, a.prefix)
         for file in files:
             assert file.size is not None, R('File size unknown', file)
             assert file.size <= self.max_file_size, R(
@@ -766,4 +773,4 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
         actual_digest_value = hasher.hexdigest()
         assert expected_digest.value == actual_digest_value, R(
             'File digest value does not match its contents',
-            expected_digest, file)
+            actual_digest_value, file)

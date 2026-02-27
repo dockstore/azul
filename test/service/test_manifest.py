@@ -129,6 +129,9 @@ from azul.types import (
     MutableJSON,
     MutableJSONs,
 )
+from azul_test_case import (
+    patch_config,
+)
 from indexer import (
     AnvilCannedBundleTestCase,
     CannedFileTestCase,
@@ -909,18 +912,29 @@ class TestManifests(DCP1ManifestTestCase):
         response = requests.put(str(url))
         self.assertEqual(400, response.status_code, response.content)
 
-    def test_manifest_content_disposition_header(self):
+    @patch_config('enable_bundle_notifications', True)
+    def test_content_disposition_header_with_notifications_enabled(self) -> None:
+        self._test_content_disposition_header()
+
+    @patch_config('enable_bundle_notifications', False)
+    def test_content_disposition_header_with_notifications_disabled(self) -> None:
+        self._test_content_disposition_header()
+
+    def _test_content_disposition_header(self):
         bundle_fqid = self.bundle_fqid(uuid='f79257a7-dfc6-46d6-ae00-ba4b25313c10',
                                        version='2018-09-14T13:33:14.453337Z')
         self._index_canned_bundle(bundle_fqid)
         with patch.object(manifest_service, 'datetime') as mock_datetime:
             mock_datetime.now.return_value = datetime(1985, 10, 25, 1, 21)
             for format in [ManifestFormat.compact]:
+                source_hash = '4bc67e84-4873-591f-b524-a5fe4ec215eb'
                 cases = [
                     # For a single project, the content disposition file name should
                     # be the project name followed by the date and time
                     (
                         {'project': {'is': ['Single of human pancreas']}},
+                        'Single of human pancreas 1985-10-25 01.21'
+                        if config.enable_bundle_notifications else
                         'Single of human pancreas 1985-10-25 01.21'
                     ),
                     # In all other cases, the standard content disposition file name
@@ -928,11 +942,15 @@ class TestManifests(DCP1ManifestTestCase):
                     # a pair of deterministically derived v5 UUIDs.
                     (
                         {'project': {'is': ['Single of human pancreas', 'Mouse Melanoma']}},
-                        'hca-manifest-89bc9973-de91-5fc4-9c6a-8c1f547d45c6.4bc67e84-4873-591f-b524-a5fe4ec215eb'
+                        'hca-manifest-89bc9973-de91-5fc4-9c6a-8c1f547d45c6.' + source_hash
+                        if config.enable_bundle_notifications else
+                        'hca-manifest-e639622e-55b5-597e-907d-e28ceca3357e.' + source_hash
                     ),
                     (
                         {},
-                        'hca-manifest-832a257c-5540-567b-bcb6-260d2e374508.4bc67e84-4873-591f-b524-a5fe4ec215eb'
+                        'hca-manifest-832a257c-5540-567b-bcb6-260d2e374508.' + source_hash
+                        if config.enable_bundle_notifications else
+                        'hca-manifest-57a7eb28-d918-5a62-9462-36b53b1ed111.' + source_hash
                     )
                 ]
                 for filters, expected_name in cases:
@@ -1066,55 +1084,69 @@ class TestManifestCache(DCP1ManifestTestCase):
                 self.assertEqual([2, 2], list(map(len, file_names.values())))
                 self.assertEqual([1, 1], list(map(len, map(set, file_names.values()))))
 
-    def test_hash_validity(self):
+    @patch_config('enable_bundle_notifications', True)
+    def test_hash_validity_with_notifications_enabled(self) -> None:
+        self._test_hash_validity()
+
+    @patch_config('enable_bundle_notifications', False)
+    def test_hash_validity_with_notifications_disabled(self) -> None:
+        self._test_hash_validity()
+
+    def _test_hash_validity(self):
         self.maxDiff = None
-        bundle_uuid = 'aaa96233-bf27-44c7-82df-b4dc15ad4d9d'
-        version1 = '2018-11-02T11:33:44.698028Z'
-        version2 = '2018-11-04T11:33:44.698028Z'
-        assert (version1 != version2)
-        original_fqid = self.bundle_fqid(uuid=bundle_uuid, version=version1)
-        self._index_canned_bundle(original_fqid)
-        filters = self._filters({'project': {'is': ['Single of human pancreas']}})
-        old_keys = {}
+        bundles_by_project = {
+            '67bc798b-a34a-4104-8cab-cad648471f69':
+                self.bundle_fqid(uuid='f79257a7-dfc6-46d6-ae00-ba4b25313c10',
+                                 version='2018-09-14T13:33:14.453337Z'),
+            '6615efae-fca8-4dd2-a223-9cfcf30fe94d':
+                self.bundle_fqid(uuid='587d74b4-1075-4bbf-b96a-4d1ede0481b2',
+                                 version='2018-09-14T13:33:14.453337Z'),
+            '091cf39b-01bc-42e5-9437-f419a66c8a45':
+                self.bundle_fqid(uuid='cfab8304-dc9f-439e-af29-f8eb75b0729d',
+                                 version='2019-07-18T21:28:20.595913Z'),
+        }
+        projects, bundles = zip(*bundles_by_project.items())
+        self._index_canned_bundle(bundles[0])
+        filters = self._filters(cast(FiltersJSON, {
+            'projectId': {
+                'is': [projects[0], projects[1]]
+            }
+        }))
         service = ManifestService(self.storage_service, self._app.file_url)
 
         def manifest_generator(format: ManifestFormat) -> ManifestGenerator:
             generator_cls = ManifestGenerator.cls_for_format(format)
             return generator_cls(service, self.catalog, filters)
 
-        for format in ManifestFormat:
-            with self.subTest('indexing new bundle', format=format):
-                # When a new bundle is indexed and its compact manifest cached,
-                # a matching manifest key is generated ...
-                generator = manifest_generator(format)
-                old_bundle_key = generator.manifest_key()
-                # and should remain valid ...
-                self.assertEqual(old_bundle_key, generator.manifest_key())
-                old_keys[format] = old_bundle_key
+        keys = [{}, {}]
 
-        # ... until a new bundle belonging to the same project is indexed, at
-        # which point a manifest request will generate a different key ...
-        update_fqid = self.bundle_fqid(uuid=bundle_uuid, version=version2)
-        self._index_canned_bundle(update_fqid)
-        new_keys = {}
         for format in ManifestFormat:
-            with self.subTest('indexing second bundle', format=format):
+            with self.subTest('First bundle indexed', format=format):
+                # A manifest for a filter matching files in the first bundle …
                 generator = manifest_generator(format)
-                new_bundle_key = generator.manifest_key()
-                # ... invalidating the cached object previously used for the same filter.
-                self.assertNotEqual(old_keys[format], new_bundle_key)
-                new_keys[format] = new_bundle_key
+                manifest_key = generator.manifest_key()
+                # … should remain cached …
+                self.assertEqual(manifest_key, generator.manifest_key())
+                keys[0][format] = manifest_key
 
-        # Updates or additions, unrelated to that project do not affect object
-        # key generation
-        other_fqid = self.bundle_fqid(uuid='f79257a7-dfc6-46d6-ae00-ba4b25313c10',
-                                      version='2018-09-14T13:33:14.453337Z')
-        self._index_canned_bundle(other_fqid)
+        # … until a new bundle with files also matching the filter is indexed.
+        self._index_canned_bundle(bundles[1])
         for format in ManifestFormat:
-            with self.subTest('indexing unrelated bundle', format=format):
+            with self.subTest('Second bundle indexed', format=format):
                 generator = manifest_generator(format)
-                latest_bundle_key = generator.manifest_key()
-                self.assertEqual(latest_bundle_key, new_keys[format])
+                manifest_key = generator.manifest_key()
+                # The updated manifest is cached under a different key.
+                self.assertNotEqual(keys[0][format], manifest_key)
+                keys[1][format] = manifest_key
+
+        # After indexing a bundle with files that don't match the filter, the
+        # cached manifest remains valid.
+        self._index_canned_bundle(bundles[2])
+        for format in ManifestFormat:
+            with self.subTest('Unrelated bundle indexed', format=format):
+                generator = manifest_generator(format)
+                manifest_key = generator.manifest_key()
+                self.assertEqual(keys[1][format], manifest_key)
 
     @patch.object(StorageService, '_time_until_object_expires')
     def test_get_cached_manifest(self, _time_until_object_expires: MagicMock):

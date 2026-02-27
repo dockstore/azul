@@ -152,8 +152,11 @@ from azul.terraform import (
 # To then format the volume, you can then either attach it to some other Linux
 # instance and format it there or use `make terraform` to create the actual
 # Gitlab instance and attach the volume. For the latter you would need to ssh
-# into the Gitlab instance, format `/dev/xvdf` (`/dev/nvme1n1` on newer
-# instance types) and reboot the instance. For example:
+# into the Gitlab instance, format `/dev/nvme1n1`. Occasionally, the device name
+# may be different, like `/dev/nvme0n1`. The invariant is that there should be
+# two controller devices, one for the root volume and one for the data volume.
+# Determine the controller device name to which the root volume is attached and
+# then simply use the other controller device name. For example:
 #
 # docker stop gitlab-runner
 # docker stop gitlab
@@ -161,8 +164,20 @@ from azul.terraform import (
 # sudo mv /mnt/gitlab /mnt/gitlab.deleteme
 # sudo mkdir /mnt/gitlab
 # sudo mkfs.ext4 /dev/nvme1n1
-# sudo reboot
-# sudo rm -rf /mnt/gitlab.deleteme
+#
+# After formatting the volume, obtain its UUID and set it as the value of
+# `azul_gitlab_data_volume_id` in the `.gitlab` component's `environment.py`.
+#
+# To get the UUID of an unmounted volume, run
+#
+# sudo lsblk -f
+#
+# For a mounted volume, use
+#
+# sudo blkid /dev/nvme1n1
+#
+# After setting `azul_gitlab_data_volume_id` to the obtained volume UUID,
+# terminate the instance and (re)deploy the `.gitlab` component.
 #
 # The EBS volume should be backed up (EBS snapshot) periodically. Not only does
 # it contain Gitlab's data but also its config.
@@ -244,11 +259,17 @@ runner_image, _ = resolve_docker_image_for_pull('gitlab_runner')
 # For instructions on finding the latest CIS-hardened AMI, see "Updating the AMI
 # for GitLab instances" section in OPERATOR.rst.
 #
-# CIS Amazon Linux 2023 Benchmark - Level 1 - v01 -prod-fvm47vekg24oc
+# CIS Amazon Linux 2023 Benchmark - Level 1 - v02 -prod-fvm47vekg24oc
 #
 ami_id = {
-    'us-east-1': 'ami-0167fe970417faf1d'
+    'us-east-1': 'ami-07f8da7e8a9c81dee'
 }
+
+# Cloud-init's cc_mounts module does not support the UUID=<uuid> device
+# specification format. We use the /dev/disk/by-uuid/<uuid> symlink as a
+# workaround, relying on udev to create the symlink when the volume is attached.
+#
+data_volume_device = f'/dev/disk/by-uuid/{config.gitlab_data_volume_id}'
 
 gitlab_mount = '/mnt/gitlab'
 
@@ -1608,7 +1629,7 @@ emit_tf({} if config.terraform_component != 'gitlab' else {
                 'user_data_replace_on_change': True,
                 'user_data': '#cloud-config\n' + yaml.dump({
                     'mounts': [
-                        ['/dev/nvme1n1', gitlab_mount, 'ext4', '']
+                        [data_volume_device, gitlab_mount, 'ext4', '']
                     ],
                     'packages': [
                         'docker',
@@ -1626,10 +1647,10 @@ emit_tf({} if config.terraform_component != 'gitlab' else {
                     'ssh_genkeytypes': ['rsa', 'dsa', 'ecdsa'],
                     'bootcmd': [
                         '; '.join([
-                            'until [ -b /dev/nvme1n1 ]',
-                            'do echo "/dev/nvme1n1 does not exist, sleeping 1s"',
+                            f'until [ -b {data_volume_device} ]',
+                            f'do echo "{data_volume_device} does not exist, sleeping 1s"',
                             'sleep 1',
-                            'done'
+                            f'done && echo "Data volume attached to $(readlink -f {data_volume_device})"'
                         ]),
                         [
                             'cloud-init-per',

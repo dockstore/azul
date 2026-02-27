@@ -274,7 +274,7 @@ class IntegrationTestCase(AzulTestCase):
                          f'been registered')
         # The unregistered service account should not have access to any sources
         with self.assertRaises(RequirementError) as cm:
-            tdr.snapshot_names_by_id()
+            tdr.list_snapshots()
         msg = str(cm.exception)
         expected_msg_prefix = f'The service account (SA) {email!r} is not authorized'
         self.assertEqual(expected_msg_prefix, msg[:len(expected_msg_prefix)])
@@ -283,8 +283,8 @@ class IntegrationTestCase(AzulTestCase):
     @cached_property
     def managed_access_sources_by_catalog(self
                                           ) -> dict[CatalogName, set[TDRSourceRef]]:
-        public_sources = self._public_tdr_client.snapshot_names_by_id()
-        all_sources = self._tdr_client.snapshot_names_by_id()
+        public_sources = self._public_tdr_client.list_snapshots()
+        all_sources = self._tdr_client.list_snapshots()
         configured_sources = {
             catalog: self.repository_plugin(catalog).sources
             for catalog in config.integration_test_catalogs
@@ -293,7 +293,11 @@ class IntegrationTestCase(AzulTestCase):
         managed_access_sources = {catalog: set() for catalog in config.catalogs}
         for catalog, sources in configured_sources.items():
             for spec, _ in sources.items():
-                source_id = one(id for id, name in all_sources.items() if name == spec.name)
+                source_id = one(
+                    id
+                    for id, snapshot in all_sources.items()
+                    if snapshot['name'] == spec.name
+                )
                 if source_id not in public_sources:
                     ref = TDRSourceRef(id=source_id, spec=spec, prefix=None)
                     managed_access_sources[catalog].add(ref)
@@ -433,8 +437,8 @@ class IndexingIntegrationTest(IntegrationTestCase):
         for page_size in 1, 2:
             with self.subTest(page_size=page_size):
                 with mock.patch.object(TDRClient, 'page_size', page_size):
-                    paged_snapshots = self._tdr_client.snapshot_names_by_id(filter=filter)
-                snapshots = self._tdr_client.snapshot_names_by_id(filter=filter)
+                    paged_snapshots = self._tdr_client.list_snapshots(filter=filter)
+                snapshots = self._tdr_client.list_snapshots(filter=filter)
                 self.assertLess(len(snapshots), 20)
                 # Show that multiple pages were fetched, via the pigeonhole
                 # principle, and under the assumption that the TDR client
@@ -526,7 +530,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
         if index and delete:
             # FIXME: Test delete notifications
             #        https://github.com/DataBiosphere/azul/issues/3548
-            if false():
+            if false() and config.enable_bundle_notifications:
                 with self._service_account_credentials:
                     for catalog in catalogs:
                         self._assert_catalog_empty(catalog.name)
@@ -1827,10 +1831,12 @@ class AzulClientIntegrationTest(IntegrationTestCase):
     def test_azul_client_error_handling(self):
         invalid_notification = {}
         notifications = [invalid_notification]
-        self.assertRaises(AzulClientNotificationError,
-                          self.azul_client.index,
-                          first(config.integration_test_catalogs),
-                          notifications)
+        with self.assertRaises(AzulClientNotificationError) as cm:
+            self.azul_client.index(catalog=first(config.integration_test_catalogs),
+                                   notifications=notifications)
+        self.assertEqual('Some notifications could not be sent', cm.exception.args[0])
+        expected = 400 if config.enable_bundle_notifications else 403
+        self.assertEqual({expected}, cm.exception.args[1])
 
 
 class OpenAPIIntegrationTest(AzulTestCase):

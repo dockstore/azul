@@ -1672,6 +1672,10 @@ class Config:
         return self.environ.get('azul_gitlab_access_token')
 
     @property
+    def gitlab_data_volume_id(self) -> str | None:
+        return self.environ.get('azul_gitlab_data_volume_id')
+
+    @property
     def lambda_layer_key(self) -> str:
         return 'lambda_layers'
 
@@ -1893,6 +1897,10 @@ class Config:
     @property
     def mirror_bucket(self) -> str | None:
         return self.environ.get('AZUL_MIRROR_BUCKET')
+
+    @property
+    def enable_bundle_notifications(self):
+        return self._boolean(self.environ['AZUL_ENABLE_BUNDLE_NOTIFICATIONS'])
 
 
 config: Config = Config()  # yes, the type hint does help PyCharm

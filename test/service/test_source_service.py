@@ -6,7 +6,15 @@ from typing import (
 from unittest import (
     mock,
 )
+from unittest.mock import (
+    MagicMock,
+    PropertyMock,
+    patch,
+)
 
+from furl import (
+    furl,
+)
 from moto import (
     mock_aws,
 )
@@ -14,13 +22,31 @@ from mypy_boto3_dynamodb.literals import (
     ScalarAttributeTypeType,
 )
 
+from app_test_case import (
+    LocalAppTestCase,
+)
 from azul import (
     NotInLambdaContextException,
+)
+from azul.http import (
+    http_client,
+)
+from azul.indexer import (
+    SourceConfig,
+)
+from azul.logging import (
+    configure_test_logging,
+    get_test_logger,
 )
 from azul.service.source_service import (
     Expired,
     NotFound,
     SourceService,
+)
+from azul.terra import (
+    TDRClient,
+    TDRSourceRef,
+    TDRSourceSpec,
 )
 from azul_test_case import (
     DCP2TestCase,
@@ -28,6 +54,13 @@ from azul_test_case import (
 from dynamodb_test_case import (
     DynamoDBTestCase,
 )
+
+log = get_test_logger(__name__)
+
+
+# noinspection PyPep8Naming
+def setUpModule():
+    configure_test_logging(log)
 
 
 @mock_aws
@@ -70,6 +103,13 @@ class TestPublicSources(DCP2TestCase):
 
         class MockPlugin:
 
+            @property
+            def sources(self):
+                return {
+                    TDRSourceSpec.parse(spec): SourceConfig.from_json(config)
+                    for spec, config in cls._sources().items()
+                }
+
             def list_sources(self, authentication):
                 assert authentication is None, authentication
                 return [cls.source]
@@ -83,7 +123,7 @@ class TestPublicSources(DCP2TestCase):
 
         def test():
             service = SourceService()
-            actuals.append(service.public_sources)
+            actuals.append(service._public_sources)
             outsourced.append(service.public_sources_for_outsourcing)
             mock_open_resource.assert_called_once()
 
@@ -102,3 +142,90 @@ class TestPublicSources(DCP2TestCase):
 
         self.assertEqual(*outsourced)
         self.assertEqual([{self.catalog: [self.source]}] * 2, actuals)
+
+
+class TestListSources(DCP2TestCase, LocalAppTestCase):
+
+    @classmethod
+    def app_name(cls) -> str:
+        return 'service'
+
+    snapshot_names = ['mock_snapshot_1', 'mock_snapshot_2']
+    make_spec_str = 'tdr:bigquery:gcp:mock-project:{}'.format
+
+    # Includes extra sources to check that the endpoint only returns results
+    # for the current catalog
+    extra_sources = ['foo', 'bar']
+    snapshots_by_id = {
+        str(i): {
+            'id': str(i),
+            'dataProject': 'mock-project',
+            'name': name
+        }
+        for i, name in enumerate(snapshot_names + extra_sources)
+    }
+
+    @classmethod
+    def _sources(cls):
+        return {
+            cls.make_spec_str(n): {'mirror': True}
+            for n in cls.snapshot_names
+        }
+
+    @classmethod
+    def _patch_public_sources(cls):
+        cls.addClassPatch(
+            patch.object(SourceService,
+                         '_public_sources',
+                         new_callable=PropertyMock,
+                         return_value=cls._sources_by_catalog())
+        )
+
+    @classmethod
+    def _sources_by_catalog(cls) -> dict[str, list[TDRSourceRef]]:
+        return {
+            cls.catalog: [
+                TDRSourceRef(id=id,
+                             spec=TDRSourceSpec.parse(cls.make_spec_str(snapshot['name'])),
+                             prefix=None)
+                for id, snapshot in cls.snapshots_by_id.items()
+                if snapshot['name'] not in cls.extra_sources
+            ]}
+
+    @patch.object(SourceService, '_get')
+    @patch.object(TDRClient, 'list_snapshots')
+    @patch.object(TDRClient, 'validate', new=MagicMock())
+    def test(self, mock_tdr_client__list_snapshots, mock_source_service__get):
+        mock_tdr_client__list_snapshots.return_value = self.snapshots_by_id
+        client = http_client(log)
+        azul_url = furl(url=self.base_url,
+                        path='/repository/sources',
+                        query_params=dict(catalog=self.catalog))
+
+        def _test(*, authenticate: bool, cache: bool):
+            with self.subTest(authenticate=authenticate, cache=cache):
+                headers = {'Authorization': 'Bearer foo_token'} if authenticate else {}
+                response = client.request('GET', str(azul_url), headers=headers)
+                self.assertEqual(response.status, 200)
+                actual = json.loads(response.data)
+                expected = {
+                    'sources': [
+                        {
+                            'sourceId': id,
+                            'sourceSpec': self.make_spec_str(snapshot['name'])
+                        }
+                        for id, snapshot in self.snapshots_by_id.items()
+                        if snapshot['name'] not in self.extra_sources
+                    ]
+                }
+                self.assertEqual(expected, actual)
+
+        mock_source_service__get.return_value = list(self.snapshots_by_id.keys())
+        _test(authenticate=True, cache=True)
+        _test(authenticate=False, cache=True)
+        mock_source_service__get.return_value = None
+        mock_source_service__get.side_effect = NotFound('foo_token')
+        with patch('azul.terra.TDRClient.list_snapshot_ids',
+                   return_value=self.snapshots_by_id.keys() | {'not_indexed'}):
+            _test(authenticate=True, cache=False)
+            _test(authenticate=False, cache=False)
