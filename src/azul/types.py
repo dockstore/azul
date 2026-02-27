@@ -176,6 +176,17 @@ def json_items_are_dicts(vs: MutableJSON) -> TypeGuard[dict[str, MutableJSON]]:
     return True
 
 
+def json_dict_of_lists(vs: MutableJSON) -> dict[str, MutableJSONArray]:
+    assert json_items_are_lists(vs)
+    return vs
+
+
+def json_items_are_lists(vs: MutableJSON) -> TypeGuard[dict[str, MutableJSONArray]]:
+    for v in vs.values():
+        json_list(v)
+    return True
+
+
 def json_sorted(vs: Iterable[PrimitiveJSON]) -> MutableJSONArray:
     return sorted(vs, key=none_safe_key(none_last=True))
 
