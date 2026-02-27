@@ -737,6 +737,11 @@ def _check_type(t: TypeExpression | TypeVar,
                 if not _check_type(vt, v, tvs):
                     return False
         return True
+    elif t is int and isinstance(x, bool):
+        # We believe that isinstance(0, bool) is a design flaw in Python.
+        # This function was primarily written to aid in the validation of JSON
+        # and TypedDict. We want to reject `[true, 42]` passing as a list[int].
+        return False
     elif isinstance(t, type):
         return isinstance(x, t)
     else:
