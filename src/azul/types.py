@@ -13,9 +13,11 @@ from typing import (
     ForwardRef,
     Iterable,
     List,
+    NotRequired,
     Optional,
     Protocol,
     ReadOnly,
+    Required,
     TypeAliasType,
     TypeGuard,
     TypeIs,
@@ -682,6 +684,34 @@ def check_type(type_expression: TypeExpression, value: Any) -> bool:
     True
     >>> check_type(C, {'x': 1})
     False
+
+    >>> class E(TypedDict):
+    ...     x: int
+    >>> check_type(E, {'x': 2})
+    True
+    >>> check_type(E, {'x': 2, 'y': 3})
+    False
+
+    >>> class F(TypedDict, total=False):
+    ...     x: Required[int]
+    ...     y: str
+    >>> check_type(F, {'x': 22, 'y': '33'})
+    True
+    >>> check_type(F, {'x': 22})
+    True
+    >>> check_type(F, {'x': 22, 'z': 44})
+    True
+
+    >>> class G(TypedDict):
+    ...     x: int
+    ...     y: NotRequired[str]
+    >>> check_type(G, {'x': 22, 'y': '33'})
+    True
+    >>> check_type(G, {'x': 22})
+    True
+    >>> check_type(G, {'x': 22, 'z': 44})
+    False
+
     """
     return _check_type(type_expression, value, {})
 
@@ -704,7 +734,7 @@ def _check_type(t: TypeExpression | TypeVar,
         return any(_check_type(at, x, tvs) for at in ats)
     elif isinstance(t, (GenericAlias, _GenericAlias)):
         ot, ats = not_none(get_origin(t)), get_args(t)
-        if ot is ReadOnly:
+        if ot in (ReadOnly, Required, NotRequired):
             return _check_type(one(ats), x, tvs)
         else:
             tps = getattr(ot, '__type_params__', ())
