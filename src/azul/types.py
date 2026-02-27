@@ -727,16 +727,19 @@ def _check_type(t: TypeExpression | TypeVar,
         else:
             return False
     elif isinstance(t, _TypedDictMeta):
-        for k, vt in t.__annotations__.items():
-            try:
-                v = x[k]
-            except KeyError:
-                if k in t.__required_keys__:
-                    return False
-            else:
-                if not _check_type(vt, v, tvs):
-                    return False
-        return True
+        if isinstance(x, dict):
+            for k, vt in t.__annotations__.items():
+                try:
+                    v = x[k]
+                except KeyError:
+                    if k in t.__required_keys__:
+                        return False
+                else:
+                    if not _check_type(vt, v, tvs):
+                        return False
+        	return True
+        else:
+            return False
     elif t is int and isinstance(x, bool):
         # We believe that isinstance(0, bool) is a design flaw in Python.
         # This function was primarily written to aid in the validation of JSON
