@@ -15,6 +15,7 @@ from typing import (
     List,
     Optional,
     Protocol,
+    ReadOnly,
     TypeAliasType,
     TypeGuard,
     TypeIs,
@@ -703,29 +704,32 @@ def _check_type(t: TypeExpression | TypeVar,
         return any(_check_type(at, x, tvs) for at in ats)
     elif isinstance(t, (GenericAlias, _GenericAlias)):
         ot, ats = not_none(get_origin(t)), get_args(t)
-        tps = getattr(ot, '__type_params__', ())
-        if tps:
-            tvs = tvs | {
-                tp.__name__: tvs[at.__name__] if isinstance(at, TypeVar) else at
-                for tp, at in zip(tps, ats, strict=True)
-            }
-            return _check_type(ot, x, tvs)
-        elif _check_type(ot, x, tvs):
-            if issubclass(ot, Mapping):
-                assert isinstance(x, Mapping)
-                kt, vt = ats
-                return all(
-                    _check_type(kt, k, tvs) and _check_type(vt, v, tvs)
-                    for k, v in x.items()
-                )
-            elif issubclass(ot, Iterable):
-                assert isinstance(x, Iterable)
-                it = one(ats)
-                return all(_check_type(it, i, tvs) for i in x)
-            else:
-                assert False, ('Unsupported generic type', ot)
+        if ot is ReadOnly:
+            return _check_type(one(ats), x, tvs)
         else:
-            return False
+            tps = getattr(ot, '__type_params__', ())
+            if tps:
+                tvs = tvs | {
+                    tp.__name__: tvs[at.__name__] if isinstance(at, TypeVar) else at
+                    for tp, at in zip(tps, ats, strict=True)
+                }
+                return _check_type(ot, x, tvs)
+            elif _check_type(ot, x, tvs):
+                if issubclass(ot, Mapping):
+                    assert isinstance(x, Mapping)
+                    kt, vt = ats
+                    return all(
+                        _check_type(kt, k, tvs) and _check_type(vt, v, tvs)
+                        for k, v in x.items()
+                    )
+                elif issubclass(ot, Iterable):
+                    assert isinstance(x, Iterable)
+                    it = one(ats)
+                    return all(_check_type(it, i, tvs) for i in x)
+                else:
+                    assert False, ('Unsupported generic type', ot)
+            else:
+                return False
     elif isinstance(t, _TypedDictMeta):
         if isinstance(x, dict):
             for k, vt in t.__annotations__.items():
