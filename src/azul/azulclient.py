@@ -70,6 +70,9 @@ from azul.plugins import (
 from azul.queues import (
     Queues,
 )
+from azul.service.source_service import (
+    SourceService,
+)
 from azul.types import (
     JSON,
     JSONs,
@@ -107,6 +110,10 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
     @cache
     def mirror_service(self, catalog: CatalogName) -> BaseMirrorService:
         return BaseMirrorService(catalog=catalog)
+
+    @cached_property
+    def source_service(self) -> SourceService:
+        return SourceService()
 
     def local_reindex(self, catalog: CatalogName, prefix: str) -> int:
         service = self.index_repository_service
@@ -209,7 +216,7 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
             log.error('Unsent notifications and their HTTP status code:\n%s',
                       printer.pformat(missing))
         if errors or missing:
-            raise AzulClientNotificationError
+            raise AzulClientNotificationError(set(errors.keys()))
 
     def matching_sources(self,
                          catalogs: Iterable[CatalogName],
@@ -397,5 +404,5 @@ class AzulClientError(RuntimeError):
 
 class AzulClientNotificationError(AzulClientError):
 
-    def __init__(self) -> None:
-        super().__init__('Some notifications could not be sent')
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__('Some notifications could not be sent', *args, **kwargs)

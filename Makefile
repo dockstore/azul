@@ -233,15 +233,31 @@ pep8: check_python
 # When diagnosing problems with the actual formatting, removing the --attach
 # flag will reveal all output, potentially aiding in the diagnosis.
 
+# The PyCharm image used here sets up a user called `developer` and assigns it
+# UID 1000. If `make format` is invoked by a user with a different UID, it would
+# fail due to lacking the permissions to write to the formatted files. To
+# circumvent this, we bind mount a temporary /etc/passwd file to associate
+# the "developer" user with the current user's UID and GID. This also requires
+# setting up a fake home directory to which the "developer" user has write
+# access, since PyCharm needs to write to directories such as ~/.config.
+
 .PHONY: format
 format: check_venv check_docker
+	tmp=$$(mktemp -d); \
+	mkdir -p $$tmp/pycharm/etc $$tmp/pycharm/home/developer; \
+	echo developer:x:$$(id -u):$$(id -g)::/home/developer:/bin/bash >$$tmp/pycharm/etc/passwd; \
 	docker run \
 	    --attach stdout \
 	    --rm \
+	    --user $$(id -u):$$(id -g) \
+	    --mount type=bind,readonly,source=$$tmp/pycharm/etc/passwd,target=/etc/passwd \
+	    --volume $$tmp/pycharm/home/developer:/home/developer \
 	    --volume $$(python scripts/resolve_container_path.py $(project_root)):/home/developer/azul \
 	    --workdir /home/developer/azul \
 	    $$(AZUL_DEBUG=0 python -m azul 'docker.resolve_docker_image_for_launch("pycharm")') \
-	    /opt/pycharm/bin/format.sh -r -settings .pycharm.style.xml -mask '*.py' $(relative_sources)
+	    /opt/pycharm/bin/format.sh -r -settings .pycharm.style.xml -mask '*.py' $(relative_sources); \
+	rm -rf $$tmp/pycharm && rm -d $$tmp
+
 
 test_args = -m unittest discover --verbose test
 

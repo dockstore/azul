@@ -1979,10 +1979,14 @@ The Gitlab EC2 instance is attached to an EBS volume that contains all of
 Gitlab's data and configuration. That volume is not controlled by Terraform and
 must be created manually before terraforming the `gitlab` component for the
 first time. Details about creating and formatting the volume can be found in
-[gitlab.tf.json.template.py]. The volume is mounted at `/mnt/gitlab`. The
-configuration changes are tracked in a local Git repository on the system 
-administrator's computer. The system administrator keeps the configuration files 
-consistent between GitLab instances.
+[gitlab.tf.json.template.py]. The volume is mounted at `/mnt/gitlab`. Also, the
+volume is mounted by its filesystem UUID rather than by device path
+(e.g., `/dev/nvme1n1`), ensuring reliable mounting across different instance
+types. This is because device names can vary and volumes may be attached in a
+non-deterministic order. See [gitlab.tf.json.template.py] for details on
+obtaining the UUID. The configuration changes are tracked in a local Git
+repository on the system administrator's computer. The system administrator
+keeps the configuration files consistent between GitLab instances.
 
 When an instance boots and finds the EBS volume empty, Gitlab will initialize it
 with default configuration. That configuration is very vulnerable because the

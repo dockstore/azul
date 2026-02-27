@@ -84,6 +84,7 @@ from azul.types import (
     JSON,
 )
 from azul_test_case import (
+    BundleNotificationTestCase,
     DCP1TestCase,
     DCP2TestCase,
 )
@@ -331,7 +332,10 @@ class TestIndexController(DCP2IndexerTestCase, WorkQueueTestCase):
         return entities
 
 
-class TestIndexerApp(LocalAppTestCase, DCP1TestCase, SqsTestCase):
+class TestIndexerApp(LocalAppTestCase,
+                     DCP1TestCase,
+                     SqsTestCase,
+                     BundleNotificationTestCase):
 
     @classmethod
     def app_name(cls) -> str:
@@ -459,3 +463,6 @@ class TestIndexerApp(LocalAppTestCase, DCP1TestCase, SqsTestCase):
         method = 'DELETE' if delete else 'POST'
         request = Request(method=method, url=str(url), json=body)
         return request
+
+    def _create_mock_notifications_queue(self):
+        self._create_mock_queues([config.notifications_queue.name])

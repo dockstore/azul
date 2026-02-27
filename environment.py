@@ -216,7 +216,7 @@ def env() -> Mapping[str, str | None]:
         # `gitlab` components, as well as building and pushing the executor
         # image (see terraform/gitlab/runner/Dockerfile for how).
         #
-        'azul_docker_version': '29.1.5',
+        'azul_docker_version': '29.2.1',
 
         # The version of Python used throughout the system.
         #
@@ -230,7 +230,7 @@ def env() -> Mapping[str, str | None]:
         # and committing the resulting changes. It also requires redeploying the
         # `shared` component.
         #
-        'azul_python_version': '3.13.11',
+        'azul_python_version': '3.13.12',
 
         # The version of Terraform used throughout the system.
         #
@@ -265,7 +265,7 @@ def env() -> Mapping[str, str | None]:
                 'url': 'https://hub.docker.com/_/python',
             },
             'pycharm': {
-                'ref': 'docker.io/ucscgi/azul-pycharm:2025.2.6-72',
+                'ref': 'docker.io/ucscgi/azul-pycharm:2025.2.6-73',
                 'url': 'https://hub.docker.com/repository/docker/ucscgi/azul-pycharm',
                 'is_custom': True
             },
@@ -275,18 +275,18 @@ def env() -> Mapping[str, str | None]:
                 'is_custom': False
             },
             'bigquery_emulator': {
-                'ref': 'docker.io/ucscgi/azul-bigquery-emulator:0.4.4-53',
+                'ref': 'docker.io/ucscgi/azul-bigquery-emulator:0.4.4-54',
                 'url': 'https://hub.docker.com/repository/docker/ucscgi/azul-bigquery-emulator',
                 'is_custom': True
             },
             # Updating any of the four images below additionally requires
             # redeploying the `gitlab` TF component.
             'clamav': {
-                'ref': 'docker.io/clamav/clamav:1.5.1-23',
+                'ref': 'docker.io/clamav/clamav:1.5.1-25',
                 'url': 'https://hub.docker.com/r/clamav/clamav'
             },
             'gitlab': {
-                'ref': 'docker.io/gitlab/gitlab-ce:18.8.2-ce.0',
+                'ref': 'docker.io/gitlab/gitlab-ce:18.8.4-ce.0',
                 'url': 'https://hub.docker.com/r/gitlab/gitlab-ce'
             },
             'gitlab_runner': {
@@ -648,6 +648,13 @@ def env() -> Mapping[str, str | None]:
         #
         'azul_gitlab_access_token': None,
 
+        # The filesystem UUID of the EBS volume attached to the GitLab EC2
+        # instance. This variable is only used in the `.gitlab` component. For
+        # additional info, see section 8.5 of the README (Storage) and the
+        # comments in `terraform/gitlab/gitlab.tf.json.template.py`.
+        #
+        'azul_gitlab_data_volume_id': None,
+
         # The name of the user owning the token in `azul_gitlab_access_token`.
         #
         'azul_gitlab_user': None,
@@ -922,5 +929,12 @@ def env() -> Mapping[str, str | None]:
         # requests, divided by the number of all requests, times 100) for a
         # configured period before a metric alarm is tripped.
         #
-        'azul_waf_blocked_alarm_threshold': '50'
+        'azul_waf_blocked_alarm_threshold': '50',
+
+        # Whether to enable bundle notifications for incremental index changes
+        #
+        # FIXME: Enable bundle notifications again #7183
+        #        https://github.com/DataBiosphere/azul/issues/7183
+        #
+        'AZUL_ENABLE_BUNDLE_NOTIFICATIONS': '0'
     }

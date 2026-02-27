@@ -1,14 +1,14 @@
 certifi==2026.1.4
 cffi==2.0.0
 charset-normalizer==3.4.4
-cryptography==46.0.4
+cryptography==46.0.5
 events==0.5
 google-cloud-core==2.5.0
 google-crc32c==1.8.0
 google-resumable-media==2.8.0
 googleapis-common-protos==1.72.0
-grpcio==1.78.0
-grpcio-status==1.78.0
+grpcio==1.78.1
+grpcio-status==1.78.1
 idna==3.11
 markupsafe==3.0.3
 orderedmultidict==1.0.2

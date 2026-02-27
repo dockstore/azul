@@ -29,7 +29,6 @@ def mirror_catalog(azul: AzulClient,
                    catalog: CatalogName,
                    source_globs: set[str],
                    wait: bool):
-    plugin = azul.repository_plugin(catalog)
     fail_queue = config.mirror_queue.to_fail.name
     assert azul.is_queue_empty(fail_queue), R(
         'Cannot begin mirroring because a previous operation failed: '
@@ -37,7 +36,7 @@ def mirror_catalog(azul: AzulClient,
         fail_queue)
     public_sources_by_spec = {
         source.spec: source
-        for source in plugin.list_sources(authentication=None)
+        for source in azul.source_service.list_sources(catalog, authentication=None)
     }
     # When the user doesn't specify a source or provides "*" as a source glob,
     # we implicitly filter out managed-access sources. This lets us assert that

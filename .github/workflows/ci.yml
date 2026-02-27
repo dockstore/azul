@@ -56,14 +56,7 @@ jobs:
           #
           export azul_docker_registry=""
 
-          # Hack: The use of chrgp compensates for a quirk of Docker. The
-          # PyCharm image used by make format sets up a user called `developer`
-          # and assigns it UID 1000. Actions is running as UID 1001. An
-          # alternative would be to pass --user to `docker run` and bind-mount
-          # an /etc/passwd that maps that to `developer`. We also need write
-          # permissions for the group
-          #
-          chmod -R g+w . && sudo chgrp -R 1000 . && make format && sudo chgrp -R $(id -g) .
+          make format
           make -C lambdas openapi
           make -C .github
           make anvil_schema

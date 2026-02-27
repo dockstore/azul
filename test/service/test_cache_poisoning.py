@@ -34,7 +34,7 @@ class CachePoisoningTestCase(LocalAppTestCase, metaclass=ABCMeta):
     def setUpClass(cls):
         super().setUpClass()
         cls.snapshot_mock = patch.object(TDRClient,
-                                         'snapshot_names_by_id',
+                                         'list_snapshots',
                                          return_value={})
         cls.snapshot_mock.start()
 

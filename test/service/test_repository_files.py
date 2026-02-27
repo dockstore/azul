@@ -4,16 +4,14 @@ from abc import (
 import hashlib
 import io
 import json
-import os
 import time
 from typing import (
     Union,
 )
-from unittest import (
-    mock,
-)
 from unittest.mock import (
     MagicMock,
+    Mock,
+    patch,
 )
 
 import attr
@@ -62,17 +60,8 @@ from azul.plugins.metadata.hca import (
 from azul.service.repository_service import (
     RepositoryService,
 )
-from azul.service.source_service import (
-    NotFound,
-    SourceService,
-)
 from azul.terra import (
-    TDRClient,
-    TDRSourceSpec,
     TerraClient,
-)
-from azul.types import (
-    JSON,
 )
 from azul_test_case import (
     DCP1TestCase,
@@ -114,21 +103,14 @@ class RepositoryFilesTestCase(LocalAppTestCase, metaclass=ABCMeta):
         self.assertEqual(sorted(a.args.allitems()), sorted(b.args.allitems()))
 
 
-@mock.patch.object(SourceService, '_put', new=MagicMock())
-@mock.patch.object(SourceService, '_get')
-@mock.patch.object(BaseMirrorService,
-                   'info_exists',
-                   new=MagicMock(return_value=False))
 class TestRepositoryFilesWithTDR(DCP2TestCase, RepositoryFilesTestCase):
 
-    @mock.patch.dict(os.environ,
-                     AZUL_TDR_SERVICE_URL=str(DCP2TestCase.mock_tdr_service_url))
-    @mock.patch.object(TerraClient,
-                       '_http_client',
-                       AuthorizedHttp(MagicMock(),
-                                      urllib3.PoolManager(ca_certs=certifi.where())))
-    def test_repository_files(self, mock_get_cached_sources):
-        mock_get_cached_sources.return_value = []
+    @patch.object(BaseMirrorService, 'info_exists', new=Mock(return_value=False))
+    @patch.object(TerraClient,
+                  '_http_client',
+                  AuthorizedHttp(MagicMock(),
+                                 urllib3.PoolManager(ca_certs=certifi.where())))
+    def test(self):
         client = http_client(log)
 
         file_uuid = '701c9a63-23da-4978-946b-7576b6ad088a'
@@ -146,9 +128,9 @@ class TestRepositoryFilesWithTDR(DCP2TestCase, RepositoryFilesTestCase):
                        crc32c='abc')
         for fetch in True, False:
             with self.subTest(fetch=fetch):
-                with mock.patch.object(RepositoryService,
-                                       'get_data_file',
-                                       return_value=file):
+                with patch.object(RepositoryService,
+                                  'get_data_file',
+                                  return_value=file):
                     azul_url = self.base_url.set(path=['repository', 'files', file_uuid],
                                                  args=dict(catalog=self.catalog, version=file_version))
                     if fetch:
@@ -169,7 +151,7 @@ class TestRepositoryFilesWithTDR(DCP2TestCase, RepositoryFilesTestCase):
                                              'X-Goog-Signature': 'SOMESIGNATURE',
                                          })
                     access = Access(method=AccessMethod.https, url=str(pre_signed_gs))
-                    with mock.patch.object(DRSObject, 'get', return_value=access):
+                    with patch.object(DRSObject, 'get', return_value=access):
                         response = client.request('GET', str(azul_url), redirect=False)
                         self.assertEqual(200 if fetch else 302, response.status)
                         if fetch:
@@ -182,100 +164,20 @@ class TestRepositoryFilesWithTDR(DCP2TestCase, RepositoryFilesTestCase):
 
         file = attr.evolve(file, drs_uri=None)
         with self.subTest('phantom'):
-            with mock.patch.object(RepositoryService,
-                                   'get_data_file',
-                                   return_value=file):
+            with patch.object(RepositoryService,
+                              'get_data_file',
+                              return_value=file):
                 response = client.request('GET', str(azul_url), redirect=False)
             self.assertEqual(response.status, 404)
 
-    mock_source_names = ['mock_snapshot_1', 'mock_snapshot_2']
-    make_mock_source_spec = 'tdr:bigquery:gcp:mock:{}'.format
 
-    @classmethod
-    def _sources(cls):
-        return {cls.make_mock_source_spec(n): {'mirror': True} for n in cls.mock_source_names}
-
-    @mock.patch.object(TDRClient, 'snapshot_names_by_id')
-    @mock.patch.object(TDRClient, 'validate', new=MagicMock())
-    def test_list_sources(self,
-                          mock_list_snapshots,
-                          mock_get_cached_sources,
-                          ):
-        # Includes extra sources to check that the endpoint only returns results
-        # for the current catalog
-        extra_sources = ['foo', 'bar']
-        mock_source_names_by_id = {
-            str(i): source_name
-            for i, source_name in enumerate(self.mock_source_names + extra_sources)
-        }
-        mock_list_snapshots.return_value = mock_source_names_by_id
-        client = http_client(log)
-        azul_url = furl(url=self.base_url,
-                        path='/repository/sources',
-                        query_params=dict(catalog=self.catalog))
-
-        def _list_sources(headers) -> JSON:
-            response = client.request('GET',
-                                      str(azul_url),
-                                      headers=headers)
-            self.assertEqual(response.status, 200)
-            return json.loads(response.data)
-
-        def _test(*, authenticate: bool, cache: bool):
-            with self.subTest(authenticate=authenticate, cache=cache):
-                response = _list_sources({'Authorization': 'Bearer foo_token'}
-                                         if authenticate else {})
-                self.assertEqual(response, {
-                    'sources': [
-                        {
-                            'sourceId': id,
-                            'sourceSpec': str(TDRSourceSpec.parse(self.make_mock_source_spec(name)))
-                        }
-                        for id, name in mock_source_names_by_id.items()
-                        if name not in extra_sources
-                    ]
-                })
-
-        mock_get_cached_sources.return_value = list(mock_source_names_by_id.keys())
-        _test(authenticate=True, cache=True)
-        _test(authenticate=False, cache=True)
-        mock_get_cached_sources.return_value = None
-        mock_get_cached_sources.side_effect = NotFound('foo_token')
-        with mock.patch('azul.terra.TDRClient.snapshot_ids',
-                        return_value=mock_source_names_by_id.keys() | {'not_indexed'}):
-            _test(authenticate=True, cache=False)
-            _test(authenticate=False, cache=False)
-
-
-@mock.patch.object(BaseMirrorService,
-                   'info_exists',
-                   new=MagicMock(return_value=False))
 class TestRepositoryFilesWithDSS(DCP1TestCase,
                                  RepositoryFilesTestCase,
                                  S3TestCase):
-    # These are the credentials defined in
-    #
-    # moto.instance_metadata.responses.InstanceMetadataResponse
-    #
-    # which, for reasons yet to be determined, is used on Travis but not when I
-    # run this locally. Maybe it's the absence of ~/.aws/credentials. The
-    # credentials that @mock_sts provides look more realistic but boto3's STS
-    # credential provider would be skipped on CI because the lack of
-    # ~/.aws/credentials there implies that AssumeRole credentials aren't
-    # configured, causing boto3 to default to use credentials from mock instance
-    # metadata.
-    #
-    mock_access_key_id = 'test-key'  # @mock_sts uses AKIAIOSFODNN7EXAMPLE
-    mock_secret_access_key = 'test-secret-key'  # @mock_sts uses wJalrXUtnFEMI/K7MDENG/bPxRfiCYzEXAMPLEKEY
-    mock_session_token = 'test-session-token'  # @mock_sts token starts with AQoEXAMPLEH4aoAH0gNCAPyJxz4BlCFFxWNE1OPTgk
 
-    @mock.patch.dict(os.environ,
-                     AWS_ACCESS_KEY_ID=mock_access_key_id,
-                     AWS_SECRET_ACCESS_KEY=mock_secret_access_key,
-                     AWS_SESSION_TOKEN=mock_session_token)
-    @mock.patch.object(type(config), 'dss_direct_access_role')
-    def test_repository_files(self, dss_direct_access_role):
-        dss_direct_access_role.return_value = None
+    @patch.object(BaseMirrorService, 'info_exists', new=Mock(return_value=False))
+    @patch.object(type(config), 'dss_direct_access_role', new=Mock(return_value=None))
+    def test(self):
         self.maxDiff = None
         key = ('blobs/6929799f227ae5f0b3e0167a6cf2bd683db097848af6ccde6329185212598779'
                '.f2237ad0a776fd7057eb3d3498114c85e2f521d7'
@@ -297,7 +199,7 @@ class TestRepositoryFilesWithDSS(DCP1TestCase,
                        content_type='text/plain',
                        sha256='123',
                        crc32c='abc')
-        with mock.patch.object(RepositoryService, 'get_data_file', return_value=file):
+        with patch.object(RepositoryService, 'get_data_file', return_value=file):
             args = {
                 'replica': 'aws',
                 'version': file_version
@@ -346,8 +248,8 @@ class TestRepositoryFilesWithDSS(DCP1TestCase,
                                     retry_after = 1
                                     expect_retry_after = None if wait or expect_status == 302 else retry_after
                                     before = time.monotonic()
-                                    with mock.patch.object(type(aws), 'dss_checkout_bucket', return_value=bucket_name):
-                                        with mock.patch('time.time', new=lambda: 1547691253.07010):
+                                    with patch.object(type(aws), 'dss_checkout_bucket', return_value=bucket_name):
+                                        with patch('time.time', new=lambda: 1547691253.07010):
                                             response = requests.get(url, allow_redirects=False)
                                     if wait and expect_status == 301:
                                         self.assertLess(retry_after, time.monotonic() - before)
@@ -390,10 +292,10 @@ class TestRepositoryFilesWithDSS(DCP1TestCase,
 
                                 args = {
                                     'response-content-disposition': f'attachment;filename={file_name}',
-                                    'AWSAccessKeyId': self.mock_access_key_id,
+                                    'AWSAccessKeyId': self.mock_boto_credentials.access_key,
                                     'Signature': signature,
                                     'Expires': expires,
-                                    'x-amz-security-token': self.mock_session_token
+                                    'x-amz-security-token': self.mock_boto_credentials.token
                                 }
                                 re_pre_signed_s3_url = furl(url=f'https://{bucket_name}.s3.amazonaws.com',
                                                             path=key,
@@ -405,7 +307,7 @@ class TestRepositoryFilesWithMirroring(DCP2TestCase,
                                        RepositoryFilesTestCase,
                                        MirrorTestCase):
 
-    def test_repository_files(self):
+    def test(self):
         file_content = b'Contents of foo'
         file_uuid = '701c9a63-23da-4978-946b-7576b6ad088a'
         file_version = '2018-09-12T12:11:54.054628Z'
@@ -421,14 +323,14 @@ class TestRepositoryFilesWithMirroring(DCP2TestCase,
 
         mirror_service = MirrorService(catalog=self.catalog,
                                        schema_url_func=MagicMock())
-        with mock.patch.object(MirrorService, '_download', return_value=file_content):
+        with patch.object(MirrorService, '_download', return_value=file_content):
             mirror_service._mirror_file(file)
         self.assertTrue(mirror_service.info_exists(file))
 
         client = http_client(log)
         args = dict(catalog=self.catalog, version=file_version)
         azul_url = self.base_url.set(path=['repository', 'files', file_uuid], args=args)
-        with mock.patch.object(RepositoryService, 'get_data_file', return_value=file):
+        with patch.object(RepositoryService, 'get_data_file', return_value=file):
             response = client.request('GET', str(azul_url), redirect=False)
         self.assertEqual(302, response.status)
 

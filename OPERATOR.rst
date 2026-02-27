@@ -426,8 +426,8 @@ Finally, SSH into the instance to complete the setup of new data volume. Use the
 ``resize2fs`` to grow the size of the mounted file system so that it matches
 that of the volume. Run::
 
-    df # Verify device /dev/nvme1n1 is mounted on /mnt/gitlab, note available size
-    sudo resize2fs /dev/nvme1n1
+    df | grep /mnt/gitlab # Verify the name of the mounted device (e.g. /dev/nvme1n1) and note the available size
+    sudo resize2fs <device_name> # Match the device name emitted by the previous command
     df # Verify the new available size is larger
 
 The output of the last ``df`` command should inform of the success of these
