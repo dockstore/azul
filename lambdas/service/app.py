@@ -690,12 +690,12 @@ filters_param_spec = params.query(
     description=fd('''
         Criteria to filter entities from the search results.
 
-        Each filter consists of a field name, an operator,
-        and an array of field values. The available operators are "is",
-        "within", "contains", and "intersects". Multiple filters are combined
-        using "and" logic. An entity must match all filters to be included in
-        the response. How multiple field values within a single filter are
-        combined depends on the operator.
+        Each filter consists of a field name, an operator, and an array of field
+        values. The available operators are "is", "within", "contains", and
+        "intersects". Multiple filters are combined using "and" logic. For an
+        entity to be included in the response, it must match all filters. How
+        multiple field values within a single filter are combined depends on the
+        operator.
 
         For the "is" operator, multiple values are combined using "or" logic.
         For example, `{"fileFormat": {"is": ["fastq", "fastq.gz"]}}` selects
