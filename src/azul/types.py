@@ -779,13 +779,16 @@ def _check_type(t: TypeExpression | TypeVar,
     :param t: the expected type of the value
     :param x: the value to check
     :param tvs: the values of any type variables ocurring in the first argument
+
+    Furthermore `ot` is the origin type, `at` and `ats` are argument type(s)
     """
     if isinstance(t, TypeVar):
         return _check_type(tvs[t.__name__], x, tvs)
     elif isinstance(t, TypeAliasType):
         return _check_type(t.__value__, x, tvs)
     elif isinstance(t, _SpecialGenericAlias):
-        return _check_type(get_origin(t), x, tvs)
+        ot = not_none(get_origin(t))
+        return _check_type(ot, x, tvs)
     elif isinstance(t, (UnionType, _UnionGenericAlias)):
         ats = get_args(t)
         return any(_check_type(at, x, tvs) for at in ats)

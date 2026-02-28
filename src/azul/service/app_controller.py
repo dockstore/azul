@@ -23,7 +23,9 @@ from azul.service import (
     FileUrlFunc,
     Filters,
     FiltersJSON,
+    normalize_filters,
     parse_filters,
+    validate_filters,
 )
 from azul.service.source_controller import (
     SourceController,
@@ -47,7 +49,7 @@ class ServiceAppController(SourceController):
 
     def _parse_filters(self, filters: str | None) -> FiltersJSON:
         try:
-            return parse_filters(filters)
+            return normalize_filters(validate_filters(parse_filters(filters)))
         except AssertionError as e:
             if R.caused(e):
                 raise R.propagate(e, BRE)
