@@ -1,6 +1,9 @@
 ﻿from collections import (
     defaultdict,
 )
+from collections.abc import (
+    Set,
+)
 import datetime
 from enum import (
     Enum,
@@ -11,7 +14,6 @@ from operator import (
     itemgetter,
 )
 from typing import (
-    AbstractSet,
     Callable,
     Iterable,
     Mapping,
@@ -78,9 +80,9 @@ from azul.uuids import (
 
 log = logging.getLogger(__name__)
 
-Keys = AbstractSet[KeyReference]
+Keys = Set[KeyReference]
 MutableKeys = set[KeyReference]
-KeysByType = dict[EntityType, AbstractSet[Key]]
+KeysByType = dict[EntityType, Set[Key]]
 MutableKeysByType = dict[EntityType, set[Key]]
 KeyLinks = set[KeyLink]
 
@@ -684,7 +686,7 @@ class Plugin(TDRPlugin[TDRAnvilBundle, TDRAnvilBundleFQID]):
 
     def _upstream_from_biosamples(self,
                                   source: TDRSourceSpec,
-                                  biosample_ids: AbstractSet[Key]
+                                  biosample_ids: Set[Key]
                                   ) -> KeyLinks:
         if biosample_ids:
             rows = self._run_sql(f'''
@@ -709,7 +711,7 @@ class Plugin(TDRPlugin[TDRAnvilBundle, TDRAnvilBundleFQID]):
 
     def _upstream_from_files(self,
                              source: TDRSourceSpec,
-                             file_ids: AbstractSet[Key]
+                             file_ids: Set[Key]
                              ) -> KeyLinks:
         if file_ids:
             rows = self._run_sql(f'''
@@ -790,7 +792,7 @@ class Plugin(TDRPlugin[TDRAnvilBundle, TDRAnvilBundleFQID]):
 
     def _diagnoses_from_donors(self,
                                source: TDRSourceSpec,
-                               donor_ids: AbstractSet[Key]
+                               donor_ids: Set[Key]
                                ) -> KeyLinks:
         if donor_ids:
             rows = self._run_sql(f'''
@@ -814,7 +816,7 @@ class Plugin(TDRPlugin[TDRAnvilBundle, TDRAnvilBundleFQID]):
 
     def _downstream_from_biosamples(self,
                                     source: TDRSourceSpec,
-                                    biosample_ids: AbstractSet[Key],
+                                    biosample_ids: Set[Key],
                                     ) -> KeyLinks:
         if biosample_ids:
             rows = self._run_sql(f'''
@@ -868,7 +870,7 @@ class Plugin(TDRPlugin[TDRAnvilBundle, TDRAnvilBundleFQID]):
 
     def _downstream_from_files(self,
                                source: TDRSourceSpec,
-                               file_ids: AbstractSet[Key]
+                               file_ids: Set[Key]
                                ) -> KeyLinks:
         if file_ids:
             rows = self._run_sql(f'''
@@ -920,7 +922,7 @@ class Plugin(TDRPlugin[TDRAnvilBundle, TDRAnvilBundleFQID]):
     def _retrieve_entities(self,
                            source: TDRSourceSpec,
                            entity_type: EntityType,
-                           keys: AbstractSet[Key],
+                           keys: Set[Key],
                            ) -> MutableJSONs:
         if keys:
             columns = self._columns(entity_type)
@@ -951,7 +953,7 @@ class Plugin(TDRPlugin[TDRAnvilBundle, TDRAnvilBundleFQID]):
             return []
 
     @cached_property
-    def _schema_columns_by_table(self) -> Mapping[str, AbstractSet[str]]:
+    def _schema_columns_by_table(self) -> Mapping[str, Set[str]]:
         columns_by_table = {}
         for table in anvil_schema['tables']:
             table_name = table['name']
@@ -964,7 +966,7 @@ class Plugin(TDRPlugin[TDRAnvilBundle, TDRAnvilBundleFQID]):
             columns_by_table[table_name] = column_names
         return columns_by_table
 
-    def _columns(self, table_name: str) -> AbstractSet[str]:
+    def _columns(self, table_name: str) -> Set[str]:
         # Include all columns for replicas of non-schema tables
         return self._schema_columns_by_table.get(table_name, {'*'})
 

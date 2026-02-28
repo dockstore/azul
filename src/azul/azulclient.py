@@ -3,6 +3,7 @@ from collections import (
 )
 from collections.abc import (
     Iterable,
+    Set,
 )
 from concurrent.futures import (
     Future,
@@ -15,9 +16,6 @@ from functools import (
 import logging
 from pprint import (
     PrettyPrinter,
-)
-from typing import (
-    AbstractSet,
 )
 import uuid
 
@@ -220,7 +218,7 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
 
     def matching_sources(self,
                          catalogs: Iterable[CatalogName],
-                         globs: AbstractSet[str] = frozenset('*')
+                         globs: Set[str] = frozenset('*')
                          ) -> dict[CatalogName, dict[SourceSpec, SourceConfig]]:
         result = {}
         matched_globs: set[str] = set()

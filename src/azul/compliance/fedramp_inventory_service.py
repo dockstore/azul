@@ -6,6 +6,9 @@ from collections import (
     Counter,
     defaultdict,
 )
+from collections.abc import (
+    Set,
+)
 import inspect
 import json
 import logging
@@ -15,7 +18,6 @@ from operator import (
 import pathlib
 import sys
 from typing import (
-    AbstractSet,
     Iterable,
     Iterator,
     Optional,
@@ -138,7 +140,7 @@ class Mapper(metaclass=ABCMeta):
             unique_id=resource.id + ('' if id_suffix is None else f'/{id_suffix}')
         )
 
-    def _supported_resource_types(self) -> AbstractSet[str]:
+    def _supported_resource_types(self) -> Set[str]:
         return frozenset()
 
     def can_map(self, resource: ResourceConfig) -> bool:
@@ -263,7 +265,7 @@ class ELBMapper(Mapper):
 
 class NetworkInterfaceMapper(Mapper):
 
-    def _supported_resource_types(self) -> AbstractSet[str]:
+    def _supported_resource_types(self) -> Set[str]:
         return {'AWS::EC2::NetworkInterface'}
 
     def map(self, resource: ResourceConfig) -> Iterable[InventoryRow]:
@@ -338,7 +340,7 @@ class DynamoDbTableMapper(Mapper):
 
 class ElasticIPMapper(Mapper):
 
-    def _supported_resource_types(self) -> AbstractSet[str]:
+    def _supported_resource_types(self) -> Set[str]:
         return {'AWS::EC2::EIP'}
 
     def map(self, resource: ResourceConfig) -> Iterable[InventoryRow]:
@@ -391,7 +393,7 @@ class VPCMapper(Mapper):
 
 class ACMCertificateMapper(Mapper):
 
-    def _supported_resource_types(self) -> AbstractSet[str]:
+    def _supported_resource_types(self) -> Set[str]:
         return {'AWS::ACM::Certificate'}
 
     def map(self, resource: ResourceConfig) -> Iterable[InventoryRow]:
@@ -417,7 +419,7 @@ class ACMCertificateMapper(Mapper):
 
 class ResourceComplianceMapper(Mapper):
 
-    def _supported_resource_types(self) -> AbstractSet[str]:
+    def _supported_resource_types(self) -> Set[str]:
         return {'AWS::Config::ResourceCompliance'}
 
     def map(self, resource: ResourceConfig) -> Iterable[InventoryRow]:
