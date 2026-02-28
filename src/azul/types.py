@@ -1,4 +1,5 @@
 from collections.abc import (
+    Iterable,
     Mapping,
     Sequence,
 )
@@ -7,12 +8,11 @@ from types import (
     UnionType,
     get_original_bases,
 )
+import typing
 from typing import (
     Any,
     Callable,
     ForwardRef,
-    Iterable,
-    List,
     NotRequired,
     Optional,
     Protocol,
@@ -612,7 +612,8 @@ class SupportsLessAndGreaterThan(Protocol):
 
 
 _UnionGenericAlias = type(Union[int, str])
-_GenericAlias = type(List[int])
+_GenericAlias = type(typing.List[int])
+_SpecialGenericAlias = type(typing.Sized)
 _TypedDictMeta = type(JSONTypedDict)
 
 # The following serves more of a documentary purpose than for static analysis.
@@ -729,6 +730,8 @@ def _check_type(t: TypeExpression | TypeVar,
         return _check_type(tvs[t.__name__], x, tvs)
     elif isinstance(t, TypeAliasType):
         return _check_type(t.__value__, x, tvs)
+    elif isinstance(t, _SpecialGenericAlias):
+        return _check_type(get_origin(t), x, tvs)
     elif isinstance(t, (UnionType, _UnionGenericAlias)):
         ats = get_args(t)
         return any(_check_type(at, x, tvs) for at in ats)
