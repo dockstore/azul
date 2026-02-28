@@ -145,27 +145,27 @@ class FieldType[N, X: IndexForm](metaclass=ABCMeta):
         return cast(N, value)
 
     @property
-    def supported_filter_relations(self) -> tuple[str, ...]:
+    def supported_filter_operators(self) -> tuple[str, ...]:
         """
-        The filter relations in which fields of this type can be used as a
+        The filter operators in which fields of this type can be used as a
         left-handside. By default, this class only supports equality. A scalar
-        field type would override this method to include the `within` relation.
+        field type would override this method to include the `within` operator.
         """
         return 'is',
 
-    def api_filter_schema(self, relation: str) -> JSON:
+    def api_filter_schema(self, operator: str) -> JSON:
         """
         The JSONSchema describing the right-handside operand of the given filter
-        relation in OpenAPI specifications when the left-handside operand is a
+        operator in OpenAPI specifications when the left-handside operand is a
         field of this type.
         """
-        assert relation in self.supported_filter_relations, relation
-        if relation == 'is':
+        assert operator in self.supported_filter_operators, operator
+        if operator == 'is':
             return self.api_schema
-        elif relation == 'within':
+        elif operator == 'within':
             return self._api_range_schema(self.api_schema)
         else:
-            assert False, relation
+            assert False, operator
 
     def _api_range_schema(self, api_schema: JSON) -> JSON:
         return schema.array(api_schema, minItems=2, maxItems=2)
@@ -180,10 +180,10 @@ class FieldType[N, X: IndexForm](metaclass=ABCMeta):
         return self.from_api(gte), self.from_api(lte)
 
     def filter(self,
-               relation: str,
+               operator: str,
                values: Iterable[AnyJSON | ApiRange]
                ) -> Iterable[X | IndexRange[X]]:
-        if relation == 'within':
+        if operator == 'within':
             return list(map(self._range_to_index, map(self._from_api_range, values)))
         else:
             return list(map(self.to_index, map(self.from_api, values)))
@@ -215,8 +215,8 @@ pass_thru_json: PassThrough[JSON] = PassThrough(JSON, es_type=None)
 class NumericPassThrough[T: JSONNumber](PassThrough[T]):
 
     @property
-    def supported_filter_relations(self) -> tuple[str, ...]:
-        return *super().supported_filter_relations, 'within'
+    def supported_filter_operators(self) -> tuple[str, ...]:
+        return *super().supported_filter_operators, 'within'
 
     def from_api(self, value: AnyJSON) -> T:
         """
@@ -269,17 +269,17 @@ class Nullable[N, X: IndexForm](FieldType[N | None, X], metaclass=ABCMeta):
 
 class NullableScalar[N, X: IndexForm](Nullable[N, X], metaclass=ABCMeta):
 
-    def api_filter_schema(self, relation: str) -> JSON:
-        if relation == 'within':
-            # The LHS operand of a range relation can't be null
+    def api_filter_schema(self, operator: str) -> JSON:
+        if operator == 'within':
+            # The LHS operand of a range operator can't be null
             api_type = schema.make(self.native_type)
             return self._api_range_schema(api_type)
         else:
-            return super().api_filter_schema(relation)
+            return super().api_filter_schema(operator)
 
     @property
-    def supported_filter_relations(self) -> tuple[str, ...]:
-        return *super().supported_filter_relations, 'within'
+    def supported_filter_operators(self) -> tuple[str, ...]:
+        return *super().supported_filter_operators, 'within'
 
 
 class NullableString(Nullable[str, str]):
@@ -383,8 +383,8 @@ class NullableBool(NullableNumber[bool]):
         super().__init__(bool, 'boolean')
 
     @property
-    def supported_filter_relations(self) -> tuple[str, ...]:
-        return 'is',  # no point in supporting range relation
+    def supported_filter_operators(self) -> tuple[str, ...]:
+        return 'is',  # no point in supporting range operator
 
 
 null_bool = NullableBool()
@@ -420,11 +420,11 @@ class Nested(PassThrough[JSON]):
         self.agg_property = first(properties.keys())
         self.properties = properties
 
-    def api_filter_schema(self, relation: str) -> JSON:
-        assert relation == 'is'
+    def api_filter_schema(self, operator: str) -> JSON:
+        assert operator == 'is'
         properties, required = {}, []
         for field, field_type in self.properties.items():
-            properties[field] = field_type.api_filter_schema(relation)
+            properties[field] = field_type.api_filter_schema(operator)
             if not isinstance(field_type, Nullable):
                 required.append(field)
         kwargs: dict[str, AnyJSON] = dict(additionalProperties=False)
@@ -433,7 +433,7 @@ class Nested(PassThrough[JSON]):
         return schema.object(properties=properties, **kwargs)
 
     def filter(self,
-               relation: str,
+               operator: str,
                values: Iterable[AnyJSON | ApiRange]
                ) -> Iterable[JSON | IndexRange[JSON]]:
         nested_object = one(values)
@@ -470,11 +470,11 @@ class ClosedRange[N: PrimitiveJSON, X: IndexForm](FieldType[Range[N], IndexRange
         return self._api_range_schema(self.ends_type.api_schema)
 
     @property
-    def supported_filter_relations(self) -> tuple[str, ...]:
+    def supported_filter_operators(self) -> tuple[str, ...]:
         return 'is', 'within', 'contains', 'intersects'
 
-    def api_filter_schema(self, relation: str) -> JSON:
-        if relation == 'contains':
+    def api_filter_schema(self, operator: str) -> JSON:
+        if operator == 'contains':
             # A range can contain a range or a value
             return schema.union(self.ends_type.api_schema, self.api_schema)
         else:
@@ -484,17 +484,17 @@ class ClosedRange[N: PrimitiveJSON, X: IndexForm](FieldType[Range[N], IndexRange
         return self.ends_type._from_api_range(value)
 
     def filter(self,
-               relation: str,
+               operator: str,
                values: Iterable[AnyJSON]
                ) -> Iterable[IndexRange[X]]:
         result = []
         for value in values:
             if isinstance(value, list):
                 pass
-            elif relation == 'contains' and isinstance(value, reify(PrimitiveJSON)):
+            elif operator == 'contains' and isinstance(value, reify(PrimitiveJSON)):
                 value = [value, value]
             else:
-                assert False, (relation, value)
+                assert False, (operator, value)
             result.append(self.to_index(self.from_api(value)))
         return result
 

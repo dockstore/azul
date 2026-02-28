@@ -229,42 +229,42 @@ class RequestParameterValidationTest(DCP1CannedBundleTestCase,
             ),
             (
                 '{"sampleDisease": {"is": "H syndrome"}}',
-                'The value of the `is` relation in the `filters` parameter '
+                'The value of the `is` operator in the `filters` parameter '
                 'entry for `sampleDisease` is not a list'
             ),
             (
                 '{"sampleDisease": {"was": "H syndrome"}}',
-                "The relation in the `filters` parameter entry "
+                "The operator in the `filters` parameter entry "
                 "for `sampleDisease` must be one of "
                 "('is', 'contains', 'within', 'intersects')"
             ),
             (
                 '{"fileSource": {"is": [["foo:23/33"]]}}',
-                'The value of the `is` relation in the `filters` parameter entry '
+                'The value of the `is` operator in the `filters` parameter entry '
                 'for `fileSource` is invalid'
             ),
             (
                 '{"accessions": {"within": ["foo"]}}',
-                'The field `accessions` can only be filtered by the `is` relation'
+                'The field `accessions` can only be filtered by the `is` operator'
             ),
             (
                 '{"accessions": {"is": []}}',
-                'The value of the `is` relation in the `filters` parameter entry '
+                'The value of the `is` operator in the `filters` parameter entry '
                 'for `accessions` is not a single-item list'
             ),
             (
                 '{"accessions": {"is": ["foo"]}}',
-                'The value of the `is` relation in the `filters` parameter entry '
+                'The value of the `is` operator in the `filters` parameter entry '
                 'for `accessions` must contain a dictionary'
             ),
             (
                 '{"accessions": {"is": [{"foo": "geostudies"}]}}',
-                "The value of the `is` relation in the `filters` parameter entry "
+                "The value of the `is` operator in the `filters` parameter entry "
                 "for `accessions` has invalid properties `{'foo'}`"
             ),
             (
                 '{"accessions": {"is": [{"namespace": "baz", "foo": "bar"}]}}',
-                "The value of the `is` relation in the `filters` parameter entry "
+                "The value of the `is` operator in the `filters` parameter entry "
                 "for `accessions` has invalid properties `{'foo'}`"
             )
         ]

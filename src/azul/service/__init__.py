@@ -546,7 +546,7 @@ class Filters:
         explicit_sources = extract_filter(source_id_name, default=None)
         accessible_name = special_fields.accessible.name
         accessible = extract_filter(accessible_name, default={False, True})
-        source_relation = 'is'
+        source_operator = 'is'
         sources: set | list | None
 
         if limit_access:
@@ -572,7 +572,7 @@ class Filters:
             elif accessible == {False}:
                 if explicit_sources is None:
                     sources = self.source_ids
-                    source_relation = 'is_not'
+                    source_operator = 'is_not'
                 else:
                     sources = explicit_sources - self.source_ids
             else:
@@ -581,7 +581,7 @@ class Filters:
         if sources is None:
             assert limit_access is False, limit_access
         else:
-            filters[source_id_name] = {source_relation: sorted(sources)}
+            filters[source_id_name] = {source_operator: sorted(sources)}
 
         if limit_access:
             assert set(filters[source_id_name]['is']) <= self.source_ids

@@ -1250,14 +1250,14 @@ class TestIndexResponse(IndexResponseTestCase):
             ('within', (gte2 + 10000, lte2 - 1000), []),
             ('intersects', (lte2 + 100, gte0 - 199000), [])
         ]
-        for relation, value, expected_hits in test_cases:
+        for operator, value, expected_hits in test_cases:
             for ends_type in int, float:
                 if isinstance(value, (tuple, list)):
                     value = list(map(ends_type, value))
                 else:
                     value = ends_type(value)
-                with self.subTest(relation=relation, value=value, ends_type=ends_type):
-                    params = self._params(filters={'organismAgeRange': {relation: [value]}},
+                with self.subTest(operator=operator, value=value, ends_type=ends_type):
+                    params = self._params(filters={'organismAgeRange': {operator: [value]}},
                                           order='desc',
                                           sort='entryId')
                     url = self.base_url.set(path='/index/projects', args=params)

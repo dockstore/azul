@@ -489,53 +489,53 @@ def validate_filters(filters):
     for field, filter_ in filters.items():
         validate_field(field, include_synthetic=True)
         try:
-            relation, values = one(filter_.items())
+            operator, values = one(filter_.items())
         except Exception:
             raise BRE(f'The `filters` parameter entry for `{field}` '
                       f'must be a single-item dictionary')
         else:
             if field in accessibility_fields:
-                valid_relations = ('is',)
+                valid_operators = ('is',)
                 disallow_null = True
             else:
-                valid_relations = ('is', 'contains', 'within', 'intersects')
+                valid_operators = ('is', 'contains', 'within', 'intersects')
                 disallow_null = False
-            if relation in valid_relations:
+            if operator in valid_operators:
                 if not isinstance(values, list):
-                    raise BRE(f'The value of the `{relation}` relation in the `filters` '
+                    raise BRE(f'The value of the `{operator}` operator in the `filters` '
                               f'parameter entry for `{field}` is not a list')
                 if disallow_null and None in values:
                     raise BRE(f'The `{field}` field does not support null values')
             else:
-                raise BRE(f'The relation in the `filters` parameter entry '
-                          f'for `{field}` must be one of {valid_relations}')
-            if relation == 'is':
+                raise BRE(f'The operator in the `filters` parameter entry '
+                          f'for `{field}` must be one of {valid_operators}')
+            if operator == 'is':
                 value_types = reify(JSON | PrimitiveJSON)
                 if not all(isinstance(value, value_types) for value in values):
-                    raise BRE(f'The value of the `is` relation in the `filters` '
+                    raise BRE(f'The value of the `is` operator in the `filters` '
                               f'parameter entry for `{field}` is invalid')
             if field == 'organismAge':
                 validate_organism_age_filter(values)
             field_type = field_types[field]
             if isinstance(field_type, Nested):
-                if relation != 'is':
-                    raise BRE(f'The field `{field}` can only be filtered by the `is` relation')
+                if operator != 'is':
+                    raise BRE(f'The field `{field}` can only be filtered by the `is` operator')
                 try:
                     nested = one(values)
                 except ValueError:
-                    raise BRE(f'The value of the `is` relation in the `filters` '
+                    raise BRE(f'The value of the `is` operator in the `filters` '
                               f'parameter entry for `{field}` is not a single-item list')
                 try:
                     require(isinstance(nested, dict))
                 except AssertionError as e:
                     if R.caused(e):
-                        raise BRE(f'The value of the `is` relation in the `filters` '
+                        raise BRE(f'The value of the `is` operator in the `filters` '
                                   f'parameter entry for `{field}` must contain a dictionary')
                     else:
                         raise
                 extra_props = nested.keys() - field_type.properties.keys()
                 if extra_props:
-                    raise BRE(f'The value of the `is` relation in the `filters` '
+                    raise BRE(f'The value of the `is` operator in the `filters` '
                               f'parameter entry for `{field}` has invalid properties `{extra_props}`')
 
 
@@ -660,19 +660,19 @@ page_spec = schema.object(
 
 
 def _filter_schema(field_type: FieldType) -> JSON:
-    relations = field_type.supported_filter_relations
+    operators = field_type.supported_filter_operators
 
-    def filter_schema(relation: str) -> JSON:
+    def filter_schema(operator: str) -> JSON:
         return schema.object(
-            properties={relation: schema.array(field_type.api_filter_schema(relation))},
-            required=[relation],
+            properties={operator: schema.array(field_type.api_filter_schema(operator))},
+            required=[operator],
             additionalProperties=False
         )
 
-    if len(relations) == 1:
-        return filter_schema(one(relations))
+    if len(operators) == 1:
+        return filter_schema(one(operators))
     else:
-        return {'oneOf': list(map(filter_schema, relations))}
+        return {'oneOf': list(map(filter_schema, operators))}
 
 
 types = app.repository_controller.field_types(app.catalog)
@@ -690,17 +690,17 @@ filters_param_spec = params.query(
     description=fd('''
         Criteria to filter entities from the search results.
 
-        Each filter consists of a field name, a relation (relational operator),
-        and an array of field values. The available relations are "is",
+        Each filter consists of a field name, an operator,
+        and an array of field values. The available operators are "is",
         "within", "contains", and "intersects". Multiple filters are combined
         using "and" logic. An entity must match all filters to be included in
         the response. How multiple field values within a single filter are
-        combined depends on the relation.
+        combined depends on the operator.
 
-        For the "is" relation, multiple values are combined using "or" logic.
+        For the "is" operator, multiple values are combined using "or" logic.
         For example, `{"fileFormat": {"is": ["fastq", "fastq.gz"]}}` selects
         entities where the file format is either "fastq" or "fastq.gz". For the
-        "within", "intersects", and "contains" relations, the field values must
+        "within", "intersects", and "contains" operators, the field values must
         come in nested pairs specifying upper and lower bounds, and multiple
         pairs are combined using "and" logic. For example, `{"donorCount":
         {"within": [[1,5], [5,10]]}}` selects entities whose donor organism
