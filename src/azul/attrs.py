@@ -15,7 +15,6 @@ from typing import (
     Iterator,
     Optional,
     Self,
-    Tuple,
     TypeAliasType,
     TypeVar,
     TypedDict,
@@ -149,7 +148,7 @@ def as_annotated():
 
 
 class _AsAnnotated:
-    _cache: Optional[Tuple[attrs.Attribute, Union[type, Tuple[type]]]] = None
+    _cache: Optional[tuple[attrs.Attribute, Union[type, tuple[type]]]] = None
 
     def __call__(self, _instance, field, value):
         reified_type = self._reify(field)
