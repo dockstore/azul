@@ -7,6 +7,7 @@ from collections import (
     defaultdict,
 )
 from collections.abc import (
+    Collection,
     Set,
 )
 from functools import (
@@ -22,7 +23,6 @@ from operator import (
 )
 from typing import (
     Callable,
-    Collection,
     Iterable,
     Iterator,
     Self,

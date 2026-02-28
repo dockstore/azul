@@ -1,7 +1,9 @@
+from collections.abc import (
+    Collection,
+)
 import logging
 from typing import (
     Any,
-    Collection,
     Mapping,
     Tuple,
     cast,
