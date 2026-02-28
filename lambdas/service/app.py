@@ -664,7 +664,9 @@ def _filter_schema(field_type: FieldType) -> JSON:
 
     def filter_schema(operator: str) -> JSON:
         return schema.object(
-            properties={operator: schema.array(field_type.api_filter_schema(operator))},
+            properties={
+                operator: field_type.api_filter_values_schema(operator)
+            },
             required=[operator],
             additionalProperties=False
         )

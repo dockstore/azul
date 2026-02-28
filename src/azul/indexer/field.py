@@ -153,7 +153,10 @@ class FieldType[N, X: IndexForm](metaclass=ABCMeta):
         """
         return 'is',
 
-    def api_filter_schema(self, operator: str) -> JSON:
+    def api_filter_values_schema(self, operator: str) -> JSON:
+        return schema.array(self.api_filter_value_schema(operator))
+
+    def api_filter_value_schema(self, operator: str) -> JSON:
         """
         The JSONSchema describing the right-handside operand of the given filter
         operator in OpenAPI specifications when the left-handside operand is a
@@ -269,13 +272,13 @@ class Nullable[N, X: IndexForm](FieldType[N | None, X], metaclass=ABCMeta):
 
 class NullableScalar[N, X: IndexForm](Nullable[N, X], metaclass=ABCMeta):
 
-    def api_filter_schema(self, operator: str) -> JSON:
+    def api_filter_value_schema(self, operator: str) -> JSON:
         if operator == 'within':
             # The LHS operand of a range operator can't be null
             api_type = schema.make(self.native_type)
             return self._api_range_schema(api_type)
         else:
-            return super().api_filter_schema(operator)
+            return super().api_filter_value_schema(operator)
 
     @property
     def supported_filter_operators(self) -> tuple[str, ...]:
@@ -420,11 +423,11 @@ class Nested(PassThrough[JSON]):
         self.agg_property = first(properties.keys())
         self.properties = properties
 
-    def api_filter_schema(self, operator: str) -> JSON:
+    def api_filter_value_schema(self, operator: str) -> JSON:
         assert operator == 'is'
         properties, required = {}, []
         for field, field_type in self.properties.items():
-            properties[field] = field_type.api_filter_schema(operator)
+            properties[field] = field_type.api_filter_value_schema(operator)
             if not isinstance(field_type, Nullable):
                 required.append(field)
         kwargs: dict[str, AnyJSON] = dict(additionalProperties=False)
@@ -473,7 +476,7 @@ class ClosedRange[N: PrimitiveJSON, X: IndexForm](FieldType[Range[N], IndexRange
     def supported_filter_operators(self) -> tuple[str, ...]:
         return 'is', 'within', 'contains', 'intersects'
 
-    def api_filter_schema(self, operator: str) -> JSON:
+    def api_filter_value_schema(self, operator: str) -> JSON:
         if operator == 'contains':
             # A range can contain a range or a value
             return schema.union(self.ends_type.api_schema, self.api_schema)
