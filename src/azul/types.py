@@ -654,6 +654,60 @@ def check_type(type_expression: TypeExpression, value: Any) -> bool:
     >>> check_type(list[str], [''])
     True
 
+    >>> check_type(typing.List[str], [''])
+    True
+
+    Intentional deviations from Python's type system: booleans are not
+    considered integers and strings are not considered sequences.
+
+    We believe that isinstance(True, int) is a design flaw in Python. It
+    results in `[True, 3]` passing as list[int] which causes problems in one of
+    the main use cases for this function: validating JSON using TypedDicts. The
+    same is the case for strings being sequences.
+
+    Generally speaking, both behaviors are surprising. If a string is a
+    sequence, what is it a sequence of? The answer would have to be characters
+    but Python doesn't have a dedicated type for that. So instead, Python
+    represents the indivdual characters as strings which represents type
+    recursion:
+
+    >>> 'x'[0][0][0][0][0][0][0][0][0]
+    'x'
+
+    Many other languages consider characters to be unsigned integers. Python
+    could have opted to do that, making `ord(s) == s[0]`.
+
+    https://github.com/python/typing/issues/256
+
+    >>> check_type(int, True)
+    False
+
+    >>> check_type(Sequence[str], ''), check_type(Sequence[int], '')
+    (False, False)
+
+    Note that we need to extend the deviation to superclasses of Sequence, at
+    least those that are generic in the type of the members,
+    otherwise the empty string would be considered `Iterable[T]` with T being
+    any other type. This is because the empty string lacks any elements to be
+    check for T. We may want to refine this behavior but that would require a
+    static assignability check like typing.assert_type(Iterable[int], '') which
+    only works in a type checker like mypy.
+
+    >>> check_type(Iterable[str], ''), check_type(Iterable[int], '')
+    (False, False)
+
+    >>> from collections.abc import Sized, Collection
+
+    >>> check_type(Collection[str], ''), check_type(Collection[int], '')
+    (False, False)
+
+    However, a string still passes for a non-generic baseclasses of Sequence:
+
+    >>> check_type(Sized, '')
+    True
+    >>> check_type(typing.Sized, '')
+    True
+
     >>> type X[T] = dict[int, set[T] | list[T|None]]
     >>> x = {1: {'a'}, 2: [None, 'b']}
     >>> check_type(X[str], x)
@@ -779,13 +833,15 @@ def _check_type(t: TypeExpression | TypeVar,
             return True
         else:
             return False
-    elif t is int and isinstance(x, bool):
-        # We believe that isinstance(0, bool) is a design flaw in Python.
-        # This function was primarily written to aid in the validation of JSON
-        # and TypedDict. We want to reject `[true, 42]` passing as a list[int].
-        return False
     elif isinstance(t, type):
-        return isinstance(x, t)
+        if isinstance(x, str) and issubclass(t, Iterable) and t is not str:
+            # See doctests
+            return False
+        elif t is int and isinstance(x, bool):
+            # See doctests
+            return False
+        else:
+            return isinstance(x, t)
     else:
         assert False, ('Unsupported type', t)
 
