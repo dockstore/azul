@@ -74,6 +74,11 @@ from azul.types import (
 
 
 class DRSController(ServiceController):
+    deprecated_spec = {
+        'summary': 'This endpoint will be removed in the future.',
+        'tags': ['Deprecated'],
+        'deprecated': True
+    }
 
     def handlers(self) -> dict[str, Any]:
         @self.app.route(
@@ -178,7 +183,7 @@ class DRSController(ServiceController):
             methods=['GET'],
             enabled=config.is_dss_enabled(),
             cors=True,
-            spec=deprecated_spec
+            spec=self.deprecated_spec
         )
         def dos_get_data_object(file_uuid):
             """

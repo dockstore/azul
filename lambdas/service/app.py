@@ -556,12 +556,6 @@ def validate_json_param(name: str, value: str) -> MutableJSON:
         raise BRE(f'The {name!r} parameter is not valid JSON')
 
 
-deprecated_spec = {
-    'summary': 'This endpoint will be removed in the future.',
-    'tags': ['Deprecated'],
-    'deprecated': True
-}
-
 globals().update(app.catalog_controller.handlers())
 
 generic_object_spec = schema.object(additionalProperties=True)
