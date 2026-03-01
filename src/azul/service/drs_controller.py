@@ -13,6 +13,9 @@ from datetime import (
     datetime,
 )
 import time
+from typing import (
+    Any,
+)
 import urllib.parse
 
 from chalice import (
@@ -48,6 +51,8 @@ from azul.drs import (
     drs_object_url_path,
 )
 from azul.openapi import (
+    format_description as fd,
+    params,
     responses,
     schema,
 )
@@ -56,6 +61,8 @@ from azul.plugins import (
 )
 from azul.service.controller import (
     ServiceController,
+    validate_catalog,
+    validate_params,
 )
 from azul.service.repository_service import (
     RepositoryService,
@@ -67,6 +74,129 @@ from azul.types import (
 
 
 class DRSController(ServiceController):
+
+    def handlers(self) -> dict[str, Any]:
+        @self.app.route(
+            drs_object_url_path(object_id='{file_uuid}'),
+            methods=['GET'],
+            enabled=config.is_dss_enabled(),
+            cors=True,
+            spec={
+                'summary': 'Get file DRS object',
+                'tags': ['DRS'],
+                'description': fd('''
+                    This endpoint returns object metadata, and a list of access methods
+                    that can be used to fetch object bytes.
+                ''') + drs_spec_description,
+                'parameters': file_fqid_parameters_spec,
+                'responses': {
+                    '200': {
+                        'description': fd(
+                            '''
+                            A DRS object is returned. Two [`AccessMethod`s][1] are
+                            included:
+
+                            [1]: {link}
+
+                            {access_methods}
+
+                            If the object is not immediately ready, an `access_id` will
+                            be returned instead of an `access_url`.
+                            ''',
+                            access_methods='\n'.join(f'- {am!s}' for am in AccessMethod),
+                            link='https://ga4gh.github.io/data-repository-service-schemas'
+                                 '/preview/release/drs-1.1.0/docs/#_accessmethod'),
+                        **self.get_object_response_schema()
+                    }
+                }
+            }
+        )
+        def get_data_object(file_uuid):
+            """
+            Return a DRS data object dictionary for a given DSS file UUID and version.
+
+            If the file is already checked out, we can return a drs_object with a URL
+            immediately. Otherwise, we need to send the request through the /access
+            endpoint.
+            """
+            query_params = self.app.current_request.query_params or {}
+            validate_params(query_params, version=str)
+            return self.get_object(file_uuid, query_params)
+
+        @self.app.route(
+            drs_object_url_path(object_id='{file_uuid}', access_id='{access_id}'),
+            methods=['GET'],
+            enabled=config.is_dss_enabled(),
+            cors=True,
+            spec={
+                'summary': 'Get a file with an access ID',
+                'description': fd('''
+                    This endpoint returns a URL that can be used to fetch the bytes of a
+                    DRS object.
+
+                    This method only needs to be called when using an `AccessMethod`
+                    that contains an `access_id`.
+
+                    An `access_id` is returned when the underlying file is not ready.
+                    When the underlying repository is the DSS, the 202 response allowed
+                    time for the DSS to do a checkout.
+                ''') + drs_spec_description,
+                'parameters': [
+                    *file_fqid_parameters_spec,
+                    params.path('access_id', str, description='Access ID returned from a previous request')
+                ],
+                'responses': {
+                    '202': {
+                        'description': fd('''
+                            This response is issued if the object is not yet ready.
+                            Respect the `Retry-After` header, then try again.
+                        '''),
+                        'headers': {
+                            'Retry-After': responses.header(str, description=fd('''
+                                Recommended number of seconds to wait before requesting
+                                the URL specified in the Location header.
+                            '''))
+                        }
+                    },
+                    '200': {
+                        'description': fd('''
+                            The object is ready. The URL is in the response object.
+                        '''),
+                        **responses.json_content(schema.object(url=str))
+                    }
+                },
+                'tags': ['DRS']
+            }
+        )
+        def get_data_object_access(file_uuid, access_id):
+            query_params = self.app.current_request.query_params or {}
+            validate_params(query_params, version=str)
+            return self.get_object_access(access_id, file_uuid, query_params)
+
+        @self.app.route(
+            dos_object_url_path('{file_uuid}'),
+            methods=['GET'],
+            enabled=config.is_dss_enabled(),
+            cors=True,
+            spec=deprecated_spec
+        )
+        def dos_get_data_object(file_uuid):
+            """
+            Return a DRS data object dictionary for a given DSS file UUID and version.
+            """
+            request = self.app.current_request
+            query_params = request.query_params or {}
+            validate_params(query_params,
+                            version=str,
+                            catalog=validate_catalog)
+            catalog = self.app.catalog
+            file_version = query_params.get('version')
+            return self.dos_get_object(catalog,
+                                       file_uuid,
+                                       file_version,
+                                       request.authentication)
+
+        return locals()
 
     @cached_property
     def service(self) -> RepositoryService:
