@@ -937,7 +937,7 @@ class AzulChaliceApp(Chalice):
 
 
 @attrs.frozen(kw_only=True)
-class AppController:
+class Controller:
     app: AzulChaliceApp
 
     @property

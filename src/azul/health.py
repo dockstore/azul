@@ -38,8 +38,8 @@ from azul import (
     require,
 )
 from azul.chalice import (
-    AppController,
     AzulChaliceApp,
+    Controller,
     LambdaMetric,
 )
 from azul.deployment import (
@@ -92,7 +92,7 @@ class health_property(cached_property):
 
 
 @attr.s(frozen=True, kw_only=True, auto_attribs=True)
-class HealthController(AppController):
+class HealthController(Controller):
     app_name: str
 
     @cached_property
