@@ -10,9 +10,6 @@ from inspect import (
 )
 import json
 import logging.config
-from typing import (
-    Callable,
-)
 import urllib.parse
 
 import attr
@@ -578,19 +575,6 @@ def validate_json_param(name: str, value: str) -> MutableJSON:
         return json.loads(value)
     except json.decoder.JSONDecodeError:
         raise BRE(f'The {name!r} parameter is not valid JSON')
-
-
-class Mandatory:
-    """
-    Validation wrapper signifying that a parameter is mandatory.
-    """
-
-    def __init__(self, validator: Callable) -> None:
-        super().__init__()
-        self._validator = validator
-
-    def __call__(self, param):
-        return self._validator(param)
 
 
 deprecated_spec = {
