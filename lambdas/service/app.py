@@ -5,9 +5,7 @@ from collections.abc import (
 from functools import (
     partial,
 )
-from inspect import (
-    signature,
-)
+
 import json
 import logging.config
 import urllib.parse
@@ -583,41 +581,7 @@ deprecated_spec = {
     'deprecated': True
 }
 
-
-@app.route(
-    '/index/catalogs',
-    methods=['GET'],
-    cors=True,
-    spec={
-        'summary': 'List all available catalogs.',
-        'tags': ['Index'],
-        'responses': {
-            '200': {
-                'description': fd('''
-                    The name of the default catalog and a list of all available
-                    catalogs. For each catalog, the response includes the name
-                    of the atlas the catalog belongs to, a flag indicating
-                    whether the catalog is for internal use only as well as the
-                    names and types of plugins currently active for the catalog.
-                    For some plugins, the response includes additional
-                    configuration properties, such as the sources used by the
-                    repository plugin to populate the catalog or the set of
-                    available [indices][1].
-
-                    [1]: #operations-Index-get_index__entity_type_
-                '''),
-                **responses.json_content(
-                    # The custom return type annotation is an experiment. Please
-                    # don't adopt this just yet elsewhere in the program.
-                    one(signature(app.catalog_controller.list_catalogs).return_annotation.__metadata__)
-                )
-            }
-        }
-    }
-)
-def list_catalogs():
-    return app.catalog_controller.list_catalogs()
-
+globals().update(app.catalog_controller.handlers())
 
 generic_object_spec = schema.object(additionalProperties=True)
 array_of_object_spec = schema.array(generic_object_spec)
