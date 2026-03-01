@@ -759,11 +759,6 @@ def repository_head_search_spec():
     }
 
 
-repository_summary_spec = {
-    'tags': ['Index'],
-    'parameters': [app.repository_controller.catalog_param_spec, app.repository_controller.filters_param_spec]
-}
-
 globals().update(app.repository_controller.handlers())
 
 

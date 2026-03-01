@@ -60,6 +60,13 @@ log = logging.getLogger(__name__)
 class RepositoryController(ServiceController):
     array_of_object_spec = schema.array(schema.object(additionalProperties=True))
 
+    @cached_property
+    def repository_summary_spec(self):
+        return {
+            'tags': ['Index'],
+            'parameters': [self.catalog_param_spec, self.filters_param_spec]
+        }
+
     def handlers(self) -> dict[str, Any]:
         @self.app.route(
             '/index/{entity_type}',
@@ -154,7 +161,7 @@ class RepositoryController(ServiceController):
                         )
                     }
                 },
-                **repository_summary_spec
+                **self.repository_summary_spec
             }
         )
         @self.app.route(
@@ -162,7 +169,7 @@ class RepositoryController(ServiceController):
             methods=['HEAD'],
             spec={
                 **repository_head_spec(for_summary=True),
-                **repository_summary_spec
+                **self.repository_summary_spec
             }
         )
         def get_summary():
