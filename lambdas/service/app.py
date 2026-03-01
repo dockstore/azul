@@ -935,15 +935,4 @@ repository_files_spec = {
 
 globals().update(app.download_controller.handlers())
 
-drs_spec_description = fd('''
-    This is a partial implementation of the [DRS 1.0.0 spec][1]. Not all
-    features are implemented. This endpoint acts as a DRS-compliant proxy for
-    accessing files in the underlying repository.
-
-    [1]: https://ga4gh.github.io/data-repository-service-schemas/preview/release/drs-1.0.0/docs/
-
-    Any errors encountered from the underlying repository are forwarded on as
-    errors from this endpoint.
-''')
-
 globals().update(app.drs_controller.handlers())

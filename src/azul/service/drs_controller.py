@@ -80,6 +80,17 @@ class DRSController(ServiceController):
         'deprecated': True
     }
 
+    drs_spec_description = fd('''
+        This is a partial implementation of the [DRS 1.0.0 spec][1]. Not all
+        features are implemented. This endpoint acts as a DRS-compliant proxy for
+        accessing files in the underlying repository.
+
+        [1]: https://ga4gh.github.io/data-repository-service-schemas/preview/release/drs-1.0.0/docs/
+
+        Any errors encountered from the underlying repository are forwarded on as
+        errors from this endpoint.
+    ''')
+
     def handlers(self) -> dict[str, Any]:
         @self.app.route(
             drs_object_url_path(object_id='{file_uuid}'),
@@ -92,7 +103,7 @@ class DRSController(ServiceController):
                 'description': fd('''
                     This endpoint returns object metadata, and a list of access methods
                     that can be used to fetch object bytes.
-                ''') + drs_spec_description,
+                ''') + self.drs_spec_description,
                 'parameters': file_fqid_parameters_spec,
                 'responses': {
                     '200': {
@@ -145,7 +156,7 @@ class DRSController(ServiceController):
                     An `access_id` is returned when the underlying file is not ready.
                     When the underlying repository is the DSS, the 202 response allowed
                     time for the DSS to do a checkout.
-                ''') + drs_spec_description,
+                ''') + self.drs_spec_description,
                 'parameters': [
                     *file_fqid_parameters_spec,
                     params.path('access_id', str, description='Access ID returned from a previous request')
