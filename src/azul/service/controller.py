@@ -9,17 +9,22 @@ from chalice import (
     BadRequestError as BRE,
     NotFoundError,
 )
+from more_itertools import (
+    one,
+)
 
 from azul import (
     CatalogName,
     R,
     RequirementError,
+    cached_property,
     config,
 )
 from azul.auth import (
     Authentication,
 )
 from azul.openapi import (
+    application_json,
     format_description as fd,
     params,
     schema,
@@ -61,6 +66,82 @@ class ServiceController(SourceController):
             ''')
         )
     ]
+
+    @cached_property
+    def catalog_param_spec(self):
+        return params.query(
+            'catalog',
+            schema.optional(schema.default(self.app.catalog,
+                                           form=schema.enum(*config.catalogs))),
+            description='The name of the catalog to query.')
+
+    @cached_property
+    def filters_param_spec(self):
+        types = self.app.repository_controller.field_types(self.app.catalog)
+
+        def _filter_schema(field_type):
+            operators = field_type.supported_filter_operators
+
+            def filter_schema(operator):
+                return schema.object(
+                    properties={
+                        operator: field_type.api_filter_values_schema(operator)
+                    },
+                    required=[operator],
+                    additionalProperties=False
+                )
+
+            if len(operators) == 1:
+                return filter_schema(one(operators))
+            else:
+                return {'oneOf': list(map(filter_schema, operators))}
+
+        return params.query(
+            'filters',
+            schema.optional(application_json(schema.object(
+                default='{}',
+                example={'cellCount': {'within': [[10000, 1000000000]]}},
+                properties={
+                    field: _filter_schema(types[field])
+                    for field in self.app.fields
+                }
+            ))),
+            description=fd('''
+                Criteria to filter entities from the search results.
+
+                Each filter consists of a field name, an operator, and an array of field
+                values. The available operators are "is", "within", "contains", and
+                "intersects". Multiple filters are combined using "and" logic. For an
+                entity to be included in the response, it must match all filters. How
+                multiple field values within a single filter are combined depends on the
+                operator.
+
+                For the "is" operator, multiple values are combined using "or" logic.
+                For example, `{"fileFormat": {"is": ["fastq", "fastq.gz"]}}` selects
+                entities where the file format is either "fastq" or "fastq.gz". For the
+                "within", "intersects", and "contains" operators, the field values must
+                come in nested pairs specifying upper and lower bounds, and multiple
+                pairs are combined using "and" logic. For example, `{"donorCount":
+                {"within": [[1,5], [5,10]]}}` selects entities whose donor organism
+                count falls within both ranges, i.e., is exactly 5.
+
+                The accessions field supports filtering for a specific accession and/or
+                namespace within a project. For example, `{"accessions": {"is": [
+                {"namespace":"array_express"}]}}` will filter for projects that have an
+                `array_express` accession. Similarly, `{"accessions": {"is": [
+                {"accession":"ERP112843"}]}}` will filter for projects that have the
+                accession `ERP112843` while `{"accessions": {"is": [
+                {"namespace":"array_express", "accession": "E-AAAA-00"}]}}` will filter
+                for projects that match both values.
+
+                The organismAge field is special in that it contains two property keys:
+                value and unit. For example, `{"organismAge": {"is": [{"value": "20",
+                "unit": "year"}]}}`. Both keys are required. `{"organismAge": {"is":
+                [null]}}` selects entities that have no organism age.''' + f'''
+
+                Supported field names are: {', '.join(self.app.fields)}
+            ''')
+        )
 
     def get_filters(self,
                     catalog: CatalogName,

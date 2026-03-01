@@ -195,8 +195,8 @@ class ManifestController(ServiceController):
                         [1]: #operations-Manifests-get_manifest_files
                     '''),
                     'parameters': [
-                        catalog_param_spec,
-                        filters_param_spec,
+                        self.catalog_param_spec,
+                        self.filters_param_spec,
                         params.query(
                             'format',
                             schema.optional(

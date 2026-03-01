@@ -190,7 +190,7 @@ class RepositoryController(ServiceController):
             spec={
                 'summary': 'List available data sources',
                 'tags': ['Repository'],
-                'parameters': [catalog_param_spec],
+                'parameters': [self.catalog_param_spec],
                 'responses': {
                     '200': {
                         'description': fd('''

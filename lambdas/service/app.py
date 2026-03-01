@@ -41,14 +41,12 @@ from azul.indexer.document import (
     EntityType,
 )
 from azul.indexer.field import (
-    FieldType,
     Nested,
 )
 from azul.logging import (
     configure_app_logging,
 )
 from azul.openapi import (
-    application_json,
     format_description as fd,
     params,
     responses,
@@ -579,84 +577,10 @@ page_spec = schema.object(
 )
 
 
-def _filter_schema(field_type: FieldType) -> JSON:
-    operators = field_type.supported_filter_operators
-
-    def filter_schema(operator: str) -> JSON:
-        return schema.object(
-            properties={
-                operator: field_type.api_filter_values_schema(operator)
-            },
-            required=[operator],
-            additionalProperties=False
-        )
-
-    if len(operators) == 1:
-        return filter_schema(one(operators))
-    else:
-        return {'oneOf': list(map(filter_schema, operators))}
-
-
-types = app.repository_controller.field_types(app.catalog)
-
-filters_param_spec = params.query(
-    'filters',
-    schema.optional(application_json(schema.object(
-        default='{}',
-        example={'cellCount': {'within': [[10000, 1000000000]]}},
-        properties={
-            field: _filter_schema(types[field])
-            for field in app.fields
-        }
-    ))),
-    description=fd('''
-        Criteria to filter entities from the search results.
-
-        Each filter consists of a field name, an operator, and an array of field
-        values. The available operators are "is", "within", "contains", and
-        "intersects". Multiple filters are combined using "and" logic. For an
-        entity to be included in the response, it must match all filters. How
-        multiple field values within a single filter are combined depends on the
-        operator.
-
-        For the "is" operator, multiple values are combined using "or" logic.
-        For example, `{"fileFormat": {"is": ["fastq", "fastq.gz"]}}` selects
-        entities where the file format is either "fastq" or "fastq.gz". For the
-        "within", "intersects", and "contains" operators, the field values must
-        come in nested pairs specifying upper and lower bounds, and multiple
-        pairs are combined using "and" logic. For example, `{"donorCount":
-        {"within": [[1,5], [5,10]]}}` selects entities whose donor organism
-        count falls within both ranges, i.e., is exactly 5.
-
-        The accessions field supports filtering for a specific accession and/or
-        namespace within a project. For example, `{"accessions": {"is": [
-        {"namespace":"array_express"}]}}` will filter for projects that have an
-        `array_express` accession. Similarly, `{"accessions": {"is": [
-        {"accession":"ERP112843"}]}}` will filter for projects that have the
-        accession `ERP112843` while `{"accessions": {"is": [
-        {"namespace":"array_express", "accession": "E-AAAA-00"}]}}` will filter
-        for projects that match both values.
-
-        The organismAge field is special in that it contains two property keys:
-        value and unit. For example, `{"organismAge": {"is": [{"value": "20",
-        "unit": "year"}]}}`. Both keys are required. `{"organismAge": {"is":
-        [null]}}` selects entities that have no organism age.''' + f'''
-
-        Supported field names are: {', '.join(app.fields)}
-    ''')
-)
-
-catalog_param_spec = params.query(
-    'catalog',
-    schema.optional(schema.default(app.catalog,
-                                   form=schema.enum(*config.catalogs))),
-    description='The name of the catalog to query.')
-
-
 def repository_search_params_spec():
     return [
-        catalog_param_spec,
-        filters_param_spec,
+        app.repository_controller.catalog_param_spec,
+        app.repository_controller.filters_param_spec,
         params.path(
             'entity_type',
             schema.enum(*app.metadata_plugin.exposed_indices.keys()),
@@ -777,7 +701,7 @@ def repository_id_spec():
         'summary': 'Detailed information on a particular entity.',
         'tags': ['Index'],
         'parameters': [
-            catalog_param_spec,
+            app.repository_controller.catalog_param_spec,
             params.path('entity_type', str, description='The type of the desired entity'),
             params.path('entity_id', str, description='The UUID of the desired entity')
         ],
@@ -837,7 +761,7 @@ def repository_head_search_spec():
 
 repository_summary_spec = {
     'tags': ['Index'],
-    'parameters': [catalog_param_spec, filters_param_spec]
+    'parameters': [app.repository_controller.catalog_param_spec, app.repository_controller.filters_param_spec]
 }
 
 globals().update(app.repository_controller.handlers())
@@ -856,63 +780,6 @@ def _hoist_parameters(query_params, request):
 
 
 globals().update(app.manifest_controller.handlers())
-
-repository_files_spec = {
-    'tags': ['Repository'],
-    'parameters': [
-        catalog_param_spec,
-        *app.download_controller.file_fqid_parameters_spec,
-        params.query(
-            'fileName',
-            schema.optional(str),
-            description=fd('''
-                The desired name of the file. The given value will be included
-                in the Content-Disposition header of the response. If absent, a
-                best effort to determine the file name from metadata will be
-                made. If that fails, the UUID of the file will be used instead.
-            ''')
-        ),
-        params.query(
-            'wait',
-            schema.optional(int),
-            description=fd('''
-                If 0, the client is responsible for honoring the waiting period
-                specified in the Retry-After response header. If 1, the server
-                will delay the response in order to consume as much of that
-                waiting period as possible. This parameter should only be set to
-                1 by clients who can't honor the `Retry-After` header,
-                preventing them from quickly exhausting the maximum number of
-                redirects. If the server cannot wait the full amount, any amount
-                of wait time left will still be returned in the Retry-After
-                header of the response.
-            ''')
-        ),
-        params.query(
-            'replica',
-            schema.optional(str),
-            description=fd('''
-                If the underlying repository offers multiple replicas of the
-                requested file, use the specified replica. Otherwise, this
-                parameter is ignored. If absent, the only replica — for
-                repositories that don't support replication — or the default
-                replica — for those that do — will be used.
-            ''')
-        ),
-        params.query(
-            'requestIndex',
-            schema.optional(int),
-            description='Do not use. Reserved for internal purposes.'
-        ),
-        params.query(
-            'drsUri',
-            schema.optional(str),
-            description='Do not use. Reserved for internal purposes.'
-        ),
-        params.query('token',
-                     schema.optional(str),
-                     description='Reserved. Do not pass explicitly.')
-    ]
-}
 
 globals().update(app.download_controller.handlers())
 

@@ -51,6 +51,7 @@ from azul.indexer.mirror_service import (
 )
 from azul.openapi import (
     format_description as fd,
+    params,
     responses,
     schema,
 )
@@ -78,6 +79,65 @@ log = logging.getLogger(__name__)
 class DownloadController(ServiceController):
 
     @cached_property
+    def repository_files_spec(self):
+        return {
+            'tags': ['Repository'],
+            'parameters': [
+                self.catalog_param_spec,
+                *self.file_fqid_parameters_spec,
+                params.query(
+                    'fileName',
+                    schema.optional(str),
+                    description=fd('''
+                        The desired name of the file. The given value will be included
+                        in the Content-Disposition header of the response. If absent, a
+                        best effort to determine the file name from metadata will be
+                        made. If that fails, the UUID of the file will be used instead.
+                    ''')
+                ),
+                params.query(
+                    'wait',
+                    schema.optional(int),
+                    description=fd('''
+                        If 0, the client is responsible for honoring the waiting period
+                        specified in the Retry-After response header. If 1, the server
+                        will delay the response in order to consume as much of that
+                        waiting period as possible. This parameter should only be set to
+                        1 by clients who can't honor the `Retry-After` header,
+                        preventing them from quickly exhausting the maximum number of
+                        redirects. If the server cannot wait the full amount, any amount
+                        of wait time left will still be returned in the Retry-After
+                        header of the response.
+                    ''')
+                ),
+                params.query(
+                    'replica',
+                    schema.optional(str),
+                    description=fd('''
+                        If the underlying repository offers multiple replicas of the
+                        requested file, use the specified replica. Otherwise, this
+                        parameter is ignored. If absent, the only replica — for
+                        repositories that don't support replication — or the default
+                        replica — for those that do — will be used.
+                    ''')
+                ),
+                params.query(
+                    'requestIndex',
+                    schema.optional(int),
+                    description='Do not use. Reserved for internal purposes.'
+                ),
+                params.query(
+                    'drsUri',
+                    schema.optional(str),
+                    description='Do not use. Reserved for internal purposes.'
+                ),
+                params.query('token',
+                             schema.optional(str),
+                             description='Reserved. Do not pass explicitly.')
+            ]
+        }
+
+    @cached_property
     def service(self) -> RepositoryService:
         return RepositoryService()
 
@@ -94,7 +154,7 @@ class DownloadController(ServiceController):
             interactive=False,
             cors=True,
             spec={
-                **repository_files_spec,
+                **self.repository_files_spec,
                 'summary': 'Redirect to a URL for downloading a given data file from the '
                            'underlying repository',
                 'description': fd('''
@@ -160,7 +220,7 @@ class DownloadController(ServiceController):
             methods=['GET'],
             cors=True,
             spec={
-                **repository_files_spec,
+                **self.repository_files_spec,
                 'summary': 'Request a URL for downloading a given data file',
                 'responses': {
                     '200': {
