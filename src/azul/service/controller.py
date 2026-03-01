@@ -67,6 +67,26 @@ class ServiceController(SourceController):
         )
     ]
 
+    @classmethod
+    def parameter_hoisting_note(cls,
+                                method: str,
+                                endpoint: str,
+                                equivalent_method: str
+                                ) -> str:
+        return fd('''
+            Any of the query parameters documented below can alternatively be passed
+            as a property of a JSON object in the body of the request. This can be
+            useful in case the value of the `filters` query parameter causes the URL
+            to exceed the maximum length of 8192 characters, resulting in a 413
+            Request Entity Too Large response.
+
+            The request `%s %s?filters={…}`, for example, is equivalent to  `%s %s`
+            with the body `{"filters": "{…}"}` in which any double quotes or
+            backslash characters inside `…` are escaped with another backslash. That
+            escaping is the requisite procedure for embedding one JSON structure
+            inside another.
+        ''' % (method, endpoint, equivalent_method, endpoint))
+
     @cached_property
     def catalog_param_spec(self):
         return params.query(

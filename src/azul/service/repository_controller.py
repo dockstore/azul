@@ -20,6 +20,7 @@ from azul import (
     CatalogName,
     cache,
     cached_property,
+    iif,
 )
 from azul.auth import (
     Authentication,
@@ -59,7 +60,113 @@ log = logging.getLogger(__name__)
 
 
 class RepositoryController(ServiceController):
-    array_of_object_spec = schema.array(schema.object(additionalProperties=True))
+    generic_object_spec = schema.object(additionalProperties=True)
+
+    array_of_object_spec = schema.array(generic_object_spec)
+
+    hit_spec = schema.object(
+        additionalProperties=True,
+        protocols=array_of_object_spec,
+        entryId=str,
+        sources=array_of_object_spec,
+        samples=array_of_object_spec,
+        specimens=array_of_object_spec,
+        cellLines=array_of_object_spec,
+        donorOrganisms=array_of_object_spec,
+        organoids=schema.array(str),
+        cellSuspensions=array_of_object_spec
+    )
+
+    page_spec = schema.object(
+        hits=schema.array(hit_spec),
+        pagination=generic_object_spec,
+        termFacets=generic_object_spec
+    )
+
+    def repository_id_spec(self):
+        search_spec_link = '#operations-Index-get_index__entity_type_'
+        return {
+            'summary': 'Detailed information on a particular entity.',
+            'tags': ['Index'],
+            'parameters': [
+                self.catalog_param_spec,
+                params.path('entity_type', str, description='The type of the desired entity'),
+                params.path('entity_id', str, description='The UUID of the desired entity')
+            ],
+            'responses': {
+                '200': {
+                    'description': fd(f'''
+                        This response describes a single entity. To search the index
+                        for multiple entities, see the [corresponding search
+                        endpoint]({search_spec_link}).
+
+                        The properties that are common to all entity types are
+                        listed in the schema below; however, additional properties
+                        may be present for certain entity types. With the exception
+                        of the entity's unique identifier, all properties are
+                        arrays, even in cases where only one value is present.
+
+                        The structures of the objects within these arrays are not
+                        perfectly consistent, since they may represent either
+                        singleton entities or aggregations depending on context.
+
+                        For example, any biomaterial that yields a cell suspension
+                        which yields a sequence file will be considered a "sample".
+                        Therefore, the `samples` field is polymorphic, and each
+                        sample may be either a specimen, an organoid, or a cell line
+                        (the field `sampleEntityType` can be used to discriminate
+                        between these cases).
+                    '''),
+                    **responses.json_content(self.hit_spec)
+                }
+            }
+        }
+
+    def repository_search_spec(self, *, post: bool):
+        id_spec_link = '#operations-Index-get_index__entity_type___entity_id_'
+        return {
+            'summary': fd(f'''
+                Search an index for entities of interest
+                {", with filters provided in the request body" if post else ""}.
+            '''),
+            'deprecated': post,
+            'description':
+                iif(post, self.parameter_hoisting_note('GET', '/index/files', 'POST') + fd('''
+
+                Note that the Swagger UI can't currently be used to pass a body.
+
+                Please also note that this endpoint should be considered beta and
+                may change or disappear in the future. That is the reason for the
+                deprecation.
+            ''')),
+            'tags': ['Index'],
+            'parameters': self.repository_search_params_spec(),
+            'responses': {
+                '200': {
+                    'description': fd(f'''
+                        Paginated list of entities that meet the search criteria
+                        ("hits"). The structure of these hits is documented under
+                        the [corresponding endpoint for a specific
+                        entity]({id_spec_link}).
+
+                        The `pagination` section describes the total number of hits
+                        and total number of pages, as well as user-supplied search
+                        parameters for page size and sorting behavior. It also
+                        provides links for navigating forwards and backwards between
+                        pages of results.
+
+                        The `termFacets` section tabulates the occurrence of unique
+                        values within nested fields of the `hits` section across all
+                        entities meeting the filter criteria (this includes entities
+                        not listed on the current page, meaning that this section
+                        will be invariable across all pages from the same search).
+                        Not every nested field is tabulated, but the set of
+                        tabulated fields is consistent between entity types.
+                    '''),
+                    **responses.json_content(self.page_spec)
+                }
+            }
+        }
 
     def repository_search_params_spec(self):
         return [
@@ -145,7 +252,7 @@ class RepositoryController(ServiceController):
         @self.app.route(
             '/index/{entity_type}',
             methods=['GET'],
-            spec=repository_search_spec(post=False),
+            spec=self.repository_search_spec(post=False),
             cors=True
         )
         # FIXME: Properly document the POST version of /index
@@ -154,7 +261,7 @@ class RepositoryController(ServiceController):
             '/index/{entity_type}',
             methods=['POST'],
             content_types=['application/json'],
-            spec=repository_search_spec(post=True),
+            spec=self.repository_search_spec(post=True),
             cors=True
         )
         @self.app.route(
@@ -166,7 +273,7 @@ class RepositoryController(ServiceController):
         @self.app.route(
             '/index/{entity_type}/{entity_id}',
             methods=['GET'],
-            spec=repository_id_spec(),
+            spec=self.repository_id_spec(),
             cors=True
         )
         def repository_search(entity_type: str, entity_id: str | None = None) -> JSON:

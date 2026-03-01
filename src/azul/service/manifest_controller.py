@@ -137,7 +137,7 @@ class ManifestController(ServiceController):
                         Swagger UI. Please use [PUT /fetch/manifest/files][1] instead.
 
                         [1]: #operations-Manifests-put_fetch_manifest_files
-                    ''') + parameter_hoisting_note('PUT', '/manifest/files', 'PUT')
+                    ''') + self.parameter_hoisting_note('PUT', '/manifest/files', 'PUT')
                     if initiate and not fetch else
                     fd('''
                         Check on the status of an ongoing manifest preparation job,
@@ -172,7 +172,7 @@ class ManifestController(ServiceController):
                         manifest generation job is done.
 
                         [1]: #operations-Manifests-put_manifest_files
-                    ''') + parameter_hoisting_note('PUT', '/fetch/manifest/files', 'PUT')
+                    ''') + self.parameter_hoisting_note('PUT', '/fetch/manifest/files', 'PUT')
                     if initiate and fetch else
                     fd('''
                         Check on the status of an ongoing manifest preparation job,

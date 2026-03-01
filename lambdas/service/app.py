@@ -24,7 +24,6 @@ from azul import (
     cache,
     cached_property,
     config,
-    iif,
     mutable_furl,
     require,
 )
@@ -48,9 +47,6 @@ from azul.logging import (
 )
 from azul.openapi import (
     format_description as fd,
-    params,
-    responses,
-    schema,
 )
 from azul.plugins import (
     ManifestFormat,
@@ -555,133 +551,6 @@ def validate_json_param(name: str, value: str) -> MutableJSON:
 
 
 globals().update(app.catalog_controller.handlers())
-
-generic_object_spec = schema.object(additionalProperties=True)
-hit_spec = schema.object(
-    additionalProperties=True,
-    protocols=app.repository_controller.array_of_object_spec,
-    entryId=str,
-    sources=app.repository_controller.array_of_object_spec,
-    samples=app.repository_controller.array_of_object_spec,
-    specimens=app.repository_controller.array_of_object_spec,
-    cellLines=app.repository_controller.array_of_object_spec,
-    donorOrganisms=app.repository_controller.array_of_object_spec,
-    organoids=schema.array(str),
-    cellSuspensions=app.repository_controller.array_of_object_spec
-)
-
-page_spec = schema.object(
-    hits=schema.array(hit_spec),
-    pagination=generic_object_spec,
-    termFacets=generic_object_spec
-)
-
-
-def parameter_hoisting_note(method: str,
-                            endpoint: str,
-                            equivalent_method: str
-                            ) -> str:
-    return fd('''
-        Any of the query parameters documented below can alternatively be passed
-        as a property of a JSON object in the body of the request. This can be
-        useful in case the value of the `filters` query parameter causes the URL
-        to exceed the maximum length of 8192 characters, resulting in a 413
-        Request Entity Too Large response.
-
-        The request `%s %s?filters={…}`, for example, is equivalent to  `%s %s`
-        with the body `{"filters": "{…}"}` in which any double quotes or
-        backslash characters inside `…` are escaped with another backslash. That
-        escaping is the requisite procedure for embedding one JSON structure
-        inside another.
-    ''' % (method, endpoint, equivalent_method, endpoint))
-
-
-def repository_search_spec(*, post: bool):
-    id_spec_link = '#operations-Index-get_index__entity_type___entity_id_'
-    return {
-        'summary': fd(f'''
-            Search an index for entities of interest
-            {", with filters provided in the request body" if post else ""}.
-        '''),
-        'deprecated': post,
-        'description':
-            iif(post, parameter_hoisting_note('GET', '/index/files', 'POST') + fd('''
-
-            Note that the Swagger UI can't currently be used to pass a body.
-
-            Please also note that this endpoint should be considered beta and
-            may change or disappear in the future. That is the reason for the
-            deprecation.
-        ''')),
-        'tags': ['Index'],
-        'parameters': app.repository_controller.repository_search_params_spec(),
-        'responses': {
-            '200': {
-                'description': fd(f'''
-                    Paginated list of entities that meet the search criteria
-                    ("hits"). The structure of these hits is documented under
-                    the [corresponding endpoint for a specific
-                    entity]({id_spec_link}).
-
-                    The `pagination` section describes the total number of hits
-                    and total number of pages, as well as user-supplied search
-                    parameters for page size and sorting behavior. It also
-                    provides links for navigating forwards and backwards between
-                    pages of results.
-
-                    The `termFacets` section tabulates the occurrence of unique
-                    values within nested fields of the `hits` section across all
-                    entities meeting the filter criteria (this includes entities
-                    not listed on the current page, meaning that this section
-                    will be invariable across all pages from the same search).
-                    Not every nested field is tabulated, but the set of
-                    tabulated fields is consistent between entity types.
-                '''),
-                **responses.json_content(page_spec)
-            }
-        }
-    }
-
-
-def repository_id_spec():
-    search_spec_link = '#operations-Index-get_index__entity_type_'
-    return {
-        'summary': 'Detailed information on a particular entity.',
-        'tags': ['Index'],
-        'parameters': [
-            app.repository_controller.catalog_param_spec,
-            params.path('entity_type', str, description='The type of the desired entity'),
-            params.path('entity_id', str, description='The UUID of the desired entity')
-        ],
-        'responses': {
-            '200': {
-                'description': fd(f'''
-                    This response describes a single entity. To search the index
-                    for multiple entities, see the [corresponding search
-                    endpoint]({search_spec_link}).
-
-                    The properties that are common to all entity types are
-                    listed in the schema below; however, additional properties
-                    may be present for certain entity types. With the exception
-                    of the entity's unique identifier, all properties are
-                    arrays, even in cases where only one value is present.
-
-                    The structures of the objects within these arrays are not
-                    perfectly consistent, since they may represent either
-                    singleton entities or aggregations depending on context.
-
-                    For example, any biomaterial that yields a cell suspension
-                    which yields a sequence file will be considered a "sample".
-                    Therefore, the `samples` field is polymorphic, and each
-                    sample may be either a specimen, an organoid, or a cell line
-                    (the field `sampleEntityType` can be used to discriminate
-                    between these cases).
-                '''),
-                **responses.json_content(hit_spec)
-            }
-        }
-    }
-
 
 globals().update(app.repository_controller.handlers())
 
