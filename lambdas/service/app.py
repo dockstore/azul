@@ -9,7 +9,6 @@ import attr
 from chalice import (
     BadRequestError as BRE,
     ChaliceViewError,
-    Response,
     UnauthorizedError,
 )
 from furl import (
@@ -948,128 +947,7 @@ repository_files_spec = {
     ]
 }
 
-
-@app.route(
-    '/repository/files/{file_uuid}',
-    methods=['GET'],
-    interactive=False,
-    cors=True,
-    spec={
-        **repository_files_spec,
-        'summary': 'Redirect to a URL for downloading a given data file from the '
-                   'underlying repository',
-        'description': fd('''
-            This endpoint is not suitable for interactive use via the Swagger
-            UI. Please use the [/fetch endpoint][1] instead.
-
-            [1]: #operations-Repository-get_fetch_repository_files__file_uuid_
-        '''),
-        'responses': {
-            '301': {
-                'description': fd('''
-                    A URL to the given file is still being prepared. Retry by
-                    waiting the number of seconds specified in the `Retry-After`
-                    header of the response and the requesting the URL specified
-                    in the `Location` header.
-                '''),
-                'headers': {
-                    'Location': responses.header(str, description=fd('''
-                        A URL pointing back at this endpoint, potentially with
-                        different or additional request parameters.
-                    ''')),
-                    'Retry-After': responses.header(int, description=fd('''
-                        Recommended number of seconds to wait before requesting
-                        the URL specified in the `Location` header. The response
-                        may carry this header even if server-side waiting was
-                        requested via `wait=1`.
-                    '''))
-                }
-            },
-            '302': {
-                'description': fd('''
-                    The file can be downloaded from the URL returned in the
-                    `Location` header.
-                '''),
-                'headers': {
-                    'Location': responses.header(str, description=fd('''
-                            A URL that will yield the actual content of the file.
-                    ''')),
-                    'Content-Disposition': responses.header(str, description=fd('''
-                        Set to a value that makes user agents download the file
-                        instead of rendering it, suggesting a meaningful name
-                        for the downloaded file stored on the user's file
-                        system. The suggested file name is taken  from the
-                        `fileName` request parameter or, if absent, from
-                        metadata describing the file. It generally does not
-                        correlate with the path component of the URL returned in
-                        the `Location` header.
-                    '''))
-                }
-            }
-        }
-    }
-)
-def repository_files(file_uuid: str) -> Response:
-    result = _repository_files(file_uuid, fetch=False)
-    status_code = result.pop('Status')
-    return Response(body='',
-                    headers={k: str(v) for k, v in result.items()},
-                    status_code=status_code)
-
-
-@app.route(
-    '/fetch/repository/files/{file_uuid}',
-    methods=['GET'],
-    cors=True,
-    spec={
-        **repository_files_spec,
-        'summary': 'Request a URL for downloading a given data file',
-        'responses': {
-            '200': {
-                'description': fd(f'''
-                    Emulates the response code and headers of
-                    {one(repository_files.path)} while bypassing the default
-                    user agent behavior. Note that the status code of a
-                    successful response will be 200 while the `Status` field of
-                    its body will be 302.
-
-                    The response described here is intended to be processed by
-                    client-side Javascript such that the emulated headers can be
-                    handled in Javascript rather than relying on the native
-                    implementation by the web browser.
-                '''),
-                **responses.json_content(
-                    schema.object(
-                        Status=int,
-                        Location=str
-                    )
-                )
-            }
-        }
-    }
-)
-def fetch_repository_files(file_uuid: str) -> Response:
-    body = _repository_files(file_uuid, fetch=True)
-    return Response(body=json.dumps(body), status_code=200)
-
-
-def _repository_files(file_uuid: str, fetch: bool) -> MutableJSON:
-    request = app.current_request
-    query_params = request.query_params or {}
-    headers = request.headers
-
-    # FIXME: Prevent duplicate filenames from files in different subgraphs by
-    #        prepending the subgraph UUID to each filename when downloaded
-    #        https://github.com/DataBiosphere/azul/issues/2682
-
-    catalog = app.catalog
-    return app.download_controller.download_file(catalog=catalog,
-                                                 fetch=fetch,
-                                                 file_uuid=file_uuid,
-                                                 query_params=query_params,
-                                                 headers=headers,
-                                                 authentication=request.authentication)
-
+globals().update(app.download_controller.handlers())
 
 drs_spec_description = fd('''
     This is a partial implementation of the [DRS 1.0.0 spec][1]. Not all
