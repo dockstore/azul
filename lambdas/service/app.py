@@ -577,58 +577,6 @@ page_spec = schema.object(
 )
 
 
-def repository_search_params_spec():
-    return [
-        app.repository_controller.catalog_param_spec,
-        app.repository_controller.filters_param_spec,
-        params.path(
-            'entity_type',
-            schema.enum(*app.metadata_plugin.exposed_indices.keys()),
-            description='Which index to search.'
-        ),
-        params.query(
-            'size',
-            schema.optional(schema.default(10, form=schema.range(min_page_size, None))),
-            description=fd('''
-                The number of hits included per page. The maximum size allowed
-                depends on the catalog and entity type.
-            ''')
-        ),
-        params.query(
-            'sort',
-            schema.optional(schema.enum(*app.organic_fields)),
-            description=fd('''
-                The field to sort the hits by. The default value depends on the
-                entity type.
-            ''')
-        ),
-        params.query(
-            'order',
-            schema.optional(schema.enum('asc', 'desc')),
-            description=fd('''
-                The ordering of the sorted hits, either ascending or descending.
-                The default value depends on the entity type.
-            ''')
-        ),
-        *[
-            params.query(
-                param,
-                schema.optional(str),
-                description=fd('''
-                    Use the `next` and `previous` properties of the
-                    `pagination` response element to navigate between pages.
-                '''),
-                deprecated=True)
-            for param in [
-                'search_before',
-                'search_before_uid',
-                'search_after',
-                'search_after_uid'
-            ]
-        ]
-    ]
-
-
 def parameter_hoisting_note(method: str,
                             endpoint: str,
                             equivalent_method: str
@@ -666,7 +614,7 @@ def repository_search_spec(*, post: bool):
             deprecation.
         ''')),
         'tags': ['Index'],
-        'parameters': repository_search_params_spec(),
+        'parameters': app.repository_controller.repository_search_params_spec(),
         'responses': {
             '200': {
                 'description': fd(f'''
@@ -732,13 +680,6 @@ def repository_id_spec():
                 **responses.json_content(hit_spec)
             }
         }
-    }
-
-
-def repository_head_search_spec():
-    return {
-        **app.repository_controller.repository_head_spec(),
-        'parameters': repository_search_params_spec()
     }
 
 

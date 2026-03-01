@@ -30,6 +30,7 @@ from azul.indexer.field import (
 )
 from azul.openapi import (
     format_description as fd,
+    params,
     responses,
     schema,
 )
@@ -59,6 +60,63 @@ log = logging.getLogger(__name__)
 
 class RepositoryController(ServiceController):
     array_of_object_spec = schema.array(schema.object(additionalProperties=True))
+
+    def repository_search_params_spec(self):
+        return [
+            self.catalog_param_spec,
+            self.filters_param_spec,
+            params.path(
+                'entity_type',
+                schema.enum(*self.app.metadata_plugin.exposed_indices.keys()),
+                description='Which index to search.'
+            ),
+            params.query(
+                'size',
+                schema.optional(schema.default(10, form=schema.range(1, None))),
+                description=fd('''
+                    The number of hits included per page. The maximum size allowed
+                    depends on the catalog and entity type.
+                ''')
+            ),
+            params.query(
+                'sort',
+                schema.optional(schema.enum(*self.app.organic_fields)),
+                description=fd('''
+                    The field to sort the hits by. The default value depends on the
+                    entity type.
+                ''')
+            ),
+            params.query(
+                'order',
+                schema.optional(schema.enum('asc', 'desc')),
+                description=fd('''
+                    The ordering of the sorted hits, either ascending or descending.
+                    The default value depends on the entity type.
+                ''')
+            ),
+            *[
+                params.query(
+                    param,
+                    schema.optional(str),
+                    description=fd('''
+                        Use the `next` and `previous` properties of the
+                        `pagination` response element to navigate between pages.
+                    '''),
+                    deprecated=True)
+                for param in [
+                    'search_before',
+                    'search_before_uid',
+                    'search_after',
+                    'search_after_uid'
+                ]
+            ]
+        ]
+
+    def repository_head_search_spec(self):
+        return {
+            **self.repository_head_spec(),
+            'parameters': self.repository_search_params_spec()
+        }
 
     def repository_head_spec(self, for_summary: bool = False):
         search_spec_link = f'#operations-Index-get_index_{"summary" if for_summary else "_entity_type_"}'
@@ -102,7 +160,7 @@ class RepositoryController(ServiceController):
         @self.app.route(
             '/index/{entity_type}',
             methods=['HEAD'],
-            spec=repository_head_search_spec(),
+            spec=self.repository_head_search_spec(),
             cors=True
         )
         @self.app.route(
