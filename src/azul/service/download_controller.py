@@ -49,7 +49,7 @@ from azul.plugins import (
     File,
     RepositoryPlugin,
 )
-from azul.service.app_controller import (
+from azul.service.controller import (
     Mandatory,
     ServiceController,
     validate_catalog,

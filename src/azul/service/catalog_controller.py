@@ -17,7 +17,7 @@ from azul.plugins import (
     Plugin,
     RepositoryPlugin,
 )
-from azul.service.app_controller import (
+from azul.service.controller import (
     ServiceController,
 )
 from azul.types import (

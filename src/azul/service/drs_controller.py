@@ -54,7 +54,7 @@ from azul.openapi import (
 from azul.plugins import (
     File,
 )
-from azul.service.app_controller import (
+from azul.service.controller import (
     ServiceController,
 )
 from azul.service.repository_service import (

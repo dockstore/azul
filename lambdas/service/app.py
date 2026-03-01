@@ -79,12 +79,12 @@ from azul.plugins import (
 from azul.plugins.metadata.hca.indexer.transform import (
     value_and_unit,
 )
-from azul.service.app_controller import (
-    validate_catalog,
-    validate_params,
-)
 from azul.service.catalog_controller import (
     CatalogController,
+)
+from azul.service.controller import (
+    validate_catalog,
+    validate_params,
 )
 from azul.service.download_controller import (
     DownloadController,

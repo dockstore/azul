@@ -26,7 +26,7 @@ from azul.indexer.field import (
 from azul.service import (
     BadArgumentException,
 )
-from azul.service.app_controller import (
+from azul.service.controller import (
     ServiceController,
 )
 from azul.service.elasticsearch_service import (

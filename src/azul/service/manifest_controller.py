@@ -33,9 +33,6 @@ from azul.plugins import (
 from azul.service import (
     Filters,
 )
-from azul.service.app_controller import (
-    ServiceController,
-)
 from azul.service.async_manifest_service import (
     AsyncManifestService,
     GenerationFailed,
@@ -43,6 +40,9 @@ from azul.service.async_manifest_service import (
     InvalidTokenError,
     NoSuchGeneration,
     Token,
+)
+from azul.service.controller import (
+    ServiceController,
 )
 from azul.service.manifest_service import (
     CachedManifestNotFound,
