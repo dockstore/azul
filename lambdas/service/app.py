@@ -559,18 +559,17 @@ def validate_json_param(name: str, value: str) -> MutableJSON:
 globals().update(app.catalog_controller.handlers())
 
 generic_object_spec = schema.object(additionalProperties=True)
-array_of_object_spec = schema.array(generic_object_spec)
 hit_spec = schema.object(
     additionalProperties=True,
-    protocols=array_of_object_spec,
+    protocols=app.repository_controller.array_of_object_spec,
     entryId=str,
-    sources=array_of_object_spec,
-    samples=array_of_object_spec,
-    specimens=array_of_object_spec,
-    cellLines=array_of_object_spec,
-    donorOrganisms=array_of_object_spec,
+    sources=app.repository_controller.array_of_object_spec,
+    samples=app.repository_controller.array_of_object_spec,
+    specimens=app.repository_controller.array_of_object_spec,
+    cellLines=app.repository_controller.array_of_object_spec,
+    donorOrganisms=app.repository_controller.array_of_object_spec,
     organoids=schema.array(str),
-    cellSuspensions=array_of_object_spec
+    cellSuspensions=app.repository_controller.array_of_object_spec
 )
 
 page_spec = schema.object(

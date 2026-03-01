@@ -58,6 +58,7 @@ log = logging.getLogger(__name__)
 
 
 class RepositoryController(ServiceController):
+    array_of_object_spec = schema.array(schema.object(additionalProperties=True))
 
     def handlers(self) -> dict[str, Any]:
         @self.app.route(
@@ -141,8 +142,8 @@ class RepositoryController(ServiceController):
                                 additionalProperties=True,
                                 organTypes=schema.array(str),
                                 totalFileSize=float,
-                                fileTypeSummaries=array_of_object_spec,
-                                cellCountSummaries=array_of_object_spec,
+                                fileTypeSummaries=self.array_of_object_spec,
+                                cellCountSummaries=self.array_of_object_spec,
                                 donorCount=int,
                                 fileCount=int,
                                 labCount=int,
