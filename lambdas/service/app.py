@@ -1,9 +1,6 @@
 from collections.abc import (
     Sequence,
 )
-from functools import (
-    partial,
-)
 import json
 import logging.config
 import urllib.parse
@@ -859,56 +856,7 @@ repository_summary_spec = {
     'parameters': [catalog_param_spec, filters_param_spec]
 }
 
-
-@app.route(
-    '/index/{entity_type}',
-    methods=['GET'],
-    spec=repository_search_spec(post=False),
-    cors=True
-)
-# FIXME: Properly document the POST version of /index
-#        https://github.com/DataBiosphere/azul/issues/5900
-@app.route(
-    '/index/{entity_type}',
-    methods=['POST'],
-    content_types=['application/json'],
-    spec=repository_search_spec(post=True),
-    cors=True
-)
-@app.route(
-    '/index/{entity_type}',
-    methods=['HEAD'],
-    spec=repository_head_search_spec(),
-    cors=True
-)
-@app.route(
-    '/index/{entity_type}/{entity_id}',
-    methods=['GET'],
-    spec=repository_id_spec(),
-    cors=True
-)
-def repository_search(entity_type: str, entity_id: str | None = None) -> JSON:
-    request = app.current_request
-    query_params = request.query_params or {}
-    _hoist_parameters(query_params, request)
-    validate_params(query_params,
-                    catalog=validate_catalog,
-                    filters=validate_filters,
-                    order=validate_order,
-                    search_after=partial(validate_json_param, 'search_after'),
-                    search_after_uid=str,
-                    search_before=partial(validate_json_param, 'search_before'),
-                    search_before_uid=str,
-                    size=partial(validate_size, entity_type),
-                    sort=validate_field)
-    validate_entity_type(entity_type)
-    response = app.repository_controller.search(catalog=app.catalog,
-                                                entity_type=entity_type,
-                                                item_id=entity_id,
-                                                filters=query_params.get('filters'),
-                                                pagination=app.get_pagination(entity_type),
-                                                authentication=request.authentication)
-    return '' if request.method == 'HEAD' else response
+globals().update(app.repository_controller.handlers())
 
 
 def _hoist_parameters(query_params, request):
@@ -921,79 +869,6 @@ def _hoist_parameters(query_params, request):
                 raise BRE('Conflicting keys between body and query parameters')
             else:
                 query_params.update(body)
-
-
-@app.route(
-    '/index/summary',
-    methods=['GET'],
-    cors=True,
-    spec={
-        'summary': 'Statistics on the data present across all entities.',
-        'responses': {
-            '200': {
-                # FIXME: Add 'projects' to API documentation & schema
-                #        https://github.com/DataBiosphere/azul/issues/3917
-                'description': fd('''
-                    Counts the total number and total size in bytes of assorted
-                    entities, subject to the provided filters.
-
-                    `fileTypeSummaries` provides the count and total size in
-                    bytes of files grouped by their format, e.g. "fastq" or
-                    "matrix." `fileCount` and `totalFileSize` compile these
-                    figures across all file formats. Likewise,
-                    `cellCountSummaries` counts cells and their associated
-                    documents grouped by organ type, with `organTypes` listing
-                    all referenced organs.
-
-                    Total counts of unique entities are also provided for other
-                    entity types such as projects and tissue donors. These
-                    values are not grouped/aggregated.
-                '''),
-                **responses.json_content(
-                    schema.object(
-                        additionalProperties=True,
-                        organTypes=schema.array(str),
-                        totalFileSize=float,
-                        fileTypeSummaries=array_of_object_spec,
-                        cellCountSummaries=array_of_object_spec,
-                        donorCount=int,
-                        fileCount=int,
-                        labCount=int,
-                        projectCount=int,
-                        speciesCount=int,
-                        specimenCount=int
-                    )
-                )
-            }
-        },
-        **repository_summary_spec
-    }
-)
-@app.route(
-    '/index/summary',
-    methods=['HEAD'],
-    spec={
-        **repository_head_spec(for_summary=True),
-        **repository_summary_spec
-    }
-)
-def get_summary():
-    """
-    Returns a summary based on the filters passed on to the call. Based on the
-    ICGC endpoint.
-    :return: Returns a jsonified Summary API response
-    """
-    request = app.current_request
-    query_params = request.query_params or {}
-    validate_params(query_params,
-                    filters=str,
-                    catalog=validate_catalog)
-    filters = query_params.get('filters', '{}')
-    validate_filters(filters)
-    response = app.repository_controller.summary(catalog=app.catalog,
-                                                 filters=filters,
-                                                 authentication=request.authentication)
-    return '' if request.method == 'HEAD' else response
 
 
 globals().update(app.manifest_controller.handlers())
@@ -1194,40 +1069,6 @@ def _repository_files(file_uuid: str, fetch: bool) -> MutableJSON:
                                                  query_params=query_params,
                                                  headers=headers,
                                                  authentication=request.authentication)
-
-
-@app.route(
-    '/repository/sources',
-    methods=['GET'],
-    cors=True,
-    spec={
-        'summary': 'List available data sources',
-        'tags': ['Repository'],
-        'parameters': [catalog_param_spec],
-        'responses': {
-            '200': {
-                'description': fd('''
-                    List the sources the currently authenticated user is
-                    authorized to access in the underlying data repository.
-                '''),
-                **responses.json_content(
-                    schema.object(sources=schema.array(
-                        schema.object(
-                            sourceId=str,
-                            sourceSpec=str
-                        )
-                    ))
-                )
-            }
-        }
-    }
-)
-def list_sources() -> Response:
-    validate_params(app.current_request.query_params or {},
-                    catalog=validate_catalog)
-    sources = app.repository_controller.list_sources(app.catalog,
-                                                     app.current_request.authentication)
-    return Response(body={'sources': sources}, status_code=200)
 
 
 drs_spec_description = fd('''
