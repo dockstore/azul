@@ -55,7 +55,7 @@ from azul.plugins import (
     File,
 )
 from azul.service.app_controller import (
-    ServiceAppController,
+    ServiceController,
 )
 from azul.service.repository_service import (
     RepositoryService,
@@ -66,7 +66,7 @@ from azul.types import (
 )
 
 
-class DRSController(ServiceAppController):
+class DRSController(ServiceController):
 
     @cached_property
     def service(self) -> RepositoryService:

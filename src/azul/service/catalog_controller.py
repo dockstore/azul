@@ -18,14 +18,14 @@ from azul.plugins import (
     RepositoryPlugin,
 )
 from azul.service.app_controller import (
-    ServiceAppController,
+    ServiceController,
 )
 from azul.types import (
     JSON,
 )
 
 
-class CatalogController(ServiceAppController):
+class CatalogController(ServiceController):
 
     # The custom return type annotation is an experiment. Please don't adopt
     # this just yet elsewhere in the program.

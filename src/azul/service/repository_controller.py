@@ -27,7 +27,7 @@ from azul.service import (
     BadArgumentException,
 )
 from azul.service.app_controller import (
-    ServiceAppController,
+    ServiceController,
 )
 from azul.service.elasticsearch_service import (
     IndexNotFoundError,
@@ -47,7 +47,7 @@ from azul.uuids import (
 log = logging.getLogger(__name__)
 
 
-class RepositoryController(ServiceAppController):
+class RepositoryController(ServiceController):
 
     @cached_property
     def service(self) -> RepositoryService:

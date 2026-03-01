@@ -36,7 +36,7 @@ from azul.strings import (
 
 
 @attrs.frozen(kw_only=True)
-class ServiceAppController(SourceController):
+class ServiceController(SourceController):
     file_url_func: FileUrlFunc
 
     def get_filters(self,

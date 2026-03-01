@@ -34,7 +34,7 @@ from azul.service import (
     Filters,
 )
 from azul.service.app_controller import (
-    ServiceAppController,
+    ServiceController,
 )
 from azul.service.async_manifest_service import (
     AsyncManifestService,
@@ -77,7 +77,7 @@ assert manifest_state_key in get_type_hints(ManifestGenerationState)
 
 
 @attr.s(frozen=True, auto_attribs=True, kw_only=True)
-class ManifestController(ServiceAppController):
+class ManifestController(ServiceController):
     manifest_url_func: ManifestUrlFunc
 
     @cached_property
