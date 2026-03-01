@@ -1,4 +1,3 @@
-import base64
 from collections.abc import (
     Mapping,
     Sequence,
@@ -6,7 +5,6 @@ from collections.abc import (
 from functools import (
     partial,
 )
-import hashlib
 from inspect import (
     signature,
 )
@@ -1596,11 +1594,6 @@ def list_sources() -> Response:
     sources = app.repository_controller.list_sources(app.catalog,
                                                      app.current_request.authentication)
     return Response(body={'sources': sources}, status_code=200)
-
-
-def hash_url(url):
-    url_hash = hashlib.sha1(bytes(url, encoding='utf-8')).digest()
-    return base64.urlsafe_b64encode(url_hash).decode()
 
 
 drs_spec_description = fd('''
