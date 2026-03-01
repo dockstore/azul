@@ -60,6 +60,22 @@ log = logging.getLogger(__name__)
 class RepositoryController(ServiceController):
     array_of_object_spec = schema.array(schema.object(additionalProperties=True))
 
+    def repository_head_spec(self, for_summary: bool = False):
+        search_spec_link = f'#operations-Index-get_index_{"summary" if for_summary else "_entity_type_"}'
+        return {
+            'summary': 'Perform a query without returning its result.',
+            'tags': ['Index'],
+            'responses': {
+                '200': {
+                    'description': fd(f'''
+                        The HEAD method can be used to test whether an index is
+                        operational, or to check the validity of query parameters
+                        for the [GET method]({search_spec_link}).
+                    ''')
+                }
+            }
+        }
+
     @cached_property
     def repository_summary_spec(self):
         return {
@@ -168,7 +184,7 @@ class RepositoryController(ServiceController):
             '/index/summary',
             methods=['HEAD'],
             spec={
-                **repository_head_spec(for_summary=True),
+                **self.repository_head_spec(for_summary=True),
                 **self.repository_summary_spec
             }
         )

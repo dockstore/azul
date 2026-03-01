@@ -735,26 +735,9 @@ def repository_id_spec():
     }
 
 
-def repository_head_spec(for_summary: bool = False):
-    search_spec_link = f'#operations-Index-get_index_{"summary" if for_summary else "_entity_type_"}'
-    return {
-        'summary': 'Perform a query without returning its result.',
-        'tags': ['Index'],
-        'responses': {
-            '200': {
-                'description': fd(f'''
-                    The HEAD method can be used to test whether an index is
-                    operational, or to check the validity of query parameters
-                    for the [GET method]({search_spec_link}).
-                ''')
-            }
-        }
-    }
-
-
 def repository_head_search_spec():
     return {
-        **repository_head_spec(),
+        **app.repository_controller.repository_head_spec(),
         'parameters': repository_search_params_spec()
     }
 
