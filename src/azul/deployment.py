@@ -291,7 +291,7 @@ class AWS:
             return endpoint
 
     @property
-    def es_instance_count(self) -> int | None:
+    def es_instance_count(self) -> int:
         if config.es_endpoint:
             return config.es_instance_count
         else:
