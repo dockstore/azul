@@ -19,6 +19,11 @@ from azul import (
 from azul.auth import (
     Authentication,
 )
+from azul.openapi import (
+    format_description as fd,
+    params,
+    schema,
+)
 from azul.service import (
     FileUrlFunc,
     Filters,
@@ -38,6 +43,24 @@ from azul.strings import (
 @attrs.frozen(kw_only=True)
 class ServiceController(SourceController):
     file_url_func: FileUrlFunc
+
+    file_fqid_parameters_spec = [
+        params.path(
+            'file_uuid',
+            str,
+            description='The UUID of the file to be returned.'),
+        params.query(
+            'version',
+            schema.optional(str),
+            description=fd('''
+                The version of the file to be returned. File versions are opaque
+                strings with only one documented property: they can be
+                lexicographically compared with each other in order to determine
+                which version is more recent. If this parameter is omitted then the
+                most recent version of the file is returned.
+            ''')
+        )
+    ]
 
     def get_filters(self,
                     catalog: CatalogName,

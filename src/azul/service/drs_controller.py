@@ -104,7 +104,7 @@ class DRSController(ServiceController):
                     This endpoint returns object metadata, and a list of access methods
                     that can be used to fetch object bytes.
                 ''') + self.drs_spec_description,
-                'parameters': file_fqid_parameters_spec,
+                'parameters': self.file_fqid_parameters_spec,
                 'responses': {
                     '200': {
                         'description': fd(
@@ -158,7 +158,7 @@ class DRSController(ServiceController):
                     time for the DSS to do a checkout.
                 ''') + self.drs_spec_description,
                 'parameters': [
-                    *file_fqid_parameters_spec,
+                    *self.file_fqid_parameters_spec,
                     params.path('access_id', str, description='Access ID returned from a previous request')
                 ],
                 'responses': {
