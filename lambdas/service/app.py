@@ -26,9 +26,6 @@ from azul.plugins import (
 from azul.service.catalog_controller import (
     CatalogController,
 )
-from azul.service.download_controller import (
-    RepositoryController,
-)
 from azul.service.drs_controller import (
     DRSController,
 )
@@ -37,6 +34,9 @@ from azul.service.index_controller import (
 )
 from azul.service.manifest_controller import (
     ManifestController,
+)
+from azul.service.repository_controller import (
+    RepositoryController,
 )
 from azul.types import (
     JSON,
