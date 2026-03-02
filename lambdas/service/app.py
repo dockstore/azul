@@ -1,18 +1,11 @@
 from collections.abc import (
     Sequence,
 )
-import json
 import logging.config
 import urllib.parse
 
-import attr
 from chalice import (
-    BadRequestError as BRE,
-    ChaliceViewError,
     UnauthorizedError,
-)
-from furl import (
-    furl,
 )
 from more_itertools import (
     one,
@@ -20,7 +13,6 @@ from more_itertools import (
 
 from azul import (
     CatalogName,
-    R,
     cache,
     cached_property,
     config,
@@ -54,9 +46,6 @@ from azul.service.download_controller import (
 )
 from azul.service.drs_controller import (
     DRSController,
-)
-from azul.service.elasticsearch_service import (
-    Pagination,
 )
 from azul.service.manifest_controller import (
     ManifestController,
@@ -310,50 +299,6 @@ class ServiceApp(HealthApp):
         super().__init__(app_name=config.service_name,
                          globals=globals(),
                          spec=spec)
-
-    @attr.s(kw_only=True, auto_attribs=True, frozen=True)
-    class Pagination(Pagination):
-        self_url: furl
-
-        def link(self, *, previous: bool, **params: str) -> furl | None:
-            search_key = self.search_before if previous else self.search_after
-            if search_key is None:
-                return None
-            else:
-                before_or_after = 'before' if previous else 'after'
-                params = {
-                    **params,
-                    f'search_{before_or_after}': json.dumps(search_key),
-                    'sort': self.sort,
-                    'order': self.order,
-                    'size': self.size
-                }
-            return furl(url=self.self_url, args=params)
-
-    def get_pagination(self, entity_type: str) -> Pagination:
-        default_sorting = self.metadata_plugin.exposed_indices[entity_type]
-        params = self.current_request.query_params or {}
-        sb, sa = params.get('search_before'), params.get('search_after')
-        if sb is None:
-            if sa is not None:
-                sa = tuple(json.loads(sa))
-        else:
-            if sa is None:
-                sb = tuple(json.loads(sb))
-            else:
-                raise BRE('Only one of search_after or search_before may be set')
-        try:
-            return self.Pagination(order=params.get('order', default_sorting.order),
-                                   size=int(params.get('size', '10')),
-                                   sort=params.get('sort', default_sorting.field_name),
-                                   search_before=sb,
-                                   search_after=sa,
-                                   self_url=self.self_url)
-        except AssertionError as e:
-            if R.caused(e):
-                raise R.propagate(e, ChaliceViewError)
-            else:
-                raise
 
     def file_url(self,
                  *,
