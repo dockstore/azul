@@ -43,6 +43,8 @@ from azul.service import (
 )
 from azul.service.controller import (
     ServiceController,
+    validate_catalog,
+    validate_params,
 )
 from azul.service.elasticsearch_service import (
     IndexNotFoundError,
@@ -253,6 +255,12 @@ class RepositoryController(ServiceController):
             'parameters': [self.catalog_param_spec, self.filters_param_spec]
         }
 
+    def validate_entity_type(self, entity_type: str):
+        entity_types = self.app.metadata_plugin.exposed_indices.keys()
+        if entity_type not in entity_types:
+            raise BadRequestError(f'Entity type {entity_type!r} is invalid for catalog '
+                                  f'{self.app.catalog!r}. Must be one of {set(entity_types)}.')
+
     def validate_size(self, entity_type: EntityType, size: str):
         sorting = self.app.metadata_plugin.exposed_indices[entity_type]
         try:
@@ -313,7 +321,7 @@ class RepositoryController(ServiceController):
                             search_before_uid=str,
                             size=partial(self.validate_size, entity_type),
                             sort=self.validate_field)
-            validate_entity_type(entity_type)
+            self.validate_entity_type(entity_type)
             response = self.search(catalog=self.app.catalog,
                                    entity_type=entity_type,
                                    item_id=entity_id,

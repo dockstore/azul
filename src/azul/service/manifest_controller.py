@@ -50,6 +50,8 @@ from azul.service.async_manifest_service import (
 )
 from azul.service.controller import (
     ServiceController,
+    validate_catalog,
+    validate_params,
 )
 from azul.service.manifest_service import (
     CachedManifestNotFound,

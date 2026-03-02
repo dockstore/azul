@@ -406,14 +406,6 @@ configure_app_logging(app, log)
 
 globals().update(app.default_routes())
 
-
-def validate_entity_type(entity_type: str):
-    entity_types = app.metadata_plugin.exposed_indices.keys()
-    if entity_type not in entity_types:
-        raise BRE(f'Entity type {entity_type!r} is invalid for catalog '
-                  f'{app.catalog!r}. Must be one of {set(entity_types)}.')
-
-
 globals().update(app.catalog_controller.handlers())
 
 globals().update(app.repository_controller.handlers())
