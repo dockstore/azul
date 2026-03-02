@@ -1,6 +1,3 @@
-from collections.abc import (
-    Sequence,
-)
 import logging.config
 
 from chalice import (
@@ -15,9 +12,6 @@ from azul import (
 )
 from azul.auth import (
     OAuth2,
-)
-from azul.collections import (
-    OrderedSet,
 )
 from azul.health import (
     HealthApp,
@@ -271,22 +265,6 @@ class ServiceApp(HealthApp):
     @cache
     def _repository_plugin(self, catalog: CatalogName):
         return RepositoryPlugin.load(catalog).create(catalog)
-
-    @property
-    def fields(self) -> Sequence[str]:
-        organic, synthetic = self.organic_fields, self.synthetic_fields
-        all = OrderedSet(organic)
-        all.update(synthetic)
-        assert len(all) == len(organic) + len(synthetic)
-        return tuple(all)
-
-    @property
-    def organic_fields(self) -> Sequence[str]:
-        return sorted(self.metadata_plugin.field_mapping.keys())
-
-    @property
-    def synthetic_fields(self) -> Sequence[str]:
-        return self.metadata_plugin.special_fields.accessible.name,
 
     def __init__(self):
         super().__init__(app_name=config.service_name,

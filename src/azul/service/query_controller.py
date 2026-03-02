@@ -1,3 +1,6 @@
+from collections.abc import (
+    Sequence,
+)
 import json
 import logging
 from typing import (
@@ -16,6 +19,9 @@ from azul import (
     R,
     cache,
     require,
+)
+from azul.collections import (
+    OrderedSet,
 )
 from azul.indexer.field import (
     FieldType,
@@ -56,6 +62,22 @@ class QueryController(ServiceController):
     @property
     def _metadata_plugin(self) -> MetadataPlugin:
         return self.service.metadata_plugin(self.app.catalog)
+
+    @property
+    def fields(self) -> Sequence[str]:
+        organic, synthetic = self.organic_fields, self.synthetic_fields
+        all = OrderedSet(organic)
+        all.update(synthetic)
+        assert len(all) == len(organic) + len(synthetic)
+        return tuple(all)
+
+    @property
+    def organic_fields(self) -> Sequence[str]:
+        return sorted(self._metadata_plugin.field_mapping.keys())
+
+    @property
+    def synthetic_fields(self) -> Sequence[str]:
+        return self._metadata_plugin.special_fields.accessible.name,
 
     def _hoist_parameters(self, query_params, request):
         if request.method in ('POST', 'PUT'):
@@ -115,7 +137,7 @@ class QueryController(ServiceController):
                 example={'cellCount': {'within': [[10000, 1000000000]]}},
                 properties={
                     field: _filter_schema(types[field])
-                    for field in self.app.fields
+                    for field in self.fields
                 }
             ))),
             description=fd('''
@@ -151,7 +173,7 @@ class QueryController(ServiceController):
                 "unit": "year"}]}}`. Both keys are required. `{"organismAge": {"is":
                 [null]}}` selects entities that have no organism age.''' + f'''
 
-                Supported field names are: {', '.join(self.app.fields)}
+                Supported field names are: {', '.join(self.fields)}
             ''')
         )
 
@@ -172,7 +194,7 @@ class QueryController(ServiceController):
                     raise
 
     def validate_field(self, field: str, *, include_synthetic: bool = False):
-        fields = self.app.fields if include_synthetic else self.app.organic_fields
+        fields = self.fields if include_synthetic else self.organic_fields
         if field not in fields:
             raise BRE(f'Unknown field `{field}`')
 

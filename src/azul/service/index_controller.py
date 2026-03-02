@@ -239,7 +239,7 @@ class IndexController(QueryController):
             ),
             params.query(
                 'sort',
-                schema.optional(schema.enum(*self.app.organic_fields)),
+                schema.optional(schema.enum(*self.organic_fields)),
                 description=fd('''
                     The field to sort the hits by. The default value depends on the
                     entity type.
