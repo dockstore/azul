@@ -149,7 +149,7 @@ class DownloadController(ServiceController):
 
     def handlers(self) -> dict[str, Any]:
         @self.app.route(
-            '/repository/files/{file_uuid}',
+            path=self._file_path(fetch=False, file_uuid='{file_uuid}'),
             methods=['GET'],
             interactive=False,
             cors=True,
@@ -216,7 +216,7 @@ class DownloadController(ServiceController):
                             status_code=status_code)
 
         @self.app.route(
-            '/fetch/repository/files/{file_uuid}',
+            path=self._file_path(fetch=True, file_uuid='{file_uuid}'),
             methods=['GET'],
             cors=True,
             spec={

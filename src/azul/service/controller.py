@@ -4,7 +4,6 @@ from typing import (
     Callable,
     Mapping,
 )
-import urllib.parse
 
 from chalice import (
     BadRequestError as BRE,
@@ -67,10 +66,15 @@ class ServiceController(SourceController):
                  fetch: bool = True,
                  **params: str
                  ) -> mutable_furl:
-        file_uuid = urllib.parse.quote(file_uuid, safe='')
-        path = '/fetch/repository/files/{file_uuid}' if fetch else '/repository/files/{file_uuid}'
-        url = self.app.base_url.add(path=path.format(file_uuid=file_uuid))
+        path = self._file_path(fetch=fetch, file_uuid=file_uuid)
+        url = self.app.base_url.add(path=path)
         return url.set(args=dict(catalog=catalog, **params))
+
+    def _file_path(self, *, fetch: bool, file_uuid: str) -> tuple[str, ...]:
+        path: tuple[str, ...] = ('repository', 'files', file_uuid)
+        if fetch:
+            path = ('fetch', *path)
+        return path
 
     file_fqid_parameters_spec = [
         params.path(

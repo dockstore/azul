@@ -132,7 +132,7 @@ class ManifestController(ServiceController):
         return self.app.route(
             # The path parameter could be a token *or* an object key, but we don't
             # want to complicate the API with this detail
-            path='/'.join(path),
+            path=path,
             # The initial PUT request is idempotent.
             methods=['PUT' if initiate else 'GET'],
             interactive=fetch,

@@ -299,7 +299,7 @@ class AzulChaliceApp(Chalice):
     HttpMethod = Literal['GET', 'POST', 'PUT', 'PATCH', 'HEAD', 'OPTIONS', 'DELETE']
 
     def route[C: Callable](self,
-                           path: str,
+                           path: str | tuple[str, ...],
                            *,
                            methods: Sequence[HttpMethod] = ('GET',),
                            enabled: bool = True,
@@ -350,6 +350,11 @@ class AzulChaliceApp(Chalice):
         require(spec is not None, "Argument 'spec' is required")
         assert spec is not None
         if enabled:
+            if isinstance(path, tuple):
+                require(len(path) > 0, 'Empty path', path)
+                require(all(len(e) > 0 for e in path), 'Empty path element', path)
+                require(all('/' not in e for e in path), 'Invalid path element', path)
+                path = '/' + '/'.join(path)
             if not interactive:
                 require(bool(methods), 'Must list methods with interactive=False')
                 self.non_interactive_routes.update((path, method) for method in methods)
