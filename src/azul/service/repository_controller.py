@@ -267,6 +267,39 @@ class RepositoryController(ServiceController):
                                       headers=headers,
                                       authentication=request.authentication)
 
+        @self.app.route(
+            '/repository/sources',
+            methods=['GET'],
+            cors=True,
+            spec={
+                'summary': 'List available data sources',
+                'tags': ['Repository'],
+                'parameters': [self.catalog_param_spec],
+                'responses': {
+                    '200': {
+                        'description': fd('''
+                            List the sources the currently authenticated user is
+                            authorized to access in the underlying data repository.
+                        '''),
+                        **responses.json_content(
+                            schema.object(sources=schema.array(
+                                schema.object(
+                                    sourceId=str,
+                                    sourceSpec=str
+                                )
+                            ))
+                        )
+                    }
+                }
+            }
+        )
+        def list_sources() -> Response:
+            validate_params(self.app.current_request.query_params or {},
+                            catalog=validate_catalog)
+            sources = self.list_sources(self.app.catalog,
+                                        self.app.current_request.authentication)
+            return Response(body={'sources': sources}, status_code=200)
+
         return locals()
 
     def download_file(self,
