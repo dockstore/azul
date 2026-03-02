@@ -97,17 +97,21 @@ class ManifestController(ServiceController):
     def service(self) -> ManifestService:
         return ManifestService(StorageService(), self.file_url)
 
+    def _manifest_path(self, *, fetch: bool, token: str | None) -> tuple[str, ...]:
+        path = ('manifest', 'files')
+        if fetch:
+            path = ('fetch', *path)
+        if token is not None:
+            path = (*path, token)
+        return path
+
     def manifest_url(self,
                      *,
                      fetch: bool,
                      token_or_key: str | None = None,
                      **params: str
                      ) -> mutable_furl:
-        if token_or_key is None:
-            path = ('/fetch' if fetch else '') + '/manifest/files'
-        else:
-            path = ('/fetch' if fetch else '') + '/manifest/files/{token}'
-            path = path.format(token=token_or_key)
+        path = self._manifest_path(fetch=fetch, token=token_or_key)
         url = self.app.base_url.add(path=path)
         return url.set(args=params)
 
@@ -124,11 +128,11 @@ class ManifestController(ServiceController):
                                       f'catalog {self.app.catalog}. Must be one of {supported_formats}')
 
     def _route(self, *, fetch: bool, initiate: bool):
+        path = self._manifest_path(fetch=fetch, token=None if initiate else '{token}')
         return self.app.route(
             # The path parameter could be a token *or* an object key, but we don't
             # want to complicate the API with this detail
-            ('/fetch' if fetch else '')
-            + ('/manifest/files' if initiate else '/manifest/files/{token}'),
+            path='/'.join(path),
             # The initial PUT request is idempotent.
             methods=['PUT' if initiate else 'GET'],
             interactive=fetch,
