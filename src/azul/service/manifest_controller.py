@@ -36,7 +36,6 @@ from azul.openapi import (
 )
 from azul.plugins import (
     ManifestFormat,
-    MetadataPlugin,
 )
 from azul.service import (
     Filters,
@@ -50,7 +49,6 @@ from azul.service.async_manifest_service import (
     Token,
 )
 from azul.service.controller import (
-    ServiceController,
     validate_catalog,
     validate_params,
 )
@@ -64,6 +62,9 @@ from azul.service.manifest_service import (
     ManifestPartition,
     ManifestService,
     SignedManifestKey,
+)
+from azul.service.query_controller import (
+    QueryController,
 )
 from azul.service.storage_service import (
     StorageService,
@@ -88,7 +89,7 @@ class ManifestGenerationState(TypedDict, total=False):
 assert manifest_state_key in get_type_hints(ManifestGenerationState)
 
 
-class ManifestController(ServiceController):
+class ManifestController(QueryController):
 
     @cached_property
     def async_service(self) -> AsyncManifestService:
@@ -97,10 +98,6 @@ class ManifestController(ServiceController):
     @cached_property
     def service(self) -> ManifestService:
         return ManifestService(StorageService(), self.file_url)
-
-    @property
-    def _metadata_plugin(self) -> MetadataPlugin:
-        return self.service.metadata_plugin(self.app.catalog)
 
     def _manifest_path(self, *, fetch: bool, token: str | None) -> tuple[str, ...]:
         path = ('manifest', 'files')

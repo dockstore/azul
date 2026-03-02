@@ -45,20 +45,19 @@ from azul.openapi import (
     responses,
     schema,
 )
-from azul.plugins import (
-    MetadataPlugin,
-)
 from azul.service import (
     BadArgumentException,
 )
 from azul.service.controller import (
-    ServiceController,
     validate_catalog,
     validate_params,
 )
 from azul.service.elasticsearch_service import (
     IndexNotFoundError,
     Pagination,
+)
+from azul.service.query_controller import (
+    QueryController,
 )
 from azul.service.repository_service import (
     EntityNotFoundError,
@@ -74,11 +73,7 @@ from azul.uuids import (
 log = logging.getLogger(__name__)
 
 
-class IndexController(ServiceController):
-    @property
-    def _metadata_plugin(self) -> MetadataPlugin:
-        return self.service.metadata_plugin(self.app.catalog)
-
+class IndexController(QueryController):
     @attr.s(kw_only=True, auto_attribs=True, frozen=True)
     class Pagination(Pagination):
         self_url: furl
