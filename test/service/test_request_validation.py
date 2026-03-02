@@ -11,6 +11,9 @@ from requests import (
 from azul.logging import (
     configure_test_logging,
 )
+from azul.service.index_controller import (
+    IndexController,
+)
 from indexer import (
     DCP1CannedBundleTestCase,
 )
@@ -37,6 +40,12 @@ class RequestParameterValidationTest(DCP1CannedBundleTestCase,
     def tearDownClass(cls):
         cls._teardown_indices()
         super().tearDownClass()
+
+    @property
+    def _controller(self) -> IndexController:
+        controller = self._app.index_controller
+        assert isinstance(controller, IndexController)
+        return controller
 
     def assertResponseStatus(self, url: furl, status: int) -> Response:
         if str(url.path) in {'/manifest/files', '/fetch/manifest/files'}:

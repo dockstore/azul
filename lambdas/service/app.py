@@ -2,13 +2,9 @@ from collections.abc import (
     Sequence,
 )
 import logging.config
-import urllib.parse
 
 from chalice import (
     UnauthorizedError,
-)
-from more_itertools import (
-    one,
 )
 
 from azul import (
@@ -16,7 +12,6 @@ from azul import (
     cache,
     cached_property,
     config,
-    mutable_furl,
 )
 from azul.auth import (
     OAuth2,
@@ -243,25 +238,23 @@ class ServiceApp(HealthApp):
 
     @property
     def drs_controller(self) -> DRSController:
-        return DRSController(app=self, file_url_func=self.file_url)
+        return DRSController(app=self)
 
     @cached_property
     def catalog_controller(self) -> CatalogController:
-        return CatalogController(app=self, file_url_func=self.file_url)
+        return CatalogController(app=self)
 
     @cached_property
     def repository_controller(self) -> RepositoryController:
-        return RepositoryController(app=self, file_url_func=self.file_url)
+        return RepositoryController(app=self)
 
     @cached_property
     def download_controller(self) -> DownloadController:
-        return DownloadController(app=self, file_url_func=self.file_url)
+        return DownloadController(app=self)
 
     @cached_property
     def manifest_controller(self) -> ManifestController:
-        return ManifestController(app=self,
-                                  file_url_func=self.file_url,
-                                  manifest_url_func=self.manifest_url)
+        return ManifestController(app=self)
 
     @property
     def metadata_plugin(self) -> MetadataPlugin:
@@ -300,19 +293,6 @@ class ServiceApp(HealthApp):
                          globals=globals(),
                          spec=spec)
 
-    def file_url(self,
-                 *,
-                 catalog: CatalogName,
-                 file_uuid: str,
-                 fetch: bool = True,
-                 **params: str
-                 ) -> mutable_furl:
-        file_uuid = urllib.parse.quote(file_uuid, safe='')
-        view_function = fetch_repository_files if fetch else repository_files
-        path = one(view_function.path)
-        url = self.base_url.add(path=path.format(file_uuid=file_uuid))
-        return url.set(args=dict(catalog=catalog, **params))
-
     def _authenticate(self) -> OAuth2 | None:
         try:
             header = self.current_request.headers['Authorization']
@@ -328,22 +308,6 @@ class ServiceApp(HealthApp):
                     return OAuth2(auth_token)
                 else:
                     raise UnauthorizedError(header)
-
-    def manifest_url(self,
-                     *,
-                     fetch: bool,
-                     token_or_key: str | None = None,
-                     **params: str
-                     ) -> mutable_furl:
-        if token_or_key is None:
-            handler = fetch_file_manifest if fetch else file_manifest
-            path = one(handler.path)
-        else:
-            handler = fetch_file_manifest_with_token if fetch else file_manifest_with_token
-            path: str = one(handler.path)
-            path = path.format(token=token_or_key)
-        url = self.base_url.add(path=path)
-        return url.set(args=params)
 
 
 app = ServiceApp()

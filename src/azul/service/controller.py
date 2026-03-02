@@ -4,8 +4,8 @@ from typing import (
     Callable,
     Mapping,
 )
+import urllib.parse
 
-import attrs
 from chalice import (
     BadRequestError as BRE,
     NotFoundError,
@@ -19,6 +19,7 @@ from azul import (
     R,
     RequirementError,
     config,
+    mutable_furl,
     require,
 )
 from azul.auth import (
@@ -37,7 +38,6 @@ from azul.plugins.metadata.hca.indexer.transform import (
     value_and_unit,
 )
 from azul.service import (
-    FileUrlFunc,
     Filters,
     FiltersJSON,
     normalize_filters,
@@ -58,9 +58,19 @@ from azul.types import (
 )
 
 
-@attrs.frozen(kw_only=True)
 class ServiceController(SourceController):
-    file_url_func: FileUrlFunc
+
+    def file_url(self,
+                 *,
+                 catalog: CatalogName,
+                 file_uuid: str,
+                 fetch: bool = True,
+                 **params: str
+                 ) -> mutable_furl:
+        file_uuid = urllib.parse.quote(file_uuid, safe='')
+        path = '/fetch/repository/files/{file_uuid}' if fetch else '/repository/files/{file_uuid}'
+        url = self.app.base_url.add(path=path.format(file_uuid=file_uuid))
+        return url.set(args=dict(catalog=catalog, **params))
 
     file_fqid_parameters_spec = [
         params.path(

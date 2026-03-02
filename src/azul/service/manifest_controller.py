@@ -8,7 +8,6 @@ from typing import (
     get_type_hints,
 )
 
-import attr
 from chalice import (
     BadRequestError,
     ChaliceViewError,
@@ -21,6 +20,7 @@ from furl import (
 from azul import (
     cached_property,
     config,
+    mutable_furl,
 )
 from azul.auth import (
     Authentication,
@@ -62,7 +62,6 @@ from azul.service.manifest_service import (
     ManifestKey,
     ManifestPartition,
     ManifestService,
-    ManifestUrlFunc,
     SignedManifestKey,
 )
 from azul.service.storage_service import (
@@ -88,9 +87,7 @@ class ManifestGenerationState(TypedDict, total=False):
 assert manifest_state_key in get_type_hints(ManifestGenerationState)
 
 
-@attr.s(frozen=True, auto_attribs=True, kw_only=True)
 class ManifestController(ServiceController):
-    manifest_url_func: ManifestUrlFunc
 
     @cached_property
     def async_service(self) -> AsyncManifestService:
@@ -98,7 +95,21 @@ class ManifestController(ServiceController):
 
     @cached_property
     def service(self) -> ManifestService:
-        return ManifestService(StorageService(), self.file_url_func)
+        return ManifestService(StorageService(), self.file_url)
+
+    def manifest_url(self,
+                     *,
+                     fetch: bool,
+                     token_or_key: str | None = None,
+                     **params: str
+                     ) -> mutable_furl:
+        if token_or_key is None:
+            path = ('/fetch' if fetch else '') + '/manifest/files'
+        else:
+            path = ('/fetch' if fetch else '') + '/manifest/files/{token}'
+            path = path.format(token=token_or_key)
+        url = self.app.base_url.add(path=path)
+        return url.set(args=params)
 
     def validate_manifest_format(self, format: str):
         supported_formats = {f.value for f in self.app.metadata_plugin.manifest_formats}
@@ -589,7 +600,7 @@ class ManifestController(ServiceController):
 
         if manifest is None:
             assert token is not None
-            url = self.manifest_url_func(fetch=fetch, token_or_key=token.encode())
+            url = self.manifest_url(fetch=fetch, token_or_key=token.encode())
             body = {
                 'Status': 301,
                 'Location': str(url),
@@ -618,7 +629,7 @@ class ManifestController(ServiceController):
                 # plugin does not support cURL-format manifests.
                 assert not config.is_anvil_enabled(manifest_key.catalog)
                 manifest_key = self.service.sign_manifest_key(manifest_key)
-                url = self.manifest_url_func(fetch=False, token_or_key=manifest_key.encode())
+                url = self.manifest_url(fetch=False, token_or_key=manifest_key.encode())
             else:
                 url = furl(self.service.get_manifest_url(manifest))
             body = {

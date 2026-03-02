@@ -106,6 +106,9 @@ from azul.service import (
     avro_pfb,
     manifest_service,
 )
+from azul.service.manifest_controller import (
+    ManifestController,
+)
 from azul.service.manifest_service import (
     CachedManifestNotFound,
     Manifest,
@@ -272,8 +275,14 @@ class ManifestTestCase(WebServiceTestCase,
         return Filters(explicit=filters, source_ids={self.source.id})
 
     @property
+    def _controller(self) -> ManifestController:
+        controller = self._app.manifest_controller
+        assert isinstance(controller, ManifestController)
+        return controller
+
+    @property
     def _service(self):
-        return ManifestService(self.storage_service, self._app.file_url)
+        return ManifestService(self.storage_service, self._controller.file_url)
 
     def _get_manifest(self,
                       format: ManifestFormat,
@@ -1112,7 +1121,7 @@ class TestManifestCache(DCP1ManifestTestCase):
                 'is': [projects[0], projects[1]]
             }
         }))
-        service = ManifestService(self.storage_service, self._app.file_url)
+        service = ManifestService(self.storage_service, self._controller.file_url)
 
         def manifest_generator(format: ManifestFormat) -> ManifestGenerator:
             generator_cls = ManifestGenerator.cls_for_format(format)

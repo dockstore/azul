@@ -20,6 +20,9 @@ from azul.logging import (
     configure_test_logging,
     get_test_logger,
 )
+from azul.service.index_controller import (
+    IndexController,
+)
 from indexer import (
     DCP1CannedBundleTestCase,
 )
@@ -41,6 +44,12 @@ class TestPagination(DCP1CannedBundleTestCase, DocumentCloningTestCase):
         super().setUp()
         self._setup_indices()
         self._setup_document_templates()
+
+    @property
+    def _controller(self) -> Any:
+        controller = self._app.index_controller
+        assert isinstance(controller, IndexController)
+        return controller
 
     def test_pagination(self):
 

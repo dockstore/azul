@@ -75,6 +75,12 @@ from azul.plugins.metadata.hca.service.response import (
 from azul.service.elasticsearch_service import (
     ResponsePagination,
 )
+from azul.service.index_controller import (
+    IndexController,
+)
+from azul.service.repository_service import (
+    RepositoryService,
+)
 from azul.service.source_service import (
     SourceService,
 )
@@ -108,7 +114,12 @@ def parse_url_qs(url) -> dict[str, str]:
 
 
 class IndexResponseTestCase(DCP1CannedBundleTestCase, WebServiceTestCase):
-    pass
+
+    @property
+    def _controller(self) -> IndexController:
+        controller = self._app.index_controller
+        assert isinstance(controller, IndexController)
+        return controller
 
 
 class TestIndexResponse(IndexResponseTestCase):
@@ -143,7 +154,7 @@ class TestIndexResponse(IndexResponseTestCase):
 
     @property
     def file_url_func(self):
-        return self._app.file_url
+        return self._controller.file_url
 
     def _get_hits(self, entity_type: str, entity_id: str):
         """
@@ -170,8 +181,8 @@ class TestIndexResponse(IndexResponseTestCase):
         return IndexService()
 
     @property
-    def _repository_service(self):
-        return self._app.repository_controller.service
+    def _repository_service(self) -> RepositoryService:
+        return self._controller.service
 
     def _response_stage(self, entity_type: str) -> HCASearchResponseStage:
         return HCASearchResponseStage(service=self._repository_service,

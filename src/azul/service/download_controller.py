@@ -395,10 +395,10 @@ class DownloadController(ServiceController):
             return {
                 'Status': 301,
                 **({'Retry-After': retry_after} if retry_after else {}),
-                'Location': str(self.file_url_func(catalog=catalog,
-                                                   file_uuid=file_uuid,
-                                                   fetch=fetch,
-                                                   **query_params))
+                'Location': str(self.file_url(catalog=catalog,
+                                              file_uuid=file_uuid,
+                                              fetch=fetch,
+                                              **query_params))
             }
         elif download.location is not None:
             log_data = {
@@ -427,7 +427,7 @@ class DownloadController(ServiceController):
                                     ) -> Sequence[tuple[int | None, int | None]]:
         """
         >>> # noinspection PyTypeChecker
-        >>> dc = DownloadController(app=None, file_url_func=None)
+        >>> dc = DownloadController(app=None)
         >>> dc._parse_range_request_header('bytes=100-200,300-400')
         [(100, 200), (300, 400)]
 

@@ -505,7 +505,7 @@ class RepositoryController(ServiceController):
         try:
             response = self.service.search(catalog=catalog,
                                            entity_type=entity_type,
-                                           file_url_func=self.file_url_func,
+                                           file_url_func=self.file_url,
                                            item_id=item_id,
                                            filters=filters,
                                            pagination=pagination)
