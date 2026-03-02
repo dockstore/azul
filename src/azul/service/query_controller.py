@@ -1,5 +1,8 @@
 import json
 import logging
+from typing import (
+    Mapping,
+)
 
 from chalice import (
     BadRequestError as BRE,
@@ -9,11 +12,15 @@ from more_itertools import (
 )
 
 from azul import (
+    CatalogName,
     R,
+    cache,
     require,
 )
 from azul.indexer.field import (
+    FieldType,
     Nested,
+    pass_thru_bool,
 )
 from azul.openapi import (
     application_json,
@@ -82,7 +89,7 @@ class QueryController(ServiceController):
 
     @property
     def filters_param_spec(self):
-        types = self.app.index_controller.field_types(self.app.catalog)
+        types = self.field_types(self.app.catalog)
 
         def _filter_schema(field_type):
             operators = field_type.supported_filter_operators
@@ -173,7 +180,7 @@ class QueryController(ServiceController):
         filters = self.validate_json_param('filters', filters)
         if type(filters) is not dict:
             raise BRE('The `filters` parameter must be a dictionary')
-        field_types = self.app.index_controller.field_types(self.app.catalog)
+        field_types = self.field_types(self.app.catalog)
         special_fields = self._metadata_plugin.special_fields
         accessibility_fields = {
             special_fields.source_id.name,
@@ -230,3 +237,22 @@ class QueryController(ServiceController):
                     if extra_props:
                         raise BRE(f'The value of the `is` operator in the `filters` '
                                   f'parameter entry for `{field}` has invalid properties `{extra_props}`')
+
+    @cache
+    def field_types(self, catalog: CatalogName) -> Mapping[str, FieldType]:
+        """
+        Returns the field type for each supported sort and filter field, using
+        the name of the field as provided by clients.
+        """
+        result = {}
+        plugin = self._metadata_plugin
+        for field, path in plugin.field_mapping.items():
+            field_type = self.service.field_type(catalog, path)
+            if isinstance(field_type, FieldType):
+                result[field] = field_type
+        # This field is a synthetic element of the response and will never be
+        # null. Including it here helps to streamline request validation.
+        accessible_field = plugin.special_fields.accessible.name
+        assert accessible_field not in result, result
+        result[accessible_field] = pass_thru_bool
+        return result

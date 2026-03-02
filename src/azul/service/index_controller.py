@@ -1,6 +1,3 @@
-from collections.abc import (
-    Mapping,
-)
 from functools import (
     partial,
 )
@@ -25,7 +22,6 @@ from furl import (
 from azul import (
     CatalogName,
     R,
-    cache,
     cached_property,
     iif,
 )
@@ -34,10 +30,6 @@ from azul.auth import (
 )
 from azul.indexer.document import (
     EntityType,
-)
-from azul.indexer.field import (
-    FieldType,
-    pass_thru_bool,
 )
 from azul.openapi import (
     format_description as fd,
@@ -529,22 +521,3 @@ class IndexController(QueryController):
         except BadArgumentException as e:
             raise BadRequestError(e)
         return cast(JSON, response)
-
-    @cache
-    def field_types(self, catalog: CatalogName) -> Mapping[str, FieldType]:
-        """
-        Returns the field type for each supported sort and filter field, using
-        the name of the field as provided by clients.
-        """
-        result = {}
-        plugin = self._metadata_plugin
-        for field, path in plugin.field_mapping.items():
-            field_type = self.service.field_type(catalog, path)
-            if isinstance(field_type, FieldType):
-                result[field] = field_type
-        # This field is a synthetic element of the response and will never be
-        # null. Including it here helps to streamline request validation.
-        accessible_field = plugin.special_fields.accessible.name
-        assert accessible_field not in result, result
-        result[accessible_field] = pass_thru_bool
-        return result
