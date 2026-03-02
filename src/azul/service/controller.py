@@ -134,7 +134,7 @@ class ServiceController(SourceController):
 
     @property
     def filters_param_spec(self):
-        types = self.app.repository_controller.field_types(self.app.catalog)
+        types = self.app.index_controller.field_types(self.app.catalog)
 
         def _filter_schema(field_type):
             operators = field_type.supported_filter_operators
@@ -225,7 +225,7 @@ class ServiceController(SourceController):
         filters = self.validate_json_param('filters', filters)
         if type(filters) is not dict:
             raise BRE('The `filters` parameter must be a dictionary')
-        field_types = self.app.repository_controller.field_types(self.app.catalog)
+        field_types = self.app.index_controller.field_types(self.app.catalog)
         special_fields = self.app.metadata_plugin.special_fields
         accessibility_fields = {
             special_fields.source_id.name,

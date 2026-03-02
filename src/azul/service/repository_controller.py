@@ -74,7 +74,7 @@ from azul.uuids import (
 log = logging.getLogger(__name__)
 
 
-class RepositoryController(ServiceController):
+class IndexController(ServiceController):
     @property
     def _metadata_plugin(self) -> MetadataPlugin:
         return self.service.metadata_plugin(self.app.catalog)

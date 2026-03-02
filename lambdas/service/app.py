@@ -46,7 +46,7 @@ from azul.service.manifest_controller import (
     ManifestController,
 )
 from azul.service.repository_controller import (
-    RepositoryController,
+    IndexController,
 )
 from azul.types import (
     JSON,
@@ -245,8 +245,8 @@ class ServiceApp(HealthApp):
         return CatalogController(app=self)
 
     @cached_property
-    def repository_controller(self) -> RepositoryController:
-        return RepositoryController(app=self)
+    def index_controller(self) -> IndexController:
+        return IndexController(app=self)
 
     @cached_property
     def download_controller(self) -> DownloadController:
@@ -317,7 +317,7 @@ globals().update(app.default_routes())
 
 globals().update(app.catalog_controller.handlers())
 
-globals().update(app.repository_controller.handlers())
+globals().update(app.index_controller.handlers())
 
 globals().update(app.manifest_controller.handlers())
 
