@@ -123,35 +123,34 @@ class ManifestController(ServiceController):
                 raise BadRequestError(f'Manifest format `{format}` is not supported for '
                                       f'catalog {self.app.catalog}. Must be one of {supported_formats}')
 
-    def handlers(self) -> dict[str, Any]:
-        def manifest_route(*, fetch: bool, initiate: bool):
-            return self.app.route(
-                # The path parameter could be a token *or* an object key, but we don't
-                # want to complicate the API with this detail
-                ('/fetch' if fetch else '')
-                + ('/manifest/files' if initiate else '/manifest/files/{token}'),
-                # The initial PUT request is idempotent.
-                methods=['PUT' if initiate else 'GET'],
-                interactive=fetch,
-                cors=True,
-                path_spec=None if initiate else {
-                    'parameters': [
-                        params.path('token', str, description=fd('''
+    def _route(self, *, fetch: bool, initiate: bool):
+        return self.app.route(
+            # The path parameter could be a token *or* an object key, but we don't
+            # want to complicate the API with this detail
+            ('/fetch' if fetch else '')
+            + ('/manifest/files' if initiate else '/manifest/files/{token}'),
+            # The initial PUT request is idempotent.
+            methods=['PUT' if initiate else 'GET'],
+            interactive=fetch,
+            cors=True,
+            path_spec=None if initiate else {
+                'parameters': [
+                    params.path('token', str, description=fd('''
                             An opaque string representing the manifest preparation job
                         '''))
-                    ]
-                },
-                spec={
-                    'tags': ['Manifests'],
-                    'summary':
-                        (
-                            'Initiate the preparation of a manifest'
-                            if initiate else
-                            'Determine status of a manifest preparation job'
-                        ) + (
-                            ' via XHR' if fetch else ''
-                        ),
-                    'description': fd('''
+                ]
+            },
+            spec={
+                'tags': ['Manifests'],
+                'summary':
+                    (
+                        'Initiate the preparation of a manifest'
+                        if initiate else
+                        'Determine status of a manifest preparation job'
+                    ) + (
+                        ' via XHR' if fetch else ''
+                    ),
+                'description': fd('''
                         Create a manifest preparation job, returning either
 
                         - a 301 redirect to the URL of the status of that job or
@@ -163,8 +162,8 @@ class ManifestController(ServiceController):
 
                         [1]: #operations-Manifests-put_fetch_manifest_files
                     ''') + self.parameter_hoisting_note('PUT', '/manifest/files', 'PUT')
-                    if initiate and not fetch else
-                    fd('''
+                if initiate and not fetch else
+                fd('''
                         Check on the status of an ongoing manifest preparation job,
                         returning either
 
@@ -198,8 +197,8 @@ class ManifestController(ServiceController):
 
                         [1]: #operations-Manifests-put_manifest_files
                     ''') + self.parameter_hoisting_note('PUT', '/fetch/manifest/files', 'PUT')
-                    if initiate and fetch else
-                    fd('''
+                if initiate and fetch else
+                fd('''
                         Check on the status of an ongoing manifest preparation job,
                         returning a 200 status response whose JSON body emulates the
                         HTTP headers that would be found in a response to an equivalent
@@ -219,21 +218,21 @@ class ManifestController(ServiceController):
 
                         [1]: #operations-Manifests-get_manifest_files
                     '''),
-                    'parameters': [
-                        self.catalog_param_spec,
-                        self.filters_param_spec,
-                        params.query(
-                            'format',
-                            schema.optional(
-                                schema.enum(
-                                    *[
-                                        format.value
-                                        for format in self.app.metadata_plugin.manifest_formats
-                                    ],
-                                    form=str
-                                )
-                            ),
-                            description=f'''
+                'parameters': [
+                    self.catalog_param_spec,
+                    self.filters_param_spec,
+                    params.query(
+                        'format',
+                        schema.optional(
+                            schema.enum(
+                                *[
+                                    format.value
+                                    for format in self.app.metadata_plugin.manifest_formats
+                                ],
+                                form=str
+                            )
+                        ),
+                        description=f'''
                                 The desired format of the output.
 
                                 - `{ManifestFormat.compact.value}` (the default) for a compact,
@@ -263,42 +262,42 @@ class ManifestController(ServiceController):
 
                                 [4]: https://jsonlines.org/
                             '''
-                        )
-                    ] if initiate else [],
-                    'responses': {
-                        '301': {
-                            'description': fd(f'''
+                    )
+                ] if initiate else [],
+                'responses': {
+                    '301': {
+                        'description': fd(f'''
                                 A redirect indicating that the manifest preparation job
                                 {'has started' if initiate else 'is running'}. Wait for
                                 the recommended number of seconds (see `Retry-After`
                                 header) and then follow the redirect to check the status
                                 of {'that job' if initiate else 'the job again'}.
                             '''),
-                            'headers': {
-                                'Location': {
-                                    'description': fd('''
-                                        The URL of the manifest preparation job at
-                                    ''') + fd('''the [`GET
-                                        /manifest/files/{token}`][2] endpoint.
+                        'headers': {
+                            'Location': {
+                                'description': fd('''
+                                    The URL of the manifest preparation job at
+                                ''') + fd('''the [`GET
+                                /manifest/files/{token}`][2] endpoint.
 
-                                        [2]: #operations-Manifests-get_fetch_manifest_files_token
-                                        ''') if initiate else fd('''
-                                        The URL of this endpoint
-                                        '''),
-                                    'schema': {'type': 'string', 'format': 'url'}
-                                },
-                                'Retry-After': {
-                                    'description': fd('''
-                                        The recommended number of seconds to wait before
-                                        requesting the URL specified in the `Location`
-                                        header
-                                    '''),
-                                    'schema': {'type': 'string'}
-                                }
+                                [2]: #operations-Manifests-get_fetch_manifest_files_token
+                                ''') if initiate else fd('''
+                                    The URL of this endpoint
+                                '''),
+                                'schema': {'type': 'string', 'format': 'url'}
+                            },
+                            'Retry-After': {
+                                'description': fd('''
+                                    The recommended number of seconds to wait before
+                                    requesting the URL specified in the `Location`
+                                    header
+                                '''),
+                                'schema': {'type': 'string'}
                             }
-                        },
-                        '302': {
-                            'description': fd(f'''
+                        }
+                    },
+                    '302': {
+                        'description': fd(f'''
                                 A redirect indicating that the manifest preparation job
                                 is {'already' if initiate else 'now'} done. Immediately
                                 follow the redirect to obtain the manifest contents.
@@ -307,29 +306,29 @@ class ManifestController(ServiceController):
                                 used shells, a command line suitable for downloading the
                                 manifest.
                             '''),
-                            'headers': {
-                                'Location': {
-                                    'description': fd(''' The URL of the manifest.
-                                        Clients should not make any assumptions about
-                                        any parts of the returned domain, except that
-                                        the scheme will be `https`.
-                                    '''),
-                                    'schema': {'type': 'string', 'format': 'url'}
-                                }
+                        'headers': {
+                            'Location': {
+                                'description': fd(''' The URL of the manifest.
+                                Clients should not make any assumptions about
+                                any parts of the returned domain, except that
+                                the scheme will be `https`.
+                                '''),
+                                'schema': {'type': 'string', 'format': 'url'}
                             }
-                        },
-                        **({} if initiate else {
-                            '410': {
-                                'description': fd('''
+                        }
+                    },
+                    **({} if initiate else {
+                        '410': {
+                            'description': fd('''
                                     The manifest preparation job has expired. Request a
                                     new preparation using the `PUT /manifest/files`
                                     endpoint.
                                 ''')
-                            }
-                        })
-                    } if not fetch else {
-                        '200': {
-                            'description': fd('''
+                        }
+                    })
+                } if not fetch else {
+                    '200': {
+                        'description': fd('''
                                 When handling this response, clients should wait the
                                 number of seconds given in the `Retry-After` property of
                                 the response body and then make another XHR request to
@@ -362,63 +361,41 @@ class ManifestController(ServiceController):
                             shells, a command line suitable for downloading the
                             manifest.
                         '''),
-                            **responses.json_content(
-                                schema.object(
-                                    Status=int,
-                                    Location={'type': 'string', 'format': 'url'},
-                                    **{'Retry-After': schema.optional(int)},
-                                    CommandLine=schema.optional(schema.object(**{
-                                        key: str
-                                        for key in CurlManifestGenerator.command_lines(url=furl(''),
-                                                                                       file_name='',
-                                                                                       authentication=None)
-                                    }))
-                                )
-                            ),
-                        }
+                        **responses.json_content(
+                            schema.object(
+                                Status=int,
+                                Location={'type': 'string', 'format': 'url'},
+                                **{'Retry-After': schema.optional(int)},
+                                CommandLine=schema.optional(schema.object(**{
+                                    key: str
+                                    for key in CurlManifestGenerator.command_lines(url=furl(''),
+                                                                                   file_name='',
+                                                                                   authentication=None)
+                                }))
+                            )
+                        ),
                     }
-
                 }
-            )
 
-        @manifest_route(fetch=False, initiate=True)
+            }
+        )
+
+    def handlers(self) -> dict[str, Any]:
+        @self._route(fetch=False, initiate=True)
         def file_manifest():
-            return _file_manifest(fetch=False)
+            return self._file_manifest(fetch=False)
 
-        @manifest_route(fetch=False, initiate=False)
+        @self._route(fetch=False, initiate=False)
         def file_manifest_with_token(token: str):
-            return _file_manifest(fetch=False, token_or_key=token)
+            return self._file_manifest(fetch=False, token_or_key=token)
 
-        @manifest_route(fetch=True, initiate=True)
+        @self._route(fetch=True, initiate=True)
         def fetch_file_manifest():
-            return _file_manifest(fetch=True)
+            return self._file_manifest(fetch=True)
 
-        @manifest_route(fetch=True, initiate=False)
+        @self._route(fetch=True, initiate=False)
         def fetch_file_manifest_with_token(token: str):
-            return _file_manifest(fetch=True, token_or_key=token)
-
-        def _file_manifest(fetch: bool, token_or_key: str | None = None):
-            request = self.app.current_request
-            query_params = request.query_params or {}
-            self._hoist_parameters(query_params, request)
-            if token_or_key is None:
-                query_params.setdefault('filters', '{}')
-                # We list the `catalog` validator first so that the catalog is validated
-                # before any other potentially catalog-dependent validators are invoked
-                validate_params(query_params,
-                                catalog=validate_catalog,
-                                format=self.validate_manifest_format,
-                                filters=self.validate_filters)
-                # Now that the catalog is valid, we can provide the default format that
-                # depends on it
-                default_format = self.app.metadata_plugin.manifest_formats[0].value
-                query_params.setdefault('format', default_format)
-            else:
-                validate_params(query_params)
-            return self.get_manifest_async(query_params=query_params,
-                                           token_or_key=token_or_key,
-                                           fetch=fetch,
-                                           authentication=request.authentication)
+            return self._file_manifest(fetch=True, token_or_key=token)
 
         @self.app.lambda_function(name=config.manifest_sfn)
         def generate_manifest(event: AnyJSON, _context: LambdaContext):
@@ -427,6 +404,29 @@ class ManifestController(ServiceController):
             return self.get_manifest(event)
 
         return locals()
+
+    def _file_manifest(self, fetch: bool, token_or_key: str | None = None):
+        request = self.app.current_request
+        query_params = request.query_params or {}
+        self._hoist_parameters(query_params, request)
+        if token_or_key is None:
+            query_params.setdefault('filters', '{}')
+            # We list the `catalog` validator first so that the catalog is validated
+            # before any other potentially catalog-dependent validators are invoked
+            validate_params(query_params,
+                            catalog=validate_catalog,
+                            format=self.validate_manifest_format,
+                            filters=self.validate_filters)
+            # Now that the catalog is valid, we can provide the default format that
+            # depends on it
+            default_format = self.app.metadata_plugin.manifest_formats[0].value
+            query_params.setdefault('format', default_format)
+        else:
+            validate_params(query_params)
+        return self.get_manifest_async(query_params=query_params,
+                                       token_or_key=token_or_key,
+                                       fetch=fetch,
+                                       authentication=request.authentication)
 
     def get_manifest(self, state: JSON) -> ManifestGenerationState:
         # We trust StepFunctions to pass
