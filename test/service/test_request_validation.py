@@ -11,6 +11,9 @@ from requests import (
 from azul.logging import (
     configure_test_logging,
 )
+from azul.plugins import (
+    MetadataPlugin,
+)
 from azul.service.index_controller import (
     IndexController,
 )
@@ -46,6 +49,13 @@ class RequestParameterValidationTest(DCP1CannedBundleTestCase,
         controller = self._app.index_controller
         assert isinstance(controller, IndexController)
         return controller
+
+    @property
+    def _metadata_plugin(self) -> MetadataPlugin:
+        controller = self._controller
+        plugin = controller._metadata_plugin
+        assert isinstance(plugin, MetadataPlugin)
+        return plugin
 
     def assertResponseStatus(self, url: furl, status: int) -> Response:
         if str(url.path) in {'/manifest/files', '/fetch/manifest/files'}:

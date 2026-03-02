@@ -91,6 +91,7 @@ from azul.logging import (
 )
 from azul.plugins import (
     ManifestFormat,
+    MetadataPlugin,
 )
 from azul.plugins.metadata.hca import (
     FileTransformer,
@@ -279,6 +280,12 @@ class ManifestTestCase(WebServiceTestCase,
         controller = self._app.manifest_controller
         assert isinstance(controller, ManifestController)
         return controller
+
+    @property
+    def _metadata_plugin(self) -> MetadataPlugin:
+        plugin = self._controller._metadata_plugin
+        assert isinstance(plugin, MetadataPlugin)
+        return plugin
 
     @property
     def _service(self):

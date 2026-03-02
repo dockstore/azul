@@ -36,6 +36,7 @@ from azul.openapi import (
 )
 from azul.plugins import (
     ManifestFormat,
+    MetadataPlugin,
 )
 from azul.service import (
     Filters,
@@ -97,6 +98,10 @@ class ManifestController(ServiceController):
     def service(self) -> ManifestService:
         return ManifestService(StorageService(), self.file_url)
 
+    @property
+    def _metadata_plugin(self) -> MetadataPlugin:
+        return self.service.metadata_plugin(self.app.catalog)
+
     def _manifest_path(self, *, fetch: bool, token: str | None) -> tuple[str, ...]:
         path = ('manifest', 'files')
         if fetch:
@@ -116,7 +121,7 @@ class ManifestController(ServiceController):
         return url.set(args=params)
 
     def validate_manifest_format(self, format: str):
-        supported_formats = {f.value for f in self.app.metadata_plugin.manifest_formats}
+        supported_formats = {f.value for f in self._metadata_plugin.manifest_formats}
         try:
             ManifestFormat(format)
         except ValueError:
@@ -231,7 +236,7 @@ class ManifestController(ServiceController):
                             schema.enum(
                                 *[
                                     format.value
-                                    for format in self.app.metadata_plugin.manifest_formats
+                                    for format in self._metadata_plugin.manifest_formats
                                 ],
                                 form=str
                             )
@@ -423,7 +428,7 @@ class ManifestController(ServiceController):
                             filters=self.validate_filters)
             # Now that the catalog is valid, we can provide the default format that
             # depends on it
-            default_format = self.app.metadata_plugin.manifest_formats[0].value
+            default_format = self._metadata_plugin.manifest_formats[0].value
             query_params.setdefault('format', default_format)
         else:
             validate_params(query_params)

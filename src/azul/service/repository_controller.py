@@ -45,6 +45,9 @@ from azul.openapi import (
     responses,
     schema,
 )
+from azul.plugins import (
+    MetadataPlugin,
+)
 from azul.service import (
     BadArgumentException,
 )
@@ -72,6 +75,10 @@ log = logging.getLogger(__name__)
 
 
 class RepositoryController(ServiceController):
+    @property
+    def _metadata_plugin(self) -> MetadataPlugin:
+        return self.service.metadata_plugin(self.app.catalog)
+
     @attr.s(kw_only=True, auto_attribs=True, frozen=True)
     class Pagination(Pagination):
         self_url: furl
@@ -92,7 +99,7 @@ class RepositoryController(ServiceController):
             return furl(url=self.self_url, args=params)
 
     def get_pagination(self, entity_type: str) -> Pagination:
-        default_sorting = self.app.metadata_plugin.exposed_indices[entity_type]
+        default_sorting = self._metadata_plugin.exposed_indices[entity_type]
         params = self.app.current_request.query_params or {}
         sb, sa = params.get('search_before'), params.get('search_after')
         if sb is None:
@@ -232,7 +239,7 @@ class RepositoryController(ServiceController):
             self.filters_param_spec,
             params.path(
                 'entity_type',
-                schema.enum(*self.app.metadata_plugin.exposed_indices.keys()),
+                schema.enum(*self._metadata_plugin.exposed_indices.keys()),
                 description='Which index to search.'
             ),
             params.query(
@@ -307,13 +314,13 @@ class RepositoryController(ServiceController):
         }
 
     def validate_entity_type(self, entity_type: str):
-        entity_types = self.app.metadata_plugin.exposed_indices.keys()
+        entity_types = self._metadata_plugin.exposed_indices.keys()
         if entity_type not in entity_types:
             raise BadRequestError(f'Entity type {entity_type!r} is invalid for catalog '
                                   f'{self.app.catalog!r}. Must be one of {set(entity_types)}.')
 
     def validate_size(self, entity_type: EntityType, size: str):
-        sorting = self.app.metadata_plugin.exposed_indices[entity_type]
+        sorting = self._metadata_plugin.exposed_indices[entity_type]
         try:
             size = int(size)
         except BaseException:
@@ -535,7 +542,7 @@ class RepositoryController(ServiceController):
         the name of the field as provided by clients.
         """
         result = {}
-        plugin = self.service.metadata_plugin(catalog)
+        plugin = self._metadata_plugin
         for field, path in plugin.field_mapping.items():
             field_type = self.service.field_type(catalog, path)
             if isinstance(field_type, FieldType):

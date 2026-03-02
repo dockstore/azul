@@ -20,6 +20,9 @@ from azul.logging import (
     configure_test_logging,
     get_test_logger,
 )
+from azul.plugins import (
+    MetadataPlugin,
+)
 from azul.service.index_controller import (
     IndexController,
 )
@@ -50,6 +53,12 @@ class TestPagination(DCP1CannedBundleTestCase, DocumentCloningTestCase):
         controller = self._app.index_controller
         assert isinstance(controller, IndexController)
         return controller
+
+    @property
+    def _metadata_plugin(self) -> MetadataPlugin:
+        plugin = self._controller._metadata_plugin
+        assert isinstance(plugin, MetadataPlugin)
+        return plugin
 
     def test_pagination(self):
 
