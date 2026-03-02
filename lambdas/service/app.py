@@ -42,11 +42,11 @@ from azul.service.download_controller import (
 from azul.service.drs_controller import (
     DRSController,
 )
+from azul.service.index_controller import (
+    IndexController,
+)
 from azul.service.manifest_controller import (
     ManifestController,
-)
-from azul.service.repository_controller import (
-    IndexController,
 )
 from azul.types import (
     JSON,
