@@ -24,7 +24,6 @@ from azul.openapi import (
 )
 from azul.plugins import (
     ManifestFormat,
-    MetadataPlugin,
     RepositoryPlugin,
 )
 from azul.service.catalog_controller import (
@@ -249,14 +248,6 @@ class ServiceApp(HealthApp):
     @cached_property
     def manifest_controller(self) -> ManifestController:
         return ManifestController(app=self)
-
-    @property
-    def metadata_plugin(self) -> MetadataPlugin:
-        return self._metadata_plugin(self.catalog)
-
-    @cache
-    def _metadata_plugin(self, catalog: CatalogName):
-        return MetadataPlugin.load(catalog).create()
 
     @property
     def repository_plugin(self) -> RepositoryPlugin:
