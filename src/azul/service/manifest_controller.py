@@ -98,6 +98,18 @@ class ManifestController(ServiceController):
     def service(self) -> ManifestService:
         return ManifestService(StorageService(), self.file_url_func)
 
+    def validate_manifest_format(self, format: str):
+        supported_formats = {f.value for f in self.app.metadata_plugin.manifest_formats}
+        try:
+            ManifestFormat(format)
+        except ValueError:
+            raise BadRequestError(f'Unknown manifest format `{format}`. '
+                                  f'Must be one of {supported_formats}')
+        else:
+            if format not in supported_formats:
+                raise BadRequestError(f'Manifest format `{format}` is not supported for '
+                                      f'catalog {self.app.catalog}. Must be one of {supported_formats}')
+
     def handlers(self) -> dict[str, Any]:
         def manifest_route(*, fetch: bool, initiate: bool):
             return self.app.route(
@@ -382,7 +394,7 @@ class ManifestController(ServiceController):
                 # before any other potentially catalog-dependent validators are invoked
                 validate_params(query_params,
                                 catalog=validate_catalog,
-                                format=validate_manifest_format,
+                                format=self.validate_manifest_format,
                                 filters=self.validate_filters)
                 # Now that the catalog is valid, we can provide the default format that
                 # depends on it

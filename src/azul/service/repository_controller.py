@@ -25,6 +25,9 @@ from azul import (
 from azul.auth import (
     Authentication,
 )
+from azul.indexer.document import (
+    EntityType,
+)
 from azul.indexer.field import (
     FieldType,
     pass_thru_bool,
@@ -60,6 +63,8 @@ log = logging.getLogger(__name__)
 
 
 class RepositoryController(ServiceController):
+    min_page_size = 1
+
     generic_object_spec = schema.object(additionalProperties=True)
 
     array_of_object_spec = schema.array(generic_object_spec)
@@ -248,6 +253,24 @@ class RepositoryController(ServiceController):
             'parameters': [self.catalog_param_spec, self.filters_param_spec]
         }
 
+    def validate_size(self, entity_type: EntityType, size: str):
+        sorting = self.app.metadata_plugin.exposed_indices[entity_type]
+        try:
+            size = int(size)
+        except BaseException:
+            raise BadRequestError('Invalid value for parameter `size`')
+        else:
+            if size > sorting.max_page_size:
+                raise BadRequestError(f'Invalid value for parameter `size`, '
+                                      f'must not be greater than {sorting.max_page_size}')
+            elif size < self.min_page_size:
+                raise BadRequestError('Invalid value for parameter `size`, must be greater than 0')
+
+    def validate_order(self, order: str):
+        supported_orders = ('asc', 'desc')
+        if order not in supported_orders:
+            raise BadRequestError(f'Unknown order `{order}`. Must be one of {supported_orders}')
+
     def handlers(self) -> dict[str, Any]:
         @self.app.route(
             '/index/{entity_type}',
@@ -283,12 +306,12 @@ class RepositoryController(ServiceController):
             validate_params(query_params,
                             catalog=validate_catalog,
                             filters=self.validate_filters,
-                            order=validate_order,
+                            order=self.validate_order,
                             search_after=partial(self.validate_json_param, 'search_after'),
                             search_after_uid=str,
                             search_before=partial(self.validate_json_param, 'search_before'),
                             search_before_uid=str,
-                            size=partial(validate_size, entity_type),
+                            size=partial(self.validate_size, entity_type),
                             sort=self.validate_field)
             validate_entity_type(entity_type)
             response = self.search(catalog=self.app.catalog,

@@ -35,9 +35,6 @@ from azul.collections import (
 from azul.health import (
     HealthApp,
 )
-from azul.indexer.document import (
-    EntityType,
-)
 from azul.logging import (
     configure_app_logging,
 )
@@ -415,42 +412,6 @@ def validate_entity_type(entity_type: str):
     if entity_type not in entity_types:
         raise BRE(f'Entity type {entity_type!r} is invalid for catalog '
                   f'{app.catalog!r}. Must be one of {set(entity_types)}.')
-
-
-min_page_size = 1
-
-
-def validate_size(entity_type: EntityType, size: str):
-    sorting = app.metadata_plugin.exposed_indices[entity_type]
-    try:
-        size = int(size)
-    except BaseException:
-        raise BRE('Invalid value for parameter `size`')
-    else:
-        if size > sorting.max_page_size:
-            raise BRE(f'Invalid value for parameter `size`, '
-                      f'must not be greater than {sorting.max_page_size}')
-        elif size < min_page_size:
-            raise BRE('Invalid value for parameter `size`, must be greater than 0')
-
-
-def validate_manifest_format(format: str):
-    supported_formats = {f.value for f in app.metadata_plugin.manifest_formats}
-    try:
-        ManifestFormat(format)
-    except ValueError:
-        raise BRE(f'Unknown manifest format `{format}`. '
-                  f'Must be one of {supported_formats}')
-    else:
-        if format not in supported_formats:
-            raise BRE(f'Manifest format `{format}` is not supported for '
-                      f'catalog {app.catalog}. Must be one of {supported_formats}')
-
-
-def validate_order(order: str):
-    supported_orders = ('asc', 'desc')
-    if order not in supported_orders:
-        raise BRE(f'Unknown order `{order}`. Must be one of {supported_orders}')
 
 
 globals().update(app.catalog_controller.handlers())
