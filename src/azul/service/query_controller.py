@@ -174,7 +174,7 @@ class QueryController(ServiceController):
         if type(filters) is not dict:
             raise BRE('The `filters` parameter must be a dictionary')
         field_types = self.app.index_controller.field_types(self.app.catalog)
-        special_fields = self.app.metadata_plugin.special_fields
+        special_fields = self._metadata_plugin.special_fields
         accessibility_fields = {
             special_fields.source_id.name,
             special_fields.accessible.name
