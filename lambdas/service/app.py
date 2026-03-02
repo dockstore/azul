@@ -5,8 +5,6 @@ from chalice import (
 )
 
 from azul import (
-    CatalogName,
-    cache,
     cached_property,
     config,
 )
@@ -24,7 +22,6 @@ from azul.openapi import (
 )
 from azul.plugins import (
     ManifestFormat,
-    RepositoryPlugin,
 )
 from azul.service.catalog_controller import (
     CatalogController,
@@ -248,14 +245,6 @@ class ServiceApp(HealthApp):
     @cached_property
     def manifest_controller(self) -> ManifestController:
         return ManifestController(app=self)
-
-    @property
-    def repository_plugin(self) -> RepositoryPlugin:
-        return self._repository_plugin(self.catalog)
-
-    @cache
-    def _repository_plugin(self, catalog: CatalogName):
-        return RepositoryPlugin.load(catalog).create(catalog)
 
     def __init__(self):
         super().__init__(app_name=config.service_name,
