@@ -248,7 +248,7 @@ class RepositoryController(ServiceController):
             }
         }
 
-    @cached_property
+    @property
     def repository_summary_spec(self):
         return {
             'tags': ['Index'],

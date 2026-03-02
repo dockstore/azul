@@ -78,7 +78,7 @@ log = logging.getLogger(__name__)
 
 class DownloadController(ServiceController):
 
-    @cached_property
+    @property
     def repository_files_spec(self):
         return {
             'tags': ['Repository'],

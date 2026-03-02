@@ -18,7 +18,6 @@ from azul import (
     CatalogName,
     R,
     RequirementError,
-    cached_property,
     config,
     require,
 )
@@ -111,7 +110,7 @@ class ServiceController(SourceController):
             inside another.
         ''' % (method, endpoint, equivalent_method, endpoint))
 
-    @cached_property
+    @property
     def catalog_param_spec(self):
         return params.query(
             'catalog',
@@ -119,7 +118,7 @@ class ServiceController(SourceController):
                                            form=schema.enum(*config.catalogs))),
             description='The name of the catalog to query.')
 
-    @cached_property
+    @property
     def filters_param_spec(self):
         types = self.app.repository_controller.field_types(self.app.catalog)
 
