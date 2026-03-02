@@ -76,7 +76,7 @@ from azul.types import (
 log = logging.getLogger(__name__)
 
 
-class DownloadController(ServiceController):
+class RepositoryController(ServiceController):
 
     @property
     def repository_files_spec(self):
@@ -427,7 +427,7 @@ class DownloadController(ServiceController):
                                     ) -> Sequence[tuple[int | None, int | None]]:
         """
         >>> # noinspection PyTypeChecker
-        >>> dc = DownloadController(app=None)
+        >>> dc = RepositoryController(app=None)
         >>> dc._parse_range_request_header('bytes=100-200,300-400')
         [(100, 200), (300, 400)]
 
