@@ -375,7 +375,7 @@ class ManifestController(ServiceController):
         def _file_manifest(fetch: bool, token_or_key: str | None = None):
             request = self.app.current_request
             query_params = request.query_params or {}
-            _hoist_parameters(query_params, request)
+            self._hoist_parameters(query_params, request)
             if token_or_key is None:
                 query_params.setdefault('filters', '{}')
                 # We list the `catalog` validator first so that the catalog is validated
@@ -383,7 +383,7 @@ class ManifestController(ServiceController):
                 validate_params(query_params,
                                 catalog=validate_catalog,
                                 format=validate_manifest_format,
-                                filters=validate_filters)
+                                filters=self.validate_filters)
                 # Now that the catalog is valid, we can provide the default format that
                 # depends on it
                 default_format = self.app.metadata_plugin.manifest_formats[0].value

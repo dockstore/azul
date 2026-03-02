@@ -1,3 +1,4 @@
+import json
 from typing import (
     Any,
     Callable,
@@ -19,15 +20,22 @@ from azul import (
     RequirementError,
     cached_property,
     config,
+    require,
 )
 from azul.auth import (
     Authentication,
+)
+from azul.indexer.field import (
+    Nested,
 )
 from azul.openapi import (
     application_json,
     format_description as fd,
     params,
     schema,
+)
+from azul.plugins.metadata.hca.indexer.transform import (
+    value_and_unit,
 )
 from azul.service import (
     FileUrlFunc,
@@ -42,6 +50,12 @@ from azul.service.source_controller import (
 )
 from azul.strings import (
     pluralize,
+)
+from azul.types import (
+    JSON,
+    MutableJSON,
+    PrimitiveJSON,
+    reify,
 )
 
 
@@ -67,8 +81,18 @@ class ServiceController(SourceController):
         )
     ]
 
-    @classmethod
-    def parameter_hoisting_note(cls,
+    def _hoist_parameters(self, query_params, request):
+        if request.method in ('POST', 'PUT'):
+            body = request.json_body
+            if body is not None:
+                if not isinstance(body, dict):
+                    raise BRE('Request body is not a JSON object')
+                elif body.keys() & query_params.keys():
+                    raise BRE('Conflicting keys between body and query parameters')
+                else:
+                    query_params.update(body)
+
+    def parameter_hoisting_note(self,
                                 method: str,
                                 endpoint: str,
                                 equivalent_method: str
@@ -162,6 +186,89 @@ class ServiceController(SourceController):
                 Supported field names are: {', '.join(self.app.fields)}
             ''')
         )
+
+    def validate_json_param(self, name: str, value: str) -> MutableJSON:
+        try:
+            return json.loads(value)
+        except json.decoder.JSONDecodeError:
+            raise BRE(f'The {name!r} parameter is not valid JSON')
+
+    def validate_organism_age_filter(self, values):
+        for value in values:
+            try:
+                value_and_unit.to_index(value)
+            except AssertionError as e:
+                if R.caused(e):
+                    raise R.propagate(e, BRE)
+                else:
+                    raise
+
+    def validate_field(self, field: str, *, include_synthetic: bool = False):
+        fields = self.app.fields if include_synthetic else self.app.organic_fields
+        if field not in fields:
+            raise BRE(f'Unknown field `{field}`')
+
+    def validate_filters(self, filters):
+        filters = self.validate_json_param('filters', filters)
+        if type(filters) is not dict:
+            raise BRE('The `filters` parameter must be a dictionary')
+        field_types = self.app.repository_controller.field_types(self.app.catalog)
+        special_fields = self.app.metadata_plugin.special_fields
+        accessibility_fields = {
+            special_fields.source_id.name,
+            special_fields.accessible.name
+        }
+        for field, filter_ in filters.items():
+            self.validate_field(field, include_synthetic=True)
+            try:
+                operator, values = one(filter_.items())
+            except Exception:
+                raise BRE(f'The `filters` parameter entry for `{field}` '
+                          f'must be a single-item dictionary')
+            else:
+                if field in accessibility_fields:
+                    valid_operators = ('is',)
+                    disallow_null = True
+                else:
+                    valid_operators = ('is', 'contains', 'within', 'intersects')
+                    disallow_null = False
+                if operator in valid_operators:
+                    if not isinstance(values, list):
+                        raise BRE(f'The value of the `{operator}` operator in the `filters` '
+                                  f'parameter entry for `{field}` is not a list')
+                    if disallow_null and None in values:
+                        raise BRE(f'The `{field}` field does not support null values')
+                else:
+                    raise BRE(f'The operator in the `filters` parameter entry '
+                              f'for `{field}` must be one of {valid_operators}')
+                if operator == 'is':
+                    value_types = reify(JSON | PrimitiveJSON)
+                    if not all(isinstance(value, value_types) for value in values):
+                        raise BRE(f'The value of the `is` operator in the `filters` '
+                                  f'parameter entry for `{field}` is invalid')
+                if field == 'organismAge':
+                    self.validate_organism_age_filter(values)
+                field_type = field_types[field]
+                if isinstance(field_type, Nested):
+                    if operator != 'is':
+                        raise BRE(f'The field `{field}` can only be filtered by the `is` operator')
+                    try:
+                        nested = one(values)
+                    except ValueError:
+                        raise BRE(f'The value of the `is` operator in the `filters` '
+                                  f'parameter entry for `{field}` is not a single-item list')
+                    try:
+                        require(isinstance(nested, dict))
+                    except AssertionError as e:
+                        if R.caused(e):
+                            raise BRE(f'The value of the `is` operator in the `filters` '
+                                      f'parameter entry for `{field}` must contain a dictionary')
+                        else:
+                            raise
+                    extra_props = nested.keys() - field_type.properties.keys()
+                    if extra_props:
+                        raise BRE(f'The value of the `is` operator in the `filters` '
+                                  f'parameter entry for `{field}` has invalid properties `{extra_props}`')
 
     def get_filters(self,
                     catalog: CatalogName,

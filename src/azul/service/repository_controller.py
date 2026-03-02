@@ -279,17 +279,17 @@ class RepositoryController(ServiceController):
         def repository_search(entity_type: str, entity_id: str | None = None) -> JSON:
             request = self.app.current_request
             query_params = request.query_params or {}
-            _hoist_parameters(query_params, request)
+            self._hoist_parameters(query_params, request)
             validate_params(query_params,
                             catalog=validate_catalog,
-                            filters=validate_filters,
+                            filters=self.validate_filters,
                             order=validate_order,
-                            search_after=partial(validate_json_param, 'search_after'),
+                            search_after=partial(self.validate_json_param, 'search_after'),
                             search_after_uid=str,
-                            search_before=partial(validate_json_param, 'search_before'),
+                            search_before=partial(self.validate_json_param, 'search_before'),
                             search_before_uid=str,
                             size=partial(validate_size, entity_type),
-                            sort=validate_field)
+                            sort=self.validate_field)
             validate_entity_type(entity_type)
             response = self.search(catalog=self.app.catalog,
                                    entity_type=entity_type,
@@ -365,7 +365,7 @@ class RepositoryController(ServiceController):
                             filters=str,
                             catalog=validate_catalog)
             filters = query_params.get('filters', '{}')
-            validate_filters(filters)
+            self.validate_filters(filters)
             response = self.summary(catalog=self.app.catalog,
                                     filters=filters,
                                     authentication=request.authentication)

@@ -25,7 +25,6 @@ from azul import (
     cached_property,
     config,
     mutable_furl,
-    require,
 )
 from azul.auth import (
     OAuth2,
@@ -39,9 +38,6 @@ from azul.health import (
 from azul.indexer.document import (
     EntityType,
 )
-from azul.indexer.field import (
-    Nested,
-)
 from azul.logging import (
     configure_app_logging,
 )
@@ -52,9 +48,6 @@ from azul.plugins import (
     ManifestFormat,
     MetadataPlugin,
     RepositoryPlugin,
-)
-from azul.plugins.metadata.hca.indexer.transform import (
-    value_and_unit,
 )
 from azul.service.catalog_controller import (
     CatalogController,
@@ -76,9 +69,6 @@ from azul.service.repository_controller import (
 )
 from azul.types import (
     JSON,
-    MutableJSON,
-    PrimitiveJSON,
-    reify,
 )
 
 log = logging.getLogger(__name__)
@@ -444,86 +434,6 @@ def validate_size(entity_type: EntityType, size: str):
             raise BRE('Invalid value for parameter `size`, must be greater than 0')
 
 
-def validate_filters(filters):
-    filters = validate_json_param('filters', filters)
-    if type(filters) is not dict:
-        raise BRE('The `filters` parameter must be a dictionary')
-    field_types = app.repository_controller.field_types(app.catalog)
-    special_fields = app.metadata_plugin.special_fields
-    accessibility_fields = {
-        special_fields.source_id.name,
-        special_fields.accessible.name
-    }
-    for field, filter_ in filters.items():
-        validate_field(field, include_synthetic=True)
-        try:
-            operator, values = one(filter_.items())
-        except Exception:
-            raise BRE(f'The `filters` parameter entry for `{field}` '
-                      f'must be a single-item dictionary')
-        else:
-            if field in accessibility_fields:
-                valid_operators = ('is',)
-                disallow_null = True
-            else:
-                valid_operators = ('is', 'contains', 'within', 'intersects')
-                disallow_null = False
-            if operator in valid_operators:
-                if not isinstance(values, list):
-                    raise BRE(f'The value of the `{operator}` operator in the `filters` '
-                              f'parameter entry for `{field}` is not a list')
-                if disallow_null and None in values:
-                    raise BRE(f'The `{field}` field does not support null values')
-            else:
-                raise BRE(f'The operator in the `filters` parameter entry '
-                          f'for `{field}` must be one of {valid_operators}')
-            if operator == 'is':
-                value_types = reify(JSON | PrimitiveJSON)
-                if not all(isinstance(value, value_types) for value in values):
-                    raise BRE(f'The value of the `is` operator in the `filters` '
-                              f'parameter entry for `{field}` is invalid')
-            if field == 'organismAge':
-                validate_organism_age_filter(values)
-            field_type = field_types[field]
-            if isinstance(field_type, Nested):
-                if operator != 'is':
-                    raise BRE(f'The field `{field}` can only be filtered by the `is` operator')
-                try:
-                    nested = one(values)
-                except ValueError:
-                    raise BRE(f'The value of the `is` operator in the `filters` '
-                              f'parameter entry for `{field}` is not a single-item list')
-                try:
-                    require(isinstance(nested, dict))
-                except AssertionError as e:
-                    if R.caused(e):
-                        raise BRE(f'The value of the `is` operator in the `filters` '
-                                  f'parameter entry for `{field}` must contain a dictionary')
-                    else:
-                        raise
-                extra_props = nested.keys() - field_type.properties.keys()
-                if extra_props:
-                    raise BRE(f'The value of the `is` operator in the `filters` '
-                              f'parameter entry for `{field}` has invalid properties `{extra_props}`')
-
-
-def validate_organism_age_filter(values):
-    for value in values:
-        try:
-            value_and_unit.to_index(value)
-        except AssertionError as e:
-            if R.caused(e):
-                raise R.propagate(e, BRE)
-            else:
-                raise
-
-
-def validate_field(field: str, *, include_synthetic: bool = False):
-    fields = app.fields if include_synthetic else app.organic_fields
-    if field not in fields:
-        raise BRE(f'Unknown field `{field}`')
-
-
 def validate_manifest_format(format: str):
     supported_formats = {f.value for f in app.metadata_plugin.manifest_formats}
     try:
@@ -543,29 +453,9 @@ def validate_order(order: str):
         raise BRE(f'Unknown order `{order}`. Must be one of {supported_orders}')
 
 
-def validate_json_param(name: str, value: str) -> MutableJSON:
-    try:
-        return json.loads(value)
-    except json.decoder.JSONDecodeError:
-        raise BRE(f'The {name!r} parameter is not valid JSON')
-
-
 globals().update(app.catalog_controller.handlers())
 
 globals().update(app.repository_controller.handlers())
-
-
-def _hoist_parameters(query_params, request):
-    if request.method in ('POST', 'PUT'):
-        body = request.json_body
-        if body is not None:
-            if not isinstance(body, dict):
-                raise BRE('Request body is not a JSON object')
-            elif body.keys() & query_params.keys():
-                raise BRE('Conflicting keys between body and query parameters')
-            else:
-                query_params.update(body)
-
 
 globals().update(app.manifest_controller.handlers())
 
