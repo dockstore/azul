@@ -184,7 +184,7 @@ class RepositoryController(ServiceController):
             ),
             params.query(
                 'size',
-                schema.optional(schema.default(10, form=schema.range(1, None))),
+                schema.optional(schema.default(10, form=schema.range(self.min_page_size, None))),
                 description=fd('''
                     The number of hits included per page. The maximum size allowed
                     depends on the catalog and entity type.
