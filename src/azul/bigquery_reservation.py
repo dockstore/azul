@@ -20,9 +20,9 @@ from more_itertools import (
 )
 
 from azul import (
+    R,
     cached_property,
     config,
-    require,
 )
 from azul.deployment import (
     aws,
@@ -232,7 +232,7 @@ class BigQueryReservation:
         except ValueError:
             return None
         else:
-            require(not extras,
-                    'Too many resources in path (should be 0 or 1)',
-                    self._reservation_parent_path, resources)
+            assert not extras, R(
+                'Too many resources in path (should be 0 or 1)',
+                self._reservation_parent_path, resources)
             return resource
