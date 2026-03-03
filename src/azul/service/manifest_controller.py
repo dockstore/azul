@@ -66,9 +66,6 @@ from azul.service.manifest_service import (
 from azul.service.query_controller import (
     QueryController,
 )
-from azul.service.storage_service import (
-    StorageService,
-)
 from azul.types import (
     AnyJSON,
     FlatJSON,
@@ -97,7 +94,7 @@ class ManifestController(QueryController):
 
     @cached_property
     def service(self) -> ManifestService:
-        return ManifestService(StorageService(), self.file_url)
+        return ManifestService(file_url_func=self.file_url)
 
     def _manifest_path(self, *, fetch: bool, token: str | None) -> tuple[str, ...]:
         path = ('manifest', 'files')

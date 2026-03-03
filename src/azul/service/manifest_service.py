@@ -579,12 +579,13 @@ class CachedManifestNotFound(Exception):
     manifest_key: ManifestKey
 
 
+@attrs.frozen(kw_only=True)
 class ManifestService(ElasticsearchService):
+    file_url_func: FileUrlFunc
 
-    def __init__(self, storage_service: StorageService, file_url_func: FileUrlFunc):
-        super().__init__()
-        self.storage_service = storage_service
-        self.file_url_func = file_url_func
+    @cached_property
+    def storage_service(self) -> StorageService:
+        return StorageService()
 
     def get_manifest(self,
                      *,
