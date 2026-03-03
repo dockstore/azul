@@ -35,7 +35,6 @@ from azul import (
     cached_property,
     config,
     lru_cache,
-    require,
 )
 from azul.chalice import (
     AzulChaliceApp,
@@ -191,7 +190,7 @@ class Health:
     def as_json(self, keys: Iterable[str]) -> JSON:
         keys = frozenset(keys)
         if keys:
-            require(keys <= self.all_keys)
+            assert keys <= self.all_keys, R('Extra keys', keys, self.all_keys)
         else:
             keys = self.all_keys
         json = {k: getattr(self, k) for k in sorted(keys)}
