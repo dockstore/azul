@@ -40,7 +40,6 @@ from azul import (
     R,
     cached_property,
     config,
-    require,
 )
 from azul.json import (
     PolymorphicSerializable,
@@ -115,7 +114,7 @@ def as_annotated():
     ... # doctest: +NORMALIZE_WHITESPACE
     Traceback (most recent call last):
         ...
-    azul.RequirementError: ('Validator cannot be shared among fields',
+    AssertionError: R('Validator cannot be shared among fields',
     Attribute(name='x', default=NOTHING, validator=as_annotated(), repr=True,
     eq=True, eq_key=None, order=True, order_key=None, hash=None, init=True,
     metadata=mappingproxy({}), type=<class 'int'>, converter=None,
@@ -141,7 +140,7 @@ def as_annotated():
     ... # doctest: +ELLIPSIS
     Traceback (most recent call last):
         ...
-    azul.RequirementError: ('Validator cannot be shared among fields', ...
+    AssertionError: R('Validator cannot be shared among fields', ...
 
     """
     return _AsAnnotated()
@@ -162,8 +161,8 @@ class _AsAnnotated:
             self._cache = field, reified_types
         else:
             cached_field, reified_types = self._cache
-            require(cached_field == field,
-                    'Validator cannot be shared among fields', cached_field, field)
+            assert cached_field == field, R(
+                'Validator cannot be shared among fields', cached_field, field)
         return reified_types
 
     def __repr__(self):
