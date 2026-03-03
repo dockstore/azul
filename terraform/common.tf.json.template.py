@@ -3,8 +3,8 @@ from pathlib import (
 )
 
 from azul import (
+    R,
     config,
-    require,
 )
 from azul.terraform import (
     emit_tf,
@@ -12,9 +12,10 @@ from azul.terraform import (
 
 expected_component_path = Path(config.project_root) / 'terraform' / config.terraform_component
 actual_component_path = Path(__file__).absolute().parent
-require(expected_component_path.samefile(actual_component_path),
-        f"The current Terraform component is set to '{config.terraform_component}'. "
-        f"You should therefore be in '{expected_component_path}'")
+assert expected_component_path.samefile(actual_component_path), R(
+    f"The current Terraform component is set to '{config.terraform_component}'. "
+    f"You should therefore be in '{expected_component_path}'"
+)
 
 emit_tf({
     "data": [
