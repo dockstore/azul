@@ -18,7 +18,6 @@ from azul import (
     CatalogName,
     R,
     cache,
-    require,
 )
 from azul.collections import (
     OrderedSet,
@@ -248,7 +247,7 @@ class QueryController(ServiceController):
                         raise BRE(f'The value of the `is` operator in the `filters` '
                                   f'parameter entry for `{field}` is not a single-item list')
                     try:
-                        require(isinstance(nested, dict))
+                        assert isinstance(nested, dict), R('not a dict', nested)
                     except AssertionError as e:
                         if R.caused(e):
                             raise BRE(f'The value of the `is` operator in the `filters` '
