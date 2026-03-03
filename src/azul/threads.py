@@ -15,7 +15,7 @@ import threading
 import time
 
 from azul import (
-    require,
+    R,
 )
 
 log = logging.getLogger(__name__)
@@ -72,12 +72,12 @@ class Latch:
     """
 
     def __init__(self, value):
-        require(isinstance(value, int))
+        assert isinstance(value, int), R('Invalid value', value)
         self.value = value
         self.condition = threading.Condition()
 
     def decrement(self, value, *, timeout=None):
-        require(isinstance(value, int))
+        assert isinstance(value, int), R('Invalid value', value)
         self.condition.acquire()
         try:
             self.value -= value
