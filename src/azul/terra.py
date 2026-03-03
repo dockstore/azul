@@ -58,7 +58,6 @@ import urllib3.response
 from azul import (
     Config,
     R,
-    RequirementError,
     cache,
     config,
     mutable_furl,
@@ -214,7 +213,7 @@ class ServiceAccountCredentialsProvider(TerraCredentialsProvider):
         return credentials
 
     def insufficient_access(self, resource: str):
-        return RequirementError(
+        return AssertionError(
             f'The service account (SA) {self.scoped_credentials().service_account_email!r} is not '
             f'authorized to access {resource} or that resource does not exist. Make sure '
             f'that it exists, that the SA is registered with SAM and has been granted read '

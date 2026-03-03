@@ -31,7 +31,6 @@ from requirements.requirement import (
 
 from azul import (
     R,
-    RequirementError,
     cached_property,
     config,
 )
@@ -80,7 +79,7 @@ class PinnedRequirement:
         elif req.recursive:
             return None
         else:
-            raise RequirementError('Unable to handle requirement', req)
+            assert False, R('Unable to handle requirement', req)
 
     def __or__(self, other: Optional['PinnedRequirement']) -> 'PinnedRequirement':
         assert self.name == other.name

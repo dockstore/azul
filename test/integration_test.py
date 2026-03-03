@@ -77,7 +77,6 @@ import urllib3
 from azul import (
     CatalogName,
     Config,
-    RequirementError,
     cache,
     cached_property,
     config,
@@ -274,7 +273,7 @@ class IntegrationTestCase(AzulTestCase):
                          f'The "unregistered" service account ({email!r}) has '
                          f'been registered')
         # The unregistered service account should not have access to any sources
-        with self.assertRaises(RequirementError) as cm:
+        with self.assertRaises(AssertionError) as cm:
             tdr.list_snapshots()
         msg = str(cm.exception)
         expected_msg_prefix = f'The service account (SA) {email!r} is not authorized'

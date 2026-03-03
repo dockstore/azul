@@ -133,7 +133,7 @@ class OAuth2Client(HasCachedHttpClient):
         token must not be expired and the service account must belong to the
         current Google Cloud project.
 
-        :raise RequirementError: if the token is definitely invalid
+        :raise AssertionError: if the token is definitely invalid
 
         :raise Exception: if the validity of the token cannot be determined
         """

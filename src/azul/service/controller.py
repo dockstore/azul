@@ -12,7 +12,6 @@ from chalice import (
 from azul import (
     CatalogName,
     R,
-    RequirementError,
     config,
     mutable_furl,
 )
@@ -148,7 +147,7 @@ def validate_params(query_params: Mapping[str, str],
         A dictionary mapping the name of a parameter to a function that will be
         used to validate the parameter if it is provided. The callable will be
         called with a single argument, the parameter value to be validated, and
-        is expected to raise ValueError, TypeError or azul.RequirementError if
+        is expected to raise ValueError, TypeError or AssertionError if
         the value is invalid. Only these exceptions will yield a 4xx status
         response, all other exceptions will yield a 500 status response. If the
         validator is an instance of `Mandatory`, then validation will fail if
@@ -208,5 +207,5 @@ def validate_params(query_params: Mapping[str, str],
         else:
             try:
                 validator(param_value)
-            except (TypeError, ValueError, RequirementError):
+            except (TypeError, ValueError, AssertionError):
                 raise BRE(f'Invalid value for `{param_name}`')
