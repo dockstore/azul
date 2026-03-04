@@ -10,13 +10,14 @@ from typing import (
 from chalice import (
     BadRequestError as BRE,
 )
+import jsonschema
+import jsonschema.protocols
 from more_itertools import (
     one,
 )
 
 from azul import (
     CatalogName,
-    R,
     cache,
 )
 from azul.collections import (
@@ -24,7 +25,6 @@ from azul.collections import (
 )
 from azul.indexer.field import (
     FieldType,
-    Nested,
     pass_thru_bool,
 )
 from azul.openapi import (
@@ -36,9 +36,6 @@ from azul.openapi import (
 from azul.plugins import (
     MetadataPlugin,
 )
-from azul.plugins.metadata.hca.indexer.transform import (
-    value_and_unit,
-)
 from azul.service.controller import (
     ServiceController,
 )
@@ -48,8 +45,6 @@ from azul.service.elasticsearch_service import (
 from azul.types import (
     JSON,
     MutableJSON,
-    PrimitiveJSON,
-    reify,
 )
 
 log = logging.getLogger(__name__)
@@ -110,35 +105,9 @@ class QueryController(ServiceController):
 
     @property
     def filters_param_spec(self):
-        types = self.field_types(self.app.catalog)
-
-        def _filter_schema(field_type):
-            operators = field_type.supported_filter_operators
-
-            def filter_schema(operator):
-                return schema.object(
-                    properties={
-                        operator: field_type.api_filter_values_schema(operator)
-                    },
-                    required=[operator],
-                    additionalProperties=False
-                )
-
-            if len(operators) == 1:
-                return filter_schema(one(operators))
-            else:
-                return {'oneOf': list(map(filter_schema, operators))}
-
         return params.query(
             'filters',
-            schema.optional(application_json(schema.object(
-                default='{}',
-                example={'cellCount': {'within': [[10000, 1000000000]]}},
-                properties={
-                    field: _filter_schema(types[field])
-                    for field in self.fields
-                }
-            ))),
+            schema.optional(application_json(self._filter_schema(self.app.catalog))),
             description=fd('''
                 Criteria to filter entities from the search results.
 
@@ -176,21 +145,41 @@ class QueryController(ServiceController):
             ''')
         )
 
+    @cache
+    def _filter_schema(self, catalog: CatalogName) -> JSON:
+        types = self.field_types(catalog)
+
+        def _filter_schema(field_type):
+            operators = field_type.supported_filter_operators
+
+            def filter_schema(operator):
+                return schema.object(
+                    properties={
+                        operator: field_type.api_filter_values_schema(operator)
+                    },
+                    required=[operator],
+                    additionalProperties=False
+                )
+
+            if len(operators) == 1:
+                return filter_schema(one(operators))
+            else:
+                return {'oneOf': list(map(filter_schema, operators))}
+
+        filter_schema = schema.object(default='{}',
+                                      example={'cellCount': {'within': [[10000, 1000000000]]}},
+                                      additionalProperties=False,
+                                      properties={
+                                          field: _filter_schema(types[field])
+                                          for field in self.fields
+                                      })
+        return filter_schema
+
     def validate_json_param(self, name: str, value: str) -> MutableJSON:
         try:
             return json.loads(value)
         except json.decoder.JSONDecodeError:
             raise BRE(f'The {name!r} parameter is not valid JSON')
-
-    def validate_organism_age_filter(self, values):
-        for value in values:
-            try:
-                value_and_unit.to_index(value)
-            except AssertionError as e:
-                if R.caused(e):
-                    raise R.propagate(e, BRE)
-                else:
-                    raise
 
     def validate_field(self, field: str, *, include_synthetic: bool = False):
         fields = self.fields if include_synthetic else self.organic_fields
@@ -199,65 +188,21 @@ class QueryController(ServiceController):
 
     def validate_filters(self, filters):
         filters = self.validate_json_param('filters', filters)
-        if type(filters) is not dict:
-            raise BRE('The `filters` parameter must be a dictionary')
-        field_types = self.field_types(self.app.catalog)
-        special_fields = self._metadata_plugin.special_fields
-        accessibility_fields = {
-            special_fields.source_id.name,
-            special_fields.accessible.name
-        }
-        for field, filter_ in filters.items():
-            self.validate_field(field, include_synthetic=True)
-            try:
-                operator, values = one(filter_.items())
-            except Exception:
-                raise BRE(f'The `filters` parameter entry for `{field}` '
-                          f'must be a single-item dictionary')
-            else:
-                if field in accessibility_fields:
-                    valid_operators = ('is',)
-                    disallow_null = True
-                else:
-                    valid_operators = ('is', 'contains', 'within', 'intersects')
-                    disallow_null = False
-                if operator in valid_operators:
-                    if not isinstance(values, list):
-                        raise BRE(f'The value of the `{operator}` operator in the `filters` '
-                                  f'parameter entry for `{field}` is not a list')
-                    if disallow_null and None in values:
-                        raise BRE(f'The `{field}` field does not support null values')
-                else:
-                    raise BRE(f'The operator in the `filters` parameter entry '
-                              f'for `{field}` must be one of {valid_operators}')
-                if operator == 'is':
-                    value_types = reify(JSON | PrimitiveJSON)
-                    if not all(isinstance(value, value_types) for value in values):
-                        raise BRE(f'The value of the `is` operator in the `filters` '
-                                  f'parameter entry for `{field}` is invalid')
-                if field == 'organismAge':
-                    self.validate_organism_age_filter(values)
-                field_type = field_types[field]
-                if isinstance(field_type, Nested):
-                    if operator != 'is':
-                        raise BRE(f'The field `{field}` can only be filtered by the `is` operator')
-                    try:
-                        nested = one(values)
-                    except ValueError:
-                        raise BRE(f'The value of the `is` operator in the `filters` '
-                                  f'parameter entry for `{field}` is not a single-item list')
-                    try:
-                        assert isinstance(nested, dict), R('not a dict', nested)
-                    except AssertionError as e:
-                        if R.caused(e):
-                            raise BRE(f'The value of the `is` operator in the `filters` '
-                                      f'parameter entry for `{field}` must contain a dictionary')
-                        else:
-                            raise
-                    extra_props = nested.keys() - field_type.properties.keys()
-                    if extra_props:
-                        raise BRE(f'The value of the `is` operator in the `filters` '
-                                  f'parameter entry for `{field}` has invalid properties `{extra_props}`')
+
+        validator = self._filter_schema_validator(self.app.catalog)
+        try:
+            validator.validate(filters)
+        except jsonschema.exceptions.ValidationError as e:
+            raise BRE(f'The value of the `filters` parameter is '
+                      f'invalid against the schema: {e.message} '
+                      f'at path {e.json_path}')
+
+    @cache
+    def _filter_schema_validator(self,
+                                 catalog: CatalogName
+                                 ) -> jsonschema.protocols.Validator:
+        schema = self._filter_schema(catalog)
+        return jsonschema.validators.validator_for(schema)(schema)
 
     @cache
     def field_types(self, catalog: CatalogName) -> Mapping[str, FieldType]:

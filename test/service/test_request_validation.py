@@ -83,6 +83,18 @@ class RequestParameterValidationTest(DCP1CannedBundleTestCase,
     def assertBadField(self, url: furl):
         self.assertBadRequest(url, 'Unknown field `bad-field`')
 
+    def assertBadFilterField(self, url: furl):
+        self.assertBadRequest(url,
+                              "The value of the `filters` parameter is invalid against the schema: "
+                              "Additional properties are not allowed "
+                              "('bad-field' was unexpected) at path $")
+
+    def assertBadFilterFields(self, url: furl):
+        self.assertBadRequest(url,
+                              "The value of the `filters` parameter is invalid against the schema: "
+                              "Additional properties are not allowed "
+                              "('bad-field', 'bad-field2' were unexpected) at path $")
+
     def test_bad_single_filter_field_of_sample(self):
         params = {
             'catalog': self.catalog,
@@ -90,7 +102,7 @@ class RequestParameterValidationTest(DCP1CannedBundleTestCase,
             'filters': json.dumps({'bad-field': {'is': ['fake-val']}}),
         }
         url = self.base_url.set(path='/index/samples', args=params)
-        self.assertBadField(url)
+        self.assertBadFilterField(url)
 
     def test_bad_multiple_filter_field_of_sample(self):
         params = {
@@ -99,7 +111,7 @@ class RequestParameterValidationTest(DCP1CannedBundleTestCase,
             'filters': json.dumps({'bad-field': {'is': ['fake-val']}, 'bad-field2': {'is': ['fake-val2']}}),
         }
         url = self.base_url.set(path='/index/samples', args=params)
-        self.assertBadField(url)
+        self.assertBadFilterFields(url)
 
     def test_mixed_multiple_filter_field_of_sample(self):
         params = {
@@ -108,7 +120,7 @@ class RequestParameterValidationTest(DCP1CannedBundleTestCase,
             'filters': json.dumps({'organPart': {'is': ['fake-val']}, 'bad-field': {'is': ['fake-val']}}),
         }
         url = self.base_url.set(path='/index/samples', args=params)
-        self.assertBadField(url)
+        self.assertBadFilterField(url)
 
     def test_bad_sort_field_of_sample(self):
         params = {
@@ -128,7 +140,7 @@ class RequestParameterValidationTest(DCP1CannedBundleTestCase,
             'order': 'asc',
         }
         url = self.base_url.set(path='/index/samples', args=params)
-        self.assertBadField(url)
+        self.assertBadFilterField(url)
 
     def test_valid_sort_field_but_bad_filter_field_of_sample(self):
         params = {
@@ -139,7 +151,7 @@ class RequestParameterValidationTest(DCP1CannedBundleTestCase,
             'order': 'asc',
         }
         url = self.base_url.set(path='/index/samples', args=params)
-        self.assertBadField(url)
+        self.assertBadFilterField(url)
 
     def test_bad_sort_field_but_valid_filter_field_of_sample(self):
         params = {
@@ -158,7 +170,7 @@ class RequestParameterValidationTest(DCP1CannedBundleTestCase,
             'filters': json.dumps({'bad-field': {'is': ['fake-val2']}}),
         }
         url = self.base_url.set(path='/index/files', args=params)
-        self.assertBadField(url)
+        self.assertBadFilterField(url)
 
     def test_bad_multiple_filter_field_of_file(self):
         params = {
@@ -167,7 +179,7 @@ class RequestParameterValidationTest(DCP1CannedBundleTestCase,
             'filters': json.dumps({'bad-field': {'is': ['fake-val']}, 'bad-field2': {'is': ['fake-val2']}}),
         }
         url = self.base_url.set(path='/index/files', args=params)
-        self.assertBadField(url)
+        self.assertBadFilterFields(url)
 
     def test_mixed_multiple_filter_field_of_file(self):
         params = {
@@ -176,11 +188,14 @@ class RequestParameterValidationTest(DCP1CannedBundleTestCase,
             'filters': json.dumps({'organPart': {'is': ['fake-val']}, 'bad-field': {'is': ['fake-val']}}),
         }
         url = self.base_url.set(path='/index/files', args=params)
-        self.assertBadField(url)
+        self.assertBadFilterField(url)
 
     def test_source_filter(self):
         special_fields = self._metadata_plugin.special_fields
-        for field in special_fields.source_id, special_fields.accessible:
+        for field, expected_type in [
+            (special_fields.source_id, 'string'),
+            (special_fields.accessible, 'boolean')
+        ]:
             with self.subTest(field=field):
                 params = {
                     'catalog': self.catalog,
@@ -188,7 +203,9 @@ class RequestParameterValidationTest(DCP1CannedBundleTestCase,
                     'filters': json.dumps({field.name: {'is': [None]}})
                 }
                 url = self.base_url.set(path='/index/projects', args=params)
-                self.assertBadRequest(url, f'The `{field.name}` field does not support null values')
+                error = (f"The value of the `filters` parameter is invalid against the schema: "
+                         f"None is not of type '{expected_type}' at path $.{field.name}.is[0]")
+                self.assertBadRequest(url, error)
 
     def test_bad_sort_field_of_file(self):
         params = {
@@ -207,7 +224,7 @@ class RequestParameterValidationTest(DCP1CannedBundleTestCase,
             'filters': json.dumps({'bad-field': {'is': ['fake-val2']}}),
         }
         url = self.base_url.set(path='/index/files', args=params)
-        self.assertBadField(url)
+        self.assertBadFilterField(url)
 
     def test_bad_sort_field_but_valid_filter_field_of_file(self):
         params = {
@@ -228,10 +245,11 @@ class RequestParameterValidationTest(DCP1CannedBundleTestCase,
             'filters': json.dumps({'bad-field': {'is': ['fake-val2']}}),
         }
         url = self.base_url.set(path='/index/files', args=params)
-        self.assertBadField(url)
+        self.assertBadFilterField(url)
 
     def test_bad_filters(self):
         url = self.base_url.set(path='/index/files', args=dict(catalog=self.catalog))
+        schema_error = "The value of the `filters` parameter is invalid against the schema: "
         cases = [
             (
                 '"',
@@ -239,60 +257,88 @@ class RequestParameterValidationTest(DCP1CannedBundleTestCase,
             ),
             (
                 '""',
-                'The `filters` parameter must be a dictionary'
+                schema_error + "'' is not of type 'object' at path $"
             ),
             (
                 '{"sampleDisease": ["H syndrome"]}',
-                'The `filters` parameter entry for `sampleDisease` must be a '
-                'single-item dictionary'
+                schema_error + "['H syndrome'] is not of type 'object' at path $.sampleDisease"
             ),
             (
                 '{"sampleDisease": {"is": "H syndrome"}}',
-                'The value of the `is` operator in the `filters` parameter '
-                'entry for `sampleDisease` is not a list'
+                schema_error + "'H syndrome' is not of type 'array' at path $.sampleDisease.is"
             ),
             (
                 '{"sampleDisease": {"was": "H syndrome"}}',
-                "The operator in the `filters` parameter entry "
-                "for `sampleDisease` must be one of "
-                "('is', 'contains', 'within', 'intersects')"
+                schema_error + "'is' is a required property at path $.sampleDisease"
             ),
             (
                 '{"fileSource": {"is": [["foo:23/33"]]}}',
-                'The value of the `is` operator in the `filters` parameter entry '
-                'for `fileSource` is invalid'
+                schema_error + "['foo:23/33'] is not of type 'string' at path $.fileSource.is[0]"
             ),
             (
                 '{"accessions": {"within": ["foo"]}}',
-                'The field `accessions` can only be filtered by the `is` operator'
+                schema_error + "'is' is a required property at path $.accessions"
             ),
             (
                 '{"accessions": {"is": []}}',
-                'The value of the `is` operator in the `filters` parameter entry '
-                'for `accessions` is not a single-item list'
+                schema_error + "[] should be non-empty at path $.accessions.is"
             ),
             (
                 '{"accessions": {"is": ["foo"]}}',
-                'The value of the `is` operator in the `filters` parameter entry '
-                'for `accessions` must contain a dictionary'
+                schema_error + "'foo' is not of type 'object' at path $.accessions.is[0]"
             ),
             (
                 '{"accessions": {"is": [{"foo": "geostudies"}]}}',
-                "The value of the `is` operator in the `filters` parameter entry "
-                "for `accessions` has invalid properties `{'foo'}`"
+                schema_error + "Additional properties are not allowed "
+                               "('foo' was unexpected) at path $.accessions.is[0]"
             ),
             (
                 '{"accessions": {"is": [{"namespace": "baz", "foo": "bar"}]}}',
-                "The value of the `is` operator in the `filters` parameter entry "
-                "for `accessions` has invalid properties `{'foo'}`"
+                schema_error + "Additional properties are not allowed "
+                               "('foo' was unexpected) at path $.accessions.is[0]"
+            ),
+            (
+                json.dumps({'accessions': {'is': [{'namespace': 'x', 'accession': 'y'}] * 2}}),
+                schema_error + "[{'namespace': 'x', 'accession': 'y'}, "
+                               "{'namespace': 'x', 'accession': 'y'}] "
+                               "is too long at path $.accessions.is"
             ),
             (
                 '{"projectTitle":{"contains":["retina"]}}',
-                None
+                schema_error + "'is' is a required property at path $.projectTitle"
             ),
             (
                 '{"assayType":{"is":["flow cytometry"]}}',
-                None
+                schema_error + "'flow cytometry' is not of type 'object' at path $.assayType.is[0]"
+            ),
+            (
+                '{"organismAge":{"is":[]}}',
+                schema_error + "[] should be non-empty at path $.organismAge.is"
+            ),
+            (
+                '{"organismAge":{"is":[""]}}',
+                schema_error + "'' is not of type 'object' at path $.organismAge.is[0]"
+            ),
+            (
+                '{"organismAge":{"contains":[{"value": "1", "unit": "year"}]}}',
+                schema_error + "'is' is a required property at path $.organismAge"
+            ),
+            (
+                '{"organismAge":{"is":[{}]}}',
+                schema_error + "'value' is a required property at path $.organismAge.is[0]"
+            ),
+            (
+                '{"organismAge":{"is":[{"value": "1"}]}}',
+                schema_error + "'unit' is a required property at path $.organismAge.is[0]"
+            ),
+            (
+                '{"organismAge":{"is":[{"value": "1", "unit": "year", "foo": "year"}]}}',
+                schema_error + "Additional properties are not allowed "
+                               "('foo' was unexpected) at path $.organismAge.is[0]"
+            ),
+            (
+                '{"organismAge":{"is":[{"value": "1", "unit": "year"}, {}]}}',
+                schema_error + "'value' is a required property at path $.organismAge.is[1]"
             )
         ]
         for filters, message in cases:

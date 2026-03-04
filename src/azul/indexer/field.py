@@ -154,7 +154,7 @@ class FieldType[N, X: IndexForm](metaclass=ABCMeta):
         return 'is',
 
     def api_filter_values_schema(self, operator: str) -> JSON:
-        return schema.array(self.api_filter_value_schema(operator))
+        return schema.array(self.api_filter_value_schema(operator), minItems=1)
 
     def api_filter_value_schema(self, operator: str) -> JSON:
         """
@@ -422,6 +422,12 @@ class Nested(PassThrough[JSON]):
         super().__init__(JSON, es_type='nested')
         self.agg_property = first(properties.keys())
         self.properties = properties
+
+    def api_filter_values_schema(self, operator: str) -> JSON:
+        assert operator == 'is'
+        schema = super().api_filter_values_schema(operator)
+        schema['maxItems'] = 1
+        return schema
 
     def api_filter_value_schema(self, operator: str) -> JSON:
         assert operator == 'is'
