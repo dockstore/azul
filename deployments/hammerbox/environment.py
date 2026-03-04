@@ -1323,7 +1323,6 @@ def env() -> Mapping[str, str | None]:
                                                     repository=dict(name='tdr_anvil')),
                                        sources=condense(sources))
             for atlas, catalog, sources, mirror_limit, it_mirror_limit in [
-                ('anvil', 'anvil12', anvil12_sources, int(1.5 * 1024 ** 3), int(1.5 * 1024 ** 3)),
                 ('anvil', 'anvil13', anvil13_sources, int(1.5 * 1024 ** 3), int(1.5 * 1024 ** 3)),
             ]
             for suffix, is_it in [
