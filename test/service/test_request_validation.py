@@ -285,6 +285,14 @@ class RequestParameterValidationTest(DCP1CannedBundleTestCase,
                 '{"accessions": {"is": [{"namespace": "baz", "foo": "bar"}]}}',
                 "The value of the `is` operator in the `filters` parameter entry "
                 "for `accessions` has invalid properties `{'foo'}`"
+            ),
+            (
+                '{"projectTitle":{"contains":["retina"]}}',
+                None
+            ),
+            (
+                '{"assayType":{"is":["flow cytometry"]}}',
+                None
             )
         ]
         for filters, message in cases:
