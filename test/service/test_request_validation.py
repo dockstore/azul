@@ -273,7 +273,8 @@ class RequestParameterValidationTest(DCP1CannedBundleTestCase,
             ),
             (
                 '{"fileSource": {"is": [["foo:23/33"]]}}',
-                schema_error + "['foo:23/33'] is not of type 'string' at path $.fileSource.is[0]"
+                schema_error + "['foo:23/33'] is not of type 'null', 'string' "
+                               "at path $.fileSource.is[0]"
             ),
             (
                 '{"accessions": {"within": ["foo"]}}',
@@ -317,7 +318,8 @@ class RequestParameterValidationTest(DCP1CannedBundleTestCase,
             ),
             (
                 '{"organismAge":{"is":[""]}}',
-                schema_error + "'' is not of type 'object' at path $.organismAge.is[0]"
+                schema_error + "'' is not valid under any of the given schemas "
+                               "at path $.organismAge.is[0]"
             ),
             (
                 '{"organismAge":{"contains":[{"value": "1", "unit": "year"}]}}',
@@ -325,20 +327,24 @@ class RequestParameterValidationTest(DCP1CannedBundleTestCase,
             ),
             (
                 '{"organismAge":{"is":[{}]}}',
-                schema_error + "'value' is a required property at path $.organismAge.is[0]"
+                schema_error + "{} is not valid under any of the given schemas "
+                               "at path $.organismAge.is[0]"
             ),
             (
                 '{"organismAge":{"is":[{"value": "1"}]}}',
-                schema_error + "'unit' is a required property at path $.organismAge.is[0]"
+                schema_error + "{'value': '1'} is not valid under any of the given schemas "
+                               "at path $.organismAge.is[0]"
             ),
             (
                 '{"organismAge":{"is":[{"value": "1", "unit": "year", "foo": "year"}]}}',
-                schema_error + "Additional properties are not allowed "
-                               "('foo' was unexpected) at path $.organismAge.is[0]"
+                schema_error + "{'value': '1', 'unit': 'year', 'foo': 'year'} "
+                               "is not valid under any of the given schemas "
+                               "at path $.organismAge.is[0]"
             ),
             (
                 '{"organismAge":{"is":[{"value": "1", "unit": "year"}, {}]}}',
-                schema_error + "'value' is a required property at path $.organismAge.is[1]"
+                schema_error + "{} is not valid under any of the given schemas "
+                               "at path $.organismAge.is[1]"
             )
         ]
         for filters, message in cases:

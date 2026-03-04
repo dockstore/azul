@@ -6,6 +6,10 @@ from datetime import (
     datetime,
     timezone,
 )
+from enum import (
+    Enum,
+    auto,
+)
 import sys
 from types import (
     UnionType,
@@ -85,6 +89,16 @@ type ApiRange = Range[AnyJSON] | list[AnyJSON]
 type JSONNumber = int | float
 
 
+class Mode(Enum):
+    """
+    OpenAPI 3.0.1 is mostly equivalent to JSONSchema but there are important
+    differences, like how nullable values are specified. This class represents
+    the possible modes.
+    """
+    jsonschema = auto()
+    openapi = auto()
+
+
 class FieldType[N, X: IndexForm](metaclass=ABCMeta):
     shadowed: ClassVar[bool] = False
     es_sort_mode: ClassVar[str] = 'min'
@@ -122,8 +136,7 @@ class FieldType[N, X: IndexForm](metaclass=ABCMeta):
     def to_tsv(self, value: N) -> str:
         return '' if value is None else str(value)
 
-    @property
-    def api_schema(self) -> JSON:
+    def api_schema(self, mode: Mode) -> JSON:
         """
         The JSONSchema describing fields of this type in OpenAPI specifications.
         """
@@ -153,10 +166,10 @@ class FieldType[N, X: IndexForm](metaclass=ABCMeta):
         """
         return 'is',
 
-    def api_filter_values_schema(self, operator: str) -> JSON:
-        return schema.array(self.api_filter_value_schema(operator), minItems=1)
+    def api_filter_values_schema(self, operator: str, mode: Mode) -> JSON:
+        return schema.array(self.api_filter_value_schema(operator, mode), minItems=1)
 
-    def api_filter_value_schema(self, operator: str) -> JSON:
+    def api_filter_value_schema(self, operator: str, mode: Mode) -> JSON:
         """
         The JSONSchema describing the right-handside operand of the given filter
         operator in OpenAPI specifications when the left-handside operand is a
@@ -164,13 +177,13 @@ class FieldType[N, X: IndexForm](metaclass=ABCMeta):
         """
         assert operator in self.supported_filter_operators, operator
         if operator == 'is':
-            return self.api_schema
+            return self.api_schema(mode)
         elif operator == 'within':
-            return self._api_range_schema(self.api_schema)
+            return self._api_range_schema(self.api_schema(mode), mode)
         else:
             assert False, operator
 
-    def _api_range_schema(self, api_schema: JSON) -> JSON:
+    def _api_range_schema(self, api_schema: JSON, mode: Mode) -> JSON:
         return schema.array(api_schema, minItems=2, maxItems=2)
 
     def _range_to_index(self, value: Range[N]) -> IndexRange[X]:
@@ -265,20 +278,20 @@ class Nullable[N, X: IndexForm](FieldType[N | None, X], metaclass=ABCMeta):
         self.native_type: Final[type[N]] = native_type
         super().__init__(native_type | None, translated_from)
 
-    @property
-    def api_schema(self) -> JSON:
-        return schema.nullable(schema.make(self.native_type))
+    def api_schema(self, mode: Mode) -> JSON:
+        return schema.nullable(schema.make(self.native_type),
+                               for_openapi=mode is Mode.openapi)
 
 
 class NullableScalar[N, X: IndexForm](Nullable[N, X], metaclass=ABCMeta):
 
-    def api_filter_value_schema(self, operator: str) -> JSON:
+    def api_filter_value_schema(self, operator: str, mode: Mode) -> JSON:
         if operator == 'within':
             # The LHS operand of a range operator can't be null
             api_type = schema.make(self.native_type)
-            return self._api_range_schema(api_type)
+            return self._api_range_schema(api_type, mode)
         else:
-            return super().api_filter_value_schema(operator)
+            return super().api_filter_value_schema(operator, mode)
 
     @property
     def supported_filter_operators(self) -> tuple[str, ...]:
@@ -423,17 +436,17 @@ class Nested(PassThrough[JSON]):
         self.agg_property = first(properties.keys())
         self.properties = properties
 
-    def api_filter_values_schema(self, operator: str) -> JSON:
+    def api_filter_values_schema(self, operator: str, mode: Mode) -> JSON:
         assert operator == 'is'
-        schema = super().api_filter_values_schema(operator)
-        schema['maxItems'] = 1
+        schema = super().api_filter_values_schema(operator, mode)
+        schema = {**schema, 'maxItems': 1}
         return schema
 
-    def api_filter_value_schema(self, operator: str) -> JSON:
+    def api_filter_value_schema(self, operator: str, mode: Mode) -> JSON:
         assert operator == 'is'
         properties, required = {}, []
         for field, field_type in self.properties.items():
-            properties[field] = field_type.api_filter_value_schema(operator)
+            properties[field] = field_type.api_filter_value_schema(operator, mode)
             if not isinstance(field_type, Nullable):
                 required.append(field)
         kwargs: dict[str, AnyJSON] = dict(additionalProperties=False)
@@ -474,20 +487,19 @@ class ClosedRange[N: PrimitiveJSON, X: IndexForm](FieldType[Range[N], IndexRange
         from_index = self.ends_type.from_index
         return from_index(value['gte']), from_index(value['lte'])
 
-    @property
-    def api_schema(self):
-        return self._api_range_schema(self.ends_type.api_schema)
+    def api_schema(self, mode: Mode):
+        return self._api_range_schema(self.ends_type.api_schema(mode), mode)
 
     @property
     def supported_filter_operators(self) -> tuple[str, ...]:
         return 'is', 'within', 'contains', 'intersects'
 
-    def api_filter_value_schema(self, operator: str) -> JSON:
+    def api_filter_value_schema(self, operator: str, mode: Mode) -> JSON:
         if operator == 'contains':
             # A range can contain a range or a value
-            return schema.union(self.ends_type.api_schema, self.api_schema)
+            return schema.union(self.ends_type.api_schema(mode), self.api_schema(mode))
         else:
-            return self.api_schema
+            return self.api_schema(mode)
 
     def from_api(self, value: AnyJSON) -> Range[N]:
         return self.ends_type._from_api_range(value)

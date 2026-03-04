@@ -25,6 +25,7 @@ from azul.collections import (
 )
 from azul.indexer.field import (
     FieldType,
+    Mode,
     pass_thru_bool,
 )
 from azul.openapi import (
@@ -105,9 +106,10 @@ class QueryController(ServiceController):
 
     @property
     def filters_param_spec(self):
+        filter_schema = self._filter_schema(self.app.catalog, Mode.openapi)
         return params.query(
             'filters',
-            schema.optional(application_json(self._filter_schema(self.app.catalog))),
+            schema.optional(application_json(filter_schema)),
             description=fd('''
                 Criteria to filter entities from the search results.
 
@@ -146,7 +148,7 @@ class QueryController(ServiceController):
         )
 
     @cache
-    def _filter_schema(self, catalog: CatalogName) -> JSON:
+    def _filter_schema(self, catalog: CatalogName, mode: Mode) -> JSON:
         types = self.field_types(catalog)
 
         def _filter_schema(field_type):
@@ -155,7 +157,7 @@ class QueryController(ServiceController):
             def filter_schema(operator):
                 return schema.object(
                     properties={
-                        operator: field_type.api_filter_values_schema(operator)
+                        operator: field_type.api_filter_values_schema(operator, mode)
                     },
                     required=[operator],
                     additionalProperties=False
@@ -201,7 +203,7 @@ class QueryController(ServiceController):
     def _filter_schema_validator(self,
                                  catalog: CatalogName
                                  ) -> jsonschema.protocols.Validator:
-        schema = self._filter_schema(catalog)
+        schema = self._filter_schema(catalog, Mode.jsonschema)
         return jsonschema.validators.validator_for(schema)(schema)
 
     @cache
