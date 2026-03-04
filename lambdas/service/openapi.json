@@ -1244,52 +1244,124 @@
                                             "additionalProperties": false
                                         },
                                         "aggregateLastModifiedDate": {
-                                            "type": "object",
-                                            "properties": {
-                                                "is": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "string",
-                                                        "nullable": true
-                                                    }
+                                            "oneOf": [
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "is": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "is"
+                                                    ],
+                                                    "additionalProperties": false
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "within": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "type": "string"
+                                                                },
+                                                                "minItems": 2,
+                                                                "maxItems": 2
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "within"
+                                                    ],
+                                                    "additionalProperties": false
                                                 }
-                                            },
-                                            "required": [
-                                                "is"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                         },
                                         "aggregateSubmissionDate": {
-                                            "type": "object",
-                                            "properties": {
-                                                "is": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "string",
-                                                        "nullable": true
-                                                    }
+                                            "oneOf": [
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "is": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "is"
+                                                    ],
+                                                    "additionalProperties": false
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "within": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "type": "string"
+                                                                },
+                                                                "minItems": 2,
+                                                                "maxItems": 2
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "within"
+                                                    ],
+                                                    "additionalProperties": false
                                                 }
-                                            },
-                                            "required": [
-                                                "is"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                         },
                                         "aggregateUpdateDate": {
-                                            "type": "object",
-                                            "properties": {
-                                                "is": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "string",
-                                                        "nullable": true
-                                                    }
+                                            "oneOf": [
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "is": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "is"
+                                                    ],
+                                                    "additionalProperties": false
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "within": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "type": "string"
+                                                                },
+                                                                "minItems": 2,
+                                                                "maxItems": 2
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "within"
+                                                    ],
+                                                    "additionalProperties": false
                                                 }
-                                            },
-                                            "required": [
-                                                "is"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                         },
                                         "assayType": {
                                             "type": "object",
@@ -1856,20 +1928,44 @@
                                             "additionalProperties": false
                                         },
                                         "lastModifiedDate": {
-                                            "type": "object",
-                                            "properties": {
-                                                "is": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "string",
-                                                        "nullable": true
-                                                    }
+                                            "oneOf": [
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "is": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "is"
+                                                    ],
+                                                    "additionalProperties": false
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "within": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "type": "string"
+                                                                },
+                                                                "minItems": 2,
+                                                                "maxItems": 2
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "within"
+                                                    ],
+                                                    "additionalProperties": false
                                                 }
-                                            },
-                                            "required": [
-                                                "is"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                         },
                                         "libraryConstructionApproach": {
                                             "type": "object",
@@ -2447,20 +2543,44 @@
                                             "additionalProperties": false
                                         },
                                         "submissionDate": {
-                                            "type": "object",
-                                            "properties": {
-                                                "is": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "string",
-                                                        "nullable": true
-                                                    }
+                                            "oneOf": [
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "is": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "is"
+                                                    ],
+                                                    "additionalProperties": false
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "within": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "type": "string"
+                                                                },
+                                                                "minItems": 2,
+                                                                "maxItems": 2
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "within"
+                                                    ],
+                                                    "additionalProperties": false
                                                 }
-                                            },
-                                            "required": [
-                                                "is"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                         },
                                         "tissueAtlas": {
                                             "type": "object",
@@ -2489,20 +2609,44 @@
                                             "additionalProperties": false
                                         },
                                         "updateDate": {
-                                            "type": "object",
-                                            "properties": {
-                                                "is": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "string",
-                                                        "nullable": true
-                                                    }
+                                            "oneOf": [
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "is": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "is"
+                                                    ],
+                                                    "additionalProperties": false
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "within": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "type": "string"
+                                                                },
+                                                                "minItems": 2,
+                                                                "maxItems": 2
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "within"
+                                                    ],
+                                                    "additionalProperties": false
                                                 }
-                                            },
-                                            "required": [
-                                                "is"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                         },
                                         "workflow": {
                                             "type": "object",
@@ -2900,52 +3044,124 @@
                                             "additionalProperties": false
                                         },
                                         "aggregateLastModifiedDate": {
-                                            "type": "object",
-                                            "properties": {
-                                                "is": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "string",
-                                                        "nullable": true
-                                                    }
+                                            "oneOf": [
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "is": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "is"
+                                                    ],
+                                                    "additionalProperties": false
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "within": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "type": "string"
+                                                                },
+                                                                "minItems": 2,
+                                                                "maxItems": 2
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "within"
+                                                    ],
+                                                    "additionalProperties": false
                                                 }
-                                            },
-                                            "required": [
-                                                "is"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                         },
                                         "aggregateSubmissionDate": {
-                                            "type": "object",
-                                            "properties": {
-                                                "is": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "string",
-                                                        "nullable": true
-                                                    }
+                                            "oneOf": [
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "is": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "is"
+                                                    ],
+                                                    "additionalProperties": false
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "within": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "type": "string"
+                                                                },
+                                                                "minItems": 2,
+                                                                "maxItems": 2
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "within"
+                                                    ],
+                                                    "additionalProperties": false
                                                 }
-                                            },
-                                            "required": [
-                                                "is"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                         },
                                         "aggregateUpdateDate": {
-                                            "type": "object",
-                                            "properties": {
-                                                "is": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "string",
-                                                        "nullable": true
-                                                    }
+                                            "oneOf": [
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "is": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "is"
+                                                    ],
+                                                    "additionalProperties": false
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "within": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "type": "string"
+                                                                },
+                                                                "minItems": 2,
+                                                                "maxItems": 2
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "within"
+                                                    ],
+                                                    "additionalProperties": false
                                                 }
-                                            },
-                                            "required": [
-                                                "is"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                         },
                                         "assayType": {
                                             "type": "object",
@@ -3512,20 +3728,44 @@
                                             "additionalProperties": false
                                         },
                                         "lastModifiedDate": {
-                                            "type": "object",
-                                            "properties": {
-                                                "is": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "string",
-                                                        "nullable": true
-                                                    }
+                                            "oneOf": [
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "is": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "is"
+                                                    ],
+                                                    "additionalProperties": false
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "within": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "type": "string"
+                                                                },
+                                                                "minItems": 2,
+                                                                "maxItems": 2
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "within"
+                                                    ],
+                                                    "additionalProperties": false
                                                 }
-                                            },
-                                            "required": [
-                                                "is"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                         },
                                         "libraryConstructionApproach": {
                                             "type": "object",
@@ -4103,20 +4343,44 @@
                                             "additionalProperties": false
                                         },
                                         "submissionDate": {
-                                            "type": "object",
-                                            "properties": {
-                                                "is": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "string",
-                                                        "nullable": true
-                                                    }
+                                            "oneOf": [
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "is": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "is"
+                                                    ],
+                                                    "additionalProperties": false
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "within": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "type": "string"
+                                                                },
+                                                                "minItems": 2,
+                                                                "maxItems": 2
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "within"
+                                                    ],
+                                                    "additionalProperties": false
                                                 }
-                                            },
-                                            "required": [
-                                                "is"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                         },
                                         "tissueAtlas": {
                                             "type": "object",
@@ -4145,20 +4409,44 @@
                                             "additionalProperties": false
                                         },
                                         "updateDate": {
-                                            "type": "object",
-                                            "properties": {
-                                                "is": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "string",
-                                                        "nullable": true
-                                                    }
+                                            "oneOf": [
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "is": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "is"
+                                                    ],
+                                                    "additionalProperties": false
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "within": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "type": "string"
+                                                                },
+                                                                "minItems": 2,
+                                                                "maxItems": 2
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "within"
+                                                    ],
+                                                    "additionalProperties": false
                                                 }
-                                            },
-                                            "required": [
-                                                "is"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                         },
                                         "workflow": {
                                             "type": "object",
@@ -4556,52 +4844,124 @@
                                             "additionalProperties": false
                                         },
                                         "aggregateLastModifiedDate": {
-                                            "type": "object",
-                                            "properties": {
-                                                "is": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "string",
-                                                        "nullable": true
-                                                    }
+                                            "oneOf": [
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "is": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "is"
+                                                    ],
+                                                    "additionalProperties": false
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "within": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "type": "string"
+                                                                },
+                                                                "minItems": 2,
+                                                                "maxItems": 2
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "within"
+                                                    ],
+                                                    "additionalProperties": false
                                                 }
-                                            },
-                                            "required": [
-                                                "is"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                         },
                                         "aggregateSubmissionDate": {
-                                            "type": "object",
-                                            "properties": {
-                                                "is": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "string",
-                                                        "nullable": true
-                                                    }
+                                            "oneOf": [
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "is": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "is"
+                                                    ],
+                                                    "additionalProperties": false
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "within": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "type": "string"
+                                                                },
+                                                                "minItems": 2,
+                                                                "maxItems": 2
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "within"
+                                                    ],
+                                                    "additionalProperties": false
                                                 }
-                                            },
-                                            "required": [
-                                                "is"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                         },
                                         "aggregateUpdateDate": {
-                                            "type": "object",
-                                            "properties": {
-                                                "is": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "string",
-                                                        "nullable": true
-                                                    }
+                                            "oneOf": [
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "is": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "is"
+                                                    ],
+                                                    "additionalProperties": false
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "within": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "type": "string"
+                                                                },
+                                                                "minItems": 2,
+                                                                "maxItems": 2
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "within"
+                                                    ],
+                                                    "additionalProperties": false
                                                 }
-                                            },
-                                            "required": [
-                                                "is"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                         },
                                         "assayType": {
                                             "type": "object",
@@ -5168,20 +5528,44 @@
                                             "additionalProperties": false
                                         },
                                         "lastModifiedDate": {
-                                            "type": "object",
-                                            "properties": {
-                                                "is": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "string",
-                                                        "nullable": true
-                                                    }
+                                            "oneOf": [
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "is": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "is"
+                                                    ],
+                                                    "additionalProperties": false
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "within": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "type": "string"
+                                                                },
+                                                                "minItems": 2,
+                                                                "maxItems": 2
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "within"
+                                                    ],
+                                                    "additionalProperties": false
                                                 }
-                                            },
-                                            "required": [
-                                                "is"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                         },
                                         "libraryConstructionApproach": {
                                             "type": "object",
@@ -5759,20 +6143,44 @@
                                             "additionalProperties": false
                                         },
                                         "submissionDate": {
-                                            "type": "object",
-                                            "properties": {
-                                                "is": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "string",
-                                                        "nullable": true
-                                                    }
+                                            "oneOf": [
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "is": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "is"
+                                                    ],
+                                                    "additionalProperties": false
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "within": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "type": "string"
+                                                                },
+                                                                "minItems": 2,
+                                                                "maxItems": 2
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "within"
+                                                    ],
+                                                    "additionalProperties": false
                                                 }
-                                            },
-                                            "required": [
-                                                "is"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                         },
                                         "tissueAtlas": {
                                             "type": "object",
@@ -5801,20 +6209,44 @@
                                             "additionalProperties": false
                                         },
                                         "updateDate": {
-                                            "type": "object",
-                                            "properties": {
-                                                "is": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "string",
-                                                        "nullable": true
-                                                    }
+                                            "oneOf": [
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "is": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "is"
+                                                    ],
+                                                    "additionalProperties": false
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "within": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "type": "string"
+                                                                },
+                                                                "minItems": 2,
+                                                                "maxItems": 2
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "within"
+                                                    ],
+                                                    "additionalProperties": false
                                                 }
-                                            },
-                                            "required": [
-                                                "is"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                         },
                                         "workflow": {
                                             "type": "object",
@@ -6102,52 +6534,124 @@
                                             "additionalProperties": false
                                         },
                                         "aggregateLastModifiedDate": {
-                                            "type": "object",
-                                            "properties": {
-                                                "is": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "string",
-                                                        "nullable": true
-                                                    }
+                                            "oneOf": [
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "is": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "is"
+                                                    ],
+                                                    "additionalProperties": false
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "within": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "type": "string"
+                                                                },
+                                                                "minItems": 2,
+                                                                "maxItems": 2
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "within"
+                                                    ],
+                                                    "additionalProperties": false
                                                 }
-                                            },
-                                            "required": [
-                                                "is"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                         },
                                         "aggregateSubmissionDate": {
-                                            "type": "object",
-                                            "properties": {
-                                                "is": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "string",
-                                                        "nullable": true
-                                                    }
+                                            "oneOf": [
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "is": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "is"
+                                                    ],
+                                                    "additionalProperties": false
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "within": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "type": "string"
+                                                                },
+                                                                "minItems": 2,
+                                                                "maxItems": 2
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "within"
+                                                    ],
+                                                    "additionalProperties": false
                                                 }
-                                            },
-                                            "required": [
-                                                "is"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                         },
                                         "aggregateUpdateDate": {
-                                            "type": "object",
-                                            "properties": {
-                                                "is": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "string",
-                                                        "nullable": true
-                                                    }
+                                            "oneOf": [
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "is": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "is"
+                                                    ],
+                                                    "additionalProperties": false
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "within": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "type": "string"
+                                                                },
+                                                                "minItems": 2,
+                                                                "maxItems": 2
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "within"
+                                                    ],
+                                                    "additionalProperties": false
                                                 }
-                                            },
-                                            "required": [
-                                                "is"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                         },
                                         "assayType": {
                                             "type": "object",
@@ -6714,20 +7218,44 @@
                                             "additionalProperties": false
                                         },
                                         "lastModifiedDate": {
-                                            "type": "object",
-                                            "properties": {
-                                                "is": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "string",
-                                                        "nullable": true
-                                                    }
+                                            "oneOf": [
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "is": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "is"
+                                                    ],
+                                                    "additionalProperties": false
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "within": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "type": "string"
+                                                                },
+                                                                "minItems": 2,
+                                                                "maxItems": 2
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "within"
+                                                    ],
+                                                    "additionalProperties": false
                                                 }
-                                            },
-                                            "required": [
-                                                "is"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                         },
                                         "libraryConstructionApproach": {
                                             "type": "object",
@@ -7305,20 +7833,44 @@
                                             "additionalProperties": false
                                         },
                                         "submissionDate": {
-                                            "type": "object",
-                                            "properties": {
-                                                "is": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "string",
-                                                        "nullable": true
-                                                    }
+                                            "oneOf": [
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "is": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "is"
+                                                    ],
+                                                    "additionalProperties": false
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "within": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "type": "string"
+                                                                },
+                                                                "minItems": 2,
+                                                                "maxItems": 2
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "within"
+                                                    ],
+                                                    "additionalProperties": false
                                                 }
-                                            },
-                                            "required": [
-                                                "is"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                         },
                                         "tissueAtlas": {
                                             "type": "object",
@@ -7347,20 +7899,44 @@
                                             "additionalProperties": false
                                         },
                                         "updateDate": {
-                                            "type": "object",
-                                            "properties": {
-                                                "is": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "string",
-                                                        "nullable": true
-                                                    }
+                                            "oneOf": [
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "is": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "is"
+                                                    ],
+                                                    "additionalProperties": false
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "within": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "type": "string"
+                                                                },
+                                                                "minItems": 2,
+                                                                "maxItems": 2
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "within"
+                                                    ],
+                                                    "additionalProperties": false
                                                 }
-                                            },
-                                            "required": [
-                                                "is"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                         },
                                         "workflow": {
                                             "type": "object",
@@ -7562,52 +8138,124 @@
                                             "additionalProperties": false
                                         },
                                         "aggregateLastModifiedDate": {
-                                            "type": "object",
-                                            "properties": {
-                                                "is": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "string",
-                                                        "nullable": true
-                                                    }
+                                            "oneOf": [
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "is": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "is"
+                                                    ],
+                                                    "additionalProperties": false
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "within": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "type": "string"
+                                                                },
+                                                                "minItems": 2,
+                                                                "maxItems": 2
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "within"
+                                                    ],
+                                                    "additionalProperties": false
                                                 }
-                                            },
-                                            "required": [
-                                                "is"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                         },
                                         "aggregateSubmissionDate": {
-                                            "type": "object",
-                                            "properties": {
-                                                "is": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "string",
-                                                        "nullable": true
-                                                    }
+                                            "oneOf": [
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "is": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "is"
+                                                    ],
+                                                    "additionalProperties": false
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "within": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "type": "string"
+                                                                },
+                                                                "minItems": 2,
+                                                                "maxItems": 2
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "within"
+                                                    ],
+                                                    "additionalProperties": false
                                                 }
-                                            },
-                                            "required": [
-                                                "is"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                         },
                                         "aggregateUpdateDate": {
-                                            "type": "object",
-                                            "properties": {
-                                                "is": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "string",
-                                                        "nullable": true
-                                                    }
+                                            "oneOf": [
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "is": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "is"
+                                                    ],
+                                                    "additionalProperties": false
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "within": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "type": "string"
+                                                                },
+                                                                "minItems": 2,
+                                                                "maxItems": 2
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "within"
+                                                    ],
+                                                    "additionalProperties": false
                                                 }
-                                            },
-                                            "required": [
-                                                "is"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                         },
                                         "assayType": {
                                             "type": "object",
@@ -8174,20 +8822,44 @@
                                             "additionalProperties": false
                                         },
                                         "lastModifiedDate": {
-                                            "type": "object",
-                                            "properties": {
-                                                "is": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "string",
-                                                        "nullable": true
-                                                    }
+                                            "oneOf": [
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "is": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "is"
+                                                    ],
+                                                    "additionalProperties": false
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "within": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "type": "string"
+                                                                },
+                                                                "minItems": 2,
+                                                                "maxItems": 2
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "within"
+                                                    ],
+                                                    "additionalProperties": false
                                                 }
-                                            },
-                                            "required": [
-                                                "is"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                         },
                                         "libraryConstructionApproach": {
                                             "type": "object",
@@ -8765,20 +9437,44 @@
                                             "additionalProperties": false
                                         },
                                         "submissionDate": {
-                                            "type": "object",
-                                            "properties": {
-                                                "is": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "string",
-                                                        "nullable": true
-                                                    }
+                                            "oneOf": [
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "is": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "is"
+                                                    ],
+                                                    "additionalProperties": false
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "within": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "type": "string"
+                                                                },
+                                                                "minItems": 2,
+                                                                "maxItems": 2
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "within"
+                                                    ],
+                                                    "additionalProperties": false
                                                 }
-                                            },
-                                            "required": [
-                                                "is"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                         },
                                         "tissueAtlas": {
                                             "type": "object",
@@ -8807,20 +9503,44 @@
                                             "additionalProperties": false
                                         },
                                         "updateDate": {
-                                            "type": "object",
-                                            "properties": {
-                                                "is": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "string",
-                                                        "nullable": true
-                                                    }
+                                            "oneOf": [
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "is": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "is"
+                                                    ],
+                                                    "additionalProperties": false
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "within": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "type": "string"
+                                                                },
+                                                                "minItems": 2,
+                                                                "maxItems": 2
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "within"
+                                                    ],
+                                                    "additionalProperties": false
                                                 }
-                                            },
-                                            "required": [
-                                                "is"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                         },
                                         "workflow": {
                                             "type": "object",
@@ -8980,52 +9700,124 @@
                                             "additionalProperties": false
                                         },
                                         "aggregateLastModifiedDate": {
-                                            "type": "object",
-                                            "properties": {
-                                                "is": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "string",
-                                                        "nullable": true
-                                                    }
+                                            "oneOf": [
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "is": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "is"
+                                                    ],
+                                                    "additionalProperties": false
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "within": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "type": "string"
+                                                                },
+                                                                "minItems": 2,
+                                                                "maxItems": 2
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "within"
+                                                    ],
+                                                    "additionalProperties": false
                                                 }
-                                            },
-                                            "required": [
-                                                "is"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                         },
                                         "aggregateSubmissionDate": {
-                                            "type": "object",
-                                            "properties": {
-                                                "is": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "string",
-                                                        "nullable": true
-                                                    }
+                                            "oneOf": [
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "is": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "is"
+                                                    ],
+                                                    "additionalProperties": false
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "within": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "type": "string"
+                                                                },
+                                                                "minItems": 2,
+                                                                "maxItems": 2
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "within"
+                                                    ],
+                                                    "additionalProperties": false
                                                 }
-                                            },
-                                            "required": [
-                                                "is"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                         },
                                         "aggregateUpdateDate": {
-                                            "type": "object",
-                                            "properties": {
-                                                "is": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "string",
-                                                        "nullable": true
-                                                    }
+                                            "oneOf": [
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "is": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "is"
+                                                    ],
+                                                    "additionalProperties": false
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "within": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "type": "string"
+                                                                },
+                                                                "minItems": 2,
+                                                                "maxItems": 2
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "within"
+                                                    ],
+                                                    "additionalProperties": false
                                                 }
-                                            },
-                                            "required": [
-                                                "is"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                         },
                                         "assayType": {
                                             "type": "object",
@@ -9592,20 +10384,44 @@
                                             "additionalProperties": false
                                         },
                                         "lastModifiedDate": {
-                                            "type": "object",
-                                            "properties": {
-                                                "is": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "string",
-                                                        "nullable": true
-                                                    }
+                                            "oneOf": [
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "is": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "is"
+                                                    ],
+                                                    "additionalProperties": false
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "within": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "type": "string"
+                                                                },
+                                                                "minItems": 2,
+                                                                "maxItems": 2
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "within"
+                                                    ],
+                                                    "additionalProperties": false
                                                 }
-                                            },
-                                            "required": [
-                                                "is"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                         },
                                         "libraryConstructionApproach": {
                                             "type": "object",
@@ -10183,20 +10999,44 @@
                                             "additionalProperties": false
                                         },
                                         "submissionDate": {
-                                            "type": "object",
-                                            "properties": {
-                                                "is": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "string",
-                                                        "nullable": true
-                                                    }
+                                            "oneOf": [
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "is": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "is"
+                                                    ],
+                                                    "additionalProperties": false
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "within": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "type": "string"
+                                                                },
+                                                                "minItems": 2,
+                                                                "maxItems": 2
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "within"
+                                                    ],
+                                                    "additionalProperties": false
                                                 }
-                                            },
-                                            "required": [
-                                                "is"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                         },
                                         "tissueAtlas": {
                                             "type": "object",
@@ -10225,20 +11065,44 @@
                                             "additionalProperties": false
                                         },
                                         "updateDate": {
-                                            "type": "object",
-                                            "properties": {
-                                                "is": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "string",
-                                                        "nullable": true
-                                                    }
+                                            "oneOf": [
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "is": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "is"
+                                                    ],
+                                                    "additionalProperties": false
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "within": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "type": "string"
+                                                                },
+                                                                "minItems": 2,
+                                                                "maxItems": 2
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "within"
+                                                    ],
+                                                    "additionalProperties": false
                                                 }
-                                            },
-                                            "required": [
-                                                "is"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                         },
                                         "workflow": {
                                             "type": "object",
@@ -10503,52 +11367,124 @@
                                             "additionalProperties": false
                                         },
                                         "aggregateLastModifiedDate": {
-                                            "type": "object",
-                                            "properties": {
-                                                "is": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "string",
-                                                        "nullable": true
-                                                    }
+                                            "oneOf": [
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "is": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "is"
+                                                    ],
+                                                    "additionalProperties": false
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "within": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "type": "string"
+                                                                },
+                                                                "minItems": 2,
+                                                                "maxItems": 2
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "within"
+                                                    ],
+                                                    "additionalProperties": false
                                                 }
-                                            },
-                                            "required": [
-                                                "is"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                         },
                                         "aggregateSubmissionDate": {
-                                            "type": "object",
-                                            "properties": {
-                                                "is": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "string",
-                                                        "nullable": true
-                                                    }
+                                            "oneOf": [
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "is": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "is"
+                                                    ],
+                                                    "additionalProperties": false
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "within": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "type": "string"
+                                                                },
+                                                                "minItems": 2,
+                                                                "maxItems": 2
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "within"
+                                                    ],
+                                                    "additionalProperties": false
                                                 }
-                                            },
-                                            "required": [
-                                                "is"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                         },
                                         "aggregateUpdateDate": {
-                                            "type": "object",
-                                            "properties": {
-                                                "is": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "string",
-                                                        "nullable": true
-                                                    }
+                                            "oneOf": [
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "is": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "is"
+                                                    ],
+                                                    "additionalProperties": false
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "within": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "type": "string"
+                                                                },
+                                                                "minItems": 2,
+                                                                "maxItems": 2
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "within"
+                                                    ],
+                                                    "additionalProperties": false
                                                 }
-                                            },
-                                            "required": [
-                                                "is"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                         },
                                         "assayType": {
                                             "type": "object",
@@ -11115,20 +12051,44 @@
                                             "additionalProperties": false
                                         },
                                         "lastModifiedDate": {
-                                            "type": "object",
-                                            "properties": {
-                                                "is": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "string",
-                                                        "nullable": true
-                                                    }
+                                            "oneOf": [
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "is": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "is"
+                                                    ],
+                                                    "additionalProperties": false
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "within": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "type": "string"
+                                                                },
+                                                                "minItems": 2,
+                                                                "maxItems": 2
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "within"
+                                                    ],
+                                                    "additionalProperties": false
                                                 }
-                                            },
-                                            "required": [
-                                                "is"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                         },
                                         "libraryConstructionApproach": {
                                             "type": "object",
@@ -11706,20 +12666,44 @@
                                             "additionalProperties": false
                                         },
                                         "submissionDate": {
-                                            "type": "object",
-                                            "properties": {
-                                                "is": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "string",
-                                                        "nullable": true
-                                                    }
+                                            "oneOf": [
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "is": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "is"
+                                                    ],
+                                                    "additionalProperties": false
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "within": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "type": "string"
+                                                                },
+                                                                "minItems": 2,
+                                                                "maxItems": 2
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "within"
+                                                    ],
+                                                    "additionalProperties": false
                                                 }
-                                            },
-                                            "required": [
-                                                "is"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                         },
                                         "tissueAtlas": {
                                             "type": "object",
@@ -11748,20 +12732,44 @@
                                             "additionalProperties": false
                                         },
                                         "updateDate": {
-                                            "type": "object",
-                                            "properties": {
-                                                "is": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "string",
-                                                        "nullable": true
-                                                    }
+                                            "oneOf": [
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "is": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "is"
+                                                    ],
+                                                    "additionalProperties": false
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "within": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "type": "string"
+                                                                },
+                                                                "minItems": 2,
+                                                                "maxItems": 2
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "within"
+                                                    ],
+                                                    "additionalProperties": false
                                                 }
-                                            },
-                                            "required": [
-                                                "is"
-                                            ],
-                                            "additionalProperties": false
+                                            ]
                                         },
                                         "workflow": {
                                             "type": "object",

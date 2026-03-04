@@ -393,7 +393,7 @@ class NullableBool(NullableNumber[bool]):
 null_bool = NullableBool()
 
 
-class NullableDateTime(Nullable[str, str]):
+class NullableDateTime(NullableScalar[str, str]):
     es_type = 'date'
     null = format_dcp2_datetime(datetime(9999, 1, 1, tzinfo=timezone.utc))
 
