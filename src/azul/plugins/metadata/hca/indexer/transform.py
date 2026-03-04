@@ -296,7 +296,7 @@ class ValueAndUnit(Nullable[JSON, str]):
 
     @property
     def api_schema(self) -> JSON:
-        return schema.object(value=str, unit=str)
+        return schema.nullable(schema.object(value=str, unit=str))
 
 
 value_and_unit: ValueAndUnit = ValueAndUnit(dict, str)

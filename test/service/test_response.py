@@ -1988,41 +1988,19 @@ class TestIndexResponse(IndexResponseTestCase):
         test_cases = [
             (
                 '627cb0ba-b8a1-405a-b58f-0add82c3d635',
-                {
-                    'is': [
-                        {
-                            'value': '20',
-                            'unit': 'year'
-                        }
-                    ]
-                }
+                {'is': [{'value': '20', 'unit': 'year'}]}
             ),
             (
                 'c765e3f9-7cfc-4501-8832-79e5f7abd321',
-                {
-                    'is': [
-                        None
-                    ]
-                }
+                {'is': [None]}
             ),
             (
                 None,
-                {
-                    'is': [
-                        {}
-                    ]
-                }
+                {'is': [{}]}
             ),
             (
                 None,
-                {
-                    'is': [
-                        {
-                            'value': None,
-                            'unit': 'weeks'
-                        }
-                    ]
-                }
+                {'is': [{'value': None, 'unit': 'weeks'}]}
             )
         ]
         for project_id, filters in test_cases:

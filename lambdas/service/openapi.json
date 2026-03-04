@@ -2028,7 +2028,8 @@
                                                             "value",
                                                             "unit"
                                                         ],
-                                                        "additionalProperties": false
+                                                        "additionalProperties": false,
+                                                        "nullable": true
                                                     }
                                                 }
                                             },
@@ -3683,7 +3684,8 @@
                                                             "value",
                                                             "unit"
                                                         ],
-                                                        "additionalProperties": false
+                                                        "additionalProperties": false,
+                                                        "nullable": true
                                                     }
                                                 }
                                             },
@@ -5338,7 +5340,8 @@
                                                             "value",
                                                             "unit"
                                                         ],
-                                                        "additionalProperties": false
+                                                        "additionalProperties": false,
+                                                        "nullable": true
                                                     }
                                                 }
                                             },
@@ -6883,7 +6886,8 @@
                                                             "value",
                                                             "unit"
                                                         ],
-                                                        "additionalProperties": false
+                                                        "additionalProperties": false,
+                                                        "nullable": true
                                                     }
                                                 }
                                             },
@@ -8342,7 +8346,8 @@
                                                             "value",
                                                             "unit"
                                                         ],
-                                                        "additionalProperties": false
+                                                        "additionalProperties": false,
+                                                        "nullable": true
                                                     }
                                                 }
                                             },
@@ -9759,7 +9764,8 @@
                                                             "value",
                                                             "unit"
                                                         ],
-                                                        "additionalProperties": false
+                                                        "additionalProperties": false,
+                                                        "nullable": true
                                                     }
                                                 }
                                             },
@@ -11281,7 +11287,8 @@
                                                             "value",
                                                             "unit"
                                                         ],
-                                                        "additionalProperties": false
+                                                        "additionalProperties": false,
+                                                        "nullable": true
                                                     }
                                                 }
                                             },
