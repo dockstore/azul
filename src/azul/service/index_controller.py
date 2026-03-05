@@ -71,7 +71,7 @@ class IndexController(QueryController):
         return RepositoryService()
 
     @attr.s(kw_only=True, auto_attribs=True, frozen=True)
-    class Pagination(Pagination):
+    class _Pagination(Pagination):
         self_url: furl
 
         def link(self, *, previous: bool, **params: str) -> furl | None:
@@ -89,7 +89,7 @@ class IndexController(QueryController):
                 }
             return furl(url=self.self_url, args=params)
 
-    def get_pagination(self, entity_type: str) -> Pagination:
+    def _pagination(self, entity_type: str) -> _Pagination:
         default_sorting = self._metadata_plugin.exposed_indices[entity_type]
         params = self.app.current_request.query_params or {}
         sb, sa = params.get('search_before'), params.get('search_after')
@@ -102,38 +102,38 @@ class IndexController(QueryController):
             else:
                 raise BadRequestError('Only one of search_after or search_before may be set')
         try:
-            return self.Pagination(order=params.get('order', default_sorting.order),
-                                   size=int(params.get('size', '10')),
-                                   sort=params.get('sort', default_sorting.field_name),
-                                   search_before=sb,
-                                   search_after=sa,
-                                   self_url=self.app.self_url)
+            return self._Pagination(order=params.get('order', default_sorting.order),
+                                    size=int(params.get('size', '10')),
+                                    sort=params.get('sort', default_sorting.field_name),
+                                    search_before=sb,
+                                    search_after=sa,
+                                    self_url=self.app.self_url)
         except AssertionError as e:
             if R.caused(e):
                 raise R.propagate(e, ChaliceViewError)
             else:
                 raise
 
-    min_page_size = 1
+    _min_page_size = 1
 
-    generic_object_spec = schema.object(additionalProperties=True)
+    _generic_object_schema = schema.object(additionalProperties=True)
 
-    array_of_object_spec = schema.array(generic_object_spec)
+    _array_of_objects_schema = schema.array(_generic_object_schema)
 
-    hit_spec = schema.object(
+    _hit_schema = schema.object(
         additionalProperties=True,
-        protocols=array_of_object_spec,
+        protocols=_array_of_objects_schema,
         entryId=str,
-        sources=array_of_object_spec,
-        samples=array_of_object_spec,
-        specimens=array_of_object_spec,
-        cellLines=array_of_object_spec,
-        donorOrganisms=array_of_object_spec,
+        sources=_array_of_objects_schema,
+        samples=_array_of_objects_schema,
+        specimens=_array_of_objects_schema,
+        cellLines=_array_of_objects_schema,
+        donorOrganisms=_array_of_objects_schema,
         organoids=schema.array(str),
-        cellSuspensions=array_of_object_spec
+        cellSuspensions=_array_of_objects_schema
     )
 
-    def repository_id_spec(self):
+    def _search_entity_spec(self):
         search_spec_link = '#operations-Index-get_index__entity_type_'
         return {
             'summary': 'Detailed information on a particular entity.',
@@ -167,12 +167,12 @@ class IndexController(QueryController):
                         (the field `sampleEntityType` can be used to discriminate
                         between these cases).
                     '''),
-                    **responses.json_content(self.hit_spec)
+                    **responses.json_content(self._hit_schema)
                 }
             }
         }
 
-    def repository_search_spec(self, *, post: bool):
+    def _search_entities_spec(self, *, post: bool):
         id_spec_link = '#operations-Index-get_index__entity_type___entity_id_'
         return {
             'summary': fd(f'''
@@ -190,7 +190,7 @@ class IndexController(QueryController):
                 deprecation.
             ''')),
             'tags': ['Index'],
-            'parameters': self.repository_search_params_spec(),
+            'parameters': self._search_entities_params_spec(),
             'responses': {
                 '200': {
                     'description': fd(f'''
@@ -215,16 +215,16 @@ class IndexController(QueryController):
                     '''),
                     **responses.json_content(
                         schema.object(
-                            hits=schema.array(self.hit_spec),
-                            pagination=self.generic_object_spec,
-                            termFacets=self.generic_object_spec
+                            hits=schema.array(self._hit_schema),
+                            pagination=self._generic_object_schema,
+                            termFacets=self._generic_object_schema
                         )
                     )
                 }
             }
         }
 
-    def repository_search_params_spec(self):
+    def _search_entities_params_spec(self):
         return [
             self.catalog_param_spec,
             self.filters_param_spec,
@@ -235,7 +235,7 @@ class IndexController(QueryController):
             ),
             params.query(
                 'size',
-                schema.optional(schema.default(10, form=schema.range(self.min_page_size, None))),
+                schema.optional(schema.default(10, form=schema.range(self._min_page_size, None))),
                 description=fd('''
                     The number of hits included per page. The maximum size allowed
                     depends on the catalog and entity type.
@@ -275,7 +275,7 @@ class IndexController(QueryController):
             ]
         ]
 
-    def repository_head_spec(self, for_summary: bool = False):
+    def _head_spec(self, for_summary: bool = False):
         search_spec_link = f'#operations-Index-get_index_{"summary" if for_summary else "_entity_type_"}'
         return {
             'summary': 'Perform a query without returning its result.',
@@ -292,19 +292,19 @@ class IndexController(QueryController):
         }
 
     @property
-    def repository_summary_spec(self):
+    def _summary_spec(self):
         return {
             'tags': ['Index'],
             'parameters': [self.catalog_param_spec, self.filters_param_spec]
         }
 
-    def validate_entity_type(self, entity_type: str):
+    def _validate_entity_type(self, entity_type: str):
         entity_types = self._metadata_plugin.exposed_indices.keys()
         if entity_type not in entity_types:
             raise BadRequestError(f'Entity type {entity_type!r} is invalid for catalog '
                                   f'{self.app.catalog!r}. Must be one of {set(entity_types)}.')
 
-    def validate_size(self, entity_type: EntityType, size: str):
+    def _validate_size(self, entity_type: EntityType, size: str):
         sorting = self._metadata_plugin.exposed_indices[entity_type]
         try:
             size = int(size)
@@ -314,10 +314,10 @@ class IndexController(QueryController):
             if size > sorting.max_page_size:
                 raise BadRequestError(f'Invalid value for parameter `size`, '
                                       f'must not be greater than {sorting.max_page_size}')
-            elif size < self.min_page_size:
+            elif size < self._min_page_size:
                 raise BadRequestError('Invalid value for parameter `size`, must be greater than 0')
 
-    def validate_order(self, order: str):
+    def _validate_order(self, order: str):
         supported_orders = ('asc', 'desc')
         if order not in supported_orders:
             raise BadRequestError(f'Unknown order `{order}`. Must be one of {supported_orders}')
@@ -326,7 +326,7 @@ class IndexController(QueryController):
         @self.app.route(
             '/index/{entity_type}',
             methods=['GET'],
-            spec=self.repository_search_spec(post=False),
+            spec=self._search_entities_spec(post=False),
             cors=True
         )
         # FIXME: Properly document the POST version of /index
@@ -335,44 +335,44 @@ class IndexController(QueryController):
             '/index/{entity_type}',
             methods=['POST'],
             content_types=['application/json'],
-            spec=self.repository_search_spec(post=True),
+            spec=self._search_entities_spec(post=True),
             cors=True
         )
         @self.app.route(
             '/index/{entity_type}',
             methods=['HEAD'],
             spec={
-                **self.repository_head_spec(),
-                'parameters': self.repository_search_params_spec()
+                **self._head_spec(),
+                'parameters': self._search_entities_params_spec()
             },
             cors=True
         )
         @self.app.route(
             '/index/{entity_type}/{entity_id}',
             methods=['GET'],
-            spec=self.repository_id_spec(),
+            spec=self._search_entity_spec(),
             cors=True
         )
-        def repository_search(entity_type: str, entity_id: str | None = None) -> JSON:
+        def search(entity_type: str, entity_id: str | None = None) -> JSON:
             request = self.app.current_request
             query_params = request.query_params or {}
             self._hoist_parameters(query_params, request)
             validate_params(query_params,
                             catalog=validate_catalog,
                             filters=self.validate_filters,
-                            order=self.validate_order,
+                            order=self._validate_order,
                             search_after=partial(self.validate_json_param, 'search_after'),
                             search_after_uid=str,
                             search_before=partial(self.validate_json_param, 'search_before'),
                             search_before_uid=str,
-                            size=partial(self.validate_size, entity_type),
+                            size=partial(self._validate_size, entity_type),
                             sort=self.validate_field)
-            self.validate_entity_type(entity_type)
+            self._validate_entity_type(entity_type)
             response = self.search(catalog=self.app.catalog,
                                    entity_type=entity_type,
                                    item_id=entity_id,
                                    filters=query_params.get('filters'),
-                                   pagination=self.get_pagination(entity_type),
+                                   pagination=self._pagination(entity_type),
                                    authentication=request.authentication)
             return '' if request.method == 'HEAD' else response
 
@@ -407,8 +407,8 @@ class IndexController(QueryController):
                                 additionalProperties=True,
                                 organTypes=schema.array(str),
                                 totalFileSize=float,
-                                fileTypeSummaries=self.array_of_object_spec,
-                                cellCountSummaries=self.array_of_object_spec,
+                                fileTypeSummaries=self._array_of_objects_schema,
+                                cellCountSummaries=self._array_of_objects_schema,
                                 donorCount=int,
                                 fileCount=int,
                                 labCount=int,
@@ -419,18 +419,18 @@ class IndexController(QueryController):
                         )
                     }
                 },
-                **self.repository_summary_spec
+                **self._summary_spec
             }
         )
         @self.app.route(
             '/index/summary',
             methods=['HEAD'],
             spec={
-                **self.repository_head_spec(for_summary=True),
-                **self.repository_summary_spec
+                **self._head_spec(for_summary=True),
+                **self._summary_spec
             }
         )
-        def get_summary():
+        def summary():
             """
             Returns a summary based on the filters passed on to the call. Based on the
             ICGC endpoint.
@@ -456,7 +456,7 @@ class IndexController(QueryController):
                entity_type: str,
                item_id: str | None,
                filters: str | None,
-               pagination: Pagination,
+               pagination: _Pagination,
                authentication: Authentication
                ) -> JSON:
         filters = self.get_filters(catalog, authentication, filters)
