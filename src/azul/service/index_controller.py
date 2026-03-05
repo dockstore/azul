@@ -65,6 +65,11 @@ log = logging.getLogger(__name__)
 
 
 class IndexController(QueryController):
+
+    @cached_property
+    def service(self) -> RepositoryService:
+        return RepositoryService()
+
     @attr.s(kw_only=True, auto_attribs=True, frozen=True)
     class Pagination(Pagination):
         self_url: furl
@@ -447,10 +452,6 @@ class IndexController(QueryController):
             return '' if request.method == 'HEAD' else response
 
         return locals()
-
-    @cached_property
-    def service(self) -> RepositoryService:
-        return RepositoryService()
 
     def search(self,
                *,
