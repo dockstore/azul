@@ -20,6 +20,8 @@ from furl import (
 from azul import (
     cached_property,
     config,
+    json_int,
+    json_mapping,
     mutable_furl,
 )
 from azul.auth import (
@@ -71,6 +73,9 @@ from azul.types import (
     FlatJSON,
     JSON,
     LambdaContext,
+    is_of_type,
+    not_none,
+    optional,
 )
 
 manifest_state_key = 'manifest'
@@ -97,7 +102,7 @@ class ManifestController(QueryController):
         return ManifestService(file_url_func=self.file_url)
 
     def _manifest_path(self, *, fetch: bool, token: str | None) -> tuple[str, ...]:
-        path = ('manifest', 'files')
+        path: tuple[str, ...] = ('manifest', 'files')
         if fetch:
             path = ('fetch', *path)
         if token is not None:
@@ -366,15 +371,19 @@ class ManifestController(QueryController):
                         '''),
                         **responses.json_content(
                             schema.object(
+                                additionalProperties=False,
                                 Status=int,
                                 Location={'type': 'string', 'format': 'url'},
                                 **{'Retry-After': schema.optional(int)},
-                                CommandLine=schema.optional(schema.object(**{
-                                    key: str
-                                    for key in CurlManifestGenerator.command_lines(url=furl(''),
-                                                                                   file_name='',
-                                                                                   authentication=None)
-                                }))
+                                CommandLine=schema.optional(schema.object(
+                                    additionalProperties=False,
+                                    **{
+                                        key: str
+                                        for key in CurlManifestGenerator.command_lines(url=furl(''),
+                                                                                       file_name='',
+                                                                                       authentication=None)
+                                    }
+                                ))
                             )
                         ),
                     }
@@ -432,9 +441,8 @@ class ManifestController(QueryController):
                                        authentication=authentication)
 
     def get_manifest(self, state: JSON) -> ManifestGenerationState:
-        # We trust StepFunctions to pass
-        state: ManifestGenerationState
-        partition = ManifestPartition.from_json(state['partition'])
+        assert is_of_type(state, ManifestGenerationState)
+        partition = ManifestPartition.from_json(not_none(state['partition']))
         manifest_key = ManifestKey.from_json(state['manifest_key'])
         result = self._service.get_manifest(format=manifest_key.format,
                                             catalog=manifest_key.catalog,
@@ -456,8 +464,8 @@ class ManifestController(QueryController):
             assert False, type(result)
 
     def _unpack_token_or_key(self,
-                             token_or_key: str
-                             ) -> tuple[Token | None, SignedManifestKey | None]:
+                             token_or_key: str | None
+                             ) -> tuple[Token | None, None] | tuple[Token, None] | tuple[None, SignedManifestKey]:
         if token_or_key is None:
             return None, None
         else:
@@ -516,11 +524,12 @@ class ManifestController(QueryController):
 
     def get_manifest_async(self,
                            *,
-                           token_or_key: str,
+                           token_or_key: str | None,
                            query_params: Mapping[str, str],
                            fetch: bool,
                            authentication: Authentication | None):
-
+        manifest: Manifest | None
+        manifest_key: SignedManifestKey | ManifestKey | None
         token, manifest_key = self._unpack_token_or_key(token_or_key)
 
         if token is None:
@@ -577,7 +586,7 @@ class ManifestController(QueryController):
             elif isinstance(token_or_result, dict):
                 # The execution is done, the resulting manifest should be ready
                 result = token_or_result
-                manifest = Manifest.from_json(result['output']['manifest'])
+                manifest = Manifest.from_json(json_mapping(result['output']['manifest']))
                 manifest_key = manifest.manifest_key
                 try:
                     manifest = self._service.get_cached_manifest_with_key(manifest_key)
@@ -600,6 +609,7 @@ class ManifestController(QueryController):
                 assert False, token_or_result
 
         body: dict[str, int | str | FlatJSON]
+        url: furl
 
         if manifest is None:
             assert token is not None
@@ -643,14 +653,15 @@ class ManifestController(QueryController):
 
         # Note: Response objects returned without a 'Content-Type' header will
         # be given one of type 'application/json' as default by Chalice.
+        #
         # https://aws.github.io/chalice/tutorials/basicrestapi.html#customizing-the-http-response
 
         if fetch:
             return Response(body=body)
         else:
-            status = body.pop('Status')
-            command_line: FlatJSON = body.pop('CommandLine', None)
-            headers = {k: str(v) for k, v in body.items()}
+            status = json_int(body.pop('Status'))
+            command_line = optional(json_mapping, body.pop('CommandLine', None))
+            headers: dict[str, str | list[str]] = {k: str(v) for k, v in body.items()}
             if command_line is None:
                 new_body = ''
             else:
