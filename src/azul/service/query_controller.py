@@ -1,3 +1,7 @@
+from abc import (
+    ABCMeta,
+    abstractmethod,
+)
 from collections.abc import (
     Sequence,
 )
@@ -51,8 +55,12 @@ from azul.types import (
 log = logging.getLogger(__name__)
 
 
-class QueryController(ServiceController):
-    service: ElasticsearchService
+class QueryController(ServiceController, metaclass=ABCMeta):
+
+    @property
+    @abstractmethod
+    def service(self) -> ElasticsearchService:
+        raise NotImplementedError
 
     @property
     def _metadata_plugin(self) -> MetadataPlugin:
