@@ -67,7 +67,7 @@ log = logging.getLogger(__name__)
 class IndexController(QueryController):
 
     @cached_property
-    def service(self) -> RepositoryService:
+    def _service(self) -> RepositoryService:
         return RepositoryService()
 
     @attr.s(kw_only=True, auto_attribs=True, frozen=True)
@@ -464,12 +464,12 @@ class IndexController(QueryController):
                ) -> JSON:
         filters = self.get_filters(catalog, authentication, filters)
         try:
-            response = self.service.search(catalog=catalog,
-                                           entity_type=entity_type,
-                                           file_url_func=self.file_url,
-                                           item_id=item_id,
-                                           filters=filters,
-                                           pagination=pagination)
+            response = self._service.search(catalog=catalog,
+                                            entity_type=entity_type,
+                                            file_url_func=self.file_url,
+                                            item_id=item_id,
+                                            filters=filters,
+                                            pagination=pagination)
         except (BadArgumentException, InvalidUUIDError) as e:
             raise BadRequestError(e)
         except (EntityNotFoundError, IndexNotFoundError) as e:
@@ -484,7 +484,7 @@ class IndexController(QueryController):
                 ) -> JSON:
         filters = self.get_filters(catalog, authentication, filters)
         try:
-            response = self.service.summary(catalog, filters)
+            response = self._service.summary(catalog, filters)
         except BadArgumentException as e:
             raise BadRequestError(e)
         return cast(JSON, response)

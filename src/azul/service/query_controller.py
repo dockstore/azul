@@ -59,12 +59,12 @@ class QueryController(ServiceController, metaclass=ABCMeta):
 
     @property
     @abstractmethod
-    def service(self) -> ElasticsearchService:
+    def _service(self) -> ElasticsearchService:
         raise NotImplementedError
 
     @property
     def _metadata_plugin(self) -> MetadataPlugin:
-        return self.service.metadata_plugin(self.app.catalog)
+        return self._service.metadata_plugin(self.app.catalog)
 
     @property
     def fields(self) -> Sequence[str]:
@@ -223,7 +223,7 @@ class QueryController(ServiceController, metaclass=ABCMeta):
         result = {}
         plugin = self._metadata_plugin
         for field, path in plugin.field_mapping.items():
-            field_type = self.service.field_type(catalog, path)
+            field_type = self._service.field_type(catalog, path)
             if isinstance(field_type, FieldType):
                 result[field] = field_type
         # This field is a synthetic element of the response and will never be

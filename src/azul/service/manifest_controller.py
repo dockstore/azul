@@ -93,7 +93,7 @@ class ManifestController(QueryController):
         return AsyncManifestService()
 
     @cached_property
-    def service(self) -> ManifestService:
+    def _service(self) -> ManifestService:
         return ManifestService(file_url_func=self.file_url)
 
     def _manifest_path(self, *, fetch: bool, token: str | None) -> tuple[str, ...]:
@@ -436,11 +436,11 @@ class ManifestController(QueryController):
         state: ManifestGenerationState
         partition = ManifestPartition.from_json(state['partition'])
         manifest_key = ManifestKey.from_json(state['manifest_key'])
-        result = self.service.get_manifest(format=manifest_key.format,
-                                           catalog=manifest_key.catalog,
-                                           filters=Filters.from_json(state['filters']),
-                                           partition=partition,
-                                           manifest_key=manifest_key)
+        result = self._service.get_manifest(format=manifest_key.format,
+                                            catalog=manifest_key.catalog,
+                                            filters=Filters.from_json(state['filters']),
+                                            partition=partition,
+                                            manifest_key=manifest_key)
         if isinstance(result, ManifestPartition):
             assert not result.is_last, result
             return {
@@ -532,9 +532,9 @@ class ManifestController(QueryController):
                 catalog = query_params.get('catalog', config.default_catalog)
                 filters = self.get_filters(catalog, authentication, query_params.get('filters'))
                 try:
-                    manifest = self.service.get_cached_manifest(format=format,
-                                                                catalog=catalog,
-                                                                filters=filters)
+                    manifest = self._service.get_cached_manifest(format=format,
+                                                                 catalog=catalog,
+                                                                 filters=filters)
                 except CachedManifestNotFound as e:
                     # A cache miss, but the exception tells us the cache key
                     manifest, manifest_key = None, e.manifest_key
@@ -553,8 +553,8 @@ class ManifestController(QueryController):
                 if authentication is not None:
                     raise BadRequestError('Must omit authentication when passing a manifest key')
                 try:
-                    manifest_key = self.service.verify_manifest_key(manifest_key)
-                    manifest = self.service.get_cached_manifest_with_key(manifest_key)
+                    manifest_key = self._service.verify_manifest_key(manifest_key)
+                    manifest = self._service.get_cached_manifest_with_key(manifest_key)
                 except CachedManifestNotFound:
                     # We could start another execution but that would require
                     # the client to follow more redirects. We've already sent
@@ -580,7 +580,7 @@ class ManifestController(QueryController):
                 manifest = Manifest.from_json(result['output']['manifest'])
                 manifest_key = manifest.manifest_key
                 try:
-                    manifest = self.service.get_cached_manifest_with_key(manifest_key)
+                    manifest = self._service.get_cached_manifest_with_key(manifest_key)
                 except CachedManifestNotFound as e:
                     assert manifest_key == e.manifest_key
                     # There are two possible causes for the missing manifest: it
@@ -631,14 +631,14 @@ class ManifestController(QueryController):
                 # remains valid for longer than 1 hour. Currently, the AnVIL
                 # plugin does not support cURL-format manifests.
                 assert not config.is_anvil_enabled(manifest_key.catalog)
-                manifest_key = self.service.sign_manifest_key(manifest_key)
+                manifest_key = self._service.sign_manifest_key(manifest_key)
                 url = self.manifest_url(fetch=False, token_or_key=manifest_key.encode())
             else:
-                url = furl(self.service.get_manifest_url(manifest))
+                url = furl(self._service.get_manifest_url(manifest))
             body = {
                 'Status': 302,
                 'Location': str(url),
-                'CommandLine': self.service.command_lines(manifest, url, authentication)
+                'CommandLine': self._service.command_lines(manifest, url, authentication)
             }
 
         # Note: Response objects returned without a 'Content-Type' header will

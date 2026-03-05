@@ -189,7 +189,7 @@ class TestIndexResponse(IndexResponseTestCase):
 
     @property
     def _repository_service(self) -> RepositoryService:
-        return self._controller.service
+        return self._controller._service
 
     def _response_stage(self, entity_type: str) -> HCASearchResponseStage:
         return HCASearchResponseStage(service=self._repository_service,
