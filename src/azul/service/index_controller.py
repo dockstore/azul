@@ -5,7 +5,6 @@ import json
 import logging
 from typing import (
     Any,
-    cast,
 )
 
 import attr
@@ -19,13 +18,9 @@ from furl import (
 )
 
 from azul import (
-    CatalogName,
     R,
     cached_property,
     iif,
-)
-from azul.auth import (
-    Authentication,
 )
 from azul.indexer.document import (
     EntityType,
@@ -354,27 +349,7 @@ class IndexController(QueryController):
             cors=True
         )
         def search(entity_type: str, entity_id: str | None = None) -> JSON:
-            request = self.app.current_request
-            query_params = request.query_params or {}
-            self._hoist_parameters(query_params, request)
-            validate_params(query_params,
-                            catalog=validate_catalog,
-                            filters=self.validate_filters,
-                            order=self._validate_order,
-                            search_after=partial(self.validate_json_param, 'search_after'),
-                            search_after_uid=str,
-                            search_before=partial(self.validate_json_param, 'search_before'),
-                            search_before_uid=str,
-                            size=partial(self._validate_size, entity_type),
-                            sort=self.validate_field)
-            self._validate_entity_type(entity_type)
-            response = self.search(catalog=self.app.catalog,
-                                   entity_type=entity_type,
-                                   item_id=entity_id,
-                                   filters=query_params.get('filters'),
-                                   pagination=self._pagination(entity_type),
-                                   authentication=request.authentication)
-            return '' if request.method == 'HEAD' else response
+            return self.search(entity_type, entity_id)
 
         @self.app.route(
             '/index/summary',
@@ -435,28 +410,36 @@ class IndexController(QueryController):
 
         return locals()
 
-    def search(self,
-               *,
-               catalog: CatalogName,
-               entity_type: str,
-               item_id: str | None,
-               filters: str | None,
-               pagination: _Pagination,
-               authentication: Authentication
-               ) -> JSON:
-        filters = self.get_filters(catalog, authentication, filters)
+    def search(self, entity_type: str, entity_id: str | None = None) -> JSON:
+        request = self.app.current_request
+        query_params = request.query_params or {}
+        self._hoist_parameters(query_params, request)
+        validate_params(query_params,
+                        catalog=validate_catalog,
+                        filters=self.validate_filters,
+                        order=self._validate_order,
+                        search_after=partial(self.validate_json_param, 'search_after'),
+                        search_after_uid=str,
+                        search_before=partial(self.validate_json_param, 'search_before'),
+                        search_before_uid=str,
+                        size=partial(self._validate_size, entity_type),
+                        sort=self.validate_field)
+        self._validate_entity_type(entity_type)
+        filters = query_params.get('filters')
+        pagination = self._pagination(entity_type)
+        filters = self.get_filters(self.app.catalog, request.authentication, filters)
         try:
-            response = self._service.search(catalog=catalog,
+            response = self._service.search(catalog=self.app.catalog,
                                             entity_type=entity_type,
                                             file_url_func=self.file_url,
-                                            item_id=item_id,
+                                            item_id=entity_id,
                                             filters=filters,
                                             pagination=pagination)
         except (BadArgumentException, InvalidUUIDError) as e:
             raise BadRequestError(e)
         except (EntityNotFoundError, IndexNotFoundError) as e:
             raise NotFoundError(e)
-        return cast(JSON, response)
+        return '' if request.method == 'HEAD' else response
 
     def summary(self):
         request = self.app.current_request
