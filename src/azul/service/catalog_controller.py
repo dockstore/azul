@@ -117,24 +117,24 @@ class CatalogController(ServiceController):
         }
 
     @cache
-    def _plugin_config(self, plugin_base_cls: str, catalog: CatalogName) -> JSON:
-        plugin_base_cls = Plugin.type_for_name(plugin_base_cls)
+    def _plugin_config(self, plugin_type_name: str, catalog: CatalogName) -> JSON:
+        plugin_base_cls: type[Plugin] = Plugin.type_for_name(plugin_type_name)
         plugin_cls = plugin_base_cls.load(catalog)
-        if issubclass(plugin_base_cls, RepositoryPlugin):
-            plugin = plugin_cls.create(catalog)
+        if issubclass(plugin_cls, RepositoryPlugin):
+            repository_plugin = plugin_cls.create(catalog)
             return {
-                'sources': list(map(str, plugin.sources))
+                'sources': list(map(str, repository_plugin.sources))
             }
-        elif issubclass(plugin_base_cls, MetadataPlugin):
-            plugin = plugin_cls.create()
+        elif issubclass(plugin_cls, MetadataPlugin):
+            metadata_plugin = plugin_cls.create()
             return {
                 'indices': {
                     entity_type: {
                         'default_sort': sorting.field_name,
                         'default_order': sorting.order
                     }
-                    for entity_type, sorting in plugin.exposed_indices.items()
+                    for entity_type, sorting in metadata_plugin.exposed_indices.items()
                 }
             }
         else:
-            assert False, plugin_base_cls
+            assert False, plugin_cls
