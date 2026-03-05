@@ -133,12 +133,6 @@ class IndexController(QueryController):
         cellSuspensions=array_of_object_spec
     )
 
-    page_spec = schema.object(
-        hits=schema.array(hit_spec),
-        pagination=generic_object_spec,
-        termFacets=generic_object_spec
-    )
-
     def repository_id_spec(self):
         search_spec_link = '#operations-Index-get_index__entity_type_'
         return {
@@ -219,7 +213,13 @@ class IndexController(QueryController):
                         Not every nested field is tabulated, but the set of
                         tabulated fields is consistent between entity types.
                     '''),
-                    **responses.json_content(self.page_spec)
+                    **responses.json_content(
+                        schema.object(
+                            hits=schema.array(self.hit_spec),
+                            pagination=self.generic_object_spec,
+                            termFacets=self.generic_object_spec
+                        )
+                    )
                 }
             }
         }
