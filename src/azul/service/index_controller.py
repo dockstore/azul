@@ -5,6 +5,7 @@ import json
 import logging
 from typing import (
     Any,
+    Mapping,
 )
 
 import attr
@@ -41,6 +42,7 @@ from azul.service.controller import (
 from azul.service.elasticsearch_service import (
     IndexNotFoundError,
     Pagination,
+    SortKey,
 )
 from azul.service.query_controller import (
     QueryController,
@@ -280,7 +282,7 @@ class IndexController(QueryController):
             spec=self._search_entity_spec(),
             cors=True
         )
-        def search(entity_type: str, entity_id: str | None = None) -> JSON:
+        def search(entity_type: str, entity_id: str | None = None) -> str | JSON:
             return self.search(entity_type, entity_id)
 
         @self.app.route(
@@ -342,9 +344,9 @@ class IndexController(QueryController):
 
         return locals()
 
-    def search(self, entity_type: str, entity_id: str | None = None) -> JSON:
+    def search(self, entity_type: str, entity_id: str | None = None) -> str | JSON:
         request = self.current_request
-        query_params = request.query_params or {}
+        query_params: Mapping[str, str] = request.query_params or {}
         self._hoist_parameters(query_params, request)
         validate_params(query_params,
                         catalog=validate_catalog,
@@ -375,7 +377,7 @@ class IndexController(QueryController):
 
     def summary(self):
         request = self.current_request
-        query_params = request.query_params or {}
+        query_params: Mapping[str, str] = request.query_params or {}
         validate_params(query_params,
                         filters=str,
                         catalog=validate_catalog)
@@ -394,7 +396,7 @@ class IndexController(QueryController):
             raise BadRequestError(f'Entity type {entity_type!r} is invalid for catalog '
                                   f'{self.app.catalog!r}. Must be one of {set(entity_types)}.')
 
-    def _validate_size(self, entity_type: EntityType, size: str):
+    def _validate_size(self, entity_type: EntityType, size: str | int):
         sorting = self._metadata_plugin.exposed_indices[entity_type]
         try:
             size = int(size)
@@ -427,31 +429,51 @@ class IndexController(QueryController):
                     f'search_{before_or_after}': json.dumps(search_key),
                     'sort': self.sort,
                     'order': self.order,
-                    'size': self.size
+                    'size': str(self.size)
                 }
             return furl(url=self.self_url, args=params)
 
     def _pagination(self, entity_type: str) -> _Pagination:
         default_sorting = self._metadata_plugin.exposed_indices[entity_type]
-        params = self.current_request.query_params or {}
-        sb, sa = params.get('search_before'), params.get('search_after')
-        if sb is None:
-            if sa is not None:
-                sa = tuple(json.loads(sa))
-        else:
-            if sa is None:
-                sb = tuple(json.loads(sb))
-            else:
-                raise BadRequestError('Only one of search_after or search_before may be set')
+        request = self.current_request
+        params: Mapping[str, str] = request.query_params or {}
         try:
+            sb, sa = self._pagination_params(params)
+        except AssertionError as e:
+            if R.caused(e):
+                raise R.propagate(e, ChaliceViewError)
+            else:
+                raise
+        else:
             return self._Pagination(order=params.get('order', default_sorting.order),
                                     size=int(params.get('size', '10')),
                                     sort=params.get('sort', default_sorting.field_name),
                                     search_before=sb,
                                     search_after=sa,
                                     self_url=self.app.self_url)
-        except AssertionError as e:
-            if R.caused(e):
-                raise R.propagate(e, ChaliceViewError)
+
+    def _pagination_params(self,
+                           params: Mapping[str, str]
+                           ) -> tuple[SortKey, None] | tuple[None, SortKey] | tuple[None, None]:
+        sb, sa = params.get('search_before'), params.get('search_after')
+        if sb is None:
+            if sa is None:
+                return None, None
             else:
-                raise
+                return None, self._sort_key(sa)
+        else:
+            if sa is None:
+                return self._sort_key(sb), None
+            else:
+                assert False, R('Only one of search_after or search_before may be set')
+
+    def _sort_key(self, sort_key: str) -> SortKey:
+        sort_key = json.loads(sort_key)
+        assert isinstance(sort_key, list), R(
+            'Not a list', sort_key)
+        assert len(sort_key) == 2, R(
+            'Not a tuple with two elements', sort_key)
+        a, b = sort_key
+        assert isinstance(b, str), R(
+            'Second sort key element not a string', sort_key)
+        return a, b

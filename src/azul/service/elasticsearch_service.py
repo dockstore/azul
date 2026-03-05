@@ -20,6 +20,9 @@ from typing import (
 )
 
 import attr
+from furl import (
+    furl,
+)
 from more_itertools import (
     one,
 )
@@ -470,19 +473,6 @@ class Pagination:
     search_before: SortKey | None = None
     search_after: SortKey | None = None
 
-    def __attrs_post_init__(self):
-        self._check_sort_key(self.search_before)
-        self._check_sort_key(self.search_after)
-
-    def _check_sort_key(self, sort_key):
-        if sort_key is not None:
-            assert isinstance(sort_key, tuple), R(
-                'Not a tuple', sort_key)
-            assert len(sort_key) == 2, R(
-                'Not a tuple with two elements', sort_key)
-            assert isinstance(sort_key[1], str), R(
-                'Second sort key element not a string', sort_key)
-
     def advance(self,
                 *,
                 search_before: SortKey | None,
@@ -492,7 +482,7 @@ class Pagination:
                            search_before=search_before,
                            search_after=search_after)
 
-    def link(self, *, previous: bool, **params: str) -> str | None:
+    def link(self, *, previous: bool, **params: str) -> furl | None:
         """
         Return the URL of the next or previous page in this pagination or None
         if there is no such page.
