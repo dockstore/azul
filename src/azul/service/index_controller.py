@@ -346,8 +346,7 @@ class IndexController(QueryController):
 
     def search(self, entity_type: str, entity_id: str | None = None) -> str | JSON:
         request = self.current_request
-        query_params: Mapping[str, str] = request.query_params or {}
-        self._hoist_parameters(query_params, request)
+        query_params = self._hoist_parameters(request)
         validate_params(query_params,
                         catalog=validate_catalog,
                         filters=self.validate_filters,
@@ -378,7 +377,7 @@ class IndexController(QueryController):
 
     def summary(self):
         request = self.current_request
-        query_params: Mapping[str, str] = request.query_params or {}
+        query_params = self._query_params(request)
         validate_params(query_params,
                         filters=str,
                         catalog=validate_catalog)
@@ -438,7 +437,7 @@ class IndexController(QueryController):
     def _pagination(self, entity_type: str) -> _Pagination:
         default_sorting = self._metadata_plugin.exposed_indices[entity_type]
         request = self.current_request
-        params: Mapping[str, str] = request.query_params or {}
+        params = self._query_params(request)
         try:
             sb, sa = self._pagination_params(params)
         except AssertionError as e:

@@ -410,8 +410,7 @@ class ManifestController(QueryController):
 
     def _file_manifest(self, fetch: bool, token_or_key: str | None = None):
         request = self.current_request
-        query_params = request.query_params or {}
-        self._hoist_parameters(query_params, request)
+        query_params = self._hoist_parameters(request)
         if token_or_key is None:
             query_params.setdefault('filters', '{}')
             # We list the `catalog` validator first so that the catalog is validated

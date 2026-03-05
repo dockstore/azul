@@ -135,7 +135,7 @@ class DRSController(ServiceController):
             immediately. Otherwise, we need to send the request through the /access
             endpoint.
             """
-            query_params = self.current_request.query_params or {}
+            query_params = self._query_params(self.current_request)
             validate_params(query_params, version=str)
             return self.get_object(file_uuid, query_params)
 
@@ -185,7 +185,7 @@ class DRSController(ServiceController):
             }
         )
         def get_data_object_access(file_uuid, access_id):
-            query_params = self.current_request.query_params or {}
+            query_params = self._query_params(self.current_request)
             validate_params(query_params, version=str)
             return self.get_object_access(access_id, file_uuid, query_params)
 
@@ -202,7 +202,7 @@ class DRSController(ServiceController):
             """
             request = self.current_request
             authentication = self._authentication(request)
-            query_params = request.query_params or {}
+            query_params = self._query_params(request)
             validate_params(query_params,
                             version=str,
                             catalog=validate_catalog)

@@ -945,3 +945,10 @@ class Controller:
         if authentication is not None:
             assert isinstance(authentication, Authentication)
         return authentication
+
+    def _query_params(self, request: Request) -> MultiDict:
+        params = request.query_params
+        if params is None:
+            params = MultiDict({})
+            request.query_params = params
+        return params

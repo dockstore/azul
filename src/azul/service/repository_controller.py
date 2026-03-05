@@ -252,7 +252,7 @@ class RepositoryController(ServiceController):
 
         def _repository_files(file_uuid: str, fetch: bool) -> MutableJSON:
             request = self.current_request
-            query_params = request.query_params or {}
+            query_params = self._query_params(request)
             headers = request.headers
 
             # FIXME: Prevent duplicate filenames from files in different subgraphs by
@@ -296,7 +296,8 @@ class RepositoryController(ServiceController):
         )
         def list_sources() -> Response:
             request = self.current_request
-            validate_params(request.query_params or {},
+            query_params = self._query_params(request)
+            validate_params(query_params,
                             catalog=validate_catalog)
             authentication = self._authentication(request)
             sources = self.list_sources(self.app.catalog,

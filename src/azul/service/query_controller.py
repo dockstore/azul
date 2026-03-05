@@ -14,6 +14,10 @@ from typing import (
 from chalice import (
     BadRequestError as BRE,
 )
+from chalice.app import (
+    MultiDict,
+    Request,
+)
 import jsonschema
 import jsonschema.protocols
 from more_itertools import (
@@ -82,7 +86,8 @@ class QueryController(ServiceController, metaclass=ABCMeta):
     def synthetic_fields(self) -> Sequence[str]:
         return self._metadata_plugin.special_fields.accessible.name,
 
-    def _hoist_parameters(self, query_params, request):
+    def _hoist_parameters(self, request: Request) -> MultiDict:
+        query_params = self._query_params(request)
         if request.method in ('POST', 'PUT'):
             body = request.json_body
             if body is not None:
@@ -92,6 +97,7 @@ class QueryController(ServiceController, metaclass=ABCMeta):
                     raise BRE('Conflicting keys between body and query parameters')
                 else:
                     query_params.update(body)
+        return query_params
 
     def parameter_hoisting_note(self,
                                 method: str,
