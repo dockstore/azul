@@ -65,50 +65,6 @@ class IndexController(QueryController):
     def _service(self) -> RepositoryService:
         return RepositoryService()
 
-    @attr.s(kw_only=True, auto_attribs=True, frozen=True)
-    class _Pagination(Pagination):
-        self_url: furl
-
-        def link(self, *, previous: bool, **params: str) -> furl | None:
-            search_key = self.search_before if previous else self.search_after
-            if search_key is None:
-                return None
-            else:
-                before_or_after = 'before' if previous else 'after'
-                params = {
-                    **params,
-                    f'search_{before_or_after}': json.dumps(search_key),
-                    'sort': self.sort,
-                    'order': self.order,
-                    'size': self.size
-                }
-            return furl(url=self.self_url, args=params)
-
-    def _pagination(self, entity_type: str) -> _Pagination:
-        default_sorting = self._metadata_plugin.exposed_indices[entity_type]
-        params = self.app.current_request.query_params or {}
-        sb, sa = params.get('search_before'), params.get('search_after')
-        if sb is None:
-            if sa is not None:
-                sa = tuple(json.loads(sa))
-        else:
-            if sa is None:
-                sb = tuple(json.loads(sb))
-            else:
-                raise BadRequestError('Only one of search_after or search_before may be set')
-        try:
-            return self._Pagination(order=params.get('order', default_sorting.order),
-                                    size=int(params.get('size', '10')),
-                                    sort=params.get('sort', default_sorting.field_name),
-                                    search_before=sb,
-                                    search_after=sa,
-                                    self_url=self.app.self_url)
-        except AssertionError as e:
-            if R.caused(e):
-                raise R.propagate(e, ChaliceViewError)
-            else:
-                raise
-
     _min_page_size = 1
 
     _generic_object_schema = schema.object(additionalProperties=True)
@@ -293,30 +249,6 @@ class IndexController(QueryController):
             'parameters': [self.catalog_param_spec, self.filters_param_spec]
         }
 
-    def _validate_entity_type(self, entity_type: str):
-        entity_types = self._metadata_plugin.exposed_indices.keys()
-        if entity_type not in entity_types:
-            raise BadRequestError(f'Entity type {entity_type!r} is invalid for catalog '
-                                  f'{self.app.catalog!r}. Must be one of {set(entity_types)}.')
-
-    def _validate_size(self, entity_type: EntityType, size: str):
-        sorting = self._metadata_plugin.exposed_indices[entity_type]
-        try:
-            size = int(size)
-        except BaseException:
-            raise BadRequestError('Invalid value for parameter `size`')
-        else:
-            if size > sorting.max_page_size:
-                raise BadRequestError(f'Invalid value for parameter `size`, '
-                                      f'must not be greater than {sorting.max_page_size}')
-            elif size < self._min_page_size:
-                raise BadRequestError('Invalid value for parameter `size`, must be greater than 0')
-
-    def _validate_order(self, order: str):
-        supported_orders = ('asc', 'desc')
-        if order not in supported_orders:
-            raise BadRequestError(f'Unknown order `{order}`. Must be one of {supported_orders}')
-
     def handlers(self) -> dict[str, Any]:
         @self.app.route(
             '/index/{entity_type}',
@@ -455,3 +387,71 @@ class IndexController(QueryController):
         except BadArgumentException as e:
             raise BadRequestError(e)
         return '' if request.method == 'HEAD' else response
+
+    def _validate_entity_type(self, entity_type: str):
+        entity_types = self._metadata_plugin.exposed_indices.keys()
+        if entity_type not in entity_types:
+            raise BadRequestError(f'Entity type {entity_type!r} is invalid for catalog '
+                                  f'{self.app.catalog!r}. Must be one of {set(entity_types)}.')
+
+    def _validate_size(self, entity_type: EntityType, size: str):
+        sorting = self._metadata_plugin.exposed_indices[entity_type]
+        try:
+            size = int(size)
+        except BaseException:
+            raise BadRequestError('Invalid value for parameter `size`')
+        else:
+            if size > sorting.max_page_size:
+                raise BadRequestError(f'Invalid value for parameter `size`, '
+                                      f'must not be greater than {sorting.max_page_size}')
+            elif size < self._min_page_size:
+                raise BadRequestError('Invalid value for parameter `size`, must be greater than 0')
+
+    def _validate_order(self, order: str):
+        supported_orders = ('asc', 'desc')
+        if order not in supported_orders:
+            raise BadRequestError(f'Unknown order `{order}`. Must be one of {supported_orders}')
+
+    @attr.s(kw_only=True, auto_attribs=True, frozen=True)
+    class _Pagination(Pagination):
+        self_url: furl
+
+        def link(self, *, previous: bool, **params: str) -> furl | None:
+            search_key = self.search_before if previous else self.search_after
+            if search_key is None:
+                return None
+            else:
+                before_or_after = 'before' if previous else 'after'
+                params = {
+                    **params,
+                    f'search_{before_or_after}': json.dumps(search_key),
+                    'sort': self.sort,
+                    'order': self.order,
+                    'size': self.size
+                }
+            return furl(url=self.self_url, args=params)
+
+    def _pagination(self, entity_type: str) -> _Pagination:
+        default_sorting = self._metadata_plugin.exposed_indices[entity_type]
+        params = self.app.current_request.query_params or {}
+        sb, sa = params.get('search_before'), params.get('search_after')
+        if sb is None:
+            if sa is not None:
+                sa = tuple(json.loads(sa))
+        else:
+            if sa is None:
+                sb = tuple(json.loads(sb))
+            else:
+                raise BadRequestError('Only one of search_after or search_before may be set')
+        try:
+            return self._Pagination(order=params.get('order', default_sorting.order),
+                                    size=int(params.get('size', '10')),
+                                    sort=params.get('sort', default_sorting.field_name),
+                                    search_before=sb,
+                                    search_after=sa,
+                                    self_url=self.app.self_url)
+        except AssertionError as e:
+            if R.caused(e):
+                raise R.propagate(e, ChaliceViewError)
+            else:
+                raise
