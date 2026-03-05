@@ -251,7 +251,7 @@ class RepositoryController(ServiceController):
             return Response(body=json.dumps(body), status_code=200)
 
         def _repository_files(file_uuid: str, fetch: bool) -> MutableJSON:
-            request = self.app.current_request
+            request = self.current_request
             query_params = request.query_params or {}
             headers = request.headers
 
@@ -294,10 +294,10 @@ class RepositoryController(ServiceController):
             }
         )
         def list_sources() -> Response:
-            validate_params(self.app.current_request.query_params or {},
+            validate_params(self.current_request.query_params or {},
                             catalog=validate_catalog)
             sources = self.list_sources(self.app.catalog,
-                                        self.app.current_request.authentication)
+                                        self.current_request.authentication)
             return Response(body={'sources': sources}, status_code=200)
 
         return locals()

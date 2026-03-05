@@ -343,7 +343,7 @@ class IndexController(QueryController):
         return locals()
 
     def search(self, entity_type: str, entity_id: str | None = None) -> JSON:
-        request = self.app.current_request
+        request = self.current_request
         query_params = request.query_params or {}
         self._hoist_parameters(query_params, request)
         validate_params(query_params,
@@ -374,7 +374,7 @@ class IndexController(QueryController):
         return '' if request.method == 'HEAD' else response
 
     def summary(self):
-        request = self.app.current_request
+        request = self.current_request
         query_params = request.query_params or {}
         validate_params(query_params,
                         filters=str,
@@ -433,7 +433,7 @@ class IndexController(QueryController):
 
     def _pagination(self, entity_type: str) -> _Pagination:
         default_sorting = self._metadata_plugin.exposed_indices[entity_type]
-        params = self.app.current_request.query_params or {}
+        params = self.current_request.query_params or {}
         sb, sa = params.get('search_before'), params.get('search_after')
         if sb is None:
             if sa is not None:

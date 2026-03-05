@@ -409,7 +409,7 @@ class ManifestController(QueryController):
         return locals()
 
     def _file_manifest(self, fetch: bool, token_or_key: str | None = None):
-        request = self.app.current_request
+        request = self.current_request
         query_params = request.query_params or {}
         self._hoist_parameters(query_params, request)
         if token_or_key is None:

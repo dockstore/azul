@@ -944,10 +944,8 @@ class Controller:
 
     @property
     def lambda_context(self) -> LambdaContext:
-        assert self.app.lambda_context is not None
-        return self.app.lambda_context
+        return not_none(self.app.lambda_context)
 
     @property
     def current_request(self) -> AzulRequest:
-        assert self.app.current_request is not None
-        return self.app.current_request
+        return not_none(self.app.current_request)
