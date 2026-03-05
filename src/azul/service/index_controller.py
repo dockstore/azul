@@ -431,17 +431,7 @@ class IndexController(QueryController):
             }
         )
         def summary():
-            request = self.app.current_request
-            query_params = request.query_params or {}
-            validate_params(query_params,
-                            filters=str,
-                            catalog=validate_catalog)
-            filters = query_params.get('filters', '{}')
-            self.validate_filters(filters)
-            response = self.summary(catalog=self.app.catalog,
-                                    filters=filters,
-                                    authentication=request.authentication)
-            return '' if request.method == 'HEAD' else response
+            return self.summary()
 
         return locals()
 
@@ -468,15 +458,17 @@ class IndexController(QueryController):
             raise NotFoundError(e)
         return cast(JSON, response)
 
-    def summary(self,
-                *,
-                catalog: CatalogName,
-                filters: str,
-                authentication: Authentication
-                ) -> JSON:
-        filters = self.get_filters(catalog, authentication, filters)
+    def summary(self):
+        request = self.app.current_request
+        query_params = request.query_params or {}
+        validate_params(query_params,
+                        filters=str,
+                        catalog=validate_catalog)
+        filters = query_params.get('filters', '{}')
+        self.validate_filters(filters)
+        filters = self.get_filters(self.app.catalog, request.authentication, filters)
         try:
-            response = self._service.summary(catalog, filters)
+            response = self._service.summary(self.app.catalog, filters)
         except BadArgumentException as e:
             raise BadRequestError(e)
-        return cast(JSON, response)
+        return '' if request.method == 'HEAD' else response
