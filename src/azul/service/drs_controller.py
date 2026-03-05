@@ -201,6 +201,7 @@ class DRSController(ServiceController):
             Return a DRS data object dictionary for a given DSS file UUID and version.
             """
             request = self.current_request
+            authentication = self._authentication(request)
             query_params = request.query_params or {}
             validate_params(query_params,
                             version=str,
@@ -210,7 +211,7 @@ class DRSController(ServiceController):
             return self.dos_get_object(catalog,
                                        file_uuid,
                                        file_version,
-                                       request.authentication)
+                                       authentication)
 
         return locals()
 

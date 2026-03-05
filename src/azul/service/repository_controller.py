@@ -260,12 +260,13 @@ class RepositoryController(ServiceController):
             #        https://github.com/DataBiosphere/azul/issues/2682
 
             catalog = self.app.catalog
+            authentication = self._authentication(request)
             return self.download_file(catalog=catalog,
                                       fetch=fetch,
                                       file_uuid=file_uuid,
                                       query_params=query_params,
                                       headers=headers,
-                                      authentication=request.authentication)
+                                      authentication=authentication)
 
         @self.app.route(
             '/repository/sources',
@@ -294,10 +295,12 @@ class RepositoryController(ServiceController):
             }
         )
         def list_sources() -> Response:
-            validate_params(self.current_request.query_params or {},
+            request = self.current_request
+            validate_params(request.query_params or {},
                             catalog=validate_catalog)
+            authentication = self._authentication(request)
             sources = self.list_sources(self.app.catalog,
-                                        self.current_request.authentication)
+                                        authentication)
             return Response(body={'sources': sources}, status_code=200)
 
         return locals()

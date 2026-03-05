@@ -426,10 +426,11 @@ class ManifestController(QueryController):
             query_params.setdefault('format', default_format)
         else:
             validate_params(query_params)
+        authentication = self._authentication(request)
         return self.get_manifest_async(query_params=query_params,
                                        token_or_key=token_or_key,
                                        fetch=fetch,
-                                       authentication=request.authentication)
+                                       authentication=authentication)
 
     def get_manifest(self, state: JSON) -> ManifestGenerationState:
         # We trust StepFunctions to pass
