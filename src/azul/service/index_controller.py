@@ -431,11 +431,6 @@ class IndexController(QueryController):
             }
         )
         def summary():
-            """
-            Returns a summary based on the filters passed on to the call. Based on the
-            ICGC endpoint.
-            :return: Returns a jsonified Summary API response
-            """
             request = self.app.current_request
             query_params = request.query_params or {}
             validate_params(query_params,
