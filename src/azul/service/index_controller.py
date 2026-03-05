@@ -275,12 +275,6 @@ class IndexController(QueryController):
             ]
         ]
 
-    def repository_head_search_spec(self):
-        return {
-            **self.repository_head_spec(),
-            'parameters': self.repository_search_params_spec()
-        }
-
     def repository_head_spec(self, for_summary: bool = False):
         search_spec_link = f'#operations-Index-get_index_{"summary" if for_summary else "_entity_type_"}'
         return {
@@ -347,7 +341,10 @@ class IndexController(QueryController):
         @self.app.route(
             '/index/{entity_type}',
             methods=['HEAD'],
-            spec=self.repository_head_search_spec(),
+            spec={
+                **self.repository_head_spec(),
+                'parameters': self.repository_search_params_spec()
+            },
             cors=True
         )
         @self.app.route(
