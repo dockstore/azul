@@ -4,7 +4,6 @@ from typing import (
     Mapping,
 )
 
-import attrs
 from chalice import (
     BadRequestError as BRE,
     NotFoundError,
@@ -13,17 +12,23 @@ from chalice import (
 from azul import (
     CatalogName,
     R,
-    RequirementError,
     config,
+    mutable_furl,
 )
 from azul.auth import (
     Authentication,
 )
+from azul.openapi import (
+    format_description as fd,
+    params,
+    schema,
+)
 from azul.service import (
-    FileUrlFunc,
     Filters,
     FiltersJSON,
+    normalize_filters,
     parse_filters,
+    validate_filters,
 )
 from azul.service.source_controller import (
     SourceController,
@@ -33,9 +38,50 @@ from azul.strings import (
 )
 
 
-@attrs.frozen(kw_only=True)
-class ServiceAppController(SourceController):
-    file_url_func: FileUrlFunc
+class ServiceController(SourceController):
+
+    def file_url(self,
+                 *,
+                 catalog: CatalogName,
+                 file_uuid: str,
+                 fetch: bool = True,
+                 **params: str
+                 ) -> mutable_furl:
+        path = self._file_path(fetch=fetch, file_uuid=file_uuid)
+        url = self.app.base_url.add(path=path)
+        return url.set(args=dict(catalog=catalog, **params))
+
+    def _file_path(self, *, fetch: bool, file_uuid: str) -> tuple[str, ...]:
+        path: tuple[str, ...] = ('repository', 'files', file_uuid)
+        if fetch:
+            path = ('fetch', *path)
+        return path
+
+    file_fqid_parameters_spec = [
+        params.path(
+            'file_uuid',
+            str,
+            description='The UUID of the file to be returned.'),
+        params.query(
+            'version',
+            schema.optional(str),
+            description=fd('''
+                The version of the file to be returned. File versions are opaque
+                strings with only one documented property: they can be
+                lexicographically compared with each other in order to determine
+                which version is more recent. If this parameter is omitted then the
+                most recent version of the file is returned.
+            ''')
+        )
+    ]
+
+    @property
+    def catalog_param_spec(self):
+        return params.query(
+            'catalog',
+            schema.optional(schema.default(self.app.catalog,
+                                           form=schema.enum(*config.catalogs))),
+            description='The name of the catalog to query.')
 
     def get_filters(self,
                     catalog: CatalogName,
@@ -47,7 +93,7 @@ class ServiceAppController(SourceController):
 
     def _parse_filters(self, filters: str | None) -> FiltersJSON:
         try:
-            return parse_filters(filters)
+            return normalize_filters(validate_filters(parse_filters(filters)))
         except AssertionError as e:
             if R.caused(e):
                 raise R.propagate(e, BRE)
@@ -101,7 +147,7 @@ def validate_params(query_params: Mapping[str, str],
         A dictionary mapping the name of a parameter to a function that will be
         used to validate the parameter if it is provided. The callable will be
         called with a single argument, the parameter value to be validated, and
-        is expected to raise ValueError, TypeError or azul.RequirementError if
+        is expected to raise ValueError, TypeError or AssertionError if
         the value is invalid. Only these exceptions will yield a 4xx status
         response, all other exceptions will yield a 500 status response. If the
         validator is an instance of `Mandatory`, then validation will fail if
@@ -161,5 +207,5 @@ def validate_params(query_params: Mapping[str, str],
         else:
             try:
                 validator(param_value)
-            except (TypeError, ValueError, RequirementError):
+            except (TypeError, ValueError, AssertionError):
                 raise BRE(f'Invalid value for `{param_name}`')

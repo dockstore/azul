@@ -69,6 +69,7 @@ from azul.indexer.document import (
 from azul.indexer.field import (
     ClosedRange,
     FieldTypes,
+    Mode,
     Nested,
     Nullable,
     NullableString,
@@ -294,9 +295,9 @@ class ValueAndUnit(Nullable[JSON, str]):
     def to_tsv(self, value: JSON | None) -> str:
         return '' if value is None else self.to_index(value)
 
-    @property
-    def api_schema(self) -> JSON:
-        return schema.object(value=str, unit=str)
+    def api_schema(self, mode: Mode) -> JSON:
+        return schema.nullable(schema.object(value=str, unit=str),
+                               for_openapi=mode is Mode.openapi)
 
 
 value_and_unit: ValueAndUnit = ValueAndUnit(dict, str)

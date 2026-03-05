@@ -24,7 +24,6 @@ from typing import (
     Any,
     Callable,
     TYPE_CHECKING,
-    Tuple,
     cast,
 )
 from unittest.mock import (
@@ -330,7 +329,7 @@ class AWS:
         }
 
     @_cache
-    def get_hmac_key_and_id(self) -> Tuple[bytes, str]:
+    def get_hmac_key_and_id(self) -> tuple[bytes, str]:
         # Note: dict contains 'key' and 'key_id' as keys and is provisioned in
         # scripts/provision_credentials.py
         secret_id = config.secrets_manager_secret_name('indexer', 'hmac')

@@ -40,10 +40,10 @@ import azul.plugins.metadata.hca.indexer.transform
 import azul.plugins.metadata.hca.service.contributor_matrices
 import azul.plugins.repository.canned
 import azul.plugins.repository.tdr_hca
-import azul.service.app_controller
-import azul.service.download_controller
+import azul.service.controller
 import azul.service.drs_controller
 import azul.service.manifest_service
+import azul.service.repository_controller
 import azul.strings
 import azul.terra
 import azul.terraform
@@ -98,10 +98,10 @@ def load_tests(_loader,
         azul.plugins.repository.canned,
         azul.plugins.repository.tdr_hca,
         azul.plugins.metadata.hca.indexer.transform,
-        azul.service.app_controller,
-        azul.service.download_controller,
+        azul.service.controller,
         azul.service.drs_controller,
         azul.service.manifest_service,
+        azul.service.repository_controller,
         azul.strings,
         azul.terra,
         azul.terraform,

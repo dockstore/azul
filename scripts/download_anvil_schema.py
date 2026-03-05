@@ -12,8 +12,8 @@ from furl import (
 )
 
 from azul import (
+    R,
     config,
-    require,
 )
 from azul.http import (
     http_client,
@@ -37,7 +37,7 @@ def read_schema() -> MutableJSON:
     schema_object_url = furl(repository_url) / commit / object_path
     http = http_client(log)
     response = http.request('GET', str(schema_object_url))
-    require(response.status == 200)
+    assert response.status == 200, R('Unexpected response', response.status)
     schema = json.loads(response.data)
     log.info('Downloaded AnVIL schema version %d', schema['version'])
     return schema

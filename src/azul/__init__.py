@@ -49,7 +49,6 @@ from more_itertools import (
 )
 from typing_extensions import (
     TypeIs,
-    deprecated,
 )
 
 import azul.caching
@@ -508,10 +507,7 @@ class Config:
     def _parse_principals(self, accounts) -> dict[str, list[str]]:
         # noinspection PyProtectedMember
         """
-        >>> from azul import config  # Without this import, these doctests fail
-        ...                          # in Pycharm since the fully qualified
-        ...                          # class name of the exception would be
-        ...                          # azul.RequirementError
+        >>> from azul import config
 
         >>> config._parse_principals('123,foo*')
         {'123': ['foo*']}
@@ -1924,8 +1920,7 @@ class R:
     ...
     AssertionError: R('Invalid foo', 1)
 
-    There are two advantages to using `assert` to enforce requirements as
-    opposed to the now deprecated :func:`require()` or :func:`reject()`: One
+    There are two advantages to using `assert` to enforce requirements: One
     advantage is that the second argument to assert is evaluated lazily, thereby
     avoiding potentially expensive operations in case the assert does not fire.
 
@@ -1989,9 +1984,6 @@ class R:
                  exception
         """
         args = one(cause.args).args
-        if isinstance(cause, RequirementError):
-            placeholder, *args = args
-            assert placeholder == cause.placeholder
         return effect_cls(*args)
 
     def __init__(self, message: str, *args):
@@ -2009,71 +2001,6 @@ class R:
     @final
     def __eq__(self, other: object):
         return isinstance(other, R) and self.args == other.args
-
-
-@deprecated("Use 'assert False, R(…)' instead", category=None)
-class RequirementError(AssertionError):
-    placeholder = 'placeholder'
-
-    def __init__(self, *args):
-        # Unlike the R() constructor, the deprecated reject() and require()
-        # methods don't enforce that a message is being passed. To work around
-        # this while also maintaining backwards compatibility, we insert a
-        # placeholder and remove it in ``__str__()`` below.
-        super().__init__(R(self.placeholder, *args))
-
-    def __str__(self) -> str:
-        # Unpack the Requirement instance, remove the placeholder and emulate
-        # BaseException.__str__
-        #
-        # https://github.com/python/cpython/blob/v3.12.8/Objects/exceptions.c#L118
-        #
-        match one(self.args).args[1:]:
-            case ():
-                return ''
-            case (message, ):
-                return str(message)
-            case args:
-                return str(args)
-
-
-@deprecated("Use 'assert …, R(…)' instead", category=None)
-def require(condition: bool, *args, exception: type = RequirementError):
-    """
-    Raise a RequirementError, or an instance of the given exception class, if
-    the given condition is False.
-
-    :param condition: The boolean condition to be required.
-
-    :param args: optional positional arguments to be passed to the exception
-                 constructor. Typically this should be a string containing a
-                 textual description of the requirement, and optionally one or
-                 more values involved in the required condition.
-
-    :param exception: A custom exception class to be instantiated and raised if
-                      the condition does not hold.
-    """
-    reject(not condition, *args, exception=exception)
-
-
-@deprecated("Use 'assert not …, R(…)' instead", category=None)
-def reject(condition: bool, *args, exception: type = RequirementError):
-    """
-    Raise a RequirementError, or an instance of the given exception class, if
-    the given condition is True.
-
-    :param condition: The boolean condition to be rejected.
-
-    :param args: Optional positional arguments to be passed to the exception
-                 constructor. Typically this should be a string containing a
-                 textual description of the rejected condition, and optionally
-                 one or more values involved in the rejected condition.
-
-    :param exception: A custom exception class to be instantiated and raised if
-                      the condition occurs.
-    """
-    if condition:
-        raise exception(*args)
 
 
 @overload

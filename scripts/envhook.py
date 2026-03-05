@@ -184,9 +184,21 @@ class EnvHook:
     def export_environment(self):
         return self.import_sibling_script('export_environment')
 
+    prefix = pathlib.Path(__file__).resolve().name + ':'
+
     @classmethod
     def print(cls, msg):
-        print(Path(__file__).resolve().name + ':', msg, file=sys.stderr)
+        k = 'ENVHOOK_SILENT'
+        if int(os.environ.get('%s' % k, '0')):
+            cls._print(k + ' is set, expect no further diagnostic output.')
+            cls.print = lambda *_, **__: None
+        else:
+            cls._print(msg)
+            cls.print = cls._print
+
+    @classmethod
+    def _print(cls, msg):
+        print(cls.prefix, msg, file=sys.stderr)
 
 
 class Path(pathlib.PosixPath):

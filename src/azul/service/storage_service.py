@@ -1,4 +1,5 @@
 from collections.abc import (
+    Collection,
     Mapping,
     Sequence,
 )
@@ -20,7 +21,6 @@ import random
 import time
 from typing import (
     Callable,
-    Collection,
     IO,
     TYPE_CHECKING,
 )

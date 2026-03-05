@@ -25,8 +25,8 @@ from more_itertools import (
 import posix_ipc
 
 from azul import (
+    R,
     config,
-    reject,
 )
 from azul.args import (
     AzulArgumentHelpFormatter,
@@ -128,7 +128,8 @@ def copy_multi_platform_image(src: TagImageRef,
 
 
 def make_platform_tag(tag, platform: Platform):
-    reject(is_platform_tag(tag), 'Input already looks like a platform tag', tag)
+    assert not is_platform_tag(tag), R(
+        'Input already looks like a platform tag', tag)
     return tag + platform_tag_suffix(platform)
 
 
@@ -192,8 +193,8 @@ def delete_unused_images(repository):
                         log.info('Deleting images %r from repository %r', image_ids, repository)
                         response = aws.ecr.batch_delete_image(repositoryName=repository,
                                                               imageIds=image_ids)
-                        reject(bool(response['failures']),
-                               'Failed to delete images', response['failures'])
+                        assert not bool(response['failures']), R(
+                            'Failed to delete images', response['failures'])
     else:
         log.info('No stale images found, nothing to delete')
 

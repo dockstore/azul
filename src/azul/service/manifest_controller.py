@@ -2,12 +2,12 @@ from collections.abc import (
     Mapping,
 )
 from typing import (
+    Any,
     TypedDict,
     cast,
     get_type_hints,
 )
 
-import attr
 from chalice import (
     BadRequestError,
     ChaliceViewError,
@@ -20,6 +20,7 @@ from furl import (
 from azul import (
     cached_property,
     config,
+    mutable_furl,
 )
 from azul.auth import (
     Authentication,
@@ -27,14 +28,17 @@ from azul.auth import (
 from azul.chalice import (
     GoneError,
 )
+from azul.openapi import (
+    format_description as fd,
+    params,
+    responses,
+    schema,
+)
 from azul.plugins import (
     ManifestFormat,
 )
 from azul.service import (
     Filters,
-)
-from azul.service.app_controller import (
-    ServiceAppController,
 )
 from azul.service.async_manifest_service import (
     AsyncManifestService,
@@ -44,23 +48,29 @@ from azul.service.async_manifest_service import (
     NoSuchGeneration,
     Token,
 )
+from azul.service.controller import (
+    validate_catalog,
+    validate_params,
+)
 from azul.service.manifest_service import (
     CachedManifestNotFound,
+    CurlManifestGenerator,
     InvalidManifestKey,
     InvalidManifestKeySignature,
     Manifest,
     ManifestKey,
     ManifestPartition,
     ManifestService,
-    ManifestUrlFunc,
     SignedManifestKey,
 )
-from azul.service.storage_service import (
-    StorageService,
+from azul.service.query_controller import (
+    QueryController,
 )
 from azul.types import (
+    AnyJSON,
     FlatJSON,
     JSON,
+    LambdaContext,
 )
 
 manifest_state_key = 'manifest'
@@ -76,9 +86,7 @@ class ManifestGenerationState(TypedDict, total=False):
 assert manifest_state_key in get_type_hints(ManifestGenerationState)
 
 
-@attr.s(frozen=True, auto_attribs=True, kw_only=True)
-class ManifestController(ServiceAppController):
-    manifest_url_func: ManifestUrlFunc
+class ManifestController(QueryController):
 
     @cached_property
     def async_service(self) -> AsyncManifestService:
@@ -86,7 +94,342 @@ class ManifestController(ServiceAppController):
 
     @cached_property
     def service(self) -> ManifestService:
-        return ManifestService(StorageService(), self.file_url_func)
+        return ManifestService(file_url_func=self.file_url)
+
+    def _manifest_path(self, *, fetch: bool, token: str | None) -> tuple[str, ...]:
+        path = ('manifest', 'files')
+        if fetch:
+            path = ('fetch', *path)
+        if token is not None:
+            path = (*path, token)
+        return path
+
+    def manifest_url(self,
+                     *,
+                     fetch: bool,
+                     token_or_key: str | None = None,
+                     **params: str
+                     ) -> mutable_furl:
+        path = self._manifest_path(fetch=fetch, token=token_or_key)
+        url = self.app.base_url.add(path=path)
+        return url.set(args=params)
+
+    def validate_manifest_format(self, format: str):
+        supported_formats = {f.value for f in self._metadata_plugin.manifest_formats}
+        try:
+            ManifestFormat(format)
+        except ValueError:
+            raise BadRequestError(f'Unknown manifest format `{format}`. '
+                                  f'Must be one of {supported_formats}')
+        else:
+            if format not in supported_formats:
+                raise BadRequestError(f'Manifest format `{format}` is not supported for '
+                                      f'catalog {self.app.catalog}. Must be one of {supported_formats}')
+
+    def _route(self, *, fetch: bool, initiate: bool):
+        path = self._manifest_path(fetch=fetch, token=None if initiate else '{token}')
+        return self.app.route(
+            # The path parameter could be a token *or* an object key, but we don't
+            # want to complicate the API with this detail
+            path=path,
+            # The initial PUT request is idempotent.
+            methods=['PUT' if initiate else 'GET'],
+            interactive=fetch,
+            cors=True,
+            path_spec=None if initiate else {
+                'parameters': [
+                    params.path('token', str, description=fd('''
+                            An opaque string representing the manifest preparation job
+                        '''))
+                ]
+            },
+            spec={
+                'tags': ['Manifests'],
+                'summary':
+                    (
+                        'Initiate the preparation of a manifest'
+                        if initiate else
+                        'Determine status of a manifest preparation job'
+                    ) + (
+                        ' via XHR' if fetch else ''
+                    ),
+                'description': fd('''
+                        Create a manifest preparation job, returning either
+
+                        - a 301 redirect to the URL of the status of that job or
+
+                        - a 302 redirect to the URL of an already prepared manifest.
+
+                        This endpoint is not suitable for interactive use via the
+                        Swagger UI. Please use [PUT /fetch/manifest/files][1] instead.
+
+                        [1]: #operations-Manifests-put_fetch_manifest_files
+                    ''') + self.parameter_hoisting_note('PUT', '/manifest/files', 'PUT')
+                if initiate and not fetch else
+                fd('''
+                        Check on the status of an ongoing manifest preparation job,
+                        returning either
+
+                        - a 301 redirect to this endpoint if the manifest job is still
+                          running
+
+                        - a 302 redirect to the URL of the completed manifest.
+
+                        This endpoint is not suitable for interactive use via the
+                        Swagger UI. Please use [GET /fetch/manifest/files/{token}][1]
+                        instead.
+
+                        [1]: #operations-Manifests-get_fetch_manifest_files
+                    ''') if not initiate and not fetch else fd('''
+                        Create a manifest preparation job, returning a 200 status
+                        response whose JSON body emulates the HTTP headers that would be
+                        found in a response to an equivalent request to the [PUT
+                        /manifest/files][1] endpoint.
+
+                        Whenever client-side JavaScript code is used in a web
+                        application to request the preparation of a manifest from Azul,
+                        this endpoint should be used instead of [PUT
+                        /manifest/files][1]. This way, the client can use XHR to make
+                        the request, retaining full control over the handling of
+                        redirects and enabling the client to bypass certain limitations
+                        on the native handling of redirects in web browsers. For
+                        example, most browsers ignore the `Retry-After` header in
+                        redirect responses, causing them to prematurely exhaust the
+                        upper limit on the number of consecutive redirects, before the
+                        manifest generation job is done.
+
+                        [1]: #operations-Manifests-put_manifest_files
+                    ''') + self.parameter_hoisting_note('PUT', '/fetch/manifest/files', 'PUT')
+                if initiate and fetch else
+                fd('''
+                        Check on the status of an ongoing manifest preparation job,
+                        returning a 200 status response whose JSON body emulates the
+                        HTTP headers that would be found in a response to an equivalent
+                        request to the [GET /manifest/files/{token}][1] endpoint.
+
+                        Whenever client-side JavaScript code is used in a web
+                        application to request the preparation of a manifest from Azul,
+                        this endpoint should be used instead of [GET
+                        /manifest/files/{token}][1]. This way, the client can use XHR to
+                        make the request, retaining full control over the handling of
+                        redirects and enabling the client to bypass certain limitations
+                        on the native handling of redirects in web browsers. For
+                        example, most browsers ignore the `Retry-After` header in
+                        redirect responses, causing them to prematurely exhaust the
+                        upper limit on the number of consecutive redirects, before the
+                        manifest generation job is done.
+
+                        [1]: #operations-Manifests-get_manifest_files
+                    '''),
+                'parameters': [
+                    self.catalog_param_spec,
+                    self.filters_param_spec,
+                    params.query(
+                        'format',
+                        schema.optional(
+                            schema.enum(
+                                *[
+                                    format.value
+                                    for format in self._metadata_plugin.manifest_formats
+                                ],
+                                form=str
+                            )
+                        ),
+                        description=f'''
+                                The desired format of the output.
+
+                                - `{ManifestFormat.compact.value}` (the default) for a compact,
+                                  tab-separated manifest
+
+                                - `{ManifestFormat.terra_pfb.value}` for a manifest in the [PFB
+                                  format][2]. This format is mainly used for exporting data to
+                                  Terra.
+
+                                - `{ManifestFormat.curl.value}` for a [curl configuration
+                                  file][3] manifest. This manifest can be used with the curl
+                                  program to download all the files listed in the manifest.
+
+                                - `{ManifestFormat.verbatim_jsonl.value}` for a verbatim
+                                  manifest in [JSONL][4] format. Each line contains an
+                                  unaltered metadata entity from the underlying repository.
+
+                                - `{ManifestFormat.verbatim_pfb.value}` for a verbatim
+                                  manifest in the [PFB format][2]. This format is mainly
+                                  used for exporting data to Terra.
+
+                                [1]: https://software.broadinstitute.org/firecloud/documentation/article?id=10954
+
+                                [2]: https://github.com/uc-cdis/pypfb
+
+                                [3]: https://curl.haxx.se/docs/manpage.html#-K
+
+                                [4]: https://jsonlines.org/
+                            '''
+                    )
+                ] if initiate else [],
+                'responses': {
+                    '301': {
+                        'description': fd(f'''
+                                A redirect indicating that the manifest preparation job
+                                {'has started' if initiate else 'is running'}. Wait for
+                                the recommended number of seconds (see `Retry-After`
+                                header) and then follow the redirect to check the status
+                                of {'that job' if initiate else 'the job again'}.
+                            '''),
+                        'headers': {
+                            'Location': {
+                                'description': fd('''
+                                    The URL of the manifest preparation job at
+                                ''') + fd('''the [`GET
+                                /manifest/files/{token}`][2] endpoint.
+
+                                [2]: #operations-Manifests-get_fetch_manifest_files_token
+                                ''') if initiate else fd('''
+                                    The URL of this endpoint
+                                '''),
+                                'schema': {'type': 'string', 'format': 'url'}
+                            },
+                            'Retry-After': {
+                                'description': fd('''
+                                    The recommended number of seconds to wait before
+                                    requesting the URL specified in the `Location`
+                                    header
+                                '''),
+                                'schema': {'type': 'string'}
+                            }
+                        }
+                    },
+                    '302': {
+                        'description': fd(f'''
+                                A redirect indicating that the manifest preparation job
+                                is {'already' if initiate else 'now'} done. Immediately
+                                follow the redirect to obtain the manifest contents.
+
+                                The response body contains, for a number of commonly
+                                used shells, a command line suitable for downloading the
+                                manifest.
+                            '''),
+                        'headers': {
+                            'Location': {
+                                'description': fd(''' The URL of the manifest.
+                                Clients should not make any assumptions about
+                                any parts of the returned domain, except that
+                                the scheme will be `https`.
+                                '''),
+                                'schema': {'type': 'string', 'format': 'url'}
+                            }
+                        }
+                    },
+                    **({} if initiate else {
+                        '410': {
+                            'description': fd('''
+                                    The manifest preparation job has expired. Request a
+                                    new preparation using the `PUT /manifest/files`
+                                    endpoint.
+                                ''')
+                        }
+                    })
+                } if not fetch else {
+                    '200': {
+                        'description': fd('''
+                                When handling this response, clients should wait the
+                                number of seconds given in the `Retry-After` property of
+                                the response body and then make another XHR request to
+                                the URL specified in the `Location` property.
+
+                                For a detailed description of these properties see the
+                                documentation for the respective response headers
+                                documented under ''') + (fd('''
+                            [PUT /manifest/files][1].
+
+                            [1]: #operations-Manifests-put_manifest_files
+                            ''') if initiate else fd('''
+                            [GET /manifest/files/{token}][1].
+
+                            [1]: #operations-Manifests-get_manifest_files
+                            ''')) + fd('''
+
+                            Note: For a 200 status code response whose body has the
+                            `Status` property set to 302, the `Location` property
+                            may reference the [GET /manifest/files/{token}][2]
+                            endpoint and that endpoint may return yet another
+                            redirect, this time a genuine (not emulated) 302 status
+                            redirect to the actual location of the manifest.
+
+                            [2]: #operations-Manifests-get_manifest_files
+
+                            Note: A 200 status response with a `Status` property of
+                            302 in its body additionally contains a `CommandLine`
+                            property that lists, for a number of commonly used
+                            shells, a command line suitable for downloading the
+                            manifest.
+                        '''),
+                        **responses.json_content(
+                            schema.object(
+                                Status=int,
+                                Location={'type': 'string', 'format': 'url'},
+                                **{'Retry-After': schema.optional(int)},
+                                CommandLine=schema.optional(schema.object(**{
+                                    key: str
+                                    for key in CurlManifestGenerator.command_lines(url=furl(''),
+                                                                                   file_name='',
+                                                                                   authentication=None)
+                                }))
+                            )
+                        ),
+                    }
+                }
+
+            }
+        )
+
+    def handlers(self) -> dict[str, Any]:
+        @self._route(fetch=False, initiate=True)
+        def file_manifest():
+            return self._file_manifest(fetch=False)
+
+        @self._route(fetch=False, initiate=False)
+        def file_manifest_with_token(token: str):
+            return self._file_manifest(fetch=False, token_or_key=token)
+
+        @self._route(fetch=True, initiate=True)
+        def fetch_file_manifest():
+            return self._file_manifest(fetch=True)
+
+        @self._route(fetch=True, initiate=False)
+        def fetch_file_manifest_with_token(token: str):
+            return self._file_manifest(fetch=True, token_or_key=token)
+
+        @self.app.lambda_function(name=config.manifest_sfn)
+        def generate_manifest(event: AnyJSON, _context: LambdaContext):
+            assert isinstance(event, Mapping)
+            assert all(isinstance(k, str) for k in event.keys())
+            return self.get_manifest(event)
+
+        return locals()
+
+    def _file_manifest(self, fetch: bool, token_or_key: str | None = None):
+        request = self.app.current_request
+        query_params = request.query_params or {}
+        self._hoist_parameters(query_params, request)
+        if token_or_key is None:
+            query_params.setdefault('filters', '{}')
+            # We list the `catalog` validator first so that the catalog is validated
+            # before any other potentially catalog-dependent validators are invoked
+            validate_params(query_params,
+                            catalog=validate_catalog,
+                            format=self.validate_manifest_format,
+                            filters=self.validate_filters)
+            # Now that the catalog is valid, we can provide the default format that
+            # depends on it
+            default_format = self._metadata_plugin.manifest_formats[0].value
+            query_params.setdefault('format', default_format)
+        else:
+            validate_params(query_params)
+        return self.get_manifest_async(query_params=query_params,
+                                       token_or_key=token_or_key,
+                                       fetch=fetch,
+                                       authentication=request.authentication)
 
     def get_manifest(self, state: JSON) -> ManifestGenerationState:
         # We trust StepFunctions to pass
@@ -260,7 +603,7 @@ class ManifestController(ServiceAppController):
 
         if manifest is None:
             assert token is not None
-            url = self.manifest_url_func(fetch=fetch, token_or_key=token.encode())
+            url = self.manifest_url(fetch=fetch, token_or_key=token.encode())
             body = {
                 'Status': 301,
                 'Location': str(url),
@@ -289,7 +632,7 @@ class ManifestController(ServiceAppController):
                 # plugin does not support cURL-format manifests.
                 assert not config.is_anvil_enabled(manifest_key.catalog)
                 manifest_key = self.service.sign_manifest_key(manifest_key)
-                url = self.manifest_url_func(fetch=False, token_or_key=manifest_key.encode())
+                url = self.manifest_url(fetch=False, token_or_key=manifest_key.encode())
             else:
                 url = furl(self.service.get_manifest_url(manifest))
             body = {

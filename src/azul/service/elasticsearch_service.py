@@ -217,10 +217,10 @@ class FilterStage(_ElasticsearchStage[Response, Response]):
         translated_filters = {}
         for field, filter in filters.items():
             field = field_mapping[field]
-            relation, values = one(filter.items())
+            operator, values = one(filter.items())
             field_type = self.service.field_type(catalog, field)
-            values = field_type.filter(relation, values)
-            translated_filters[field] = {relation: list(values)}
+            values = field_type.filter(operator, values)
+            translated_filters[field] = {operator: list(values)}
         return translated_filters
 
     def prepare_query(self, skip_field_paths: tuple[FieldPath] = ()) -> Query:
@@ -228,12 +228,12 @@ class FilterStage(_ElasticsearchStage[Response, Response]):
         Converts the given filters into an Elasticsearch DSL Query object.
         """
         filter_list = []
-        for field_path, relation_and_values in self.prepared_filters.items():
+        for field_path, filter in self.prepared_filters.items():
             if field_path not in skip_field_paths:
-                relation, values = one(relation_and_values.items())
+                operator, values = one(filter.items())
                 # Note that `is_not` is only used internally (for filtering by
                 # inaccessible sources)
-                if relation in ('is', 'is_not'):
+                if operator in ('is', 'is_not'):
                     field_type = self.service.field_type(self.catalog, field_path)
                     if isinstance(field_type, Nested):
                         term_queries = []
@@ -251,12 +251,12 @@ class FilterStage(_ElasticsearchStage[Response, Response]):
                             # as absent fields
                             absent_query = Q('bool', must_not=[Q('exists', field=dotted(field_path))])
                             query = Q('bool', should=[query, absent_query])
-                    if relation == 'is_not':
+                    if operator == 'is_not':
                         query = Q('bool', must_not=[query])
                     filter_list.append(query)
-                elif relation in ('contains', 'within', 'intersects'):
+                elif operator in ('contains', 'within', 'intersects'):
                     for value in values:
-                        value = value | {'relation': relation}
+                        value = value | {'relation': operator}
                         filter_list.append(Q('range', **{dotted(field_path): value}))
                 else:
                     assert False
