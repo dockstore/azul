@@ -66,7 +66,7 @@ from azul.service.controller import (
     validate_params,
 )
 from azul.service.repository_service import (
-    RepositoryService,
+    IndexService,
 )
 from azul.types import (
     MutableJSON,
@@ -139,8 +139,8 @@ class RepositoryController(ServiceController):
         }
 
     @cached_property
-    def service(self) -> RepositoryService:
-        return RepositoryService()
+    def service(self) -> IndexService:
+        return IndexService()
 
     def mirror_service(self, catalog: CatalogName) -> BaseMirrorService:
         return self.service.mirror_service(catalog)

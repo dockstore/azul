@@ -49,7 +49,7 @@ from azul.service.query_service import (
 )
 from azul.service.repository_service import (
     EntityNotFoundError,
-    RepositoryService,
+    IndexService,
 )
 from azul.types import (
     JSON,
@@ -64,8 +64,8 @@ log = logging.getLogger(__name__)
 class IndexController(QueryController):
 
     @cached_property
-    def _service(self) -> RepositoryService:
-        return RepositoryService()
+    def _service(self) -> IndexService:
+        return IndexService()
 
     _min_page_size = 1
 

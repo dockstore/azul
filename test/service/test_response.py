@@ -81,7 +81,7 @@ from azul.service.query_service import (
     ResponsePagination,
 )
 from azul.service.repository_service import (
-    RepositoryService,
+    IndexService,
 )
 from azul.service.source_service import (
     SourceService,
@@ -197,11 +197,11 @@ class TestIndexResponse(IndexResponseTestCase):
         return azul.indexer.index_service.IndexService()
 
     @property
-    def _repository_service(self) -> RepositoryService:
+    def _service_index_service(self) -> IndexService:
         return self._controller._service
 
     def _response_stage(self, entity_type: str) -> HCASearchResponseStage:
-        return HCASearchResponseStage(service=self._repository_service,
+        return HCASearchResponseStage(service=self._service_index_service,
                                       entity_type=entity_type,
                                       catalog=self.catalog,
                                       file_url_func=self.file_url_func)

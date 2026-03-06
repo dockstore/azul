@@ -62,7 +62,7 @@ from azul.service.controller import (
     validate_params,
 )
 from azul.service.repository_service import (
-    RepositoryService,
+    IndexService,
 )
 from azul.types import (
     JSON,
@@ -214,8 +214,8 @@ class DRSController(ServiceController):
         return locals()
 
     @cached_property
-    def service(self) -> RepositoryService:
-        return RepositoryService()
+    def service(self) -> IndexService:
+        return IndexService()
 
     def _access_url(self, url):
         return {'url': url}
