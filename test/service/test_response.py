@@ -22,6 +22,9 @@ from urllib.parse import (
     parse_qsl,
     urlparse,
 )
+from warnings import (
+    deprecated,
+)
 
 import attr
 from furl import (
@@ -161,6 +164,7 @@ class TestIndexResponse(IndexResponseTestCase):
     def file_url_func(self):
         return self._controller.file_url
 
+    @deprecated('Verify the response, not the index content')
     def _get_hits(self, entity_type: str, entity_id: str):
         """
         Fetches hits from ES instance searching for a particular entity ID
@@ -182,6 +186,7 @@ class TestIndexResponse(IndexResponseTestCase):
                                                             forward=False)
 
     @cached_property
+    @deprecated('Verify the response, not the index content')
     def _indexer_index_service(self):
         return azul.indexer.index_service.IndexService()
 

@@ -163,6 +163,8 @@ class AzulTestCase(TestCase):
                 # FIXME: Remove deprecated DOS endpoints
                 #        https://github.com/DataBiosphere/azul/issues/7839
                 'DOS support will be removed',
+
+                'Verify the response, not the index content',
             },
             OpenSearchWarning: {
                 # FIXME: ES DeprecationWarning for using _id as sort key
