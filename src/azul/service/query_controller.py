@@ -49,7 +49,7 @@ from azul.service.controller import (
     ServiceController,
 )
 from azul.service.elasticsearch_service import (
-    ElasticsearchService,
+    QueryService,
 )
 from azul.types import (
     JSON,
@@ -63,7 +63,7 @@ class QueryController(ServiceController, metaclass=ABCMeta):
 
     @property
     @abstractmethod
-    def _service(self) -> ElasticsearchService:
+    def _service(self) -> QueryService:
         raise NotImplementedError
 
     @property

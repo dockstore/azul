@@ -47,11 +47,11 @@ from azul.service import (
     Filters,
 )
 from azul.service.elasticsearch_service import (
-    ElasticsearchService,
     ElasticsearchStage,
     IndexNotFoundError,
     Pagination,
     PaginationStage,
+    QueryService,
     ResponseTriple,
     ToDictStage,
     _ElasticsearchStage,
@@ -116,7 +116,7 @@ class SummaryResponseStage(ElasticsearchStage[JSON, MutableJSON],
         return request
 
 
-class RepositoryService(ElasticsearchService):
+class RepositoryService(QueryService):
 
     @cache
     def mirror_service(self, catalog: CatalogName) -> BaseMirrorService:

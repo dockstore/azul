@@ -654,7 +654,7 @@ class PaginationStage(_ElasticsearchStage[JSON, ResponseTriple]):
                                   order=pagination.order)
 
 
-class ElasticsearchService(DocumentService):
+class QueryService(DocumentService):
 
     @cached_property
     def _es_client(self) -> OpenSearch:

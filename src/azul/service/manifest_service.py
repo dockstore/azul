@@ -137,9 +137,9 @@ from azul.service.avro_pfb import (
 )
 from azul.service.elasticsearch_service import (
     ElasticsearchChain,
-    ElasticsearchService,
     Pagination,
     PaginationStage,
+    QueryService,
     SortKey,
     ToDictStage,
 )
@@ -580,7 +580,7 @@ class CachedManifestNotFound(Exception):
 
 
 @attrs.frozen(kw_only=True)
-class ManifestService(ElasticsearchService):
+class ManifestService(QueryService):
     file_url_func: FileUrlFunc
 
     @cached_property
