@@ -57,9 +57,7 @@ from azul.indexer.document import (
 from azul.indexer.field import (
     null_str,
 )
-from azul.indexer.index_service import (
-    IndexService,
-)
+import azul.indexer.index_service
 from azul.logging import (
     configure_test_logging,
 )
@@ -179,13 +177,13 @@ class TestIndexResponse(IndexResponseTestCase):
                                                                    qualifier=entity_type,
                                                                    doc_type=DocumentType.aggregate)),
                                         body=body)
-        return self._index_service.translate_fields(catalog=self.catalog,
-                                                    doc=[results['hits']['hits'][0]['_source']],
-                                                    forward=False)
+        return self._indexer_index_service.translate_fields(catalog=self.catalog,
+                                                            doc=[results['hits']['hits'][0]['_source']],
+                                                            forward=False)
 
     @cached_property
-    def _index_service(self):
-        return IndexService()
+    def _indexer_index_service(self):
+        return azul.indexer.index_service.IndexService()
 
     @property
     def _repository_service(self) -> RepositoryService:
