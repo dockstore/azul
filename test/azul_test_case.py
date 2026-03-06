@@ -154,6 +154,11 @@ class AzulTestCase(TestCase):
                 # FIXME: DeprecationWarning for datetime methods in Python 3.12
                 #        https://github.com/DataBiosphere/azul/issues/5953
                 'datetime.datetime.utcnow() is deprecated',
+                
+                'Instead of decorating your test case, or its test methods in '
+                'it, mix in the appropriate subclass of CatalogTestCase.',
+
+                'DOS support will be removed',
             },
             OpenSearchWarning: {
                 # FIXME: ES DeprecationWarning for using _id as sort key

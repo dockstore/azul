@@ -19,7 +19,7 @@ mccabe==0.7.0
 mypy-boto3-apigateway==1.42.3
 mypy-boto3-cloudwatch==1.42.56
 mypy-boto3-dynamodb==1.42.55
-mypy-boto3-ec2==1.42.58
+mypy-boto3-ec2==1.42.62
 mypy-boto3-ecr==1.42.57
 mypy-boto3-es==1.42.61
 mypy-boto3-iam==1.42.4

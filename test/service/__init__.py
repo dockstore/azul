@@ -22,10 +22,10 @@ from unittest.mock import (
     patch,
 )
 import uuid
-
-from deprecated import (
+from warnings import (
     deprecated,
 )
+
 from more_itertools import (
     flatten,
     one,

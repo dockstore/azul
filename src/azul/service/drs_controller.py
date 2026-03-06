@@ -17,13 +17,13 @@ from typing import (
     Any,
 )
 import urllib.parse
+from warnings import (
+    deprecated,
+)
 
 from chalice import (
     ChaliceViewError,
     Response,
-)
-from deprecated import (
-    deprecated,
 )
 from furl import (
     furl,
