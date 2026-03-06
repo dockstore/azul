@@ -160,6 +160,8 @@ class AzulTestCase(TestCase):
                 'Instead of decorating your test case, or its test methods in '
                 'it, mix in the appropriate subclass of CatalogTestCase.',
 
+                # FIXME: Remove deprecated DOS endpoints
+                #        https://github.com/DataBiosphere/azul/issues/7839
                 'DOS support will be removed',
             },
             OpenSearchWarning: {
