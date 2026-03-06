@@ -41,9 +41,6 @@ from azul import (
     dss,
     mutable_furl,
 )
-from azul.collections import (
-    adict,
-)
 from azul.drs import (
     AccessMethod,
     dos_object_url_path,
@@ -70,11 +67,12 @@ from azul.service.repository_service import (
 from azul.types import (
     JSON,
     MutableJSON,
+    not_none,
 )
 
 
 class DRSController(ServiceController):
-    deprecated_spec = {
+    deprecated_spec: JSON = {
         'summary': 'This endpoint will be removed in the future.',
         'tags': ['Deprecated'],
         'deprecated': True
@@ -300,7 +298,7 @@ class DRSController(ServiceController):
 
     @classmethod
     def dss_file_url(cls, file_uuid: str) -> mutable_furl:
-        return furl(config.dss_endpoint).add(path=('files', file_uuid))
+        return mutable_furl(config.dss_endpoint).add(path=('files', file_uuid))
 
     @deprecated('DOS support will be removed')
     def dos_get_object(self, catalog, file_uuid, file_version, authentication):
@@ -326,7 +324,7 @@ class DRSController(ServiceController):
             if self.lambda_context.get_remaining_time_in_millis() / 1000 > 3:
                 dss_response = requests.get(url, params=params, allow_redirects=False)
                 if dss_response.status_code == 302:
-                    url = furl(dss_response.next.url)
+                    url = mutable_furl(dss_response.next.url)
                     assert url.scheme == 'gs', R('Expected a gs:// URL', url)
                     return url
                 elif dss_response.status_code == 301:
@@ -352,7 +350,7 @@ class DRSController(ServiceController):
         urls = [
             self.file_url(catalog=catalog,
                           file_uuid=file.uuid,
-                          version=file.version,
+                          version=not_none(file.version),
                           fetch=False,
                           wait='1',
                           fileName=file.name),
@@ -370,8 +368,8 @@ class DRSController(ServiceController):
             'size': str(file.size),
             'checksums': [
                 {
-                    'checksum': file.sha256,
-                    'type': 'sha256'
+                    'checksum': file.digest.value,
+                    'type': file.digest.type
                 }
             ],
             'aliases': [file.name],
@@ -409,9 +407,9 @@ class DRSObject:
         })
 
     def to_json(self) -> JSON:
-        args = adict(replica='aws', version=self.version)
+        args = _url_query(replica='aws', version=self.version)
         url = DRSController.dss_file_url(self.uuid).add(args=args)
-        headers = requests.head(url).headers
+        headers = requests.head(str(url)).headers
         version = headers['x-dss-version']
         if self.version is not None:
             assert version == self.version
@@ -510,7 +508,7 @@ def dss_drs_object_uri(*,
     """
     return drs_object_uri(base_url=_base_url(base_url),
                           path=(file_uuid,),
-                          params=_url_query(file_version))
+                          params=_url_query(version=file_version))
 
 
 def dss_dos_object_url(*,
@@ -534,9 +532,9 @@ def dss_dos_object_url(*,
                      If absent, the service endpoint for the current deployment
                      will be used.
     """
-    return furl(url=_base_url(base_url),
-                path=dos_object_url_path(file_uuid),
-                query_params=dict(_url_query(file_version), catalog=catalog))
+    return mutable_furl(url=_base_url(base_url),
+                        path=dos_object_url_path(file_uuid),
+                        args=_url_query(version=file_version, catalog=catalog))
 
 
 def dss_drs_object_url(*,
@@ -561,14 +559,26 @@ def dss_drs_object_url(*,
     :param access_id: access id will be included in the URL if this parameter is
                       supplied
     """
-    return furl(url=_base_url(base_url),
-                path=drs_object_url_path(object_id=file_uuid, access_id=access_id),
-                args=_url_query(file_version))
+    return mutable_furl(url=_base_url(base_url),
+                        path=drs_object_url_path(object_id=file_uuid, access_id=access_id),
+                        args=_url_query(version=file_version))
 
 
 def _base_url(base_url: furl | None) -> furl:
     return config.drs_endpoint if base_url is None else base_url
 
 
-def _url_query(file_version: str | None) -> Mapping[str, str]:
-    return {'version': file_version} if file_version else {}
+def _url_query(*, version: str | None, **kwargs: str) -> Mapping[str, str]:
+    """
+    >>> _url_query(version=None, catalog='foo')
+    {'catalog': 'foo'}
+
+    >>> _url_query(version='', catalog='foo')
+    {'catalog': 'foo', 'version': ''}
+
+    Static type analysis would flag this, though:
+
+    >>> _url_query(version=None, catalog=None)
+    {'catalog': None}
+    """
+    return kwargs if version is None else kwargs | {'version': version}
