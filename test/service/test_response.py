@@ -164,6 +164,9 @@ class TestIndexResponse(IndexResponseTestCase):
     def file_url_func(self):
         return self._controller.file_url
 
+    # FIXME: Use response from `/index/files` to validate
+    #        https://github.com/DataBiosphere/azul/issues/2970
+    #
     @deprecated('Verify the response, not the index content')
     def _get_hits(self, entity_type: str, entity_id: str):
         """
@@ -185,6 +188,9 @@ class TestIndexResponse(IndexResponseTestCase):
                                                             doc=[results['hits']['hits'][0]['_source']],
                                                             forward=False)
 
+    # FIXME: Use response from `/index/files` to validate
+    #        https://github.com/DataBiosphere/azul/issues/2970
+    #
     @cached_property
     @deprecated('Verify the response, not the index content')
     def _indexer_index_service(self):

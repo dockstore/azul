@@ -164,6 +164,8 @@ class AzulTestCase(TestCase):
                 #        https://github.com/DataBiosphere/azul/issues/7839
                 'DOS support will be removed',
 
+                # FIXME: Use response from `/index/files` to validate
+                #        https://github.com/DataBiosphere/azul/issues/2970
                 'Verify the response, not the index content',
             },
             OpenSearchWarning: {
