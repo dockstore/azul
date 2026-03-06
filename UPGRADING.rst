@@ -20,6 +20,20 @@ reverted. This is all fairly informal and loosely defined. Hopefully we won't
 have too many entries in this file.
 
 
+#7815 No files found during mirroring IT
+========================================
+
+Flag the following sources as ``no_mirror`` in your personal deployments
+colocated with ``dev``:
+
+ - ``datarepo-dev-3041c2cf:hca_dev_2af52a1365cb4973b51339be38f2df3f__20210830_20210903``
+ - ``datarepo-dev-40283c27:hca_dev_3a69470330844ece9abed935fd5f6748__20210901_20210903``
+ - ``datarepo-dev-788c3b52:hca_dev_955dfc2ca8c64d04aa4d907610545d11__20210831_20210903``
+
+As always, use the sandbox deployment's ``environment.py`` as a model when
+upgrading personal deployments.
+
+
 #6675 Docker build with Bookworm base image fails on GL
 =======================================================
 
