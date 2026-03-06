@@ -135,7 +135,7 @@ from azul.service import (
 from azul.service.avro_pfb import (
     PFBRelation,
 )
-from azul.service.elasticsearch_service import (
+from azul.service.query_service import (
     ElasticsearchChain,
     Pagination,
     PaginationStage,

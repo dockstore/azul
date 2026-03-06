@@ -88,7 +88,7 @@ from azul.uuids import (
 )
 
 if TYPE_CHECKING:
-    from azul.service.elasticsearch_service import (
+    from azul.service.query_service import (
         AggregationStage,
         FilterStage,
     )

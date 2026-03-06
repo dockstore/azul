@@ -31,7 +31,7 @@ from azul.plugins.metadata.hca.service.aggregation import (
 from azul.service import (
     Filters,
 )
-from azul.service.elasticsearch_service import (
+from azul.service.query_service import (
     QueryService,
     ToDictStage,
 )

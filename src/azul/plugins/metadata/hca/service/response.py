@@ -31,7 +31,7 @@ from azul.plugins import (
 from azul.plugins.metadata.hca.service.contributor_matrices import (
     make_stratification_tree,
 )
-from azul.service.elasticsearch_service import (
+from azul.service.query_service import (
     ResponsePagination,
     ResponseTriple,
 )

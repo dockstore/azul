@@ -73,11 +73,11 @@ from azul.plugins.metadata.hca import (
 from azul.plugins.metadata.hca.service.response import (
     HCASearchResponseStage,
 )
-from azul.service.elasticsearch_service import (
-    ResponsePagination,
-)
 from azul.service.index_controller import (
     IndexController,
+)
+from azul.service.query_service import (
+    ResponsePagination,
 )
 from azul.service.repository_service import (
     RepositoryService,

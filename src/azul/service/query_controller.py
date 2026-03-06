@@ -48,7 +48,7 @@ from azul.plugins import (
 from azul.service.controller import (
     ServiceController,
 )
-from azul.service.elasticsearch_service import (
+from azul.service.query_service import (
     QueryService,
 )
 from azul.types import (

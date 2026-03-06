@@ -46,7 +46,7 @@ from azul.service import (
     FileUrlFunc,
     Filters,
 )
-from azul.service.elasticsearch_service import (
+from azul.service.query_service import (
     ElasticsearchStage,
     IndexNotFoundError,
     Pagination,
