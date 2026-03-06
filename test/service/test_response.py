@@ -77,11 +77,11 @@ from azul.plugins.metadata.hca.service.response import (
 from azul.service.index_controller import (
     IndexController,
 )
+from azul.service.index_service import (
+    IndexService,
+)
 from azul.service.query_service import (
     ResponsePagination,
-)
-from azul.service.repository_service import (
-    IndexService,
 )
 from azul.service.source_service import (
     SourceService,

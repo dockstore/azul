@@ -65,7 +65,7 @@ from azul.service.controller import (
     validate_catalog,
     validate_params,
 )
-from azul.service.repository_service import (
+from azul.service.index_service import (
     IndexService,
 )
 from azul.types import (

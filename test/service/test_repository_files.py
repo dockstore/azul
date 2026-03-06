@@ -57,7 +57,7 @@ from azul.logging import (
 from azul.plugins.metadata.hca import (
     HCAFile,
 )
-from azul.service.repository_service import (
+from azul.service.index_service import (
     IndexService,
 )
 from azul.terra import (

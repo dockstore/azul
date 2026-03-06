@@ -39,6 +39,10 @@ from azul.service.controller import (
     validate_catalog,
     validate_params,
 )
+from azul.service.index_service import (
+    EntityNotFoundError,
+    IndexService,
+)
 from azul.service.query_controller import (
     QueryController,
 )
@@ -46,10 +50,6 @@ from azul.service.query_service import (
     IndexNotFoundError,
     Pagination,
     SortKey,
-)
-from azul.service.repository_service import (
-    EntityNotFoundError,
-    IndexService,
 )
 from azul.types import (
     JSON,

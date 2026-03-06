@@ -94,7 +94,7 @@ if TYPE_CHECKING:
     )
     # These are only needed for type hints and would otherwise introduce a
     # circular import since the service layer heavily depends on the plugin.
-    from azul.service.repository_service import (
+    from azul.service.index_service import (
         SearchResponseStage,
         SummaryResponseStage,
     )

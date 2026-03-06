@@ -31,13 +31,13 @@ from azul.plugins import (
 from azul.plugins.metadata.hca.service.contributor_matrices import (
     make_stratification_tree,
 )
+from azul.service.index_service import (
+    SearchResponseStage,
+    SummaryResponseStage,
+)
 from azul.service.query_service import (
     ResponsePagination,
     ResponseTriple,
-)
-from azul.service.repository_service import (
-    SearchResponseStage,
-    SummaryResponseStage,
 )
 from azul.strings import (
     to_camel_case,

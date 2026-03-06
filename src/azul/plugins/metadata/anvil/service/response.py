@@ -25,12 +25,12 @@ from azul.json import (
 from azul.plugins import (
     SpecialFields,
 )
-from azul.service.query_service import (
-    ResponseTriple,
-)
-from azul.service.repository_service import (
+from azul.service.index_service import (
     SearchResponseStage,
     SummaryResponseStage,
+)
+from azul.service.query_service import (
+    ResponseTriple,
 )
 from azul.types import (
     AnyMutableJSON,
