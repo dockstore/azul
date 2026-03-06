@@ -28,6 +28,12 @@ Linked issue: #0000
 - [ ] This PR is labeled `reindex:partial` and its description documents the specific reindexing procedure for `prod` <sub>or requires a full reindex or is not labeled`reindex:prod`</sub>
 
 
+### Author (mirror)
+
+- [ ] This PR is labeled `mirror:prod` <sub>or the changes introduced by it will not require mirroring of `prod`</sub>
+- [ ] This PR is labeled `mirror:partial` and its description documents the specific mirroring procedure for `prod` <sub>or requires a full mirroring or is not labeled`mirror:prod`</sub>
+
+
 ### Author (upgrading deployments)
 
 - [ ] This PR is labeled `upgrade` <sub>or does not require upgrading deployments</sub>
@@ -122,9 +128,9 @@ Promoted PRs in status *Done* do not need to be moved.
 
 ### Operator (mirroring)
 
-- [ ] Started mirroring in `prod` <sub>or this PR does not require mirroring `prod`</sub>
-- [ ] Checked for, triaged and possibly requeued messages in mirror fail queue in `prod` <sub>or this PR does not require mirroring `prod`</sub>
-- [ ] Emptied mirror fail queue in `prod` <sub>or this PR does not require mirroring `prod`</sub>
+- [ ] Started mirroring in `prod` <sub>or this PR is not labelled `mirror:prod`</sub>
+- [ ] Checked for, triaged and possibly requeued messages in mirror fail queue in `prod` <sub>or this PR is not labelled `mirror:prod`</sub>
+- [ ] Emptied mirror fail queue in `prod` <sub>or this PR is not labelled `mirror:prod`</sub>
 
 
 ### Operator

@@ -61,6 +61,10 @@ This is the PR template for backport PRs against `develop`.
 - [ ] Started reindex in `anvilbox` <sub>or this PR is not labeled `reindex:anvildev`</sub>
 - [ ] Checked for failures in `sandbox` <sub>or this PR is not labeled `reindex:dev`</sub>
 - [ ] Checked for failures in `anvilbox` <sub>or this PR is not labeled `reindex:anvildev`</sub>
+- [ ] Started mirroring in `sandbox` <sub>or this PR is not labeled `mirror:dev`</sub>
+- [ ] Started mirroring in `anvilbox` <sub>or this PR is not labeled `mirror:anvildev`</sub>
+- [ ] Checked for failures in `sandbox` <sub>or this PR is not labeled `mirror:dev`</sub>
+- [ ] Checked for failures in `anvilbox` <sub>or this PR is not labeled `mirror:anvildev`</sub>
 
 
 ### Operator (merge the branch)

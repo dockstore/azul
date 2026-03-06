@@ -47,6 +47,15 @@ title is `Fix: ` followed by the issue title
 - [ ] This PR is labeled `reindex:partial` and its description documents the specific reindexing procedure for `dev`, `anvildev`, `anvilprod` and `prod` <sub>or requires a full reindex or carries none of the labels `reindex:dev`, `reindex:anvildev`, `reindex:anvilprod` and `reindex:prod`</sub>
 
 
+### Author (mirror)
+
+- [ ] This PR is labeled `mirror:dev` <sub>or the changes introduced by it will not require mirroring of `dev`</sub>
+- [ ] This PR is labeled `mirror:anvildev` <sub>or the changes introduced by it will not require mirroring of `anvildev`</sub>
+- [ ] This PR is labeled `mirror:anvilprod` <sub>or the changes introduced by it will not require mirroring of `anvilprod`</sub>
+- [ ] This PR is labeled `mirror:prod` <sub>or the changes introduced by it will not require mirroring of `prod`</sub>
+- [ ] This PR is labeled `mirror:partial` and its description documents the specific mirroring procedure for `dev`, `anvildev`, `anvilprod` and `prod` <sub>or requires a full mirroring or carries none of the labels `mirror:dev`, `mirror:anvildev`, `mirror:anvilprod` and `mirror:prod`</sub>
+
+
 ### Author (API changes)
 
 - [ ] This PR and its linked issues are labeled `API` <sub>or this PR does not modify a REST API</sub>
@@ -110,6 +119,7 @@ Note that after requesting changes, the PR must be assigned to only the author.
 ### Operator
 
 - [ ] Checked `reindex:…` labels and `r` commit title tag
+- [ ] Checked `mirror:…` labels
 - [ ] Checked that demo expectations are clear <sub>or all linked issues are labeled `no demo`</sub>
 - [ ] Squashed PR branch and rebased onto `develop`
 - [ ] Sanity-checked history
@@ -154,6 +164,10 @@ Note that after requesting changes, the PR must be assigned to only the author.
 - [ ] Started reindex in `anvilbox` <sub>or this PR is not labeled `reindex:anvildev`</sub>
 - [ ] Checked for failures in `sandbox` <sub>or this PR is not labeled `reindex:dev`</sub>
 - [ ] Checked for failures in `anvilbox` <sub>or this PR is not labeled `reindex:anvildev`</sub>
+- [ ] Started mirroring in `sandbox` <sub>or this PR is not labeled `mirror:dev`</sub>
+- [ ] Started mirroring in `anvilbox` <sub>or this PR is not labeled `mirror:anvildev`</sub>
+- [ ] Checked for failures in `sandbox` <sub>or this PR is not labeled `mirror:dev`</sub>
+- [ ] Checked for failures in `anvilbox` <sub>or this PR is not labeled `mirror:anvildev`</sub>
 
 
 ### Operator (merge the branch)
@@ -207,18 +221,18 @@ Note that after requesting changes, the PR must be assigned to only the author.
 
 ### Operator (mirroring)
 
-- [ ] Started mirroring in `dev` <sub>or this PR does not require mirroring `dev`</sub>
-- [ ] Started mirroring in `anvildev` <sub>or this PR does not require mirroring `anvildev`</sub>
-- [ ] Checked for, triaged and possibly requeued messages in mirror fail queue in `dev` <sub>or this PR does not require mirroring `dev`</sub>
-- [ ] Checked for, triaged and possibly requeued messages in mirror fail queue in `anvildev` <sub>or this PR does not require mirroring `anvildev`</sub>
-- [ ] Emptied mirror fail queue in `dev` <sub>or this PR does not require mirroring `dev`</sub>
-- [ ] Emptied mirror fail queue in `anvildev` <sub>or this PR does not require mirroring `anvildev`</sub>
+- [ ] Started mirroring in `dev` <sub>or this PR is not labelled `mirror:dev`</sub>
+- [ ] Started mirroring in `anvildev` <sub>or this PR is not labelled `mirror:anvildev`</sub>
+- [ ] Checked for, triaged and possibly requeued messages in mirror fail queue in `dev` <sub>or this PR is not labelled `mirror:dev`</sub>
+- [ ] Checked for, triaged and possibly requeued messages in mirror fail queue in `anvildev` <sub>or this PR is not labelled `mirror:anvildev`</sub>
+- [ ] Emptied mirror fail queue in `dev` <sub>or this PR is not labelled `mirror:dev`</sub>
+- [ ] Emptied mirror fail queue in `anvildev` <sub>or this PR is not labelled `mirror:anvildev`</sub>
 
 
 ### Operator
 
-- [ ] Propagated the `deploy:shared`, `deploy:gitlab`, `deploy:runner`, `API`, `reindex:partial`, `reindex:anvilprod` and `reindex:prod` labels to the next promotion PRs <sub>or this PR carries none of these labels</sub>
-- [ ] Propagated any specific instructions related to the `deploy:shared`, `deploy:gitlab`, `deploy:runner`, `API`, `reindex:partial`, `reindex:anvilprod` and `reindex:prod` labels, from the description of this PR to that of the next promotion PRs <sub>or this PR carries none of these labels</sub>
+- [ ] Propagated the `deploy:shared`, `deploy:gitlab`, `deploy:runner`, `API`, `reindex:partial`, `reindex:anvilprod`, `reindex:prod`, `mirror:partial`, `mirror:anvilprod` and `mirror:prod` labels to the next promotion PRs <sub>or this PR carries none of these labels</sub>
+- [ ] Propagated any specific instructions related to the `deploy:shared`, `deploy:gitlab`, `deploy:runner`, `API`, `reindex:partial`, `reindex:anvilprod`, `reindex:prod`, `mirror:partial`, `mirror:anvilprod` and `mirror:prod` labels, from the description of this PR to that of the next promotion PRs <sub>or this PR carries none of these labels</sub>
 - [ ] PR is assigned to no one
 
 

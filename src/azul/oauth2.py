@@ -141,7 +141,7 @@ class OAuth2Client(HasCachedHttpClient):
         """
         credentials = self.credentials
         url = furl(url='https://www.googleapis.com/oauth2/v3/tokeninfo',
-                   args=dict(access_token=credentials.token))
+                   args=dict(access_token=str(credentials.token)))
         response = self._http_client_without_credentials.request('GET', str(url))
         reject(response.status == 400,
                'The token is not valid')

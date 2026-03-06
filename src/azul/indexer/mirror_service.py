@@ -89,6 +89,7 @@ from azul.service.storage_service import (
 )
 from azul.types import (
     JSON,
+    MutableJSON,
     json_element_strings,
 )
 
@@ -190,7 +191,7 @@ class MirrorFileDownload(RepositoryFileDownload):
 
 class SchemaUrlFunc(Protocol):
 
-    def __call__(self, *, schema_name: str, version: int) -> mutable_furl: ...
+    def __call__(self, *, name: str, version: int) -> mutable_furl: ...
 
 
 @attrs.frozen(kw_only=True)
@@ -331,6 +332,8 @@ class BaseMirrorService:
     """
 
     catalog: CatalogName
+
+    info_schema_version = 2
 
     @cached_property
     def _queues(self) -> Queues:
@@ -480,6 +483,9 @@ class BaseMirrorService:
         return self._storage.get_presigned_url(object_key=self._file_object_key(file),
                                                file_name=file.name,
                                                content_type=file.content_type)
+
+    def info(self, file: File) -> MutableJSON:
+        return json.loads(self._storage.get_object(self._info_object_key(file)))
 
     def info_exists(self, file: File) -> bool:
         return self._storage.object_exists(self._info_object_key(file))
@@ -717,7 +723,8 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
             content_types.add(file.content_type)
         return {
             content_type: sorted(content_types),
-            '$schema': str(self._schema_url_func(schema_name='info', version=2))
+            '$schema': str(self._schema_url_func(name='info',
+                                                 version=self.info_schema_version)),
         }
 
     def _update_info(self, file: File):
