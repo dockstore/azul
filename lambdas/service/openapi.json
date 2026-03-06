@@ -13687,7 +13687,7 @@
                         "description": "Gateway timeout. The frontend server did not receive a timely response from the backend server. \nIt is unlikely that a retry will be successful until the problem is\nresolved by an operator.\n"
                     },
                     "200": {
-                        "description": "\nEmulates the response code and headers of\n/repository/files/{file_uuid} while bypassing the default\nuser agent behavior. Note that the status code of a\nsuccessful response will be 200 while the `Status` field of\nits body will be 302.\n\nThe response described here is intended to be processed by\nclient-side Javascript such that the emulated headers can be\nhandled in Javascript rather than relying on the native\nimplementation by the web browser.\n",
+                        "description": "\nEmulates the response code and headers of\n/repository/files/{file_uuid} while bypassing\nthe default user agent behavior. Note that the status\ncode of a successful response will be 200 while the\n`Status` field of its body will be 302.\n\nThe response described here is intended to be processed by\nclient-side Javascript such that the emulated headers can be\nhandled in Javascript rather than relying on the native\nimplementation by the web browser.\n",
                         "content": {
                             "application/json": {
                                 "schema": {

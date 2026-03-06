@@ -115,12 +115,15 @@ def validate_catalog(catalog):
                                 f'Must be one of {set(config.catalogs)}.')
 
 
+type Validator = Callable[[Any], Any]
+
+
 class Mandatory:
     """
     Validation wrapper signifying that a parameter is mandatory.
     """
 
-    def __init__(self, validator: Callable) -> None:
+    def __init__(self, validator: Validator) -> None:
         super().__init__()
         self._validator = validator
 
@@ -130,7 +133,7 @@ class Mandatory:
 
 def validate_params(query_params: Mapping[str, str],
                     allow_extra_params: bool = False,
-                    **validators: Callable[[Any], Any]) -> None:
+                    **validators: Validator) -> None:
     """
     Validates request query parameters for web-service API.
 

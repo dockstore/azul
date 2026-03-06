@@ -7,7 +7,6 @@ import logging
 import time
 from typing import (
     Any,
-    Callable,
 )
 
 import attr
@@ -62,6 +61,7 @@ from azul.plugins import (
 from azul.service.controller import (
     Mandatory,
     ServiceController,
+    Validator,
     validate_catalog,
     validate_params,
 )
@@ -71,6 +71,7 @@ from azul.service.repository_service import (
 from azul.types import (
     MutableJSON,
     is_optional,
+    json_int,
 )
 
 log = logging.getLogger(__name__)
@@ -210,7 +211,7 @@ class RepositoryController(ServiceController):
         )
         def repository_files(file_uuid: str) -> Response:
             result = _repository_files(file_uuid, fetch=False)
-            status_code = result.pop('Status')
+            status_code = json_int(result.pop('Status'))
             return Response(body='',
                             headers={k: str(v) for k, v in result.items()},
                             status_code=status_code)
@@ -226,10 +227,10 @@ class RepositoryController(ServiceController):
                     '200': {
                         'description': fd(f'''
                             Emulates the response code and headers of
-                            {one(repository_files.path)} while bypassing the default
-                            user agent behavior. Note that the status code of a
-                            successful response will be 200 while the `Status` field of
-                            its body will be 302.
+                            {one(getattr(repository_files, 'path'))} while bypassing
+                            the default user agent behavior. Note that the status
+                            code of a successful response will be 200 while the
+                            `Status` field of its body will be 302.
 
                             The response described here is intended to be processed by
                             client-side Javascript such that the emulated headers can be
@@ -332,6 +333,7 @@ class RepositoryController(ServiceController):
                         wait=self._validate_wait,
                         replica=self._validate_replica,
                         token=str,
+                        allow_extra_params=False,
                         **self._file_param_validators(catalog, request_index))
 
         file_version = query_params.get('version')
@@ -349,7 +351,10 @@ class RepositoryController(ServiceController):
             if file is None:
                 raise NotFoundError(f'Unable to find file {file_uuid!r}, '
                                     f'version {file_version!r} in catalog {catalog!r}')
-            file = attr.evolve(file, **adict(name=file_name, drs_uri=drs_uri))
+            if file_name is not None:
+                file = attr.evolve(file, name=file_name)
+            if drs_uri is not None:
+                file = attr.evolve(file, drs_uri=drs_uri)
         else:
             file = self._file_from_request(catalog, file_uuid, query_params)
 
@@ -374,26 +379,27 @@ class RepositoryController(ServiceController):
 
         plugin = self.repository_plugin(catalog)
 
+        mirror_url = None
         if config.enable_mirroring:
             mirror_service = self.mirror_service(catalog)
-            is_mirrored = mirror_service.info_exists(file)
+            if mirror_service.info_exists(file):
+                mirror_url = mirror_service.mirror_url(file)
+
+        if mirror_url is None:
+            download_cls = plugin.file_download_class()
+            download = download_cls(file=file, replica=replica, token=token)
         else:
-            mirror_service, is_mirrored = None, False
-        if is_mirrored:
             # The file's content type would be None on subsequent requests since
             # it isn't propagated via a query parameter. `MirrorFileDownload`
             # will always be ready immediately.
             assert request_index == 0, request_index
             download = MirrorFileDownload(
                 file=file,
-                location=mirror_service.mirror_url(file),
+                location=mirror_url,
                 replica=replica,
                 token=token
             )
             assert download.retry_after is None, download
-        else:
-            download_cls = plugin.file_download_class()
-            download = download_cls(file=file, replica=replica, token=token)
 
         try:
             download.update(plugin, authentication)
@@ -423,12 +429,11 @@ class RepositoryController(ServiceController):
                     retry_after = round(retry_after - server_side_sleep)
                 else:
                     assert False, wait
-            query_params = self._file_to_request(download.file) | adict(
-                token=download.token,
-                replica=download.replica,
-                requestIndex=request_index + 1,
-                wait=wait
-            )
+            query_params = adict(self._file_to_request(download.file),
+                                 token=download.token,
+                                 replica=download.replica,
+                                 requestIndex=str(request_index + 1),
+                                 wait=wait)
             return {
                 'Status': 301,
                 **({'Retry-After': retry_after} if retry_after else {}),
@@ -448,7 +453,7 @@ class RepositoryController(ServiceController):
                 }
             }
             log.info('Download of %s file %s',
-                     'mirrored' if is_mirrored else 'repository',
+                     'repository' if mirror_url is None else 'mirrored',
                      json.dumps(log_data))
             return {
                 'Status': 302,
@@ -536,8 +541,8 @@ class RepositoryController(ServiceController):
     def _file_param_validators(self,
                                catalog: CatalogName,
                                request_index: int
-                               ) -> dict[str, Callable[[Any], Any]]:
-        all_file_validators = dict(
+                               ) -> dict[str, Validator]:
+        all_file_validators: Mapping[str, Validator] = dict(
             version=self.repository_plugin(catalog).validate_version,
             fileName=str,
             drsUri=str,
