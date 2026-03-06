@@ -11,11 +11,17 @@ import json
 import logging
 import sys
 
+from azul import (
+    cached_property,
+)
 from azul.args import (
     AzulArgumentHelpFormatter,
 )
 from azul.deployment import (
     aws,
+)
+from azul.http import (
+    http_client,
 )
 from azul.logging import (
     configure_script_logging,
@@ -47,6 +53,7 @@ class ParseInspectorFindings:
         'CRITICAL': 10,
         'HIGH': 1
     }
+    debian_url_prefix = 'https://security-tracker.debian.org/tracker/'
 
     @classmethod
     def _parse_args(cls, argv):
@@ -70,6 +77,10 @@ class ParseInspectorFindings:
                             help='Dump findings to a JSON file.')
         args = parser.parse_args(argv)
         return args
+
+    @cached_property
+    def http(self):
+        return http_client()
 
     def __init__(self, argv: list[str]) -> None:
         super().__init__()
@@ -123,6 +134,7 @@ class ParseInspectorFindings:
             vulnerability, summary = self.parse_finding(finding)
             parsed_findings[vulnerability].append(summary)
         log.info('Found %i unique vulnerabilities', len(parsed_findings))
+        log.info('Generating CSV output')
         self.write_to_csv(parsed_findings)
         log.info('Done.')
 
@@ -203,6 +215,7 @@ class ParseInspectorFindings:
         titles = [
             'Packages',
             'Vulnerability',
+            'Link',
             'Since',
             'Severity'
         ]
@@ -232,9 +245,22 @@ class ParseInspectorFindings:
             col_range = f'{img_first_col}{row_num}:{img_last_col}{row_num}'
             severity_formula = (f'=(COUNTIF({col_range},"C")*{self.weights['CRITICAL']})'
                                 f'+(COUNTIF({col_range},"H")*{self.weights['HIGH']})')
-            urls = sorted([summary['source_url'] for summary in summaries], reverse=True)
-            hyperlink = f'=HYPERLINK("{urls.pop(0)}","{vulnerability}")'
-            row = [packages, hyperlink, '', severity_formula]
+            # If there are multiple URLs for a vulnerability, this grabs the one
+            # from nist.gov if available, else the first after sorting the list
+            urls = sorted({summary['source_url'] for summary in summaries},
+                          key=lambda s: ('nist.gov' not in s, s))
+            source_url = urls[0]
+            debian_url = self.debian_url_prefix + vulnerability
+            response = self.http.request('HEAD', debian_url)
+            if response.status != 200:
+                log.debug('Got %s for %s', response.status, debian_url)
+            if response.status == 200 and source_url != debian_url:
+                link1 = f'=HYPERLINK("{debian_url}","{vulnerability}")'
+                link2 = f'=HYPERLINK("{source_url}","...")'
+            else:
+                link1 = f'=HYPERLINK("{source_url}","{vulnerability}")'
+                link2 = ''
+            row = [packages, link1, link2, '', severity_formula]
             for column_index in range(len(row), len(titles) + 1):
                 row.append(column_values.get(column_index, ''))
             rows.append(row)
