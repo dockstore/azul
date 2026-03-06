@@ -28,6 +28,12 @@ Linked issue: #0000
 - [ ] This PR is labeled `reindex:partial` and its description documents the specific reindexing procedure for `anvilprod` <sub>or requires a full reindex or is not labeled`reindex:anvilprod`</sub>
 
 
+### Author (mirror)
+
+- [ ] This PR is labeled `mirror:anvilprod` <sub>or the changes introduced by it will not require mirroring of `anvilprod`</sub>
+- [ ] This PR is labeled `mirror:partial` and its description documents the specific mirroring procedure for `anvilprod` <sub>or requires a full mirroring or is not labeled`mirror:anvilprod`</sub>
+
+
 ### Author (upgrading deployments)
 
 - [ ] This PR is labeled `upgrade` <sub>or does not require upgrading deployments</sub>
@@ -88,6 +94,8 @@ Linked issue: #0000
 - [ ] Deleted unreferenced indices in `hammerbox` <sub>or this PR does not remove catalogs or otherwise causes unreferenced indices in `hammerbox`</sub>
 - [ ] Started reindex in `hammerbox` <sub>or this PR is not labeled `reindex:anvilprod`</sub>
 - [ ] Checked for failures in `hammerbox` <sub>or this PR is not labeled `reindex:anvilprod`</sub>
+- [ ] Started mirroring in `hammerbox` <sub>or this PR is not labeled `mirror:anvilprod`</sub>
+- [ ] Checked for failures in `hammerbox` <sub>or this PR is not labeled `mirror:anvilprod`</sub>
 
 
 ### Operator (merge the branch)
@@ -133,9 +141,9 @@ Promoted PRs in status *Done* do not need to be moved.
 
 ### Operator (mirroring)
 
-- [ ] Started mirroring in `anvilprod` <sub>or this PR does not require mirroring `anvilprod`</sub>
-- [ ] Checked for, triaged and possibly requeued messages in mirror fail queue in `anvilprod` <sub>or this PR does not require mirroring `anvilprod`</sub>
-- [ ] Emptied mirror fail queue in `anvilprod` <sub>or this PR does not require mirroring `anvilprod`</sub>
+- [ ] Started mirroring in `anvilprod` <sub>or this PR is not labelled `mirror:anvilprod`</sub>
+- [ ] Checked for, triaged and possibly requeued messages in mirror fail queue in `anvilprod` <sub>or this PR is not labelled `mirror:anvilprod`</sub>
+- [ ] Emptied mirror fail queue in `anvilprod` <sub>or this PR is not labelled `mirror:anvilprod`</sub>
 
 
 ### Operator

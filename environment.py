@@ -265,7 +265,7 @@ def env() -> Mapping[str, str | None]:
                 'url': 'https://hub.docker.com/_/python',
             },
             'pycharm': {
-                'ref': 'docker.io/ucscgi/azul-pycharm:2025.2.6-73',
+                'ref': 'docker.io/ucscgi/azul-pycharm:2025.2.6-74',
                 'url': 'https://hub.docker.com/repository/docker/ucscgi/azul-pycharm',
                 'is_custom': True
             },
@@ -275,22 +275,22 @@ def env() -> Mapping[str, str | None]:
                 'is_custom': False
             },
             'bigquery_emulator': {
-                'ref': 'docker.io/ucscgi/azul-bigquery-emulator:0.4.4-54',
+                'ref': 'docker.io/ucscgi/azul-bigquery-emulator:0.4.4-55',
                 'url': 'https://hub.docker.com/repository/docker/ucscgi/azul-bigquery-emulator',
                 'is_custom': True
             },
             # Updating any of the four images below additionally requires
             # redeploying the `gitlab` TF component.
             'clamav': {
-                'ref': 'docker.io/clamav/clamav:1.5.1-25',
+                'ref': 'docker.io/clamav/clamav:1.5.1-26',
                 'url': 'https://hub.docker.com/r/clamav/clamav'
             },
             'gitlab': {
-                'ref': 'docker.io/gitlab/gitlab-ce:18.8.4-ce.0',
+                'ref': 'docker.io/gitlab/gitlab-ce:18.9.0-ce.0',
                 'url': 'https://hub.docker.com/r/gitlab/gitlab-ce'
             },
             'gitlab_runner': {
-                'ref': 'docker.io/gitlab/gitlab-runner:ubuntu-v18.8.0',
+                'ref': 'docker.io/gitlab/gitlab-runner:ubuntu-v18.9.0',
                 'url': 'https://hub.docker.com/r/gitlab/gitlab-runner'
             },
             'dind': {

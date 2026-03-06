@@ -19,6 +19,7 @@ from typing import (
     Any,
     TYPE_CHECKING,
     cast,
+    overload,
 )
 
 from more_itertools import (
@@ -41,6 +42,7 @@ from azul import (
     CatalogName,
     R,
     config,
+    json_mapping,
 )
 from azul.deployment import (
     aws,
@@ -88,18 +90,22 @@ from azul.logging import (
 )
 from azul.types import (
     AnyJSON,
-    CompositeJSON,
     JSON,
+    JSONArray,
     JSONs,
+    PrimitiveJSON,
+    json_element_mappings,
+    json_items_are_sequences_of_mappings,
+    json_sequence,
 )
 
 log = logging.getLogger(__name__)
 
-Tallies = Mapping[EntityReference, int]
+type Tallies = Mapping[EntityReference, int]
 
-CataloguedTallies = Mapping[CataloguedEntityReference, int]
+type CataloguedTallies = Mapping[CataloguedEntityReference, int]
 
-MutableCataloguedTallies = dict[CataloguedEntityReference, int]
+type MutableCataloguedTallies = dict[CataloguedEntityReference, int]
 
 
 class IndexExistsAndDiffersException(Exception):
@@ -190,7 +196,7 @@ class IndexService(DocumentService):
         and aggregate all affected entities at the end.
         """
         transforms = self.deep_transform(catalog, bundle, delete=False)
-        tallies = {}
+        tallies: MutableCataloguedTallies = {}
         for contributions, replicas in transforms:
             tallies.update(self.contribute(catalog, contributions))
             self.replicate(catalog, replicas)
@@ -207,7 +213,7 @@ class IndexService(DocumentService):
         #        concurrently. The fix could be to optimistically lock on the
         #        aggregate version (https://github.com/DataBiosphere/azul/issues/611)
         transforms = self.deep_transform(catalog, bundle, delete=True)
-        tallies = {}
+        tallies: MutableCataloguedTallies = {}
         for contributions, replicas in transforms:
             # FIXME: these are all modified contributions, not new ones. This also
             #        happens when we reindex without deleting the indices first. The
@@ -238,6 +244,7 @@ class IndexService(DocumentService):
         result = first(results, None)
         if isinstance(result, BundlePartition):
             for sub_partition in results:
+                assert isinstance(sub_partition, BundlePartition)
                 yield from self.deep_transform(catalog, bundle, sub_partition, delete=delete)
         elif isinstance(results, tuple):
             yield results
@@ -284,7 +291,7 @@ class IndexService(DocumentService):
             log.info('Transforming %i entities in partition %s of bundle %s, version %s.',
                      num_entities, partition, bundle.uuid, bundle.version)
             contributions = []
-            replicas_by_coords = {}
+            replicas_by_coords: dict[ReplicaCoordinates, Replica] = {}
             for transformer in transformers:
                 for document in transformer.transform(partition):
                     if isinstance(document, Contribution):
@@ -328,7 +335,19 @@ class IndexService(DocumentService):
 
     def _check_index(self, *, settings: JSON, mappings: JSON, index: JSON):
 
-        def stringify(value: AnyJSON) -> AnyJSON:
+        @overload
+        def stringify(value: PrimitiveJSON) -> str:
+            ...
+
+        @overload
+        def stringify(value: JSON) -> JSON:
+            ...
+
+        @overload
+        def stringify(value: JSONArray) -> JSONArray:
+            ...
+
+        def stringify(value):
             return (
                 {k: stringify(v) for k, v in value.items()}
                 if isinstance(value, dict) else
@@ -337,16 +356,13 @@ class IndexService(DocumentService):
                 str(value)
             )
 
-        def setify(value: CompositeJSON
-                   ) -> set[tuple[str, AnyJSON]] | set[AnyJSON]:
-            value = freeze(value)
-            return set(
-                value.items()
-                if isinstance(value, Mapping) else
-                value
-            )
+        def setify_mapping[K](value: Mapping[K, AnyJSON]) -> set[tuple[K, AnyJSON]]:
+            return set((k, freeze(v)) for k, v in value.items())
 
-        def flatten(value: JSON, *path) -> Iterable[tuple[tuple[str, ...], AnyJSON]]:
+        def setify_sequence(value: JSONArray) -> set[AnyJSON]:
+            return set(json_sequence(freeze(value)))
+
+        def flatten(value: JSON, *path: str) -> Iterable[tuple[tuple[str, ...], AnyJSON]]:
             for k, v in value.items():
                 if isinstance(v, Mapping):
                     yield from flatten(v, *path, k)
@@ -355,8 +371,8 @@ class IndexService(DocumentService):
 
         # Compare the index settings
         expected, actual = (
-            setify(dict(flatten(stringify(s))))
-            for s in [settings, index['settings']]
+            setify_mapping(dict(flatten(stringify(s))))
+            for s in [settings, json_mapping(index['settings'])]
         )
         if not expected <= actual:
             raise IndexExistsAndDiffersException('settings', settings, index['settings'])
@@ -364,8 +380,8 @@ class IndexService(DocumentService):
         # Compare the static field mapping
         key = 'properties'
         expected, actual = (
-            setify(dict(flatten(m.get(key, {}))))
-            for m in [mappings, index['mappings']]
+            setify_mapping(dict(flatten(json_mapping(m.get(key, {})))))
+            for m in [mappings, json_mapping(index['mappings'])]
         )
         if not expected <= actual:
             raise IndexExistsAndDiffersException(key, mappings, index['mappings'])
@@ -373,20 +389,20 @@ class IndexService(DocumentService):
         # Compare the dynamic field mapping
         key = 'dynamic_templates'
         expected, actual = (
-            setify(m.get(key, []))
-            for m in [mappings, index['mappings']]
+            setify_sequence(json_sequence(m.get(key, [])))
+            for m in [mappings, json_mapping(index['mappings'])]
         )
         if not expected == actual:
             raise IndexExistsAndDiffersException(key, mappings, index['mappings'])
 
         # Compare the rest of the mapping
         expected, actual = (
-            setify(dict(flatten({
+            setify_mapping(dict(flatten({
                 k: v
                 for k, v in m.items()
                 if k not in {'properties', 'dynamic_templates'}
             })))
-            for m in [mappings, index['mappings']]
+            for m in [mappings, json_mapping(index['mappings'])]
         )
         if not expected <= actual:
             raise IndexExistsAndDiffersException('mappings', mappings, index['mappings'])
@@ -408,7 +424,7 @@ class IndexService(DocumentService):
         Tallies for overwritten documents are not counted. This means a tally
         with a count of 0 may exist. This is ok. See description of aggregate().
         """
-        tallies = Counter()
+        tallies: MutableCataloguedTallies = Counter()
         writer = self._create_writer(DocumentType.contribution, catalog)
         while contributions:
             writer.write(contributions)
@@ -497,7 +513,7 @@ class IndexService(DocumentService):
 
             # Retry writes if necessary
             if writer.retries:
-                tallies: CataloguedTallies = {
+                tallies = {
                     aggregate.coordinates.entity: tallies[aggregate.coordinates.entity]
                     for aggregate in new_aggregates
                     if aggregate.coordinates in writer.retries
@@ -600,14 +616,14 @@ class IndexService(DocumentService):
             }
         }
 
-        index = sorted(list(entity_ids_by_index.keys()))
+        indices = sorted(entity_ids_by_index.keys())
         num_contributions = sum(tallies.values())
         log.info('Reading %i expected contribution(s)', num_contributions)
 
         def pages() -> Iterable[JSONs]:
             body = dict(query=query)
             while True:
-                response = es_client.search(index=index,
+                response = es_client.search(index=indices,
                                             sort=['_index', 'document_id.keyword'],
                                             body=body,
                                             size=config.contribution_page_size,
@@ -621,7 +637,7 @@ class IndexService(DocumentService):
                 else:
                     break
 
-        contributions = [
+        contributions: list[CataloguedContribution] = [
             Contribution.from_index(self.catalogued_field_types(), hit)
             for hits in pages()
             for hit in hits
@@ -663,13 +679,15 @@ class IndexService(DocumentService):
         # For each entity and bundle, find the most recent contribution that is
         # not a deletion
         contributions_by_entity: dict[
-            CataloguedEntityReference, list[CataloguedContribution]] = defaultdict(list)
+            CataloguedEntityReference,
+            list[CataloguedContribution]
+        ] = defaultdict(list)
         for (entity, bundle_uuid), contributions in contributions_by_bundle.items():
             contributions = sorted(contributions,
                                    key=attrgetter('coordinates.bundle.version', 'coordinates.deleted'),
                                    reverse=True)
             for bundle_version, group in groupby(contributions, key=attrgetter('coordinates.bundle.version')):
-                contribution: Contribution = next(group)
+                contribution = next(group)
                 if not contribution.coordinates.deleted:
                     assert bundle_uuid == contribution.coordinates.bundle.uuid
                     assert bundle_version == contribution.coordinates.bundle.version
@@ -757,7 +775,9 @@ class IndexService(DocumentService):
         contributions.
         """
         if len(contributions) == 1:
-            return one(contributions).contents
+            single_result = contributions[0].contents
+            assert json_items_are_sequences_of_mappings(single_result)
+            return single_result
         else:
             result: dict[EntityType, dict[EntityID, tuple[JSON, BundleFQID]]]
             result = defaultdict(dict)
@@ -765,12 +785,12 @@ class IndexService(DocumentService):
                 that_bundle = contribution.coordinates.bundle
                 for entity_type, those_entities in contribution.contents.items():
                     these_entities = result[entity_type]
-                    for that_entity in those_entities:
-                        entity_id = transformer.inner_entity_id(entity_type, that_entity)
-                        this = these_entities.get(entity_id, (None, None))
-                        this_entity, this_bundle = this
+                    for that_entity in json_element_mappings(those_entities):
                         that = (that_entity, that_bundle)
-                        if this_entity is None:
+                        entity_id = transformer.inner_entity_id(entity_type, that_entity)
+                        try:
+                            this = these_entities[entity_id]
+                        except KeyError:
                             these_entities[entity_id] = that
                         else:
                             that = transformer.reconcile_inner_entities(entity_type, this=this, that=that)
@@ -835,11 +855,11 @@ class IndexWriter:
         self.es_client = ESClientFactory.get()
         self.errors: dict[DocumentCoordinates, int] = defaultdict(int)
         self.conflicts: dict[DocumentCoordinates, int] = defaultdict(int)
-        self.retries: set[DocumentCoordinates] | None = None
+        self.retries: set[DocumentCoordinates] = set()
 
     bulk_threshold = 32
 
-    def write(self, documents: list[Document]):
+    def write(self, documents: Sequence[Document]):
         """
         Make an attempt to write the documents into the index, updating local
         state with failures and conflicts
@@ -875,7 +895,7 @@ class IndexWriter:
             for doc in documents
         }
 
-        def expand_action(doc: Any) -> tuple[dict[str, Any], dict[str, Any] | None]:
+        def expand_action(doc: Any) -> tuple[JSON, JSON | None]:
             # Document.to_index returns the keyword arguments to the ES client
             # method referenced by Document.op_type. In bulk requests, these
             # methods are not invoked individually. This function converts the
@@ -885,10 +905,13 @@ class IndexWriter:
             # optional document source.
             assert isinstance(doc, Document), doc
             action = dict(doc.to_index(self.catalog, self.field_types))
-            action.update(action.pop('params', {}))
+            action.update(json_mapping(action.pop('params', {})))
             action['_index'] = action.pop('index')
             action['_id'] = action.pop('id')
-            body = action.pop('body', None)
+            try:
+                body = json_mapping(action.pop('body'))
+            except KeyError:
+                body = None
             action = {doc.op_type.name: action}
             return action, body
 

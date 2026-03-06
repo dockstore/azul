@@ -7,7 +7,7 @@ editor==1.7.0
 et_xmlfile==2.0.0
 gitdb==4.0.12
 google-auth-httplib2==0.3.0
-greenlet==3.3.1
+greenlet==3.3.2
 grpc-google-iam-v1==0.14.3
 httplib2==0.31.2
 inquirer==3.4.1
@@ -31,7 +31,7 @@ mypy-boto3-secretsmanager==1.42.8
 mypy-boto3-securityhub==1.42.3
 mypy-boto3-sns==1.42.3
 mypy-boto3-sqs==1.42.3
-mypy-boto3-ssm==1.42.3
+mypy-boto3-ssm==1.42.54
 mypy-boto3-stepfunctions==1.42.3
 mypy-boto3-sts==1.42.3
 mypy_extensions==1.1.0
