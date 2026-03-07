@@ -71,6 +71,11 @@ from azul.types import (
 
 
 class DRSController(ServiceController):
+
+    @cached_property
+    def service(self) -> IndexService:
+        return IndexService()
+
     deprecated_spec: JSON = {
         'summary': 'This endpoint will be removed in the future.',
         'tags': ['Deprecated'],
@@ -211,10 +216,6 @@ class DRSController(ServiceController):
                                        authentication)
 
         return locals()
-
-    @cached_property
-    def service(self) -> IndexService:
-        return IndexService()
 
     def _access_url(self, url):
         return {'url': url}
