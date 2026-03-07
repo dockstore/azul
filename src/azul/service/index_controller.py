@@ -360,7 +360,7 @@ class IndexController(QueryController):
         filters = query_params.get('filters')
         pagination = self._pagination(entity_type)
         authentication = self._authentication(request)
-        filters = self.get_filters(self.app.catalog, authentication, filters)
+        filters = self._prepare_filters(self.app.catalog, authentication, filters)
         try:
             response = self._service.search(catalog=self.app.catalog,
                                             entity_type=entity_type,
@@ -383,7 +383,7 @@ class IndexController(QueryController):
         filters = query_params.get('filters', '{}')
         self.validate_filters(filters)
         authentication = self._authentication(request)
-        filters = self.get_filters(self.app.catalog, authentication, filters)
+        filters = self._prepare_filters(self.app.catalog, authentication, filters)
         try:
             response = self._service.summary(self.app.catalog, filters)
         except BadArgumentException as e:

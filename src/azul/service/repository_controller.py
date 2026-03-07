@@ -343,7 +343,7 @@ class RepositoryController(ServiceController):
         token = query_params.get('token')
 
         if request_index == 0:
-            filters = self.get_filters(catalog, authentication, None)
+            filters = self._prepare_filters(catalog, authentication, None)
             file = self._service.get_data_file(catalog=catalog,
                                                file_uuid=file_uuid,
                                                file_version=file_version,

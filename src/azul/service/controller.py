@@ -82,11 +82,11 @@ class ServiceController(SourceController):
             path = ('fetch', *path)
         return path
 
-    def get_filters(self,
-                    catalog: CatalogName,
-                    authentication: Authentication | None,
-                    filters: str | None = None
-                    ) -> Filters:
+    def _prepare_filters(self,
+                         catalog: CatalogName,
+                         authentication: Authentication | None,
+                         filters: str | None = None
+                         ) -> Filters:
         return Filters(explicit=self._parse_filters(filters),
                        source_ids=self._list_source_ids(catalog, authentication))
 
