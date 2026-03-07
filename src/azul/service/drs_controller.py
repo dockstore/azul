@@ -58,7 +58,6 @@ from azul.plugins import (
 )
 from azul.service.controller import (
     ServiceController,
-    validate_catalog,
     validate_params,
 )
 from azul.service.index_service import (
@@ -203,7 +202,7 @@ class DRSController(ServiceController):
             query_params = self._query_params(request)
             validate_params(query_params,
                             version=str,
-                            catalog=validate_catalog)
+                            catalog=self._validate_catalog)
             catalog = self.app.catalog
             file_version = query_params.get('version')
             return self.dos_get_object(catalog,

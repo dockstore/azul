@@ -100,19 +100,18 @@ class ServiceController(SourceController):
             else:
                 raise
 
-
-def validate_catalog(catalog):
-    try:
-        config.Catalog.validate_name(catalog)
-    except AssertionError as e:
-        if R.caused(e):
-            raise R.propagate(e, BRE)
+    def _validate_catalog(self, catalog: CatalogName):
+        try:
+            config.Catalog.validate_name(catalog)
+        except AssertionError as e:
+            if R.caused(e):
+                raise R.propagate(e, BRE)
+            else:
+                raise
         else:
-            raise
-    else:
-        if catalog not in config.catalogs:
-            raise NotFoundError(f'Catalog name {catalog!r} does not exist. '
-                                f'Must be one of {set(config.catalogs)}.')
+            if catalog not in config.catalogs:
+                raise NotFoundError(f'Catalog name {catalog!r} does not exist. '
+                                    f'Must be one of {set(config.catalogs)}.')
 
 
 type Validator = Callable[[Any], Any]

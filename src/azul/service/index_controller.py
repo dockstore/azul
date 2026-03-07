@@ -36,7 +36,6 @@ from azul.service import (
     BadArgumentException,
 )
 from azul.service.controller import (
-    validate_catalog,
     validate_params,
 )
 from azul.service.index_service import (
@@ -348,7 +347,7 @@ class IndexController(QueryController):
         request = self.current_request
         query_params = self._hoist_parameters(request)
         validate_params(query_params,
-                        catalog=validate_catalog,
+                        catalog=self._validate_catalog,
                         filters=self.validate_filters,
                         order=self._validate_order,
                         search_after=partial(self.validate_json_param, 'search_after'),
@@ -380,7 +379,7 @@ class IndexController(QueryController):
         query_params = self._query_params(request)
         validate_params(query_params,
                         filters=str,
-                        catalog=validate_catalog)
+                        catalog=self._validate_catalog)
         filters = query_params.get('filters', '{}')
         self.validate_filters(filters)
         authentication = self._authentication(request)

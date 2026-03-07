@@ -62,7 +62,6 @@ from azul.service.controller import (
     Mandatory,
     ServiceController,
     Validator,
-    validate_catalog,
     validate_params,
 )
 from azul.service.index_service import (
@@ -299,7 +298,7 @@ class RepositoryController(ServiceController):
             request = self.current_request
             query_params = self._query_params(request)
             validate_params(query_params,
-                            catalog=validate_catalog)
+                            catalog=self._validate_catalog)
             authentication = self._authentication(request)
             sources = self.list_sources(self.app.catalog,
                                         authentication)
@@ -321,7 +320,7 @@ class RepositoryController(ServiceController):
         # plugin to know which file parameters to expect, and the repository
         # plugin to validate the file version.
         validate_params(query_params,
-                        catalog=validate_catalog,
+                        catalog=self._validate_catalog,
                         requestIndex=int,
                         allow_extra_params=True)
 

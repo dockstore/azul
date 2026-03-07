@@ -51,7 +51,6 @@ from azul.service.async_manifest_service import (
     Token,
 )
 from azul.service.controller import (
-    validate_catalog,
     validate_params,
 )
 from azul.service.manifest_service import (
@@ -425,7 +424,7 @@ class ManifestController(QueryController):
             # We list the `catalog` validator first so that the catalog is validated
             # before any other potentially catalog-dependent validators are invoked
             validate_params(query_params,
-                            catalog=validate_catalog,
+                            catalog=self._validate_catalog,
                             format=self.validate_manifest_format,
                             filters=self.validate_filters)
             # Now that the catalog is valid, we can provide the default format that
