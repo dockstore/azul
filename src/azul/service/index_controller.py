@@ -281,7 +281,7 @@ class IndexController(QueryController):
             spec=self._search_entity_spec(),
             cors=True
         )
-        def search(entity_type: str, entity_id: str | None = None) -> str | JSON:
+        def get_head_post_index_entity(entity_type: str, entity_id: str | None = None) -> str | JSON:
             return self.search(entity_type, entity_id)
 
         @self.app.route(
@@ -338,7 +338,7 @@ class IndexController(QueryController):
                 **self._summary_spec
             }
         )
-        def summary():
+        def get_head_index_summary():
             return self.summary()
 
         return locals()

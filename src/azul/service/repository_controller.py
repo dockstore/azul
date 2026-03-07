@@ -208,7 +208,7 @@ class RepositoryController(ServiceController):
                 }
             }
         )
-        def repository_files(file_uuid: str) -> Response:
+        def get_repository_files(file_uuid: str) -> Response:
             result = self.download_file(file_uuid, fetch=False)
             status_code = json_int(result.pop('Status'))
             return Response(body='',
@@ -226,7 +226,7 @@ class RepositoryController(ServiceController):
                     '200': {
                         'description': fd(f'''
                             Emulates the response code and headers of
-                            {one(getattr(repository_files, 'path'))} while bypassing
+                            {one(getattr(get_repository_files, 'path'))} while bypassing
                             the default user agent behavior. Note that the status
                             code of a successful response will be 200 while the
                             `Status` field of its body will be 302.
@@ -246,7 +246,7 @@ class RepositoryController(ServiceController):
                 }
             }
         )
-        def fetch_repository_files(file_uuid: str) -> Response:
+        def get_fetch_repository_files(file_uuid: str) -> Response:
             body = self.download_file(file_uuid, fetch=True)
             return Response(body=json.dumps(body), status_code=200)
 
@@ -276,7 +276,7 @@ class RepositoryController(ServiceController):
                 }
             }
         )
-        def repository_sources() -> Response:
+        def get_repository_sources() -> Response:
             request = self.current_request
             query_params = self._query_params(request)
             validate_params(query_params,

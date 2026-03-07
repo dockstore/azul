@@ -68,7 +68,7 @@ class CatalogController(ServiceController):
                 }
             }
         )
-        def list_catalogs():
+        def get_index_catalogs():
             return self.list_catalogs()
 
         return locals()

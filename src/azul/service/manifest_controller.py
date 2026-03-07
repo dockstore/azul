@@ -372,19 +372,19 @@ class ManifestController(QueryController):
 
     def handlers(self) -> dict[str, Any]:
         @self._route(fetch=False, initiate=True)
-        def download():
+        def put_manifest_files():
             return self.download(fetch=False)
 
         @self._route(fetch=False, initiate=False)
-        def download_with_token(token: str):
+        def get_manifest_files_token(token: str):
             return self.download(fetch=False, token_or_key=token)
 
         @self._route(fetch=True, initiate=True)
-        def fetch_download():
+        def put_fetch_manifest_files():
             return self.download(fetch=True)
 
         @self._route(fetch=True, initiate=False)
-        def fetch_download_with_token(token: str):
+        def get_fetch_manifest_files_token(token: str):
             return self.download(fetch=True, token_or_key=token)
 
         @self.app.lambda_function(name=config.manifest_sfn)
