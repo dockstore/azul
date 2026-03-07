@@ -4,6 +4,7 @@ from collections.abc import (
 from typing import (
     Any,
     TypedDict,
+    Union,
     cast,
     get_type_hints,
 )
@@ -589,9 +590,13 @@ class ManifestController(QueryController):
         url = self.app.base_url.add(path=path)
         return url.set(args=params)
 
-    def _unpack_token_or_key(self,
-                             token_or_key: str | None
-                             ) -> tuple[None, None] | tuple[Token, None] | tuple[None, SignedManifestKey]:
+    type TokenOrKey = Union[
+        tuple[None, None],
+        tuple[Token, None],
+        tuple[None, SignedManifestKey]
+    ]
+
+    def _unpack_token_or_key(self, token_or_key: str | None) -> TokenOrKey:
         if token_or_key is None:
             return None, None
         else:
