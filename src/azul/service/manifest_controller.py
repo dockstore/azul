@@ -405,7 +405,7 @@ class ManifestController(QueryController):
             validate_params(query_params,
                             catalog=self._validate_catalog,
                             format=self._validate_manifest_format,
-                            filters=self.validate_filters)
+                            filters=self._validate_filters)
             # Now that the catalog is valid, we can provide the default format that
             # depends on it
             default_format = self._metadata_plugin.manifest_formats[0].value

@@ -348,7 +348,7 @@ class IndexController(QueryController):
         query_params = self._hoist_parameters(request)
         validate_params(query_params,
                         catalog=self._validate_catalog,
-                        filters=self.validate_filters,
+                        filters=self._validate_filters,
                         order=self._validate_order,
                         search_after=partial(self._validate_json_param, 'search_after'),
                         search_after_uid=str,
@@ -381,7 +381,7 @@ class IndexController(QueryController):
                         filters=str,
                         catalog=self._validate_catalog)
         filters = query_params.get('filters', '{}')
-        self.validate_filters(filters)
+        self._validate_filters(filters)
         authentication = self._authentication(request)
         filters = self._prepare_filters(self.app.catalog, authentication, filters)
         try:

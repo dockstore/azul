@@ -202,7 +202,7 @@ class QueryController(ServiceController, metaclass=ABCMeta):
         if field not in fields:
             raise BRE(f'Unknown field `{field}`')
 
-    def validate_filters(self, filters):
+    def _validate_filters(self, filters):
         filters = self._validate_json_param('filters', filters)
 
         validator = self._filter_schema_validator(self.app.catalog)
