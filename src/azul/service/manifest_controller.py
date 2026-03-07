@@ -118,7 +118,7 @@ class ManifestController(QueryController):
         url = self.app.base_url.add(path=path)
         return url.set(args=params)
 
-    def validate_manifest_format(self, format: str):
+    def _validate_manifest_format(self, format: str):
         supported_formats = {f.value for f in self._metadata_plugin.manifest_formats}
         try:
             ManifestFormat(format)
@@ -425,7 +425,7 @@ class ManifestController(QueryController):
             # before any other potentially catalog-dependent validators are invoked
             validate_params(query_params,
                             catalog=self._validate_catalog,
-                            format=self.validate_manifest_format,
+                            format=self._validate_manifest_format,
                             filters=self.validate_filters)
             # Now that the catalog is valid, we can provide the default format that
             # depends on it
