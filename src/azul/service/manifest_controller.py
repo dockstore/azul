@@ -198,7 +198,7 @@ class ManifestController(QueryController):
                     '''),
                 'parameters': [
                     self._catalog_param_spec,
-                    self.filters_param_spec,
+                    self._filters_param_spec,
                     params.query(
                         'format',
                         schema.optional(

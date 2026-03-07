@@ -119,7 +119,7 @@ class QueryController(ServiceController, metaclass=ABCMeta):
         ''' % (method, endpoint, equivalent_method, endpoint))
 
     @property
-    def filters_param_spec(self):
+    def _filters_param_spec(self):
         filter_schema = self._filter_schema(self.app.catalog, Mode.openapi)
         return params.query(
             'filters',

@@ -179,7 +179,7 @@ class IndexController(QueryController):
     def _search_entities_params_spec(self):
         return [
             self._catalog_param_spec,
-            self.filters_param_spec,
+            self._filters_param_spec,
             params.path(
                 'entity_type',
                 schema.enum(*self._metadata_plugin.exposed_indices.keys()),
@@ -247,7 +247,7 @@ class IndexController(QueryController):
     def _summary_spec(self):
         return {
             'tags': ['Index'],
-            'parameters': [self._catalog_param_spec, self.filters_param_spec]
+            'parameters': [self._catalog_param_spec, self._filters_param_spec]
         }
 
     def handlers(self) -> dict[str, Any]:
