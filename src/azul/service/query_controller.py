@@ -71,19 +71,19 @@ class QueryController(ServiceController, metaclass=ABCMeta):
         return self._service.metadata_plugin(self.app.catalog)
 
     @property
-    def fields(self) -> Sequence[str]:
-        organic, synthetic = self.organic_fields, self.synthetic_fields
+    def _fields(self) -> Sequence[str]:
+        organic, synthetic = self._organic_fields, self._synthetic_fields
         all = OrderedSet(organic)
         all.update(synthetic)
         assert len(all) == len(organic) + len(synthetic)
         return tuple(all)
 
     @property
-    def organic_fields(self) -> Sequence[str]:
+    def _organic_fields(self) -> Sequence[str]:
         return sorted(self._metadata_plugin.field_mapping.keys())
 
     @property
-    def synthetic_fields(self) -> Sequence[str]:
+    def _synthetic_fields(self) -> Sequence[str]:
         return self._metadata_plugin.special_fields.accessible.name,
 
     def _hoist_parameters(self, request: Request) -> MultiDict:
@@ -157,7 +157,7 @@ class QueryController(ServiceController, metaclass=ABCMeta):
                 "unit": "year"}]}}`. Both keys are required. `{"organismAge": {"is":
                 [null]}}` selects entities that have no organism age.''' + f'''
 
-                Supported field names are: {', '.join(self.fields)}
+                Supported field names are: {', '.join(self._fields)}
             ''')
         )
 
@@ -187,7 +187,7 @@ class QueryController(ServiceController, metaclass=ABCMeta):
                                       additionalProperties=False,
                                       properties={
                                           field: _filter_schema(types[field])
-                                          for field in self.fields
+                                          for field in self._fields
                                       })
         return filter_schema
 
@@ -198,7 +198,7 @@ class QueryController(ServiceController, metaclass=ABCMeta):
             raise BRE(f'The {name!r} parameter is not valid JSON')
 
     def validate_field(self, field: str, *, include_synthetic: bool = False):
-        fields = self.fields if include_synthetic else self.organic_fields
+        fields = self._fields if include_synthetic else self._organic_fields
         if field not in fields:
             raise BRE(f'Unknown field `{field}`')
 
