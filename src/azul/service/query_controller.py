@@ -163,7 +163,7 @@ class QueryController(ServiceController, metaclass=ABCMeta):
 
     @cache
     def _filter_schema(self, catalog: CatalogName, mode: Mode) -> JSON:
-        types = self.field_types(catalog)
+        types = self._field_types(catalog)
 
         def _filter_schema(field_type):
             operators = field_type.supported_filter_operators
@@ -221,7 +221,7 @@ class QueryController(ServiceController, metaclass=ABCMeta):
         return jsonschema.validators.validator_for(schema)(schema)
 
     @cache
-    def field_types(self, catalog: CatalogName) -> Mapping[str, FieldType]:
+    def _field_types(self, catalog: CatalogName) -> Mapping[str, FieldType]:
         """
         Returns the field type for each supported sort and filter field, using
         the name of the field as provided by clients.
