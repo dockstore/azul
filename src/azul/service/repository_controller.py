@@ -80,17 +80,17 @@ log = logging.getLogger(__name__)
 class RepositoryController(ServiceController):
 
     @cached_property
-    def service(self) -> IndexService:
+    def _service(self) -> IndexService:
         return IndexService()
 
-    def mirror_service(self, catalog: CatalogName) -> BaseMirrorService:
-        return self.service.mirror_service(catalog)
+    def _mirror_service(self, catalog: CatalogName) -> BaseMirrorService:
+        return self._service.mirror_service(catalog)
 
-    def repository_plugin(self, catalog: CatalogName) -> RepositoryPlugin:
-        return self.service.repository_plugin(catalog)
+    def _repository_plugin(self, catalog: CatalogName) -> RepositoryPlugin:
+        return self._service.repository_plugin(catalog)
 
     @property
-    def repository_files_spec(self):
+    def _repository_files_spec(self):
         return {
             'tags': ['Repository'],
             'parameters': [
@@ -155,7 +155,7 @@ class RepositoryController(ServiceController):
             interactive=False,
             cors=True,
             spec={
-                **self.repository_files_spec,
+                **self._repository_files_spec,
                 'summary': 'Redirect to a URL for downloading a given data file from the '
                            'underlying repository',
                 'description': fd('''
@@ -221,7 +221,7 @@ class RepositoryController(ServiceController):
             methods=['GET'],
             cors=True,
             spec={
-                **self.repository_files_spec,
+                **self._repository_files_spec,
                 'summary': 'Request a URL for downloading a given data file',
                 'responses': {
                     '200': {
@@ -344,10 +344,10 @@ class RepositoryController(ServiceController):
         token = query_params.get('token')
 
         if request_index == 0:
-            file = self.service.get_data_file(catalog=catalog,
-                                              file_uuid=file_uuid,
-                                              file_version=file_version,
-                                              filters=self.get_filters(catalog, authentication, None))
+            file = self._service.get_data_file(catalog=catalog,
+                                               file_uuid=file_uuid,
+                                               file_version=file_version,
+                                               filters=self.get_filters(catalog, authentication, None))
             if file is None:
                 raise NotFoundError(f'Unable to find file {file_uuid!r}, '
                                     f'version {file_version!r} in catalog {catalog!r}')
@@ -377,11 +377,11 @@ class RepositoryController(ServiceController):
                     'Content-Range': f'bytes */{file.size}'
                 }
 
-        plugin = self.repository_plugin(catalog)
+        plugin = self._repository_plugin(catalog)
 
         mirror_url = None
         if config.enable_mirroring:
-            mirror_service = self.mirror_service(catalog)
+            mirror_service = self._mirror_service(catalog)
             if mirror_service.info_exists(file):
                 mirror_url = mirror_service.mirror_url(file)
 
@@ -543,7 +543,7 @@ class RepositoryController(ServiceController):
                                request_index: int
                                ) -> dict[str, Validator]:
         all_file_validators: Mapping[str, Validator] = dict(
-            version=self.repository_plugin(catalog).validate_version,
+            version=self._repository_plugin(catalog).validate_version,
             fileName=str,
             drsUri=str,
             sha256=str,
@@ -605,4 +605,4 @@ class RepositoryController(ServiceController):
     }
 
     def _file_class(self, catalog: CatalogName) -> type[File]:
-        return self.service.metadata_plugin(catalog).file_class
+        return self._service.metadata_plugin(catalog).file_class
