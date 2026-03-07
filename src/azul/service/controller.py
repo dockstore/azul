@@ -57,7 +57,7 @@ class ServiceController(SourceController):
             path = ('fetch', *path)
         return path
 
-    file_fqid_parameters_spec = [
+    _file_fqid_parameters_spec = [
         params.path(
             'file_uuid',
             str,
@@ -76,7 +76,7 @@ class ServiceController(SourceController):
     ]
 
     @property
-    def catalog_param_spec(self):
+    def _catalog_param_spec(self):
         return params.query(
             'catalog',
             schema.optional(schema.default(self.app.catalog,

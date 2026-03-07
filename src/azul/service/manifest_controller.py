@@ -197,7 +197,7 @@ class ManifestController(QueryController):
                         [1]: #operations-Manifests-get_manifest_files
                     '''),
                 'parameters': [
-                    self.catalog_param_spec,
+                    self._catalog_param_spec,
                     self.filters_param_spec,
                     params.query(
                         'format',

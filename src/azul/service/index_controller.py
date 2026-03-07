@@ -91,7 +91,7 @@ class IndexController(QueryController):
             'summary': 'Detailed information on a particular entity.',
             'tags': ['Index'],
             'parameters': [
-                self.catalog_param_spec,
+                self._catalog_param_spec,
                 params.path('entity_type', str, description='The type of the desired entity'),
                 params.path('entity_id', str, description='The UUID of the desired entity')
             ],
@@ -178,7 +178,7 @@ class IndexController(QueryController):
 
     def _search_entities_params_spec(self):
         return [
-            self.catalog_param_spec,
+            self._catalog_param_spec,
             self.filters_param_spec,
             params.path(
                 'entity_type',
@@ -247,7 +247,7 @@ class IndexController(QueryController):
     def _summary_spec(self):
         return {
             'tags': ['Index'],
-            'parameters': [self.catalog_param_spec, self.filters_param_spec]
+            'parameters': [self._catalog_param_spec, self.filters_param_spec]
         }
 
     def handlers(self) -> dict[str, Any]:

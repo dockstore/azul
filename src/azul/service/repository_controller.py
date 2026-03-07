@@ -93,8 +93,8 @@ class RepositoryController(ServiceController):
         return {
             'tags': ['Repository'],
             'parameters': [
-                self.catalog_param_spec,
-                *self.file_fqid_parameters_spec,
+                self._catalog_param_spec,
+                *self._file_fqid_parameters_spec,
                 params.query(
                     'fileName',
                     schema.optional(str),
@@ -275,7 +275,7 @@ class RepositoryController(ServiceController):
             spec={
                 'summary': 'List available data sources',
                 'tags': ['Repository'],
-                'parameters': [self.catalog_param_spec],
+                'parameters': [self._catalog_param_spec],
                 'responses': {
                     '200': {
                         'description': fd('''
