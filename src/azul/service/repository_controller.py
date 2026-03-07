@@ -79,6 +79,16 @@ log = logging.getLogger(__name__)
 
 class RepositoryController(ServiceController):
 
+    @cached_property
+    def service(self) -> IndexService:
+        return IndexService()
+
+    def mirror_service(self, catalog: CatalogName) -> BaseMirrorService:
+        return self.service.mirror_service(catalog)
+
+    def repository_plugin(self, catalog: CatalogName) -> RepositoryPlugin:
+        return self.service.repository_plugin(catalog)
+
     @property
     def repository_files_spec(self):
         return {
@@ -137,16 +147,6 @@ class RepositoryController(ServiceController):
                              description='Reserved. Do not pass explicitly.')
             ]
         }
-
-    @cached_property
-    def service(self) -> IndexService:
-        return IndexService()
-
-    def mirror_service(self, catalog: CatalogName) -> BaseMirrorService:
-        return self.service.mirror_service(catalog)
-
-    def repository_plugin(self, catalog: CatalogName) -> RepositoryPlugin:
-        return self.service.repository_plugin(catalog)
 
     def handlers(self) -> dict[str, Any]:
         @self.app.route(
