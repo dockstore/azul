@@ -447,7 +447,8 @@ class ManifestController(QueryController):
                 # be a cached manifest, so we'll need to look it up.
                 format = ManifestFormat(query_params['format'])
                 catalog = query_params.get('catalog', config.default_catalog)
-                filters = self.get_filters(catalog, authentication, query_params.get('filters'))
+                filters = query_params.get('filters')
+                filters = self.get_filters(catalog, authentication, filters)
                 try:
                     manifest = self._service.get_cached_manifest(format=format,
                                                                  catalog=catalog,
