@@ -267,7 +267,7 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                              manifest_key=manifest_key.to_json(),
                              partition=partitions[0].to_json())
                 controller: ManifestController = self._app.manifest_controller
-                service = controller.async_service
+                service = controller._async_service
                 generation_id = manifest_key.uuid
                 execution_names = [
                     service.execution_name(generation_id, iteration=i)

@@ -93,7 +93,7 @@ assert manifest_state_key in get_type_hints(ManifestGenerationState)
 class ManifestController(QueryController):
 
     @cached_property
-    def async_service(self) -> AsyncManifestService:
+    def _async_service(self) -> AsyncManifestService:
         return AsyncManifestService()
 
     @cached_property
@@ -513,7 +513,7 @@ class ManifestController(QueryController):
         if iteration > max_iteration:
             raise ChaliceViewError('Too many executions of this manifest generation')
         try:
-            return self.async_service.start_generation(generation_id, input, iteration)
+            return self._async_service.start_generation(generation_id, input, iteration)
         except GenerationFinished as e:
             # Returning a token will result in a redirect. If the client follows
             # that redirect, and if the manifest still doesn't exist, we'll end
@@ -574,7 +574,7 @@ class ManifestController(QueryController):
             # A token for an execution was given
             assert manifest_key is None, manifest_key
             try:
-                token_or_result = self.async_service.inspect_generation(token)
+                token_or_result = self._async_service.inspect_generation(token)
             except NoSuchGeneration:
                 raise BadRequestError('Invalid token')
             except GenerationFailed as e:
