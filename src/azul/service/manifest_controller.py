@@ -412,7 +412,7 @@ class ManifestController(QueryController):
         def generate_manifest(event: AnyJSON, _context: LambdaContext):
             assert isinstance(event, Mapping)
             assert all(isinstance(k, str) for k in event.keys())
-            return self.get_manifest(event)
+            return self.generate(event)
 
         return locals()
 
@@ -589,29 +589,6 @@ class ManifestController(QueryController):
                 )
             return Response(body=new_body, status_code=status, headers=headers)
 
-    def get_manifest(self, state: JSON) -> ManifestGenerationState:
-        assert is_of_type(state, ManifestGenerationState)
-        partition = ManifestPartition.from_json(not_none(state['partition']))
-        manifest_key = ManifestKey.from_json(state['manifest_key'])
-        result = self._service.get_manifest(format=manifest_key.format,
-                                            catalog=manifest_key.catalog,
-                                            filters=Filters.from_json(state['filters']),
-                                            partition=partition,
-                                            manifest_key=manifest_key)
-        if isinstance(result, ManifestPartition):
-            assert not result.is_last, result
-            return {
-                **state,
-                'partition': result.to_json()
-            }
-        elif isinstance(result, Manifest):
-            return {
-                # The presence of this key terminates the step function loop
-                'manifest': result.to_json()
-            }
-        else:
-            assert False, type(result)
-
     def _unpack_token_or_key(self,
                              token_or_key: str | None
                              ) -> tuple[Token | None, None] | tuple[Token, None] | tuple[None, SignedManifestKey]:
@@ -670,3 +647,26 @@ class ManifestController(QueryController):
             # up right back in this method and can then try starting the next
             # iteration.
             return e.token
+
+    def generate(self, state: JSON) -> ManifestGenerationState:
+        assert is_of_type(state, ManifestGenerationState)
+        partition = ManifestPartition.from_json(not_none(state['partition']))
+        manifest_key = ManifestKey.from_json(state['manifest_key'])
+        result = self._service.get_manifest(format=manifest_key.format,
+                                            catalog=manifest_key.catalog,
+                                            filters=Filters.from_json(state['filters']),
+                                            partition=partition,
+                                            manifest_key=manifest_key)
+        if isinstance(result, ManifestPartition):
+            assert not result.is_last, result
+            return {
+                **state,
+                'partition': result.to_json()
+            }
+        elif isinstance(result, Manifest):
+            return {
+                # The presence of this key terminates the step function loop
+                'manifest': result.to_json()
+            }
+        else:
+            assert False, type(result)
