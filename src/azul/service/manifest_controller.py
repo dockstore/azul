@@ -118,18 +118,6 @@ class ManifestController(QueryController):
         url = self.app.base_url.add(path=path)
         return url.set(args=params)
 
-    def _validate_manifest_format(self, format: str):
-        supported_formats = {f.value for f in self._metadata_plugin.manifest_formats}
-        try:
-            ManifestFormat(format)
-        except ValueError:
-            raise BadRequestError(f'Unknown manifest format `{format}`. '
-                                  f'Must be one of {supported_formats}')
-        else:
-            if format not in supported_formats:
-                raise BadRequestError(f'Manifest format `{format}` is not supported for '
-                                      f'catalog {self.app.catalog}. Must be one of {supported_formats}')
-
     def _route(self, *, fetch: bool, initiate: bool):
         path = self._manifest_path(fetch=fetch, token=None if initiate else '{token}')
         return self.app.route(
@@ -438,6 +426,18 @@ class ManifestController(QueryController):
                               token_or_key=token_or_key,
                               fetch=fetch,
                               authentication=authentication)
+
+    def _validate_manifest_format(self, format: str):
+        supported_formats = {f.value for f in self._metadata_plugin.manifest_formats}
+        try:
+            ManifestFormat(format)
+        except ValueError:
+            raise BadRequestError(f'Unknown manifest format `{format}`. '
+                                  f'Must be one of {supported_formats}')
+        else:
+            if format not in supported_formats:
+                raise BadRequestError(f'Manifest format `{format}` is not supported for '
+                                      f'catalog {self.app.catalog}. Must be one of {supported_formats}')
 
     def _download(self,
                   *,
