@@ -294,7 +294,7 @@ class RepositoryController(ServiceController):
                 }
             }
         )
-        def list_sources() -> Response:
+        def repository_sources() -> Response:
             request = self.current_request
             query_params = self._query_params(request)
             validate_params(query_params,
