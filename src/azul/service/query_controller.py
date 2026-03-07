@@ -197,7 +197,7 @@ class QueryController(ServiceController, metaclass=ABCMeta):
         except json.decoder.JSONDecodeError:
             raise BRE(f'The {name!r} parameter is not valid JSON')
 
-    def validate_field(self, field: str, *, include_synthetic: bool = False):
+    def _validate_field(self, field: str, *, include_synthetic: bool = False):
         fields = self._fields if include_synthetic else self._organic_fields
         if field not in fields:
             raise BRE(f'Unknown field `{field}`')

@@ -355,7 +355,7 @@ class IndexController(QueryController):
                         search_before=partial(self._validate_json_param, 'search_before'),
                         search_before_uid=str,
                         size=partial(self._validate_size, entity_type),
-                        sort=self.validate_field)
+                        sort=self._validate_field)
         self._validate_entity_type(entity_type)
         filters = query_params.get('filters')
         pagination = self._pagination(entity_type)
