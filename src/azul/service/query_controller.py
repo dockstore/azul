@@ -191,7 +191,7 @@ class QueryController(ServiceController, metaclass=ABCMeta):
                                       })
         return filter_schema
 
-    def validate_json_param(self, name: str, value: str) -> MutableJSON:
+    def _validate_json_param(self, name: str, value: str) -> MutableJSON:
         try:
             return json.loads(value)
         except json.decoder.JSONDecodeError:
@@ -203,7 +203,7 @@ class QueryController(ServiceController, metaclass=ABCMeta):
             raise BRE(f'Unknown field `{field}`')
 
     def validate_filters(self, filters):
-        filters = self.validate_json_param('filters', filters)
+        filters = self._validate_json_param('filters', filters)
 
         validator = self._filter_schema_validator(self.app.catalog)
         try:
