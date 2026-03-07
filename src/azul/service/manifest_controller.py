@@ -108,12 +108,12 @@ class ManifestController(QueryController):
             path = (*path, token)
         return path
 
-    def manifest_url(self,
-                     *,
-                     fetch: bool,
-                     token_or_key: str | None = None,
-                     **params: str
-                     ) -> mutable_furl:
+    def _manifest_url(self,
+                      *,
+                      fetch: bool,
+                      token_or_key: str | None = None,
+                      **params: str
+                      ) -> mutable_furl:
         path = self._manifest_path(fetch=fetch, token=token_or_key)
         url = self.app.base_url.add(path=path)
         return url.set(args=params)
@@ -612,7 +612,7 @@ class ManifestController(QueryController):
 
         if manifest is None:
             assert token is not None
-            url = self.manifest_url(fetch=fetch, token_or_key=token.encode())
+            url = self._manifest_url(fetch=fetch, token_or_key=token.encode())
             body = {
                 'Status': 301,
                 'Location': str(url),
@@ -641,7 +641,7 @@ class ManifestController(QueryController):
                 # plugin does not support cURL-format manifests.
                 assert not config.is_anvil_enabled(manifest_key.catalog)
                 manifest_key = self._service.sign_manifest_key(manifest_key)
-                url = self.manifest_url(fetch=False, token_or_key=manifest_key.encode())
+                url = self._manifest_url(fetch=False, token_or_key=manifest_key.encode())
             else:
                 url = furl(self._service.get_manifest_url(manifest))
             body = {
