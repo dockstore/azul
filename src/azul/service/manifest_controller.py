@@ -393,20 +393,20 @@ class ManifestController(QueryController):
 
     def handlers(self) -> dict[str, Any]:
         @self._route(fetch=False, initiate=True)
-        def file_manifest():
-            return self._file_manifest(fetch=False)
+        def download():
+            return self.download(fetch=False)
 
         @self._route(fetch=False, initiate=False)
-        def file_manifest_with_token(token: str):
-            return self._file_manifest(fetch=False, token_or_key=token)
+        def download_with_token(token: str):
+            return self.download(fetch=False, token_or_key=token)
 
         @self._route(fetch=True, initiate=True)
-        def fetch_file_manifest():
-            return self._file_manifest(fetch=True)
+        def fetch_download():
+            return self.download(fetch=True)
 
         @self._route(fetch=True, initiate=False)
-        def fetch_file_manifest_with_token(token: str):
-            return self._file_manifest(fetch=True, token_or_key=token)
+        def fetch_download_with_token(token: str):
+            return self.download(fetch=True, token_or_key=token)
 
         @self.app.lambda_function(name=config.manifest_sfn)
         def generate_manifest(event: AnyJSON, _context: LambdaContext):
@@ -416,7 +416,7 @@ class ManifestController(QueryController):
 
         return locals()
 
-    def _file_manifest(self, fetch: bool, token_or_key: str | None = None):
+    def download(self, fetch: bool, token_or_key: str | None = None):
         request = self.current_request
         query_params = self._hoist_parameters(request)
         if token_or_key is None:
@@ -434,17 +434,17 @@ class ManifestController(QueryController):
         else:
             validate_params(query_params)
         authentication = self._authentication(request)
-        return self.get_manifest_async(query_params=query_params,
-                                       token_or_key=token_or_key,
-                                       fetch=fetch,
-                                       authentication=authentication)
+        return self._download(query_params=query_params,
+                              token_or_key=token_or_key,
+                              fetch=fetch,
+                              authentication=authentication)
 
-    def get_manifest_async(self,
-                           *,
-                           token_or_key: str | None,
-                           query_params: Mapping[str, str],
-                           fetch: bool,
-                           authentication: Authentication | None):
+    def _download(self,
+                  *,
+                  token_or_key: str | None,
+                  query_params: Mapping[str, str],
+                  fetch: bool,
+                  authentication: Authentication | None):
         manifest: Manifest | None
         manifest_key: SignedManifestKey | ManifestKey | None
         token, manifest_key = self._unpack_token_or_key(token_or_key)
