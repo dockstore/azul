@@ -209,7 +209,7 @@ class RepositoryController(ServiceController):
             }
         )
         def repository_files(file_uuid: str) -> Response:
-            result = _repository_files(file_uuid, fetch=False)
+            result = self.download_file(file_uuid, fetch=False)
             status_code = json_int(result.pop('Status'))
             return Response(body='',
                             headers={k: str(v) for k, v in result.items()},
@@ -247,26 +247,8 @@ class RepositoryController(ServiceController):
             }
         )
         def fetch_repository_files(file_uuid: str) -> Response:
-            body = _repository_files(file_uuid, fetch=True)
+            body = self.download_file(file_uuid, fetch=True)
             return Response(body=json.dumps(body), status_code=200)
-
-        def _repository_files(file_uuid: str, fetch: bool) -> MutableJSON:
-            request = self.current_request
-            query_params = self._query_params(request)
-            headers = request.headers
-
-            # FIXME: Prevent duplicate filenames from files in different subgraphs by
-            #        prepending the subgraph UUID to each filename when downloaded
-            #        https://github.com/DataBiosphere/azul/issues/2682
-
-            catalog = self.app.catalog
-            authentication = self._authentication(request)
-            return self.download_file(catalog=catalog,
-                                      fetch=fetch,
-                                      file_uuid=file_uuid,
-                                      query_params=query_params,
-                                      headers=headers,
-                                      authentication=authentication)
 
         @self.app.route(
             '/repository/sources',
@@ -306,14 +288,32 @@ class RepositoryController(ServiceController):
 
         return locals()
 
-    def download_file(self,
-                      catalog: CatalogName,
-                      fetch: bool,
-                      file_uuid: str,
-                      query_params: Mapping[str, str],
-                      headers: Mapping[str, str],
-                      authentication: Authentication | None
-                      ):
+    def download_file(self, file_uuid: str, fetch: bool) -> MutableJSON:
+        request = self.current_request
+        query_params = self._query_params(request)
+        headers = request.headers
+
+        # FIXME: Prevent duplicate filenames from files in different subgraphs by
+        #        prepending the subgraph UUID to each filename when downloaded
+        #        https://github.com/DataBiosphere/azul/issues/2682
+
+        catalog = self.app.catalog
+        authentication = self._authentication(request)
+        return self._download_file(catalog=catalog,
+                                   fetch=fetch,
+                                   file_uuid=file_uuid,
+                                   query_params=query_params,
+                                   headers=headers,
+                                   authentication=authentication)
+
+    def _download_file(self,
+                       catalog: CatalogName,
+                       fetch: bool,
+                       file_uuid: str,
+                       query_params: Mapping[str, str],
+                       headers: Mapping[str, str],
+                       authentication: Authentication | None
+                       ):
 
         # Check the catalog in a separate step so that the plugins can be loaded
         # safely, since doing so requires a valid catalog. We need the metadata
