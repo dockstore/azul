@@ -289,7 +289,7 @@ class ManifestTestCase(WebServiceTestCase,
 
     @property
     def _service(self):
-        return ManifestService(file_url_func=self._controller.file_url)
+        return ManifestService(file_url_func=self._controller._file_url)
 
     def _get_manifest(self,
                       format: ManifestFormat,
@@ -1128,7 +1128,7 @@ class TestManifestCache(DCP1ManifestTestCase):
                 'is': [projects[0], projects[1]]
             }
         }))
-        service = ManifestService(file_url_func=self._controller.file_url)
+        service = ManifestService(file_url_func=self._controller._file_url)
 
         def manifest_generator(format: ManifestFormat) -> ManifestGenerator:
             generator_cls = ManifestGenerator.cls_for_format(format)

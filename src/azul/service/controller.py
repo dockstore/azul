@@ -40,13 +40,13 @@ from azul.strings import (
 
 class ServiceController(SourceController):
 
-    def file_url(self,
-                 *,
-                 catalog: CatalogName,
-                 file_uuid: str,
-                 fetch: bool = True,
-                 **params: str
-                 ) -> mutable_furl:
+    def _file_url(self,
+                  *,
+                  catalog: CatalogName,
+                  file_uuid: str,
+                  fetch: bool = True,
+                  **params: str
+                  ) -> mutable_furl:
         path = self._file_path(fetch=fetch, file_uuid=file_uuid)
         url = self.app.base_url.add(path=path)
         return url.set(args=dict(catalog=catalog, **params))

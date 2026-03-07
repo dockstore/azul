@@ -365,7 +365,7 @@ class IndexController(QueryController):
         try:
             response = self._service.search(catalog=self.app.catalog,
                                             entity_type=entity_type,
-                                            file_url_func=self.file_url,
+                                            file_url_func=self._file_url,
                                             item_id=entity_id,
                                             filters=filters,
                                             pagination=pagination)

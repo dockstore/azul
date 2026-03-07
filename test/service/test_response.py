@@ -162,7 +162,7 @@ class TestIndexResponse(IndexResponseTestCase):
 
     @property
     def file_url_func(self):
-        return self._controller.file_url
+        return self._controller._file_url
 
     # FIXME: Use response from `/index/files` to validate
     #        https://github.com/DataBiosphere/azul/issues/2970

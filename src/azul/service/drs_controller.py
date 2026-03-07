@@ -348,12 +348,12 @@ class DRSController(ServiceController):
         Converts an aggregate file document to a DRS data object response.
         """
         urls = [
-            self.file_url(catalog=catalog,
-                          file_uuid=file.uuid,
-                          version=not_none(file.version),
-                          fetch=False,
-                          wait='1',
-                          fileName=file.name),
+            self._file_url(catalog=catalog,
+                           file_uuid=file.uuid,
+                           version=not_none(file.version),
+                           fetch=False,
+                           wait='1',
+                           fileName=file.name),
             self._dos_gs_url(file.uuid, file.version)
         ]
 

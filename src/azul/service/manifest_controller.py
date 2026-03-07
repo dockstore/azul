@@ -99,7 +99,7 @@ class ManifestController(QueryController):
 
     @cached_property
     def _service(self) -> ManifestService:
-        return ManifestService(file_url_func=self.file_url)
+        return ManifestService(file_url_func=self._file_url)
 
     def _manifest_path(self, *, fetch: bool, token: str | None) -> tuple[str, ...]:
         path: tuple[str, ...] = ('manifest', 'files')
