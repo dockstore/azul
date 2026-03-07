@@ -99,11 +99,11 @@ class QueryController(ServiceController, metaclass=ABCMeta):
                     query_params.update(body)
         return query_params
 
-    def parameter_hoisting_note(self,
-                                method: str,
-                                endpoint: str,
-                                equivalent_method: str
-                                ) -> str:
+    def _parameter_hoisting_note(self,
+                                 method: str,
+                                 endpoint: str,
+                                 equivalent_method: str
+                                 ) -> str:
         return fd('''
             Any of the query parameters documented below can alternatively be passed
             as a property of a JSON object in the body of the request. This can be

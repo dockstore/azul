@@ -139,7 +139,7 @@ class ManifestController(QueryController):
                         Swagger UI. Please use [PUT /fetch/manifest/files][1] instead.
 
                         [1]: #operations-Manifests-put_fetch_manifest_files
-                    ''') + self.parameter_hoisting_note('PUT', '/manifest/files', 'PUT')
+                    ''') + self._parameter_hoisting_note('PUT', '/manifest/files', 'PUT')
                 if initiate and not fetch else
                 fd('''
                         Check on the status of an ongoing manifest preparation job,
@@ -174,7 +174,7 @@ class ManifestController(QueryController):
                         manifest generation job is done.
 
                         [1]: #operations-Manifests-put_manifest_files
-                    ''') + self.parameter_hoisting_note('PUT', '/fetch/manifest/files', 'PUT')
+                    ''') + self._parameter_hoisting_note('PUT', '/fetch/manifest/files', 'PUT')
                 if initiate and fetch else
                 fd('''
                         Check on the status of an ongoing manifest preparation job,

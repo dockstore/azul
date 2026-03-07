@@ -133,7 +133,7 @@ class IndexController(QueryController):
             '''),
             'deprecated': post,
             'description':
-                iif(post, self.parameter_hoisting_note('GET', '/index/files', 'POST') + fd('''
+                iif(post, self._parameter_hoisting_note('GET', '/index/files', 'POST') + fd('''
 
                 Note that the Swagger UI can't currently be used to pass a body.
 
