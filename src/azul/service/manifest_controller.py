@@ -100,24 +100,6 @@ class ManifestController(QueryController):
     def _service(self) -> ManifestService:
         return ManifestService(file_url_func=self._file_url)
 
-    def _manifest_path(self, *, fetch: bool, token: str | None) -> tuple[str, ...]:
-        path: tuple[str, ...] = ('manifest', 'files')
-        if fetch:
-            path = ('fetch', *path)
-        if token is not None:
-            path = (*path, token)
-        return path
-
-    def _manifest_url(self,
-                      *,
-                      fetch: bool,
-                      token_or_key: str | None = None,
-                      **params: str
-                      ) -> mutable_furl:
-        path = self._manifest_path(fetch=fetch, token=token_or_key)
-        url = self.app.base_url.add(path=path)
-        return url.set(args=params)
-
     def _route(self, *, fetch: bool, initiate: bool):
         path = self._manifest_path(fetch=fetch, token=None if initiate else '{token}')
         return self.app.route(
@@ -379,6 +361,14 @@ class ManifestController(QueryController):
             }
         )
 
+    def _manifest_path(self, *, fetch: bool, token: str | None) -> tuple[str, ...]:
+        path: tuple[str, ...] = ('manifest', 'files')
+        if fetch:
+            path = ('fetch', *path)
+        if token is not None:
+            path = (*path, token)
+        return path
+
     def handlers(self) -> dict[str, Any]:
         @self._route(fetch=False, initiate=True)
         def download():
@@ -588,6 +578,16 @@ class ManifestController(QueryController):
                     for shell, cmd in command_line.items()
                 )
             return Response(body=new_body, status_code=status, headers=headers)
+
+    def _manifest_url(self,
+                      *,
+                      fetch: bool,
+                      token_or_key: str | None = None,
+                      **params: str
+                      ) -> mutable_furl:
+        path = self._manifest_path(fetch=fetch, token=token_or_key)
+        url = self.app.base_url.add(path=path)
+        return url.set(args=params)
 
     def _unpack_token_or_key(self,
                              token_or_key: str | None
