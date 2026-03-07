@@ -39,24 +39,6 @@ from azul.strings import (
 
 
 class ServiceController(SourceController):
-
-    def _file_url(self,
-                  *,
-                  catalog: CatalogName,
-                  file_uuid: str,
-                  fetch: bool = True,
-                  **params: str
-                  ) -> mutable_furl:
-        path = self._file_path(fetch=fetch, file_uuid=file_uuid)
-        url = self.app.base_url.add(path=path)
-        return url.set(args=dict(catalog=catalog, **params))
-
-    def _file_path(self, *, fetch: bool, file_uuid: str) -> tuple[str, ...]:
-        path: tuple[str, ...] = ('repository', 'files', file_uuid)
-        if fetch:
-            path = ('fetch', *path)
-        return path
-
     _file_fqid_parameters_spec = [
         params.path(
             'file_uuid',
@@ -82,6 +64,23 @@ class ServiceController(SourceController):
             schema.optional(schema.default(self.app.catalog,
                                            form=schema.enum(*config.catalogs))),
             description='The name of the catalog to query.')
+
+    def _file_url(self,
+                  *,
+                  catalog: CatalogName,
+                  file_uuid: str,
+                  fetch: bool = True,
+                  **params: str
+                  ) -> mutable_furl:
+        path = self._file_path(fetch=fetch, file_uuid=file_uuid)
+        url = self.app.base_url.add(path=path)
+        return url.set(args=dict(catalog=catalog, **params))
+
+    def _file_path(self, *, fetch: bool, file_uuid: str) -> tuple[str, ...]:
+        path: tuple[str, ...] = ('repository', 'files', file_uuid)
+        if fetch:
+            path = ('fetch', *path)
+        return path
 
     def get_filters(self,
                     catalog: CatalogName,
