@@ -591,7 +591,7 @@ class ManifestController(QueryController):
 
     def _unpack_token_or_key(self,
                              token_or_key: str | None
-                             ) -> tuple[Token | None, None] | tuple[Token, None] | tuple[None, SignedManifestKey]:
+                             ) -> tuple[None, None] | tuple[Token, None] | tuple[None, SignedManifestKey]:
         if token_or_key is None:
             return None, None
         else:
