@@ -93,6 +93,24 @@ class DRSController(ServiceController):
         errors from this endpoint.
     ''')
 
+    @classmethod
+    def _get_object_response_schema(cls):
+        return responses.json_content(
+            schema.object(
+                created_time=str,
+                id=str,
+                self_uri=str,
+                size=str,
+                version=str,
+                checksums=schema.object(sha1=str, **{'sha-256': str}),
+                access_methods=schema.array(schema.object(
+                    access_url=schema.optional(schema.object(url=str)),
+                    type=schema.optional(str),
+                    access_id=schema.optional(str)
+                ))
+            )
+        )
+
     def handlers(self) -> dict[str, Any]:
         @self.app.route(
             drs_object_url_path(object_id='{file_uuid}'),
@@ -219,24 +237,6 @@ class DRSController(ServiceController):
 
     def _access_url(self, url):
         return {'url': url}
-
-    @classmethod
-    def _get_object_response_schema(cls):
-        return responses.json_content(
-            schema.object(
-                created_time=str,
-                id=str,
-                self_uri=str,
-                size=str,
-                version=str,
-                checksums=schema.object(sha1=str, **{'sha-256': str}),
-                access_methods=schema.array(schema.object(
-                    access_url=schema.optional(schema.object(url=str)),
-                    type=schema.optional(str),
-                    access_id=schema.optional(str)
-                ))
-            )
-        )
 
     def get_object(self, file_uuid, query_params):
         drs_object = DRSObject(file_uuid, version=query_params.get('version'))
