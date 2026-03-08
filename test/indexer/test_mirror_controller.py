@@ -1,5 +1,8 @@
 import hashlib
 import json
+from typing import (
+    ContextManager,
+)
 from unittest.mock import (
     MagicMock,
     patch,
@@ -173,6 +176,9 @@ class TestMirrorController(DCP2TestCase,
         self.service.mirror_sources([(self.source, source_config)])
         return self._read_mirror_queue()
 
+    def _patch_download(self, **kwargs) -> ContextManager:
+        return patch.object(MirrorService, '_download', **kwargs)
+
     def _test_mirror_sources(self):
         source_message = one(self._mirror_sources())
         expected_message = dict(action='MirrorSourceAction',
@@ -210,7 +216,7 @@ class TestMirrorController(DCP2TestCase,
 
     def _test_mirror_file(self, file, file_message):
         event = self._mirror_event(file_message)
-        with patch.object(MirrorService, '_download', return_value=self._file_contents):
+        with self._patch_download(return_value=self._file_contents):
             self.mirror_controller.mirror(event)
         self._validate_file_contents(file, self._file_contents)
         content_types = self._get_content_types_from_info_object(file)
@@ -219,14 +225,14 @@ class TestMirrorController(DCP2TestCase,
     def _test_corrupted_download(self, file_message):
         event = self._mirror_event(file_message)
         corrupted_contents = self._file_contents[:-1] + b'Q'
-        with patch.object(MirrorService, '_download', return_value=corrupted_contents):
+        with self._patch_download(return_value=corrupted_contents):
             with self.assertRaises(AssertionError) as e:
                 self.mirror_controller.mirror(event)
             self.assertTrue(R.caused(e.exception))
 
     def _test_reuploaded_file(self, file_message):
         event = self._mirror_event(file_message)
-        with patch.object(MirrorService, '_download', return_value=self._file_contents):
+        with self._patch_download(return_value=self._file_contents):
             with self.assertRaises(AssertionError) as e:
                 self.mirror_controller.mirror(event)
         self.assertTrue(R.caused(e.exception))
@@ -348,7 +354,7 @@ class TestMirrorController(DCP2TestCase,
         # Skip over mirror_source and mirror_partition to keep things simple
         self._send_mirror_message(self._mirror_file_message(big_file))
         with patch.object(FilePart, 'default_size', new=min_size):
-            with patch.object(MirrorService, '_download', new=download):
+            with self._patch_download(new=download):
                 for action in ['MirrorFileAction', 'MirrorPartAction', 'FinalizeFileAction']:
                     message = one(self._read_mirror_queue())
                     event = self._mirror_event(message)
