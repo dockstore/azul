@@ -168,11 +168,11 @@ class IndexQueueService:
             messages = map(message, prefix.partition_prefixes())
             self.queue_notifications(messages)
 
-    def contribute(self, message: IndexAction):
-        if isinstance(message, IndexPartitionAction):
-            self._index_partition(message)
-        elif isinstance(message, IndexBundleAction):
-            self._index_bundle(message)
+    def contribute(self, action: IndexAction):
+        if isinstance(action, IndexPartitionAction):
+            self._index_partition(action)
+        elif isinstance(action, IndexBundleAction):
+            self._index_bundle(action)
 
     def _index_partition(self, message: IndexPartitionAction) -> None:
         service = self._repository_service
