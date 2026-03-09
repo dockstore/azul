@@ -94,14 +94,6 @@ from azul.types import (
 log = logging.getLogger(__name__)
 
 
-class AzulRequest(Request):
-    """
-    Use only for type hints. The actual requests will be instances of the parent
-    class, but they will have the attributes defined here.
-    """
-    authentication: Authentication | None
-
-
 class TerraTimeoutError(ChaliceViewError):
     STATUS_CODE = 307
 
@@ -135,7 +127,6 @@ class LambdaMetric(Enum):
 
 class AzulChaliceApp(Chalice):
     lambda_context: LambdaContext | None
-    current_request: AzulRequest | None
 
     def __init__(self,
                  app_name: str,
@@ -485,7 +476,6 @@ class AzulChaliceApp(Chalice):
     def __authenticate(self):
         auth = self._authenticate()
         attribute_name = 'authentication'
-        assert attribute_name in AzulRequest.__annotations__
         setattr(self.current_request, attribute_name, auth)
         if auth is None:
             log.info('Did not authenticate request.')
@@ -944,10 +934,21 @@ class Controller:
 
     @property
     def lambda_context(self) -> LambdaContext:
-        assert self.app.lambda_context is not None
-        return self.app.lambda_context
+        return not_none(self.app.lambda_context)
 
     @property
-    def current_request(self) -> AzulRequest:
-        assert self.app.current_request is not None
-        return self.app.current_request
+    def current_request(self) -> Request:
+        return not_none(self.app.current_request)
+
+    def _authentication(self, request: Request) -> Authentication | None:
+        authentication = getattr(request, 'authentication', None)
+        if authentication is not None:
+            assert isinstance(authentication, Authentication)
+        return authentication
+
+    def _query_params(self, request: Request) -> MultiDict:
+        params = request.query_params
+        if params is None:
+            params = MultiDict({})
+            request.query_params = params
+        return params

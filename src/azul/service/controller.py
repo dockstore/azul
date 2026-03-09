@@ -39,25 +39,7 @@ from azul.strings import (
 
 
 class ServiceController(SourceController):
-
-    def file_url(self,
-                 *,
-                 catalog: CatalogName,
-                 file_uuid: str,
-                 fetch: bool = True,
-                 **params: str
-                 ) -> mutable_furl:
-        path = self._file_path(fetch=fetch, file_uuid=file_uuid)
-        url = self.app.base_url.add(path=path)
-        return url.set(args=dict(catalog=catalog, **params))
-
-    def _file_path(self, *, fetch: bool, file_uuid: str) -> tuple[str, ...]:
-        path: tuple[str, ...] = ('repository', 'files', file_uuid)
-        if fetch:
-            path = ('fetch', *path)
-        return path
-
-    file_fqid_parameters_spec = [
+    _file_fqid_parameters_spec = [
         params.path(
             'file_uuid',
             str,
@@ -76,18 +58,35 @@ class ServiceController(SourceController):
     ]
 
     @property
-    def catalog_param_spec(self):
+    def _catalog_param_spec(self):
         return params.query(
             'catalog',
             schema.optional(schema.default(self.app.catalog,
                                            form=schema.enum(*config.catalogs))),
             description='The name of the catalog to query.')
 
-    def get_filters(self,
-                    catalog: CatalogName,
-                    authentication: Authentication | None,
-                    filters: str | None = None
-                    ) -> Filters:
+    def _file_url(self,
+                  *,
+                  catalog: CatalogName,
+                  file_uuid: str,
+                  fetch: bool = True,
+                  **params: str
+                  ) -> mutable_furl:
+        path = self._file_path(fetch=fetch, file_uuid=file_uuid)
+        url = self.app.base_url.add(path=path)
+        return url.set(args=dict(catalog=catalog, **params))
+
+    def _file_path(self, *, fetch: bool, file_uuid: str) -> tuple[str, ...]:
+        path: tuple[str, ...] = ('repository', 'files', file_uuid)
+        if fetch:
+            path = ('fetch', *path)
+        return path
+
+    def _prepare_filters(self,
+                         catalog: CatalogName,
+                         authentication: Authentication | None,
+                         filters: str | None = None
+                         ) -> Filters:
         return Filters(explicit=self._parse_filters(filters),
                        source_ids=self._list_source_ids(catalog, authentication))
 
@@ -100,19 +99,21 @@ class ServiceController(SourceController):
             else:
                 raise
 
-
-def validate_catalog(catalog):
-    try:
-        config.Catalog.validate_name(catalog)
-    except AssertionError as e:
-        if R.caused(e):
-            raise R.propagate(e, BRE)
+    def _validate_catalog(self, catalog: CatalogName):
+        try:
+            config.Catalog.validate_name(catalog)
+        except AssertionError as e:
+            if R.caused(e):
+                raise R.propagate(e, BRE)
+            else:
+                raise
         else:
-            raise
-    else:
-        if catalog not in config.catalogs:
-            raise NotFoundError(f'Catalog name {catalog!r} does not exist. '
-                                f'Must be one of {set(config.catalogs)}.')
+            if catalog not in config.catalogs:
+                raise NotFoundError(f'Catalog name {catalog!r} does not exist. '
+                                    f'Must be one of {set(config.catalogs)}.')
+
+
+type Validator = Callable[[Any], Any]
 
 
 class Mandatory:
@@ -120,7 +121,7 @@ class Mandatory:
     Validation wrapper signifying that a parameter is mandatory.
     """
 
-    def __init__(self, validator: Callable) -> None:
+    def __init__(self, validator: Validator) -> None:
         super().__init__()
         self._validator = validator
 
@@ -130,7 +131,7 @@ class Mandatory:
 
 def validate_params(query_params: Mapping[str, str],
                     allow_extra_params: bool = False,
-                    **validators: Callable[[Any], Any]) -> None:
+                    **validators: Validator) -> None:
     """
     Validates request query parameters for web-service API.
 

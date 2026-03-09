@@ -22,10 +22,10 @@ from unittest.mock import (
     patch,
 )
 import uuid
-
-from deprecated import (
+from warnings import (
     deprecated,
 )
+
 from more_itertools import (
     flatten,
     one,
@@ -252,6 +252,9 @@ class MirrorTestCase(S3TestCase):
         self._create_test_bucket(self.mirror_bucket)
 
 
+# FIXME: Remove deprecation, convert doctests, prevent use as decorator
+#        https://github.com/DataBiosphere/azul/issues/7838
+#
 @deprecated('Instead of decorating your test case, or its test methods in it, '
             'mix in the appropriate subclass of CatalogTestCase.')
 def patch_source_cache(target: Union[None, type, Callable] = None,

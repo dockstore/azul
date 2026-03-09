@@ -1,3 +1,7 @@
+from abc import (
+    ABCMeta,
+    abstractmethod,
+)
 from collections.abc import (
     Sequence,
 )
@@ -9,6 +13,10 @@ from typing import (
 
 from chalice import (
     BadRequestError as BRE,
+)
+from chalice.app import (
+    MultiDict,
+    Request,
 )
 import jsonschema
 import jsonschema.protocols
@@ -40,8 +48,8 @@ from azul.plugins import (
 from azul.service.controller import (
     ServiceController,
 )
-from azul.service.elasticsearch_service import (
-    ElasticsearchService,
+from azul.service.query_service import (
+    QueryService,
 )
 from azul.types import (
     JSON,
@@ -51,30 +59,35 @@ from azul.types import (
 log = logging.getLogger(__name__)
 
 
-class QueryController(ServiceController):
-    service: ElasticsearchService
+class QueryController(ServiceController, metaclass=ABCMeta):
+
+    @property
+    @abstractmethod
+    def _service(self) -> QueryService:
+        raise NotImplementedError
 
     @property
     def _metadata_plugin(self) -> MetadataPlugin:
-        return self.service.metadata_plugin(self.app.catalog)
+        return self._service.metadata_plugin(self.app.catalog)
 
     @property
-    def fields(self) -> Sequence[str]:
-        organic, synthetic = self.organic_fields, self.synthetic_fields
+    def _fields(self) -> Sequence[str]:
+        organic, synthetic = self._organic_fields, self._synthetic_fields
         all = OrderedSet(organic)
         all.update(synthetic)
         assert len(all) == len(organic) + len(synthetic)
         return tuple(all)
 
     @property
-    def organic_fields(self) -> Sequence[str]:
+    def _organic_fields(self) -> Sequence[str]:
         return sorted(self._metadata_plugin.field_mapping.keys())
 
     @property
-    def synthetic_fields(self) -> Sequence[str]:
+    def _synthetic_fields(self) -> Sequence[str]:
         return self._metadata_plugin.special_fields.accessible.name,
 
-    def _hoist_parameters(self, query_params, request):
+    def _hoist_parameters(self, request: Request) -> MultiDict:
+        query_params = self._query_params(request)
         if request.method in ('POST', 'PUT'):
             body = request.json_body
             if body is not None:
@@ -84,12 +97,13 @@ class QueryController(ServiceController):
                     raise BRE('Conflicting keys between body and query parameters')
                 else:
                     query_params.update(body)
+        return query_params
 
-    def parameter_hoisting_note(self,
-                                method: str,
-                                endpoint: str,
-                                equivalent_method: str
-                                ) -> str:
+    def _parameter_hoisting_note(self,
+                                 method: str,
+                                 endpoint: str,
+                                 equivalent_method: str
+                                 ) -> str:
         return fd('''
             Any of the query parameters documented below can alternatively be passed
             as a property of a JSON object in the body of the request. This can be
@@ -105,7 +119,7 @@ class QueryController(ServiceController):
         ''' % (method, endpoint, equivalent_method, endpoint))
 
     @property
-    def filters_param_spec(self):
+    def _filters_param_spec(self):
         filter_schema = self._filter_schema(self.app.catalog, Mode.openapi)
         return params.query(
             'filters',
@@ -143,13 +157,13 @@ class QueryController(ServiceController):
                 "unit": "year"}]}}`. Both keys are required. `{"organismAge": {"is":
                 [null]}}` selects entities that have no organism age.''' + f'''
 
-                Supported field names are: {', '.join(self.fields)}
+                Supported field names are: {', '.join(self._fields)}
             ''')
         )
 
     @cache
     def _filter_schema(self, catalog: CatalogName, mode: Mode) -> JSON:
-        types = self.field_types(catalog)
+        types = self._field_types(catalog)
 
         def _filter_schema(field_type):
             operators = field_type.supported_filter_operators
@@ -173,23 +187,23 @@ class QueryController(ServiceController):
                                       additionalProperties=False,
                                       properties={
                                           field: _filter_schema(types[field])
-                                          for field in self.fields
+                                          for field in self._fields
                                       })
         return filter_schema
 
-    def validate_json_param(self, name: str, value: str) -> MutableJSON:
+    def _validate_json_param(self, name: str, value: str) -> MutableJSON:
         try:
             return json.loads(value)
         except json.decoder.JSONDecodeError:
             raise BRE(f'The {name!r} parameter is not valid JSON')
 
-    def validate_field(self, field: str, *, include_synthetic: bool = False):
-        fields = self.fields if include_synthetic else self.organic_fields
+    def _validate_field(self, field: str, *, include_synthetic: bool = False):
+        fields = self._fields if include_synthetic else self._organic_fields
         if field not in fields:
             raise BRE(f'Unknown field `{field}`')
 
-    def validate_filters(self, filters):
-        filters = self.validate_json_param('filters', filters)
+    def _validate_filters(self, filters):
+        filters = self._validate_json_param('filters', filters)
 
         validator = self._filter_schema_validator(self.app.catalog)
         try:
@@ -207,7 +221,7 @@ class QueryController(ServiceController):
         return jsonschema.validators.validator_for(schema)(schema)
 
     @cache
-    def field_types(self, catalog: CatalogName) -> Mapping[str, FieldType]:
+    def _field_types(self, catalog: CatalogName) -> Mapping[str, FieldType]:
         """
         Returns the field type for each supported sort and filter field, using
         the name of the field as provided by clients.
@@ -215,7 +229,7 @@ class QueryController(ServiceController):
         result = {}
         plugin = self._metadata_plugin
         for field, path in plugin.field_mapping.items():
-            field_type = self.service.field_type(catalog, path)
+            field_type = self._service.field_type(catalog, path)
             if isinstance(field_type, FieldType):
                 result[field] = field_type
         # This field is a synthetic element of the response and will never be

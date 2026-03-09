@@ -46,23 +46,25 @@ class optional(NamedTuple):
 # wholesale and its members referenced by fully qualifying their name so the
 # `object` builtin is not shadowed in the importing module.
 
-# noinspection PyShadowingBuiltins,PyPep8Naming
+@overload
+def object(**properties: Form | optional) -> JSON: ...
+
+
 @overload
 def object(*,
-           additionalProperties: JSON | bool = False,
-           **properties: Form | optional) -> JSON: ...
+           additionalProperties: JSON | bool,  # noqa: N803
+           **properties: Form | optional
+           ) -> JSON: ...
 
 
-# noinspection PyShadowingBuiltins,PyPep8Naming
 @overload
 def object(*, properties: JSON, **kwargs: AnyJSON) -> JSON: ...
 
 
-# noinspection PyShadowingBuiltins,PyPep8Naming
 def object(*,
            properties=None,
-           additionalProperties=None,
-           **kwargs) -> JSON:
+           additionalProperties=None,  # noqa: N803
+           **kwargs):
     """
     >>> from azul.doctests import assert_json
     >>> assert_json(object(x=int, y=int, relative=optional(bool)))

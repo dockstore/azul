@@ -285,16 +285,18 @@ def compose_keys(f: Callable, g: Callable) -> Callable:
 
 
 @overload
-def adict[K, V](seq: Mapping[K, V] | Iterable[tuple[K, V]] | None = None,
-                /
-                ) -> dict[K, V]: ...
+def adict[K, V](
+    seq: Mapping[K, V] | Iterable[tuple[K, V]] | None = None,
+    /
+) -> dict[K, V]: ...
 
 
 @overload
-def adict[K, V](seq: Mapping[str, V] | Iterable[tuple[str, V]] | None = None,
-                /,
-                **kwargs: V
-                ) -> dict[str, V]: ...
+def adict[V](
+    seq: Mapping[str, V] | Iterable[tuple[str, V]],
+    /,
+    **kwargs: V | None
+) -> dict[str, V]: ...
 
 
 def adict(seq=None, /, **kwargs):

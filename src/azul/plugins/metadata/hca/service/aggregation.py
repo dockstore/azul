@@ -18,7 +18,7 @@ from azul.plugins import (
     FieldPath,
     dotted,
 )
-from azul.service.elasticsearch_service import (
+from azul.service.query_service import (
     AggregationStage,
 )
 from azul.types import (

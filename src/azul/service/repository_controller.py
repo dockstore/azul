@@ -7,7 +7,6 @@ import logging
 import time
 from typing import (
     Any,
-    Callable,
 )
 
 import attr
@@ -62,15 +61,16 @@ from azul.plugins import (
 from azul.service.controller import (
     Mandatory,
     ServiceController,
-    validate_catalog,
+    Validator,
     validate_params,
 )
-from azul.service.repository_service import (
-    RepositoryService,
+from azul.service.index_service import (
+    IndexService,
 )
 from azul.types import (
     MutableJSON,
     is_optional,
+    json_int,
 )
 
 log = logging.getLogger(__name__)
@@ -78,13 +78,23 @@ log = logging.getLogger(__name__)
 
 class RepositoryController(ServiceController):
 
+    @cached_property
+    def _service(self) -> IndexService:
+        return IndexService()
+
+    def _mirror_service(self, catalog: CatalogName) -> BaseMirrorService:
+        return self._service.mirror_service(catalog)
+
+    def _repository_plugin(self, catalog: CatalogName) -> RepositoryPlugin:
+        return self._service.repository_plugin(catalog)
+
     @property
-    def repository_files_spec(self):
+    def _repository_files_spec(self):
         return {
             'tags': ['Repository'],
             'parameters': [
-                self.catalog_param_spec,
-                *self.file_fqid_parameters_spec,
+                self._catalog_param_spec,
+                *self._file_fqid_parameters_spec,
                 params.query(
                     'fileName',
                     schema.optional(str),
@@ -137,16 +147,6 @@ class RepositoryController(ServiceController):
             ]
         }
 
-    @cached_property
-    def service(self) -> RepositoryService:
-        return RepositoryService()
-
-    def mirror_service(self, catalog: CatalogName) -> BaseMirrorService:
-        return self.service.mirror_service(catalog)
-
-    def repository_plugin(self, catalog: CatalogName) -> RepositoryPlugin:
-        return self.service.repository_plugin(catalog)
-
     def handlers(self) -> dict[str, Any]:
         @self.app.route(
             path=self._file_path(fetch=False, file_uuid='{file_uuid}'),
@@ -154,7 +154,7 @@ class RepositoryController(ServiceController):
             interactive=False,
             cors=True,
             spec={
-                **self.repository_files_spec,
+                **self._repository_files_spec,
                 'summary': 'Redirect to a URL for downloading a given data file from the '
                            'underlying repository',
                 'description': fd('''
@@ -208,9 +208,9 @@ class RepositoryController(ServiceController):
                 }
             }
         )
-        def repository_files(file_uuid: str) -> Response:
-            result = _repository_files(file_uuid, fetch=False)
-            status_code = result.pop('Status')
+        def get_repository_files(file_uuid: str) -> Response:
+            result = self.download_file(file_uuid, fetch=False)
+            status_code = json_int(result.pop('Status'))
             return Response(body='',
                             headers={k: str(v) for k, v in result.items()},
                             status_code=status_code)
@@ -220,16 +220,16 @@ class RepositoryController(ServiceController):
             methods=['GET'],
             cors=True,
             spec={
-                **self.repository_files_spec,
+                **self._repository_files_spec,
                 'summary': 'Request a URL for downloading a given data file',
                 'responses': {
                     '200': {
                         'description': fd(f'''
                             Emulates the response code and headers of
-                            {one(repository_files.path)} while bypassing the default
-                            user agent behavior. Note that the status code of a
-                            successful response will be 200 while the `Status` field of
-                            its body will be 302.
+                            {one(getattr(get_repository_files, 'path'))} while bypassing
+                            the default user agent behavior. Note that the status
+                            code of a successful response will be 200 while the
+                            `Status` field of its body will be 302.
 
                             The response described here is intended to be processed by
                             client-side Javascript such that the emulated headers can be
@@ -246,26 +246,9 @@ class RepositoryController(ServiceController):
                 }
             }
         )
-        def fetch_repository_files(file_uuid: str) -> Response:
-            body = _repository_files(file_uuid, fetch=True)
+        def get_fetch_repository_files(file_uuid: str) -> Response:
+            body = self.download_file(file_uuid, fetch=True)
             return Response(body=json.dumps(body), status_code=200)
-
-        def _repository_files(file_uuid: str, fetch: bool) -> MutableJSON:
-            request = self.app.current_request
-            query_params = request.query_params or {}
-            headers = request.headers
-
-            # FIXME: Prevent duplicate filenames from files in different subgraphs by
-            #        prepending the subgraph UUID to each filename when downloaded
-            #        https://github.com/DataBiosphere/azul/issues/2682
-
-            catalog = self.app.catalog
-            return self.download_file(catalog=catalog,
-                                      fetch=fetch,
-                                      file_uuid=file_uuid,
-                                      query_params=query_params,
-                                      headers=headers,
-                                      authentication=request.authentication)
 
         @self.app.route(
             '/repository/sources',
@@ -274,7 +257,7 @@ class RepositoryController(ServiceController):
             spec={
                 'summary': 'List available data sources',
                 'tags': ['Repository'],
-                'parameters': [self.catalog_param_spec],
+                'parameters': [self._catalog_param_spec],
                 'responses': {
                     '200': {
                         'description': fd('''
@@ -293,30 +276,51 @@ class RepositoryController(ServiceController):
                 }
             }
         )
-        def list_sources() -> Response:
-            validate_params(self.app.current_request.query_params or {},
-                            catalog=validate_catalog)
+        def get_repository_sources() -> Response:
+            request = self.current_request
+            query_params = self._query_params(request)
+            validate_params(query_params,
+                            catalog=self._validate_catalog)
+            authentication = self._authentication(request)
             sources = self.list_sources(self.app.catalog,
-                                        self.app.current_request.authentication)
+                                        authentication)
             return Response(body={'sources': sources}, status_code=200)
 
         return locals()
 
-    def download_file(self,
-                      catalog: CatalogName,
-                      fetch: bool,
-                      file_uuid: str,
-                      query_params: Mapping[str, str],
-                      headers: Mapping[str, str],
-                      authentication: Authentication | None
-                      ):
+    def download_file(self, file_uuid: str, fetch: bool) -> MutableJSON:
+        request = self.current_request
+        query_params = self._query_params(request)
+        headers = request.headers
+
+        # FIXME: Prevent duplicate filenames from files in different subgraphs by
+        #        prepending the subgraph UUID to each filename when downloaded
+        #        https://github.com/DataBiosphere/azul/issues/2682
+
+        catalog = self.app.catalog
+        authentication = self._authentication(request)
+        return self._download_file(catalog=catalog,
+                                   fetch=fetch,
+                                   file_uuid=file_uuid,
+                                   query_params=query_params,
+                                   headers=headers,
+                                   authentication=authentication)
+
+    def _download_file(self,
+                       catalog: CatalogName,
+                       fetch: bool,
+                       file_uuid: str,
+                       query_params: Mapping[str, str],
+                       headers: Mapping[str, str],
+                       authentication: Authentication | None
+                       ):
 
         # Check the catalog in a separate step so that the plugins can be loaded
         # safely, since doing so requires a valid catalog. We need the metadata
         # plugin to know which file parameters to expect, and the repository
         # plugin to validate the file version.
         validate_params(query_params,
-                        catalog=validate_catalog,
+                        catalog=self._validate_catalog,
                         requestIndex=int,
                         allow_extra_params=True)
 
@@ -328,6 +332,7 @@ class RepositoryController(ServiceController):
                         wait=self._validate_wait,
                         replica=self._validate_replica,
                         token=str,
+                        allow_extra_params=False,
                         **self._file_param_validators(catalog, request_index))
 
         file_version = query_params.get('version')
@@ -338,14 +343,18 @@ class RepositoryController(ServiceController):
         token = query_params.get('token')
 
         if request_index == 0:
-            file = self.service.get_data_file(catalog=catalog,
-                                              file_uuid=file_uuid,
-                                              file_version=file_version,
-                                              filters=self.get_filters(catalog, authentication, None))
+            filters = self._prepare_filters(catalog, authentication, None)
+            file = self._service.get_data_file(catalog=catalog,
+                                               file_uuid=file_uuid,
+                                               file_version=file_version,
+                                               filters=filters)
             if file is None:
                 raise NotFoundError(f'Unable to find file {file_uuid!r}, '
                                     f'version {file_version!r} in catalog {catalog!r}')
-            file = attr.evolve(file, **adict(name=file_name, drs_uri=drs_uri))
+            if file_name is not None:
+                file = attr.evolve(file, name=file_name)
+            if drs_uri is not None:
+                file = attr.evolve(file, drs_uri=drs_uri)
         else:
             file = self._file_from_request(catalog, file_uuid, query_params)
 
@@ -368,28 +377,29 @@ class RepositoryController(ServiceController):
                     'Content-Range': f'bytes */{file.size}'
                 }
 
-        plugin = self.repository_plugin(catalog)
+        plugin = self._repository_plugin(catalog)
 
+        mirror_url = None
         if config.enable_mirroring:
-            mirror_service = self.mirror_service(catalog)
-            is_mirrored = mirror_service.info_exists(file)
+            mirror_service = self._mirror_service(catalog)
+            if mirror_service.info_exists(file):
+                mirror_url = mirror_service.mirror_url(file)
+
+        if mirror_url is None:
+            download_cls = plugin.file_download_class()
+            download = download_cls(file=file, replica=replica, token=token)
         else:
-            mirror_service, is_mirrored = None, False
-        if is_mirrored:
             # The file's content type would be None on subsequent requests since
             # it isn't propagated via a query parameter. `MirrorFileDownload`
             # will always be ready immediately.
             assert request_index == 0, request_index
             download = MirrorFileDownload(
                 file=file,
-                location=mirror_service.mirror_url(file),
+                location=mirror_url,
                 replica=replica,
                 token=token
             )
             assert download.retry_after is None, download
-        else:
-            download_cls = plugin.file_download_class()
-            download = download_cls(file=file, replica=replica, token=token)
 
         try:
             download.update(plugin, authentication)
@@ -419,19 +429,18 @@ class RepositoryController(ServiceController):
                     retry_after = round(retry_after - server_side_sleep)
                 else:
                     assert False, wait
-            query_params = self._file_to_request(download.file) | adict(
-                token=download.token,
-                replica=download.replica,
-                requestIndex=request_index + 1,
-                wait=wait
-            )
+            query_params = adict(self._file_to_request(download.file),
+                                 token=download.token,
+                                 replica=download.replica,
+                                 requestIndex=str(request_index + 1),
+                                 wait=wait)
             return {
                 'Status': 301,
                 **({'Retry-After': retry_after} if retry_after else {}),
-                'Location': str(self.file_url(catalog=catalog,
-                                              file_uuid=file_uuid,
-                                              fetch=fetch,
-                                              **query_params))
+                'Location': str(self._file_url(catalog=catalog,
+                                               file_uuid=file_uuid,
+                                               fetch=fetch,
+                                               **query_params))
             }
         elif download.location is not None:
             log_data = {
@@ -444,7 +453,7 @@ class RepositoryController(ServiceController):
                 }
             }
             log.info('Download of %s file %s',
-                     'mirrored' if is_mirrored else 'repository',
+                     'repository' if mirror_url is None else 'mirrored',
                      json.dumps(log_data))
             return {
                 'Status': 302,
@@ -532,9 +541,9 @@ class RepositoryController(ServiceController):
     def _file_param_validators(self,
                                catalog: CatalogName,
                                request_index: int
-                               ) -> dict[str, Callable[[Any], Any]]:
-        all_file_validators = dict(
-            version=self.repository_plugin(catalog).validate_version,
+                               ) -> dict[str, Validator]:
+        all_file_validators: Mapping[str, Validator] = dict(
+            version=self._repository_plugin(catalog).validate_version,
             fileName=str,
             drsUri=str,
             sha256=str,
@@ -596,4 +605,4 @@ class RepositoryController(ServiceController):
     }
 
     def _file_class(self, catalog: CatalogName) -> type[File]:
-        return self.service.metadata_plugin(catalog).file_class
+        return self._service.metadata_plugin(catalog).file_class
