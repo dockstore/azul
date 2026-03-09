@@ -69,7 +69,7 @@ class MirrorController(ActionController[MirrorAction], SchemaController):
     def mirror(self, event: Iterable[SQSRecord]):
         assert config.enable_mirroring, R('Mirroring is disabled')
 
-        def message_handler(action: MirrorAction):
+        def action_handler(action: MirrorAction):
             self.service(action.catalog).mirror(action)
 
-        self._handle_events(event, message_handler)
+        self._handle_events(event, action_handler)

@@ -135,21 +135,21 @@ class IndexQueueService:
                              *,
                              delete: bool = False
                              ) -> SQSMessage:
-        message_cls = DeleteBundleAction if delete else AddBundleAction
-        message = message_cls(catalog=catalog,
-                              bundle_fqid=bundle_fqid,
-                              bundle_partition=bundle_partition)
-        return SQSMessage(body=json_mapping(message.to_json()))
+        action_cls = DeleteBundleAction if delete else AddBundleAction
+        action = action_cls(catalog=catalog,
+                            bundle_fqid=bundle_fqid,
+                            bundle_partition=bundle_partition)
+        return SQSMessage(body=json_mapping(action.to_json()))
 
     def index_partition_message(self,
                                 catalog: CatalogName,
                                 source: SourceRef,
                                 prefix: str
                                 ) -> SQSMessage:
-        message = IndexPartitionAction(catalog=catalog,
-                                       source=source,
-                                       prefix=prefix)
-        return SQSMessage(body=json_mapping(message.to_json()))
+        action = IndexPartitionAction(catalog=catalog,
+                                      source=source,
+                                      prefix=prefix)
+        return SQSMessage(body=json_mapping(action.to_json()))
 
     def index_catalog(self, catalog: CatalogName, sources: Iterable[SourceSpec]):
         service = self._repository_service
