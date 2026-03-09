@@ -29,12 +29,12 @@ from azul.indexer.document import (
     EntityReference,
     Replica,
 )
-from azul.indexer.index_repository_service import (
-    RepositoryService,
-)
 from azul.indexer.index_service import (
     CataloguedEntityReference,
     IndexService,
+)
+from azul.indexer.repository_service import (
+    RepositoryService,
 )
 from azul.queues import (
     Action,

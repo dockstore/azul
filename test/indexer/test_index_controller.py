@@ -57,11 +57,11 @@ from azul.indexer.index_controller import (
 from azul.indexer.index_queue_service import (
     IndexQueueService,
 )
-from azul.indexer.index_repository_service import (
-    RepositoryService,
-)
 from azul.indexer.index_service import (
     IndexWriter,
+)
+from azul.indexer.repository_service import (
+    RepositoryService,
 )
 from azul.logging import (
     configure_test_logging,

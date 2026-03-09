@@ -20,7 +20,7 @@ import azul.http
 import azul.indexer
 import azul.indexer.aggregate
 import azul.indexer.document
-import azul.indexer.index_repository_service
+import azul.indexer.repository_service
 import azul.iterators
 import azul.json
 import azul.json_freeze
@@ -85,7 +85,7 @@ def load_tests(_loader,
         azul.indexer,
         azul.indexer.aggregate,
         azul.indexer.document,
-        azul.indexer.index_repository_service,
+        azul.indexer.repository_service,
         azul.iterators,
         azul.json,
         azul.json_freeze,

@@ -52,14 +52,14 @@ from azul.indexer import (
 from azul.indexer.index_queue_service import (
     IndexQueueService,
 )
-from azul.indexer.index_repository_service import (
-    RepositoryService,
-)
 from azul.indexer.index_service import (
     IndexService,
 )
 from azul.indexer.mirror_service import (
     MirrorService,
+)
+from azul.indexer.repository_service import (
+    RepositoryService,
 )
 from azul.plugins import (
     MetadataPlugin,
