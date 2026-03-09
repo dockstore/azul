@@ -99,7 +99,7 @@ class IndexQueueService:
         name = config.notifications_queue.derive(retry=retry).name
         return aws.sqs_queue(name)
 
-    def tallies_queue(self, *, retry: bool = False) -> 'Queue':
+    def _tallies_queue(self, *, retry: bool = False) -> 'Queue':
         name = config.tallies_queue.derive(retry=retry).name
         return aws.sqs_queue(name)
 
@@ -124,7 +124,7 @@ class IndexQueueService:
                        *,
                        retry: bool = False
                        ) -> int:
-        queue = self.tallies_queue(retry=retry)
+        queue = self._tallies_queue(retry=retry)
         # Logging tallies would be excessively verbose
         return self._queues.send_messages(queue, messages, log_level=0)
 
