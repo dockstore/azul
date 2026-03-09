@@ -275,8 +275,11 @@ class TestIndexController(DCP2IndexerTestCase, WorkQueueTestCase):
             elif i == 2:
                 self.assertEqual({}, partitions)
 
+        tallies_queue = self.queue_service._tallies_queue()
+        tallies_retry_queue = self.queue_service._tallies_queue(retry=True)
+
         # We got a tally of one for each
-        tallies = self._read_queue(self.queue_service._tallies_queue())
+        tallies = self._read_queue(tallies_queue)
         digest = self._digest_tallies(tallies)
         self.assertEqual(expected_digest, digest)
 
@@ -290,7 +293,7 @@ class TestIndexController(DCP2IndexerTestCase, WorkQueueTestCase):
             else:
                 self.fail()
 
-        self.assertEqual([], self._read_queue(self.queue_service._tallies_queue()))
+        self.assertEqual([], self._read_queue(tallies_queue))
 
         # Poison the two project and the two bundle tallies, by simulating
         # a number of failed attempts at processing them
@@ -307,7 +310,7 @@ class TestIndexController(DCP2IndexerTestCase, WorkQueueTestCase):
         ]
         self.controller.aggregate(messages, retry=True)
 
-        tallies = self._read_queue(self.queue_service._tallies_queue(retry=True))
+        tallies = self._read_queue(tallies_retry_queue)
         digest = self._digest_tallies(tallies)
         # The two project tallies were consolidated (despite being poisoned) and
         # the resulting tally was deferred
@@ -322,8 +325,8 @@ class TestIndexController(DCP2IndexerTestCase, WorkQueueTestCase):
         self.controller.aggregate(messages, retry=True)
 
         # All tallies were referred
-        self.assertEqual([], self._read_queue(self.queue_service._tallies_queue()))
-        self.assertEqual([], self._read_queue(self.queue_service._tallies_queue(retry=True)))
+        self.assertEqual([], self._read_queue(tallies_queue))
+        self.assertEqual([], self._read_queue(tallies_retry_queue))
 
     def _digest_tallies(self, tallies):
         entities = defaultdict(list)
