@@ -168,6 +168,12 @@ class IndexQueueService:
             messages = map(message, prefix.partition_prefixes())
             self.queue_notifications(messages)
 
+    def contribute(self, message: IndexAction):
+        if isinstance(message, IndexPartitionAction):
+            self._index_partition(message)
+        elif isinstance(message, IndexBundleAction):
+            self._index_bundle(message)
+
     def _index_partition(self, message: IndexPartitionAction) -> None:
         service = self._repository_service
         catalog, prefix, source = message.catalog, message.prefix, message.source
@@ -186,12 +192,6 @@ class IndexQueueService:
         num_messages = self.queue_notifications(messages)
         log.info('Successfully queued %i notification(s) for prefix %s of '
                  'source %r', num_messages, prefix, source)
-
-    def contribute(self, message: IndexAction):
-        if isinstance(message, IndexPartitionAction):
-            self._index_partition(message)
-        elif isinstance(message, IndexBundleAction):
-            self._index_bundle(message)
 
     def _index_bundle(self, message: IndexBundleAction):
         catalog = json_str(message.catalog)
