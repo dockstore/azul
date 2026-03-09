@@ -58,7 +58,7 @@ from azul.indexer.index_queue_service import (
     IndexQueueService,
 )
 from azul.indexer.index_repository_service import (
-    IndexRepositoryService,
+    RepositoryService,
 )
 from azul.indexer.index_service import (
     IndexWriter,
@@ -241,7 +241,7 @@ class TestIndexController(DCP2IndexerTestCase, WorkQueueTestCase):
             mock_plugin.fetch_bundle.side_effect = notified_bundles
             type(mock_plugin).bundle_fqid_cls = PropertyMock(return_value=TDRBundleFQID)
             mock_plugin.sources = [source]
-            with patch.object(IndexRepositoryService,
+            with patch.object(RepositoryService,
                               'repository_plugin',
                               return_value=mock_plugin):
                 with patch.object(BundlePartition,

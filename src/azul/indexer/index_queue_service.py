@@ -30,7 +30,7 @@ from azul.indexer.document import (
     Replica,
 )
 from azul.indexer.index_repository_service import (
-    IndexRepositoryService,
+    RepositoryService,
 )
 from azul.indexer.index_service import (
     CataloguedEntityReference,
@@ -88,8 +88,8 @@ class IndexQueueService:
         return IndexService()
 
     @cached_property
-    def index_repository_service(self) -> IndexRepositoryService:
-        return IndexRepositoryService()
+    def index_repository_service(self) -> RepositoryService:
+        return RepositoryService()
 
     @cached_property
     def queues(self) -> Queues:

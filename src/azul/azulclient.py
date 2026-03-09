@@ -53,7 +53,7 @@ from azul.indexer.index_queue_service import (
     IndexQueueService,
 )
 from azul.indexer.index_repository_service import (
-    IndexRepositoryService,
+    RepositoryService,
 )
 from azul.indexer.index_service import (
     IndexService,
@@ -96,8 +96,8 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
         return IndexQueueService()
 
     @cached_property
-    def index_repository_service(self) -> IndexRepositoryService:
-        return IndexRepositoryService()
+    def index_repository_service(self) -> RepositoryService:
+        return RepositoryService()
 
     def repository_plugin(self, catalog: CatalogName) -> RepositoryPlugin:
         return self.index_repository_service.repository_plugin(catalog)

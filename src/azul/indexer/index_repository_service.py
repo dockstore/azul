@@ -25,7 +25,7 @@ from azul.types import (
 log = logging.getLogger(__name__)
 
 
-class IndexRepositoryService:
+class RepositoryService:
 
     @cache
     def repository_plugin(self, catalog: CatalogName) -> RepositoryPlugin:
@@ -49,7 +49,7 @@ class IndexRepositoryService:
         """
         Suppress obsolete bundle versions by only taking the latest version for
         each bundle UUID.
-        >>> service = IndexRepositoryService()
+        >>> service = RepositoryService()
         >>> service.filter_obsolete_bundle_versions([])
         []
         >>> from azul.indexer import SimpleSourceSpec, SourceRef, Prefix
