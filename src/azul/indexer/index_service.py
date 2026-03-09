@@ -114,7 +114,7 @@ class IndexExistsAndDiffersException(Exception):
 
 class IndexService(DocumentService):
 
-    def settings(self, index_name: IndexName) -> JSON:
+    def _settings(self, index_name: IndexName) -> JSON:
         index_name.validate()
         aggregate = index_name.doc_type is DocumentType.aggregate
         # There is a terminology collision between ElasticSearch's concept of an
@@ -311,7 +311,7 @@ class IndexService(DocumentService):
         es_client = ESClientFactory.get()
         for index_name in self.index_names(catalog):
             while True:
-                settings = self.settings(index_name)
+                settings = self._settings(index_name)
                 mappings = self.metadata_plugin(catalog).mapping(index_name)
                 try:
                     with silenced_es_logger():
