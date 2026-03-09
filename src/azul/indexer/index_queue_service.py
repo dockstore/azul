@@ -263,7 +263,7 @@ class IndexQueueService:
     #: Note that the retry lambda does first attempts, too, namely on re-fed and
     #: deferred tallies.
     #
-    num_batched_aggregation_attempts = 3
+    _num_batched_aggregation_attempts = 3
 
     def aggregate(self, tallies: list['DocumentTally'], *, retry: bool):
         tallies_by_entity: dict[CataloguedEntityReference, list[DocumentTally]] = defaultdict(list)
@@ -279,7 +279,7 @@ class IndexQueueService:
                 assert False
         if referrals:
             for i, tally in enumerate(referrals):
-                if tally.attempts > self.num_batched_aggregation_attempts:
+                if tally.attempts > self._num_batched_aggregation_attempts:
                     log.info('Only aggregating problematic entity %s, deferring all others',
                              tally.entity)
                     referrals.pop(i)

@@ -297,7 +297,7 @@ class TestIndexController(DCP2IndexerTestCase, WorkQueueTestCase):
 
         # Poison the two project and the two bundle tallies, by simulating
         # a number of failed attempts at processing them
-        attempts = self.queue_service.num_batched_aggregation_attempts
+        attempts = self.queue_service._num_batched_aggregation_attempts
         # While 0 is a valid value, the test logic below wouldn't work with it
         self.assertGreater(attempts, 0)
         messages = [
