@@ -151,7 +151,7 @@ class IndexQueueService:
                                        prefix=prefix)
         return SQSMessage(body=json_mapping(message.to_json()))
 
-    def remote_reindex(self, catalog: CatalogName, sources: Iterable[SourceSpec]):
+    def index_catalog(self, catalog: CatalogName, sources: Iterable[SourceSpec]):
         service = self._repository_service
         plugin = service.repository_plugin(catalog)
         for source_spec in sources:

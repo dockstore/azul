@@ -148,14 +148,14 @@ class TestIndexController(DCP2IndexerTestCase, WorkQueueTestCase):
 
     @patch.object(RepositoryPlugin, 'partition_source_for_indexing')
     @patch.object(TDRPlugin, 'resolve_source')
-    def test_remote_reindex(self, resolve_source, partition_source):
+    def test_index_catalog(self, resolve_source, partition_source):
         source = self.source
         resolve_source.return_value = attrs.evolve(source, prefix=None)
         partition_source.return_value = source
         plugin = self.index_repository_service.repository_plugin(self.catalog)
         plugin._assert_source(source)
         self._create_mock_queues(config.indexer_queue_names)
-        self.queue_service.remote_reindex(self.catalog, [source.spec])
+        self.queue_service.index_catalog(self.catalog, [source.spec])
         messages = one(self._read_queue(self.queue_service._notifications_queue()))
         expected_notification = dict(action='IndexPartitionAction',
                                      catalog=self.catalog,
