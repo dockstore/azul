@@ -168,7 +168,7 @@ class IndexQueueService:
             messages = map(message, prefix.partition_prefixes())
             self.queue_notifications(messages)
 
-    def _remote_reindex_partition(self, message: IndexPartitionAction) -> None:
+    def _index_partition(self, message: IndexPartitionAction) -> None:
         service = self._repository_service
         catalog, prefix, source = message.catalog, message.prefix, message.source
         assert isinstance(catalog, str) and isinstance(prefix, str)
@@ -189,7 +189,7 @@ class IndexQueueService:
 
     def contribute(self, message: IndexAction):
         if isinstance(message, IndexPartitionAction):
-            self._remote_reindex_partition(message)
+            self._index_partition(message)
         elif isinstance(message, IndexBundleAction):
             catalog = json_str(message.catalog)
             assert catalog is not None
