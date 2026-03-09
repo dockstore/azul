@@ -156,7 +156,7 @@ class TestIndexController(DCP2IndexerTestCase, WorkQueueTestCase):
         plugin._assert_source(source)
         self._create_mock_queues(config.indexer_queue_names)
         self.queue_service.remote_reindex(self.catalog, [source.spec])
-        messages = one(self._read_queue(self.queue_service.notifications_queue()))
+        messages = one(self._read_queue(self.queue_service._notifications_queue()))
         expected_notification = dict(action='IndexPartitionAction',
                                      catalog=self.catalog,
                                      source=source.to_json(),
@@ -173,7 +173,7 @@ class TestIndexController(DCP2IndexerTestCase, WorkQueueTestCase):
         with patch.object(Plugin, 'list_bundles', return_value=bundle_fqids):
             self.controller.contribute(event)
 
-        messages = one(self._read_queue(self.queue_service.notifications_queue()))
+        messages = one(self._read_queue(self.queue_service._notifications_queue()))
         expected_source = dict(id=source.id,
                                spec=str(source.spec),
                                prefix=str(source.prefix),
@@ -255,7 +255,7 @@ class TestIndexController(DCP2IndexerTestCase, WorkQueueTestCase):
             self.assertEqual(expected_calls, mock_plugin.fetch_bundle.mock_calls)
 
             # Assert partitioned notifications, straight from the retry queue
-            messages = self._read_queue(self.queue_service.notifications_queue(retry=True))
+            messages = self._read_queue(self.queue_service._notifications_queue(retry=True))
             # Fingerprint the partitions from the resulting notifications
             partitions = defaultdict(set)
             for n in messages:
