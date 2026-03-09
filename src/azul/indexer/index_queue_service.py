@@ -191,38 +191,41 @@ class IndexQueueService:
         if isinstance(message, IndexPartitionAction):
             self._index_partition(message)
         elif isinstance(message, IndexBundleAction):
-            catalog = json_str(message.catalog)
-            assert catalog is not None
-            delete = isinstance(message, DeleteBundleAction)
-            if not delete:
-                assert isinstance(message, AddBundleAction)
-            bundle_fqid = json_mapping(message.bundle_fqid)
-            bundle_partition = message.bundle_partition
-            contributions, replicas = self._transform(catalog,
-                                                      bundle_fqid,
-                                                      bundle_partition,
-                                                      delete=delete)
-            log.info('Writing %i contributions to index.', len(contributions))
-            tallies = self._index_service.contribute(catalog, contributions)
-            tallies = [DocumentTally.for_entity(catalog, entity, num_contributions)
-                       for entity, num_contributions in tallies.items()]
+            self._index_bundle(message)
 
-            if replicas:
-                if delete:
-                    # FIXME: Replica index does not support deletions
-                    #        https://github.com/DataBiosphere/azul/issues/5846
-                    log.warning('Deletion of replicas is not supported')
-                else:
-                    log.info('Writing %i replicas to index.', len(replicas))
-                    num_written = self._index_service.replicate(catalog, replicas)
-                    log.info('Successfully wrote %i replicas', num_written)
+    def _index_bundle(self, message: IndexBundleAction):
+        catalog = json_str(message.catalog)
+        assert catalog is not None
+        delete = isinstance(message, DeleteBundleAction)
+        if not delete:
+            assert isinstance(message, AddBundleAction)
+        bundle_fqid = json_mapping(message.bundle_fqid)
+        bundle_partition = message.bundle_partition
+        contributions, replicas = self._transform(catalog,
+                                                  bundle_fqid,
+                                                  bundle_partition,
+                                                  delete=delete)
+        log.info('Writing %i contributions to index.', len(contributions))
+        tallies = self._index_service.contribute(catalog, contributions)
+        tallies = [DocumentTally.for_entity(catalog, entity, num_contributions)
+                   for entity, num_contributions in tallies.items()]
+
+        if replicas:
+            if delete:
+                # FIXME: Replica index does not support deletions
+                #        https://github.com/DataBiosphere/azul/issues/5846
+                log.warning('Deletion of replicas is not supported')
             else:
-                log.info('No replicas to write.')
+                log.info('Writing %i replicas to index.', len(replicas))
+                num_written = self._index_service.replicate(catalog, replicas)
+                log.info('Successfully wrote %i replicas', num_written)
+        else:
+            log.info('No replicas to write.')
 
-            log.info('Queueing %i entities for aggregating a total of %i contributions.',
-                     len(tallies), sum(tally.num_contributions for tally in tallies))
-            messages = (tally.to_message() for tally in tallies)
-            self._queue_tallies(messages)
+        log.info('Queueing %i entities for aggregating a total of %i contributions.',
+                 len(tallies), sum(tally.num_contributions for tally in tallies))
+        messages = (tally.to_message() for tally in tallies)
+        self._queue_tallies(messages)
 
     def _transform(self,
                    catalog: CatalogName,
