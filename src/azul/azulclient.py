@@ -402,5 +402,5 @@ class AzulClientError(RuntimeError):
 
 class AzulClientNotificationError(AzulClientError):
 
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__('Some notifications could not be sent', *args, **kwargs)
+    def __init__(self, *args) -> None:
+        super().__init__('Some notifications could not be sent', *args)
