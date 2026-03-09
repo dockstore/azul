@@ -1772,6 +1772,12 @@ dcp57_sources = union(dcp56_sources, 528, delta([
     source('bigquery', 'datarepo-7731fc47', 'hca_prod_76bc0e978cae43d4a647477a13be47f9__20251202_dcp2_20260203_dcp57'),
 ]))
 
+dcp58_sources = union(dcp57_sources, 530, delta([
+    source('bigquery', 'datarepo-74756a12', 'hca_prod_984ce0a2682d47a3b80e1354dfe51ca3__20260304_dcp2_20260304_dcp58'),
+    source('bigquery', 'datarepo-90320986', 'hca_prod_ad04c8e79b7d4cceb8e901e31da10b94__20220118_dcp2_20260304_dcp58'),
+    source('bigquery', 'datarepo-04e4ece0', 'hca_prod_c8503de8d02d4bdaad064c851b37fa97__20260304_dcp2_20260304_dcp58'),
+]))
+
 lungmap_sources = union({}, 3, delta([
     source('bigquery', 'datarepo-32f75497', 'lungmap_prod_00f056f273ff43ac97ff69ca10e38c89__20220308_20220308'),
     source('bigquery', 'datarepo-7066459d', 'lungmap_prod_1bdcecde16be420888f478cd2133d11d__20220308_20220308'),
@@ -1899,8 +1905,8 @@ def env() -> Mapping[str, str | None]:
                                                     repository=dict(name='tdr_hca')),
                                        sources=condense(sources))
             for atlas, catalog, sources, mirror_limit, it_mirror_limit in [
-                ('hca', 'dcp56', dcp56_sources, None, int(1.5 * 1024 ** 3)),
                 ('hca', 'dcp57', dcp57_sources, None, int(1.5 * 1024 ** 3)),
+                ('hca', 'dcp58', dcp58_sources, None, int(1.5 * 1024 ** 3)),
                 ('lungmap', 'lm10', lm10_sources, -1, -1)
             ]
             for suffix, is_it in [
