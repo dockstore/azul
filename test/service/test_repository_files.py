@@ -48,7 +48,7 @@ from azul.http import (
 )
 from azul.indexer.mirror_service import (
     BaseMirrorService,
-    MirrorService,
+    MirrorWorkerService,
 )
 from azul.logging import (
     configure_test_logging,
@@ -321,9 +321,9 @@ class TestRepositoryFilesWithMirroring(DCP2TestCase,
                        sha256=hashlib.sha256(file_content).hexdigest(),
                        crc32c=None)
 
-        mirror_service = MirrorService(catalog=self.catalog,
-                                       schema_url_func=MagicMock())
-        with patch.object(MirrorService, '_download', return_value=file_content):
+        mirror_service = MirrorWorkerService(catalog=self.catalog,
+                                             schema_url_func=MagicMock())
+        with patch.object(MirrorWorkerService, '_download', return_value=file_content):
             mirror_service._mirror_file(file)
         self.assertTrue(mirror_service.info_exists(file))
 

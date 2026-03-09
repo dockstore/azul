@@ -26,7 +26,7 @@ from azul.indexer.action_controller import (
 )
 from azul.indexer.mirror_service import (
     MirrorAction,
-    MirrorService,
+    MirrorWorkerService,
 )
 from azul.schemas import (
     SchemaController,
@@ -46,10 +46,10 @@ class MirrorController(ActionController[MirrorAction], SchemaController):
         return MirrorAction
 
     @cache
-    def service(self, catalog: CatalogName) -> MirrorService:
+    def service(self, catalog: CatalogName) -> MirrorWorkerService:
         schema_url_func = partial(self.schema_url, facility='mirror')
-        return MirrorService(catalog=catalog,
-                             schema_url_func=schema_url_func)
+        return MirrorWorkerService(catalog=catalog,
+                                   schema_url_func=schema_url_func)
 
     def handlers(self) -> dict[str, Any]:
         if config.enable_mirroring:

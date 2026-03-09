@@ -40,7 +40,7 @@ from azul.indexer.mirror_controller import (
 from azul.indexer.mirror_service import (
     FilePart,
     MirrorAction,
-    MirrorService,
+    MirrorWorkerService,
 )
 from azul.json import (
     copy_json,
@@ -166,7 +166,7 @@ class TestMirrorController(DCP2TestCase,
         return self._app.mirror_controller
 
     @property
-    def _service(self) -> MirrorService:
+    def _service(self) -> MirrorWorkerService:
         return self._mirror_controller.service(self.catalog)
 
     def _mirror_event(self, body: JSON) -> list[SQSRecord]:
@@ -177,7 +177,7 @@ class TestMirrorController(DCP2TestCase,
         return self._read_mirror_queue()
 
     def _patch_download(self, **kwargs) -> ContextManager:
-        return patch.object(MirrorService, '_download', **kwargs)
+        return patch.object(MirrorWorkerService, '_download', **kwargs)
 
     def _test_mirror_sources(self):
         source_message = one(self._mirror_sources())

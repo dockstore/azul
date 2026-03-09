@@ -531,7 +531,7 @@ class BaseMirrorService:
 
 
 @attrs.frozen(kw_only=True, slots=False)
-class MirrorService(BaseMirrorService, HasCachedHttpClient):
+class MirrorWorkerService(BaseMirrorService, HasCachedHttpClient):
     """
     Service that carries out mirroring work. Requires a mechanism to compose
     schema URLs. This function is currently offered by the indexer app, so
