@@ -198,10 +198,10 @@ class IndexQueueService:
                 assert isinstance(message, AddBundleAction)
             bundle_fqid = json_mapping(message.bundle_fqid)
             bundle_partition = message.bundle_partition
-            contributions, replicas = self.transform(catalog,
-                                                     bundle_fqid,
-                                                     bundle_partition,
-                                                     delete=delete)
+            contributions, replicas = self._transform(catalog,
+                                                      bundle_fqid,
+                                                      bundle_partition,
+                                                      delete=delete)
             log.info('Writing %i contributions to index.', len(contributions))
             tallies = self._index_service.contribute(catalog, contributions)
             tallies = [DocumentTally.for_entity(catalog, entity, num_contributions)
@@ -224,13 +224,13 @@ class IndexQueueService:
             messages = (tally.to_message() for tally in tallies)
             self.queue_tallies(messages)
 
-    def transform(self,
-                  catalog: CatalogName,
-                  bundle_fqid: JSON,
-                  bundle_partition: BundlePartition,
-                  *,
-                  delete: bool
-                  ) -> tuple[list[Contribution], list[Replica]]:
+    def _transform(self,
+                   catalog: CatalogName,
+                   bundle_fqid: JSON,
+                   bundle_partition: BundlePartition,
+                   *,
+                   delete: bool
+                   ) -> tuple[list[Contribution], list[Replica]]:
         """
         Transform the metadata in the bundle referenced by the given
         notification into a list of contributions to documents, each document
