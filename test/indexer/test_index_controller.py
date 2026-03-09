@@ -117,7 +117,7 @@ class TestIndexController(DCP2IndexerTestCase, WorkQueueTestCase):
         app = MagicMock()
         self.controller = IndexController(app=app)
         app.catalog = self.catalog
-        IndexQueueService.index_service.fset(self.queue_service, self.index_service)
+        IndexQueueService._index_service.fset(self.queue_service, self.index_service)
 
     @property
     def queue_service(self):

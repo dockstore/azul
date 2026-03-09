@@ -84,7 +84,7 @@ class IndexPartitionAction(IndexAction):
 class IndexQueueService:
 
     @cached_property
-    def index_service(self) -> IndexService:
+    def _index_service(self) -> IndexService:
         return IndexService()
 
     @cached_property
@@ -203,7 +203,7 @@ class IndexQueueService:
                                                      bundle_partition,
                                                      delete=delete)
             log.info('Writing %i contributions to index.', len(contributions))
-            tallies = self.index_service.contribute(catalog, contributions)
+            tallies = self._index_service.contribute(catalog, contributions)
             tallies = [DocumentTally.for_entity(catalog, entity, num_contributions)
                        for entity, num_contributions in tallies.items()]
 
@@ -214,7 +214,7 @@ class IndexQueueService:
                     log.warning('Deletion of replicas is not supported')
                 else:
                     log.info('Writing %i replicas to index.', len(replicas))
-                    num_written = self.index_service.replicate(catalog, replicas)
+                    num_written = self._index_service.replicate(catalog, replicas)
                     log.info('Successfully wrote %i replicas', num_written)
             else:
                 log.info('No replicas to write.')
@@ -239,10 +239,10 @@ class IndexQueueService:
         """
         bundle = self.repository_service.fetch_bundle(catalog,
                                                       bundle_fqid)
-        results = self.index_service.transform(catalog,
-                                               bundle,
-                                               bundle_partition,
-                                               delete=delete)
+        results = self._index_service.transform(catalog,
+                                                bundle,
+                                                bundle_partition,
+                                                delete=delete)
         if isinstance(results, list):
             for bundle_partition in results:
                 assert isinstance(bundle_partition, BundlePartition)
@@ -294,7 +294,7 @@ class IndexQueueService:
                          tally.num_contributions, tally.entity)
                 tally_by_entity[tally.entity] = tally.num_contributions
 
-            self.index_service.aggregate(tally_by_entity)
+            self._index_service.aggregate(tally_by_entity)
 
             for tally in referrals:
                 log.info('Successfully aggregated %i contribution(s) to entity %s',
