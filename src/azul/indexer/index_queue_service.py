@@ -92,7 +92,7 @@ class IndexQueueService:
         return RepositoryService()
 
     @cached_property
-    def queues(self) -> Queues:
+    def _queues(self) -> Queues:
         return Queues()
 
     def notifications_queue(self, *, retry: bool = False) -> 'Queue':
@@ -109,7 +109,7 @@ class IndexQueueService:
                             retry: bool = False
                             ) -> int:
         queue = self.notifications_queue(retry=retry)
-        return self.queues.send_messages(queue, messages)
+        return self._queues.send_messages(queue, messages)
 
     def queue_notification(self,
                            message: SQSMessage,
@@ -117,7 +117,7 @@ class IndexQueueService:
                            retry: bool
                            ) -> None:
         queue = self.notifications_queue(retry=retry)
-        self.queues.send_message(queue, message)
+        self._queues.send_message(queue, message)
 
     def queue_tallies(self,
                       messages: Iterable[SQSMessage],
@@ -126,7 +126,7 @@ class IndexQueueService:
                       ) -> int:
         queue = self.tallies_queue(retry=retry)
         # Logging tallies would be excessively verbose
-        return self.queues.send_messages(queue, messages, log_level=0)
+        return self._queues.send_messages(queue, messages, log_level=0)
 
     def index_bundle_message(self,
                              catalog: CatalogName,
