@@ -34,7 +34,7 @@ from azul.indexer import (
     SourceSpec,
 )
 from azul.indexer.mirror_service import (
-    BaseMirrorService,
+    MirrorService,
 )
 from azul.plugins import (
     File,
@@ -119,8 +119,8 @@ class SummaryResponseStage(ElasticsearchStage[JSON, MutableJSON],
 class IndexService(QueryService):
 
     @cache
-    def mirror_service(self, catalog: CatalogName) -> BaseMirrorService:
-        return BaseMirrorService(catalog=catalog)
+    def mirror_service(self, catalog: CatalogName) -> MirrorService:
+        return MirrorService(catalog=catalog)
 
     def search(self,
                *,

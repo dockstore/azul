@@ -47,7 +47,7 @@ from azul.http import (
     http_client,
 )
 from azul.indexer.mirror_service import (
-    BaseMirrorService,
+    MirrorService,
     MirrorWorkerService,
 )
 from azul.logging import (
@@ -105,7 +105,7 @@ class RepositoryFilesTestCase(LocalAppTestCase, metaclass=ABCMeta):
 
 class TestRepositoryFilesWithTDR(DCP2TestCase, RepositoryFilesTestCase):
 
-    @patch.object(BaseMirrorService, 'info_exists', new=Mock(return_value=False))
+    @patch.object(MirrorService, 'info_exists', new=Mock(return_value=False))
     @patch.object(TerraClient,
                   '_http_client',
                   AuthorizedHttp(MagicMock(),
@@ -175,7 +175,7 @@ class TestRepositoryFilesWithDSS(DCP1TestCase,
                                  RepositoryFilesTestCase,
                                  S3TestCase):
 
-    @patch.object(BaseMirrorService, 'info_exists', new=Mock(return_value=False))
+    @patch.object(MirrorService, 'info_exists', new=Mock(return_value=False))
     @patch.object(type(config), 'dss_direct_access_role', new=Mock(return_value=None))
     def test(self):
         self.maxDiff = None

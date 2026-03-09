@@ -130,7 +130,7 @@ from azul.indexer.index_service import (
     IndexService,
 )
 from azul.indexer.mirror_service import (
-    BaseMirrorService,
+    MirrorService,
 )
 from azul.json_freeze import (
     freeze,
@@ -1782,7 +1782,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
             for command_line in command_lines:
                 self.assertIn(expected_auth_header, command_line)
 
-    def _mirror_service(self, catalog: CatalogName) -> BaseMirrorService:
+    def _mirror_service(self, catalog: CatalogName) -> MirrorService:
         return self.azul_client.mirror_service(catalog)
 
     def _test_mirroring(self, *, delete: bool):

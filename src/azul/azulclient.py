@@ -59,7 +59,7 @@ from azul.indexer.index_service import (
     IndexService,
 )
 from azul.indexer.mirror_service import (
-    BaseMirrorService,
+    MirrorService,
 )
 from azul.plugins import (
     MetadataPlugin,
@@ -106,8 +106,8 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
         return self.index_service.metadata_plugin(catalog)
 
     @cache
-    def mirror_service(self, catalog: CatalogName) -> BaseMirrorService:
-        return BaseMirrorService(catalog=catalog)
+    def mirror_service(self, catalog: CatalogName) -> MirrorService:
+        return MirrorService(catalog=catalog)
 
     @cached_property
     def source_service(self) -> SourceService:

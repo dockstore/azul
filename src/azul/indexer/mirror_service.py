@@ -324,7 +324,7 @@ class FinalizeFileAction(MultiPartUploadAction):
 
 
 @attrs.frozen(kw_only=True, slots=False)
-class BaseMirrorService:
+class MirrorService:
     """
     Service for queuing mirroring work, e.g., sending action messages, and
     reading mirrored files. The most prominent reader of mirrored files is the
@@ -531,7 +531,7 @@ class BaseMirrorService:
 
 
 @attrs.frozen(kw_only=True, slots=False)
-class MirrorWorkerService(BaseMirrorService, HasCachedHttpClient):
+class MirrorWorkerService(MirrorService, HasCachedHttpClient):
     """
     Service that carries out mirroring work. Requires a mechanism to compose
     schema URLs. This function is currently offered by the indexer app, so

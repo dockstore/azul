@@ -45,8 +45,8 @@ from azul.http import (
     TooManyRequestsException,
 )
 from azul.indexer.mirror_service import (
-    BaseMirrorService,
     MirrorFileDownload,
+    MirrorService,
 )
 from azul.openapi import (
     format_description as fd,
@@ -82,7 +82,7 @@ class RepositoryController(ServiceController):
     def _service(self) -> IndexService:
         return IndexService()
 
-    def _mirror_service(self, catalog: CatalogName) -> BaseMirrorService:
+    def _mirror_service(self, catalog: CatalogName) -> MirrorService:
         return self._service.mirror_service(catalog)
 
     def _repository_plugin(self, catalog: CatalogName) -> RepositoryPlugin:

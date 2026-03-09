@@ -112,7 +112,7 @@ from azul.indexer.field import (
     null_str,
 )
 from azul.indexer.mirror_service import (
-    BaseMirrorService,
+    MirrorService,
 )
 from azul.json import (
     copy_json,
@@ -823,8 +823,8 @@ class ManifestGenerator(metaclass=ABCMeta):
         return self.service.metadata_plugin(self.catalog)
 
     @cached_property
-    def mirror_service(self) -> BaseMirrorService:
-        return BaseMirrorService(catalog=self.catalog)
+    def mirror_service(self) -> MirrorService:
+        return MirrorService(catalog=self.catalog)
 
     @classmethod
     @abstractmethod
