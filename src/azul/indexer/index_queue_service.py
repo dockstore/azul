@@ -119,11 +119,11 @@ class IndexQueueService:
         queue = self.notifications_queue(retry=retry)
         self._queues.send_message(queue, message)
 
-    def queue_tallies(self,
-                      messages: Iterable[SQSMessage],
-                      *,
-                      retry: bool = False
-                      ) -> int:
+    def _queue_tallies(self,
+                       messages: Iterable[SQSMessage],
+                       *,
+                       retry: bool = False
+                       ) -> int:
         queue = self.tallies_queue(retry=retry)
         # Logging tallies would be excessively verbose
         return self._queues.send_messages(queue, messages, log_level=0)
@@ -222,7 +222,7 @@ class IndexQueueService:
             log.info('Queueing %i entities for aggregating a total of %i contributions.',
                      len(tallies), sum(tally.num_contributions for tally in tallies))
             messages = (tally.to_message() for tally in tallies)
-            self.queue_tallies(messages)
+            self._queue_tallies(messages)
 
     def _transform(self,
                    catalog: CatalogName,
@@ -309,7 +309,7 @@ class IndexQueueService:
             # Hopefully this is more or less atomic. If we crash below here,
             # tallies will be inflated because some or all deferrals have
             # been sent and the original tallies will be returned.
-            self.queue_tallies(messages, retry=retry)
+            self._queue_tallies(messages, retry=retry)
 
 
 @attrs.frozen(kw_only=True)
