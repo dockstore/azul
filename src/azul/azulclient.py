@@ -96,11 +96,11 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
         return IndexQueueService()
 
     @cached_property
-    def index_repository_service(self) -> RepositoryService:
+    def repository_service(self) -> RepositoryService:
         return RepositoryService()
 
     def repository_plugin(self, catalog: CatalogName) -> RepositoryPlugin:
-        return self.index_repository_service.repository_plugin(catalog)
+        return self.repository_service.repository_plugin(catalog)
 
     def metadata_plugin(self, catalog: CatalogName) -> MetadataPlugin:
         return self.index_service.metadata_plugin(catalog)
@@ -114,7 +114,7 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
         return SourceService()
 
     def local_reindex(self, catalog: CatalogName, prefix: str) -> int:
-        service = self.index_repository_service
+        service = self.repository_service
         plugin = self.repository_plugin(catalog)
         notifications: JSONs = [
             # Notifications sent organically by DSS had a different structure,

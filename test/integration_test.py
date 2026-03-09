@@ -226,8 +226,8 @@ class IntegrationTestCase(AzulTestCase):
         return self.azul_client.index_queue_service
 
     @property
-    def index_repository_service(self):
-        return self.azul_client.index_repository_service
+    def repository_service(self):
+        return self.azul_client.repository_service
 
     def repository_plugin(self, catalog: CatalogName) -> RepositoryPlugin:
         return self.azul_client.repository_plugin(catalog)
@@ -1313,7 +1313,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
                                ) -> tuple[list[SQSMessage], set[SourcedBundleFQID]]:
         plugin = self.repository_plugin(catalog)
         queue_service = self.index_queue_service
-        repository_service = self.index_repository_service
+        repository_service = self.repository_service
         bundle_fqids, notifications = set(), []
         for source in sources:
             source = plugin.partition_source_for_indexing(catalog, source)
@@ -1385,7 +1385,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
                 expected_fqids -= replica_fqids
                 log.info('Ignoring replica bundles %r', replica_fqids)
             else:
-                service = self.index_repository_service
+                service = self.repository_service
                 expected_fqids = set(service.filter_obsolete_bundle_versions(expected_fqids))
                 obsolete_fqids = bundle_fqids - expected_fqids
                 if obsolete_fqids:
@@ -2018,7 +2018,7 @@ class CanBundleScriptIntegrationTest(IntegrationTestCase):
         source, _ = self._select_source(catalog)
         # The plugin will raise an exception if the source lacks a prefix
         source = source.with_prefix(Prefix.of_everything)
-        bundle_fqids = self.azul_client.index_repository_service.list_bundles(catalog, source, prefix='')
+        bundle_fqids = self.azul_client.repository_service.list_bundles(catalog, source, prefix='')
         return self.random.choice(sorted(bundle_fqids))
 
     def _can_bundle(self,

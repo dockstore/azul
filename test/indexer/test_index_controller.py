@@ -125,7 +125,7 @@ class TestIndexController(DCP2IndexerTestCase, WorkQueueTestCase):
 
     @property
     def index_repository_service(self):
-        return self.queue_service.index_repository_service
+        return self.queue_service.repository_service
 
     def tearDown(self):
         self._purge_indices()

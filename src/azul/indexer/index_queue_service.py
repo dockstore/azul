@@ -88,7 +88,7 @@ class IndexQueueService:
         return IndexService()
 
     @cached_property
-    def index_repository_service(self) -> RepositoryService:
+    def repository_service(self) -> RepositoryService:
         return RepositoryService()
 
     @cached_property
@@ -152,7 +152,7 @@ class IndexQueueService:
         return SQSMessage(body=json_mapping(message.to_json()))
 
     def remote_reindex(self, catalog: CatalogName, sources: Iterable[SourceSpec]):
-        service = self.index_repository_service
+        service = self.repository_service
         plugin = service.repository_plugin(catalog)
         for source_spec in sources:
             source_ref = plugin.resolve_source(source_spec)
@@ -169,7 +169,7 @@ class IndexQueueService:
             self.queue_notifications(messages)
 
     def remote_reindex_partition(self, message: IndexPartitionAction) -> None:
-        service = self.index_repository_service
+        service = self.repository_service
         catalog, prefix, source = message.catalog, message.prefix, message.source
         assert isinstance(catalog, str) and isinstance(prefix, str)
         bundle_fqids = service.list_bundles(catalog, source, prefix)
@@ -237,8 +237,8 @@ class IndexQueueService:
         representing one metadata entity in the index. Replicas of the original,
         untransformed metadata are returned as well.
         """
-        bundle = self.index_repository_service.fetch_bundle(catalog,
-                                                            bundle_fqid)
+        bundle = self.repository_service.fetch_bundle(catalog,
+                                                      bundle_fqid)
         results = self.index_service.transform(catalog,
                                                bundle,
                                                bundle_partition,
