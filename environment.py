@@ -939,12 +939,7 @@ def env() -> Mapping[str, str | None]:
         'AZUL_ENABLE_BUNDLE_NOTIFICATIONS': '0',
 
         # A Lambda runtime version to pin to, which overrides the AWS-managed
-        # default. Pin Lambda runtime to python:3.13.v76. When AWS automatically
-        # updated the runtime to 3.13v77, we observed a significant increase in
-        # memory usage, leading to mirroring failures.
+        # default.
         #
-        # FIXME: Remove pinned Lambda runtime version
-        #        https://github.com/DataBiosphere/azul/issues/7798
-        #
-        'azul_lambda_runtime_version': '1a6363019b274fc28ffbbec073e5ebf1a872c10c52269844a57c62e74063a49b'
+        'azul_lambda_runtime_version': None
     }
