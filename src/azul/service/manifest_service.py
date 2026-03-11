@@ -1151,8 +1151,8 @@ class ManifestGenerator(metaclass=ABCMeta):
                        file: JSON,
                        args: Mapping = frozendict()
                        ) -> str | None:
-        download_cls = self.repository_plugin.file_download_class()
-        if download_cls.needs_drs_uri and file['drs_uri'] is None:
+        if file['drs_uri'] is None:
+            # To download a file we need its DRS URI
             return None
         else:
             special_fields = self.metadata_plugin.special_fields

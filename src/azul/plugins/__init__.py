@@ -945,9 +945,6 @@ class RepositoryFileDownload(metaclass=ABCMeta):
     #: The file being downloaded
     file: File
 
-    #: True if the download of a file requires its DRS URI
-    needs_drs_uri: ClassVar[bool] = False
-
     #: The name of the replica to download the file from. Defaults to the name
     #: of the default replica. The set of valid replica names depends on the
     #: repository, but each repository must support the default replica.

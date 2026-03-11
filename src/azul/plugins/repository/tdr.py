@@ -272,8 +272,6 @@ class TDRPlugin[TDR_BUNDLE: TDRBundle,
 class TDRFileDownload(RepositoryFileDownload):
     _location: str | None = None
 
-    needs_drs_uri = True
-
     def update(self,
                plugin: RepositoryPlugin,
                authentication: Authentication | None
