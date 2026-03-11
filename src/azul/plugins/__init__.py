@@ -2,9 +2,6 @@ from abc import (
     ABCMeta,
     abstractmethod,
 )
-from enum import (
-    Enum,
-)
 import importlib
 from inspect import (
     isabstract,
@@ -75,6 +72,7 @@ from azul.indexer.transform import (
 )
 from azul.json import (
     DynamicPolymorphicSerializable,
+    SerializableEnum,
 )
 from azul.types import (
     JSON,
@@ -208,7 +206,13 @@ class SpecialFields:
     file_uuid: SpecialField
 
 
-class ManifestFormat(Enum):
+class ManifestFormat(SerializableEnum):
+    """
+    >>> ManifestFormat.verbatim_jsonl.to_json()
+    'verbatim_jsonl'
+    >>> ManifestFormat.from_json('verbatim_jsonl')
+    <ManifestFormat.verbatim_jsonl: 'verbatim.jsonl'>
+    """
     compact = 'compact'
     terra_pfb = 'terra.pfb'
     curl = 'curl'

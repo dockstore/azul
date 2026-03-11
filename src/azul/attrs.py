@@ -41,6 +41,9 @@ from azul import (
     cached_property,
     config,
 )
+from azul.functions import (
+    compose,
+)
 from azul.json import (
     PolymorphicSerializable,
     Serializable,
@@ -56,6 +59,7 @@ from azul.types import (
     PrimitiveJSON,
     derived_type_params,
     json_mapping,
+    json_str,
     not_none,
     reify,
 )
@@ -962,3 +966,9 @@ def is_uuid(version):
             raise TypeError(f'Not a UUID{version}', field.name, value)
 
     return validator
+
+
+def serializable_uuid[T: UUID](field: T | None = None) -> T:
+    return serializable(field,
+                        from_json=compose(UUID, json_str),
+                        to_json=str)

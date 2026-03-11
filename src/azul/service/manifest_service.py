@@ -81,7 +81,9 @@ from azul import (
     mutable_furl,
 )
 from azul.attrs import (
+    SerializableAttrs,
     is_uuid,
+    serializable_uuid,
     strict_auto,
 )
 from azul.auth import (
@@ -211,7 +213,7 @@ class AbstractManifestKey(metaclass=ABCMeta):
 
 
 @attrs.frozen(kw_only=True)
-class BareManifestKey(AbstractManifestKey):
+class BareManifestKey(AbstractManifestKey, SerializableAttrs):
     """
     An untrusted manifest key. Instances can be freely serialized and
     deserialized but the service won't accept them. To obtain a key the service
@@ -290,8 +292,8 @@ class BareManifestKey(AbstractManifestKey):
     """
     catalog: CatalogName = strict_auto()
     format: ManifestFormat = strict_auto()
-    manifest_hash: UUID = attrs.field(validator=is_uuid(5))
-    source_hash: UUID = attrs.field(validator=is_uuid(5))
+    manifest_hash: UUID = serializable_uuid(attrs.field(validator=is_uuid(5)))
+    source_hash: UUID = serializable_uuid(attrs.field(validator=is_uuid(5)))
 
     def pack(self) -> bytes:
         return msgpack.packb([
@@ -383,21 +385,6 @@ class ManifestKey(BareManifestKey):
         :meth:`ManifestService.verify_manifest_key_signature`.
         """
         assert False
-
-    def to_json(self) -> JSON:
-        return {
-            'catalog': self.catalog,
-            'format': self.format.value,
-            'manifest_hash': str(self.manifest_hash),
-            'source_hash': str(self.source_hash)
-        }
-
-    @classmethod
-    def from_json(cls, json: JSON) -> Self:
-        return cls(catalog=json['catalog'],
-                   format=ManifestFormat(json['format']),
-                   manifest_hash=UUID(json['manifest_hash']),
-                   source_hash=UUID(json['source_hash']))
 
     _uuid_namespace: ClassVar[UUID] = UUID('c5a0cd95-44f7-4216-972f-623f00f8fd22')
 
