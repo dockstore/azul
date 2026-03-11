@@ -169,14 +169,6 @@ class _AsAnnotated:
         return 'as_annotated()'
 
 
-def is_uuid(version):
-    def validator(_instance, field, value):
-        if not isinstance(value, UUID) or value.version != version:
-            raise TypeError(f'Not a UUID{version}', field.name, value)
-
-    return validator
-
-
 type Source = list[str | tuple[str, ...] | Source]
 
 type FromJSON = Callable[[AnyJSON], Any]
@@ -962,3 +954,11 @@ def devolve[T: AttrsInstance](cls: type[T],
             if init_name not in changes:
                 changes[init_name] = getattr(inst, field.name)
     return cls(**changes)
+
+
+def is_uuid(version):
+    def validator(_instance, field, value):
+        if not isinstance(value, UUID) or value.version != version:
+            raise TypeError(f'Not a UUID{version}', field.name, value)
+
+    return validator
