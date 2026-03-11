@@ -48,6 +48,9 @@ from azul.indexer.mirror_service import (
     MirrorFileDownload,
     MirrorService,
 )
+from azul.indexer.repository_service import (
+    RepositoryService,
+)
 from azul.openapi import (
     format_description as fd,
     params,
@@ -79,6 +82,10 @@ log = logging.getLogger(__name__)
 class RepositoryController(ServiceController):
 
     @cached_property
+    def _repository_service(self) -> RepositoryService:
+        return RepositoryService()
+
+    @cached_property
     def _index_service(self) -> IndexService:
         return IndexService()
 
@@ -86,7 +93,7 @@ class RepositoryController(ServiceController):
         return self._index_service.mirror_service(catalog)
 
     def _repository_plugin(self, catalog: CatalogName) -> RepositoryPlugin:
-        return self._index_service.repository_plugin(catalog)
+        return self._repository_service.repository_plugin(catalog)
 
     @property
     def _repository_files_spec(self):
