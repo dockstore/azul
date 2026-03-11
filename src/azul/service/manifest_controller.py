@@ -131,9 +131,9 @@ class ManifestController(QueryController):
                 mainly used for exporting data to Terra.
             ''')
         }
-        format_descriptions = [
+        supported_format_descriptions = [
             f'- `{format.value}` {descriptions_by_format[format]}'
-            for format in ManifestFormat
+            for format in self._formats
         ]
         links = [
             '[1]: https://software.broadinstitute.org/firecloud/documentation/article?id=10954',
@@ -143,7 +143,7 @@ class ManifestController(QueryController):
         ]
         return '\n\n'.join([
             'The desired format of the output.',
-            *format_descriptions,
+            *supported_format_descriptions,
             *links
         ])
 
