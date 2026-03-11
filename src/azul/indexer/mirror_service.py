@@ -182,10 +182,7 @@ class MirrorFileDownload(RepositoryFileDownload):
     def location(self) -> str | None:
         return self._location
 
-    def update(self,
-               plugin: RepositoryPlugin,
-               authentication: Authentication | None
-               ) -> None:
+    def update(self, authentication: Authentication | None) -> None:
         pass
 
 

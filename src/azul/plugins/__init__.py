@@ -942,6 +942,9 @@ class File(DiscriminatingPolymorphicSerializableAttrs,
 
 @attrs.define(auto_attribs=True, kw_only=True)
 class RepositoryFileDownload(metaclass=ABCMeta):
+    #: The plugin for the repository that contains the file to be downloaded
+    _plugin: RepositoryPlugin
+
     #: The file being downloaded
     file: File
 
@@ -955,19 +958,13 @@ class RepositoryFileDownload(metaclass=ABCMeta):
     token: str | None
 
     @abstractmethod
-    def update(self,
-               plugin: RepositoryPlugin,
-               authentication: Authentication | None
-               ) -> None:
+    def update(self, authentication: Authentication | None) -> None:
         """
         Initiate the preparation of a URL from which the file can be downloaded.
         Set any attributes that are None to their default values. If a download
         is already being prepared, update those attributes and set the
         `retry_after` property. If the download has been prepared, set the
         `location` property.
-
-        :param plugin: The plugin for the repository from which the file is to
-                       be downloaded.
 
         :param authentication: The authentication provided with the download
                                request.

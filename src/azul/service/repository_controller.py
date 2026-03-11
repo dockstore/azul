@@ -394,13 +394,14 @@ class RepositoryController(ServiceController):
 
         if mirror_url is None:
             download_cls = plugin.file_download_class()
-            download = download_cls(file=file, replica=replica, token=token)
+            download = download_cls(plugin=plugin, file=file, replica=replica, token=token)
         else:
             # The file's content type would be None on subsequent requests since
             # it isn't propagated via a query parameter. `MirrorFileDownload`
             # will always be ready immediately.
             assert request_index == 0, request_index
             download = MirrorFileDownload(
+                plugin=plugin,
                 file=file,
                 location=mirror_url,
                 replica=replica,
@@ -409,7 +410,7 @@ class RepositoryController(ServiceController):
             assert download.retry_after is None, download
 
         try:
-            download.update(plugin, authentication)
+            download.update(authentication)
         except LimitedTimeoutException as e:
             raise ServiceUnavailableError(*e.args)
         except TooManyRequestsException as e:
