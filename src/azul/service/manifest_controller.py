@@ -3,6 +3,7 @@ from collections.abc import (
 )
 from typing import (
     Any,
+    Sequence,
     TypedDict,
     Union,
     cast,
@@ -102,6 +103,10 @@ class ManifestController(QueryController):
     @cached_property
     def _service(self) -> ManifestService:
         return ManifestService(file_url_func=self._file_url)
+
+    @property
+    def _formats(self) -> Sequence[ManifestFormat]:
+        return self._metadata_plugin.manifest_formats
 
     def _route(self, *, fetch: bool, initiate: bool):
         path = self._manifest_path(fetch=fetch, token=None if initiate else '{token}')
@@ -207,7 +212,7 @@ class ManifestController(QueryController):
                             schema.enum(
                                 *[
                                     format.value
-                                    for format in self._metadata_plugin.manifest_formats
+                                    for format in self._formats
                                 ],
                                 form=str
                             )
@@ -410,7 +415,7 @@ class ManifestController(QueryController):
                             filters=self._validate_filters)
             # Now that the catalog is valid, we can provide the default format that
             # depends on it
-            default_format = self._metadata_plugin.manifest_formats[0].value
+            default_format = self._formats[0].value
             query_params.setdefault('format', default_format)
         else:
             validate_params(query_params)
@@ -421,7 +426,7 @@ class ManifestController(QueryController):
                               authentication=authentication)
 
     def _validate_manifest_format(self, format: str):
-        supported_formats = {f.value for f in self._metadata_plugin.manifest_formats}
+        supported_formats = {f.value for f in self._formats}
         try:
             ManifestFormat(format)
         except ValueError:
