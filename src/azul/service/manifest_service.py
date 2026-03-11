@@ -123,7 +123,6 @@ from azul.plugins import (
     ManifestConfig,
     ManifestFormat,
     MetadataPlugin,
-    RepositoryPlugin,
     SpecialField,
     dotted,
 )
@@ -812,11 +811,6 @@ class ManifestGenerator(metaclass=ABCMeta):
         Returns the manifest format implemented by this generator class.
         """
         raise NotImplementedError
-
-    @cached_property
-    def repository_plugin(self) -> RepositoryPlugin:
-        catalog = self.catalog
-        return RepositoryPlugin.load(catalog).create(catalog)
 
     @property
     def metadata_plugin(self) -> MetadataPlugin:
@@ -1827,7 +1821,7 @@ class PFBManifestGenerator(FileBasedManifestGenerator):
         field_types = transformer.field_types()
         pfb_schema = avro_pfb.pfb_schema_from_field_types(field_types)
 
-        converter = avro_pfb.PFBConverter(pfb_schema, self.repository_plugin)
+        converter = avro_pfb.PFBConverter(pfb_schema)
         for doc in self._all_docs_sorted():
             converter.add_doc(doc)
 

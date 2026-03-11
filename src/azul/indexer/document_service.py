@@ -37,7 +37,6 @@ from azul.indexer.transform import (
 from azul.plugins import (
     FieldPath,
     MetadataPlugin,
-    RepositoryPlugin,
 )
 from azul.types import (
     AnyMutableJSON,
@@ -50,10 +49,6 @@ class DocumentService:
     @cache
     def metadata_plugin(self, catalog: CatalogName) -> MetadataPlugin:
         return MetadataPlugin.load(catalog).create()
-
-    @cache
-    def repository_plugin(self, catalog: CatalogName) -> RepositoryPlugin:
-        return RepositoryPlugin.load(catalog).create(catalog)
 
     @cache
     def aggregate_class(self, catalog: CatalogName) -> Type[Aggregate]:

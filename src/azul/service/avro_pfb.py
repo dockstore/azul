@@ -52,9 +52,6 @@ from azul.indexer.field import (
 from azul.json import (
     copy_json,
 )
-from azul.plugins import (
-    RepositoryPlugin,
-)
 from azul.plugins.metadata.hca.indexer.transform import (
     pass_thru_uuid4,
     value_and_unit,
@@ -103,9 +100,8 @@ class PFBConverter:
 
     entity_type = 'files'
 
-    def __init__(self, schema: JSON, repository_plugin: RepositoryPlugin):
+    def __init__(self, schema: JSON):
         self.schema = schema
-        self.repository_plugin = repository_plugin
         self._entities: dict[PFBEntity, MutableSet[PFBRelation]] = defaultdict(set)
 
     def add_doc(self, doc: JSON):
