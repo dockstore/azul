@@ -1527,7 +1527,6 @@ class CurlManifestGenerator(PagedManifestGenerator):
                       ) -> ManifestPartition:
 
         def _write(file: JSON, is_related_file: bool = False):
-            name = file['name']
             # Related files are indexed differently than normal files (they
             # don't have their own document but are listed inside the main
             # file's document), so to ensure that the /repository/files
@@ -1536,7 +1535,7 @@ class CurlManifestGenerator(PagedManifestGenerator):
             # need to query the index for that information.
             args = {
                 'requestIndex': 1,
-                'fileName': name,
+                'fileName': file['name'],
                 'drsUri': file['drs_uri']
             } if is_related_file else {
             }
@@ -1551,7 +1550,7 @@ class CurlManifestGenerator(PagedManifestGenerator):
                 # bundle UUID. Because a file can belong to multiple bundles we use
                 # the one with the most recent version.
                 bundle = max(cast(JSONs, doc['bundles']), key=itemgetter('version', 'uuid'))
-                output_name = self._sanitize_path(bundle['uuid'] + '/' + name)
+                output_name = self._sanitize_path(bundle['uuid'] + '/' + file['name'])
                 output.write(f'url={self._option(file_url)}\n'
                              f'output={self._option(output_name)}\n\n')
 
