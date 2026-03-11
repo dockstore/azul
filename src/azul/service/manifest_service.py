@@ -719,7 +719,7 @@ class ManifestService(QueryService):
                        file_name: str | None,
                        was_cached: bool
                        ) -> Manifest:
-        if not generator_cls.use_content_disposition_file_name:
+        if not generator_cls.use_content_disposition_file_name():
             file_name = None
         object_key = generator_cls.s3_object_key(manifest_key)
         return Manifest(object_key=object_key,
