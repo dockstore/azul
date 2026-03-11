@@ -79,14 +79,14 @@ log = logging.getLogger(__name__)
 class RepositoryController(ServiceController):
 
     @cached_property
-    def _service(self) -> IndexService:
+    def _index_service(self) -> IndexService:
         return IndexService()
 
     def _mirror_service(self, catalog: CatalogName) -> MirrorService:
-        return self._service.mirror_service(catalog)
+        return self._index_service.mirror_service(catalog)
 
     def _repository_plugin(self, catalog: CatalogName) -> RepositoryPlugin:
-        return self._service.repository_plugin(catalog)
+        return self._index_service.repository_plugin(catalog)
 
     @property
     def _repository_files_spec(self):
@@ -344,10 +344,10 @@ class RepositoryController(ServiceController):
 
         if request_index == 0:
             filters = self._prepare_filters(catalog, authentication, None)
-            file = self._service.get_data_file(catalog=catalog,
-                                               file_uuid=file_uuid,
-                                               file_version=file_version,
-                                               filters=filters)
+            file = self._index_service.get_data_file(catalog=catalog,
+                                                     file_uuid=file_uuid,
+                                                     file_version=file_version,
+                                                     filters=filters)
             if file is None:
                 raise NotFoundError(f'Unable to find file {file_uuid!r}, '
                                     f'version {file_version!r} in catalog {catalog!r}')
@@ -605,4 +605,4 @@ class RepositoryController(ServiceController):
     }
 
     def _file_class(self, catalog: CatalogName) -> type[File]:
-        return self._service.metadata_plugin(catalog).file_class
+        return self._index_service.metadata_plugin(catalog).file_class
