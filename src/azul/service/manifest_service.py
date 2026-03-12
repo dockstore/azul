@@ -138,6 +138,7 @@ from azul.lib.types import (
     json_element_mappings,
     json_element_strings,
     json_elements_are_mappings,
+    json_int,
     json_list_of_dicts,
     json_mapping,
     json_sequence,
@@ -1578,10 +1579,29 @@ class CurlManifestGenerator(PagedManifestGenerator):
                 contents = json_mapping(doc['contents'])
                 files = json_sequence(contents['files'])
                 file = json_mapping(one(files))
-                _write(file)
-                if config.is_hca_enabled(self.catalog):
-                    for related_file in json_element_mappings(file['related_files']):
-                        _write(related_file, is_related_file=True)
+                source: JSON = one(json_sequence_of_mappings(doc['sources']))
+                source: SourceRef = SourceRef.from_json(source)
+
+                # On AnVIL, and for political reasons, we are not permitted to
+                # include managed-access files, even if they are accessible to
+                # the requesting user. Because we only mirror open-access files,
+                # we can use the mirrorability of a file as a proxy condition
+                # for excluding managed-access files. It is possible that the
+                # condition is true for a file that has yet to be mirrored.
+                # Until the mirrored copy exists, the download will fall back to
+                # TDR's original. We accept that caveat. Also note that if
+                # managed-access files were to be included, we would need to
+                # ensure that the signed URL of the manifest expired after one
+                # hour.
+                #
+                if not config.is_anvil_enabled(self.catalog) or (
+                    self.mirror_service.may_mirror_files_from_source(source.spec)
+                    and self.mirror_service.may_mirror(json_int(file['file_size']))
+                ):
+                    _write(file)
+                    if config.is_hca_enabled(self.catalog):
+                        for related_file in json_element_mappings(file['related_files']):
+                            _write(related_file, is_related_file=True)
             assert hit is not None
             return partition.next_page(file_name=None,
                                        search_after=self._search_after(hit))

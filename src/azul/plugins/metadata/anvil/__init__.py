@@ -110,6 +110,9 @@ class Plugin(MetadataPlugin[AnvilBundle]):
         return [
             ManifestFormat.compact,
             ManifestFormat.terra_pfb,
+            *iif(config.enable_mirroring, [
+                ManifestFormat.curl
+            ]),
             *iif(config.enable_replicas, [
                 ManifestFormat.verbatim_jsonl,
                 ManifestFormat.verbatim_pfb
