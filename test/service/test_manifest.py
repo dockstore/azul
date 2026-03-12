@@ -1347,10 +1347,10 @@ class AnvilManifestTestCase(ManifestTestCase, AnvilCannedBundleTestCase):
     @classmethod
     def bundles(cls) -> list[SourcedBundleFQID]:
         return [
-            cls.bundle_fqid(uuid='2370f948-2783-aeb6-afea-e022897f4dcf'),
-            cls.bundle_fqid(uuid='595c469e-604d-ab34-af39-f5b9f5d61818'),
-            cls.bundle_fqid(uuid='826dea02-e274-affe-aabc-eb3db63ad068'),
-            cls.bundle_fqid(uuid='f4b39881-d519-ab6f-99a0-7cc5089caee6'),
+            cls.duos_bundle(),
+            cls.supplementary_bundle(),
+            cls.primary_bundle(),
+            cls.replica_bundle()
         ]
 
     source_id_filters: FiltersJSON = {
