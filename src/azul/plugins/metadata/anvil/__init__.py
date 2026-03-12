@@ -8,6 +8,7 @@ from typing import (
     Iterable,
     Self,
     Sequence,
+    cast,
 )
 
 from attrs import (
@@ -78,6 +79,7 @@ from azul.types import (
     AnyMutableJSON,
     JSON,
     MutableJSON,
+    MutableJSONArray,
     MutableJSONs,
     json_bool,
     json_element_mappings,
@@ -436,7 +438,7 @@ class Plugin(MetadataPlugin[AnvilBundle]):
             ]
         )
 
-    def verbatim_pfb_schema(self, replicas: list[JSON]) -> list[JSON]:
+    def verbatim_pfb_schema(self, replicas: Iterable[JSON]) -> MutableJSONs:
         table_schemas_by_name = {
             json_str(schema['name']): schema
             for schema in json_element_mappings(anvil_schema['tables'])
@@ -473,7 +475,10 @@ class Plugin(MetadataPlugin[AnvilBundle]):
             entity_schemas.append({
                 'name': table_name,
                 'type': 'record',
-                'fields': field_schemas
+                # The cast is safe because `field_schemas` is reassigned in the
+                # next loop iteration, or goes out of scope when the function
+                # returns  after the loop exits. Mypy just doesn't realize that.
+                'fields': cast(MutableJSONArray, field_schemas)
             })
         return entity_schemas
 

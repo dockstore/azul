@@ -10,12 +10,14 @@ from collections.abc import (
     Mapping,
     Sequence,
 )
+from functools import (
+    partial,
+)
 import json
 import logging
 from typing import (
-    Generic,
+    Any,
     Self,
-    TypeVar,
 )
 
 import attr
@@ -91,11 +93,7 @@ class IndexNotFoundError(Exception):
         super().__init__(f'Index `{missing_index}` was not found')
 
 
-R1 = TypeVar('R1')
-R2 = TypeVar('R2')
-
-
-class ElasticsearchStage(Generic[R1, R2], metaclass=ABCMeta):
+class ElasticsearchStage[R1, R2](metaclass=ABCMeta):
     """
     A stage in a chain of responsibility to prepare an Elasticsearch request and
     to process the response to that request. If an implementation modifies the
@@ -120,11 +118,8 @@ class ElasticsearchStage(Generic[R1, R2], metaclass=ABCMeta):
         raise NotImplementedError
 
 
-R0 = TypeVar('R0')
-
-
 @attr.s(frozen=True, auto_attribs=True, kw_only=True)
-class ElasticsearchChain(ElasticsearchStage[R0, R2]):
+class ElasticsearchChain[R0, R1, R2](ElasticsearchStage[R0, R2]):
     """
     The result of wrapping a stage or chain in another stage.
     """
@@ -155,7 +150,7 @@ class ElasticsearchChain(ElasticsearchStage[R0, R2]):
 
 
 @attr.s(frozen=True, auto_attribs=True, kw_only=True)
-class _ElasticsearchStage(ElasticsearchStage[R1, R2], metaclass=ABCMeta):
+class _ElasticsearchStage[R1, R2](ElasticsearchStage[R1, R2], metaclass=ABCMeta):
     """
     A base implementation of a stage.
     """
@@ -167,7 +162,7 @@ class _ElasticsearchStage(ElasticsearchStage[R1, R2], metaclass=ABCMeta):
     def plugin(self) -> MetadataPlugin:
         return self.service.metadata_plugin(self.catalog)
 
-    def wrap(self, other: ElasticsearchStage[R0, R1]) -> ElasticsearchChain[R0, R2]:
+    def wrap[R0](self, other: ElasticsearchStage[R0, R1]) -> ElasticsearchChain[R0, R1, R2]:
         return ElasticsearchChain(inner=other, outer=self)
 
 
@@ -283,9 +278,9 @@ class AggregationStage(_ElasticsearchStage[MutableJSON, MutableJSON]):
     filter_stage: FilterStage
 
     @classmethod
-    def create_and_wrap(cls,
-                        chain: ElasticsearchChain[R0, MutableJSON]
-                        ) -> ElasticsearchChain[R0, MutableJSON]:
+    def create_and_wrap[R0](cls,
+                            chain: ElasticsearchChain[R0, MutableJSON, MutableJSON]
+                            ) -> ElasticsearchChain[R0, MutableJSON, MutableJSON]:
         """
         Creates and adds an aggregation stage to the specified chain. The chain
         must contain a filter stage.
@@ -609,7 +604,8 @@ class PaginationStage(_ElasticsearchStage[JSON, ResponseTriple]):
         return hits
 
     def _translate_hits(self, hits):
-        hits = self.service.translate_fields(self.catalog, hits, forward=False)
+        f = partial(self.service.translate_fields, self.catalog, forward=False)
+        hits = list(map(f, hits))
         return hits
 
     def _process_pagination(self, response: JSON) -> MutableJSON:
@@ -678,7 +674,7 @@ class QueryService(DocumentService):
                      filters: Filters,
                      post_filter: bool,
                      document_slice: DocumentSlice | None
-                     ) -> ElasticsearchChain[Response, Response]:
+                     ) -> ElasticsearchChain[Response, Any, Response]:
         """
         Create a chain for a basic Elasticsearch `search` request for documents
         matching the given filter, optionally restricting the set of properties

@@ -560,7 +560,7 @@ class MetadataPlugin[BUNDLE: Bundle](Plugin[BUNDLE]):
     def verbatim_pfb_entity_id(self, replica: JSON) -> str:
         return json_str(replica['entity_id'])
 
-    def verbatim_pfb_schema(self, replicas: list[JSON]) -> list[JSON]:
+    def verbatim_pfb_schema(self, replicas: Iterable[JSON]) -> MutableJSONs:
         """
         Generate the azul-specific parts of the PFB schema for the verbatim
         manifest. The default, metadata-agnostic implementation loads all
@@ -572,7 +572,7 @@ class MetadataPlugin[BUNDLE: Bundle](Plugin[BUNDLE]):
 
         :param replicas: The replica documents to be described by the PFB schema
 
-        :return: a list of PFB entity schemas describing the replicas
+        :return: the PFB entity schemas describing the replicas
         """
         from azul.service import (
             avro_pfb,

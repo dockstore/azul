@@ -259,7 +259,8 @@ class PFBRelation:
         return cls(dst_id=entity.id, dst_name=entity.name)
 
 
-def pfb_links_from_field_types(field_types: FieldTypes) -> MutableJSON:
+def pfb_links_from_field_types(field_types: FieldTypes
+                               ) -> dict[str, MutableJSONs]:
     return {
         entity_type: [] if entity_type == 'files' else [{
             'multiplicity': 'MANY_TO_MANY',
@@ -311,7 +312,7 @@ def pfb_schema_from_field_types(field_types: FieldTypes) -> JSON:
     return avro_pfb_schema(entity_schemas)
 
 
-def pfb_schema_from_replicas(replicas: Iterable[JSON]) -> list[JSON]:
+def pfb_schema_from_replicas(replicas: Iterable[JSON]) -> MutableJSONs:
     schemas_by_replica_type: dict[str, MutableJSON] = {}
     for replica in replicas:
         replica_type, replica_contents = replica['replica_type'], replica['contents']
