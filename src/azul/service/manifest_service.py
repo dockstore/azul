@@ -50,7 +50,6 @@ from typing import (
     IO,
     Protocol,
     Self,
-    cast,
 )
 import unicodedata
 from uuid import (
@@ -142,6 +141,7 @@ from azul.lib.types import (
     json_list_of_dicts,
     json_mapping,
     json_sequence,
+    json_sequence_of_mappings,
     json_str,
     not_none,
     optional,
@@ -1722,7 +1722,7 @@ class CompactManifestGenerator(PagedManifestGenerator):
                 sources = json_element_mappings(doc['sources'])
                 source: SourceSpec = SourceRef.from_json(one(sources)).spec
                 if len(project_short_names) < 2 and 'projects' in contents:
-                    project = one(cast(JSONs, contents['projects']))
+                    project = one(json_sequence_of_mappings(contents['projects']))
                     short_names = json_element_strings(project['project_short_name'])
                     project_short_names.update(short_names)
                 row: Cells = {}
