@@ -13,7 +13,6 @@ from collections.abc import (
 import json
 import logging
 from typing import (
-    Any,
     Generic,
     Self,
     TypeVar,
@@ -73,11 +72,14 @@ from azul.service import (
     FiltersJSON,
 )
 from azul.types import (
+    AnyJSON,
     JSON,
     JSONTypedDict,
     JSONs,
     MutableJSON,
     PrimitiveJSON,
+    json_list,
+    json_str,
 )
 
 log = logging.getLogger(__name__)
@@ -462,7 +464,16 @@ class ToDictStage(_ElasticsearchStage[Response, MutableJSON]):
         return response.to_dict()
 
 
-SortKey = tuple[Any, str]
+type SortKey = tuple[PrimitiveJSON, str]
+
+
+def sort_key_from_json(s: AnyJSON) -> SortKey:
+    a, b = json_list(s)
+    return a, json_str(b)
+
+
+def sort_key_to_json(s: SortKey) -> AnyJSON:
+    return list(s)
 
 
 @attr.s(auto_attribs=True, kw_only=True, frozen=True)

@@ -75,10 +75,14 @@ from azul.json import (
     SerializableEnum,
 )
 from azul.types import (
+    AnyJSON,
     JSON,
     MutableJSON,
     MutableJSONs,
+    check_type,
     derived_type_params,
+    json_element_strings,
+    json_sequence,
     json_str,
 )
 from azul.uuids import (
@@ -119,10 +123,25 @@ type InverseFieldMapping = Mapping[
     FieldName | InverseFieldMapping
 ]
 
-ColumnMapping = Mapping[FieldPathElement, FieldName | None]
-ManifestConfig = Mapping[FieldPath, ColumnMapping]
-MutableColumnMapping = dict[FieldPathElement, FieldName]
-MutableManifestConfig = dict[FieldPath, MutableColumnMapping]
+type ColumnMapping = Mapping[FieldPathElement, FieldName | None]
+type ManifestConfig = Mapping[FieldPath, ColumnMapping]
+
+
+def manifest_config_from_json(c: AnyJSON) -> ManifestConfig:
+    def f(e: AnyJSON) -> tuple[FieldPath, ColumnMapping]:
+        k, v = json_sequence(e)
+        assert check_type(ColumnMapping, v)
+        return tuple(json_element_strings(k)), cast(ColumnMapping, v)
+
+    return dict(map(f, json_sequence(c)))
+
+
+def manifest_config_to_json(c: ManifestConfig) -> AnyJSON:
+    return [[list(k), v] for k, v in c.items()]
+
+
+type MutableColumnMapping = dict[FieldPathElement, FieldName]
+type MutableManifestConfig = dict[FieldPath, MutableColumnMapping]
 
 DottedFieldPath = str
 FieldGlobs = list[DottedFieldPath]

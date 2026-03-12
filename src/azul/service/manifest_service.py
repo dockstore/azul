@@ -14,6 +14,9 @@ import csv
 from datetime import (
     datetime,
 )
+from functools import (
+    partial,
+)
 from inspect import (
     isabstract,
 )
@@ -83,6 +86,7 @@ from azul import (
 from azul.attrs import (
     SerializableAttrs,
     is_uuid,
+    serializable,
     serializable_uuid,
     strict_auto,
 )
@@ -98,6 +102,9 @@ from azul.collections import (
 )
 from azul.deployment import (
     aws,
+)
+from azul.functions import (
+    compose,
 )
 from azul.indexer import (
     Prefix,
@@ -127,6 +134,8 @@ from azul.plugins import (
     MetadataPlugin,
     SpecialField,
     dotted,
+    manifest_config_from_json,
+    manifest_config_to_json,
 )
 from azul.service import (
     FileUrlFunc,
@@ -143,6 +152,8 @@ from azul.service.query_service import (
     QueryService,
     SortKey,
     ToDictStage,
+    sort_key_from_json,
+    sort_key_to_json,
 )
 from azul.service.storage_service import (
     StorageObjectNotFound,
@@ -152,11 +163,12 @@ from azul.strings import (
     double_quote as dq,
 )
 from azul.types import (
-    AnyJSON,
     FlatJSON,
     JSON,
     JSONs,
     MutableJSON,
+    json_element_strings,
+    optional,
 )
 from azul.uuids import (
     uuid5_for_bytes,
@@ -399,7 +411,7 @@ class InvalidManifestKeySignature(Exception):
 
 
 @attrs.frozen(kw_only=True)
-class Manifest:
+class Manifest(SerializableAttrs):
     """
     Contains the details of a prepared manifest.
     """
@@ -421,30 +433,13 @@ class Manifest:
     #: system
     file_name: str
 
-    def to_json(self) -> JSON:
-        return {
-            'object_key': self.object_key,
-            'was_cached': self.was_cached,
-            'format': self.format.value,
-            'manifest_key': self.manifest_key.to_json(),
-            'file_name': self.file_name
-        }
-
-    @classmethod
-    def from_json(cls, json: JSON) -> Self:
-        return cls(object_key=json['object_key'],
-                   was_cached=json['was_cached'],
-                   format=ManifestFormat(json['format']),
-                   manifest_key=ManifestKey.from_json(json['manifest_key']),
-                   file_name=json['file_name'])
-
 
 def tuple_or_none(v):
     return v if v is None else tuple(v)
 
 
 @attrs.frozen(kw_only=True)
-class ManifestPartition:
+class ManifestPartition(SerializableAttrs):
     """
     A partial manifest. An instance of this class encapsulates the state that
     might need to be tracked while a manifest is populated, in increments of
@@ -474,7 +469,9 @@ class ManifestPartition:
     #: The cached configuration of the manifest that contains this partition.
     #: Manifest generators whose `manifest_config` property is expensive should
     #: cache the returned value here for subsequent partitions to reuse.
-    config: AnyJSON | None = None
+    config: ManifestConfig | None = serializable(attrs.field(default=None),
+                                                 from_json=partial(optional, manifest_config_from_json),
+                                                 to_json=partial(optional, manifest_config_to_json))
 
     #: The ID of the S3 multi-part upload this partition is a part of. If a
     #: manifest consists of just one partition, this may be None, but it doesn't
@@ -482,8 +479,9 @@ class ManifestPartition:
     multipart_upload_id: str | None = None
 
     #: The S3 ETag of each partition; the current one and all the ones before it
-    part_etags: tuple[str, ...] | None = attrs.field(converter=tuple_or_none,
-                                                     default=None)
+    part_etags: tuple[str, ...] | None = serializable(attrs.field(default=None),
+                                                      from_json=partial(optional, compose(tuple, json_element_strings)),
+                                                      to_json=partial(optional, list))
 
     #: The index of the current page. The index is zero-based and global. For
     #: example, if the first partition contains five pages, the index of the
@@ -497,17 +495,9 @@ class ManifestPartition:
 
     #: The `sort` value of the first hit of the current page in this partition,
     #: or None if there is no current page.
-    search_after: SortKey | None = None
-
-    @classmethod
-    def from_json(cls, partition: JSON) -> Self:
-        return cls(**{
-            k: tuple(v) if k == 'search_after' and v is not None else v
-            for k, v in partition.items()
-        })
-
-    def to_json(self) -> MutableJSON:
-        return attrs.asdict(self)
+    search_after: SortKey | None = serializable(attrs.field(default=None),
+                                                from_json=partial(optional, sort_key_from_json),
+                                                to_json=partial(optional, sort_key_to_json))
 
     @classmethod
     def first(cls) -> Self:
@@ -518,7 +508,7 @@ class ManifestPartition:
     def is_first(self) -> bool:
         return not (self.index or self.page_index)
 
-    def with_config(self, config: AnyJSON) -> Self:
+    def with_config(self, config: ManifestConfig) -> Self:
         return attrs.evolve(self, config=config)
 
     def with_upload(self, multipart_upload_id) -> Self:
@@ -1335,13 +1325,9 @@ class PagedManifestGenerator(ClientSidePagingManifestGenerator):
               ) -> ManifestPartition:
         assert not partition.is_last, partition
         if partition.config is None:
-            # The keys in manifest config are tuples which aren't allowed in
-            # JSON. We convert the outer mapping to a list of entries.
-            config = [[list(k), v] for k, v in self.manifest_config.items()]
-            partition = partition.with_config(config)
+            partition = partition.with_config(self.manifest_config)
         else:
-            config = {tuple(k): v for k, v in partition.config}
-            type(self).manifest_config.fset(self, config)
+            type(self).manifest_config.fset(self, partition.config)
         object_key = self.s3_object_key(manifest_key)
         if partition.multipart_upload_id is None:
             upload_id = self.storage.create_multipart_upload(object_key=object_key)
