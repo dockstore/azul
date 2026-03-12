@@ -1729,7 +1729,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
             # Create a single-file curl manifest and verify that the OAuth2
             # token is present on the command line
             managed_access_file = one(self.random.choice(files)['files'])
-            managed_access_file_id = managed_access_file['uuid']
+            managed_access_file_id = lookup(managed_access_file, 'document_id', 'uuid')
             filters = {metadata_plugin.special_fields.file_uuid.name: {'is': [managed_access_file_id]}}
             manifest_url.set(args=dict(catalog=catalog,
                                        filters=json.dumps(filters),

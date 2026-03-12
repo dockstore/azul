@@ -1518,7 +1518,11 @@ class CurlManifestGenerator(PagedManifestGenerator):
                       ) -> ManifestPartition:
 
         def _write(file: JSON, is_related_file: bool = False):
-            file_name = json_str(file['name'])
+            special_fields = self.metadata_plugin.special_fields
+            file_name_field = special_fields.file_name.name_in_hit
+            file_uuid_field = special_fields.file_uuid.name_in_hit
+
+            file_name = json_str(file[file_name_field])
             # Related files are indexed differently than normal files (they
             # don't have their own document but are listed inside the main
             # file's document), so to ensure that the /repository/files
@@ -1534,8 +1538,8 @@ class CurlManifestGenerator(PagedManifestGenerator):
 
             file_url = self._azul_file_url(file, args)
             if file_url is None:
-                output.write(f"# File {file['uuid']!r}, version {file['version']!r} is "
-                             f"currently not available in catalog {self.catalog!r}.\n\n")
+                output.write(f"# File {file[file_uuid_field]!r}, version {file['version']!r} "
+                             f"is currently not available in catalog {self.catalog!r}.\n\n")
             else:
                 # To prevent overwriting one file with another one of the same name
                 # but different content we nest each file in a folder using the
@@ -1575,8 +1579,9 @@ class CurlManifestGenerator(PagedManifestGenerator):
                 files = json_sequence(contents['files'])
                 file = json_mapping(one(files))
                 _write(file)
-                for related_file in json_element_mappings(file['related_files']):
-                    _write(related_file, is_related_file=True)
+                if config.is_hca_enabled(self.catalog):
+                    for related_file in json_element_mappings(file['related_files']):
+                        _write(related_file, is_related_file=True)
             assert hit is not None
             return partition.next_page(file_name=None,
                                        search_after=self._search_after(hit))
