@@ -346,6 +346,24 @@ class ManifestTestCase(WebServiceTestCase,
         actual[1:], expected[1:] = sorted(actual[1:]), sorted(expected[1:])
         self.assertEqual(expected, actual)
 
+    def _assert_curl(self, expected_body: list[list[str]], actual: Response):
+        expected_header = [
+            '--http1.1', '',
+            '--create-dirs', '',
+            '--compressed', '',
+            '--location', '',
+            '--globoff', '',
+            '--fail', '',
+            '--fail-early', '',
+            '--continue-at -', '',
+            '--write-out "Downloading to: %{filename_effective}\\n\\n"', '',
+        ]
+        lines = actual.content.decode().splitlines()
+        header_length = len(expected_header)
+        header, body = lines[:header_length], lines[header_length:]
+        self.assertEqual(expected_header, header)
+        self.assertEqual(expected_body, sorted(chunked(body, 3)))
+
     def _file_url(self, file_id, version):
         return str(self.base_url.set(path='/repository/files/' + file_id,
                                      args=dict(catalog=self.catalog,
@@ -872,21 +890,6 @@ class TestManifests(DCP1ManifestTestCase):
         filters = {'fileFormat': {'is': ['pdf']}}
         response = self._get_manifest(ManifestFormat.curl, filters)
         self.assertEqual(200, response.status_code)
-        lines = response.content.decode().splitlines()
-        expected_header = [
-            '--http1.1', '',
-            '--create-dirs', '',
-            '--compressed', '',
-            '--location', '',
-            '--globoff', '',
-            '--fail', '',
-            '--fail-early', '',
-            '--continue-at -', '',
-            '--write-out "Downloading to: %{filename_effective}\\n\\n"', '',
-        ]
-        header_length = len(expected_header)
-        header, body = lines[:header_length], lines[header_length:]
-        self.assertEqual(expected_header, header)
         base_url = str(self.base_url.set(path='/repository/files'))
         expected_body = [
             [
@@ -908,7 +911,7 @@ class TestManifests(DCP1ManifestTestCase):
                 ''
             ],
         ]
-        self.assertEqual(expected_body, sorted(chunked(body, 3)))
+        self._assert_curl(expected_body, response)
 
     def test_manifest_format_validation(self):
         url = self.base_url.set(path='/manifest/files',
