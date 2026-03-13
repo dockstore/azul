@@ -330,6 +330,23 @@ update the ``ami_id`` entry for the respective region. Instead of selecting a
 ``….gitlab`` component, you can just specify the region of the component using
 the ``--region`` option to ``aws ec2 describe-images``.
 
+Updating software packages via release version upgrade in AL2023 instances
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Amazon Linux 2023 uses deterministic versioning, so package updates require
+upgrading to a specific release version rather than using the default already
+hard-coded in the AMI. Otherwise, packages would never be updated. To obtain the
+Amazon Linux 2023 release version, SSH into the GitLab instance, say,
+``anvildev.gitlab``, and run::
+
+    sudo dnf check-release-update
+
+This prints the list of available AL2023 releases. Note that the most recent
+release is listed last. Each entry shows the release version string and the
+command to apply it. Copy the version string (e.g., ``2023.10.20260302``) from
+the last entry in the command's output and update the ``AL2023_release``
+variable in ``terraform/gitlab/gitlab.tf.json.template.py``.
+
 Upgrading GitLab & ClamAV
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
