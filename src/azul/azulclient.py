@@ -52,14 +52,14 @@ from azul.indexer import (
 from azul.indexer.index_queue_service import (
     IndexQueueService,
 )
-from azul.indexer.index_repository_service import (
-    IndexRepositoryService,
-)
 from azul.indexer.index_service import (
     IndexService,
 )
 from azul.indexer.mirror_service import (
-    BaseMirrorService,
+    MirrorService,
+)
+from azul.indexer.repository_service import (
+    RepositoryService,
 )
 from azul.plugins import (
     MetadataPlugin,
@@ -96,25 +96,25 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
         return IndexQueueService()
 
     @cached_property
-    def index_repository_service(self) -> IndexRepositoryService:
-        return IndexRepositoryService()
+    def repository_service(self) -> RepositoryService:
+        return RepositoryService()
 
     def repository_plugin(self, catalog: CatalogName) -> RepositoryPlugin:
-        return self.index_repository_service.repository_plugin(catalog)
+        return self.repository_service.repository_plugin(catalog)
 
     def metadata_plugin(self, catalog: CatalogName) -> MetadataPlugin:
         return self.index_service.metadata_plugin(catalog)
 
     @cache
-    def mirror_service(self, catalog: CatalogName) -> BaseMirrorService:
-        return BaseMirrorService(catalog=catalog)
+    def mirror_service(self, catalog: CatalogName) -> MirrorService:
+        return MirrorService(catalog=catalog)
 
     @cached_property
     def source_service(self) -> SourceService:
         return SourceService()
 
     def local_reindex(self, catalog: CatalogName, prefix: str) -> int:
-        service = self.index_repository_service
+        service = self.repository_service
         plugin = self.repository_plugin(catalog)
         notifications: JSONs = [
             # Notifications sent organically by DSS had a different structure,
@@ -402,5 +402,5 @@ class AzulClientError(RuntimeError):
 
 class AzulClientNotificationError(AzulClientError):
 
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__('Some notifications could not be sent', *args, **kwargs)
+    def __init__(self, *args) -> None:
+        super().__init__('Some notifications could not be sent', *args)

@@ -210,19 +210,16 @@ class DSSFileDownload(RepositoryFileDownload):
     _location: str | None = None
     _retry_after: int | None = None
 
-    def update(self,
-               plugin: RepositoryPlugin,
-               authentication: Authentication | None
-               ) -> None:
+    def update(self, authentication: Authentication | None) -> None:
         self.file = attrs.evolve(self.file, drs_uri=None)  # to shorten the retry URLs
         if self.replica is None:
             self.replica = 'aws'
-        assert isinstance(plugin, Plugin)
+        assert isinstance(self._plugin, Plugin)
         # noinspection PyProtectedMember
-        dss_url = plugin._direct_file_url(file_uuid=self.file.uuid,
-                                          file_version=self.file.version,
-                                          replica=self.replica,
-                                          token=self.token)
+        dss_url = self._plugin._direct_file_url(file_uuid=self.file.uuid,
+                                                file_version=self.file.version,
+                                                replica=self.replica,
+                                                token=self.token)
         dss_response = requests.get(dss_url, allow_redirects=False)
         if dss_response.status_code == 301:
             retry_after = int(dss_response.headers.get('Retry-After'))
@@ -242,7 +239,7 @@ class DSSFileDownload(RepositoryFileDownload):
                 query = urllib.parse.parse_qs(location.query, strict_parsing=True)
                 expires = int(one(query['Expires']))
                 bucket = location.netloc.partition('.')[0]
-                dss_endpoint = one(plugin.sources).name
+                dss_endpoint = one(self._plugin.sources).name
                 assert bucket == aws.dss_checkout_bucket(dss_endpoint), bucket
                 with aws.direct_access_credentials(dss_endpoint, lambda_name='service'):
                     # FIXME: make region configurable (https://github.com/DataBiosphere/azul/issues/1560)

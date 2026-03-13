@@ -114,7 +114,7 @@ class IndexExistsAndDiffersException(Exception):
 
 class IndexService(DocumentService):
 
-    def settings(self, index_name: IndexName) -> JSON:
+    def _settings(self, index_name: IndexName) -> JSON:
         index_name.validate()
         aggregate = index_name.doc_type is DocumentType.aggregate
         # There is a terminology collision between ElasticSearch's concept of an
@@ -195,7 +195,7 @@ class IndexService(DocumentService):
         implementation would transform many bundles, collect their contributions
         and aggregate all affected entities at the end.
         """
-        transforms = self.deep_transform(catalog, bundle, delete=False)
+        transforms = self._deep_transform(catalog, bundle, delete=False)
         tallies: MutableCataloguedTallies = {}
         for contributions, replicas in transforms:
             tallies.update(self.contribute(catalog, contributions))
@@ -212,7 +212,7 @@ class IndexService(DocumentService):
         # FIXME: this only works if the bundle version is not being indexed
         #        concurrently. The fix could be to optimistically lock on the
         #        aggregate version (https://github.com/DataBiosphere/azul/issues/611)
-        transforms = self.deep_transform(catalog, bundle, delete=True)
+        transforms = self._deep_transform(catalog, bundle, delete=True)
         tallies: MutableCataloguedTallies = {}
         for contributions, replicas in transforms:
             # FIXME: these are all modified contributions, not new ones. This also
@@ -226,13 +226,13 @@ class IndexService(DocumentService):
         #        https://github.com/DataBiosphere/azul/issues/5846
         self.aggregate(tallies)
 
-    def deep_transform(self,
-                       catalog: CatalogName,
-                       bundle: Bundle,
-                       partition: BundlePartition = BundlePartition.root,
-                       *,
-                       delete: bool
-                       ) -> Iterator[tuple[list[Contribution], list[Replica]]]:
+    def _deep_transform(self,
+                        catalog: CatalogName,
+                        bundle: Bundle,
+                        partition: BundlePartition = BundlePartition.root,
+                        *,
+                        delete: bool
+                        ) -> Iterator[tuple[list[Contribution], list[Replica]]]:
         """
         Recursively transform the given partition of the specified bundle and
         any divisions of that partition. This should be used by synchronous
@@ -245,7 +245,7 @@ class IndexService(DocumentService):
         if isinstance(result, BundlePartition):
             for sub_partition in results:
                 assert isinstance(sub_partition, BundlePartition)
-                yield from self.deep_transform(catalog, bundle, sub_partition, delete=delete)
+                yield from self._deep_transform(catalog, bundle, sub_partition, delete=delete)
         elif isinstance(results, tuple):
             yield results
         elif result is None:
@@ -311,7 +311,7 @@ class IndexService(DocumentService):
         es_client = ESClientFactory.get()
         for index_name in self.index_names(catalog):
             while True:
-                settings = self.settings(index_name)
+                settings = self._settings(index_name)
                 mappings = self.metadata_plugin(catalog).mapping(index_name)
                 try:
                     with silenced_es_logger():

@@ -2,9 +2,6 @@ from abc import (
     ABCMeta,
     abstractmethod,
 )
-from enum import (
-    Enum,
-)
 import importlib
 from inspect import (
     isabstract,
@@ -75,12 +72,17 @@ from azul.indexer.transform import (
 )
 from azul.json import (
     DynamicPolymorphicSerializable,
+    SerializableEnum,
 )
 from azul.types import (
+    AnyJSON,
     JSON,
     MutableJSON,
     MutableJSONs,
+    check_type,
     derived_type_params,
+    json_element_strings,
+    json_sequence,
     json_str,
 )
 from azul.uuids import (
@@ -121,10 +123,25 @@ type InverseFieldMapping = Mapping[
     FieldName | InverseFieldMapping
 ]
 
-ColumnMapping = Mapping[FieldPathElement, FieldName | None]
-ManifestConfig = Mapping[FieldPath, ColumnMapping]
-MutableColumnMapping = dict[FieldPathElement, FieldName]
-MutableManifestConfig = dict[FieldPath, MutableColumnMapping]
+type ColumnMapping = Mapping[FieldPathElement, FieldName | None]
+type ManifestConfig = Mapping[FieldPath, ColumnMapping]
+
+
+def manifest_config_from_json(c: AnyJSON) -> ManifestConfig:
+    def f(e: AnyJSON) -> tuple[FieldPath, ColumnMapping]:
+        k, v = json_sequence(e)
+        assert check_type(ColumnMapping, v)
+        return tuple(json_element_strings(k)), cast(ColumnMapping, v)
+
+    return dict(map(f, json_sequence(c)))
+
+
+def manifest_config_to_json(c: ManifestConfig) -> AnyJSON:
+    return [[list(k), v] for k, v in c.items()]
+
+
+type MutableColumnMapping = dict[FieldPathElement, FieldName]
+type MutableManifestConfig = dict[FieldPath, MutableColumnMapping]
 
 DottedFieldPath = str
 FieldGlobs = list[DottedFieldPath]
@@ -208,7 +225,13 @@ class SpecialFields:
     file_uuid: SpecialField
 
 
-class ManifestFormat(Enum):
+class ManifestFormat(SerializableEnum):
+    """
+    >>> ManifestFormat.verbatim_jsonl.to_json()
+    'verbatim_jsonl'
+    >>> ManifestFormat.from_json('verbatim_jsonl')
+    <ManifestFormat.verbatim_jsonl: 'verbatim.jsonl'>
+    """
     compact = 'compact'
     terra_pfb = 'terra.pfb'
     curl = 'curl'
@@ -537,7 +560,7 @@ class MetadataPlugin[BUNDLE: Bundle](Plugin[BUNDLE]):
     def verbatim_pfb_entity_id(self, replica: JSON) -> str:
         return json_str(replica['entity_id'])
 
-    def verbatim_pfb_schema(self, replicas: list[JSON]) -> list[JSON]:
+    def verbatim_pfb_schema(self, replicas: Iterable[JSON]) -> MutableJSONs:
         """
         Generate the azul-specific parts of the PFB schema for the verbatim
         manifest. The default, metadata-agnostic implementation loads all
@@ -549,7 +572,7 @@ class MetadataPlugin[BUNDLE: Bundle](Plugin[BUNDLE]):
 
         :param replicas: The replica documents to be described by the PFB schema
 
-        :return: a list of PFB entity schemas describing the replicas
+        :return: the PFB entity schemas describing the replicas
         """
         from azul.service import (
             avro_pfb,
@@ -942,11 +965,11 @@ class File(DiscriminatingPolymorphicSerializableAttrs,
 
 @attrs.define(auto_attribs=True, kw_only=True)
 class RepositoryFileDownload(metaclass=ABCMeta):
+    #: The plugin for the repository that contains the file to be downloaded
+    _plugin: RepositoryPlugin
+
     #: The file being downloaded
     file: File
-
-    #: True if the download of a file requires its DRS URI
-    needs_drs_uri: ClassVar[bool] = False
 
     #: The name of the replica to download the file from. Defaults to the name
     #: of the default replica. The set of valid replica names depends on the
@@ -958,19 +981,13 @@ class RepositoryFileDownload(metaclass=ABCMeta):
     token: str | None
 
     @abstractmethod
-    def update(self,
-               plugin: RepositoryPlugin,
-               authentication: Authentication | None
-               ) -> None:
+    def update(self, authentication: Authentication | None) -> None:
         """
         Initiate the preparation of a URL from which the file can be downloaded.
         Set any attributes that are None to their default values. If a download
         is already being prepared, update those attributes and set the
         `retry_after` property. If the download has been prepared, set the
         `location` property.
-
-        :param plugin: The plugin for the repository from which the file is to
-                       be downloaded.
 
         :param authentication: The authentication provided with the download
                                request.

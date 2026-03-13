@@ -37,11 +37,11 @@ from azul.indexer.transform import (
 from azul.plugins import (
     FieldPath,
     MetadataPlugin,
-    RepositoryPlugin,
 )
 from azul.types import (
-    AnyMutableJSON,
     JSON,
+    MutableJSON,
+    json_dict,
 )
 
 
@@ -50,10 +50,6 @@ class DocumentService:
     @cache
     def metadata_plugin(self, catalog: CatalogName) -> MetadataPlugin:
         return MetadataPlugin.load(catalog).create()
-
-    @cache
-    def repository_plugin(self, catalog: CatalogName) -> RepositoryPlugin:
-        return RepositoryPlugin.load(catalog).create(catalog)
 
     @cache
     def aggregate_class(self, catalog: CatalogName) -> Type[Aggregate]:
@@ -136,8 +132,8 @@ class DocumentService:
                          *,
                          forward: bool,
                          allowed_paths: list[FieldPath] | None = None
-                         ) -> AnyMutableJSON:
-        return Document.translate_fields(doc,
-                                         self.field_types(catalog),
-                                         forward=forward,
-                                         allowed_paths=allowed_paths)
+                         ) -> MutableJSON:
+        return json_dict(Document.translate_fields(doc,
+                                                   self.field_types(catalog),
+                                                   forward=forward,
+                                                   allowed_paths=allowed_paths))
