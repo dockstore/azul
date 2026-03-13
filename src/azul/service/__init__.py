@@ -57,6 +57,9 @@ type IsFilterValuesJSON = Union[
     Sequence[float | None],
     Sequence[bool | None],
     Sequence[FlatJSON | None],
+    Sequence[Sequence[int] | None],
+    Sequence[Sequence[float] | None],
+    Sequence[Sequence[str] | None]
 ]
 
 
@@ -207,6 +210,9 @@ def parse_filters(raw_filters: str | None) -> AnyJSON:
 
 def validate_filters(filters: AnyJSON) -> FiltersJSON:
     """
+    These doctests only have the validation failures, the the happy paths are
+    covered in the doctests of py:meth:`normalize_filters`.
+
     >>> validate_filters({'x': {'within': ['c', ['a', 'b']]}})
     Traceback (most recent call last):
         ...
@@ -351,7 +357,47 @@ def validate_filters(filters: AnyJSON) -> FiltersJSON:
     Traceback (most recent call last):
         ...
     AssertionError: R('Invalid filter values', 'x')
+
+    >>> validate_filters({'x':{'is': [[]]}})
+    Traceback (most recent call last):
+        ...
+    AssertionError: R('Range must be list of length 2', 'x')
+
+    >>> validate_filters({'x':{'is_not': [[1, 2, 3]]}})
+    Traceback (most recent call last):
+        ...
+    AssertionError: R('Range must be list of length 2', 'x')
+
+    >>> validate_filters({'x':{'is': [[1, None]]}})
+    Traceback (most recent call last):
+        ...
+    AssertionError: R('Invalid filter values', 'x')
+
+    >>> validate_filters({'x':{'is_not': [[1, 2], ['a', 'b']]}})
+    Traceback (most recent call last):
+        ...
+    AssertionError: R('Invalid filter values', 'x')
+
+    >>> validate_filters({'x':{'is': [[2, 1]]}})
+    Traceback (most recent call last):
+        ...
+    AssertionError: R('Range is inverted', 'x')
+
+    >>> validate_filters({'x':{'is_not': [['b', 'a']]}})
+    Traceback (most recent call last):
+        ...
+    AssertionError: R('Range is inverted', 'x')
+
+    >>> validate_filters({'x':{'is': [[1, 2], [1, 2]]}})
+    Traceback (most recent call last):
+        ...
+    AssertionError: R('Duplicate values', 'x')
     """
+
+    def validate_range(field: str, value: list[int] | list[float] | list[str]):
+        assert len(value) == 2, R('Range must be list of length 2', field)
+        assert value == sorted(value), R('Range is inverted', field)
+
     assert type(filters) is dict, R('Filters must be an object')
     for field, filter in filters.items():
         assert len(field) > 0, R('Empty field name')
@@ -382,6 +428,15 @@ def validate_filters(filters: AnyJSON) -> FiltersJSON:
                 assert num_value_types == {1}, R('Inconsistent property values', field)
                 unique_values = set(map(frozenset, map(dict.items, values)))
                 assert len(unique_values) == len(values), R('Duplicate objects', field)
+            elif value_type is list:
+                ranges: set[tuple[int] | tuple[float] | tuple[str] | None] = set()
+                for value in values:
+                    if value is None:
+                        ranges.add(value)
+                    else:
+                        validate_range(field, value)
+                        ranges.add(tuple(value))
+                assert len(ranges) == len(values), R('Duplicate values', field)
             else:
                 assert len(set(values)) == len(values), R('Duplicate values', field)
         elif operator in {'within', 'intersects', 'contains'}:
@@ -392,8 +447,7 @@ def validate_filters(filters: AnyJSON) -> FiltersJSON:
             ranges, primitives = set(), set()
             for value in values:
                 if isinstance(value, list):
-                    assert len(value) == 2, R('Range must be list of length 2', field)
-                    assert value[0] <= value[1], R('Range is inverted', field)
+                    validate_range(field, value)
                     ranges.add(tuple(value))
                 else:
                     assert operator == 'contains'
@@ -453,6 +507,15 @@ def normalize_filters(filters: FiltersJSON) -> FiltersJSON:
     ...     {'b': None, 'a': 1}
     ... ]}})
     {'x': {'is': [{'a': 0, 'b': 3}, {'a': 1, 'b': None}, {'a': 1, 'b': 2}]}}
+
+    >>> validate_and_normalize({'x':{'is': [[3, 4], None, [1, 2]]}})
+    {'x': {'is': [None, [1, 2], [3, 4]]}}
+
+    >>> validate_and_normalize({'x':{'is': [['b', 'c'], ['a', 'b']]}})
+    {'x': {'is': [['a', 'b'], ['b', 'c']]}}
+
+    >>> validate_and_normalize({'x':{'is': [['b', 'b'], ['a', 'a']]}})
+    {'x': {'is': [['a', 'a'], ['b', 'b']]}}
 
     Ranges are sorted by start and end value.
 
