@@ -375,7 +375,7 @@ def reify(t):
     >>> reify(Union)
     Traceback (most recent call last):
         ...
-    ValueError: ('Not a reifiable generic type', typing.Union)
+    ValueError: ('Not a reifiable generic type', <class 'typing.Union'>)
     """
 
     def reify(t):

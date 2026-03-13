@@ -270,7 +270,7 @@ class Prefix(Parseable):
         >>> str(Prefix.for_main_deployment(0, n))
         Traceback (most recent call last):
         ...
-        ValueError: math domain error
+        ValueError: expected a positive input, got 0.0
 
         >>> str(Prefix.for_main_deployment(1, n))
         '/0'
@@ -302,7 +302,7 @@ class Prefix(Parseable):
         >>> str(Prefix.for_lesser_deployment(0))
         Traceback (most recent call last):
         ...
-        ValueError: math domain error
+        ValueError: expected a positive input, got 0.0
 
         >>> str(Prefix.for_lesser_deployment(1))
         '/1'

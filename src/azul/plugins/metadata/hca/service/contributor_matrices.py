@@ -298,7 +298,7 @@ def make_stratification_tree(files: JSONs) -> JSON:
     ... )
     Traceback (most recent call last):
     ...
-    ValueError: 'foo' is not in list
+    ValueError: list.index(x): x not in list
     """
     assert len(set(file['uuid'] for file in files)) == len(files), files
 

@@ -1371,6 +1371,10 @@ class Config:
         }
 
     @cached_property
+    def lambda_runtime_version(self) -> str | None:
+        return self.environ.get('azul_lambda_runtime_version')
+
+    @cached_property
     def _outsourced_environ(self) -> dict[str, str]:
         try:
             with open_resource('environ.json') as f:

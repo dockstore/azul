@@ -131,7 +131,7 @@ class TupleKey(object):
     >>> {TupleKey((True,)):1}
     Traceback (most recent call last):
     ...
-    TypeError: unhashable type: 'TupleKey'
+    TypeError: cannot use 'azul.json_freeze.TupleKey' as a dict key (unhashable type: 'TupleKey')
     """
     __slots__ = ['obj']
 

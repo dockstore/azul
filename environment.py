@@ -230,7 +230,7 @@ def env() -> Mapping[str, str | None]:
         # and committing the resulting changes. It also requires redeploying the
         # `shared` component.
         #
-        'azul_python_version': '3.13.12',
+        'azul_python_version': '3.14.3',
 
         # The version of Terraform used throughout the system.
         #
@@ -936,5 +936,10 @@ def env() -> Mapping[str, str | None]:
         # FIXME: Enable bundle notifications again #7183
         #        https://github.com/DataBiosphere/azul/issues/7183
         #
-        'AZUL_ENABLE_BUNDLE_NOTIFICATIONS': '0'
+        'AZUL_ENABLE_BUNDLE_NOTIFICATIONS': '0',
+
+        # A Lambda runtime version to pin to, which overrides the AWS-managed
+        # default.
+        #
+        'azul_lambda_runtime_version': None
     }

@@ -68,9 +68,9 @@ def write_schema(schema: JSON) -> None:
                 .replace('false', 'False')
                 .replace('"', "'"))
         f.write('\n')
-        import azul.plugins.metadata.anvil.schema as actual_schema
-        assert actual_schema.anvil_schema == schema
-        assert actual_schema.__file__ == str(output_path)
+    import azul.plugins.metadata.anvil.schema as actual_schema
+    assert actual_schema.anvil_schema == schema
+    assert actual_schema.__file__ == str(output_path)
     log.info('Wrote AnVIL schema to %s', output_path)
 
 

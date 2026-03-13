@@ -80,7 +80,7 @@ class TestAppLogging(AzulUnitTestCase):
                     info = {
                         'host': f'{host}:{port}',
                         'user-agent': 'python-requests/2.32.5',
-                        'accept-encoding': 'gzip, deflate',
+                        'accept-encoding': 'gzip, deflate, zstd',
                         'accept': '*/*',
                         'connection': 'keep-alive'
                     }
