@@ -180,13 +180,15 @@ class TestIndexResponse(IndexResponseTestCase):
             }
         }
         # Tests are assumed to only ever run with the azul dev index
-        results = self.es_client.search(index=str(IndexName.create(catalog=self.catalog,
-                                                                   qualifier=entity_type,
-                                                                   doc_type=DocumentType.aggregate)),
+        index_name = str(IndexName.create(catalog=self.catalog,
+                                          qualifier=entity_type,
+                                          doc_type=DocumentType.aggregate))
+        results = self.es_client.search(index=index_name,
                                         body=body)
-        return self._indexer_index_service.translate_fields(catalog=self.catalog,
-                                                            doc=[results['hits']['hits'][0]['_source']],
-                                                            forward=False)
+        service = self._indexer_index_service
+        doc = results['hits']['hits'][0]['_source']
+        doc = service.translate_fields(catalog=self.catalog, doc=[doc], forward=False)
+        return doc
 
     # FIXME: Use response from `/index/files` to validate
     #        https://github.com/DataBiosphere/azul/issues/2970
