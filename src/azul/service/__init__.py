@@ -51,7 +51,7 @@ from azul.types import (
 
 log = logging.getLogger(__name__)
 
-type IsFilterValueJSON = Union[
+type IsFilterValuesJSON = Union[
     Sequence[str | None],
     Sequence[int | None],
     Sequence[float | None],
@@ -68,16 +68,16 @@ type IsFilterValueJSON = Union[
 #
 @final
 class IsFilterJSON(TypedDict('_IsFilterJSON',
-                             {'is': ReadOnly[IsFilterValueJSON]})):
+                             {'is': ReadOnly[IsFilterValuesJSON]})):
     pass
 
 
 @final
 class IsNotFilterJSON(JSONTypedDict):
-    is_not: ReadOnly[IsFilterValueJSON]
+    is_not: ReadOnly[IsFilterValuesJSON]
 
 
-type RangeFilterValueJSON = Union[
+type RangeFilterValuesJSON = Union[
     Sequence[Sequence[int]],
     Sequence[Sequence[float]],
     Sequence[Sequence[str]]
@@ -86,10 +86,10 @@ type RangeFilterValueJSON = Union[
 
 @final
 class IntersectsFilterJSON(JSONTypedDict):
-    intersects: ReadOnly[RangeFilterValueJSON]
+    intersects: ReadOnly[RangeFilterValuesJSON]
 
 
-type ContainsFilterValueJSON = Union[
+type ContainsFilterValuesJSON = Union[
     Sequence[int | Sequence[int]],
     Sequence[float | Sequence[float]],
     Sequence[str | Sequence[str]]
@@ -98,12 +98,12 @@ type ContainsFilterValueJSON = Union[
 
 @final
 class ContainsFilterJSON(JSONTypedDict):
-    contains: ReadOnly[ContainsFilterValueJSON]
+    contains: ReadOnly[ContainsFilterValuesJSON]
 
 
 @final
 class WithinFilterJSON(JSONTypedDict):
-    within: ReadOnly[RangeFilterValueJSON]
+    within: ReadOnly[RangeFilterValuesJSON]
 
 
 type FilterJSON = Union[
