@@ -237,7 +237,7 @@ class PFBEntity:
                                             object_=sub_object,
                                             schema=field)
 
-    def to_json(self, relations: Iterable['PFBRelation']) -> JSON:
+    def to_json(self, relations: Iterable[PFBRelation]) -> JSON:
         return {
             'id': self.id,
             'name': self.name,

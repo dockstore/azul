@@ -416,7 +416,7 @@ class StaticRegisteredPolymorphicSerializable(PolymorphicSerializable):
     unique, regardless of the module the subclass is defined in.
     """
 
-    _registry: ClassVar[dict[str, type['StaticRegisteredPolymorphicSerializable']]] = {}
+    _registry: ClassVar[dict[str, type[StaticRegisteredPolymorphicSerializable]]] = {}
 
     @classmethod
     def cls_to_json(cls) -> AnyJSON:

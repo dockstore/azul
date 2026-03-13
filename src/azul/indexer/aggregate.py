@@ -132,7 +132,7 @@ class SetAccumulator[V: Hashable](Accumulator[V, list[V]]):
 
     def __init__(self,
                  max_size: int | None = None,
-                 key: Callable[[V], 'SupportsRichComparison'] | None = None
+                 key: Callable[[V], SupportsRichComparison] | None = None
                  ) -> None:
         """
         :param max_size: the maximum number of elements to retain

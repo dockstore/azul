@@ -79,7 +79,7 @@ class LambdaFunction:
         )
 
     @classmethod
-    def from_response(cls, response: 'FunctionConfigurationTypeDef') -> Self:
+    def from_response(cls, response: FunctionConfigurationTypeDef) -> Self:
         name = response['FunctionName']
         role = response['Role']
         try:

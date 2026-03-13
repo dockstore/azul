@@ -634,7 +634,7 @@ class ManifestService(QueryService):
             return self._generate_manifest(generator, manifest_key, partition)
 
     def _generate_manifest(self,
-                           generator: 'ManifestGenerator',
+                           generator: ManifestGenerator,
                            manifest_key: ManifestKey,
                            partition: ManifestPartition
                            ) -> Manifest | ManifestPartition:
@@ -691,7 +691,7 @@ class ManifestService(QueryService):
         return self._get_cached_manifest(generator_cls, manifest_key)
 
     def _get_cached_manifest(self,
-                             generator_cls: type['ManifestGenerator'],
+                             generator_cls: type[ManifestGenerator],
                              manifest_key: ManifestKey
                              ) -> Manifest:
         file_name = self._get_cached_manifest_file_name(generator_cls, manifest_key)
@@ -704,7 +704,7 @@ class ManifestService(QueryService):
                                        was_cached=True)
 
     def _make_manifest(self,
-                       generator_cls: type['ManifestGenerator'],
+                       generator_cls: type[ManifestGenerator],
                        manifest_key: ManifestKey,
                        file_name: str | None,
                        was_cached: bool
@@ -725,7 +725,7 @@ class ManifestService(QueryService):
     file_name_tag = 'azul_file_name'
 
     def _get_cached_manifest_file_name(self,
-                                       generator_cls: type['ManifestGenerator'],
+                                       generator_cls: type[ManifestGenerator],
                                        manifest_key: ManifestKey
                                        ) -> str | None:
         """
@@ -869,7 +869,7 @@ class ManifestGenerator(metaclass=ABCMeta):
             if field_name is not None
         ]
 
-    _cls_for_format: dict[ManifestFormat, type['ManifestGenerator']] = {}
+    _cls_for_format: dict[ManifestFormat, type[ManifestGenerator]] = {}
 
     def __init_subclass__(cls) -> None:
         super().__init_subclass__()
@@ -881,7 +881,7 @@ class ManifestGenerator(metaclass=ABCMeta):
     @classmethod
     def cls_for_format(cls,
                        format: ManifestFormat | None
-                       ) -> type['ManifestGenerator']:
+                       ) -> type[ManifestGenerator]:
         """
         Return the generator class  for the given format.
 

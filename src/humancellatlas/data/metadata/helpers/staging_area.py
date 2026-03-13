@@ -60,7 +60,7 @@ class JsonFile:
         self._validator.validate_json(self.content, self.name)
 
     @classmethod
-    def from_json(cls, file_name: str, content: MutableJSON) -> 'JsonFile':
+    def from_json(cls, file_name: str, content: MutableJSON) -> JsonFile:
         def parse_file_name(file_name: str) -> Sequence[str]:
             suffix = '.json'
             assert file_name.endswith(suffix), file_name

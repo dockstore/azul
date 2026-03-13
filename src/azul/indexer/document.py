@@ -473,7 +473,7 @@ class DocumentCoordinates[E: EntityReference](metaclass=ABCMeta):
                     ) -> CataloguedDocumentCoordinates:
         raise NotImplementedError
 
-    def with_catalog(self: 'DocumentCoordinates',
+    def with_catalog(self: DocumentCoordinates,
                      catalog: CatalogName | None
                      ) -> CataloguedDocumentCoordinates:
         """

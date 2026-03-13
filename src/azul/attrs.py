@@ -462,7 +462,7 @@ class SerializableAttrs(Serializable, attrs.AttrsInstance):
 
     @attrs.frozen
     class Strategy[T](metaclass=ABCMeta):
-        cls: type['SerializableAttrs']
+        cls: type[SerializableAttrs]
         field: attrs.Attribute
         globals: dict[str, Any]
         depth: Iterator[int] = attrs.field(factory=count)

@@ -166,7 +166,7 @@ class Entity:
     def schema_name(self):
         return schema_names[type(self)]
 
-    def accept(self, visitor: 'EntityVisitor') -> None:
+    def accept(self, visitor: EntityVisitor) -> None:
         visitor.visit(self)
 
 
@@ -184,14 +184,14 @@ class TypeLookupError(Exception):
 class EntityVisitor(metaclass=ABCMeta):
 
     @abstractmethod
-    def visit(self, entity: 'Entity') -> None:
+    def visit(self, entity: Entity) -> None:
         raise NotImplementedError()
 
 
 @dataclass(init=False)
 class LinkedEntity(Entity, metaclass=ABCMeta):
     children: MutableMapping[UUID4, Entity] = field(repr=False)
-    parents: MutableMapping[UUID4, 'LinkedEntity'] = field(repr=False)
+    parents: MutableMapping[UUID4, LinkedEntity] = field(repr=False)
 
     @abstractmethod
     def _connect_to(self, other: Entity, forward: bool) -> None:
@@ -389,8 +389,8 @@ class Biomaterial(LinkedEntity):
     biomaterial_id: str
     ncbi_taxon_id: list[int]
     has_input_biomaterial: str | None
-    from_processes: MutableMapping[UUID4, 'Process'] = field(repr=False)
-    to_processes: MutableMapping[UUID4, 'Process']
+    from_processes: MutableMapping[UUID4, Process] = field(repr=False)
+    to_processes: MutableMapping[UUID4, Process]
 
     def __init__(self, json: JSON) -> None:
         super().__init__(json)
@@ -556,10 +556,10 @@ class Process(LinkedEntity):
     process_id: str
     process_name: str | None
     input_biomaterials: MutableMapping[UUID4, Biomaterial] = field(repr=False)
-    input_files: MutableMapping[UUID4, 'File'] = field(repr=False)
+    input_files: MutableMapping[UUID4, File] = field(repr=False)
     output_biomaterials: MutableMapping[UUID4, Biomaterial]
-    output_files: MutableMapping[UUID4, 'File']
-    protocols: MutableMapping[UUID4, 'Protocol']
+    output_files: MutableMapping[UUID4, File]
+    protocols: MutableMapping[UUID4, Protocol]
 
     def __init__(self, json: JSON) -> None:
         super().__init__(json)
@@ -858,7 +858,7 @@ class Link:
     link_type: str = 'process_link'
 
     @classmethod
-    def from_json(cls, json: JSON, schema_version: tuple[int, ...]) -> Iterable['Link']:
+    def from_json(cls, json: JSON, schema_version: tuple[int, ...]) -> Iterable[Link]:
         if 'source_id' in json:
             # DCP/1 v5 (obsolete)
             yield cls(source_id=UUID4(json['source_id']),

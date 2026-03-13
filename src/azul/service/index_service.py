@@ -75,7 +75,7 @@ class EntityNotFoundError(Exception):
 @attrs.frozen(auto_attribs=True, kw_only=True)
 class SearchResponseStage(_ElasticsearchStage[ResponseTriple, MutableJSON],
                           metaclass=ABCMeta):
-    service: 'IndexService'
+    service: IndexService
     file_url_func: FileUrlFunc
 
     def prepare_request(self, request: Search) -> Search:

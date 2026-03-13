@@ -116,7 +116,7 @@ class Sentinel(object):
     for function arguments for which ``None`` isn't a suitable default value.
     """
 
-    def is_(self, other: Any) -> TypeIs['Sentinel']:
+    def is_(self, other: Any) -> TypeIs[Sentinel]:
         """
         Detect if the given argument is this sentinel, and if it isn't, that it
         is no no other instance of this class.
@@ -1463,7 +1463,7 @@ class Config:
         public = '_public'
         unregistered = '_unregistered'
 
-        def id(self, config: 'Config') -> str:
+        def id(self, config: Config) -> str:
             return config.environ['AZUL_GOOGLE_SERVICE_ACCOUNT' + self.value.upper()]
 
         @property

@@ -51,7 +51,7 @@ class Versions(frozenset[Version]):
     def __str__(self) -> str:
         return ','.join('==' + v for v in sorted(self))
 
-    def __or__(self, other: 'Versions') -> 'Versions':
+    def __or__(self, other: Versions) -> Versions:
         # We need to hand-implement this because the overridden base class
         # method returns a base class instance, unfortunately.
         return type(self)(*self, *other)
@@ -67,7 +67,7 @@ class PinnedRequirement:
     versions: Versions = Versions()
 
     @classmethod
-    def create(cls, req: Requirement) -> Optional['PinnedRequirement']:
+    def create(cls, req: Requirement) -> Optional[PinnedRequirement]:
         if req.specifier:
             op, version = one(req.specs)
             assert op == '=='
@@ -81,7 +81,7 @@ class PinnedRequirement:
         else:
             assert False, R('Unable to handle requirement', req)
 
-    def __or__(self, other: Optional['PinnedRequirement']) -> 'PinnedRequirement':
+    def __or__(self, other: Optional[PinnedRequirement]) -> PinnedRequirement:
         assert self.name == other.name
         if self.versions == other.versions:
             return self
@@ -89,7 +89,7 @@ class PinnedRequirement:
             return PinnedRequirement(name=other.name,
                                      versions=self.versions | other.versions)
 
-    def __lt__(self, other: 'PinnedRequirement'):
+    def __lt__(self, other: PinnedRequirement):
         if self.name < other.name:
             return True
         elif self.name == other.name:
@@ -110,7 +110,7 @@ class PinnedRequirements:
         self._reqs = {req.name: req for req in reqs}
         assert len(reqs) == len(self._reqs)
 
-    def __and__(self, other: 'PinnedRequirements') -> 'PinnedRequirements':
+    def __and__(self, other: PinnedRequirements) -> PinnedRequirements:
         def lookup(req: PinnedRequirement) -> Optional[PinnedRequirement]:
             try:
                 other_req = other[req]
@@ -121,10 +121,10 @@ class PinnedRequirements:
 
         return PinnedRequirements(lookup(req) for req in self)
 
-    def __sub__(self, other: 'PinnedRequirements') -> 'PinnedRequirements':
+    def __sub__(self, other: PinnedRequirements) -> PinnedRequirements:
         return PinnedRequirements(req for req in self if req not in other)
 
-    def __le__(self, other: 'PinnedRequirements') -> bool:
+    def __le__(self, other: PinnedRequirements) -> bool:
         return self._reqs.keys() <= other._reqs.keys()
 
     def __iter__(self):

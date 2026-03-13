@@ -87,7 +87,7 @@ class ImageRef(metaclass=ABCMeta):
     repository: tuple[str, ...]
 
     @classmethod
-    def parse(cls, image_ref: str) -> 'ImageRef':
+    def parse(cls, image_ref: str) -> ImageRef:
         """
         >>> ImageRef.parse('2@1')
         DigestImageRef(registry='docker.io', username='library', repository=('2',), digest='1')
@@ -151,10 +151,10 @@ class ImageRef(metaclass=ABCMeta):
         registry = self.registry
         return 'registry-1.docker.io' if registry == 'docker.io' else registry
 
-    def with_digest(self, digest: str) -> 'DigestImageRef':
+    def with_digest(self, digest: str) -> DigestImageRef:
         return DigestImageRef.create(self.name, digest)
 
-    def with_tag(self, tag: str) -> 'TagImageRef':
+    def with_tag(self, tag: str) -> TagImageRef:
         return TagImageRef.create(self.name, tag)
 
     ecr_registry_host_re = re.compile(r'[\d]+\.dkr\.ecr\.[^.]+\.amazonaws\.com')

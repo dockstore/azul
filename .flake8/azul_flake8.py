@@ -188,7 +188,7 @@ class OrderedImport:
     def from_ast(cls, node: EitherImport) -> Self:
         return cls(node=node, order_info=ModuleOrderInfo.from_ast(node))
 
-    def is_correct_order(self, other: 'OrderedImport') -> bool:
+    def is_correct_order(self, other: OrderedImport) -> bool:
         return (self.node.lineno <= other.node.lineno) == (self.order_info <= other.order_info)
 
 

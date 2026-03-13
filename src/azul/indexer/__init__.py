@@ -155,7 +155,7 @@ class BundleFQID(SerializableAttrs):
         assert cls.__hash__ is BundleFQID.__hash__, cls
 
     # attrs doesn't allow `order=True` when `eq=False`
-    def __lt__(self, other: 'BundleFQID') -> bool:
+    def __lt__(self, other: BundleFQID) -> bool:
         """
         >>> aa = BundleFQID(uuid='a', version='a')
         >>> ab = BundleFQID(uuid='a', version='b')
@@ -182,7 +182,7 @@ class BundleFQID(SerializableAttrs):
 class Prefix(Parseable):
     common: str = ''
     partition: int
-    of_everything: ClassVar['Prefix']
+    of_everything: ClassVar[Prefix]
 
     digits = '0123456789abcdef'
 

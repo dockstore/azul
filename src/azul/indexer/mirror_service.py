@@ -415,7 +415,7 @@ class MirrorService:
 
         self._queue_actions(actions())
 
-    def _mirror_queue(self) -> 'Queue':
+    def _mirror_queue(self) -> Queue:
         name = config.mirror_queue.name
         return aws.sqs_queue(name)
 

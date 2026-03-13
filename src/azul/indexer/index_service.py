@@ -804,7 +804,7 @@ class IndexService(DocumentService):
     def _create_writer(self,
                        doc_type: DocumentType,
                        catalog: CatalogName | None
-                       ) -> 'IndexWriter':
+                       ) -> IndexWriter:
         # We allow one conflict retry in the case of duplicate notifications and
         # switch from 'add' to 'update'. After that, there should be no
         # conflicts because we use an SQS FIFO message group per entity.

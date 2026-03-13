@@ -599,32 +599,32 @@ class MetadataPlugin[BUNDLE: Bundle](Plugin[BUNDLE]):
 
     @property
     @abstractmethod
-    def summary_response_stage(self) -> 'type[SummaryResponseStage]':
+    def summary_response_stage(self) -> type[SummaryResponseStage]:
         raise NotImplementedError
 
     @property
     @abstractmethod
-    def search_response_stage(self) -> 'type[SearchResponseStage]':
+    def search_response_stage(self) -> type[SearchResponseStage]:
         raise NotImplementedError
 
     @property
     @abstractmethod
-    def summary_aggregation_stage(self) -> 'type[AggregationStage]':
+    def summary_aggregation_stage(self) -> type[AggregationStage]:
         raise NotImplementedError
 
     @property
     @abstractmethod
-    def aggregation_stage(self) -> 'type[AggregationStage]':
+    def aggregation_stage(self) -> type[AggregationStage]:
         raise NotImplementedError
 
     @property
     @abstractmethod
-    def filter_stage(self) -> 'type[FilterStage]':
+    def filter_stage(self) -> type[FilterStage]:
         raise NotImplementedError
 
     @property
     @abstractmethod
-    def file_class(self) -> type['File']:
+    def file_class(self) -> type[File]:
         raise NotImplementedError
 
 
@@ -854,7 +854,7 @@ class RepositoryPlugin[BUNDLE: Bundle = Bundle[SourcedBundleFQID],
         raise NotImplementedError
 
     @abstractmethod
-    def list_files(self, source: SOURCE_REF, prefix: str) -> list['File']:
+    def list_files(self, source: SOURCE_REF, prefix: str) -> list[File]:
         """
         List the files in the given source whose digest value starts with the
         given prefix.
@@ -899,7 +899,7 @@ class RepositoryPlugin[BUNDLE: Bundle = Bundle[SourcedBundleFQID],
         return IdentifiersDotOrgClient()
 
     @abstractmethod
-    def file_download_class(self) -> type['RepositoryFileDownload']:
+    def file_download_class(self) -> type[RepositoryFileDownload]:
         raise NotImplementedError
 
     @abstractmethod

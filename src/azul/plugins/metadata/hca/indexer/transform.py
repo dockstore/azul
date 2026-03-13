@@ -322,8 +322,8 @@ class Submitters:
     # These class attributes must be defined in a separate class because Enum
     # and EnumMeta would get confused if they were defined in the Enum subclass.
     # It also helps with mypy.
-    by_id: ClassVar[dict[str, 'Submitter']] = {}
-    by_title: ClassVar[dict[str, 'Submitter']] = {}
+    by_id: ClassVar[dict[str, Submitter]] = {}
+    by_title: ClassVar[dict[str, Submitter]] = {}
     id_namespace: ClassVar[UUID] = UUID('382415e5-67a6-49be-8f3c-aaaa707d82db')
 
 
@@ -409,14 +409,14 @@ class Submitter(Enum):
         Submitters.by_id[id] = self
 
     @classmethod
-    def for_id(cls, submitter_id: str) -> 'Submitter | None':
+    def for_id(cls, submitter_id: str) -> Submitter | None:
         try:
             return Submitters.by_id[submitter_id]
         except KeyError:
             return None
 
     @classmethod
-    def for_file(cls, file: api.File) -> 'Submitter | None':
+    def for_file(cls, file: api.File) -> Submitter | None:
         if file.file_source is None:
             if (
                 # The DCP/2 system design specification mistakenly required that

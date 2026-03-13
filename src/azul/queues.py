@@ -99,10 +99,10 @@ class SQSMessage(SerializableAttrs):
     #:
     id: str | None = None
 
-    def to_entry(self) -> 'SendMessageRequestQueueSendMessageTypeDef':
+    def to_entry(self) -> SendMessageRequestQueueSendMessageTypeDef:
         return {'MessageBody': json.dumps(self.body)}
 
-    def to_batch_entry(self, id: int) -> 'SendMessageBatchRequestEntryTypeDef':
+    def to_batch_entry(self, id: int) -> SendMessageBatchRequestEntryTypeDef:
         return {**self.to_entry(), 'Id': str(id)}
 
     @classmethod
@@ -123,7 +123,7 @@ class SQSFifoMessage(SQSMessage):
     group_id: str
     dedup_id: str = attrs.field(factory=lambda: str(uuid.uuid4()))
 
-    def to_entry(self) -> 'SendMessageRequestQueueSendMessageTypeDef':
+    def to_entry(self) -> SendMessageRequestQueueSendMessageTypeDef:
         return {
             **super().to_entry(),
             'MessageGroupId': self.group_id,
@@ -175,15 +175,15 @@ class Queues:
         for queue_name, queue in self.all_queues().items():
             self._dump(queue, queue_name + '.json')
 
-    def _dump(self, queue: 'Queue', path: str):
+    def _dump(self, queue: Queue, path: str):
         log.info('Writing messages from queue %r to file %r', queue.url, path)
         messages = self._get_messages(queue)
         self._dump_messages(messages, queue.url, path)
         log.info(f'Finished writing {path!r}')
         self._cleanup_messages(queue, messages)
 
-    def _get_messages(self, queue: 'Queue') -> builtins.list['Message']:
-        messages: list['Message'] = []
+    def _get_messages(self, queue: Queue) -> builtins.list[Message]:
+        messages: list[Message] = []
         while True:
             message_batch = queue.receive_messages(AttributeNames=['All'],
                                                    MaxNumberOfMessages=10,
@@ -193,13 +193,13 @@ class Queues:
             else:
                 messages.extend(message_batch)
 
-    def read_messages(self, queue: 'Queue') -> builtins.list['Message']:
+    def read_messages(self, queue: Queue) -> builtins.list[Message]:
         messages = self._get_messages(queue)
         self._cleanup_messages(queue, messages)
         return messages
 
     def send_messages(self,
-                      queue: 'Queue',
+                      queue: Queue,
                       messages: Iterable[SQSMessage],
                       rate_limit: float | None = None,
                       log_level: int = logging.DEBUG
@@ -222,7 +222,7 @@ class Queues:
         return num_messages
 
     def send_message(self,
-                     queue: 'Queue',
+                     queue: Queue,
                      message: SQSMessage,
                      log_level: int = logging.DEBUG):
         queue.send_message(**message.to_entry())
@@ -231,7 +231,7 @@ class Queues:
     def _log_queued_message(self, message: SQSMessage, log_level: int):
         log.log(log_level, 'Queued message %r', message)
 
-    def _cleanup_messages(self, queue: 'Queue', messages: Iterable['Message']):
+    def _cleanup_messages(self, queue: Queue, messages: Iterable[Message]):
         message_batches = list(more_itertools.chunked(messages, self.batch_size))
         if self._delete:
             log.info('Removing messages from queue %r', queue.url)
@@ -241,7 +241,7 @@ class Queues:
             self._return_messages(message_batches, queue)
 
     def _dump_messages(self,
-                       messages: Iterable['Message'],
+                       messages: Iterable[Message],
                        queue_url: str,
                        path: str):
         messages = [self._condense(message) for message in messages]
@@ -254,10 +254,10 @@ class Queues:
         log.info('Wrote %i messages', len(messages))
 
     def _return_messages(self,
-                         message_batches: Iterable[Iterable['Message']],
-                         queue: 'Queue'):
+                         message_batches: Iterable[Iterable[Message]],
+                         queue: Queue):
         for message_batch in message_batches:
-            batch: list['ChangeMessageVisibilityBatchRequestEntryTypeDef'] = [
+            batch: list[ChangeMessageVisibilityBatchRequestEntryTypeDef] = [
                 dict(Id=message.message_id,
                      ReceiptHandle=message.receipt_handle,
                      VisibilityTimeout=0)
@@ -268,8 +268,8 @@ class Queues:
                 raise RuntimeError(f'Failed to return message: {response!r}')
 
     def _delete_messages(self,
-                         message_batches: Iterable[builtins.list['Message']],
-                         queue: 'Queue'):
+                         message_batches: Iterable[builtins.list[Message]],
+                         queue: Queue):
         for message_batch in message_batches:
             response = queue.delete_messages(
                 Entries=[
@@ -281,7 +281,7 @@ class Queues:
             if len(response['Successful']) != len(message_batch):
                 raise RuntimeError(f'Failed to delete messages: {response!r}')
 
-    def _condense(self, message: 'Message') -> JSON:
+    def _condense(self, message: Message) -> JSON:
         """
         Prepare a message for writing to a local file.
         """
@@ -299,7 +299,7 @@ class Queues:
             }
         }
 
-    def _reconstitute(self, message: JSON) -> 'SendMessageBatchRequestEntryTypeDef':
+    def _reconstitute(self, message: JSON) -> SendMessageBatchRequestEntryTypeDef:
         """
         Prepare a message from a local file for submission to a queue.
 
@@ -309,7 +309,7 @@ class Queues:
         if not isinstance(body, str):
             body = json.dumps(body)
         attributes = json_mapping(message['Attributes'])
-        result: 'SendMessageBatchRequestEntryTypeDef' = {
+        result: SendMessageBatchRequestEntryTypeDef = {
             'Id': json_str(message['MessageId']),
             'MessageBody': body,
         }
@@ -320,17 +320,17 @@ class Queues:
                 pass
         return result
 
-    def all_queues(self) -> dict[str, 'Queue']:
+    def all_queues(self) -> dict[str, Queue]:
         return self.get_queues(config.all_queue_names)
 
-    def get_queues(self, queue_names: Iterable[str]) -> dict[str, 'Queue']:
+    def get_queues(self, queue_names: Iterable[str]) -> dict[str, Queue]:
         return {
             queue_name: aws.sqs_queue(queue_name)
             for queue_name in queue_names
         }
 
     def get_queue_lengths(self,
-                          queues: Mapping[str, 'Queue']
+                          queues: Mapping[str, Queue]
                           ) -> tuple[int, dict[str, int]]:
         """
         Count the number of messages in the given queues.
@@ -479,22 +479,22 @@ class Queues:
         queues = self.get_queues(config.mirror_work_queue_names)
         self.purge_queues_safely(queues)
 
-    def purge_queues_safely(self, queues: Mapping[str, 'Queue']):
+    def purge_queues_safely(self, queues: Mapping[str, Queue]):
         self.manage_lambdas(queues, enable=False)
         self.purge_queues_unsafely(queues)
         self.manage_lambdas(queues, enable=True)
 
-    def purge_queues_unsafely(self, queues: Mapping[str, 'Queue']):
+    def purge_queues_unsafely(self, queues: Mapping[str, Queue]):
         with ThreadPoolExecutor(max_workers=len(queues)) as tpe:
             futures = [tpe.submit(self._purge_queue, queue) for queue in queues.values()]
             self._handle_futures(futures)
 
-    def _purge_queue(self, queue: 'Queue'):
+    def _purge_queue(self, queue: Queue):
         log.info('Purging queue %r', queue.url)
         queue.purge()
         self._wait_for_queue_empty(queue)
 
-    def _wait_for_queue_idle(self, queue: 'Queue'):
+    def _wait_for_queue_idle(self, queue: Queue):
         while True:
             num_inflight_messages = int(queue.attributes['ApproximateNumberOfMessagesNotVisible'])
             if num_inflight_messages == 0:
@@ -503,7 +503,7 @@ class Queues:
             time.sleep(3)
             queue.reload()
 
-    def _wait_for_queue_empty(self, queue: 'Queue'):
+    def _wait_for_queue_empty(self, queue: Queue):
         while True:
             num_messages = (
                 int(queue.attributes['ApproximateNumberOfMessages']) +
@@ -520,7 +520,7 @@ class Queues:
                          *,
                          function: str,
                          alias: str,
-                         queue: 'Queue',
+                         queue: Queue,
                          enable: bool):
         lambda_ = aws.lambda_
         partial_arn = f'{function}:{alias}'
@@ -569,7 +569,7 @@ class Queues:
         assert not invalid_queues, invalid_queues
         return functions_by_queue
 
-    def manage_lambdas(self, queues: Mapping[str, 'Queue'], enable: bool):
+    def manage_lambdas(self, queues: Mapping[str, Queue], enable: bool):
         """
         Enable or disable the readers and writers of the given queues.
         """

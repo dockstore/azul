@@ -34,7 +34,7 @@ if TYPE_CHECKING:
 
 @attr.s(frozen=False, kw_only=False, auto_attribs=True)
 class LambdaLogFilter(logging.Filter):
-    app: Optional['AzulChaliceApp'] = None
+    app: Optional[AzulChaliceApp] = None
 
     def filter(self, record):
         if self.app is None or self.app.lambda_context is None:
@@ -77,7 +77,7 @@ lambda_log_format = '\t'.join([
 lambda_log_date_format = '%Y-%m-%dT%H:%M:%S'
 
 
-def configure_app_logging(app: 'AzulChaliceApp', *loggers):
+def configure_app_logging(app: AzulChaliceApp, *loggers):
     _configure_log_levels(app.log, *loggers)
     if not app.loaded_dynamically:
         # Environment is not unit test
