@@ -201,8 +201,9 @@ class IndexController(ActionController[IndexAction]):
 
     def index_bundle(self, catalog: CatalogName):
         request = self.current_request
-        if isinstance(request.authentication, HMACAuthentication):
-            assert request.authentication.identity() is not None
+        authentication = self._authentication(request)
+        if isinstance(authentication, HMACAuthentication):
+            assert authentication.identity() is not None
             try:
                 config.Catalog.validate_name(catalog)
             except AssertionError as e:

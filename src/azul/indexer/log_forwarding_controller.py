@@ -7,7 +7,7 @@ from azul import (
     cached_property,
 )
 from azul.chalice import (
-    AppController,
+    Controller,
 )
 from azul.indexer.log_forwarding_service import (
     ALBLogForwardingService,
@@ -16,7 +16,7 @@ from azul.indexer.log_forwarding_service import (
 )
 
 
-class LogForwardingController(AppController):
+class LogForwardingController(Controller):
     """
     Forward logs from an Application Load Balancer (ALB) or S3 to standard output.
     When this behavior is invoked via an AWS Lambda function, the output is

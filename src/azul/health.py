@@ -35,11 +35,10 @@ from azul import (
     cached_property,
     config,
     lru_cache,
-    require,
 )
 from azul.chalice import (
-    AppController,
     AzulChaliceApp,
+    Controller,
     LambdaMetric,
 )
 from azul.deployment import (
@@ -92,7 +91,7 @@ class health_property(cached_property):
 
 
 @attr.s(frozen=True, kw_only=True, auto_attribs=True)
-class HealthController(AppController):
+class HealthController(Controller):
     app_name: str
 
     @cached_property
@@ -191,7 +190,7 @@ class Health:
     def as_json(self, keys: Iterable[str]) -> JSON:
         keys = frozenset(keys)
         if keys:
-            require(keys <= self.all_keys)
+            assert keys <= self.all_keys, R('Extra keys', keys, self.all_keys)
         else:
             keys = self.all_keys
         json = {k: getattr(self, k) for k in sorted(keys)}

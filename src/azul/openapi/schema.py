@@ -1,6 +1,8 @@
+from collections.abc import (
+    Collection,
+)
 import re
 from typing import (
-    Collection,
     Mapping,
     NamedTuple,
     TypeAliasType,
@@ -12,8 +14,7 @@ from more_itertools import (
 )
 
 from azul import (
-    reject,
-    require,
+    R,
 )
 from azul.types import (
     AnyJSON,
@@ -45,23 +46,25 @@ class optional(NamedTuple):
 # wholesale and its members referenced by fully qualifying their name so the
 # `object` builtin is not shadowed in the importing module.
 
-# noinspection PyShadowingBuiltins,PyPep8Naming
+@overload
+def object(**properties: Form | optional) -> JSON: ...
+
+
 @overload
 def object(*,
-           additionalProperties: JSON | bool = False,
-           **properties: Form | optional) -> JSON: ...
+           additionalProperties: JSON | bool,  # noqa: N803
+           **properties: Form | optional
+           ) -> JSON: ...
 
 
-# noinspection PyShadowingBuiltins,PyPep8Naming
 @overload
 def object(*, properties: JSON, **kwargs: AnyJSON) -> JSON: ...
 
 
-# noinspection PyShadowingBuiltins,PyPep8Naming
 def object(*,
            properties=None,
-           additionalProperties=None,
-           **kwargs) -> JSON:
+           additionalProperties=None,  # noqa: N803
+           **kwargs):
     """
     >>> from azul.doctests import assert_json
     >>> assert_json(object(x=int, y=int, relative=optional(bool)))
@@ -328,7 +331,7 @@ def range[N: int | float](minimum: N | None,
     >>> assert_json(range(minimum=.5, maximum=2))
     Traceback (most recent call last):
     ...
-    azul.RequirementError: ('Mismatched argument types', <class 'float'>, <class 'int'>)
+    AssertionError: R('Mismatched argument types', <class 'float'>, <class 'int'>)
 
     >>> assert_json(range())
     Traceback (most recent call last):
@@ -338,14 +341,14 @@ def range[N: int | float](minimum: N | None,
     >>> assert_json(range(None, None))
     Traceback (most recent call last):
     ...
-    azul.RequirementError: Must pass at least one bound
+    AssertionError: R('Must pass at least one bound')
     """
     if form is None:
         types = (type(minimum), type(maximum))
         set_of_types = set(types)
         set_of_types.discard(type(None))
-        require(bool(set_of_types), 'Must pass at least one bound')
-        require(len(set_of_types) == 1, 'Mismatched argument types', *types)
+        assert bool(set_of_types), R('Must pass at least one bound')
+        assert len(set_of_types) == 1, R('Mismatched argument types', *types)
         form = one(set_of_types)
     return {
         **schema(form),
@@ -529,7 +532,7 @@ def nullable(t: Form, for_openapi: bool = True) -> JSON:
     >>> nullable(str, for_openapi=False)
     {'type': ['null', 'string']}
     """
-    reject(t is None or t is type(None))
+    assert t is not None and t is not type(None), R('Invalid type', t)
     if for_openapi:
         return {**schema(t), 'nullable': True}
     else:

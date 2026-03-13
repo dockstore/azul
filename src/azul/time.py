@@ -10,7 +10,7 @@ import re
 import time
 
 from azul import (
-    require,
+    R,
 )
 from azul.types import (
     LambdaContext,
@@ -64,7 +64,7 @@ class SpecificRemainingTime(RemainingTimeUntil):
     """
 
     def __init__(self, amount: float) -> None:
-        require(amount >= 0, 'Initial remaining time must be non-negative')
+        assert amount >= 0, R('Initial remaining time must be non-negative')
         super().__init__(time.time() + amount)
 
 
@@ -133,9 +133,9 @@ def format_dcp2_datetime(d: datetime) -> str:
     >>> format_dcp2_datetime(datetime(2020, 1, 1))
     Traceback (most recent call last):
     ...
-    azul.RequirementError: 2020-01-01 00:00:00
+    AssertionError: R('2020-01-01 00:00:00')
     """
-    require(str(d.tzinfo) == 'UTC', d)
+    assert str(d.tzinfo) == 'UTC', R(str(d))
     date_string = datetime.strftime(d, dcp2_datetime_format)
     # Work around https://bugs.python.org/issue13305
     date_string = ('0000' + date_string)[-31:]

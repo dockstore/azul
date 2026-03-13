@@ -21,8 +21,8 @@ from botocore.response import (
 )
 
 from azul import (
+    R,
     cached_property,
-    require,
 )
 from azul.deployment import (
     aws,
@@ -58,7 +58,7 @@ class LogForwardingService(metaclass=ABCMeta):
             # When new fields are introduced, they are added at the end of
             # the log entry, so observing more fields than expected does not
             # indicate a problem.
-            require(len(row) >= len(self.fields), 'Missing expected fields')
+            assert len(row) >= len(self.fields), R('Missing expected fields')
             fields: MutableJSON = dict(zip(self.fields, row))
             yield fields
 

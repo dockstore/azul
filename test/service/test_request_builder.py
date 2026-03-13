@@ -31,8 +31,8 @@ from azul.plugins.metadata.hca.service.aggregation import (
 from azul.service import (
     Filters,
 )
-from azul.service.elasticsearch_service import (
-    ElasticsearchService,
+from azul.service.query_service import (
+    QueryService,
     ToDictStage,
 )
 from indexer import (
@@ -51,7 +51,7 @@ def setUpModule():
 class TestRequestBuilder(DCP1CannedBundleTestCase, WebServiceTestCase):
     # Subclass the class under test so we can inject a mock plugin
     @attr.s(frozen=True, auto_attribs=True)
-    class Service(ElasticsearchService):
+    class Service(QueryService):
         plugin: MetadataPlugin
 
         def metadata_plugin(self, catalog: CatalogName) -> MetadataPlugin:

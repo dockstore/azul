@@ -1,5 +1,5 @@
 from azul import (
-    require,
+    R,
 )
 from azul.es import (
     ESClientFactory,
@@ -18,7 +18,7 @@ def main():
             'action.auto_create_index': False
         }
     })
-    require(response['acknowledged'], 'Failed to update cluster settings', response)
+    assert response['acknowledged'], R('Failed to update cluster settings', response)
 
 
 if __name__ == '__main__':

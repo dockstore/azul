@@ -16,7 +16,7 @@ from typing import (
 )
 
 from azul import (
-    require,
+    R,
 )
 
 T = TypeVar('T')
@@ -88,7 +88,7 @@ def reservoir_sample(k: int,
     """
     if k == 0:
         return []
-    require(k > 0, 'Sample size must not be negative', k, exception=ValueError)
+    assert k > 0, R('Sample size must not be negative', k)
     it = iter(it)
     sample = list(islice(it, k))
     random.shuffle(sample)

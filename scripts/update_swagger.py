@@ -8,8 +8,8 @@ from furl import (
 )
 
 from azul import (
+    R,
     config,
-    require,
 )
 from azul.http import (
     http_client,
@@ -42,7 +42,7 @@ swagger_dir = Path(config.project_root) / 'resources/static/swagger'
 def download_file(name: str):
     object_url = furl(repository_url) / tag / 'dist' / name
     response = http.request('GET', str(object_url))
-    require(response.status == 200, name)
+    assert response.status == 200, R(name)
     with open(swagger_dir / name, 'wb') as f:
         f.write(response.data)
 

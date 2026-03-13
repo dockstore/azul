@@ -135,11 +135,11 @@ from azul.service import (
 from azul.service.avro_pfb import (
     PFBRelation,
 )
-from azul.service.elasticsearch_service import (
+from azul.service.query_service import (
     ElasticsearchChain,
-    ElasticsearchService,
     Pagination,
     PaginationStage,
+    QueryService,
     SortKey,
     ToDictStage,
 )
@@ -579,12 +579,13 @@ class CachedManifestNotFound(Exception):
     manifest_key: ManifestKey
 
 
-class ManifestService(ElasticsearchService):
+@attrs.frozen(kw_only=True)
+class ManifestService(QueryService):
+    file_url_func: FileUrlFunc
 
-    def __init__(self, storage_service: StorageService, file_url_func: FileUrlFunc):
-        super().__init__()
-        self.storage_service = storage_service
-        self.file_url_func = file_url_func
+    @cached_property
+    def storage_service(self) -> StorageService:
+        return StorageService()
 
     def get_manifest(self,
                      *,

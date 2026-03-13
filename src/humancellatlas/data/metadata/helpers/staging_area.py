@@ -26,8 +26,7 @@ from furl import (
 import git
 
 from azul import (
-    reject,
-    require,
+    R,
 )
 from azul.indexer.document import (
     EntityReference,
@@ -245,8 +244,7 @@ class CannedStagingAreaFactory:
         path = self.base_path / path
         staging_area_folders = {p.name for p in path.iterdir()}
         expected_folders = {'data', 'descriptors', 'links', 'metadata'}
-        require(expected_folders == staging_area_folders,
-                'Invalid staging area', path)
+        assert expected_folders == staging_area_folders, R('Invalid staging area', path)
         return StagingArea(links=self._get_link_files(path),
                            metadata=self._get_metadata_files(path),
                            descriptors=self._get_descriptor_files(path))
@@ -296,7 +294,7 @@ class CannedStagingAreaFactory:
                 content = json.load(f)
             file_name = file.name
             json_file = JsonFile.from_json(file_name, content)
-            require(isinstance(json_file, file_cls), json_file)
+            assert isinstance(json_file, file_cls), R(str(json_file))
             self._add_file(files, json_file)
         return files
 
@@ -310,7 +308,7 @@ class CannedStagingAreaFactory:
         except KeyError:
             files[file.uuid] = file
         else:
-            reject(file.version == existing_version, file)
+            assert file.version != existing_version, R(str(file))
             if file.version > existing_version:
                 files[file.uuid] = file
             else:

@@ -46,11 +46,10 @@ from furl import (
 )
 
 from azul import (
+    R,
     config,
     mutable_furl,
     open_resource,
-    reject,
-    require,
 )
 from azul.auth import (
     Authentication,
@@ -95,14 +94,6 @@ from azul.types import (
 log = logging.getLogger(__name__)
 
 
-class AzulRequest(Request):
-    """
-    Use only for type hints. The actual requests will be instances of the parent
-    class, but they will have the attributes defined here.
-    """
-    authentication: Authentication | None
-
-
 class TerraTimeoutError(ChaliceViewError):
     STATUS_CODE = 307
 
@@ -136,7 +127,6 @@ class LambdaMetric(Enum):
 
 class AzulChaliceApp(Chalice):
     lambda_context: LambdaContext | None
-    current_request: AzulRequest | None
 
     def __init__(self,
                  app_name: str,
@@ -145,11 +135,11 @@ class AzulChaliceApp(Chalice):
                  spec: JSON):
         self._patch_event_source_handler()
         app_module_path = globals['__file__']
-        require(app_module_path.endswith('/app.py'), app_module_path)
+        assert app_module_path.endswith('/app.py'), R(app_module_path)
         self.app_module_path = app_module_path
         self.loaded_dynamically = module_loaded_dynamically(globals)
         self.non_interactive_routes: set[tuple[str, str]] = set()
-        reject('paths' in spec, 'The top-level spec must not define paths')
+        assert 'paths' not in spec, R('The top-level spec must not define paths')
         self._specs = self._add_contact_to_spec(spec)
         self._specs['paths'] = {}
         # The `debug` arg controls whether tracebacks appear in error responses
@@ -299,7 +289,7 @@ class AzulChaliceApp(Chalice):
     HttpMethod = Literal['GET', 'POST', 'PUT', 'PATCH', 'HEAD', 'OPTIONS', 'DELETE']
 
     def route[C: Callable](self,
-                           path: str,
+                           path: str | tuple[str, ...],
                            *,
                            methods: Sequence[HttpMethod] = ('GET',),
                            enabled: bool = True,
@@ -347,11 +337,15 @@ class AzulChaliceApp(Chalice):
                      override is compatible with that of the overridden method,
                      a mypy requirement.
         """
-        require(spec is not None, "Argument 'spec' is required")
-        assert spec is not None
+        assert spec is not None, R("Argument 'spec' is required")
         if enabled:
+            if isinstance(path, tuple):
+                assert len(path) > 0, R('Empty path', path)
+                assert all(len(e) > 0 for e in path), R('Empty path element', path)
+                assert all('/' not in e for e in path), R('Invalid path element', path)
+                path = '/' + '/'.join(path)
             if not interactive:
-                require(bool(methods), 'Must list methods with interactive=False')
+                assert bool(methods), R('Must list methods with interactive=False')
                 self.non_interactive_routes.update((path, method) for method in methods)
             spec = deep_dict_merge(self.default_specs(), spec, override=True)
             chalice_decorator = super().route(path, methods=methods, **kwargs)
@@ -377,7 +371,7 @@ class AzulChaliceApp(Chalice):
             for method in json_dict(path).values() if isinstance(method, dict)
             for tag in json_list(method.get('tags', []))
         )
-        reject('servers' in self._specs, "The 'servers' entry is computed")
+        assert 'servers' not in self._specs, R("The 'servers' entry is computed")
         return {
             **self._specs,
             'tags': [
@@ -446,8 +440,7 @@ class AzulChaliceApp(Chalice):
         """
         paths = json_dict(self._specs['paths'])
         if path_spec is not None:
-            reject(path in paths,
-                   'Only specify path_spec once per route path')
+            assert path not in paths, R('Only specify path_spec once per route path')
             paths[path] = copy_json(path_spec)
 
         for method in methods:
@@ -455,8 +448,8 @@ class AzulChaliceApp(Chalice):
             method = method.lower()
             # This may override duplicate specs from path_specs
             path_methods = json_dict(paths.setdefault(path, {}))
-            reject(method in path_methods,
-                   "Only specify 'spec' once per route path and method")
+            assert method not in path_methods, R(
+                "Only specify 'spec' once per route path and method")
             path_methods[method] = copy_json(spec)
 
     class _LogJSONEncoder(json.JSONEncoder):
@@ -483,7 +476,6 @@ class AzulChaliceApp(Chalice):
     def __authenticate(self):
         auth = self._authenticate()
         attribute_name = 'authentication'
-        assert attribute_name in AzulRequest.__annotations__
         setattr(self.current_request, attribute_name, auth)
         if auth is None:
             log.info('Did not authenticate request.')
@@ -937,15 +929,26 @@ class AzulChaliceApp(Chalice):
 
 
 @attrs.frozen(kw_only=True)
-class AppController:
+class Controller:
     app: AzulChaliceApp
 
     @property
     def lambda_context(self) -> LambdaContext:
-        assert self.app.lambda_context is not None
-        return self.app.lambda_context
+        return not_none(self.app.lambda_context)
 
     @property
-    def current_request(self) -> AzulRequest:
-        assert self.app.current_request is not None
-        return self.app.current_request
+    def current_request(self) -> Request:
+        return not_none(self.app.current_request)
+
+    def _authentication(self, request: Request) -> Authentication | None:
+        authentication = getattr(request, 'authentication', None)
+        if authentication is not None:
+            assert isinstance(authentication, Authentication)
+        return authentication
+
+    def _query_params(self, request: Request) -> MultiDict:
+        params = request.query_params
+        if params is None:
+            params = MultiDict({})
+            request.query_params = params
+        return params

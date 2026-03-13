@@ -432,6 +432,29 @@ emit_tf({
                                     'cloudwatch_metrics_enabled': True
                                 }
                             },
+                            # The IP Reputation rule is given higher priority than the Common Rule Set so
+                            # that malicious requests can be blocked before the Common Rule Set is
+                            # evaluated. This reduces Web ACL Capacity Unit (WCU) consumption, and also
+                            # avoids triggering the WAF Blocked alarm unnecessarily, as requests blocked by
+                            # the Common Rule Set rule trigger the alarm however those blocked by the IP
+                            # Reputation rule do not.
+                            {
+                                'name': config.aws_ip_reputation_list_term,
+                                'statement': {
+                                    'managed_rule_group_statement': {
+                                        'name': 'AWSManagedRulesAmazonIpReputationList',
+                                        'vendor_name': 'AWS'
+                                    }
+                                },
+                                'override_action': {
+                                    'none': {}
+                                },
+                                'visibility_config': {
+                                    'metric_name': config.aws_ip_reputation_list_term,
+                                    'sampled_requests_enabled': True,
+                                    'cloudwatch_metrics_enabled': True
+                                }
+                            },
                             {
                                 'name': 'aws_common_rule_set',
                                 'statement': {
@@ -476,23 +499,6 @@ emit_tf({
                                 },
                                 'visibility_config': {
                                     'metric_name': 'aws_common_rule_set',
-                                    'sampled_requests_enabled': True,
-                                    'cloudwatch_metrics_enabled': True
-                                }
-                            },
-                            {
-                                'name': config.aws_ip_reputation_list_term,
-                                'statement': {
-                                    'managed_rule_group_statement': {
-                                        'name': 'AWSManagedRulesAmazonIpReputationList',
-                                        'vendor_name': 'AWS'
-                                    }
-                                },
-                                'override_action': {
-                                    'none': {}
-                                },
-                                'visibility_config': {
-                                    'metric_name': config.aws_ip_reputation_list_term,
                                     'sampled_requests_enabled': True,
                                     'cloudwatch_metrics_enabled': True
                                 }

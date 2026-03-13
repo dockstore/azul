@@ -20,8 +20,8 @@ from more_itertools import (
 )
 
 from azul import (
+    R,
     config,
-    require,
 )
 from azul.es import (
     ESClientFactory,
@@ -64,8 +64,8 @@ def prepare_node_ids(node_ids: Sequence[str]) -> dict[str, str]:
     # items than there are matches in the template, Terraform would throw an
     # "Invalid index" error.
     num_placeholders = node_placeholder_count()
-    require(num_placeholders > 0,
-            'Error: No node ID placeholders found in template file')
+    assert num_placeholders > 0, R(
+        'Error: No node ID placeholders found in template file')
     # The dashboard will not allow an empty string as a node ID value, causing
     # the error `Invalid metric field type, only "String" type is allowed`
     # during deploy. For this reason we pad the list with a dummy value.
