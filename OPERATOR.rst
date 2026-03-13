@@ -449,19 +449,6 @@ For GitLab or ClamAV updates, use the ``--no-restart`` flag in order to leave
 the instance stopped after the snapshot has been created. There is no point in
 starting the instance only to have the update terminate it again.
 
-Updating software packages on GitLab instances
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Once a week, operators must update all Linux packages installed on the root
-volume of each GitLab instance. SSH access to the instances is necessary to
-perform these instructions but on production instances this access is
-unavailable, even to operators. In these cases the operator must request the
-help of the system administrator via Slack to perform these steps.
-
-SSH into the instance, and run ``sudo yum update`` followed by ``sudo reboot``.
-Wait for the GitLab web application to become available again and perform a
-``git fetch`` from one of the Git repositories hosted on that instance.
-
 Updating the Swagger UI
 ^^^^^^^^^^^^^^^^^^^^^^^
 
