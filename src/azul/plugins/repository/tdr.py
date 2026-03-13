@@ -22,10 +22,10 @@ from furl import (
 )
 
 from azul import (
+    R,
     cache_per_thread,
     cached_property,
     config,
-    require,
 )
 from azul.auth import (
     Authentication,
@@ -278,18 +278,19 @@ class TDRFileDownload(RepositoryFileDownload):
                plugin: RepositoryPlugin,
                authentication: Authentication | None
                ) -> None:
-        require(self.replica is None or self.replica == 'gcp')
+        assert self.replica is None or self.replica == 'gcp', R(
+            'Invalid replica', self.replica)
         if self.file.drs_uri is None:
             assert self.location is None, self
             assert self.retry_after is None, self
         else:
             drs_client = plugin.drs_object(self.file.drs_uri, authentication)
             access = drs_client.get(access_method=AccessMethod.gs)
-            require(access.method is AccessMethod.https, access.method)
-            require(access.headers is None, access.headers)
+            assert access.method is AccessMethod.https, R(str(access.method))
+            assert access.headers is None, R(str(access.headers))
             signed_url = access.url
             args = furl(signed_url).args
-            require('X-Goog-Signature' in args, args)
+            assert 'X-Goog-Signature' in args, R(str(args))
             self._location = signed_url
 
     @property

@@ -1,4 +1,5 @@
 from collections.abc import (
+    Iterable,
     Mapping,
     Sequence,
 )
@@ -7,14 +8,16 @@ from types import (
     UnionType,
     get_original_bases,
 )
+import typing
 from typing import (
     Any,
     Callable,
     ForwardRef,
-    Iterable,
-    List,
+    NotRequired,
     Optional,
     Protocol,
+    ReadOnly,
+    Required,
     TypeAliasType,
     TypeGuard,
     TypeIs,
@@ -173,6 +176,17 @@ def json_dict_of_dicts(vs: MutableJSON) -> dict[str, MutableJSON]:
 def json_items_are_dicts(vs: MutableJSON) -> TypeGuard[dict[str, MutableJSON]]:
     for v in vs.values():
         json_dict(v)
+    return True
+
+
+def json_dict_of_lists(vs: MutableJSON) -> dict[str, MutableJSONArray]:
+    assert json_items_are_lists(vs)
+    return vs
+
+
+def json_items_are_lists(vs: MutableJSON) -> TypeGuard[dict[str, MutableJSONArray]]:
+    for v in vs.values():
+        json_list(v)
     return True
 
 
@@ -598,7 +612,8 @@ class SupportsLessAndGreaterThan(Protocol):
 
 
 _UnionGenericAlias = type(Union[int, str])
-_GenericAlias = type(List[int])
+_GenericAlias = type(typing.List[int])
+_SpecialGenericAlias = type(typing.Sized)
 _TypedDictMeta = type(JSONTypedDict)
 
 # The following serves more of a documentary purpose than for static analysis.
@@ -639,6 +654,60 @@ def check_type(type_expression: TypeExpression, value: Any) -> bool:
     >>> check_type(list[str], [''])
     True
 
+    >>> check_type(typing.List[str], [''])
+    True
+
+    Intentional deviations from Python's type system: booleans are not
+    considered integers and strings are not considered sequences.
+
+    We believe that isinstance(True, int) is a design flaw in Python. It
+    results in `[True, 3]` passing as list[int] which causes problems in one of
+    the main use cases for this function: validating JSON using TypedDicts. The
+    same is the case for strings being sequences.
+
+    Generally speaking, both behaviors are surprising. If a string is a
+    sequence, what is it a sequence of? The answer would have to be characters
+    but Python doesn't have a dedicated type for that. So instead, Python
+    represents the indivdual characters as strings which represents type
+    recursion:
+
+    >>> 'x'[0][0][0][0][0][0][0][0][0]
+    'x'
+
+    Many other languages consider characters to be unsigned integers. Python
+    could have opted to do that, making `ord(s) == s[0]`.
+
+    https://github.com/python/typing/issues/256
+
+    >>> check_type(int, True)
+    False
+
+    >>> check_type(Sequence[str], ''), check_type(Sequence[int], '')
+    (False, False)
+
+    Note that we need to extend the deviation to superclasses of Sequence, at
+    least those that are generic in the type of the members,
+    otherwise the empty string would be considered `Iterable[T]` with T being
+    any other type. This is because the empty string lacks any elements to be
+    check for T. We may want to refine this behavior but that would require a
+    static assignability check like typing.assert_type(Iterable[int], '') which
+    only works in a type checker like mypy.
+
+    >>> check_type(Iterable[str], ''), check_type(Iterable[int], '')
+    (False, False)
+
+    >>> from collections.abc import Sized, Collection
+
+    >>> check_type(Collection[str], ''), check_type(Collection[int], '')
+    (False, False)
+
+    However, a string still passes for a non-generic baseclasses of Sequence:
+
+    >>> check_type(Sized, '')
+    True
+    >>> check_type(typing.Sized, '')
+    True
+
     >>> type X[T] = dict[int, set[T] | list[T|None]]
     >>> x = {1: {'a'}, 2: [None, 'b']}
     >>> check_type(X[str], x)
@@ -670,6 +739,34 @@ def check_type(type_expression: TypeExpression, value: Any) -> bool:
     True
     >>> check_type(C, {'x': 1})
     False
+
+    >>> class E(TypedDict):
+    ...     x: int
+    >>> check_type(E, {'x': 2})
+    True
+    >>> check_type(E, {'x': 2, 'y': 3})
+    False
+
+    >>> class F(TypedDict, total=False):
+    ...     x: Required[int]
+    ...     y: str
+    >>> check_type(F, {'x': 22, 'y': '33'})
+    True
+    >>> check_type(F, {'x': 22})
+    True
+    >>> check_type(F, {'x': 22, 'z': 44})
+    True
+
+    >>> class G(TypedDict):
+    ...     x: int
+    ...     y: NotRequired[str]
+    >>> check_type(G, {'x': 22, 'y': '33'})
+    True
+    >>> check_type(G, {'x': 22})
+    True
+    >>> check_type(G, {'x': 22, 'z': 44})
+    False
+
     """
     return _check_type(type_expression, value, {})
 
@@ -682,52 +779,72 @@ def _check_type(t: TypeExpression | TypeVar,
     :param t: the expected type of the value
     :param x: the value to check
     :param tvs: the values of any type variables ocurring in the first argument
+
+    Furthermore `ot` is the origin type, `at` and `ats` are argument type(s)
     """
     if isinstance(t, TypeVar):
         return _check_type(tvs[t.__name__], x, tvs)
     elif isinstance(t, TypeAliasType):
         return _check_type(t.__value__, x, tvs)
+    elif isinstance(t, _SpecialGenericAlias):
+        ot = not_none(get_origin(t))
+        return _check_type(ot, x, tvs)
     elif isinstance(t, (UnionType, _UnionGenericAlias)):
         ats = get_args(t)
         return any(_check_type(at, x, tvs) for at in ats)
     elif isinstance(t, (GenericAlias, _GenericAlias)):
         ot, ats = not_none(get_origin(t)), get_args(t)
-        tps = getattr(ot, '__type_params__', ())
-        if tps:
-            tvs = tvs | {
-                tp.__name__: tvs[at.__name__] if isinstance(at, TypeVar) else at
-                for tp, at in zip(tps, ats, strict=True)
-            }
-            return _check_type(ot, x, tvs)
-        elif _check_type(ot, x, tvs):
-            if issubclass(ot, Mapping):
-                assert isinstance(x, Mapping)
-                kt, vt = ats
-                return all(
-                    _check_type(kt, k, tvs) and _check_type(vt, v, tvs)
-                    for k, v in x.items()
-                )
-            elif issubclass(ot, Iterable):
-                assert isinstance(x, Iterable)
-                it = one(ats)
-                return all(_check_type(it, i, tvs) for i in x)
+        if ot in (ReadOnly, Required, NotRequired):
+            return _check_type(one(ats), x, tvs)
+        else:
+            tps = getattr(ot, '__type_params__', ())
+            if tps:
+                tvs = tvs | {
+                    tp.__name__: tvs[at.__name__] if isinstance(at, TypeVar) else at
+                    for tp, at in zip(tps, ats, strict=True)
+                }
+                return _check_type(ot, x, tvs)
+            elif _check_type(ot, x, tvs):
+                if issubclass(ot, Mapping):
+                    assert isinstance(x, Mapping)
+                    kt, vt = ats
+                    return all(
+                        _check_type(kt, k, tvs) and _check_type(vt, v, tvs)
+                        for k, v in x.items()
+                    )
+                elif issubclass(ot, Iterable):
+                    assert isinstance(x, Iterable)
+                    it = one(ats)
+                    return all(_check_type(it, i, tvs) for i in x)
+                else:
+                    assert False, ('Unsupported generic type', ot)
             else:
-                assert False, ('Unsupported generic type', ot)
+                return False
+    elif isinstance(t, _TypedDictMeta):
+        if isinstance(x, dict):
+            for k, vt in t.__annotations__.items():
+                try:
+                    v = x[k]
+                except KeyError:
+                    if k in t.__required_keys__:
+                        return False
+                else:
+                    if not _check_type(vt, v, tvs):
+                        return False
+            if t.__total__ and x.keys() - t.__annotations__.keys():
+                return False
+            return True
         else:
             return False
-    elif isinstance(t, _TypedDictMeta):
-        for k, vt in t.__annotations__.items():
-            try:
-                v = x[k]
-            except KeyError:
-                if k in t.__required_keys__:
-                    return False
-            else:
-                if not _check_type(vt, v, tvs):
-                    return False
-        return True
     elif isinstance(t, type):
-        return isinstance(x, t)
+        if isinstance(x, str) and issubclass(t, Iterable) and t is not str:
+            # See doctests
+            return False
+        elif t is int and isinstance(x, bool):
+            # See doctests
+            return False
+        else:
+            return isinstance(x, t)
     else:
         assert False, ('Unsupported type', t)
 

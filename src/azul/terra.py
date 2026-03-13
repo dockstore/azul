@@ -58,12 +58,9 @@ import urllib3.response
 from azul import (
     Config,
     R,
-    RequirementError,
     cache,
     config,
     mutable_furl,
-    reject,
-    require,
 )
 from azul.auth import (
     OAuth2,
@@ -155,9 +152,9 @@ class TDRSourceSpec(SourceSpec):
         service, type, domain, subdomain, name = spec.split(':')
         assert service == 'tdr', service
         type = cls.Type(type)
-        reject(type == cls.Type.parquet, 'Parquet sources are not yet supported')
+        assert type != cls.Type.parquet, R('Parquet sources are not yet supported')
         domain = cls.Domain(domain)
-        reject(domain == cls.Domain.azure, 'Azure sources are not yet supported')
+        assert domain != cls.Domain.azure, R('Azure sources are not yet supported')
         self = cls(type=type,
                    domain=domain,
                    subdomain=subdomain,
@@ -216,7 +213,7 @@ class ServiceAccountCredentialsProvider(TerraCredentialsProvider):
         return credentials
 
     def insufficient_access(self, resource: str):
-        return RequirementError(
+        return AssertionError(
             f'The service account (SA) {self.scoped_credentials().service_account_email!r} is not '
             f'authorized to access {resource} or that resource does not exist. Make sure '
             f'that it exists, that the SA is registered with SAM and has been granted read '
@@ -383,9 +380,9 @@ class TDRClient(SAMClient, DRSClient):
         """
         source = self._lookup_source(source_spec)
         actual_project = source['dataProject']
-        require(actual_project == source_spec.subdomain,
-                'Actual Google project of TDR source differs from configured one',
-                actual_project, source_spec.subdomain)
+        assert actual_project == source_spec.subdomain, R(
+            'Actual Google project of TDR source differs from configured one',
+            actual_project, source_spec.subdomain)
         storage = one(
             resource
             for resource in map(json_dict, json_list(source['storage']))
@@ -394,17 +391,17 @@ class TDRClient(SAMClient, DRSClient):
         actual_location = json_str(storage['region'])
         # Uppercase is standard for multi-regions in the documentation but TDR
         # returns 'us' in lowercase
-        require(actual_location.lower() == config.tdr_source_location.lower(),
-                'Actual storage location of TDR source differs from configured one',
-                actual_location, config.tdr_source_location)
+        assert actual_location.lower() == config.tdr_source_location.lower(), R(
+            'Actual storage location of TDR source differs from configured one',
+            actual_location, config.tdr_source_location)
         return json_str(source['id'])
 
     def _retrieve_source(self, source: TDRSourceRef) -> MutableJSON:
         endpoint = self._repository_endpoint('snapshots', source.id)
         response = self._request('GET', endpoint)
         response = self._check_response(endpoint, response)
-        require(source.spec.name == response['name'],
-                'Source name changed unexpectedly', source, response)
+        assert source.spec.name == response['name'], R(
+            'Source name changed unexpectedly', source, response)
         return response
 
     def _lookup_source(self, source: TDRSourceSpec) -> MutableJSON:
@@ -562,7 +559,7 @@ class TDRClient(SAMClient, DRSClient):
         response = self._check_response(endpoint, response)
         return set(json_dict(response['roleMap']).keys())
 
-    class Snapshot(TypedDict):
+    class Snapshot(TypedDict, total=False):
         id: str
         name: str
         dataProject: str | None  # None for Azure-backed snapshots
@@ -676,6 +673,6 @@ class TDRClient(SAMClient, DRSClient):
             else:
                 body = self._check_response(url, response)
                 consent_group = json_dict(one(json_list(body['consentGroups'])))
-                require(duos_id == json_str(consent_group['datasetIdentifier']),
-                        'Mismatched identifiers', duos_id, consent_group)
+                assert duos_id == json_str(consent_group['datasetIdentifier']), R(
+                    'Mismatched identifiers', duos_id, consent_group)
                 return duos_id, body

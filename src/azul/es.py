@@ -1,9 +1,10 @@
+from collections.abc import (
+    Collection,
+)
 import logging
 from typing import (
     Any,
-    Collection,
     Mapping,
-    Tuple,
     cast,
 )
 from urllib.parse import (
@@ -72,7 +73,7 @@ class AzulConnection(Connection):
                         timeout: int | float | None = None,
                         ignore: Collection[int] = (),
                         headers: Mapping[str, str] | None = None
-                        ) -> Tuple[int, Mapping[str, str], str]:
+                        ) -> tuple[int, Mapping[str, str], str]:
         self._log_request(method, self._full_url(url, params), headers, body)
         return super().perform_request(method, url, params, body, timeout, ignore, headers)
 

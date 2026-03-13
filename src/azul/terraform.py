@@ -22,10 +22,10 @@ from typing import (
 import attr
 
 from azul import (
+    R,
     cache,
     cached_property,
     config,
-    require,
 )
 from azul.chalice import (
     AzulChaliceApp,
@@ -84,7 +84,7 @@ class Terraform:
     def taggable_resource_types(self) -> set[str]:
         schema = self.schema.document
         version = schema['format_version']
-        require(version == '1.0', 'Unexpected format version', version)
+        assert version == '1.0', R('Unexpected format version', version)
         resources = chain.from_iterable(
             provider['resource_schemas'].items()
             for provider in schema['provider_schemas'].values()
@@ -924,9 +924,9 @@ class Chalice:
         deployments = json_dict(resources['aws_api_gateway_deployment'])
         deployment = json_dict(deployments[app_name])
         stage_name = deployment.pop('stage_name')
-        require(stage_name == config.deployment_stage,
-                'The TF config from Chalice does not match the selected deployment',
-                stage_name, config.deployment_stage)
+        assert stage_name == config.deployment_stage, R(
+            'The TF config from Chalice does not match the selected deployment',
+            stage_name, config.deployment_stage)
         del json_dict(deployment['lifecycle'])['create_before_destroy']
         assert not deployment['lifecycle'], deployment
         del deployment['lifecycle']

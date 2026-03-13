@@ -22,6 +22,9 @@ from urllib.parse import (
     parse_qsl,
     urlparse,
 )
+from warnings import (
+    deprecated,
+)
 
 import attr
 from furl import (
@@ -57,14 +60,13 @@ from azul.indexer.document import (
 from azul.indexer.field import (
     null_str,
 )
-from azul.indexer.index_service import (
-    IndexService,
-)
+import azul.indexer.index_service
 from azul.logging import (
     configure_test_logging,
 )
 from azul.plugins import (
     FieldPath,
+    MetadataPlugin,
 )
 from azul.plugins.metadata.hca import (
     HCABundle,
@@ -72,7 +74,13 @@ from azul.plugins.metadata.hca import (
 from azul.plugins.metadata.hca.service.response import (
     HCASearchResponseStage,
 )
-from azul.service.elasticsearch_service import (
+from azul.service.index_controller import (
+    IndexController,
+)
+from azul.service.index_service import (
+    IndexService,
+)
+from azul.service.query_service import (
     ResponsePagination,
 )
 from azul.service.source_service import (
@@ -108,7 +116,18 @@ def parse_url_qs(url) -> dict[str, str]:
 
 
 class IndexResponseTestCase(DCP1CannedBundleTestCase, WebServiceTestCase):
-    pass
+
+    @property
+    def _controller(self) -> IndexController:
+        controller = self._app.index_controller
+        assert isinstance(controller, IndexController)
+        return controller
+
+    @property
+    def _metadata_plugin(self) -> MetadataPlugin:
+        plugin = self._controller._metadata_plugin
+        assert isinstance(plugin, MetadataPlugin)
+        return plugin
 
 
 class TestIndexResponse(IndexResponseTestCase):
@@ -143,8 +162,12 @@ class TestIndexResponse(IndexResponseTestCase):
 
     @property
     def file_url_func(self):
-        return self._app.file_url
+        return self._controller._file_url
 
+    # FIXME: Use response from `/index/files` to validate
+    #        https://github.com/DataBiosphere/azul/issues/2970
+    #
+    @deprecated('Verify the response, not the index content')
     def _get_hits(self, entity_type: str, entity_id: str):
         """
         Fetches hits from ES instance searching for a particular entity ID
@@ -161,20 +184,24 @@ class TestIndexResponse(IndexResponseTestCase):
                                                                    qualifier=entity_type,
                                                                    doc_type=DocumentType.aggregate)),
                                         body=body)
-        return self._index_service.translate_fields(catalog=self.catalog,
-                                                    doc=[results['hits']['hits'][0]['_source']],
-                                                    forward=False)
+        return self._indexer_index_service.translate_fields(catalog=self.catalog,
+                                                            doc=[results['hits']['hits'][0]['_source']],
+                                                            forward=False)
 
+    # FIXME: Use response from `/index/files` to validate
+    #        https://github.com/DataBiosphere/azul/issues/2970
+    #
     @cached_property
-    def _index_service(self):
-        return IndexService()
+    @deprecated('Verify the response, not the index content')
+    def _indexer_index_service(self):
+        return azul.indexer.index_service.IndexService()
 
     @property
-    def _repository_service(self):
-        return self._app.repository_controller.service
+    def _service_index_service(self) -> IndexService:
+        return self._controller._service
 
     def _response_stage(self, entity_type: str) -> HCASearchResponseStage:
-        return HCASearchResponseStage(service=self._repository_service,
+        return HCASearchResponseStage(service=self._service_index_service,
                                       entity_type=entity_type,
                                       catalog=self.catalog,
                                       file_url_func=self.file_url_func)
@@ -1250,14 +1277,14 @@ class TestIndexResponse(IndexResponseTestCase):
             ('within', (gte2 + 10000, lte2 - 1000), []),
             ('intersects', (lte2 + 100, gte0 - 199000), [])
         ]
-        for relation, value, expected_hits in test_cases:
+        for operator, value, expected_hits in test_cases:
             for ends_type in int, float:
                 if isinstance(value, (tuple, list)):
                     value = list(map(ends_type, value))
                 else:
                     value = ends_type(value)
-                with self.subTest(relation=relation, value=value, ends_type=ends_type):
-                    params = self._params(filters={'organismAgeRange': {relation: [value]}},
+                with self.subTest(operator=operator, value=value, ends_type=ends_type):
+                    params = self._params(filters={'organismAgeRange': {operator: [value]}},
                                           order='desc',
                                           sort='entryId')
                     url = self.base_url.set(path='/index/projects', args=params)
@@ -1970,41 +1997,19 @@ class TestIndexResponse(IndexResponseTestCase):
         test_cases = [
             (
                 '627cb0ba-b8a1-405a-b58f-0add82c3d635',
-                {
-                    'is': [
-                        {
-                            'value': '20',
-                            'unit': 'year'
-                        }
-                    ]
-                }
+                {'is': [{'value': '20', 'unit': 'year'}]}
             ),
             (
                 'c765e3f9-7cfc-4501-8832-79e5f7abd321',
-                {
-                    'is': [
-                        None
-                    ]
-                }
+                {'is': [None]}
             ),
             (
                 None,
-                {
-                    'is': [
-                        {}
-                    ]
-                }
+                {'is': [{}]}
             ),
             (
                 None,
-                {
-                    'is': [
-                        {
-                            'value': None,
-                            'unit': 'weeks'
-                        }
-                    ]
-                }
+                {'is': [{'value': None, 'unit': 'weeks'}]}
             )
         ]
         for project_id, filters in test_cases:

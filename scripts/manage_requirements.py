@@ -30,11 +30,9 @@ from requirements.requirement import (
 )
 
 from azul import (
-    RequirementError,
+    R,
     cached_property,
     config,
-    reject,
-    require,
 )
 from azul.logging import (
     configure_script_logging,
@@ -75,12 +73,13 @@ class PinnedRequirement:
             assert op == '=='
             return cls(name=req.name.lower(), versions=Versions(version))
         elif req.vcs:
-            reject(req.revision is None, 'VCS requirements must carry a specific revision', req)
+            assert req.revision is not None, R(
+                'VCS requirements must carry a specific revision', req)
             return cls(name=req.name.lower())
         elif req.recursive:
             return None
         else:
-            raise RequirementError('Unable to handle requirement', req)
+            assert False, R('Unable to handle requirement', req)
 
     def __or__(self, other: Optional['PinnedRequirement']) -> 'PinnedRequirement':
         assert self.name == other.name
@@ -195,13 +194,14 @@ class Main:
         direct_runtime_reqs = self.get_direct_reqs(self.runtime)
         direct_build_reqs = self.get_direct_reqs(self.build)
         dupes = direct_build_reqs & direct_runtime_reqs
-        require(not dupes, 'Some requirements are declared as both run and build time', dupes)
+        assert not dupes, R(
+            'Some requirements are declared as both run and build time', dupes)
 
         build_reqs = self.get_reqs(self.build)
         runtime_reqs = self.get_reqs(self.runtime)
-        require(runtime_reqs <= build_reqs,
-                'Runtime requirements are not a subset of build requirements',
-                runtime_reqs - build_reqs)
+        assert runtime_reqs <= build_reqs, R(
+            'Runtime requirements are not a subset of build requirements',
+            runtime_reqs - build_reqs)
         overlap = build_reqs & runtime_reqs
         ambiguities = PinnedRequirements(req for req in overlap if len(req.versions) > 1)
         for req in ambiguities:
@@ -215,9 +215,9 @@ class Main:
             log.error('Ambiguous version of transitive runtime requirement %s. '
                       'Consider pinning it to the version used at build time (%s).',
                       req, build_req.versions)
-        require(not ambiguities,
-                'Ambiguous transitive runtime requirement versions',
-                ambiguities)
+        assert not ambiguities, R(
+            'Ambiguous transitive runtime requirement versions',
+            ambiguities)
 
         build_only_reqs = build_reqs - pip_reqs - runtime_reqs
         transitive_build_reqs = build_only_reqs - direct_build_reqs

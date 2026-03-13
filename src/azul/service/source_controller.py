@@ -13,8 +13,8 @@ from azul.auth import (
     Authentication,
 )
 from azul.chalice import (
-    AppController,
     BadGatewayError,
+    Controller,
     TerraTimeoutError,
 )
 from azul.http import (
@@ -31,7 +31,7 @@ from azul.types import (
 log = logging.getLogger(__name__)
 
 
-class SourceController(AppController):
+class SourceController(Controller):
 
     @cached_property
     def _source_service(self) -> SourceService:

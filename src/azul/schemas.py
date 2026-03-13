@@ -13,7 +13,7 @@ from azul import (
     mutable_furl,
 )
 from azul.chalice import (
-    AppController,
+    Controller,
 )
 from azul.openapi import (
     params,
@@ -25,7 +25,7 @@ from azul.types import (
 )
 
 
-class SchemaController(AppController):
+class SchemaController(Controller):
     """
     A controller for serving JSON schemas relating to an Azul facility
     """

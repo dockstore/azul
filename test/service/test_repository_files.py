@@ -57,8 +57,8 @@ from azul.logging import (
 from azul.plugins.metadata.hca import (
     HCAFile,
 )
-from azul.service.repository_service import (
-    RepositoryService,
+from azul.service.index_service import (
+    IndexService,
 )
 from azul.terra import (
     TerraClient,
@@ -128,7 +128,7 @@ class TestRepositoryFilesWithTDR(DCP2TestCase, RepositoryFilesTestCase):
                        crc32c='abc')
         for fetch in True, False:
             with self.subTest(fetch=fetch):
-                with patch.object(RepositoryService,
+                with patch.object(IndexService,
                                   'get_data_file',
                                   return_value=file):
                     azul_url = self.base_url.set(path=['repository', 'files', file_uuid],
@@ -164,7 +164,7 @@ class TestRepositoryFilesWithTDR(DCP2TestCase, RepositoryFilesTestCase):
 
         file = attr.evolve(file, drs_uri=None)
         with self.subTest('phantom'):
-            with patch.object(RepositoryService,
+            with patch.object(IndexService,
                               'get_data_file',
                               return_value=file):
                 response = client.request('GET', str(azul_url), redirect=False)
@@ -199,7 +199,7 @@ class TestRepositoryFilesWithDSS(DCP1TestCase,
                        content_type='text/plain',
                        sha256='123',
                        crc32c='abc')
-        with patch.object(RepositoryService, 'get_data_file', return_value=file):
+        with patch.object(IndexService, 'get_data_file', return_value=file):
             args = {
                 'replica': 'aws',
                 'version': file_version
@@ -330,7 +330,7 @@ class TestRepositoryFilesWithMirroring(DCP2TestCase,
         client = http_client(log)
         args = dict(catalog=self.catalog, version=file_version)
         azul_url = self.base_url.set(path=['repository', 'files', file_uuid], args=args)
-        with patch.object(RepositoryService, 'get_data_file', return_value=file):
+        with patch.object(IndexService, 'get_data_file', return_value=file):
             response = client.request('GET', str(azul_url), redirect=False)
         self.assertEqual(302, response.status)
 

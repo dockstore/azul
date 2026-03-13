@@ -88,13 +88,13 @@ from azul.uuids import (
 )
 
 if TYPE_CHECKING:
-    from azul.service.elasticsearch_service import (
+    from azul.service.query_service import (
         AggregationStage,
         FilterStage,
     )
     # These are only needed for type hints and would otherwise introduce a
     # circular import since the service layer heavily depends on the plugin.
-    from azul.service.repository_service import (
+    from azul.service.index_service import (
         SearchResponseStage,
         SummaryResponseStage,
     )

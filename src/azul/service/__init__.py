@@ -1,20 +1,21 @@
 from collections import (
     defaultdict,
 )
-from functools import (
-    partial,
-)
-from itertools import (
-    chain,
-)
+import copy
 import json
+from json import (
+    JSONDecodeError,
+)
 import logging
 from typing import (
+    Mapping,
     Protocol,
+    ReadOnly,
     Self,
+    Sequence,
+    TypeGuard,
     TypedDict,
-    cast,
-    get_args,
+    Union,
 )
 
 import attr
@@ -29,58 +30,141 @@ from more_itertools import (
 from azul import (
     CatalogName,
     R,
+    json_mapping,
     mutable_furl,
-)
-from azul.json import (
-    copy_json,
 )
 from azul.plugins import (
     FieldName,
     MetadataPlugin,
 )
 from azul.types import (
+    AnyJSON,
     FlatJSON,
     JSON,
+    JSONTypedDict,
+    MutableFlatJSON,
     PrimitiveJSON,
-    reify,
+    check_type,
+    json_element_strings,
 )
 
 log = logging.getLogger(__name__)
 
-# We can't express that these are actually pairs, i.e. lists of length 2. We
-# could, using tuples, but those are not JSON, even though the `json` module
-# supports serializing them by default.
-#
-type FilterRange = list[int] | list[float] | list[str]
-type FilterRangeEnd = int | float | str
+type IsFilterValueJSON = Union[
+    Sequence[str | None],
+    Sequence[int | None],
+    Sequence[float | None],
+    Sequence[bool | None],
+    Sequence[FlatJSON | None],
+]
 
 # `is` is a reserved keyword so we can't use the class-based syntax for
-# TypedDict, but have to use the constructor-based one instead. We don't
-# currently represent the mutual exclusivity of the operators. We could, as a
-# union of singleton TypeDict subclasses, but PyCharm doesn't support that.
+# TypedDict, but have to use the constructor-based one instead. This also
+# prevents us from using JSONTypedDict.
 #
-FilterJSON = TypedDict(
-    'FilterJSON',
-    {
-        'is': list[PrimitiveJSON | FlatJSON],
-        'is_not': list[PrimitiveJSON | FlatJSON],
-        'intersects': list[FilterRange],
-        'contains': list[FilterRange | FilterRangeEnd],
-        'within': list[FilterRange],
-    },
-    total=False
-)
-
-type FiltersJSON = dict[FieldName, FilterJSON]
-
-_filter_operators = FilterJSON.__optional_keys__
-_simple_filter_value_types = reify(PrimitiveJSON)
-_dict_filter_value_types = reify(get_args(FlatJSON.__value__)[1])
-assert _simple_filter_value_types == _dict_filter_value_types
-_filter_range_end_types = reify(FilterRangeEnd)
+IsFilterJSON = TypedDict('IsFilterJSON', {'is': ReadOnly[IsFilterValueJSON]})
 
 
-def parse_filters(raw_filters: str | None) -> FiltersJSON:
+class IsNotFilterJSON(JSONTypedDict):
+    is_not: ReadOnly[IsFilterValueJSON]
+
+
+type RangeFilterValueJSON = Union[
+    Sequence[Sequence[int]],
+    Sequence[Sequence[float]],
+    Sequence[Sequence[str]]
+]
+
+
+class IntersectsFilterJSON(JSONTypedDict):
+    intersects: ReadOnly[RangeFilterValueJSON]
+
+
+type ContainsFilterValueJSON = Union[
+    Sequence[int | Sequence[int]],
+    Sequence[float | Sequence[float]],
+    Sequence[str | Sequence[str]]
+]
+
+
+class ContainsFilterJSON(JSONTypedDict):
+    contains: ReadOnly[ContainsFilterValueJSON]
+
+
+class WithinFilterJSON(JSONTypedDict):
+    within: ReadOnly[RangeFilterValueJSON]
+
+
+type FilterJSON = Union[
+    IsFilterJSON,
+    IsNotFilterJSON,
+    IntersectsFilterJSON,
+    ContainsFilterJSON,
+    WithinFilterJSON
+]
+
+type FiltersJSON = Mapping[FieldName, FilterJSON]
+
+
+def is_filters_json(v: JSON) -> TypeGuard[FiltersJSON]:
+    """
+    >>> is_filters_json({'x':{'is': ["a", "b"]}})
+    True
+    >>> is_filters_json({'x':{'is': ["a", 1]}})
+    False
+    >>> is_filters_json({'x':{'is': [None, {}]}})
+    True
+    >>> is_filters_json({
+    ... 'a': {'is': []},
+    ... 'b': {'is_not': [1, 2, None]},
+    ... 'c': {'is': [None, {'x': 42, 'y': 45}]},
+    ... 'd': {'within': [[1, 2], [3, 4]]},
+    ... 'e': {'intersects': [[1, 2], [3, 4]]},
+    ... 'f': {'contains': ['a', 'b']},
+    ... 'g': {'contains': [[1, 2], [3, 4]]}
+    ... })
+    True
+    """
+    return check_type(FiltersJSON, v)
+
+
+type _FilterJSON = Mapping[
+    FieldName,
+    Mapping[
+        str,
+        Sequence[PrimitiveJSON | FlatJSON | Sequence[PrimitiveJSON]]
+    ]
+]
+
+type _FilterMutableJSON = dict[
+    FieldName,
+    dict[
+        str,
+        list[PrimitiveJSON | MutableFlatJSON | list[PrimitiveJSON]]
+    ]
+]
+
+
+def _upcast_filters(filters: FiltersJSON) -> _FilterJSON:
+    """
+    Mypy does not realize that FilterJSON is actually JSON, probably due to the
+    union of TypedDicts in its definition. Instead, it widens the filter values
+    to just ``object``. Use this function if you need to process filters more
+    generically, independent of the specific operators and the different
+    constraints they impose on the values they operate on.
+    """
+    return filters  # type: ignore[return-value]
+
+
+def _upcast_filters_unsafe(filters) -> _FilterMutableJSON:
+    """
+    Same as :meth:`upcast_filters` but pretends that the result is mutable.
+    Callers must immediately make a deep copy of the returned value.
+    """
+    return filters  # type: ignore[return-value]
+
+
+def parse_filters(raw_filters: str | None) -> AnyJSON:
     """
     Deserialize, validate and normalize the given string form of the `filters`
     request parameter. The aim of normalization is to eliminate any
@@ -96,185 +180,183 @@ def parse_filters(raw_filters: str | None) -> FiltersJSON:
     >>> parse_filters('{}')
     {}
 
-    >>> parse_filters('{"x":{"is":[null]}}')
-    {'x': {'is': [None]}}
-
-    Values are sorted.
-
-    >>> parse_filters('{"x":{"is":[2,1,null]}}')
-    {'x': {'is': [None, 1, 2]}}
-
-    The entries in value dictionaries are sorted by key.
-
-    >>> parse_filters('{"x":{"is":[{"b":2,"a":1}]}}')
-    {'x': {'is': [{'a': 1, 'b': 2}]}}
-
-    Value dictionaries are sorted by their values, in order of the key. If two
-    dictionaries have equal values at the first key, the value at the second key
-    is used as a tie breaker and so on.
-
-    >>> parse_filters('{"x":{"is":[{"b":2,"a":1},{"a":0,"b":3},{"b":null,"a":1}]}}')
-    {'x': {'is': [{'a': 0, 'b': 3}, {'a': 1, 'b': None}, {'a': 1, 'b': 2}]}}
-
-    Ranges are sorted by start and end value.
-
-    >>> parse_filters('{"x":{"within":[[3,4],[1,2],[1,1]]}}')
-    {'x': {'within': [[1, 1], [1, 2], [3, 4]]}}
-
-    Overall, filters are sorted by field name.
-
-    >>> parse_filters('{"y":{"within":[[1,2]]},"x":{"is":[4, 3]}}')
-    {'x': {'is': [3, 4]}, 'y': {'within': [[1, 2]]}}
-
-    >>> parse_filters('[]')
+    >>> parse_filters('{]')
     Traceback (most recent call last):
         ...
-    AssertionError: R('Filters must be an object')
-
-    >>> parse_filters('{"":42}')
-    Traceback (most recent call last):
-        ...
-    AssertionError: R('Empty field name')
-
-    >>> parse_filters('{"x":42}')
-    Traceback (most recent call last):
-        ...
-    AssertionError: R('Filter must be an object', 'x')
-
-    >>> parse_filters('{"x":{}}')
-    Traceback (most recent call last):
-        ...
-    AssertionError: R('Need exactly one filter per field', 'x')
-
-    >>> parse_filters('{"x":{"is":[1],"contains":[1]}}')
-    Traceback (most recent call last):
-        ...
-    AssertionError: R('Need exactly one filter per field', 'x')
-
-    >>> parse_filters('{"x":{"foo":[2]}}')
-    Traceback (most recent call last):
-        ...
-    AssertionError: R('Invalid operator', 'x', 'foo')
-
-    >>> parse_filters('{"x":{"is":[]}}')
-    Traceback (most recent call last):
-        ...
-    AssertionError: R('Need at least one value', 'x')
-
-    >>> parse_filters('{"x":{"is":[1,1]}}')
-    Traceback (most recent call last):
-        ...
-    AssertionError: R('Duplicate values', 'x')
-
-    >>> parse_filters('{"x":{"within":[1]}}')
-    Traceback (most recent call last):
-        ...
-    AssertionError: R('Value does not match operator', 'x', <class 'int'>, 'within')
-
-    >>> parse_filters('{"x":{"is":[42,4.1]}}')
-    Traceback (most recent call last):
-        ...
-    AssertionError: R('Inconsistent value types', 'x')
-
-    >>> parse_filters('{"x":{"within":[[1]]}}')
-    Traceback (most recent call last):
-        ...
-    AssertionError: R('Range must be list of length 2', 'x')
-
-    >>> parse_filters('{"x":{"within":[[2,1]]}}')
-    Traceback (most recent call last):
-        ...
-    AssertionError: R('Range is inverted', 'x')
-
-    >>> parse_filters('{"x":{"within":[[1,2],["",""]]}}')
-    Traceback (most recent call last):
-        ...
-    AssertionError: R('Inconsistent range ends', 'x')
-
-    >>> parse_filters('{"x":{"within":[[1,1.1],[2,2.2]]}}')
-    Traceback (most recent call last):
-        ...
-    AssertionError: R('Inconsistent range ends', 'x')
-
-    >>> parse_filters('{"x":{"within":[[false,true]]}}')
-    Traceback (most recent call last):
-        ...
-    AssertionError: R('Invalid range end', 'x')
-
-    >>> parse_filters('{"x":{"within":[{}]}}')
-    Traceback (most recent call last):
-        ...
-    AssertionError: R('Value does not match operator', 'x', <class 'dict'>, 'within')
-
-    >>> parse_filters('{"x":{"within":[[1,2],[1,2]]}}')
-    Traceback (most recent call last):
-        ...
-    AssertionError: R('Duplicate ranges', 'x')
-
-    >>> parse_filters('{"x":{"is":[{}]}}')
-    Traceback (most recent call last):
-        ...
-    AssertionError: R('Empty object', 'x')
-
-    >>> parse_filters('{"x":{"is":[{"":1}]}}')
-    Traceback (most recent call last):
-        ...
-    AssertionError: R('Empty property name', 'x')
-
-    >>> parse_filters('{"x":{"is":[{"y":1},{"z":2}]}}')
-    Traceback (most recent call last):
-        ...
-    AssertionError: R('Inconsistent property names', 'x')
-
-    >>> parse_filters('{"x":{"is":[{"y":1,"z":[]}]}}')
-    Traceback (most recent call last):
-        ...
-    AssertionError: R('Invalid property value', 'x')
-
-    >>> parse_filters('{"x":{"is":[{"y":1,"z":2},{"y":"","z":3}]}}')
-    Traceback (most recent call last):
-        ...
-    AssertionError: R('Inconsistent property values', 'x')
-
-    >>> parse_filters('{"x":{"is":[{"a":1,"b":2},{"b":2,"a":1}]}}')
-    Traceback (most recent call last):
-        ...
-    AssertionError: R('Duplicate objects', 'x')
+    AssertionError: R('Filters are not valid JSON')
     """
     if raw_filters is None:
         return {}
     else:
-        filters = json.loads(raw_filters)
-        assert type(filters) is dict, R('Filters must be an object')
-        for field, filter in filters.items():
-            assert len(field) > 0, R('Empty field name')
-            assert type(filter) is dict, R('Filter must be an object', field)
-            assert len(filter) == 1, R('Need exactly one filter per field', field)
-            operator, values = one(filter.items())
-            assert operator in _filter_operators, R('Invalid operator', field, operator)
-            assert len(values) > 0, R('Need at least one value', field)
-            num_value_types = set(map(type, values))
-            num_value_types.discard(type(None))
-            assert len(num_value_types) < 2, R('Inconsistent value types', field)
-            value_type = only(num_value_types)
-            mismatch = R('Value does not match operator', field, value_type, operator)
-            if value_type is None:
-                assert operator in {'is'}, mismatch
-            elif value_type in _simple_filter_value_types:
-                assert operator in {'is', 'contains'}, mismatch
-                assert len(set(values)) == len(values), R('Duplicate values', field)
-            elif value_type is list:
-                assert operator in {'contains', 'within', 'intersects'}, mismatch
-                for range in values:
-                    assert len(range) == 2, R('Range must be list of length 2', field)
-                    assert range[0] <= range[1], R('Range is inverted', field)
-                assert len(set(map(tuple, values))) == len(values), R('Duplicate ranges', field)
-                end_types = set(chain.from_iterable(map(partial(map, type), values)))
-                assert len(end_types) == 1, R('Inconsistent range ends', field)
-                end_type = one(end_types)
-                assert end_type in _filter_range_end_types, R('Invalid range end', field)
-            elif value_type is dict:
-                assert operator == 'is', mismatch
+        try:
+            return json.loads(raw_filters)
+        except JSONDecodeError:
+            assert False, R('Filters are not valid JSON')
+
+
+def validate_filters(filters: AnyJSON) -> FiltersJSON:
+    """
+    >>> validate_filters({'x': {'within': ['c', ['a', 'b']]}})
+    Traceback (most recent call last):
+        ...
+    AssertionError: R('Invalid filter values', 'x')
+
+    >>> validate_filters([])
+    Traceback (most recent call last):
+        ...
+    AssertionError: R('Filters must be an object')
+
+    >>> validate_filters({'': {'is': [42]}})
+    Traceback (most recent call last):
+        ...
+    AssertionError: R('Empty field name')
+
+    >>> validate_filters({'x': 42})
+    Traceback (most recent call last):
+        ...
+    AssertionError: R('Filter must be an object', 'x')
+
+    >>> validate_filters({'x': {}})
+    Traceback (most recent call last):
+        ...
+    AssertionError: R('Need exactly one filter per field', 'x')
+
+    >>> validate_filters({'x': {'is': [1], 'contains': [1]}})
+    Traceback (most recent call last):
+        ...
+    AssertionError: R('Need exactly one filter per field', 'x')
+
+    >>> validate_filters({'x': {'foo': [2]}})
+    Traceback (most recent call last):
+        ...
+    AssertionError: R('Invalid operator', 'x', 'foo')
+
+    >>> validate_filters({'x': {'is': {}}})
+    Traceback (most recent call last):
+        ...
+    AssertionError: R('Values must be an array', 'x')
+
+    >>> validate_filters({'x': {'is': []}})
+    Traceback (most recent call last):
+        ...
+    AssertionError: R('Need at least one value', 'x')
+
+    >>> validate_filters({'x': {'within': []}})
+    Traceback (most recent call last):
+        ...
+    AssertionError: R('Need at least one value', 'x')
+
+    >>> validate_filters({'x': {'is': [1, 1]}})
+    Traceback (most recent call last):
+        ...
+    AssertionError: R('Duplicate values', 'x')
+
+    >>> validate_filters({'x': {'is': [None, None]}})
+    Traceback (most recent call last):
+        ...
+    AssertionError: R('Duplicate values', 'x')
+
+    >>> validate_filters({'x': {'within': [1]}})
+    Traceback (most recent call last):
+        ...
+    AssertionError: R('Invalid filter values', 'x')
+
+    >>> validate_filters({'x': {'is': [42, 4.1]}})
+    Traceback (most recent call last):
+        ...
+    AssertionError: R('Invalid filter values', 'x')
+
+    >>> validate_filters({'x': {'within': [[1]]}})
+    Traceback (most recent call last):
+        ...
+    AssertionError: R('Range must be list of length 2', 'x')
+
+    >>> validate_filters({'x': {'within': [[2, 1]]}})
+    Traceback (most recent call last):
+        ...
+    AssertionError: R('Range is inverted', 'x')
+
+    >>> validate_filters({'x': {'intersects': [[2, 1]]}})
+    Traceback (most recent call last):
+        ...
+    AssertionError: R('Range is inverted', 'x')
+
+    >>> validate_filters({'x': {'within': [[1, 2], ['', '']]}})
+    Traceback (most recent call last):
+        ...
+    AssertionError: R('Invalid filter values', 'x')
+
+    >>> validate_filters({'x': {'within': [[1, 1.1], [2, 2.2]]}})
+    Traceback (most recent call last):
+        ...
+    AssertionError: R('Invalid filter values', 'x')
+
+    >>> validate_filters({'x': {'within': [[False, True]]}})
+    Traceback (most recent call last):
+        ...
+    AssertionError: R('Invalid filter values', 'x')
+
+    >>> validate_filters({'x': {'within': [{}]}})
+    Traceback (most recent call last):
+        ...
+    AssertionError: R('Invalid filter values', 'x')
+
+    >>> validate_filters({'x': {'within': [[1, 2], [1, 2]]}})
+    Traceback (most recent call last):
+        ...
+    AssertionError: R('Duplicate values', 'x')
+
+    >>> validate_filters({'x': {'is': [{}]}})
+    Traceback (most recent call last):
+        ...
+    AssertionError: R('Empty object', 'x')
+
+    >>> validate_filters({'x': {'is': [{'': 1}]}})
+    Traceback (most recent call last):
+        ...
+    AssertionError: R('Empty property name', 'x')
+
+    >>> validate_filters({'x': {'is': [{'y': 1}, {'z': 2}]}})
+    Traceback (most recent call last):
+        ...
+    AssertionError: R('Inconsistent property names', 'x')
+
+    >>> validate_filters({'x': {'is': [{'y': 1, 'z': []}]}})
+    Traceback (most recent call last):
+        ...
+    AssertionError: R('Invalid filter values', 'x')
+
+    >>> validate_filters({'x': {'is': [{'y': 1, 'z': 2}, {'y': '', 'z': 3}]}})
+    Traceback (most recent call last):
+        ...
+    AssertionError: R('Inconsistent property values', 'x')
+
+    >>> validate_filters({'x': {'is': [{'a': 1, 'b': 2}, {'b': 2, 'a': 1}]}})
+    Traceback (most recent call last):
+        ...
+    AssertionError: R('Duplicate objects', 'x')
+
+    >>> validate_filters({'x': {'contains': [1, 'a']}})
+    Traceback (most recent call last):
+        ...
+    AssertionError: R('Invalid filter values', 'x')
+    """
+    assert type(filters) is dict, R('Filters must be an object')
+    for field, filter in filters.items():
+        assert len(field) > 0, R('Empty field name')
+        assert type(filter) is dict, R('Filter must be an object', field)
+        assert len(filter) == 1, R('Need exactly one filter per field', field)
+        operator, values = one(filter.items())
+        assert type(values) is list, R('Values must be an array', field)
+        assert len(values) > 0, R('Need at least one value', field)
+        value_types = set(map(type, values))
+        if operator in {'is', 'is_not'}:
+            identity_filters = IsFilterJSON | IsNotFilterJSON
+            assert check_type(identity_filters, filter), R('Invalid filter values', field)
+            value_types.discard(type(None))
+            value_type = only(value_types)
+            if value_type is dict:
+                assert operator == 'is', operator
                 key_sets = set(map(frozenset, map(dict.keys, values)))
                 assert len(key_sets) == 1, R('Inconsistent property names', field)
                 keys = one(key_sets)
@@ -283,39 +365,126 @@ def parse_filters(raw_filters: str | None) -> FiltersJSON:
                 value_types_by_key = defaultdict(set)
                 for value in values:
                     for k, v in value.items():
-                        assert type(v) in _dict_filter_value_types, R('Invalid property value', field)
                         if v is not None:
                             value_types_by_key[k].add(type(v))
                 num_value_types = set(map(len, value_types_by_key.values()))
                 assert num_value_types == {1}, R('Inconsistent property values', field)
-                # Sort each value dictionary in place by key (and value, but key
-                # is already unique). This makes sorting the values and checking
-                # their uniqueness easier.
-                for value in values:
-                    sorted_value = dict(sorted(value.items()))
-                    value.clear()
-                    value.update(sorted_value)
-                unique_values = set(map(tuple, map(dict.items, values)))
+                unique_values = set(map(frozenset, map(dict.items, values)))
                 assert len(unique_values) == len(values), R('Duplicate objects', field)
             else:
-                assert False, R('Invalid value', field)
-
-            def key(v):
-                if v is None:
-                    return False, v
-                elif type(v) is dict:
-                    # The entries in the dict are alteady sorted by key, the
-                    # values are primitive so we just need to handle None values
-                    # and "freeze" the iterable of entries.
-                    return True, tuple((k, key(v)) for k, v in v.items())
+                assert len(set(values)) == len(values), R('Duplicate values', field)
+        elif operator in {'within', 'intersects', 'contains'}:
+            range_filters = WithinFilterJSON | IntersectsFilterJSON | ContainsFilterJSON
+            assert check_type(range_filters, filter), R('Invalid filter values', field)
+            expected_lengths = (1, 2) if operator == 'contains' else (1,)
+            assert len(value_types) in expected_lengths, field
+            ranges, primitives = set(), set()
+            for value in values:
+                if isinstance(value, list):
+                    assert len(value) == 2, R('Range must be list of length 2', field)
+                    assert value[0] <= value[1], R('Range is inverted', field)
+                    ranges.add(tuple(value))
                 else:
-                    return True, v
+                    assert operator == 'contains'
+                    primitives.add(value)
+            assert len(ranges) + len(primitives) == len(values), R('Duplicate values', field)
+        else:
+            assert False, R('Invalid operator', field, operator)
 
-            values.sort(key=key)
+    assert is_filters_json(filters)
+    return filters
 
-        filters = {k: v for k, v in sorted(filters.items())}
 
-        return cast(FiltersJSON, filters)
+def normalize_filters(filters: FiltersJSON) -> FiltersJSON:
+    """
+    >>> from azul.functions import compose
+    >>> validate_and_normalize = compose(normalize_filters, validate_filters)
+
+    >>> validate_and_normalize({'x': {'intersects': [[3, 4], [1, 2], [1, 1]]}})
+    {'x': {'intersects': [[1, 1], [1, 2], [3, 4]]}}
+
+    The is_not operator behaves like is with respect to sorting and validation.
+
+    >>> validate_and_normalize({'x': {'is_not': [3, 1, None, 2]}})
+    {'x': {'is_not': [None, 1, 2, 3]}}
+
+    Contains supports scalars, ranges, or a mix of both, all sorted.
+
+    >>> validate_and_normalize({'x': {'contains': [3, 1, 2]}})
+    {'x': {'contains': [1, 2, 3]}}
+
+    >>> validate_and_normalize({'x': {'contains': [[3, 4], [1, 2]]}})
+    {'x': {'contains': [[1, 2], [3, 4]]}}
+
+    >>> validate_and_normalize({'x': {'contains': [3, [3, 4], 1, [1, 2]]}})
+    {'x': {'contains': [1, [1, 2], 3, [3, 4]]}}
+
+    >>> validate_and_normalize({'x': {'is': [None]}})
+    {'x': {'is': [None]}}
+
+    Values are sorted.
+
+    >>> validate_and_normalize({'x': {'is': [2, 1, None]}})
+    {'x': {'is': [None, 1, 2]}}
+
+    The entries in value dictionaries are sorted by key.
+
+    >>> validate_and_normalize({'x': {'is': [{'b': 2, 'a': 1}]}})
+    {'x': {'is': [{'a': 1, 'b': 2}]}}
+
+    Value dictionaries are sorted by their values, in order of the key. If two
+    dictionaries have equal values at the first key, the value at the second key
+    is used as a tie breaker and so on.
+
+    >>> validate_and_normalize({'x': {'is': [
+    ...     {'b': 2, 'a': 1},
+    ...     {'a': 0, 'b': 3},
+    ...     {'b': None, 'a': 1}
+    ... ]}})
+    {'x': {'is': [{'a': 0, 'b': 3}, {'a': 1, 'b': None}, {'a': 1, 'b': 2}]}}
+
+    Ranges are sorted by start and end value.
+
+    >>> validate_and_normalize({'x': {'within': [[3, 4], [1, 2], [1, 1]]}})
+    {'x': {'within': [[1, 1], [1, 2], [3, 4]]}}
+
+    Overall, filters are sorted by field name.
+
+    >>> validate_and_normalize({'y': {'within': [[1, 2]]}, 'x': {'is': [4, 3]}})
+    {'x': {'is': [3, 4]}, 'y': {'within': [[1, 2]]}}
+
+    >>> validate_and_normalize({'x': {'intersects': [['a', 'b'], ['', ' ']]}})
+    {'x': {'intersects': [['', ' '], ['a', 'b']]}}
+
+    >>> validate_and_normalize({'x': {'contains': [['', ''], '']}})
+    {'x': {'contains': ['', ['', '']]}}
+    """
+
+    def key(v):
+        if v is None:
+            return ()
+        elif type(v) is dict:
+            # The values are primitive so we just need to handle None values
+            # and "freeze" the iterable of entries.
+            return tuple((k, key(v)) for k, v in sorted(v.items()))
+        elif type(v) is list:
+            return tuple(v)
+        else:
+            return v,
+
+    def sort_value(v):
+        return dict(sorted(v.items())) if isinstance(v, Mapping) else v
+
+    filters_: _FilterJSON = {
+        field: {
+            operator: sorted(map(sort_value, values), key=key)
+            for operator, values in filter.items()
+        }
+        for field, filter in sorted(_upcast_filters(filters).items())
+    }
+
+    assert is_filters_json(filters_)
+    return filters_
 
 
 @attr.s(auto_attribs=True, kw_only=True, frozen=True)
@@ -324,19 +493,20 @@ class Filters:
     source_ids: set[str]
 
     @classmethod
-    def from_json(cls, json: JSON) -> Self:
+    def from_json(cls, json: AnyJSON) -> Self:
         """
         Deserialize an instance of this class without reifying it.
         """
-        return cls(explicit=json['explicit'],
-                   source_ids=set(json['source_ids']))
+        json = json_mapping(json)
+        return cls(explicit=validate_filters(json['explicit']),
+                   source_ids=set(json_element_strings(json['source_ids'])))
 
     def to_json(self) -> JSON:
         """
         The inverse of :py:meth:`from_json`.
         """
         return {
-            'explicit': self.explicit,
+            'explicit': _upcast_filters(self.explicit),
             'source_ids': sorted(self.source_ids)
         }
 
@@ -358,10 +528,10 @@ class Filters:
         :param limit_access: Whether to enforce data access controls by
                              inserting an implicit filter on the source ID facet
         """
-        filters = copy_json(self.explicit)
+        filters = copy.copy(_upcast_filters_unsafe(self.explicit))
         special_fields = plugin.special_fields
 
-        def extract_filter(field: str, *, default: set | None) -> set | None:
+        def extract_filter[T](field: str, *, default: set | T) -> set | T:
             filter = filters.pop(field, {})
             # Other operators are not supported on string or boolean fields
             assert filter.keys() <= {'is'}, filter
@@ -372,11 +542,12 @@ class Filters:
             else:
                 return set(values)
 
-        explicit_sources = extract_filter(special_fields.source_id.name,
-                                          default=None)
-        accessible = extract_filter(special_fields.accessible.name,
-                                    default={False, True})
-        source_relation = 'is'
+        source_id_name = special_fields.source_id.name
+        explicit_sources = extract_filter(source_id_name, default=None)
+        accessible_name = special_fields.accessible.name
+        accessible = extract_filter(accessible_name, default={False, True})
+        source_operator = 'is'
+        sources: set | list | None
 
         if limit_access:
             if explicit_sources is None:
@@ -401,7 +572,7 @@ class Filters:
             elif accessible == {False}:
                 if explicit_sources is None:
                     sources = self.source_ids
-                    source_relation = 'is_not'
+                    source_operator = 'is_not'
                 else:
                     sources = explicit_sources - self.source_ids
             else:
@@ -410,11 +581,12 @@ class Filters:
         if sources is None:
             assert limit_access is False, limit_access
         else:
-            filters[special_fields.source_id.name] = {source_relation: sorted(sources)}
+            filters[source_id_name] = {source_operator: sorted(sources)}
 
         if limit_access:
-            assert set(filters[special_fields.source_id.name]['is']) <= self.source_ids
+            assert set(filters[source_id_name]['is']) <= self.source_ids
 
+        assert is_filters_json(filters)
         return filters
 
 

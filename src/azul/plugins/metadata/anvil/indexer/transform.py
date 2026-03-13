@@ -6,6 +6,10 @@ from collections import (
     ChainMap,
     defaultdict,
 )
+from collections.abc import (
+    Collection,
+    Set,
+)
 from functools import (
     cached_property,
     partial,
@@ -18,9 +22,7 @@ from operator import (
     attrgetter,
 )
 from typing import (
-    AbstractSet,
     Callable,
-    Collection,
     Iterable,
     Iterator,
     Self,
@@ -418,7 +420,7 @@ class BaseTransformer(Transformer, metaclass=ABCMeta):
             return one(o for o in self.bundle.orphans if o.entity_type == 'anvil_dataset')
 
     @cached_property
-    def _activity_polymorphic_types(self) -> AbstractSet[str]:
+    def _activity_polymorphic_types(self) -> Set[str]:
         from azul.plugins.metadata.anvil import (
             anvil_schema,
         )
@@ -468,7 +470,7 @@ class BaseTransformer(Transformer, metaclass=ABCMeta):
 
     @classmethod
     @cache
-    def _complete_dataset_keys(cls) -> AbstractSet[str]:
+    def _complete_dataset_keys(cls) -> Set[str]:
         field_types = cls.field_types()['datasets']
         assert isinstance(field_types, dict), field_types
         return field_types.keys()

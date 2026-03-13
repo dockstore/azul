@@ -22,10 +22,10 @@ from unittest.mock import (
     patch,
 )
 import uuid
-
-from deprecated import (
+from warnings import (
     deprecated,
 )
+
 from more_itertools import (
     flatten,
     one,
@@ -62,9 +62,6 @@ from azul.indexer.document import (
 from azul.logging import (
     configure_test_logging,
     get_test_logger,
-)
-from azul.plugins import (
-    MetadataPlugin,
 )
 from azul.service.source_service import (
     NotFound,
@@ -136,16 +133,6 @@ class WebServiceTestCase(IndexerTestCase, LocalAppTestCase, metaclass=ABCMeta):
             'catalog': self.catalog,
             **params
         }
-
-    @property
-    def _metadata_plugin(self) -> MetadataPlugin:
-        """
-        Returns the app's plugin instance for the default catalog, which is
-        assumed to have been patched adequately to match the test requirements.
-        """
-        plugin = self._app.metadata_plugin
-        assert isinstance(plugin, MetadataPlugin)
-        return plugin
 
 
 class DocumentCloningTestCase(WebServiceTestCase, metaclass=ABCMeta):
@@ -265,6 +252,9 @@ class MirrorTestCase(S3TestCase):
         self._create_test_bucket(self.mirror_bucket)
 
 
+# FIXME: Remove deprecation, convert doctests, prevent use as decorator
+#        https://github.com/DataBiosphere/azul/issues/7838
+#
 @deprecated('Instead of decorating your test case, or its test methods in it, '
             'mix in the appropriate subclass of CatalogTestCase.')
 def patch_source_cache(target: Union[None, type, Callable] = None,
