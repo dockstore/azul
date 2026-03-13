@@ -873,7 +873,23 @@ class IndexingIntegrationTest(IntegrationTestCase):
             outer_file, inner_file = self._get_one_file(catalog)
             source = self._source_spec(catalog, outer_file)
             self._test_dos(catalog, inner_file)
-            self._test_drs(catalog, source, inner_file)
+            repository_plugin = self.azul_client.repository_plugin(catalog)
+            file_uuid = lookup(inner_file, 'document_id', 'uuid')
+            drs_uri = f'drs://{config.api_lambda_domain("service")}/{file_uuid}'
+            drs_object = repository_plugin.drs_object(drs_uri)
+            for access_method in AccessMethod:
+                with self.subTest('drs', catalog=catalog, access_method=AccessMethod.https):
+                    log.info('Resolving file %r with DRS using %r', file_uuid, access_method)
+                    access = drs_object.get(access_method)
+                    self.assertIsNone(access.headers)
+                    if access.method is AccessMethod.https:
+                        response = self._get_url(GET, furl(access.url), stream=True)
+                        self._validate_file_response(response, source, inner_file)
+                    elif access.method is AccessMethod.gs:
+                        content = self._get_gs_url_content(furl(access.url), size=self.num_fastq_bytes)
+                        self._validate_file_content(content, inner_file)
+                    else:
+                        self.fail(access_method)
 
     @property
     def _service_account_credentials(self) -> ContextManager:
@@ -1238,29 +1254,6 @@ class IndexingIntegrationTest(IntegrationTestCase):
                 self._validate_file_content(response, file)
         finally:
             response.close()
-
-    def _test_drs(self,
-                  catalog: CatalogName,
-                  source: SourceSpec,
-                  file: JSON
-                  ) -> None:
-        repository_plugin = self.azul_client.repository_plugin(catalog)
-        file_uuid = lookup(file, 'document_id', 'uuid')
-        drs_uri = f'drs://{config.api_lambda_domain("service")}/{file_uuid}'
-        drs_object = repository_plugin.drs_object(drs_uri)
-        for access_method in AccessMethod:
-            with self.subTest('drs', catalog=catalog, access_method=AccessMethod.https):
-                log.info('Resolving file %r with DRS using %r', file_uuid, access_method)
-                access = drs_object.get(access_method)
-                self.assertIsNone(access.headers)
-                if access.method is AccessMethod.https:
-                    response = self._get_url(GET, furl(access.url), stream=True)
-                    self._validate_file_response(response, source, file)
-                elif access.method is AccessMethod.gs:
-                    content = self._get_gs_url_content(furl(access.url), size=self.num_fastq_bytes)
-                    self._validate_file_content(content, file)
-                else:
-                    self.fail(access_method)
 
     def _test_dos(self, catalog: CatalogName, file: JSON):
         with self.subTest('dos', catalog=catalog):
