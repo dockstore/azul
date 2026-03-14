@@ -83,6 +83,9 @@ from azul.json import (
 from azul.lib.collections import (
     NestedDict,
 )
+from azul.lib.threads import (
+    Latch,
+)
 from azul.logging import (
     configure_test_logging,
     get_test_logger,
@@ -98,9 +101,6 @@ from azul.plugins.repository.dss import (
     DSSBundle,
     DSSBundleFQID,
     DSSSourceRef,
-)
-from azul.threads import (
-    Latch,
 )
 from azul.types import (
     JSON,

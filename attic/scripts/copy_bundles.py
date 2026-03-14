@@ -39,7 +39,7 @@ import azul.dss
 from azul.logging import (
     configure_script_logging,
 )
-from azul.threads import (
+from azul.lib.threads import (
     DeferredTaskExecutor,
 )
 from azul.types import (
