@@ -1028,6 +1028,16 @@ class Chalice:
             assert resource_type not in resources, resources
             resources[resource_type] = runtime_version_configs
 
+        resource_type = 'aws_lambda_function_recursion_config'
+        recursion_configs: MutableJSON = {}
+        for resource_name, resource in resource_items('aws_lambda_function'):
+            recursion_configs[resource_name] = {
+                'function_name': '${aws_lambda_function.%s.function_name}' % resource_name,
+                'recursive_loop': 'Allow'
+            }
+        assert resource_type not in resources, resources
+        resources[resource_type] = recursion_configs
+
         return {
             'resource': resources,
             'data': data,
