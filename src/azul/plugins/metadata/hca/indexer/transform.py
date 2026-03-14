@@ -80,14 +80,14 @@ from azul.indexer.transform import (
     ReplicaTransformer,
     Transformer,
 )
-from azul.iterators import (
-    generable,
-)
 from azul.lib.collections import (
     OrderedSet,
 )
 from azul.lib.enums import (
     auto,
+)
+from azul.lib.iterators import (
+    generable,
 )
 from azul.openapi import (
     schema,
