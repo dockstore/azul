@@ -45,9 +45,6 @@ from azul import (
     cached_property,
     config,
 )
-from azul.enums import (
-    auto,
-)
 from azul.indexer import (
     BundleFQID,
     BundlePartition,
@@ -88,6 +85,9 @@ from azul.iterators import (
 )
 from azul.lib.collections import (
     OrderedSet,
+)
+from azul.lib.enums import (
+    auto,
 )
 from azul.openapi import (
     schema,

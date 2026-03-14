@@ -26,9 +26,6 @@ from azul import (
     R,
     config,
 )
-from azul.enums import (
-    auto,
-)
 from azul.indexer import (
     BundleFQID,
     SourceRef,
@@ -45,6 +42,9 @@ from azul.indexer.field import (
 )
 from azul.json import (
     Parseable,
+)
+from azul.lib.enums import (
+    auto,
 )
 from azul.types import (
     AnyJSON,

@@ -57,14 +57,14 @@ from azul.auth import (
 from azul.csp import (
     CSP,
 )
-from azul.enums import (
-    auto,
-)
 from azul.json import (
     copy_json,
 )
 from azul.lib.collections import (
     deep_dict_merge,
+)
+from azul.lib.enums import (
+    auto,
 )
 from azul.logging import (
     http_body_log_message,

@@ -2,7 +2,7 @@ from enum import (
     Enum,
 )
 
-from azul.enums import (
+from azul.lib.enums import (
     auto,
 )
 
