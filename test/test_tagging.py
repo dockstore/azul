@@ -7,7 +7,7 @@ from azul.terraform import (
 from azul.types import (
     JSON,
 )
-from test.azul_test_case import (
+from azul_test_case import (
     AzulUnitTestCase,
     patch_config,
 )
