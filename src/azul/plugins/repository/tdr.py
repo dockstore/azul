@@ -46,6 +46,10 @@ from azul.lib.bigquery import (
 from azul.lib.strings import (
     longest_common_prefix,
 )
+from azul.lib.time import (
+    format_dcp2_datetime,
+    parse_dcp2_version,
+)
 from azul.plugins import (
     RepositoryFileDownload,
     RepositoryPlugin,
@@ -54,10 +58,6 @@ from azul.terra import (
     TDRClient,
     TDRSourceRef,
     TDRSourceSpec,
-)
-from azul.time import (
-    format_dcp2_datetime,
-    parse_dcp2_version,
 )
 from azul.types import (
     JSON,

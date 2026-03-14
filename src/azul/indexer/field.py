@@ -34,12 +34,12 @@ from azul import (
     CatalogName,
     cached_property,
 )
-from azul.openapi import (
-    schema,
-)
-from azul.time import (
+from azul.lib.time import (
     format_dcp2_datetime,
     parse_dcp2_datetime,
+)
+from azul.openapi import (
+    schema,
 )
 from azul.types import (
     AnyJSON,

@@ -89,6 +89,10 @@ from azul.lib.enums import (
 from azul.lib.iterators import (
     generable,
 )
+from azul.lib.time import (
+    format_dcp2_datetime,
+    parse_dcp2_version,
+)
 from azul.openapi import (
     schema,
 )
@@ -112,10 +116,6 @@ from azul.plugins.metadata.hca.indexer.aggregate import (
 )
 from azul.plugins.metadata.hca.service.contributor_matrices import (
     parse_strata,
-)
-from azul.time import (
-    format_dcp2_datetime,
-    parse_dcp2_version,
 )
 from azul.types import (
     JSON,

@@ -41,15 +41,15 @@ from azul.indexer import (
 from azul.lib.collections import (
     adict,
 )
+from azul.lib.time import (
+    parse_dcp2_version,
+)
 from azul.plugins import (
     RepositoryFileDownload,
     RepositoryPlugin,
 )
 from azul.plugins.metadata.hca.bundle import (
     HCABundle,
-)
-from azul.time import (
-    parse_dcp2_version,
 )
 from azul.types import (
     JSON,
