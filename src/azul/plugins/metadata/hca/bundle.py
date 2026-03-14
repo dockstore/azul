@@ -5,12 +5,12 @@ import logging
 
 import attrs
 
-from azul.attrs import (
-    serializable,
-)
 from azul.indexer import (
     Bundle,
     SourcedBundleFQID,
+)
+from azul.lib.attrs import (
+    serializable,
 )
 from azul.types import (
     MutableJSON,

@@ -39,11 +39,6 @@ from azul import (
     json_mapping,
     mutable_furl,
 )
-from azul.attrs import (
-    SerializableAttrs,
-    devolve,
-    serializable,
-)
 from azul.auth import (
     Authentication,
 )
@@ -69,6 +64,11 @@ from azul.indexer import (
     SourceConfig,
     SourceRef,
     SourceSpec,
+)
+from azul.lib.attrs import (
+    SerializableAttrs,
+    devolve,
+    serializable,
 )
 from azul.plugins import (
     File,

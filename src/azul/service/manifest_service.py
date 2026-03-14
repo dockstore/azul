@@ -85,13 +85,6 @@ from azul import (
     config,
     mutable_furl,
 )
-from azul.attrs import (
-    SerializableAttrs,
-    is_uuid,
-    serializable,
-    serializable_uuid,
-    strict_auto,
-)
 from azul.auth import (
     Authentication,
 )
@@ -128,6 +121,13 @@ from azul.indexer.mirror_service import (
 )
 from azul.json import (
     copy_json,
+)
+from azul.lib.attrs import (
+    SerializableAttrs,
+    is_uuid,
+    serializable,
+    serializable_uuid,
+    strict_auto,
 )
 from azul.plugins import (
     ColumnMapping,

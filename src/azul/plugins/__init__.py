@@ -33,9 +33,6 @@ from azul import (
     cached_property,
     config,
 )
-from azul.attrs import (
-    DiscriminatingPolymorphicSerializableAttrs,
-)
 from azul.chalice import (
     Authentication,
 )
@@ -73,6 +70,9 @@ from azul.indexer.transform import (
 from azul.json import (
     DynamicPolymorphicSerializable,
     SerializableEnum,
+)
+from azul.lib.attrs import (
+    DiscriminatingPolymorphicSerializableAttrs,
 )
 from azul.types import (
     AnyJSON,

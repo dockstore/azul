@@ -2,7 +2,6 @@ import doctest
 import unittest
 
 import azul
-import azul.attrs
 import azul.auth
 import azul.bigquery
 import azul.bytes
@@ -24,6 +23,7 @@ import azul.indexer.repository_service
 import azul.iterators
 import azul.json
 import azul.json_freeze
+import azul.lib.attrs
 from azul.logging import (
     configure_test_logging,
 )
@@ -68,7 +68,6 @@ def load_tests(_loader,
     root = azul.config.project_root
     for module in [
         azul,
-        azul.attrs,
         azul.auth,
         azul.bigquery,
         azul.bytes,
@@ -90,6 +89,7 @@ def load_tests(_loader,
         azul.iterators,
         azul.json,
         azul.json_freeze,
+        azul.lib.attrs,
         azul.objects,
         azul.openapi,
         azul.openapi.params,

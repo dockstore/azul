@@ -46,10 +46,6 @@ from azul import (
     cached_property,
     config,
 )
-from azul.attrs import (
-    DiscriminatingPolymorphicSerializableAttrs,
-    SerializableAttrs,
-)
 from azul.deployment import (
     aws,
 )
@@ -61,6 +57,10 @@ from azul.json import (
 )
 from azul.lambdas import (
     LambdaFunctions,
+)
+from azul.lib.attrs import (
+    DiscriminatingPolymorphicSerializableAttrs,
+    SerializableAttrs,
 )
 from azul.modules import (
     load_app_module,

@@ -909,7 +909,7 @@ def polymorphic[T](field: T | None = None,
 
     >>> outer = AbstractOuter(InnerWithInt(42))
     >>> AbstractOuter.from_json(outer.to_json()).inner  # doctest: +ELLIPSIS
-    <azul.attrs.Inner object at ...>
+    <azul.lib.attrs.Inner object at ...>
     """
     return _set_field_metadata(field, 'discriminator', discriminator)
 

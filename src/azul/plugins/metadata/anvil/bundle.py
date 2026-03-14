@@ -14,10 +14,6 @@ from typing import (
 
 import attrs
 
-from azul.attrs import (
-    SerializableAttrs,
-    serializable,
-)
 from azul.collections import (
     aset,
     none_safe_apply,
@@ -29,6 +25,10 @@ from azul.indexer import (
 from azul.indexer.document import (
     EntityReference,
     EntityType,
+)
+from azul.lib.attrs import (
+    SerializableAttrs,
+    serializable,
 )
 from azul.types import (
     MutableJSON,
