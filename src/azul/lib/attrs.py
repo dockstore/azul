@@ -850,7 +850,7 @@ def polymorphic[T](field: T | None = None,
     ...     inner: Inner = polymorphic(discriminator='type')
     ...     inners: list[Inner] = polymorphic(discriminator='_cls')
 
-    >>> from azul.doctests import assert_json
+    >>> from azul.lib.doctests import assert_json
 
     >>> outer = Outer(inner=InnerWithInt(42),
     ...               inners=[InnerWithStr('foo'), InnerWithInt(7)])

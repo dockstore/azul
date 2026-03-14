@@ -56,7 +56,7 @@ class CSP:
         Parse the given CSP or raise AssertionError if it is not syntactically
         valid against the specification at https://www.w3.org/TR/CSP2.
 
-        >>> from azul.doctests import (
+        >>> from azul.lib.doctests import (
         ...     assert_json,
         ... )
 

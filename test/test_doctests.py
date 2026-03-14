@@ -5,7 +5,6 @@ import azul
 import azul.auth
 import azul.csp
 import azul.docker
-import azul.doctests
 import azul.drs
 import azul.dss
 import azul.http
@@ -18,6 +17,7 @@ import azul.lib.bigquery
 import azul.lib.bytes
 import azul.lib.caching
 import azul.lib.collections
+import azul.lib.doctests
 import azul.lib.exceptions
 import azul.lib.files
 import azul.lib.functions
@@ -70,7 +70,6 @@ def load_tests(_loader,
         azul,
         azul.auth,
         azul.csp,
-        azul.doctests,
         azul.docker,
         azul.drs,
         azul.dss,
@@ -84,6 +83,7 @@ def load_tests(_loader,
         azul.lib.bytes,
         azul.lib.caching,
         azul.lib.collections,
+        azul.lib.doctests,
         azul.lib.exceptions,
         azul.lib.files,
         azul.lib.functions,

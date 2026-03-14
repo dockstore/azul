@@ -26,7 +26,7 @@ def header(form: Form, **kwargs: PrimitiveJSON) -> JSON:
     """
     Returns the schema and description for a response header.
 
-    >>> from azul.doctests import assert_json
+    >>> from azul.lib.doctests import assert_json
     >>> assert_json(header(float, description='futz'))
     {
         "schema": {

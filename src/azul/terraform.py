@@ -289,7 +289,7 @@ def _tags(resource_type: str, resource_name: str, tags: JSON) -> JSON:
 
     :param tags: Additional tags that override the defaults
 
-    >>> from azul.doctests import assert_json
+    >>> from azul.lib.doctests import assert_json
     >>> from test.azul_test_case import patch_config
 
     >>> with patch_config('terraform_component', 'foo'):
@@ -525,7 +525,7 @@ class Chalice:
         given Chalice-generated Terraform config. Definitions and references
         will be patched.
 
-        >>> from azul.doctests import assert_json
+        >>> from azul.lib.doctests import assert_json
 
         >>> assert_json(chalice.patch_resource_names('indexer', {
         ...     'locals': {

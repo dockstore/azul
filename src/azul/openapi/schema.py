@@ -66,7 +66,7 @@ def object(*,
            additionalProperties=None,  # noqa: N803
            **kwargs):
     """
-    >>> from azul.doctests import assert_json
+    >>> from azul.lib.doctests import assert_json
     >>> assert_json(object(x=int, y=int, relative=optional(bool)))
     {
         "type": "object",
@@ -139,7 +139,7 @@ def array(item: Form, *items: Form, **kwargs) -> JSON:
     Same as `array_type` but calls `property_type` for each positional argument,
     allowing for a more concise syntax.
 
-    >>> from azul.doctests import assert_json
+    >>> from azul.lib.doctests import assert_json
     >>> assert_json(array(str, bool, additionalItems=True))
     {
         "type": "array",
@@ -164,7 +164,7 @@ def enum(*items: PrimitiveJSON, form: Form = None) -> JSON:
     However, the current implementation cannot detect some cases in which the
     types of the enum values contradict the explicit type.
 
-    >>> from azul.doctests import assert_json
+    >>> from azul.lib.doctests import assert_json
     >>> assert_json(enum('foo', 'bar', form=str))
     {
         "type": "string",
@@ -242,7 +242,7 @@ def pattern(regex: str | re.Pattern, _type: Form = str) -> JSON:
                   that as of version 7.0 of JSON Schema, the `pattern` property
                   can only be used in conjunction with the `string` type.
 
-    >>> from azul.doctests import assert_json
+    >>> from azul.lib.doctests import assert_json
 
     >>> assert_json(pattern(r'[a-z]+'))
     {
@@ -278,7 +278,7 @@ def default(default: PrimitiveJSON, /, form: Form = None) -> JSON:
     """
     Add a documented default value to the type schema.
 
-    >>> from azul.doctests import assert_json
+    >>> from azul.lib.doctests import assert_json
 
     >>> assert_json(default('foo'))
     {
@@ -304,7 +304,7 @@ def range[N: int | float](minimum: N | None,
                           form: Form = None
                           ) -> JSON:
     """
-    >>> from azul.doctests import assert_json
+    >>> from azul.lib.doctests import assert_json
 
     >>> assert_json(range(1, 2))
     {
@@ -382,7 +382,7 @@ def array_type(item: JSON, *items: JSON, **kwargs) -> JSON:
 
     Not very useful by itself. You will likely want to use `array` instead.
 
-    >>> from azul.doctests import assert_json
+    >>> from azul.lib.doctests import assert_json
     >>> assert_json(array_type({'type': 'string'}, {'type': 'boolean'}, additionalItems=True))
     {
         "type": "array",

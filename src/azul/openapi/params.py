@@ -16,7 +16,7 @@ def path(name: str, form: Form, **kwargs: PrimitiveJSON) -> JSON:
     Returns an OpenAPI `parameters` specification of a URL path parameter.
     Note that path parameters cannot be optional.
 
-    >>> from azul.doctests import assert_json
+    >>> from azul.lib.doctests import assert_json
     >>> assert_json(path('foo', int))
     {
         "name": "foo",
@@ -38,7 +38,7 @@ def query(name: str,
     """
     Returns an OpenAPI `parameters` specification of a URL query parameter.
 
-    >>> from azul.doctests import assert_json
+    >>> from azul.lib.doctests import assert_json
     >>> assert_json(query('foo', schema.optional(int)))
     {
         "name": "foo",
@@ -60,7 +60,7 @@ def header(name: str,
     """
     Returns an OpenAPI `parameters` specification of a request header.
 
-    >>> from azul.doctests import assert_json
+    >>> from azul.lib.doctests import assert_json
     >>> assert_json(header('X-foo', schema.optional(int)))
     {
         "name": "X-foo",
