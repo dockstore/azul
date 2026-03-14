@@ -12,6 +12,7 @@ gitpython==3.1.46
 google-api-python-client==2.192.0
 google-cloud-bigquery-reservation==1.22.0
 google-cloud-storage==3.9.0
+isort==8.0.1
 jq==1.11.0
 msgpack-types==0.7.0  # versioned independently from the corresponding runtime dependency but when updating one, the other should be updated, too
 moto[s3,sqs,sns,dynamodb,iam]==5.1.21  # match the extras with the backends listed in AzulUnitTestCase._reset_moto
