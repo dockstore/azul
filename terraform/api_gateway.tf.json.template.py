@@ -21,11 +21,11 @@ from azul.deployment import (
     aws,
     public_ip,
 )
+from azul.lib.objects import (
+    InternMeta,
+)
 from azul.modules import (
     load_app_module,
-)
-from azul.objects import (
-    InternMeta,
 )
 from azul.terraform import (
     chalice,

@@ -24,6 +24,7 @@ import azul.lib.collections
 import azul.lib.exceptions
 import azul.lib.functions
 import azul.lib.iterators
+import azul.lib.objects
 import azul.lib.strings
 import azul.lib.threads
 import azul.lib.time
@@ -34,7 +35,6 @@ from azul.modules import (
     load_module,
     load_script,
 )
-import azul.objects
 import azul.openapi
 import azul.openapi.params
 import azul.openapi.responses
@@ -90,10 +90,10 @@ def load_tests(_loader,
         azul.lib.exceptions,
         azul.lib.functions,
         azul.lib.iterators,
+        azul.lib.objects,
         azul.lib.strings,
         azul.lib.threads,
         azul.lib.time,
-        azul.objects,
         azul.openapi,
         azul.openapi.params,
         azul.openapi.responses,
