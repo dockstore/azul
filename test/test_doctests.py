@@ -10,7 +10,6 @@ import azul.drs
 import azul.dss
 import azul.exceptions
 import azul.files
-import azul.functions
 import azul.http
 import azul.indexer
 import azul.indexer.aggregate
@@ -23,6 +22,7 @@ import azul.lib.bigquery
 import azul.lib.bytes
 import azul.lib.caching
 import azul.lib.collections
+import azul.lib.functions
 import azul.lib.iterators
 from azul.logging import (
     configure_test_logging,
@@ -76,7 +76,6 @@ def load_tests(_loader,
         azul.dss,
         azul.exceptions,
         azul.files,
-        azul.functions,
         azul.http,
         azul.indexer,
         azul.indexer.aggregate,
@@ -89,6 +88,7 @@ def load_tests(_loader,
         azul.lib.bytes,
         azul.lib.caching,
         azul.lib.collections,
+        azul.lib.functions,
         azul.lib.iterators,
         azul.objects,
         azul.openapi,

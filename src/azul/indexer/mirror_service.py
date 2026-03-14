@@ -54,9 +54,6 @@ from azul.digests import (
 from azul.drs import (
     AccessMethod,
 )
-from azul.functions import (
-    compose,
-)
 from azul.http import (
     HasCachedHttpClient,
 )
@@ -69,6 +66,9 @@ from azul.lib.attrs import (
     SerializableAttrs,
     devolve,
     serializable,
+)
+from azul.lib.functions import (
+    compose,
 )
 from azul.plugins import (
     File,

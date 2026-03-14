@@ -91,9 +91,6 @@ from azul.auth import (
 from azul.deployment import (
     aws,
 )
-from azul.functions import (
-    compose,
-)
 from azul.indexer import (
     Prefix,
     SourceRef,
@@ -128,6 +125,9 @@ from azul.lib.bytes import (
 )
 from azul.lib.collections import (
     getitem,
+)
+from azul.lib.functions import (
+    compose,
 )
 from azul.plugins import (
     ColumnMapping,

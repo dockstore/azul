@@ -41,12 +41,12 @@ from azul import (
     cached_property,
     config,
 )
-from azul.functions import (
-    compose,
-)
 from azul.json import (
     PolymorphicSerializable,
     Serializable,
+)
+from azul.lib.functions import (
+    compose,
 )
 from azul.types import (
     AnyJSON,

@@ -462,7 +462,7 @@ def validate_filters(filters: AnyJSON) -> FiltersJSON:
 
 def normalize_filters(filters: FiltersJSON) -> FiltersJSON:
     """
-    >>> from azul.functions import compose
+    >>> from azul.lib.functions import compose
     >>> validate_and_normalize = compose(normalize_filters, validate_filters)
 
     >>> validate_and_normalize({'x': {'intersects': [[3, 4], [1, 2], [1, 1]]}})
