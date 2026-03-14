@@ -47,6 +47,11 @@ from azul.drs import (
     drs_object_uri,
     drs_object_url_path,
 )
+from azul.lib.types import (
+    JSON,
+    MutableJSON,
+    not_none,
+)
 from azul.openapi import (
     format_description as fd,
     params,
@@ -62,11 +67,6 @@ from azul.service.controller import (
 )
 from azul.service.index_service import (
     IndexService,
-)
-from azul.types import (
-    JSON,
-    MutableJSON,
-    not_none,
 )
 
 

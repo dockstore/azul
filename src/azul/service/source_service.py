@@ -26,14 +26,14 @@ from azul.deployment import (
 from azul.indexer import (
     SourceRef,
 )
-from azul.plugins import (
-    RepositoryPlugin,
-)
-from azul.types import (
+from azul.lib.types import (
     AnyJSON,
     JSON,
     json_element_strings,
     json_item_sequences,
+)
+from azul.plugins import (
+    RepositoryPlugin,
 )
 
 log = logging.getLogger(__name__)

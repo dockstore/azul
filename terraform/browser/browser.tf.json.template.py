@@ -35,14 +35,14 @@ from azul.lib.strings import (
     join_words as jw,
     single_quote as sq,
 )
+from azul.lib.types import (
+    JSON,
+)
 from azul.terraform import (
     block_public_s3_bucket_access,
     emit_tf,
     enable_s3_bucket_inventory,
     set_empty_s3_bucket_lifecycle_config,
-)
-from azul.types import (
-    JSON,
 )
 
 sites = config.browser_sites

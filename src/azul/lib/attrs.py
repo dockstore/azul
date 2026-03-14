@@ -48,7 +48,7 @@ from azul.lib.json import (
     PolymorphicSerializable,
     Serializable,
 )
-from azul.types import (
+from azul.lib.types import (
     AnyJSON,
     CompositeJSON,
     JSON,
@@ -82,7 +82,7 @@ def as_annotated():
     type. Has some limited magic for parameterized types such as typing.Union
     and typing.Optional.
 
-    >>> from azul.types import AnyJSON
+    >>> from azul.lib.types import AnyJSON
     >>> @attrs.define
     ... class Foo:
     ...     x: Optional[bool] = strict_auto()

@@ -12,15 +12,15 @@ from azul.chalice import (
 from azul.lib.json import (
     copy_json,
 )
+from azul.lib.types import (
+    JSON,
+)
 from azul.logging import (
     configure_test_logging,
 )
 from azul.openapi import (
     params,
     schema,
-)
-from azul.types import (
-    JSON,
 )
 from azul_test_case import (
     AzulUnitTestCase,

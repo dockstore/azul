@@ -21,11 +21,11 @@ from azul.http import (
     LimitedTimeoutException,
     TooManyRequestsException,
 )
+from azul.lib.types import (
+    JSONs,
+)
 from azul.service.source_service import (
     SourceService,
-)
-from azul.types import (
-    JSONs,
 )
 
 log = logging.getLogger(__name__)

@@ -55,10 +55,7 @@ import azul.lib.caching
 from azul.lib.collections import (
     atuple,
 )
-from azul.openapi import (
-    format_description,
-)
-from azul.types import (
+from azul.lib.types import (
     JSON,
     MutableJSON,
     json_bool,
@@ -66,6 +63,9 @@ from azul.types import (
     json_mapping,
     json_str,
     optional,
+)
+from azul.openapi import (
+    format_description,
 )
 from azul.vendored.frozendict import (
     frozendict,

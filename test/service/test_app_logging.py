@@ -20,11 +20,11 @@ from azul.chalice import (
     AzulChaliceApp,
     log,
 )
+from azul.lib.types import (
+    JSON,
+)
 from azul.logging import (
     configure_test_logging,
-)
-from azul.types import (
-    JSON,
 )
 from indexer import (
     DCP1CannedBundleTestCase,

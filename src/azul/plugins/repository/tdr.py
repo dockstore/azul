@@ -50,6 +50,9 @@ from azul.lib.time import (
     format_dcp2_datetime,
     parse_dcp2_version,
 )
+from azul.lib.types import (
+    JSON,
+)
 from azul.plugins import (
     RepositoryFileDownload,
     RepositoryPlugin,
@@ -58,9 +61,6 @@ from azul.terra import (
     TDRClient,
     TDRSourceRef,
     TDRSourceSpec,
-)
-from azul.types import (
-    JSON,
 )
 
 log = logging.getLogger(__name__)

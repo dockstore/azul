@@ -40,7 +40,7 @@ from azul.lib.collections import (
     none_safe_key,
     none_safe_tuple_key,
 )
-from azul.types import (
+from azul.lib.types import (
     JSON,
     json_element_mappings,
     json_int,

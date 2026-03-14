@@ -26,7 +26,7 @@ from azul.indexer.log_forwarding_controller import (
 from azul.lib.strings import (
     double_quote as dq,
 )
-from azul.types import (
+from azul.lib.types import (
     JSONs,
 )
 from service import (

@@ -132,6 +132,26 @@ from azul.lib.json import (
 from azul.lib.strings import (
     double_quote as dq,
 )
+from azul.lib.types import (
+    FlatJSON,
+    JSON,
+    JSONs,
+    MutableJSON,
+    json_dict,
+    json_element_dicts,
+    json_element_mappings,
+    json_element_strings,
+    json_elements_are_mappings,
+    json_list_of_dicts,
+    json_mapping,
+    json_sequence,
+    json_str,
+    not_none,
+    optional,
+)
+from azul.lib.uuids import (
+    uuid5_for_bytes,
+)
 from azul.plugins import (
     ColumnMapping,
     DocumentSlice,
@@ -165,26 +185,6 @@ from azul.service.query_service import (
 from azul.service.storage_service import (
     StorageObjectNotFound,
     StorageService,
-)
-from azul.types import (
-    FlatJSON,
-    JSON,
-    JSONs,
-    MutableJSON,
-    json_dict,
-    json_element_dicts,
-    json_element_mappings,
-    json_element_strings,
-    json_elements_are_mappings,
-    json_list_of_dicts,
-    json_mapping,
-    json_sequence,
-    json_str,
-    not_none,
-    optional,
-)
-from azul.uuids import (
-    uuid5_for_bytes,
 )
 from azul.vendored.frozendict import (
     frozendict,

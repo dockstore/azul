@@ -88,6 +88,13 @@ from azul.lib.json import (
 from azul.lib.strings import (
     single_quote as sq,
 )
+from azul.lib.types import (
+    JSON,
+    JSONs,
+    MutableCompositeJSON,
+    MutableJSON,
+    MutableJSONs,
+)
 from azul.logging import (
     configure_test_logging,
     get_test_logger,
@@ -125,13 +132,6 @@ from azul.service.manifest_service import (
 )
 from azul.service.storage_service import (
     StorageService,
-)
-from azul.types import (
-    JSON,
-    JSONs,
-    MutableCompositeJSON,
-    MutableJSON,
-    MutableJSONs,
 )
 from azul_test_case import (
     patch_config,

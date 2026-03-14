@@ -22,17 +22,7 @@ from azul.lib.json import (
     copy_any_json,
     copy_json,
 )
-from azul.plugins import (
-    SpecialFields,
-)
-from azul.service.index_service import (
-    SearchResponseStage,
-    SummaryResponseStage,
-)
-from azul.service.query_service import (
-    ResponseTriple,
-)
-from azul.types import (
+from azul.lib.types import (
     AnyMutableJSON,
     JSON,
     MutableJSON,
@@ -47,6 +37,16 @@ from azul.types import (
     json_str,
     json_untyped_dict,
     optional,
+)
+from azul.plugins import (
+    SpecialFields,
+)
+from azul.service.index_service import (
+    SearchResponseStage,
+    SummaryResponseStage,
+)
+from azul.service.query_service import (
+    ResponseTriple,
 )
 
 

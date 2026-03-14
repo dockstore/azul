@@ -21,7 +21,7 @@ from azul import (
     R,
     cached_property,
 )
-from azul.types import (
+from azul.lib.types import (
     JSON,
 )
 

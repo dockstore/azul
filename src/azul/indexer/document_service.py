@@ -34,14 +34,14 @@ from azul.indexer.transform import (
 from azul.lib.collections import (
     deep_dict_merge,
 )
-from azul.plugins import (
-    FieldPath,
-    MetadataPlugin,
-)
-from azul.types import (
+from azul.lib.types import (
     JSON,
     MutableJSON,
     json_dict,
+)
+from azul.plugins import (
+    FieldPath,
+    MetadataPlugin,
 )
 
 

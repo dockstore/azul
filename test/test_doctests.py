@@ -28,6 +28,8 @@ import azul.lib.objects
 import azul.lib.strings
 import azul.lib.threads
 import azul.lib.time
+import azul.lib.types
+import azul.lib.uuids
 from azul.logging import (
     configure_test_logging,
 )
@@ -50,8 +52,6 @@ import azul.service.manifest_service
 import azul.service.repository_controller
 import azul.terra
 import azul.terraform
-import azul.types
-import azul.uuids
 import azul.vendored.frozendict
 import service
 
@@ -94,6 +94,8 @@ def load_tests(_loader,
         azul.lib.strings,
         azul.lib.threads,
         azul.lib.time,
+        azul.lib.types,
+        azul.lib.uuids,
         azul.openapi,
         azul.openapi.params,
         azul.openapi.responses,
@@ -109,8 +111,6 @@ def load_tests(_loader,
         azul.service.repository_controller,
         azul.terra,
         azul.terraform,
-        azul.types,
-        azul.uuids,
         azul.vendored.frozendict,
         load_script('can_bundle'),
         load_script('envhook'),

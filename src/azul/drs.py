@@ -42,7 +42,7 @@ from azul.http import (
     LimitedRetryHttpClient,
     Propagate429HttpClient,
 )
-from azul.types import (
+from azul.lib.types import (
     MutableJSON,
     json_dict,
     json_list,

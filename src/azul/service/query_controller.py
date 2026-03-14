@@ -36,6 +36,10 @@ from azul.indexer.field import (
 from azul.lib.collections import (
     OrderedSet,
 )
+from azul.lib.types import (
+    JSON,
+    MutableJSON,
+)
 from azul.openapi import (
     application_json,
     format_description as fd,
@@ -50,10 +54,6 @@ from azul.service.controller import (
 )
 from azul.service.query_service import (
     QueryService,
-)
-from azul.types import (
-    JSON,
-    MutableJSON,
 )
 
 log = logging.getLogger(__name__)

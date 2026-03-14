@@ -62,13 +62,13 @@ from azul.lib.attrs import (
 from azul.lib.json import (
     StaticRegisteredPolymorphicSerializable,
 )
-from azul.modules import (
-    load_app_module,
-)
-from azul.types import (
+from azul.lib.types import (
     JSON,
     json_mapping,
     json_str,
+)
+from azul.modules import (
+    load_app_module,
 )
 
 log = logging.getLogger(__name__)

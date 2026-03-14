@@ -37,10 +37,7 @@ from azul.lib.json import (
     copy_any_json,
     copy_json,
 )
-from azul.template import (
-    emit,
-)
-from azul.types import (
+from azul.lib.types import (
     AnyMutableJSON,
     CompositeJSON,
     JSON,
@@ -54,6 +51,9 @@ from azul.types import (
     json_mapping,
     json_str,
     not_none,
+)
+from azul.template import (
+    emit,
 )
 
 log = logging.getLogger(__name__)

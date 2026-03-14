@@ -15,13 +15,13 @@ from azul import (
 from azul.chalice import (
     Controller,
 )
+from azul.lib.types import (
+    JSON,
+)
 from azul.openapi import (
     params,
     responses,
     schema,
-)
-from azul.types import (
-    JSON,
 )
 
 

@@ -1,13 +1,13 @@
+from azul.lib.types import (
+    JSON,
+    PrimitiveJSON,
+)
 from azul.openapi import (
     format_description_key,
     schema,
 )
 from azul.openapi.schema import (
     Form,
-)
-from azul.types import (
-    JSON,
-    PrimitiveJSON,
 )
 
 

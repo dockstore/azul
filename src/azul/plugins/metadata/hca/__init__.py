@@ -17,9 +17,6 @@ from azul import (
     iif,
     json_mapping,
 )
-from azul.digests import (
-    Digest,
-)
 from azul.drs import (
     HostBasedDRSURI,
 )
@@ -28,6 +25,19 @@ from azul.indexer.document import (
     DocumentType,
     EntityType,
     IndexName,
+)
+from azul.lib.digests import (
+    Digest,
+)
+from azul.lib.types import (
+    JSON,
+    MutableJSON,
+    json_dict,
+    json_dict_of_dicts,
+    json_int,
+    json_list,
+    json_str,
+    optional,
 )
 from azul.plugins import (
     DocumentSlice,
@@ -66,16 +76,6 @@ from azul.plugins.metadata.hca.service.response import (
 )
 from azul.service.manifest_service import (
     ManifestFormat,
-)
-from azul.types import (
-    JSON,
-    MutableJSON,
-    json_dict,
-    json_dict_of_dicts,
-    json_int,
-    json_list,
-    json_str,
-    optional,
 )
 from humancellatlas.data.metadata import (
     api,

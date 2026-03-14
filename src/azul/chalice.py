@@ -69,6 +69,15 @@ from azul.lib.json import (
 from azul.lib.strings import (
     join_words as jw,
 )
+from azul.lib.types import (
+    JSON,
+    LambdaContext,
+    MutableJSON,
+    json_dict,
+    json_list,
+    json_str,
+    not_none,
+)
 from azul.logging import (
     http_body_log_message,
 )
@@ -80,15 +89,6 @@ from azul.openapi import (
     params,
     responses,
     schema,
-)
-from azul.types import (
-    JSON,
-    LambdaContext,
-    MutableJSON,
-    json_dict,
-    json_list,
-    json_str,
-    not_none,
 )
 
 log = logging.getLogger(__name__)

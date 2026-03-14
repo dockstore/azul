@@ -31,6 +31,15 @@ from azul.auth import (
 from azul.chalice import (
     GoneError,
 )
+from azul.lib.types import (
+    AnyJSON,
+    FlatJSON,
+    JSON,
+    LambdaContext,
+    is_of_type,
+    not_none,
+    optional,
+)
 from azul.openapi import (
     format_description as fd,
     params,
@@ -67,15 +76,6 @@ from azul.service.manifest_service import (
 )
 from azul.service.query_controller import (
     QueryController,
-)
-from azul.types import (
-    AnyJSON,
-    FlatJSON,
-    JSON,
-    LambdaContext,
-    is_of_type,
-    not_none,
-    optional,
 )
 
 manifest_state_key = 'manifest'

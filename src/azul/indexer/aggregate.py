@@ -28,7 +28,7 @@ from azul.lib.json_freeze import (
     freeze,
     thaw,
 )
-from azul.types import (
+from azul.lib.types import (
     AnyJSON,
     JSON,
     JSONs,

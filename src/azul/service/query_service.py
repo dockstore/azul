@@ -63,6 +63,16 @@ from azul.indexer.document_service import (
 from azul.indexer.field import (
     Nested,
 )
+from azul.lib.types import (
+    AnyJSON,
+    JSON,
+    JSONTypedDict,
+    JSONs,
+    MutableJSON,
+    PrimitiveJSON,
+    json_list,
+    json_str,
+)
 from azul.plugins import (
     DocumentSlice,
     FieldPath,
@@ -72,16 +82,6 @@ from azul.plugins import (
 from azul.service import (
     Filters,
     FiltersJSON,
-)
-from azul.types import (
-    AnyJSON,
-    JSON,
-    JSONTypedDict,
-    JSONs,
-    MutableJSON,
-    PrimitiveJSON,
-    json_list,
-    json_str,
 )
 
 log = logging.getLogger(__name__)

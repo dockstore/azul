@@ -19,12 +19,12 @@ from azul import (
 from azul.deployment import (
     aws,
 )
-from azul.queues import (
-    Queues,
-)
-from azul.types import (
+from azul.lib.types import (
     JSON,
     MutableJSONs,
+)
+from azul.queues import (
+    Queues,
 )
 from azul_test_case import (
     AzulUnitTestCase,

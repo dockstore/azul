@@ -27,7 +27,7 @@ from azul import (
 from azul.deployment import (
     aws,
 )
-from azul.types import (
+from azul.lib.types import (
     MutableJSON,
     json_str,
 )

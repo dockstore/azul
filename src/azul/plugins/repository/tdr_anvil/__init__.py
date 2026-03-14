@@ -29,7 +29,6 @@ from azul import (
     R,
     cached_property,
     config,
-    uuids,
 )
 from azul.drs import (
     DRSURI,
@@ -47,6 +46,13 @@ from azul.lib.bigquery import (
 )
 from azul.lib.collections import (
     singleton,
+)
+from azul.lib.types import (
+    MutableJSON,
+    MutableJSONs,
+)
+from azul.lib.uuids import (
+    change_version,
 )
 from azul.plugins.metadata.anvil import (
     AnvilFile,
@@ -69,13 +75,6 @@ from azul.plugins.repository.tdr import (
 from azul.terra import (
     TDRSourceRef,
     TDRSourceSpec,
-)
-from azul.types import (
-    MutableJSON,
-    MutableJSONs,
-)
-from azul.uuids import (
-    change_version,
 )
 
 log = logging.getLogger(__name__)
@@ -615,9 +614,9 @@ class Plugin(TDRPlugin[TDRAnvilBundle, TDRAnvilBundleFQID]):
     def _bundle_entity(self, bundle_fqid: TDRAnvilBundleFQID) -> KeyReference:
         source = bundle_fqid.source
         bundle_uuid = bundle_fqid.uuid
-        entity_id = uuids.change_version(bundle_uuid,
-                                         self.bundle_uuid_version,
-                                         self.datarepo_row_uuid_version)
+        entity_id = change_version(bundle_uuid,
+                                   self.bundle_uuid_version,
+                                   self.datarepo_row_uuid_version)
         table_name = bundle_fqid.table_name
         pk_column = table_name.removeprefix('anvil_') + '_id'
         bundle_entity = one(self._run_sql(f'''

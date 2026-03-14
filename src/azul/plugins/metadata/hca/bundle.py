@@ -12,7 +12,7 @@ from azul.indexer import (
 from azul.lib.attrs import (
     serializable,
 )
-from azul.types import (
+from azul.lib.types import (
     MutableJSON,
     json_element_strings,
 )

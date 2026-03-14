@@ -34,11 +34,7 @@ from azul import (
     json_mapping,
     mutable_furl,
 )
-from azul.plugins import (
-    FieldName,
-    MetadataPlugin,
-)
-from azul.types import (
+from azul.lib.types import (
     AnyJSON,
     FlatJSON,
     JSON,
@@ -47,6 +43,10 @@ from azul.types import (
     PrimitiveJSON,
     check_type,
     json_element_strings,
+)
+from azul.plugins import (
+    FieldName,
+    MetadataPlugin,
 )
 
 log = logging.getLogger(__name__)

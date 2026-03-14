@@ -28,21 +28,7 @@ from azul.indexer import (
 from azul.lib.strings import (
     to_camel_case,
 )
-from azul.plugins import (
-    SpecialFields,
-)
-from azul.plugins.metadata.hca.service.contributor_matrices import (
-    make_stratification_tree,
-)
-from azul.service.index_service import (
-    SearchResponseStage,
-    SummaryResponseStage,
-)
-from azul.service.query_service import (
-    ResponsePagination,
-    ResponseTriple,
-)
-from azul.types import (
+from azul.lib.types import (
     AnyJSON,
     JSON,
     JSONTypedDict,
@@ -58,6 +44,20 @@ from azul.types import (
     json_str,
     json_untyped_dict,
     optional,
+)
+from azul.plugins import (
+    SpecialFields,
+)
+from azul.plugins.metadata.hca.service.contributor_matrices import (
+    make_stratification_tree,
+)
+from azul.service.index_service import (
+    SearchResponseStage,
+    SummaryResponseStage,
+)
+from azul.service.query_service import (
+    ResponsePagination,
+    ResponseTriple,
 )
 
 log = logging.getLogger(__name__)

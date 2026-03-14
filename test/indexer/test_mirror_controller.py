@@ -45,6 +45,11 @@ from azul.indexer.mirror_service import (
 from azul.lib.json import (
     copy_json,
 )
+from azul.lib.types import (
+    JSON,
+    MutableJSON,
+    MutableJSONs,
+)
 from azul.logging import (
     configure_test_logging,
     get_test_logger,
@@ -57,11 +62,6 @@ from azul.queues import (
 )
 from azul.service.source_service import (
     SourceService,
-)
-from azul.types import (
-    JSON,
-    MutableJSON,
-    MutableJSONs,
 )
 from azul_test_case import (
     DCP2TestCase,

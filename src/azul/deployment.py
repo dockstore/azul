@@ -55,12 +55,12 @@ from azul import (
 from azul.http import (
     http_client,
 )
+from azul.lib.types import (
+    JSONs,
+)
 from azul.logging import (
     azul_boto3_log as boto3_log,
     http_body_log_message,
-)
-from azul.types import (
-    JSONs,
 )
 
 if TYPE_CHECKING:

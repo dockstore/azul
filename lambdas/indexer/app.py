@@ -31,15 +31,15 @@ from azul.indexer.log_forwarding_controller import (
 from azul.indexer.mirror_controller import (
     MirrorController,
 )
+from azul.lib.types import (
+    JSON,
+    not_none,
+)
 from azul.logging import (
     configure_app_logging,
 )
 from azul.openapi import (
     format_description as fd,
-)
-from azul.types import (
-    JSON,
-    not_none,
 )
 
 log = logging.getLogger(__name__)

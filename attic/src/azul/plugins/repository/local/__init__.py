@@ -31,10 +31,10 @@ from azul.plugins import (
     RepositoryFileDownload,
     RepositoryPlugin,
 )
-from azul.types import (
+from azul.lib.types import (
     JSONs,
 )
-from azul.uuids import (
+from azul.lib.uuids import (
     validate_uuid_prefix,
 )
 

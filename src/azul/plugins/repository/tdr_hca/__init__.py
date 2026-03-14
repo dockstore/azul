@@ -49,6 +49,14 @@ from azul.lib.collections import (
 from azul.lib.strings import (
     single_quote as sq,
 )
+from azul.lib.types import (
+    JSON,
+    JSONs,
+    MutableJSON,
+    MutableJSONs,
+    any_str,
+    optional,
+)
 from azul.plugins.metadata.hca import (
     HCAFile,
 )
@@ -63,14 +71,6 @@ from azul.plugins.repository.tdr import (
 from azul.terra import (
     TDRSourceRef,
     TDRSourceSpec,
-)
-from azul.types import (
-    JSON,
-    JSONs,
-    MutableJSON,
-    MutableJSONs,
-    any_str,
-    optional,
 )
 from humancellatlas.data.metadata import (
     api,

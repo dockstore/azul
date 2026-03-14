@@ -44,10 +44,7 @@ from azul.http import (
 from azul.lib.json import (
     dig,
 )
-from azul.logging import (
-    configure_script_logging,
-)
-from azul.types import (
+from azul.lib.types import (
     AnyJSON,
     JSON,
     JSONs,
@@ -58,6 +55,9 @@ from azul.types import (
     json_mapping,
     json_sequence_of_mappings,
     json_str,
+)
+from azul.logging import (
+    configure_script_logging,
 )
 
 log = logging.getLogger(__name__)

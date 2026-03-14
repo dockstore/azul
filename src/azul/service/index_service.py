@@ -36,6 +36,13 @@ from azul.indexer import (
 from azul.indexer.mirror_service import (
     MirrorService,
 )
+from azul.lib.types import (
+    JSON,
+    MutableJSON,
+)
+from azul.lib.uuids import (
+    validate_uuid,
+)
 from azul.plugins import (
     File,
     dotted,
@@ -54,13 +61,6 @@ from azul.service.query_service import (
     ResponseTriple,
     ToDictStage,
     _ElasticsearchStage,
-)
-from azul.types import (
-    JSON,
-    MutableJSON,
-)
-from azul.uuids import (
-    validate_uuid,
 )
 
 log = logging.getLogger(__name__)

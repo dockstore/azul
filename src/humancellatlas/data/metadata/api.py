@@ -49,7 +49,7 @@ from azul.lib.collections import (
     dict_merge,
     lookup,
 )
-from azul.types import (
+from azul.lib.types import (
     JSON,
     MutableJSON,
     is_optional,

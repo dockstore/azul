@@ -14,17 +14,17 @@ from azul import (
     cached_property,
     config,
 )
+from azul.lib.types import (
+    MutableJSON,
+    json_dict,
+    json_int,
+)
 from azul.plugins import (
     FieldPath,
     dotted,
 )
 from azul.service.query_service import (
     AggregationStage,
-)
-from azul.types import (
-    MutableJSON,
-    json_dict,
-    json_int,
 )
 
 

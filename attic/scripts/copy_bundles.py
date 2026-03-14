@@ -42,7 +42,7 @@ from azul.logging import (
 from azul.lib.threads import (
     DeferredTaskExecutor,
 )
-from azul.types import (
+from azul.lib.types import (
     MutableJSON,
 )
 

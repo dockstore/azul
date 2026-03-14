@@ -15,11 +15,11 @@ from azul.indexer import (
     SourceRef,
     SourcedBundleFQID,
 )
+from azul.lib.types import (
+    JSON,
+)
 from azul.plugins import (
     RepositoryPlugin,
-)
-from azul.types import (
-    JSON,
 )
 
 log = logging.getLogger(__name__)

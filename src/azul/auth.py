@@ -14,7 +14,7 @@ import attr
 from azul.lib.json import (
     copy_json,
 )
-from azul.types import (
+from azul.lib.types import (
     JSON,
 )
 

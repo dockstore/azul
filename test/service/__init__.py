@@ -59,6 +59,11 @@ from azul.indexer.document import (
     DocumentType,
     IndexName,
 )
+from azul.lib.types import (
+    AnyJSON,
+    JSON,
+    JSONs,
+)
 from azul.logging import (
     configure_test_logging,
     get_test_logger,
@@ -69,11 +74,6 @@ from azul.service.source_service import (
 )
 from azul.service.storage_service import (
     StorageService,
-)
-from azul.types import (
-    AnyJSON,
-    JSON,
-    JSONs,
 )
 from azul_test_case import (
     AzulUnitTestCase,

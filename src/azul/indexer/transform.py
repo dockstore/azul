@@ -37,7 +37,7 @@ from azul.lib.collections import (
 from azul.lib.json import (
     json_hash,
 )
-from azul.types import (
+from azul.lib.types import (
     JSON,
 )
 

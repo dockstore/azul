@@ -52,16 +52,16 @@ from azul.indexer.field import (
 from azul.lib.json import (
     copy_json,
 )
-from azul.plugins.metadata.hca.indexer.transform import (
-    pass_thru_uuid4,
-    value_and_unit,
-)
-from azul.types import (
+from azul.lib.types import (
     AnyJSON,
     AnyMutableJSON,
     JSON,
     MutableJSON,
     MutableJSONs,
+)
+from azul.plugins.metadata.hca.indexer.transform import (
+    pass_thru_uuid4,
+    value_and_unit,
 )
 
 log = logging.getLogger(__name__)

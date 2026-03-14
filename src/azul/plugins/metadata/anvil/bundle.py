@@ -30,7 +30,7 @@ from azul.lib.collections import (
     aset,
     none_safe_apply,
 )
-from azul.types import (
+from azul.lib.types import (
     MutableJSON,
     json_element_mappings,
     json_element_strings,

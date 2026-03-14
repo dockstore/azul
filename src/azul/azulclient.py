@@ -61,6 +61,10 @@ from azul.indexer.mirror_service import (
 from azul.indexer.repository_service import (
     RepositoryService,
 )
+from azul.lib.types import (
+    JSON,
+    JSONs,
+)
 from azul.plugins import (
     MetadataPlugin,
     RepositoryPlugin,
@@ -70,10 +74,6 @@ from azul.queues import (
 )
 from azul.service.source_service import (
     SourceService,
-)
-from azul.types import (
-    JSON,
-    JSONs,
 )
 
 log = logging.getLogger(__name__)

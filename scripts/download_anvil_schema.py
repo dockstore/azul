@@ -18,12 +18,12 @@ from azul import (
 from azul.http import (
     http_client,
 )
-from azul.logging import (
-    configure_script_logging,
-)
-from azul.types import (
+from azul.lib.types import (
     JSON,
     MutableJSON,
+)
+from azul.logging import (
+    configure_script_logging,
 )
 
 repository_url = 'https://raw.githubusercontent.com/broadinstitute/anvil_tdr_ingest'
@@ -55,7 +55,7 @@ def write_schema(schema: JSON) -> None:
             """
         '''))
         f.write(dedent('''
-            from azul.types import (
+            from azul.lib.types import (
                 JSON,
             )
         '''))

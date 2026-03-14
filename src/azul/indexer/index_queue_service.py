@@ -36,16 +36,16 @@ from azul.indexer.index_service import (
 from azul.indexer.repository_service import (
     RepositoryService,
 )
+from azul.lib.types import (
+    JSON,
+    json_int,
+    json_str,
+)
 from azul.queues import (
     Action,
     Queues,
     SQSFifoMessage,
     SQSMessage,
-)
-from azul.types import (
-    JSON,
-    json_int,
-    json_str,
 )
 
 if TYPE_CHECKING:

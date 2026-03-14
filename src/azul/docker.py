@@ -54,7 +54,7 @@ from azul import (
     cached_property,
     config,
 )
-from azul.types import (
+from azul.lib.types import (
     JSONs,
     json_int,
     json_str,

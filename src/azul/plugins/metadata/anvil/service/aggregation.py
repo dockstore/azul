@@ -5,15 +5,15 @@ from opensearchpy.helpers.aggs import (
     Agg,
 )
 
+from azul.lib.types import (
+    MutableJSON,
+    json_dict,
+)
 from azul.plugins import (
     FieldPath,
 )
 from azul.service.query_service import (
     AggregationStage,
-)
-from azul.types import (
-    MutableJSON,
-    json_dict,
 )
 
 

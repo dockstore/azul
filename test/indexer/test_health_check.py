@@ -2,11 +2,11 @@ from moto import (
     mock_aws,
 )
 
+from azul.lib.types import (
+    MutableJSON,
+)
 from azul.logging import (
     configure_test_logging,
-)
-from azul.types import (
-    MutableJSON,
 )
 from azul_test_case import (
     DCP1TestCase,

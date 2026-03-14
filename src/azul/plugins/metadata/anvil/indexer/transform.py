@@ -72,6 +72,16 @@ from azul.lib.collections import (
 from azul.lib.strings import (
     pluralize,
 )
+from azul.lib.types import (
+    AnyMutableJSON,
+    JSON,
+    MutableJSON,
+    MutableJSONs,
+    json_element_mappings,
+    json_sequence_of_optional_strings,
+    json_sorted,
+    json_str,
+)
 from azul.plugins.metadata.anvil.bundle import (
     AnvilBundle,
     EntityLink,
@@ -83,16 +93,6 @@ from azul.plugins.metadata.anvil.indexer.aggregate import (
     DiagnosisAggregator,
     DonorAggregator,
     FileAggregator,
-)
-from azul.types import (
-    AnyMutableJSON,
-    JSON,
-    MutableJSON,
-    MutableJSONs,
-    json_element_mappings,
-    json_sequence_of_optional_strings,
-    json_sorted,
-    json_str,
 )
 
 log = logging.getLogger(__name__)

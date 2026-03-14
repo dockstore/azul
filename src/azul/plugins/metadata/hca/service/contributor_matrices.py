@@ -9,7 +9,7 @@ from itertools import (
 from azul.lib.collections import (
     NestedDict,
 )
-from azul.types import (
+from azul.lib.types import (
     JSON,
     JSONs,
     json_sequence,

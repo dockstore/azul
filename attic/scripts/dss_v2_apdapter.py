@@ -53,7 +53,7 @@ from azul.logging import (
 from azul.lib.time import (
     format_dcp2_datetime,
 )
-from azul.types import (
+from azul.lib.types import (
     AnyJSON,
     JSON,
     MutableJSON,

@@ -135,6 +135,12 @@ from azul.lib.collections import (
 from azul.lib.json_freeze import (
     freeze,
 )
+from azul.lib.types import (
+    JSON,
+    JSONs,
+    MutableJSON,
+    MutableJSONs,
+)
 from azul.logging import (
     configure_test_logging,
     get_test_logger,
@@ -174,12 +180,6 @@ from azul.terra import (
     TDRSourceRef,
     TDRSourceSpec,
     UserCredentialsProvider,
-)
-from azul.types import (
-    JSON,
-    JSONs,
-    MutableJSON,
-    MutableJSONs,
 )
 from azul_test_case import (
     AzulTestCase,

@@ -21,7 +21,7 @@ from azul.lib.json import (
 from azul.lib.strings import (
     trunc_ellipses,
 )
-from azul.types import (
+from azul.lib.types import (
     JSON,
     reify,
 )

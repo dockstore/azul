@@ -1,4 +1,4 @@
-from azul.types import (
+from azul.lib.types import (
     AnyJSON,
     AnyMutableJSON,
 )

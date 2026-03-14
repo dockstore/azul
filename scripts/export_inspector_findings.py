@@ -23,12 +23,12 @@ from azul.deployment import (
 from azul.http import (
     http_client,
 )
-from azul.logging import (
-    configure_script_logging,
-)
-from azul.types import (
+from azul.lib.types import (
     JSON,
     JSONs,
+)
+from azul.logging import (
+    configure_script_logging,
 )
 
 log = logging.getLogger(__name__)

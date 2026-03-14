@@ -14,6 +14,9 @@ from azul.auth import (
 from azul.health import (
     HealthApp,
 )
+from azul.lib.types import (
+    JSON,
+)
 from azul.logging import (
     configure_app_logging,
 )
@@ -37,9 +40,6 @@ from azul.service.manifest_controller import (
 )
 from azul.service.repository_controller import (
     RepositoryController,
-)
-from azul.types import (
-    JSON,
 )
 
 log = logging.getLogger(__name__)

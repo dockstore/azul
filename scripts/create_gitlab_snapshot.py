@@ -26,11 +26,11 @@ from azul import (
 from azul.deployment import (
     aws,
 )
+from azul.lib.types import (
+    JSON,
+)
 from azul.logging import (
     configure_script_logging,
-)
-from azul.types import (
-    JSON,
 )
 
 log = logging.getLogger(__name__)

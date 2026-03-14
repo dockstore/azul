@@ -51,6 +51,11 @@ from azul.indexer.repository_service import (
 from azul.lib.collections import (
     adict,
 )
+from azul.lib.types import (
+    MutableJSON,
+    is_optional,
+    json_int,
+)
 from azul.openapi import (
     format_description as fd,
     params,
@@ -69,11 +74,6 @@ from azul.service.controller import (
 )
 from azul.service.index_service import (
     IndexService,
-)
-from azul.types import (
-    MutableJSON,
-    is_optional,
-    json_int,
 )
 
 log = logging.getLogger(__name__)

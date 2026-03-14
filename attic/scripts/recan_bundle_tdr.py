@@ -62,7 +62,7 @@ from azul.plugins.repository.tdr_hca import (
 from azul.terra import (
     TDRSourceSpec,
 )
-from azul.types import (
+from azul.lib.types import (
     JSON,
     MutableJSON,
     MutableJSONs,

@@ -12,7 +12,7 @@ import time
 from azul import (
     R,
 )
-from azul.types import (
+from azul.lib.types import (
     LambdaContext,
 )
 

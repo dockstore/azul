@@ -86,6 +86,10 @@ from azul.lib.json import (
 from azul.lib.threads import (
     Latch,
 )
+from azul.lib.types import (
+    JSON,
+    JSONs,
+)
 from azul.logging import (
     configure_test_logging,
     get_test_logger,
@@ -101,10 +105,6 @@ from azul.plugins.repository.dss import (
     DSSBundle,
     DSSBundleFQID,
     DSSSourceRef,
-)
-from azul.types import (
-    JSON,
-    JSONs,
 )
 from azul_test_case import (
     AzulUnitTestCase,

@@ -46,7 +46,7 @@ from azul.lib.enums import (
 from azul.lib.json import (
     Parseable,
 )
-from azul.types import (
+from azul.lib.types import (
     AnyJSON,
     AnyMutableJSON,
     JSON,

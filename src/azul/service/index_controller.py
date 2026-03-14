@@ -26,6 +26,14 @@ from azul import (
 from azul.indexer.document import (
     EntityType,
 )
+from azul.lib.types import (
+    JSON,
+    PrimitiveJSON,
+    check_type,
+)
+from azul.lib.uuids import (
+    InvalidUUIDError,
+)
 from azul.openapi import (
     format_description as fd,
     params,
@@ -49,14 +57,6 @@ from azul.service.query_service import (
     IndexNotFoundError,
     Pagination,
     SortKey,
-)
-from azul.types import (
-    JSON,
-    PrimitiveJSON,
-    check_type,
-)
-from azul.uuids import (
-    InvalidUUIDError,
 )
 
 log = logging.getLogger(__name__)

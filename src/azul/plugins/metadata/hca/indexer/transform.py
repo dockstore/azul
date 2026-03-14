@@ -93,6 +93,16 @@ from azul.lib.time import (
     format_dcp2_datetime,
     parse_dcp2_version,
 )
+from azul.lib.types import (
+    JSON,
+    MutableJSON,
+    json_element_mappings,
+    json_element_strings,
+    json_sorted,
+    json_str,
+    not_none,
+    optional,
+)
 from azul.openapi import (
     schema,
 )
@@ -116,16 +126,6 @@ from azul.plugins.metadata.hca.indexer.aggregate import (
 )
 from azul.plugins.metadata.hca.service.contributor_matrices import (
     parse_strata,
-)
-from azul.types import (
-    JSON,
-    MutableJSON,
-    json_element_mappings,
-    json_element_strings,
-    json_sorted,
-    json_str,
-    not_none,
-    optional,
 )
 from humancellatlas.data.metadata import (
     api,

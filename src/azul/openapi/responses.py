@@ -1,3 +1,8 @@
+from azul.lib.types import (
+    AnyJSON,
+    JSON,
+    PrimitiveJSON,
+)
 from azul.openapi import (
     application_json,
     format_description_key,
@@ -5,11 +10,6 @@ from azul.openapi import (
 )
 from azul.openapi.schema import (
     Form,
-)
-from azul.types import (
-    AnyJSON,
-    JSON,
-    PrimitiveJSON,
 )
 
 

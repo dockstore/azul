@@ -36,9 +36,6 @@ from azul import (
 from azul.chalice import (
     Authentication,
 )
-from azul.digests import (
-    Digest,
-)
 from azul.drs import (
     CompactDRSURI,
     DRSObject,
@@ -70,11 +67,14 @@ from azul.indexer.transform import (
 from azul.lib.attrs import (
     DiscriminatingPolymorphicSerializableAttrs,
 )
+from azul.lib.digests import (
+    Digest,
+)
 from azul.lib.json import (
     DynamicPolymorphicSerializable,
     SerializableEnum,
 )
-from azul.types import (
+from azul.lib.types import (
     AnyJSON,
     JSON,
     MutableJSON,
@@ -85,7 +85,7 @@ from azul.types import (
     json_sequence,
     json_str,
 )
-from azul.uuids import (
+from azul.lib.uuids import (
     validate_uuid_prefix,
 )
 

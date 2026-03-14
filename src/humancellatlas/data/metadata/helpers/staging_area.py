@@ -30,7 +30,7 @@ from azul import (
 from azul.indexer.document import (
     EntityReference,
 )
-from azul.types import (
+from azul.lib.types import (
     JSON,
     MutableJSON,
 )

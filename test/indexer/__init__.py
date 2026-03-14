@@ -43,6 +43,13 @@ from azul.indexer.index_service import (
     IndexService,
     IndexWriter,
 )
+from azul.lib.types import (
+    AnyJSON,
+    JSON,
+    JSONs,
+    MutableJSON,
+    MutableJSONs,
+)
 from azul.plugins import (
     FieldPath,
 )
@@ -60,13 +67,6 @@ from azul.plugins.repository.tdr_anvil import (
 )
 from azul.plugins.repository.tdr_hca import (
     TDRHCABundle,
-)
-from azul.types import (
-    AnyJSON,
-    JSON,
-    JSONs,
-    MutableJSON,
-    MutableJSONs,
 )
 from azul_test_case import (
     AnvilTestCase,

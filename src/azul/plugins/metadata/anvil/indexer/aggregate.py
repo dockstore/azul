@@ -17,7 +17,7 @@ from azul.lib.collections import (
     compose_keys,
     none_safe_tuple_key,
 )
-from azul.types import (
+from azul.lib.types import (
     JSON,
 )
 

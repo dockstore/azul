@@ -47,6 +47,11 @@ from azul.deployment import (
 from azul.es import (
     ESClientFactory,
 )
+from azul.lib.types import (
+    JSON,
+    MutableJSON,
+    json_bool,
+)
 from azul.openapi import (
     format_description,
     params,
@@ -59,11 +64,6 @@ from azul.plugins import (
 from azul.service.storage_service import (
     StorageObjectNotFound,
     StorageService,
-)
-from azul.types import (
-    JSON,
-    MutableJSON,
-    json_bool,
 )
 
 log = logging.getLogger(__name__)

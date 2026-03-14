@@ -85,10 +85,7 @@ from azul.indexer.transform import (
 from azul.lib.json_freeze import (
     freeze,
 )
-from azul.logging import (
-    silenced_es_logger,
-)
-from azul.types import (
+from azul.lib.types import (
     AnyJSON,
     JSON,
     JSONArray,
@@ -97,6 +94,9 @@ from azul.types import (
     json_element_mappings,
     json_items_are_sequences_of_mappings,
     json_sequence,
+)
+from azul.logging import (
+    silenced_es_logger,
 )
 
 log = logging.getLogger(__name__)

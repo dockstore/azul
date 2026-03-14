@@ -38,14 +38,14 @@ from azul.lib.time import (
     format_dcp2_datetime,
     parse_dcp2_datetime,
 )
-from azul.openapi import (
-    schema,
-)
-from azul.types import (
+from azul.lib.types import (
     AnyJSON,
     JSON,
     PrimitiveJSON,
     reify,
+)
+from azul.openapi import (
+    schema,
 )
 
 # A type variable named ``N`` denotes the native type of a field in documents as

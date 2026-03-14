@@ -61,6 +61,10 @@ import azul.indexer.index_service
 from azul.lib.collections import (
     none_safe_key,
 )
+from azul.lib.types import (
+    JSON,
+    JSONs,
+)
 from azul.logging import (
     configure_test_logging,
 )
@@ -89,10 +93,6 @@ from azul.service.source_service import (
 from azul.terra import (
     TDRSourceRef,
     TDRSourceSpec,
-)
-from azul.types import (
-    JSON,
-    JSONs,
 )
 from indexer import (
     DCP1CannedBundleTestCase,

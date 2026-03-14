@@ -24,6 +24,10 @@ from azul.deployment import (
 from azul.lib.objects import (
     InternMeta,
 )
+from azul.lib.types import (
+    JSON,
+    JSONs,
+)
 from azul.modules import (
     load_app_module,
 )
@@ -31,10 +35,6 @@ from azul.terraform import (
     chalice,
     emit_tf,
     vpc,
-)
-from azul.types import (
-    JSON,
-    JSONs,
 )
 
 

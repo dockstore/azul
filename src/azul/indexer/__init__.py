@@ -39,13 +39,13 @@ from azul.lib.json import (
     DynamicPolymorphicSerializable,
     Parseable,
 )
-from azul.types import (
+from azul.lib.types import (
     AnyJSON,
     JSON,
     SupportsLessAndGreaterThan,
     derived_type_params,
 )
-from azul.uuids import (
+from azul.lib.uuids import (
     UUIDPartition,
     validate_uuid_prefix,
 )
@@ -217,12 +217,12 @@ class Prefix(Parseable):
         >>> Prefix.parse('8F53/0')
         Traceback (most recent call last):
         ...
-        azul.uuids.InvalidUUIDPrefixError: '8F53' is not a valid UUID prefix.
+        azul.lib.uuids.InvalidUUIDPrefixError: '8F53' is not a valid UUID prefix.
 
         >>> Prefix.parse('https:foo.edu/0')
         Traceback (most recent call last):
         ...
-        azul.uuids.InvalidUUIDPrefixError: 'https:foo.edu' is not a valid UUID prefix.
+        azul.lib.uuids.InvalidUUIDPrefixError: 'https:foo.edu' is not a valid UUID prefix.
 
         >>> Prefix.parse('8f538f53/1').partition_prefixes() # doctest: +NORMALIZE_WHITESPACE
         Traceback (most recent call last):

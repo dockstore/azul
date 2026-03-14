@@ -88,13 +88,7 @@ from azul.lib.bigquery import (
 from azul.lib.strings import (
     trunc_ellipses,
 )
-from azul.oauth2 import (
-    CredentialsProvider,
-    OAuth2Client,
-    ServiceAccountCredentials,
-    TokenCredentials,
-)
-from azul.types import (
+from azul.lib.types import (
     JSON,
     MutableJSON,
     is_of_type,
@@ -103,6 +97,12 @@ from azul.types import (
     json_list,
     json_mapping,
     json_str,
+)
+from azul.oauth2 import (
+    CredentialsProvider,
+    OAuth2Client,
+    ServiceAccountCredentials,
+    TokenCredentials,
 )
 
 log = logging.getLogger(__name__)

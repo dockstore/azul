@@ -72,6 +72,12 @@ from azul.indexer import (
 from azul.lib.bigquery import (
     BigQueryRow,
 )
+from azul.lib.types import (
+    AnyJSON,
+    JSON,
+    JSONs,
+    reify,
+)
 from azul.logging import (
     configure_test_logging,
     get_test_logger,
@@ -96,12 +102,6 @@ from azul.terra import (
     TDRSourceSpec,
     TerraClient,
     TerraCredentialsProvider,
-)
-from azul.types import (
-    AnyJSON,
-    JSON,
-    JSONs,
-    reify,
 )
 from azul_test_case import (
     AzulUnitTestCase,

@@ -30,6 +30,12 @@ from azul.files import (
 from azul.indexer import (
     Bundle,
 )
+from azul.lib.types import (
+    AnyJSON,
+    AnyMutableJSON,
+    JSON,
+    json_dict,
+)
 from azul.logging import (
     configure_script_logging,
 )
@@ -38,12 +44,6 @@ from azul.plugins import (
 )
 from azul.plugins.metadata.anvil.bundle import (
     AnvilBundle,
-)
-from azul.types import (
-    AnyJSON,
-    AnyMutableJSON,
-    JSON,
-    json_dict,
 )
 
 log = logging.getLogger(__name__)

@@ -21,7 +21,7 @@ from azul.deployment import (
 from azul.lib.attrs import (
     strict_auto,
 )
-from azul.types import (
+from azul.lib.types import (
     JSON,
 )
 

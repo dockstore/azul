@@ -10,7 +10,7 @@ from azul import (
 from azul.files import (
     write_file_atomically,
 )
-from azul.types import (
+from azul.lib.types import (
     JSON,
 )
 
