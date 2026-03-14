@@ -3,7 +3,6 @@ import unittest
 
 import azul
 import azul.auth
-import azul.bytes
 import azul.caching
 import azul.collections
 import azul.csp
@@ -24,6 +23,7 @@ import azul.json
 import azul.json_freeze
 import azul.lib.attrs
 import azul.lib.bigquery
+import azul.lib.bytes
 from azul.logging import (
     configure_test_logging,
 )
@@ -69,7 +69,6 @@ def load_tests(_loader,
     for module in [
         azul,
         azul.auth,
-        azul.bytes,
         azul.caching,
         azul.collections,
         azul.csp,
@@ -90,6 +89,7 @@ def load_tests(_loader,
         azul.json_freeze,
         azul.lib.attrs,
         azul.lib.bigquery,
+        azul.lib.bytes,
         azul.objects,
         azul.openapi,
         azul.openapi.params,
