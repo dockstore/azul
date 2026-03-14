@@ -94,10 +94,6 @@ from azul.azulclient import (
 from azul.chalice import (
     AzulChaliceApp,
 )
-from azul.collections import (
-    alist,
-    lookup,
-)
 from azul.csp import (
     CSP,
 )
@@ -134,6 +130,10 @@ from azul.indexer.mirror_service import (
 )
 from azul.json_freeze import (
     freeze,
+)
+from azul.lib.collections import (
+    alist,
+    lookup,
 )
 from azul.logging import (
     configure_test_logging,

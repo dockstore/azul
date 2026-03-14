@@ -45,9 +45,6 @@ from azul import (
     cached_property,
     config,
 )
-from azul.collections import (
-    OrderedSet,
-)
 from azul.enums import (
     auto,
 )
@@ -88,6 +85,9 @@ from azul.indexer.transform import (
 )
 from azul.iterators import (
     generable,
+)
+from azul.lib.collections import (
+    OrderedSet,
 )
 from azul.openapi import (
     schema,

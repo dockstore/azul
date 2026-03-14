@@ -15,15 +15,15 @@ import yaml
 from azul import (
     config,
 )
-from azul.collections import (
-    alist,
-    dict_merge,
-)
 from azul.deployment import (
     aws,
 )
 from azul.docker import (
     resolve_docker_image_for_pull,
+)
+from azul.lib.collections import (
+    alist,
+    dict_merge,
 )
 from azul.strings import (
     departition,

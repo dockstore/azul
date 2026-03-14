@@ -33,7 +33,7 @@ from more_itertools import (
     one,
 )
 
-from azul.collections import (
+from azul.lib.collections import (
     OrderedSet,
     none_safe_key,
 )

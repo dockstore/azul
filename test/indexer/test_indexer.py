@@ -50,9 +50,6 @@ from azul import (
     config,
     true,
 )
-from azul.collections import (
-    NestedDict,
-)
 from azul.indexer import (
     Bundle,
     BundlePartition,
@@ -82,6 +79,9 @@ from azul.indexer.index_service import (
 )
 from azul.json import (
     json_hash,
+)
+from azul.lib.collections import (
+    NestedDict,
 )
 from azul.logging import (
     configure_test_logging,

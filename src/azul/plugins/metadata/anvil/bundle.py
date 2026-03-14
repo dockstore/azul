@@ -14,10 +14,6 @@ from typing import (
 
 import attrs
 
-from azul.collections import (
-    aset,
-    none_safe_apply,
-)
 from azul.indexer import (
     Bundle,
     SourcedBundleFQID,
@@ -29,6 +25,10 @@ from azul.indexer.document import (
 from azul.lib.attrs import (
     SerializableAttrs,
     serializable,
+)
+from azul.lib.collections import (
+    aset,
+    none_safe_apply,
 )
 from azul.types import (
     MutableJSON,

@@ -42,9 +42,6 @@ from azul import (
     cached_property,
     config,
 )
-from azul.collections import (
-    none_safe_key,
-)
 from azul.deployment import (
     aws,
 )
@@ -61,6 +58,9 @@ from azul.indexer.field import (
     null_str,
 )
 import azul.indexer.index_service
+from azul.lib.collections import (
+    none_safe_key,
+)
 from azul.logging import (
     configure_test_logging,
 )

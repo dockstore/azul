@@ -54,9 +54,6 @@ from azul import (
 from azul.auth import (
     Authentication,
 )
-from azul.collections import (
-    deep_dict_merge,
-)
 from azul.csp import (
     CSP,
 )
@@ -65,6 +62,9 @@ from azul.enums import (
 )
 from azul.json import (
     copy_json,
+)
+from azul.lib.collections import (
+    deep_dict_merge,
 )
 from azul.logging import (
     http_body_log_message,

@@ -31,9 +31,6 @@ from azul import (
     config,
     uuids,
 )
-from azul.collections import (
-    singleton,
-)
 from azul.drs import (
     DRSURI,
 )
@@ -47,6 +44,9 @@ from azul.indexer.document import (
 from azul.lib.bigquery import (
     BigQueryRow,
     backtick,
+)
+from azul.lib.collections import (
+    singleton,
 )
 from azul.plugins.metadata.anvil import (
     AnvilFile,

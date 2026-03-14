@@ -51,10 +51,10 @@ from typing_extensions import (
     TypeIs,
 )
 
-from azul.collections import (
+import azul.lib.caching
+from azul.lib.collections import (
     atuple,
 )
-import azul.lib.caching
 from azul.openapi import (
     format_description,
 )

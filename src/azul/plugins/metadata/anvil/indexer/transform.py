@@ -40,9 +40,6 @@ from azul import (
     cache,
     config,
 )
-from azul.collections import (
-    deep_dict_merge,
-)
 from azul.indexer import (
     BundleFQID,
     BundlePartition,
@@ -68,6 +65,9 @@ from azul.indexer.field import (
 from azul.indexer.transform import (
     ReplicaTransformer,
     Transformer,
+)
+from azul.lib.collections import (
+    deep_dict_merge,
 )
 from azul.plugins.metadata.anvil.bundle import (
     AnvilBundle,

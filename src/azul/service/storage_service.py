@@ -43,11 +43,11 @@ from werkzeug.http import (
 from azul import (
     R,
 )
-from azul.collections import (
-    OrderedSet,
-)
 from azul.deployment import (
     aws,
+)
+from azul.lib.collections import (
+    OrderedSet,
 )
 
 if TYPE_CHECKING:

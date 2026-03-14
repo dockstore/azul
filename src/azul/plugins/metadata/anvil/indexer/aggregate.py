@@ -5,10 +5,6 @@ from typing import (
     Any,
 )
 
-from azul.collections import (
-    compose_keys,
-    none_safe_tuple_key,
-)
 from azul.indexer.aggregate import (
     Accumulator,
     DistinctAccumulator,
@@ -16,6 +12,10 @@ from azul.indexer.aggregate import (
     SetOfDictAccumulator,
     SimpleAggregator,
     SumAccumulator,
+)
+from azul.lib.collections import (
+    compose_keys,
+    none_safe_tuple_key,
 )
 from azul.types import (
     JSON,

@@ -1,11 +1,11 @@
 from azul import (
     config,
 )
-from azul.collections import (
-    alist,
-)
 from azul.deployment import (
     aws,
+)
+from azul.lib.collections import (
+    alist,
 )
 from azul.modules import (
     load_app_module,

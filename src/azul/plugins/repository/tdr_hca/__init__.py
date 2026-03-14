@@ -31,9 +31,6 @@ from azul import (
     config,
     iif,
 )
-from azul.collections import (
-    OrderedSet,
-)
 from azul.indexer import (
     BundleFQID,
 )
@@ -45,6 +42,9 @@ from azul.indexer.document import (
 from azul.lib.bigquery import (
     BigQueryRow,
     backtick,
+)
+from azul.lib.collections import (
+    OrderedSet,
 )
 from azul.plugins.metadata.hca import (
     HCAFile,

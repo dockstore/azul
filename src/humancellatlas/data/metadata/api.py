@@ -39,15 +39,15 @@ from azul import (
     cached_property,
     config,
 )
-from azul.collections import (
+from azul.indexer.document import (
+    EntityReference,
+)
+from azul.lib.collections import (
     LookupDefault,
     OrderedSet,
     adict,
     dict_merge,
     lookup,
-)
-from azul.indexer.document import (
-    EntityReference,
 )
 from azul.types import (
     JSON,

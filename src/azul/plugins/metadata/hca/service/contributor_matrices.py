@@ -6,7 +6,7 @@ from itertools import (
     product,
 )
 
-from azul.collections import (
+from azul.lib.collections import (
     NestedDict,
 )
 from azul.types import (

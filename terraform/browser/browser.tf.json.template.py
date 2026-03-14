@@ -23,12 +23,12 @@ from azul import (
     config,
     iif,
 )
-from azul.collections import (
-    adict,
-    dict_merge,
-)
 from azul.deployment import (
     aws,
+)
+from azul.lib.collections import (
+    adict,
+    dict_merge,
 )
 from azul.strings import (
     double_quote as dq,

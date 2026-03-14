@@ -26,9 +26,6 @@ from azul import (
 from azul.auth import (
     Authentication,
 )
-from azul.collections import (
-    adict,
-)
 from azul.deployment import (
     aws,
 )
@@ -40,6 +37,9 @@ from azul.indexer import (
     SimpleSourceSpec,
     SourceRef,
     SourcedBundleFQID,
+)
+from azul.lib.collections import (
+    adict,
 )
 from azul.plugins import (
     RepositoryFileDownload,

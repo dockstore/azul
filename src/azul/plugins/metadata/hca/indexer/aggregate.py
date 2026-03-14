@@ -12,12 +12,6 @@ from more_itertools import (
 from azul import (
     cached_property,
 )
-from azul.collections import (
-    compose_keys,
-    none_safe_itemgetter,
-    none_safe_key,
-    none_safe_tuple_key,
-)
 from azul.indexer.aggregate import (
     Accumulator,
     DictAccumulator,
@@ -39,6 +33,12 @@ from azul.indexer.document import (
 from azul.indexer.field import (
     FieldTypes,
     null_int,
+)
+from azul.lib.collections import (
+    compose_keys,
+    none_safe_itemgetter,
+    none_safe_key,
+    none_safe_tuple_key,
 )
 from azul.types import (
     JSON,

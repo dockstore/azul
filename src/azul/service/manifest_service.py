@@ -88,9 +88,6 @@ from azul import (
 from azul.auth import (
     Authentication,
 )
-from azul.collections import (
-    getitem,
-)
 from azul.deployment import (
     aws,
 )
@@ -128,6 +125,9 @@ from azul.lib.attrs import (
 from azul.lib.bytes import (
     azul_urlsafe_b64decode,
     azul_urlsafe_b64encode,
+)
+from azul.lib.collections import (
+    getitem,
 )
 from azul.plugins import (
     ColumnMapping,

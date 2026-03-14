@@ -63,11 +63,6 @@ from azul import (
     cache,
     config,
 )
-from azul.collections import (
-    adict,
-    compose_keys,
-    none_safe_tuple_key,
-)
 from azul.http import (
     parse_header,
 )
@@ -84,6 +79,11 @@ from azul.indexer.document import (
 from azul.json import (
     copy_json,
     json_hash,
+)
+from azul.lib.collections import (
+    adict,
+    compose_keys,
+    none_safe_tuple_key,
 )
 from azul.logging import (
     configure_test_logging,

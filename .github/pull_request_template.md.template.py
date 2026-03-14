@@ -35,7 +35,7 @@ from azul import (
     config,
     iif,
 )
-from azul.collections import (
+from azul.lib.collections import (
     OrderedSet,
 )
 from azul.modules import (

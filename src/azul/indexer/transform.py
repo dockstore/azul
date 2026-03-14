@@ -11,9 +11,6 @@ from typing import (
 
 import attr
 
-from azul.collections import (
-    alist,
-)
 from azul.indexer import (
     Bundle,
     BundleFQID,
@@ -36,6 +33,9 @@ from azul.indexer.field import (
 )
 from azul.json import (
     json_hash,
+)
+from azul.lib.collections import (
+    alist,
 )
 from azul.types import (
     JSON,

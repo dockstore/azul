@@ -16,9 +16,6 @@ from azul import (
     cache,
     config,
 )
-from azul.collections import (
-    deep_dict_merge,
-)
 from azul.indexer.document import (
     Aggregate,
     Contribution,
@@ -33,6 +30,9 @@ from azul.indexer.field import (
 )
 from azul.indexer.transform import (
     Transformer,
+)
+from azul.lib.collections import (
+    deep_dict_merge,
 )
 from azul.plugins import (
     FieldPath,

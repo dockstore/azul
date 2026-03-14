@@ -28,13 +28,13 @@ from azul import (
     CatalogName,
     cache,
 )
-from azul.collections import (
-    OrderedSet,
-)
 from azul.indexer.field import (
     FieldType,
     Mode,
     pass_thru_bool,
+)
+from azul.lib.collections import (
+    OrderedSet,
 )
 from azul.openapi import (
     application_json,

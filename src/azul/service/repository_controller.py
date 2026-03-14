@@ -34,9 +34,6 @@ from azul.auth import (
 from azul.chalice import (
     ServiceUnavailableError,
 )
-from azul.collections import (
-    adict,
-)
 from azul.drs import (
     DRSStatusException,
 )
@@ -50,6 +47,9 @@ from azul.indexer.mirror_service import (
 )
 from azul.indexer.repository_service import (
     RepositoryService,
+)
+from azul.lib.collections import (
+    adict,
 )
 from azul.openapi import (
     format_description as fd,

@@ -18,15 +18,15 @@ from typing import (
 from azul import (
     R,
 )
-from azul.collections import (
-    none_safe_key,
-)
 from azul.indexer.document import (
     EntityType,
 )
 from azul.json_freeze import (
     freeze,
     thaw,
+)
+from azul.lib.collections import (
+    none_safe_key,
 )
 from azul.types import (
     AnyJSON,
