@@ -24,7 +24,7 @@ from azul import (
     cached_property,
     json_mapping,
 )
-from azul.json import (
+from azul.lib.json import (
     Serializable,
 )
 from azul.types import (

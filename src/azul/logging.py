@@ -15,7 +15,7 @@ from more_itertools import (
 )
 
 import azul
-from azul.json import (
+from azul.lib.json import (
     json_head,
 )
 from azul.lib.strings import (

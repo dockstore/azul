@@ -42,7 +42,7 @@ from azul.indexer.mirror_service import (
     MirrorAction,
     MirrorWorkerService,
 )
-from azul.json import (
+from azul.lib.json import (
     copy_json,
 )
 from azul.logging import (

@@ -109,9 +109,6 @@ from azul.indexer.field import (
 from azul.indexer.mirror_service import (
     MirrorService,
 )
-from azul.json import (
-    copy_json,
-)
 from azul.lib.attrs import (
     SerializableAttrs,
     is_uuid,
@@ -128,6 +125,9 @@ from azul.lib.collections import (
 )
 from azul.lib.functions import (
     compose,
+)
+from azul.lib.json import (
+    copy_json,
 )
 from azul.lib.strings import (
     double_quote as dq,

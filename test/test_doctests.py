@@ -14,7 +14,6 @@ import azul.indexer
 import azul.indexer.aggregate
 import azul.indexer.document
 import azul.indexer.repository_service
-import azul.json
 import azul.lib.attrs
 import azul.lib.bigquery
 import azul.lib.bytes
@@ -23,6 +22,7 @@ import azul.lib.collections
 import azul.lib.exceptions
 import azul.lib.functions
 import azul.lib.iterators
+import azul.lib.json
 import azul.lib.json_freeze
 import azul.lib.objects
 import azul.lib.strings
@@ -80,7 +80,6 @@ def load_tests(_loader,
         azul.indexer.aggregate,
         azul.indexer.document,
         azul.indexer.repository_service,
-        azul.json,
         azul.lib.attrs,
         azul.lib.bigquery,
         azul.lib.bytes,
@@ -89,6 +88,7 @@ def load_tests(_loader,
         azul.lib.exceptions,
         azul.lib.functions,
         azul.lib.iterators,
+        azul.lib.json,
         azul.lib.json_freeze,
         azul.lib.objects,
         azul.lib.strings,

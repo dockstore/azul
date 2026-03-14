@@ -9,7 +9,7 @@ from furl import (
 from azul.chalice import (
     AzulChaliceApp,
 )
-from azul.json import (
+from azul.lib.json import (
     copy_json,
 )
 from azul.logging import (

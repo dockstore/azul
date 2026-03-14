@@ -6,11 +6,11 @@
 
 import attrs
 
-from azul.json import (
-    DynamicPolymorphicSerializable,
-)
 from azul.lib.attrs import (
     DiscriminatingPolymorphicSerializableAttrs,
+)
+from azul.lib.json import (
+    DynamicPolymorphicSerializable,
 )
 from azul_test_case import (
     AzulUnitTestCase,

@@ -76,14 +76,14 @@ from azul.indexer.document import (
     EntityReference,
     EntityType,
 )
-from azul.json import (
-    copy_json,
-    json_hash,
-)
 from azul.lib.collections import (
     adict,
     compose_keys,
     none_safe_tuple_key,
+)
+from azul.lib.json import (
+    copy_json,
+    json_hash,
 )
 from azul.lib.strings import (
     single_quote as sq,

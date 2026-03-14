@@ -31,11 +31,11 @@ from azul.indexer.document import (
 from azul.indexer.field import (
     FieldTypes,
 )
-from azul.json import (
-    json_hash,
-)
 from azul.lib.collections import (
     alist,
+)
+from azul.lib.json import (
+    json_hash,
 )
 from azul.types import (
     JSON,

@@ -18,7 +18,7 @@ from azul.indexer import (
     SourceRef,
     SourceSpec,
 )
-from azul.json import (
+from azul.lib.json import (
     copy_any_json,
     copy_json,
 )

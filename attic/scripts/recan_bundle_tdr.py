@@ -41,7 +41,7 @@ from azul.indexer import (
 from azul.indexer.document import (
     EntityID,
 )
-from azul.json import (
+from azul.lib.json import (
     copy_json,
     copy_jsons,
 )

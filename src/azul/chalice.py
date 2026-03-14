@@ -57,14 +57,14 @@ from azul.auth import (
 from azul.csp import (
     CSP,
 )
-from azul.json import (
-    copy_json,
-)
 from azul.lib.collections import (
     deep_dict_merge,
 )
 from azul.lib.enums import (
     auto,
+)
+from azul.lib.json import (
+    copy_json,
 )
 from azul.lib.strings import (
     join_words as jw,

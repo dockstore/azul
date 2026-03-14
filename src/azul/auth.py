@@ -11,7 +11,7 @@ from typing import (
 
 import attr
 
-from azul.json import (
+from azul.lib.json import (
     copy_json,
 )
 from azul.types import (

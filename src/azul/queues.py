@@ -52,15 +52,15 @@ from azul.deployment import (
 from azul.files import (
     write_file_atomically,
 )
-from azul.json import (
-    StaticRegisteredPolymorphicSerializable,
-)
 from azul.lambdas import (
     LambdaFunctions,
 )
 from azul.lib.attrs import (
     DiscriminatingPolymorphicSerializableAttrs,
     SerializableAttrs,
+)
+from azul.lib.json import (
+    StaticRegisteredPolymorphicSerializable,
 )
 from azul.modules import (
     load_app_module,

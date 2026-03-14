@@ -77,11 +77,11 @@ from azul.indexer.index_service import (
     Tallies,
     log as index_service_log,
 )
-from azul.json import (
-    json_hash,
-)
 from azul.lib.collections import (
     NestedDict,
+)
+from azul.lib.json import (
+    json_hash,
 )
 from azul.lib.threads import (
     Latch,

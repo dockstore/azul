@@ -183,7 +183,7 @@ class TestAzulFlake8(AzulUnitTestCase):
                 import azul.modules
 
                 def foo_too():
-                    import azul.json
+                    import azul.lib.json
 
             def bar():
                 import azul.chalice

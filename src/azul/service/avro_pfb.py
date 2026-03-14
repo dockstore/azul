@@ -49,7 +49,7 @@ from azul.indexer.field import (
     pass_thru_int,
     pass_thru_json,
 )
-from azul.json import (
+from azul.lib.json import (
     copy_json,
 )
 from azul.plugins.metadata.hca.indexer.transform import (

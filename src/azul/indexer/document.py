@@ -40,11 +40,11 @@ from azul.indexer.field import (
     pass_thru_json,
     pass_thru_str,
 )
-from azul.json import (
-    Parseable,
-)
 from azul.lib.enums import (
     auto,
+)
+from azul.lib.json import (
+    Parseable,
 )
 from azul.types import (
     AnyJSON,

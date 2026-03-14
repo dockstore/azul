@@ -33,7 +33,7 @@ from azul.chalice import (
 from azul.deployment import (
     aws,
 )
-from azul.json import (
+from azul.lib.json import (
     copy_any_json,
     copy_json,
 )

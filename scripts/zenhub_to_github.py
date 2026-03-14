@@ -41,7 +41,7 @@ from azul import (
 from azul.http import (
     http_client,
 )
-from azul.json import (
+from azul.lib.json import (
     dig,
 )
 from azul.logging import (

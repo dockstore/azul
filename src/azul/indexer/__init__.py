@@ -31,13 +31,13 @@ from azul.indexer.field import (
     FieldTypes,
     pass_thru_str,
 )
-from azul.json import (
-    DynamicPolymorphicSerializable,
-    Parseable,
-)
 from azul.lib.attrs import (
     DiscriminatingPolymorphicSerializableAttrs,
     SerializableAttrs,
+)
+from azul.lib.json import (
+    DynamicPolymorphicSerializable,
+    Parseable,
 )
 from azul.types import (
     AnyJSON,

@@ -67,12 +67,12 @@ from azul.indexer.transform import (
     ReplicaTransformer,
     Transformer,
 )
-from azul.json import (
-    DynamicPolymorphicSerializable,
-    SerializableEnum,
-)
 from azul.lib.attrs import (
     DiscriminatingPolymorphicSerializableAttrs,
+)
+from azul.lib.json import (
+    DynamicPolymorphicSerializable,
+    SerializableEnum,
 )
 from azul.types import (
     AnyJSON,
