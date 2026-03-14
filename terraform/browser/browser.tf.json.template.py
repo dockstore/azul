@@ -30,7 +30,7 @@ from azul.lib.collections import (
     adict,
     dict_merge,
 )
-from azul.strings import (
+from azul.lib.strings import (
     double_quote as dq,
     join_words as jw,
     single_quote as sq,

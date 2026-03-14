@@ -129,6 +129,9 @@ from azul.lib.collections import (
 from azul.lib.functions import (
     compose,
 )
+from azul.lib.strings import (
+    double_quote as dq,
+)
 from azul.plugins import (
     ColumnMapping,
     DocumentSlice,
@@ -162,9 +165,6 @@ from azul.service.query_service import (
 from azul.service.storage_service import (
     StorageObjectNotFound,
     StorageService,
-)
-from azul.strings import (
-    double_quote as dq,
 )
 from azul.types import (
     FlatJSON,

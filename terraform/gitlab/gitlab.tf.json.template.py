@@ -25,7 +25,7 @@ from azul.lib.collections import (
     alist,
     dict_merge,
 )
-from azul.strings import (
+from azul.lib.strings import (
     departition,
     join_lines as jl,
     join_words as jw,

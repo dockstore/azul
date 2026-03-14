@@ -11,7 +11,7 @@ from azul import (
 from azul.deployment import (
     aws,
 )
-from azul.strings import (
+from azul.lib.strings import (
     parenthesize as _parens,
 )
 from azul.terraform import (

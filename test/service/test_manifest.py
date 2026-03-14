@@ -85,6 +85,9 @@ from azul.lib.collections import (
     compose_keys,
     none_safe_tuple_key,
 )
+from azul.lib.strings import (
+    single_quote as sq,
+)
 from azul.logging import (
     configure_test_logging,
     get_test_logger,
@@ -122,9 +125,6 @@ from azul.service.manifest_service import (
 )
 from azul.service.storage_service import (
     StorageService,
-)
-from azul.strings import (
-    single_quote as sq,
 )
 from azul.types import (
     JSON,

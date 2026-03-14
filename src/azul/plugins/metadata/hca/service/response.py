@@ -25,6 +25,9 @@ from azul.indexer import (
     SourceRef,
     SourceSpec,
 )
+from azul.lib.strings import (
+    to_camel_case,
+)
 from azul.plugins import (
     SpecialFields,
 )
@@ -38,9 +41,6 @@ from azul.service.index_service import (
 from azul.service.query_service import (
     ResponsePagination,
     ResponseTriple,
-)
-from azul.strings import (
-    to_camel_case,
 )
 from azul.types import (
     AnyJSON,

@@ -18,7 +18,7 @@ from more_itertools import (
 from azul import (
     R,
 )
-from azul.strings import (
+from azul.lib.strings import (
     single_quote as sq,
 )
 

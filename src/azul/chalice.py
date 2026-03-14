@@ -66,6 +66,9 @@ from azul.lib.collections import (
 from azul.lib.enums import (
     auto,
 )
+from azul.lib.strings import (
+    join_words as jw,
+)
 from azul.logging import (
     http_body_log_message,
 )
@@ -77,9 +80,6 @@ from azul.openapi import (
     params,
     responses,
     schema,
-)
-from azul.strings import (
-    join_words as jw,
 )
 from azul.types import (
     JSON,

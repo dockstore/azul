@@ -43,12 +43,12 @@ from azul.lib.bigquery import (
     BigQueryRows,
     backtick,
 )
+from azul.lib.strings import (
+    longest_common_prefix,
+)
 from azul.plugins import (
     RepositoryFileDownload,
     RepositoryPlugin,
-)
-from azul.strings import (
-    longest_common_prefix,
 )
 from azul.terra import (
     TDRClient,

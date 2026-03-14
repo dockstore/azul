@@ -69,6 +69,9 @@ from azul.indexer.transform import (
 from azul.lib.collections import (
     deep_dict_merge,
 )
+from azul.lib.strings import (
+    pluralize,
+)
 from azul.plugins.metadata.anvil.bundle import (
     AnvilBundle,
     EntityLink,
@@ -80,9 +83,6 @@ from azul.plugins.metadata.anvil.indexer.aggregate import (
     DiagnosisAggregator,
     DonorAggregator,
     FileAggregator,
-)
-from azul.strings import (
-    pluralize,
 )
 from azul.types import (
     AnyMutableJSON,

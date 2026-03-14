@@ -38,12 +38,12 @@ from azul import (
 from azul.lib.collections import (
     OrderedSet,
 )
-from azul.modules import (
-    load_script,
-)
-from azul.strings import (
+from azul.lib.strings import (
     back_quote as bq,
     join_grammatically,
+)
+from azul.modules import (
+    load_script,
 )
 from azul.template import (
     emit_text,

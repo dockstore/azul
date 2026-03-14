@@ -18,7 +18,7 @@ import azul
 from azul.json import (
     json_head,
 )
-from azul.strings import (
+from azul.lib.strings import (
     trunc_ellipses,
 )
 from azul.types import (

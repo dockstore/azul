@@ -23,7 +23,7 @@ from azul.deployment import (
 from azul.indexer.log_forwarding_controller import (
     LogForwardingController,
 )
-from azul.strings import (
+from azul.lib.strings import (
     double_quote as dq,
 )
 from azul.types import (

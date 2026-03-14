@@ -46,6 +46,9 @@ from azul.lib.bigquery import (
 from azul.lib.collections import (
     OrderedSet,
 )
+from azul.lib.strings import (
+    single_quote as sq,
+)
 from azul.plugins.metadata.hca import (
     HCAFile,
 )
@@ -56,9 +59,6 @@ from azul.plugins.repository.tdr import (
     TDRBundle,
     TDRBundleFQID,
     TDRPlugin,
-)
-from azul.strings import (
-    single_quote as sq,
 )
 from azul.terra import (
     TDRSourceRef,

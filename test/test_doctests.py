@@ -24,6 +24,7 @@ import azul.lib.collections
 import azul.lib.exceptions
 import azul.lib.functions
 import azul.lib.iterators
+import azul.lib.strings
 from azul.logging import (
     configure_test_logging,
 )
@@ -45,7 +46,6 @@ import azul.service.controller
 import azul.service.drs_controller
 import azul.service.manifest_service
 import azul.service.repository_controller
-import azul.strings
 import azul.terra
 import azul.terraform
 import azul.threads
@@ -90,6 +90,7 @@ def load_tests(_loader,
         azul.lib.exceptions,
         azul.lib.functions,
         azul.lib.iterators,
+        azul.lib.strings,
         azul.objects,
         azul.openapi,
         azul.openapi.params,
@@ -104,7 +105,6 @@ def load_tests(_loader,
         azul.service.drs_controller,
         azul.service.manifest_service,
         azul.service.repository_controller,
-        azul.strings,
         azul.terra,
         azul.terraform,
         azul.threads,

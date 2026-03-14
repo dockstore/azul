@@ -85,14 +85,14 @@ from azul.indexer import (
 from azul.lib.bigquery import (
     BigQueryRows,
 )
+from azul.lib.strings import (
+    trunc_ellipses,
+)
 from azul.oauth2 import (
     CredentialsProvider,
     OAuth2Client,
     ServiceAccountCredentials,
     TokenCredentials,
-)
-from azul.strings import (
-    trunc_ellipses,
 )
 from azul.types import (
     JSON,

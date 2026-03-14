@@ -18,6 +18,9 @@ from azul import (
 from azul.auth import (
     Authentication,
 )
+from azul.lib.strings import (
+    pluralize,
+)
 from azul.openapi import (
     format_description as fd,
     params,
@@ -32,9 +35,6 @@ from azul.service import (
 )
 from azul.service.source_controller import (
     SourceController,
-)
-from azul.strings import (
-    pluralize,
 )
 
 
