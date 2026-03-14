@@ -13,7 +13,7 @@ from azul.docker import (
 from azul.es import (
     ESClientFactory,
 )
-from azul.json_freeze import (
+from azul.lib.json_freeze import (
     freeze,
     sort_frozen,
 )

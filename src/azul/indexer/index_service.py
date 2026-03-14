@@ -82,7 +82,7 @@ from azul.indexer.field import (
 from azul.indexer.transform import (
     Transformer,
 )
-from azul.json_freeze import (
+from azul.lib.json_freeze import (
     freeze,
 )
 from azul.logging import (

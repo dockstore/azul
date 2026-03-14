@@ -128,12 +128,12 @@ from azul.indexer.index_service import (
 from azul.indexer.mirror_service import (
     MirrorService,
 )
-from azul.json_freeze import (
-    freeze,
-)
 from azul.lib.collections import (
     alist,
     lookup,
+)
+from azul.lib.json_freeze import (
+    freeze,
 )
 from azul.logging import (
     configure_test_logging,

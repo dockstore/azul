@@ -21,12 +21,12 @@ from azul import (
 from azul.indexer.document import (
     EntityType,
 )
-from azul.json_freeze import (
-    freeze,
-    thaw,
-)
 from azul.lib.collections import (
     none_safe_key,
+)
+from azul.lib.json_freeze import (
+    freeze,
+    thaw,
 )
 from azul.types import (
     AnyJSON,
