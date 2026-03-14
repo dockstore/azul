@@ -14,7 +14,6 @@ from azul import (
     CatalogName,
     config,
     iif,
-    json_mapping,
 )
 from azul.drs import (
     HostBasedDRSURI,
@@ -38,6 +37,7 @@ from azul.lib.types import (
     json_dict_of_dicts,
     json_int,
     json_list,
+    json_mapping,
     json_str,
     optional,
 )

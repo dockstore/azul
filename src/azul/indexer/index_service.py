@@ -41,7 +41,6 @@ from opensearchpy.helpers import (
 from azul import (
     CatalogName,
     config,
-    json_mapping,
 )
 from azul.deployment import (
     aws,
@@ -95,6 +94,7 @@ from azul.lib.types import (
     PrimitiveJSON,
     json_element_mappings,
     json_items_are_sequences_of_mappings,
+    json_mapping,
     json_sequence,
 )
 from azul.logging import (

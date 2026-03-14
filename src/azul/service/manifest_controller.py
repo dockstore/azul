@@ -21,7 +21,6 @@ from furl import (
 from azul import (
     cached_property,
     config,
-    json_mapping,
     mutable_furl,
 )
 from azul.auth import (
@@ -37,6 +36,7 @@ from azul.lib.types import (
     LambdaContext,
     is_of_type,
     json_int,
+    json_mapping,
     not_none,
     optional,
 )

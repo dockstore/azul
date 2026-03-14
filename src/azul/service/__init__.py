@@ -30,7 +30,6 @@ from more_itertools import (
 
 from azul import (
     CatalogName,
-    json_mapping,
     mutable_furl,
 )
 from azul.lib import (
@@ -45,6 +44,7 @@ from azul.lib.types import (
     PrimitiveJSON,
     check_type,
     json_element_strings,
+    json_mapping,
 )
 from azul.plugins import (
     FieldName,

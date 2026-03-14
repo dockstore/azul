@@ -21,7 +21,6 @@ from attrs import (
 
 from azul import (
     cached_property,
-    json_mapping,
 )
 from azul.lib import (
     R,
@@ -33,6 +32,7 @@ from azul.lib.types import (
     AnyJSON,
     MutableJSON,
     json_int,
+    json_mapping,
 )
 
 

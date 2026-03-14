@@ -14,7 +14,6 @@ from azul import (
     CatalogName,
     cached_property,
     config,
-    json_mapping,
 )
 from azul.deployment import (
     aws,
@@ -39,6 +38,7 @@ from azul.indexer.repository_service import (
 from azul.lib.types import (
     JSON,
     json_int,
+    json_mapping,
     json_str,
 )
 from azul.queues import (

@@ -35,7 +35,6 @@ from azul import (
     CatalogName,
     cached_property,
     config,
-    json_mapping,
     mutable_furl,
 )
 from azul.auth import (
@@ -76,6 +75,7 @@ from azul.lib.types import (
     JSON,
     MutableJSON,
     json_element_strings,
+    json_mapping,
 )
 from azul.plugins import (
     File,
