@@ -22,7 +22,6 @@ import attr
 from furl import (
     furl,
 )
-
 import git
 
 from azul import (

@@ -74,14 +74,14 @@ from azul.types import (
 log = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
+    from mypy_boto3_sqs.service_resource import (
+        Message,
+        Queue,
+    )
     from mypy_boto3_sqs.type_defs import (
         ChangeMessageVisibilityBatchRequestEntryTypeDef,
         SendMessageBatchRequestEntryTypeDef,
         SendMessageRequestQueueSendMessageTypeDef,
-    )
-    from mypy_boto3_sqs.service_resource import (
-        Message,
-        Queue,
     )
 
 

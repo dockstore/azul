@@ -55,6 +55,7 @@ class EnvHook:
 
     def _main(self, argv):
         import argparse
+
         from azul.args import (
             AzulArgumentHelpFormatter,
         )

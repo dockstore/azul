@@ -371,6 +371,7 @@ class AzulImports:
         from pathlib import (
             Path,
         )
+
         import mypy
         bundled_stubs = Path(mypy.__file__).parent / 'typeshed' / 'stdlib'
         sys.path.append(str(bundled_stubs))

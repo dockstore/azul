@@ -46,7 +46,6 @@ from azul.collections import (
     dict_merge,
     lookup,
 )
-
 from azul.indexer.document import (
     EntityReference,
 )

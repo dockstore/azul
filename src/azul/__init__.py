@@ -1018,8 +1018,8 @@ class Config:
         """
         catalogs = self.environ['AZUL_CATALOGS']
         if catalogs.startswith('Qlpo'):  # bzip2 header, `BZh`, base64-encoded
-            import bz2
             import base64
+            import bz2
             catalogs = bz2.decompress(base64.b64decode(catalogs)).decode()
         catalogs = _json.loads(catalogs)
         assert bool(catalogs), R('No catalogs configured')

@@ -64,9 +64,6 @@ from azul.types import (
 )
 
 if TYPE_CHECKING:
-    from azul import (
-        Config,
-    )
     from mypy_boto3_apigateway import (
         APIGatewayClient,
     )
@@ -122,6 +119,10 @@ if TYPE_CHECKING:
     )
     from mypy_boto3_sts import (
         STSClient,
+    )
+
+    from azul import (
+        Config,
     )
 
 log = logging.getLogger(__name__)

@@ -90,15 +90,15 @@ from azul.uuids import (
 )
 
 if TYPE_CHECKING:
-    from azul.service.query_service import (
-        AggregationStage,
-        FilterStage,
-    )
     # These are only needed for type hints and would otherwise introduce a
     # circular import since the service layer heavily depends on the plugin.
     from azul.service.index_service import (
         SearchResponseStage,
         SummaryResponseStage,
+    )
+    from azul.service.query_service import (
+        AggregationStage,
+        FilterStage,
     )
 
 #: Field names are used to reference fields in requests to the service, e.g.,
