@@ -31,10 +31,6 @@ from azul import (
     config,
     uuids,
 )
-from azul.bigquery import (
-    BigQueryRow,
-    backtick,
-)
 from azul.collections import (
     singleton,
 )
@@ -47,6 +43,10 @@ from azul.indexer import (
 from azul.indexer.document import (
     EntityReference,
     EntityType,
+)
+from azul.lib.bigquery import (
+    BigQueryRow,
+    backtick,
 )
 from azul.plugins.metadata.anvil import (
     AnvilFile,

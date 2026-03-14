@@ -31,10 +31,6 @@ from azul import (
     config,
     iif,
 )
-from azul.bigquery import (
-    BigQueryRow,
-    backtick,
-)
 from azul.collections import (
     OrderedSet,
 )
@@ -45,6 +41,10 @@ from azul.indexer.document import (
     EntityID,
     EntityReference,
     EntityType,
+)
+from azul.lib.bigquery import (
+    BigQueryRow,
+    backtick,
 )
 from azul.plugins.metadata.hca import (
     HCAFile,

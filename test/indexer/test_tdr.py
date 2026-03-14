@@ -63,14 +63,14 @@ from azul import (
 from azul.auth import (
     OAuth2,
 )
-from azul.bigquery import (
-    BigQueryRow,
-)
 from azul.docker import (
     resolve_docker_image_for_launch,
 )
 from azul.indexer import (
     Prefix,
+)
+from azul.lib.bigquery import (
+    BigQueryRow,
 )
 from azul.logging import (
     configure_test_logging,

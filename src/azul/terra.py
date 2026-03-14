@@ -65,9 +65,6 @@ from azul import (
 from azul.auth import (
     OAuth2,
 )
-from azul.bigquery import (
-    BigQueryRows,
-)
 from azul.deployment import (
     aws,
 )
@@ -84,6 +81,9 @@ from azul.http import (
 from azul.indexer import (
     SourceRef,
     SourceSpec,
+)
+from azul.lib.bigquery import (
+    BigQueryRows,
 )
 from azul.oauth2 import (
     CredentialsProvider,

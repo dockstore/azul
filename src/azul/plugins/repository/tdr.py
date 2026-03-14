@@ -31,10 +31,6 @@ from azul.auth import (
     Authentication,
     OAuth2,
 )
-from azul.bigquery import (
-    BigQueryRows,
-    backtick,
-)
 from azul.drs import (
     AccessMethod,
     DRSObject,
@@ -42,6 +38,10 @@ from azul.drs import (
 from azul.indexer import (
     Bundle,
     SourcedBundleFQID,
+)
+from azul.lib.bigquery import (
+    BigQueryRows,
+    backtick,
 )
 from azul.plugins import (
     RepositoryFileDownload,
