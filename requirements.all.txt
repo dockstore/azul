@@ -99,7 +99,7 @@ pycodestyle==2.14.0
 pycparser==3.0
 pyflakes==3.4.0
 pygithub==2.8.1
-pyjwt==2.11.0
+pyjwt==2.12.0
 pynacl==1.6.2
 pyopenssl==25.3.0
 pyparsing==3.3.2
