@@ -9,7 +9,6 @@ from chalice import (
 )
 
 from azul import (
-    format_description as fd,
     mutable_furl,
 )
 from azul.chalice import (
@@ -19,6 +18,7 @@ from azul.lib.types import (
     JSON,
 )
 from azul.openapi import (
+    format_description as fd,
     params,
     responses,
     schema,
