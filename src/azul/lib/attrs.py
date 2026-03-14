@@ -37,9 +37,11 @@ from more_itertools import (
 )
 
 from azul import (
-    R,
     cached_property,
     config,
+)
+from azul.lib import (
+    R,
 )
 from azul.lib.functions import (
     compose,

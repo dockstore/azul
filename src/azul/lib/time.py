@@ -9,7 +9,7 @@ import email.utils
 import re
 import time
 
-from azul import (
+from azul.lib import (
     R,
 )
 from azul.lib.types import (

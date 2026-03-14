@@ -40,7 +40,6 @@ from opensearchpy.helpers import (
 
 from azul import (
     CatalogName,
-    R,
     config,
     json_mapping,
 )
@@ -81,6 +80,9 @@ from azul.indexer.field import (
 )
 from azul.indexer.transform import (
     Transformer,
+)
+from azul.lib import (
+    R,
 )
 from azul.lib.json_freeze import (
     freeze,

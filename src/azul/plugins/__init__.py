@@ -29,7 +29,6 @@ from more_itertools import (
 
 from azul import (
     CatalogName,
-    R,
     cached_property,
     config,
 )
@@ -63,6 +62,9 @@ from azul.indexer.document import (
 from azul.indexer.transform import (
     ReplicaTransformer,
     Transformer,
+)
+from azul.lib import (
+    R,
 )
 from azul.lib.attrs import (
     DiscriminatingPolymorphicSerializableAttrs,

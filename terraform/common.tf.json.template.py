@@ -3,8 +3,10 @@ from pathlib import (
 )
 
 from azul import (
-    R,
     config,
+)
+from azul.lib import (
+    R,
 )
 from azul.terraform import (
     emit_tf,

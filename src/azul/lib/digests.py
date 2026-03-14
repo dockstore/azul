@@ -7,7 +7,7 @@ from typing import (
 import attrs
 import resumablehash
 
-from azul import (
+from azul.lib import (
     R,
 )
 from azul.lib.types import (

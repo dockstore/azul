@@ -24,11 +24,11 @@ from furl import (
 )
 import git
 
-from azul import (
-    R,
-)
 from azul.indexer.document import (
     EntityReference,
+)
+from azul.lib import (
+    R,
 )
 from azul.lib.types import (
     JSON,

@@ -59,7 +59,6 @@ from requests import (
 )
 
 from azul import (
-    R,
     cache,
     config,
 )
@@ -75,6 +74,9 @@ from azul.indexer.document import (
     EntityID,
     EntityReference,
     EntityType,
+)
+from azul.lib import (
+    R,
 )
 from azul.lib.collections import (
     adict,

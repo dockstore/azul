@@ -9,13 +9,15 @@ from typing import (
 
 from azul import (
     CatalogName,
-    R,
     cache_per_thread,
     cached_property,
     config,
 )
 from azul.azulclient import (
     AzulClient,
+)
+from azul.lib import (
+    R,
 )
 from azul.logging import (
     configure_script_logging,

@@ -11,12 +11,14 @@ from chalice import (
 
 from azul import (
     CatalogName,
-    R,
     config,
     mutable_furl,
 )
 from azul.auth import (
     Authentication,
+)
+from azul.lib import (
+    R,
 )
 from azul.lib.strings import (
     pluralize,

@@ -20,9 +20,11 @@ from attrs import (
 )
 
 from azul import (
-    R,
     cached_property,
     json_mapping,
+)
+from azul.lib import (
+    R,
 )
 from azul.lib.json import (
     Serializable,

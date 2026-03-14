@@ -6,7 +6,6 @@ import logging
 import sys
 
 from azul import (
-    R,
     config,
 )
 from azul.args import (
@@ -14,6 +13,9 @@ from azul.args import (
 )
 from azul.lambdas import (
     LambdaFunctions,
+)
+from azul.lib import (
+    R,
 )
 from azul.logging import (
     configure_script_logging,

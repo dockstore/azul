@@ -21,7 +21,6 @@ from app_test_case import (
     LocalAppTestCase,
 )
 from azul import (
-    R,
     cached_property,
     config,
 )
@@ -41,6 +40,9 @@ from azul.indexer.mirror_service import (
     FilePart,
     MirrorAction,
     MirrorWorkerService,
+)
+from azul.lib import (
+    R,
 )
 from azul.lib.json import (
     copy_json,

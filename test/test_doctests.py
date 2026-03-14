@@ -12,6 +12,7 @@ import azul.indexer
 import azul.indexer.aggregate
 import azul.indexer.document
 import azul.indexer.repository_service
+import azul.lib
 import azul.lib.attrs
 import azul.lib.bigquery
 import azul.lib.bytes
@@ -78,6 +79,7 @@ def load_tests(_loader,
         azul.indexer.aggregate,
         azul.indexer.document,
         azul.indexer.repository_service,
+        azul.lib,
         azul.lib.attrs,
         azul.lib.bigquery,
         azul.lib.bytes,

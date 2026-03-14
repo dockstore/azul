@@ -33,7 +33,6 @@ from furl import (
 
 from azul import (
     CatalogName,
-    R,
     cached_property,
     config,
     json_mapping,
@@ -55,6 +54,9 @@ from azul.indexer import (
     SourceConfig,
     SourceRef,
     SourceSpec,
+)
+from azul.lib import (
+    R,
 )
 from azul.lib.attrs import (
     SerializableAttrs,

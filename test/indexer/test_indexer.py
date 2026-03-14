@@ -45,7 +45,6 @@ from opensearchpy import (
 )
 
 from azul import (
-    R,
     cached_property,
     config,
     true,
@@ -76,6 +75,9 @@ from azul.indexer.index_service import (
     IndexWriter,
     Tallies,
     log as index_service_log,
+)
+from azul.lib import (
+    R,
 )
 from azul.lib.collections import (
     NestedDict,

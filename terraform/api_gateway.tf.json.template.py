@@ -9,7 +9,6 @@ from more_itertools import (
 )
 
 from azul import (
-    R,
     cached_property,
     config,
     iif,
@@ -20,6 +19,9 @@ from azul.chalice import (
 from azul.deployment import (
     aws,
     public_ip,
+)
+from azul.lib import (
+    R,
 )
 from azul.lib.objects import (
     InternMeta,

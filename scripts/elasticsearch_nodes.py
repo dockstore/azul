@@ -20,11 +20,13 @@ from more_itertools import (
 )
 
 from azul import (
-    R,
     config,
 )
 from azul.es import (
     ESClientFactory,
+)
+from azul.lib import (
+    R,
 )
 from azul.logging import (
     configure_script_logging,

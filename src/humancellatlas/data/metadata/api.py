@@ -35,12 +35,14 @@ from furl import (
 )
 
 from azul import (
-    R,
     cached_property,
     config,
 )
 from azul.indexer.document import (
     EntityReference,
+)
+from azul.lib import (
+    R,
 )
 from azul.lib.collections import (
     LookupDefault,

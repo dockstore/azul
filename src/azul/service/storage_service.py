@@ -40,11 +40,11 @@ from werkzeug.http import (
     parse_dict_header,
 )
 
-from azul import (
-    R,
-)
 from azul.deployment import (
     aws,
+)
+from azul.lib import (
+    R,
 )
 from azul.lib.collections import (
     OrderedSet,

@@ -57,7 +57,6 @@ import urllib3.response
 
 from azul import (
     Config,
-    R,
     cache,
     config,
     mutable_furl,
@@ -81,6 +80,9 @@ from azul.http import (
 from azul.indexer import (
     SourceRef,
     SourceSpec,
+)
+from azul.lib import (
+    R,
 )
 from azul.lib.bigquery import (
     BigQueryRows,

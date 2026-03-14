@@ -35,7 +35,6 @@ import requests
 
 from azul import (
     CatalogName,
-    R,
     cached_property,
     config,
     dss,
@@ -46,6 +45,9 @@ from azul.drs import (
     dos_object_url_path,
     drs_object_uri,
     drs_object_url_path,
+)
+from azul.lib import (
+    R,
 )
 from azul.lib.types import (
     JSON,

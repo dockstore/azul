@@ -15,7 +15,7 @@ from more_itertools import (
     prepend,
 )
 
-from azul import (
+from azul.lib import (
     R,
 )
 from azul.lib.strings import (

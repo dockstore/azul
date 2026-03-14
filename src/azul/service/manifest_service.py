@@ -79,7 +79,6 @@ from opensearchpy.helpers.response import (
 
 from azul import (
     CatalogName,
-    R,
     cache,
     cached_property,
     config,
@@ -108,6 +107,9 @@ from azul.indexer.field import (
 )
 from azul.indexer.mirror_service import (
     MirrorService,
+)
+from azul.lib import (
+    R,
 )
 from azul.lib.attrs import (
     SerializableAttrs,

@@ -27,7 +27,6 @@ from more_itertools import (
 )
 
 from azul import (
-    R,
     config,
     iif,
 )
@@ -38,6 +37,9 @@ from azul.indexer.document import (
     EntityID,
     EntityReference,
     EntityType,
+)
+from azul.lib import (
+    R,
 )
 from azul.lib.bigquery import (
     BigQueryRow,

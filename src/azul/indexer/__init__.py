@@ -24,12 +24,14 @@ from typing import (
 import attrs
 
 from azul import (
-    R,
     config,
 )
 from azul.indexer.field import (
     FieldTypes,
     pass_thru_str,
+)
+from azul.lib import (
+    R,
 )
 from azul.lib.attrs import (
     DiscriminatingPolymorphicSerializableAttrs,

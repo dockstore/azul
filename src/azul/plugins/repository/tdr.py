@@ -22,7 +22,6 @@ from furl import (
 )
 
 from azul import (
-    R,
     cache_per_thread,
     cached_property,
     config,
@@ -38,6 +37,9 @@ from azul.drs import (
 from azul.indexer import (
     Bundle,
     SourcedBundleFQID,
+)
+from azul.lib import (
+    R,
 )
 from azul.lib.bigquery import (
     BigQueryRows,

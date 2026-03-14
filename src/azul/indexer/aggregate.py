@@ -15,11 +15,11 @@ from typing import (
     TYPE_CHECKING,
 )
 
-from azul import (
-    R,
-)
 from azul.indexer.document import (
     EntityType,
+)
+from azul.lib import (
+    R,
 )
 from azul.lib.collections import (
     none_safe_key,

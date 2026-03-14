@@ -21,7 +21,6 @@ from furl import (
 )
 
 from azul import (
-    R,
     lru_cache,
 )
 from azul.auth import (
@@ -34,6 +33,9 @@ from azul.indexer import (
     SimpleSourceSpec,
     SourceRef,
     SourcedBundleFQID,
+)
+from azul.lib import (
+    R,
 )
 from azul.lib.time import (
     parse_dcp2_version,

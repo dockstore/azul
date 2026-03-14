@@ -22,7 +22,7 @@ from more_itertools.more import (
     mark_ends,
 )
 
-from azul import (
+from azul.lib import (
     R,
 )
 from azul.lib.types import (

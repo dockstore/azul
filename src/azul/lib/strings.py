@@ -8,7 +8,7 @@ from more_itertools import (
     minmax,
 )
 
-from azul import (
+from azul.lib import (
     R,
 )
 

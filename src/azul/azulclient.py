@@ -31,7 +31,6 @@ from urllib3.exceptions import (
 
 from azul import (
     CatalogName,
-    R,
     cache,
     cached_property,
     config,
@@ -60,6 +59,9 @@ from azul.indexer.mirror_service import (
 )
 from azul.indexer.repository_service import (
     RepositoryService,
+)
+from azul.lib import (
+    R,
 )
 from azul.lib.types import (
     JSON,

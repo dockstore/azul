@@ -9,8 +9,10 @@ import sys
 
 from azul import (
     CatalogName,
-    R,
     config,
+)
+from azul.lib import (
+    R,
 )
 from azul.args import (
     AzulArgumentHelpFormatter,

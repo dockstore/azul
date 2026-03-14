@@ -13,7 +13,7 @@ from more_itertools import (
     one,
 )
 
-from azul import (
+from azul.lib import (
     R,
 )
 from azul.lib.types import (

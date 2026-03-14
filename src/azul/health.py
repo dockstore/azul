@@ -30,7 +30,6 @@ import requests
 
 from azul import (
     CatalogName,
-    R,
     cache,
     cached_property,
     config,
@@ -46,6 +45,9 @@ from azul.deployment import (
 )
 from azul.es import (
     ESClientFactory,
+)
+from azul.lib import (
+    R,
 )
 from azul.lib.types import (
     JSON,

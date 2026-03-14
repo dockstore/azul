@@ -30,9 +30,11 @@ from requirements.requirement import (
 )
 
 from azul import (
-    R,
     cached_property,
     config,
+)
+from azul.lib import (
+    R,
 )
 from azul.logging import (
     configure_script_logging,

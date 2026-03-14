@@ -30,9 +30,11 @@ from more_itertools import (
 
 from azul import (
     CatalogName,
-    R,
     json_mapping,
     mutable_furl,
+)
+from azul.lib import (
+    R,
 )
 from azul.lib.types import (
     AnyJSON,

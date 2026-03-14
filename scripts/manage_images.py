@@ -25,7 +25,6 @@ from more_itertools import (
 import posix_ipc
 
 from azul import (
-    R,
     config,
 )
 from azul.args import (
@@ -46,6 +45,9 @@ from azul.docker import (
     get_docker_image_gist,
     get_docker_image_gists,
     platforms,
+)
+from azul.lib import (
+    R,
 )
 from azul.lib.files import (
     write_file_atomically,

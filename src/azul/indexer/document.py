@@ -23,7 +23,6 @@ from more_itertools import (
 
 from azul import (
     CatalogName,
-    R,
     config,
 )
 from azul.indexer import (
@@ -39,6 +38,9 @@ from azul.indexer.field import (
     pass_thru_int,
     pass_thru_json,
     pass_thru_str,
+)
+from azul.lib import (
+    R,
 )
 from azul.lib.enums import (
     auto,

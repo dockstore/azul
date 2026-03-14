@@ -12,11 +12,13 @@ from furl import (
 )
 
 from azul import (
-    R,
     config,
 )
 from azul.http import (
     http_client,
+)
+from azul.lib import (
+    R,
 )
 from azul.lib.types import (
     JSON,

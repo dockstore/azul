@@ -12,7 +12,6 @@ from attrs import (
 
 from azul import (
     CatalogName,
-    R,
     config,
     iif,
     json_mapping,
@@ -25,6 +24,9 @@ from azul.indexer.document import (
     DocumentType,
     EntityType,
     IndexName,
+)
+from azul.lib import (
+    R,
 )
 from azul.lib.digests import (
     Digest,

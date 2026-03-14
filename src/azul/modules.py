@@ -14,8 +14,10 @@ from typing import (
 )
 
 from azul import (
-    R,
     config,
+)
+from azul.lib import (
+    R,
 )
 from azul.lib.types import (
     not_none,

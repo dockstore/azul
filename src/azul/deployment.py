@@ -47,13 +47,15 @@ from more_itertools import (
 
 from azul import (
     Netloc,
-    R,
     cache,
     cached_property,
     config,
 )
 from azul.http import (
     http_client,
+)
+from azul.lib import (
+    R,
 )
 from azul.lib.types import (
     JSONs,

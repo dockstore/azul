@@ -34,7 +34,6 @@ from more_itertools import (
 )
 
 from azul import (
-    R,
     config,
 )
 from azul.indexer.field import (
@@ -48,6 +47,9 @@ from azul.indexer.field import (
     null_str,
     pass_thru_int,
     pass_thru_json,
+)
+from azul.lib import (
+    R,
 )
 from azul.lib.json import (
     copy_json,

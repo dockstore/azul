@@ -18,8 +18,10 @@ from referencing import (
 import requests
 
 from azul import (
-    R,
     cached_property,
+)
+from azul.lib import (
+    R,
 )
 from azul.lib.types import (
     JSON,

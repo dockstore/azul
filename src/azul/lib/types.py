@@ -562,7 +562,7 @@ def derived_type_params(cls: type, /, *, root: Any = None) -> TypeParams:
     >>> derived_type_params(M, root=A)
     {T1: <class 'int'>, T2: <class 'float'>}
     """
-    from azul import (
+    from azul.lib import (
         R,
     )
     assert isinstance(cls, type), R('Not a type', cls, type(cls))

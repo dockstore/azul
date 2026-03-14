@@ -19,12 +19,14 @@ from furl import (
 )
 
 from azul import (
-    R,
     cached_property,
     iif,
 )
 from azul.indexer.document import (
     EntityType,
+)
+from azul.lib import (
+    R,
 )
 from azul.lib.types import (
     JSON,
