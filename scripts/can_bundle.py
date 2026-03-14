@@ -24,11 +24,11 @@ from azul import (
 from azul.args import (
     AzulArgumentHelpFormatter,
 )
-from azul.files import (
-    write_file_atomically,
-)
 from azul.indexer import (
     Bundle,
+)
+from azul.lib.files import (
+    write_file_atomically,
 )
 from azul.lib.types import (
     AnyJSON,

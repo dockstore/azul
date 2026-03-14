@@ -47,7 +47,7 @@ from azul.docker import (
     get_docker_image_gists,
     platforms,
 )
-from azul.files import (
+from azul.lib.files import (
     write_file_atomically,
 )
 from azul.logging import (

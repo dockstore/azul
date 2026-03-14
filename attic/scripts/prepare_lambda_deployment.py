@@ -9,7 +9,7 @@ import sys
 from azul import (
     config,
 )
-from azul.files import (
+from azul.lib.files import (
     write_file_atomically,
 )
 from azul.logging import (

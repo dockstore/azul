@@ -8,7 +8,6 @@ import azul.docker
 import azul.doctests
 import azul.drs
 import azul.dss
-import azul.files
 import azul.http
 import azul.indexer
 import azul.indexer.aggregate
@@ -20,6 +19,7 @@ import azul.lib.bytes
 import azul.lib.caching
 import azul.lib.collections
 import azul.lib.exceptions
+import azul.lib.files
 import azul.lib.functions
 import azul.lib.iterators
 import azul.lib.json
@@ -74,7 +74,6 @@ def load_tests(_loader,
         azul.docker,
         azul.drs,
         azul.dss,
-        azul.files,
         azul.http,
         azul.indexer,
         azul.indexer.aggregate,
@@ -86,6 +85,7 @@ def load_tests(_loader,
         azul.lib.caching,
         azul.lib.collections,
         azul.lib.exceptions,
+        azul.lib.files,
         azul.lib.functions,
         azul.lib.iterators,
         azul.lib.json,

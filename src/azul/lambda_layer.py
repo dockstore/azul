@@ -20,7 +20,7 @@ from azul import (
 from azul.deployment import (
     aws,
 )
-from azul.files import (
+from azul.lib.files import (
     file_sha1,
 )
 

@@ -24,7 +24,7 @@ from azul import (
 from azul.chalice import (
     AzulChaliceApp,
 )
-from azul.files import (
+from azul.lib.files import (
     write_file_atomically,
 )
 from azul.modules import (
