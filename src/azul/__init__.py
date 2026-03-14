@@ -51,10 +51,10 @@ from typing_extensions import (
     TypeIs,
 )
 
-import azul.caching
 from azul.collections import (
     atuple,
 )
+import azul.lib.caching
 from azul.openapi import (
     format_description,
 )
@@ -86,7 +86,7 @@ Netloc = tuple[str, int]
 
 CatalogName = str
 
-cached_property = azul.caching.CachedProperty
+cached_property = azul.lib.caching.CachedProperty
 
 lru_cache = functools.lru_cache
 
@@ -106,7 +106,7 @@ else:
 
 
 def cache_per_thread(f, /):
-    return azul.caching.lru_cache_per_thread(maxsize=None)(f)
+    return azul.lib.caching.lru_cache_per_thread(maxsize=None)(f)
 
 
 @final
