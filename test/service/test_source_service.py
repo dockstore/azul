@@ -25,9 +25,6 @@ from mypy_boto3_dynamodb.literals import (
 from app_test_case import (
     LocalAppTestCase,
 )
-from azul import (
-    NotInLambdaContextException,
-)
 from azul.http import (
     http_client,
 )
@@ -37,6 +34,9 @@ from azul.indexer import (
 from azul.logging import (
     configure_test_logging,
     get_test_logger,
+)
+from azul.resources import (
+    NotInLambdaContextException,
 )
 from azul.service.source_service import (
     Expired,

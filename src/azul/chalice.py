@@ -47,7 +47,6 @@ from furl import (
 
 from azul import (
     config,
-    open_resource,
 )
 from azul.auth import (
     Authentication,
@@ -91,6 +90,9 @@ from azul.openapi import (
     params,
     responses,
     schema,
+)
+from azul.resources import (
+    open_resource,
 )
 
 log = logging.getLogger(__name__)

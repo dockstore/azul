@@ -10,9 +10,7 @@ from typing import (
 
 from azul import (
     CatalogName,
-    NotInLambdaContextException,
     config,
-    open_resource,
 )
 from azul.auth import (
     Authentication,
@@ -36,6 +34,10 @@ from azul.lib.types import (
 )
 from azul.plugins import (
     RepositoryPlugin,
+)
+from azul.resources import (
+    NotInLambdaContextException,
+    open_resource,
 )
 
 log = logging.getLogger(__name__)
