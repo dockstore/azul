@@ -88,3 +88,7 @@ def iif[T, E](condition: bool, then: T, otherwise: E | Sentinel = absent) -> T |
             return type(then)()
         else:
             return otherwise
+
+
+def either[T, E](value: T | None, alternative: E) -> T | E:
+    return alternative if value is None else value

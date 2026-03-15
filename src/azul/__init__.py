@@ -1815,10 +1815,6 @@ def str_to_bool(string: str):
         raise ValueError(string)
 
 
-def either[T, E](value: T | None, alternative: E) -> T | E:
-    return alternative if value is None else value
-
-
 def _check_submodule_conflicts():
     file_path = Path(__file__)
     assert file_path.name == '__init__.py', file_path
