@@ -1803,7 +1803,7 @@ class Config:
         return self._boolean(self.environ['AZUL_ENABLE_BUNDLE_NOTIFICATIONS'])
 
 
-config: Config = Config()  # yes, the type hint does help PyCharm
+config = Config()
 
 
 def str_to_bool(string: str):
