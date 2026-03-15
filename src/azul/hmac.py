@@ -103,7 +103,8 @@ class SignatureHelper(HTTPSignatureKeyResolver):
         assert body is not None
         digest = hashlib.sha256(body).digest()
         assert isinstance(request.headers, requests.structures.CaseInsensitiveDict)
-        request.headers['Content-Digest'] = str(http_sfv.Dictionary({'sha-256': digest}))
+        header = http_sfv.dictionary.Dictionary({'sha-256': digest})
+        request.headers['Content-Digest'] = str(header)
         key, key_id = aws.get_hmac_key_and_id()
         self.signer.sign(request,
                          key_id=key_id,
