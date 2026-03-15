@@ -77,7 +77,11 @@ class SignatureHelper(HTTPSignatureKeyResolver):
             endpoint = f'http://{base_url}{path}'
             method = current_request.context['httpMethod']
             headers = current_request.headers
-            request = requests.Request(method, endpoint, headers, data=current_request.raw_body).prepare()
+            request = requests.models.Request(method=method,
+                                              url=endpoint,
+                                              headers=headers,
+                                              data=current_request.raw_body)
+            request = request.prepare()
             result = one(self.verifier.verify(request))
         except BaseException as e:
             log.warning('Exception while validating HMAC: ', exc_info=e)
@@ -85,14 +89,16 @@ class SignatureHelper(HTTPSignatureKeyResolver):
         else:
             return result.parameters
 
-    def sign_and_send(self, request: requests.Request) -> requests.Response:
+    def sign_and_send(self,
+                      request: requests.models.Request
+                      ) -> requests.models.Response:
         request = request.prepare()
         self.sign(request)
         with requests.sessions.Session() as session:
             response = session.send(request)
         return response
 
-    def sign(self, request: requests.PreparedRequest):
+    def sign(self, request: requests.models.PreparedRequest):
         body = request.body
         assert body is not None
         digest = hashlib.sha256(body).digest()

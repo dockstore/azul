@@ -262,7 +262,7 @@ class Health:
         url = str(config.service_endpoint.join(relative_url))
         log.info('Making HEAD request to %s', url)
         start = time.time()
-        response = requests.head(url)
+        response = requests.api.head(url)
         log.info('Got %s response after %.3fs from HEAD request to %s',
                  response.status_code, time.time() - start, url)
         try:
@@ -299,7 +299,7 @@ class Health:
             url = config.lambda_endpoint(lambda_name).set(path='/health/basic',
                                                           args={'catalog': self.catalog})
             log.info('Requesting %r', url)
-            response = requests.get(str(url))
+            response = requests.api.get(str(url))
             response.raise_for_status()
             up = response.json()['up']
         except Exception as e:

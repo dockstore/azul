@@ -153,9 +153,9 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
             # We want to send the request with urllib3 directly but HMAC
             # signing is only available for Requests, so we need to prepare a
             # request, sign it and then unpack it again before calling urllib3.
-            request = requests.Request(method='DELETE' if delete else 'POST',
-                                       url=str(indexer_url),
-                                       json=notification)
+            request = requests.models.Request(method='DELETE' if delete else 'POST',
+                                              url=str(indexer_url),
+                                              json=notification)
             request = request.prepare()
             self.sign(request)
             result: BaseHTTPResponse | HTTPError

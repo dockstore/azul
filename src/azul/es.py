@@ -163,7 +163,7 @@ class AWSAuthHttpClient(HttpClient):
         # directly, we need to prepare a Requests request object, sign it with
         # self._http_auth and pass the resulting signature header to urllib3's
         # urlopen() method.
-        request = requests.PreparedRequest()
+        request = requests.models.PreparedRequest()
         request.method = method
         # Because urllib3 connection pools are host-specific, URLs passed to a
         # connection pool's urlencode() must be relative and path-absolute. And

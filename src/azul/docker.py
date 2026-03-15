@@ -553,7 +553,7 @@ class Repository:
                    auth=self._dxf_auth,
                    insecure=self.host.startswith('localhost:') or self.host == 'localhost')
 
-    def _dxf_auth(self, dxf: DXFBase, response: requests.Response):
+    def _dxf_auth(self, dxf: DXFBase, response: requests.models.Response):
         username, password = self._auth
         dxf.authenticate(username=username,
                          password=password,
