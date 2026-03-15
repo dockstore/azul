@@ -9,7 +9,7 @@ from typing import (
     get_type_hints,
 )
 
-from chalice import (
+from chalice.app import (
     BadRequestError,
     ChaliceViewError,
     Response,

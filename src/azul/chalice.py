@@ -26,13 +26,11 @@ from urllib.parse import (
 )
 
 import attrs
-from chalice import (
-    Chalice,
-    ChaliceViewError,
-)
 from chalice.app import (
     BadRequestError,
     CaseInsensitiveMapping,
+    Chalice,
+    ChaliceViewError,
     EventSourceHandler,
     HeadersType,
     MultiDict,

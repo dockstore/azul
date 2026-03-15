@@ -9,7 +9,7 @@ from typing import (
 )
 
 import attr
-from chalice import (
+from chalice.app import (
     BadRequestError,
     ChaliceViewError,
     NotFoundError,

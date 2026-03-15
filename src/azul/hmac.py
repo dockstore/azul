@@ -1,7 +1,7 @@
 import hashlib
 import logging
 
-import chalice
+import chalice.app
 from http_message_signatures import (
     HTTPMessageSigner,
     HTTPMessageVerifier,
@@ -81,7 +81,7 @@ class SignatureHelper(HTTPSignatureKeyResolver):
             result = one(self.verifier.verify(request))
         except BaseException as e:
             log.warning('Exception while validating HMAC: ', exc_info=e)
-            raise chalice.UnauthorizedError('Invalid authorization credentials')
+            raise chalice.app.UnauthorizedError('Invalid authorization credentials')
         else:
             return result.parameters
 

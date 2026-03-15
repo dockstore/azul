@@ -4,7 +4,7 @@ from typing import (
     Mapping,
 )
 
-from chalice import (
+from chalice.app import (
     BadRequestError as BRE,
     NotFoundError,
 )

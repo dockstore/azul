@@ -21,7 +21,7 @@ from warnings import (
     deprecated,
 )
 
-from chalice import (
+from chalice.app import (
     ChaliceViewError,
     Response,
 )

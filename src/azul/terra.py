@@ -21,7 +21,7 @@ from typing import (
 )
 
 import attrs
-from chalice import (
+from chalice.app import (
     UnauthorizedError,
 )
 from furl import (

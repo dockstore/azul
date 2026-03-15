@@ -31,7 +31,7 @@ from azul import (
     CatalogName,
     config,
 )
-from azul.chalice import (
+from azul.auth import (
     Authentication,
 )
 from azul.drs import (

@@ -4,7 +4,7 @@ from typing import (
     Any,
 )
 
-from chalice import (
+from chalice.app import (
     BadRequestError,
 )
 

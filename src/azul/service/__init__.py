@@ -20,7 +20,7 @@ from typing import (
 )
 
 import attr
-from chalice import (
+from chalice.app import (
     ForbiddenError,
 )
 from more_itertools import (

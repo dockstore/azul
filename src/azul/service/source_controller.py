@@ -1,6 +1,6 @@
 import logging
 
-from chalice import (
+from chalice.app import (
     TooManyRequestsError,
     UnauthorizedError,
 )

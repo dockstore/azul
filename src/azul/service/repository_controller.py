@@ -11,7 +11,7 @@ from typing import (
 
 import attr
 import attrs
-from chalice import (
+from chalice.app import (
     BadRequestError,
     NotFoundError,
     Response,

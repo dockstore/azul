@@ -17,9 +17,9 @@ import attr
 from botocore.exceptions import (
     ClientError,
 )
-import chalice
-from chalice import (
+from chalice.app import (
     ChaliceViewError,
+    CloudWatchEvent,
     NotFoundError,
     Response,
 )
@@ -525,7 +525,7 @@ class HealthApp(AzulChaliceApp):
             'rate(1 minute)',
             name=self.unqualified_app_name + 'cachehealth'
         )
-        def update_health_cache(_event: chalice.app.CloudWatchEvent):
+        def update_health_cache(_event: CloudWatchEvent):
             self.health_controller.update_cache()
 
         return {

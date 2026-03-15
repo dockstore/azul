@@ -10,6 +10,7 @@ import uuid
 
 import chalice
 from chalice.app import (
+    BadRequestError,
     SQSRecord,
     UnauthorizedError,
 )
@@ -210,7 +211,7 @@ class IndexController(ActionController[IndexAction]):
                 config.Catalog.validate_name(catalog)
             except AssertionError as e:
                 if R.caused(e):
-                    raise R.propagate(e, chalice.BadRequestError)
+                    raise R.propagate(e, BadRequestError)
             notification = request.json_body
             log.info('Received notification %r for catalog %r', notification, catalog)
             assert config.enable_bundle_notifications, R(
@@ -231,29 +232,29 @@ class IndexController(ActionController[IndexAction]):
         try:
             bundle_fqid = notification['bundle_fqid']
         except KeyError:
-            raise chalice.BadRequestError('Missing notification entry: bundle_fqid')
+            raise BadRequestError('Missing notification entry: bundle_fqid')
 
         try:
             bundle_uuid = bundle_fqid['uuid']
         except KeyError:
-            raise chalice.BadRequestError('Missing notification entry: bundle_fqid.uuid')
+            raise BadRequestError('Missing notification entry: bundle_fqid.uuid')
 
         try:
             bundle_version = bundle_fqid['version']
         except KeyError:
-            raise chalice.BadRequestError('Missing notification entry: bundle_fqid.version')
+            raise BadRequestError('Missing notification entry: bundle_fqid.version')
 
         if not isinstance(bundle_uuid, str):
-            raise chalice.BadRequestError(f'Invalid type: uuid: {type(bundle_uuid)} (should be str)')
+            raise BadRequestError(f'Invalid type: uuid: {type(bundle_uuid)} (should be str)')
 
         if not isinstance(bundle_version, str):
-            raise chalice.BadRequestError(f'Invalid type: version: {type(bundle_version)} (should be str)')
+            raise BadRequestError(f'Invalid type: version: {type(bundle_version)} (should be str)')
 
         if bundle_uuid.lower() != str(uuid.UUID(bundle_uuid)).lower():
-            raise chalice.BadRequestError(f'Invalid syntax: {bundle_uuid} (should be a UUID)')
+            raise BadRequestError(f'Invalid syntax: {bundle_uuid} (should be a UUID)')
 
         if not bundle_version:
-            raise chalice.BadRequestError('Invalid syntax: bundle_version can not be empty')
+            raise BadRequestError('Invalid syntax: bundle_version can not be empty')
 
     def contribute(self, event: Iterable[SQSRecord], *, retry=False):
         self._handle_events(event, self.index_queue_service.contribute)

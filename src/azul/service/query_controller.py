@@ -11,10 +11,8 @@ from typing import (
     Mapping,
 )
 
-from chalice import (
-    BadRequestError as BRE,
-)
 from chalice.app import (
+    BadRequestError as BRE,
     MultiDict,
     Request,
 )
