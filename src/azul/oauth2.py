@@ -18,12 +18,8 @@ from furl import (
 from google.auth.transport.urllib3 import (
     AuthorizedHttp,
 )
-from google.oauth2.credentials import (
-    Credentials as TokenCredentials,
-)
-from google.oauth2.service_account import (
-    Credentials as ServiceAccountCredentials,
-)
+import google.oauth2.credentials
+import google.oauth2.service_account
 
 from azul import (
     config,
@@ -40,6 +36,8 @@ from azul.lib import (
 
 log = logging.getLogger(__name__)
 
+TokenCredentials = google.oauth2.credentials.Credentials
+ServiceAccountCredentials = google.oauth2.service_account.Credentials
 ScopedCredentials = ServiceAccountCredentials | TokenCredentials
 
 
