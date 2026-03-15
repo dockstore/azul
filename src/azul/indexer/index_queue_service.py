@@ -23,12 +23,12 @@ from azul.indexer import (
     SourceSpec,
 )
 from azul.indexer.document import (
+    CataloguedEntityReference,
     Contribution,
     EntityReference,
     Replica,
 )
 from azul.indexer.index_service import (
-    CataloguedEntityReference,
     IndexService,
 )
 from azul.indexer.repository_service import (

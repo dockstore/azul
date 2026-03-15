@@ -19,6 +19,7 @@ from azul.indexer.document import (
     Aggregate,
     Contribution,
     Document,
+    FieldPath,
 )
 from azul.indexer.field import (
     CataloguedFieldTypes,
@@ -42,7 +43,6 @@ from azul.lib.types import (
     json_dict,
 )
 from azul.plugins import (
-    FieldPath,
     MetadataPlugin,
 )
 

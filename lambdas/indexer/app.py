@@ -8,6 +8,9 @@ import chalice
 from azul import (
     config,
 )
+from azul.auth import (
+    HMACAuthentication,
+)
 from azul.chalice import (
     LambdaMetric,
 )
@@ -18,7 +21,6 @@ from azul.health import (
     HealthApp,
 )
 from azul.hmac import (
-    HMACAuthentication,
     SignatureHelper,
 )
 from azul.indexer.index_controller import (

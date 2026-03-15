@@ -13,6 +13,9 @@ from opensearchpy.helpers.aggs import (
 from azul import (
     config,
 )
+from azul.indexer.document import (
+    FieldPath,
+)
 from azul.lib import (
     cached_property,
 )
@@ -22,7 +25,6 @@ from azul.lib.types import (
     json_int,
 )
 from azul.plugins import (
-    FieldPath,
     dotted,
 )
 from azul.service.query_service import (

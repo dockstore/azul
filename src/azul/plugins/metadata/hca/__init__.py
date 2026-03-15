@@ -48,6 +48,7 @@ from azul.plugins import (
     File,
     InverseFieldMapping,
     ManifestConfig,
+    ManifestFormat,
     MetadataPlugin,
     Sorting,
     SpecialField,
@@ -77,9 +78,6 @@ from azul.plugins.metadata.hca.service.filter import (
 from azul.plugins.metadata.hca.service.response import (
     HCASearchResponseStage,
     HCASummaryResponseStage,
-)
-from azul.service.manifest_service import (
-    ManifestFormat,
 )
 from humancellatlas.data.metadata import (
     api,

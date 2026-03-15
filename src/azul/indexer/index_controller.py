@@ -18,11 +18,11 @@ from azul import (
     CatalogName,
     config,
 )
+from azul.auth import (
+    HMACAuthentication,
+)
 from azul.chalice import (
     LambdaMetric,
-)
-from azul.hmac import (
-    HMACAuthentication,
 )
 from azul.indexer import (
     BundlePartition,

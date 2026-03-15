@@ -423,7 +423,7 @@ class BaseTransformer(Transformer, metaclass=ABCMeta):
 
     @cached_property
     def _activity_polymorphic_types(self) -> Set[str]:
-        from azul.plugins.metadata.anvil import (
+        from azul.plugins.metadata.anvil.schema import (
             anvil_schema,
         )
         return {

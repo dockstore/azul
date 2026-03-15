@@ -58,6 +58,7 @@ from azul.plugins import (
     File,
     InverseFieldMapping,
     ManifestConfig,
+    ManifestFormat,
     MetadataPlugin,
     Sorting,
     SpecialField,
@@ -88,9 +89,6 @@ from azul.plugins.metadata.anvil.service.filter import (
 from azul.plugins.metadata.anvil.service.response import (
     AnvilSearchResponseStage,
     AnvilSummaryResponseStage,
-)
-from azul.service.manifest_service import (
-    ManifestFormat,
 )
 
 

@@ -65,13 +65,11 @@ from azul.logging import (
 from azul.plugins.repository.dss import (
     DSSSourceRef,
 )
-from azul.plugins.repository.tdr_hca import (
-    TDRSourceRef,
-)
 from azul.service.source_service import (
     SourceService,
 )
 from azul.terra import (
+    TDRSourceRef,
     TDRSourceSpec,
 )
 from humancellatlas.data.metadata import (
