@@ -32,13 +32,15 @@ from more_itertools import (
 
 from azul import (
     config,
-    iif,
 )
 from azul.lib import (
     cache,
 )
 from azul.lib.collections import (
     OrderedSet,
+)
+from azul.lib.functions import (
+    iif,
 )
 from azul.lib.strings import (
     back_quote as bq,

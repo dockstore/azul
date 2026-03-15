@@ -10,7 +10,6 @@ from more_itertools import (
 
 from azul import (
     config,
-    iif,
 )
 from azul.chalice import (
     AzulChaliceApp,
@@ -22,6 +21,9 @@ from azul.deployment import (
 from azul.lib import (
     R,
     cached_property,
+)
+from azul.lib.functions import (
+    iif,
 )
 from azul.lib.objects import (
     InternMeta,

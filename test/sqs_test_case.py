@@ -13,13 +13,15 @@ from chalice.app import (
 
 from azul import (
     config,
-    iif,
 )
 from azul.deployment import (
     aws,
 )
 from azul.lib import (
     cached_property,
+)
+from azul.lib.functions import (
+    iif,
 )
 from azul.lib.types import (
     JSON,

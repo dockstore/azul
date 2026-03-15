@@ -28,7 +28,6 @@ from more_itertools import (
 
 from azul import (
     config,
-    iif,
 )
 from azul.indexer import (
     BundleFQID,
@@ -47,6 +46,9 @@ from azul.lib.bigquery import (
 )
 from azul.lib.collections import (
     OrderedSet,
+)
+from azul.lib.functions import (
+    iif,
 )
 from azul.lib.strings import (
     single_quote as sq,

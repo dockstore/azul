@@ -23,7 +23,6 @@ from more_itertools.more import (
 
 from azul import (
     config,
-    iif,
 )
 from azul.indexer.document import (
     DocumentType,
@@ -34,6 +33,9 @@ from azul.indexer.document import (
 )
 from azul.lib.digests import (
     Digest,
+)
+from azul.lib.functions import (
+    iif,
 )
 from azul.lib.types import (
     AnyMutableJSON,

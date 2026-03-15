@@ -20,7 +20,6 @@ from more_itertools import (
 
 from azul import (
     config,
-    iif,
 )
 from azul.deployment import (
     aws,
@@ -31,6 +30,9 @@ from azul.lib import (
 from azul.lib.collections import (
     adict,
     dict_merge,
+)
+from azul.lib.functions import (
+    iif,
 )
 from azul.lib.strings import (
     double_quote as dq,

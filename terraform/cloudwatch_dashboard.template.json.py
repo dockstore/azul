@@ -8,13 +8,15 @@ from more_itertools import (
 
 from azul import (
     config,
-    iif,
 )
 from azul.lib import (
     R,
 )
 from azul.deployment import (
     aws,
+)
+from azul.lib.functions import (
+    iif,
 )
 from azul.lib.types import (
     JSON,

@@ -18,15 +18,15 @@ from furl import (
     furl,
 )
 
-from azul import (
-    iif,
-)
 from azul.indexer.document import (
     EntityType,
 )
 from azul.lib import (
     R,
     cached_property,
+)
+from azul.lib.functions import (
+    iif,
 )
 from azul.lib.types import (
     JSON,

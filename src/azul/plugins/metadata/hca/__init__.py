@@ -13,7 +13,6 @@ from attrs import (
 from azul import (
     CatalogName,
     config,
-    iif,
 )
 from azul.drs import (
     HostBasedDRSURI,
@@ -29,6 +28,9 @@ from azul.lib import (
 )
 from azul.lib.digests import (
     Digest,
+)
+from azul.lib.functions import (
+    iif,
 )
 from azul.lib.types import (
     JSON,
