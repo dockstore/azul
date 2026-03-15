@@ -1,4 +1,14 @@
+from typing import (
+    Any,
+    final,
+)
+
+from typing_extensions import (
+    TypeIs,
+)
+
 from azul.lib import (
+    R,
     lru_cache,
 )
 
@@ -69,3 +79,52 @@ class InternMeta(type):
     @lru_cache
     def __call__(cls, *args, **kwargs):
         return super().__call__(*args, **kwargs)
+
+
+@final
+class Sentinel(object):
+    """
+    Use an instance of this class instead of ``object()`` as the default value
+    for function arguments for which ``None`` isn't a suitable default value.
+    """
+
+    def is_(self, other: Any) -> TypeIs[Sentinel]:
+        """
+        Detect if the given argument is this sentinel, and if it isn't, that it
+        is no no other instance of this class.
+
+        :return: True, if the given value is this sentinel. False, if the given
+                 value is no sentinel. Otherwise, a requirement assertion is
+                 raised
+
+        A typical usage would look as follows:
+
+        >>> zero = Sentinel()
+
+        >>> def f(x: int | Sentinel = zero) -> list[int]:
+        ...     if zero.is_(x):
+        ...         x = 0
+        ...     # `x` is now narrowed to just `int`
+        ...     return [x]
+
+        This is equivalent to.
+
+        >>> def f(x: int | Sentinel = zero) -> list[int]:
+        ...     if x is zero:
+        ...         x = 0
+        ...     assert not isinstance(zero, Sentinel)
+        ...     return [x]
+
+        Without the narrowing done by this method, or by the assertion in the
+        second example, the type checker would reject the return statement
+        as it would consider its type to be ``list[x | Sentinel]``, not just
+        ``list[int]`` as required by the return type annotation of ``f``.
+        """
+        if self is other:
+            return True
+        else:
+            assert not isinstance(other, type(self)), R('Invalid sentinel')
+            return False
+
+
+absent = Sentinel()

@@ -30,7 +30,6 @@ from typing import (
     Self,
     TextIO,
     TypedDict,
-    final,
     overload,
 )
 
@@ -43,10 +42,6 @@ from more_itertools import (
     first,
     one,
 )
-from typing_extensions import (
-    TypeIs,
-)
-
 from azul.lib import (
     R,
     cached_property,
@@ -54,6 +49,10 @@ from azul.lib import (
 )
 from azul.lib.collections import (
     atuple,
+)
+from azul.lib.objects import (
+    Sentinel,
+    absent,
 )
 from azul.lib.types import (
     JSON,
@@ -76,52 +75,6 @@ log = _logging.getLogger(__name__)
 Netloc = tuple[str, int]
 
 CatalogName = str
-
-
-@final
-class Sentinel(object):
-    """
-    Use an instance of this class instead of ``object()`` as the default value
-    for function arguments for which ``None`` isn't a suitable default value.
-    """
-
-    def is_(self, other: Any) -> TypeIs[Sentinel]:
-        """
-        Detect if the given argument is this sentinel, and if it isn't, that it
-        is no no other instance of this class.
-
-        :return: True, if the given value is this sentinel. False, if the given
-                 value is no sentinel. Otherwise, a requirement assertion is
-                 raised
-
-        A typical usage would look as follows:
-
-        >>> zero = Sentinel()
-
-        >>> def f(x: int | Sentinel = zero) -> list[int]:
-        ...     if zero.is_(x):
-        ...         x = 0
-        ...     # `x` is now narrowed to just `int`
-        ...     return [x]
-
-        This is equivalent to.
-
-        >>> def f(x: int | Sentinel = zero) -> list[int]:
-        ...     if x is zero:
-        ...         x = 0
-        ...     assert not isinstance(zero, Sentinel)
-        ...     return [x]
-
-        Without the narrowing done by this method, or by the assertion in the
-        second example, the type checker would reject the return statement
-        as it would consider its type to be ``list[x | Sentinel]``, not just
-        ``list[int]`` as required by the return type annotation of ``f``.
-        """
-        if self is other:
-            return True
-        else:
-            assert not isinstance(other, type(self)), R('Invalid sentinel')
-            return False
 
 
 class Config:
@@ -1921,9 +1874,6 @@ def str_to_bool(string: str):
         return False
     else:
         raise ValueError(string)
-
-
-absent = Sentinel()
 
 
 def iif[T, E](condition: bool, then: T, otherwise: E | Sentinel = absent) -> T | E:
