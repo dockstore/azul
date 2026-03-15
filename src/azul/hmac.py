@@ -2,12 +2,12 @@ import hashlib
 import logging
 
 import chalice.app
-from http_message_signatures import (
+from http_message_signatures import (  # type:ignore[attr-defined]
     HTTPMessageSigner,
     HTTPMessageVerifier,
     HTTPSignatureKeyResolver,
 )
-from http_message_signatures.algorithms import (
+from http_message_signatures.algorithms import (  # type:ignore[attr-defined]
     HMAC_SHA256,
 )
 import http_sfv
