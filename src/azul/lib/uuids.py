@@ -19,11 +19,9 @@ from attrs import (
     frozen,
 )
 
-from azul import (
-    cached_property,
-)
 from azul.lib import (
     R,
+    cached_property,
 )
 from azul.lib.json import (
     Serializable,

@@ -16,7 +16,6 @@ from chalice.app import (
 
 from azul import (
     CatalogName,
-    cached_property,
     config,
 )
 from azul.chalice import (
@@ -38,6 +37,7 @@ from azul.indexer.index_queue_service import (
 )
 from azul.lib import (
     R,
+    cached_property,
 )
 from azul.openapi import (
     format_description as fd,

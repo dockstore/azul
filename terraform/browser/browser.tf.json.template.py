@@ -19,12 +19,14 @@ from more_itertools import (
 )
 
 from azul import (
-    cached_property,
     config,
     iif,
 )
 from azul.deployment import (
     aws,
+)
+from azul.lib import (
+    cached_property,
 )
 from azul.lib.collections import (
     adict,

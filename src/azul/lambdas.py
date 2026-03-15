@@ -13,7 +13,6 @@ from more_itertools import (
 )
 
 from azul import (
-    cache,
     config,
 )
 from azul.deployment import (
@@ -21,6 +20,7 @@ from azul.deployment import (
 )
 from azul.lib import (
     R,
+    cache,
 )
 from azul.modules import (
     load_app_module,

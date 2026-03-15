@@ -32,6 +32,8 @@ from more_itertools import (
 
 from azul import (
     CatalogName,
+)
+from azul.lib import (
     cached_property,
 )
 from azul.lib.time import (

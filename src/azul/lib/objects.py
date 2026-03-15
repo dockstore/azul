@@ -1,4 +1,4 @@
-from azul import (
+from azul.lib import (
     lru_cache,
 )
 

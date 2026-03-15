@@ -8,11 +8,11 @@ from chalice import (
     BadRequestError,
 )
 
-from azul import (
-    mutable_furl,
-)
 from azul.chalice import (
     Controller,
+)
+from azul.lib import (
+    mutable_furl,
 )
 from azul.lib.types import (
     JSON,

@@ -20,9 +20,6 @@ from furl import (
     furl,
 )
 
-from azul import (
-    lru_cache,
-)
 from azul.auth import (
     Authentication,
 )
@@ -36,6 +33,7 @@ from azul.indexer import (
 )
 from azul.lib import (
     R,
+    lru_cache,
 )
 from azul.lib.time import (
     parse_dcp2_version,

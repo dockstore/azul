@@ -11,9 +11,6 @@ import json
 import logging
 import sys
 
-from azul import (
-    cached_property,
-)
 from azul.args import (
     AzulArgumentHelpFormatter,
 )
@@ -22,6 +19,9 @@ from azul.deployment import (
 )
 from azul.http import (
     http_client,
+)
+from azul.lib import (
+    cached_property,
 )
 from azul.lib.types import (
     JSON,

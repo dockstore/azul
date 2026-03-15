@@ -5,7 +5,6 @@ from chalice import (
 )
 
 from azul import (
-    cached_property,
     config,
 )
 from azul.auth import (
@@ -13,6 +12,9 @@ from azul.auth import (
 )
 from azul.health import (
     HealthApp,
+)
+from azul.lib import (
+    cached_property,
 )
 from azul.lib.types import (
     JSON,

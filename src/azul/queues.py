@@ -43,7 +43,6 @@ from more_itertools import (
 )
 
 from azul import (
-    cached_property,
     config,
 )
 from azul.deployment import (
@@ -51,6 +50,9 @@ from azul.deployment import (
 )
 from azul.lambdas import (
     LambdaFunctions,
+)
+from azul.lib import (
+    cached_property,
 )
 from azul.lib.attrs import (
     DiscriminatingPolymorphicSerializableAttrs,

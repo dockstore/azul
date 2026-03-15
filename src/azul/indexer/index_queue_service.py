@@ -12,7 +12,6 @@ import attrs
 
 from azul import (
     CatalogName,
-    cached_property,
     config,
 )
 from azul.deployment import (
@@ -34,6 +33,9 @@ from azul.indexer.index_service import (
 )
 from azul.indexer.repository_service import (
     RepositoryService,
+)
+from azul.lib import (
+    cached_property,
 )
 from azul.lib.types import (
     JSON,

@@ -9,7 +9,6 @@ from collections.abc import (
 from enum import (
     Enum,
 )
-import functools
 from itertools import (
     chain,
 )
@@ -24,14 +23,11 @@ import shlex
 from typing import (
     Any,
     BinaryIO,
-    Callable,
     ClassVar,
-    Hashable,
     IO,
     Literal,
     NotRequired,
     Self,
-    TYPE_CHECKING,
     TextIO,
     TypedDict,
     final,
@@ -53,8 +49,9 @@ from typing_extensions import (
 
 from azul.lib import (
     R,
+    cached_property,
+    mutable_furl,
 )
-import azul.lib.caching
 from azul.lib.collections import (
     atuple,
 )
@@ -74,42 +71,11 @@ from azul.vendored.frozendict import (
     frozendict,
 )
 
-if TYPE_CHECKING:
-    from furl import (
-        _mutable_furl as mutable_furl,
-    )
-else:
-    from furl import (
-        furl as mutable_furl,
-    )
-
 log = _logging.getLogger(__name__)
 
 Netloc = tuple[str, int]
 
 CatalogName = str
-
-cached_property = azul.lib.caching.CachedProperty
-
-lru_cache = functools.lru_cache
-
-if TYPE_CHECKING:
-    # Work around https://github.com/python/typeshed/issues/15139
-    @final
-    class CacheWrapper[_T]:
-
-        def __call__(self, *args: Hashable, **kwargs: Hashable) -> _T:
-            ...
-
-
-    def cache[_T](f: Callable[..., _T], /) -> CacheWrapper[_T]:  # noqa: E303
-        ...
-else:
-    cache = functools.cache
-
-
-def cache_per_thread(f, /):
-    return azul.lib.caching.lru_cache_per_thread(maxsize=None)(f)
 
 
 @final

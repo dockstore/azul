@@ -47,7 +47,6 @@ from furl import (
 
 from azul import (
     config,
-    mutable_furl,
     open_resource,
 )
 from azul.auth import (
@@ -58,6 +57,7 @@ from azul.csp import (
 )
 from azul.lib import (
     R,
+    mutable_furl,
 )
 from azul.lib.collections import (
     deep_dict_merge,

@@ -39,7 +39,6 @@ from app_test_case import (
     LocalAppTestCase,
 )
 from azul import (
-    cached_property,
     config,
 )
 from azul.deployment import (
@@ -58,6 +57,9 @@ from azul.indexer.field import (
     null_str,
 )
 import azul.indexer.index_service
+from azul.lib import (
+    cached_property,
+)
 from azul.lib.collections import (
     none_safe_key,
 )

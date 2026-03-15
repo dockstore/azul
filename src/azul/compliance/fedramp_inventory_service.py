@@ -44,11 +44,13 @@ from openpyxl.worksheet.worksheet import (
 )
 
 from azul import (
-    cached_property,
     config,
 )
 from azul.deployment import (
     aws,
+)
+from azul.lib import (
+    cached_property,
 )
 from azul.lib.types import (
     JSON,

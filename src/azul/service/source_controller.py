@@ -7,7 +7,6 @@ from chalice import (
 
 from azul import (
     CatalogName,
-    cached_property,
 )
 from azul.auth import (
     Authentication,
@@ -20,6 +19,9 @@ from azul.chalice import (
 from azul.http import (
     LimitedTimeoutException,
     TooManyRequestsException,
+)
+from azul.lib import (
+    cached_property,
 )
 from azul.lib.types import (
     JSONs,

@@ -31,9 +31,11 @@ from more_itertools import (
 )
 
 from azul import (
-    cache,
     config,
     iif,
+)
+from azul.lib import (
+    cache,
 )
 from azul.lib.collections import (
     OrderedSet,

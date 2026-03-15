@@ -11,8 +11,6 @@ from typing import (
 from azul import (
     CatalogName,
     NotInLambdaContextException,
-    cache,
-    cached_property,
     config,
     open_resource,
 )
@@ -27,6 +25,8 @@ from azul.indexer import (
 )
 from azul.lib import (
     R,
+    cache,
+    cached_property,
 )
 from azul.lib.types import (
     AnyJSON,

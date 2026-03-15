@@ -41,7 +41,6 @@ from more_itertools import (
 )
 
 from azul import (
-    cached_property,
     config,
 )
 from azul.indexer import (
@@ -81,6 +80,7 @@ from azul.indexer.transform import (
 )
 from azul.lib import (
     R,
+    cached_property,
 )
 from azul.lib.collections import (
     OrderedSet,

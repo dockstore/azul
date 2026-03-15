@@ -18,12 +18,12 @@ from more_itertools import (
     one,
 )
 
-from azul import (
-    cached_property,
-)
 from azul.indexer import (
     SourceRef,
     SourceSpec,
+)
+from azul.lib import (
+    cached_property,
 )
 from azul.lib.strings import (
     to_camel_case,

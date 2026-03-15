@@ -34,11 +34,11 @@ from more_itertools import (
     only,
 )
 
-from azul import (
-    cached_property,
-)
 from azul.http import (
     http_client,
+)
+from azul.lib import (
+    cached_property,
 )
 from azul.lib.json import (
     dig,

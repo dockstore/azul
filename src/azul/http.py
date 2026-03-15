@@ -18,12 +18,12 @@ import urllib3.connectionpool
 import urllib3.exceptions
 
 from azul import (
-    cache,
-    cached_property,
     config,
 )
 from azul.lib import (
     R,
+    cache,
+    cached_property,
 )
 from azul.logging import (
     http_body_log_message,

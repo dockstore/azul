@@ -22,8 +22,6 @@ from typing import (
 import attr
 
 from azul import (
-    cache,
-    cached_property,
     config,
 )
 from azul.chalice import (
@@ -34,6 +32,8 @@ from azul.deployment import (
 )
 from azul.lib import (
     R,
+    cache,
+    cached_property,
 )
 from azul.lib.json import (
     copy_any_json,

@@ -37,7 +37,6 @@ from more_itertools import (
 )
 
 from azul import (
-    cache,
     config,
 )
 from azul.indexer import (
@@ -65,6 +64,9 @@ from azul.indexer.field import (
 from azul.indexer.transform import (
     ReplicaTransformer,
     Transformer,
+)
+from azul.lib import (
+    cache,
 )
 from azul.lib.collections import (
     deep_dict_merge,

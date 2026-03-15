@@ -35,10 +35,8 @@ import requests
 
 from azul import (
     CatalogName,
-    cached_property,
     config,
     dss,
-    mutable_furl,
 )
 from azul.drs import (
     AccessMethod,
@@ -48,6 +46,8 @@ from azul.drs import (
 )
 from azul.lib import (
     R,
+    cached_property,
+    mutable_furl,
 )
 from azul.lib.types import (
     JSON,

@@ -33,9 +33,7 @@ from furl import (
 
 from azul import (
     CatalogName,
-    cached_property,
     config,
-    mutable_furl,
 )
 from azul.auth import (
     Authentication,
@@ -56,6 +54,8 @@ from azul.indexer import (
 )
 from azul.lib import (
     R,
+    cached_property,
+    mutable_furl,
 )
 from azul.lib.attrs import (
     SerializableAttrs,

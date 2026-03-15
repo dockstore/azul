@@ -8,12 +8,14 @@ from typing import (
 
 from azul import (
     CatalogName,
-    cache,
 )
 from azul.indexer import (
     Bundle,
     SourceRef,
     SourcedBundleFQID,
+)
+from azul.lib import (
+    cache,
 )
 from azul.lib.types import (
     JSON,

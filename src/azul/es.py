@@ -25,13 +25,15 @@ import urllib3
 
 from azul import (
     config,
-    lru_cache,
 )
 from azul.deployment import (
     aws,
 )
 from azul.http import (
     HttpClient,
+)
+from azul.lib import (
+    lru_cache,
 )
 from azul.logging import (
     es_log,

@@ -21,7 +21,6 @@ from app_test_case import (
     LocalAppTestCase,
 )
 from azul import (
-    cached_property,
     config,
 )
 from azul.deployment import (
@@ -43,6 +42,7 @@ from azul.indexer.mirror_service import (
 )
 from azul.lib import (
     R,
+    cached_property,
 )
 from azul.lib.json import (
     copy_json,

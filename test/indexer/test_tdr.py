@@ -57,7 +57,6 @@ from more_itertools import (
 import urllib3
 
 from azul import (
-    cached_property,
     config,
 )
 from azul.auth import (
@@ -68,6 +67,9 @@ from azul.docker import (
 )
 from azul.indexer import (
     Prefix,
+)
+from azul.lib import (
+    cached_property,
 )
 from azul.lib.bigquery import (
     BigQueryRow,

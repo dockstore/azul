@@ -11,12 +11,12 @@ from more_itertools import (
     one,
 )
 
-from azul import (
-    cached_property,
-)
 from azul.indexer import (
     SourceRef,
     SourceSpec,
+)
+from azul.lib import (
+    cached_property,
 )
 from azul.lib.json import (
     copy_any_json,

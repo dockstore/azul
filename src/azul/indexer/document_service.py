@@ -13,7 +13,6 @@ from more_itertools import (
 
 from azul import (
     CatalogName,
-    cache,
     config,
 )
 from azul.indexer.document import (
@@ -30,6 +29,9 @@ from azul.indexer.field import (
 )
 from azul.indexer.transform import (
     Transformer,
+)
+from azul.lib import (
+    cache,
 )
 from azul.lib.collections import (
     deep_dict_merge,

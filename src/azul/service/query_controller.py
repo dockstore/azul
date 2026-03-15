@@ -26,12 +26,14 @@ from more_itertools import (
 
 from azul import (
     CatalogName,
-    cache,
 )
 from azul.indexer.field import (
     FieldType,
     Mode,
     pass_thru_bool,
+)
+from azul.lib import (
+    cache,
 )
 from azul.lib.collections import (
     OrderedSet,

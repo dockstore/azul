@@ -45,7 +45,6 @@ from opensearchpy import (
 )
 
 from azul import (
-    cached_property,
     config,
     true,
 )
@@ -78,6 +77,7 @@ from azul.indexer.index_service import (
 )
 from azul.lib import (
     R,
+    cached_property,
 )
 from azul.lib.collections import (
     NestedDict,

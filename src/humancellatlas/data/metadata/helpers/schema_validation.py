@@ -17,11 +17,9 @@ from referencing import (
 )
 import requests
 
-from azul import (
-    cached_property,
-)
 from azul.lib import (
     R,
+    cached_property,
 )
 from azul.lib.types import (
     JSON,

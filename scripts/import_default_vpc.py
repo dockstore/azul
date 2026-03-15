@@ -5,11 +5,13 @@ from more_itertools import (
 )
 
 from azul import (
-    cached_property,
     config,
 )
 from azul.deployment import (
     aws,
+)
+from azul.lib import (
+    cached_property,
 )
 from azul.logging import (
     configure_script_logging,

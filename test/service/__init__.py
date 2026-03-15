@@ -44,7 +44,6 @@ from app_test_case import (
     LocalAppTestCase,
 )
 from azul import (
-    cached_property,
     config,
 )
 from azul.deployment import (
@@ -58,6 +57,9 @@ from azul.indexer import (
 from azul.indexer.document import (
     DocumentType,
     IndexName,
+)
+from azul.lib import (
+    cached_property,
 )
 from azul.lib.types import (
     AnyJSON,

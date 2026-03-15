@@ -26,7 +26,6 @@ from google.oauth2.service_account import (
 )
 
 from azul import (
-    cached_property,
     config,
 )
 from azul.http import (
@@ -36,6 +35,7 @@ from azul.http import (
 )
 from azul.lib import (
     R,
+    cached_property,
 )
 
 log = logging.getLogger(__name__)

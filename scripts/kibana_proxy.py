@@ -47,14 +47,14 @@ from docker.models.containers import (
     Container,
 )
 
-from azul import (
-    cached_property,
-)
 from azul.deployment import (
     aws,
 )
 from azul.docker import (
     resolve_docker_image_for_launch,
+)
+from azul.lib import (
+    cached_property,
 )
 from azul.logging import (
     configure_script_logging,

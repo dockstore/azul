@@ -30,10 +30,10 @@ from more_itertools import (
 
 from azul import (
     CatalogName,
-    mutable_furl,
 )
 from azul.lib import (
     R,
+    mutable_furl,
 )
 from azul.lib.types import (
     AnyJSON,

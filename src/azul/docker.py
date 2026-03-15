@@ -49,12 +49,12 @@ from more_itertools import (
 import requests
 
 from azul import (
-    cache,
-    cached_property,
     config,
 )
 from azul.lib import (
     R,
+    cache,
+    cached_property,
 )
 from azul.lib.types import (
     JSONs,

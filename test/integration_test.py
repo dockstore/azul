@@ -77,12 +77,9 @@ import urllib3
 from azul import (
     CatalogName,
     Config,
-    cache,
-    cached_property,
     config,
     drs,
     false,
-    mutable_furl,
 )
 from azul.auth import (
     OAuth2,
@@ -127,6 +124,11 @@ from azul.indexer.index_service import (
 )
 from azul.indexer.mirror_service import (
     MirrorService,
+)
+from azul.lib import (
+    cache,
+    cached_property,
+    mutable_furl,
 )
 from azul.lib.collections import (
     alist,

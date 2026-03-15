@@ -20,14 +20,12 @@ from botocore.response import (
     StreamingBody,
 )
 
-from azul import (
-    cached_property,
-)
 from azul.deployment import (
     aws,
 )
 from azul.lib import (
     R,
+    cached_property,
 )
 from azul.lib.types import (
     MutableJSON,

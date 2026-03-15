@@ -9,8 +9,6 @@ from typing import (
 
 from azul import (
     CatalogName,
-    cache_per_thread,
-    cached_property,
     config,
 )
 from azul.azulclient import (
@@ -18,6 +16,8 @@ from azul.azulclient import (
 )
 from azul.lib import (
     R,
+    cache_per_thread,
+    cached_property,
 )
 from azul.logging import (
     configure_script_logging,

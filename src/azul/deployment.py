@@ -47,8 +47,6 @@ from more_itertools import (
 
 from azul import (
     Netloc,
-    cache,
-    cached_property,
     config,
 )
 from azul.http import (
@@ -56,6 +54,8 @@ from azul.http import (
 )
 from azul.lib import (
     R,
+    cache,
+    cached_property,
 )
 from azul.lib.types import (
     JSONs,

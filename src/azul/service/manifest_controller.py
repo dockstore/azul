@@ -19,15 +19,17 @@ from furl import (
 )
 
 from azul import (
-    cached_property,
     config,
-    mutable_furl,
 )
 from azul.auth import (
     Authentication,
 )
 from azul.chalice import (
     GoneError,
+)
+from azul.lib import (
+    cached_property,
+    mutable_furl,
 )
 from azul.lib.types import (
     AnyJSON,

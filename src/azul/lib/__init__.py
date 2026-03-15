@@ -1,10 +1,48 @@
+import functools
 from typing import (
+    Callable,
+    Hashable,
+    TYPE_CHECKING,
     final,
 )
 
+import furl
 from more_itertools import (
     one,
 )
+
+from azul.lib.caching import (
+    CachedProperty,
+    lru_cache_per_thread,
+)
+
+cached_property = CachedProperty
+
+lru_cache = functools.lru_cache
+
+if TYPE_CHECKING:
+    # Work around https://github.com/python/typeshed/issues/15139
+    @final
+    class CacheWrapper[_T]:
+
+        def __call__(self, *args: Hashable, **kwargs: Hashable) -> _T:
+            ...
+
+
+    def cache[_T](f: Callable[..., _T], /) -> CacheWrapper[_T]:  # noqa: E303
+        ...
+else:
+    cache = functools.cache
+
+
+def cache_per_thread(f, /):
+    return lru_cache_per_thread(maxsize=None)(f)
+
+
+if TYPE_CHECKING:
+    mutable_furl = furl._mutable_furl
+else:
+    mutable_furl = furl.furl
 
 
 class R:

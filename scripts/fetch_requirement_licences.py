@@ -28,7 +28,6 @@ from urllib3 import (
 )
 
 from azul import (
-    cached_property,
     config,
 )
 from azul.args import (
@@ -36,6 +35,9 @@ from azul.args import (
 )
 from azul.http import (
     http_client,
+)
+from azul.lib import (
+    cached_property,
 )
 from azul.logging import (
     configure_script_logging,

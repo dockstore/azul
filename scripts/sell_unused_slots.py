@@ -14,7 +14,6 @@ import time
 import attr
 
 from azul import (
-    cache,
     config,
 )
 from azul.args import (
@@ -29,6 +28,9 @@ from azul.deployment import (
 from azul.lambdas import (
     LambdaFunction,
     LambdaFunctions,
+)
+from azul.lib import (
+    cache,
 )
 from azul.logging import (
     configure_script_logging,

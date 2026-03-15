@@ -30,10 +30,7 @@ import requests
 
 from azul import (
     CatalogName,
-    cache,
-    cached_property,
     config,
-    lru_cache,
 )
 from azul.chalice import (
     AzulChaliceApp,
@@ -48,6 +45,9 @@ from azul.es import (
 )
 from azul.lib import (
     R,
+    cache,
+    cached_property,
+    lru_cache,
 )
 from azul.lib.types import (
     JSON,

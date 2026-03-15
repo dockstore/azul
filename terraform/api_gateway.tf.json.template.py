@@ -9,7 +9,6 @@ from more_itertools import (
 )
 
 from azul import (
-    cached_property,
     config,
     iif,
 )
@@ -22,6 +21,7 @@ from azul.deployment import (
 )
 from azul.lib import (
     R,
+    cached_property,
 )
 from azul.lib.objects import (
     InternMeta,

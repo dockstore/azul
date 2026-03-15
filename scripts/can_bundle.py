@@ -18,7 +18,6 @@ import sys
 import uuid
 
 from azul import (
-    cache,
     config,
 )
 from azul.args import (
@@ -26,6 +25,9 @@ from azul.args import (
 )
 from azul.indexer import (
     Bundle,
+)
+from azul.lib import (
+    cache,
 )
 from azul.lib.files import (
     write_file_atomically,

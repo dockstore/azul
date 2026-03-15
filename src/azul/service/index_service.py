@@ -27,7 +27,6 @@ from opensearchpy.helpers.response import (
 
 from azul import (
     CatalogName,
-    cache,
     config,
 )
 from azul.indexer import (
@@ -35,6 +34,9 @@ from azul.indexer import (
 )
 from azul.indexer.mirror_service import (
     MirrorService,
+)
+from azul.lib import (
+    cache,
 )
 from azul.lib.types import (
     JSON,

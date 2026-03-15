@@ -14,11 +14,13 @@ from zipfile import (
 )
 
 from azul import (
-    cached_property,
     config,
 )
 from azul.deployment import (
     aws,
+)
+from azul.lib import (
+    cached_property,
 )
 from azul.lib.files import (
     file_sha1,

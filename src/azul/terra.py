@@ -57,9 +57,7 @@ import urllib3.response
 
 from azul import (
     Config,
-    cache,
     config,
-    mutable_furl,
 )
 from azul.auth import (
     OAuth2,
@@ -83,6 +81,8 @@ from azul.indexer import (
 )
 from azul.lib import (
     R,
+    cache,
+    mutable_furl,
 )
 from azul.lib.bigquery import (
     BigQueryRows,

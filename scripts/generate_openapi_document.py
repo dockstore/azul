@@ -18,11 +18,13 @@ from furl import (
 )
 
 from azul import (
-    cached_property,
     config,
 )
 from azul.chalice import (
     AzulChaliceApp,
+)
+from azul.lib import (
+    cached_property,
 )
 from azul.lib.files import (
     write_file_atomically,

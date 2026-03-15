@@ -31,10 +31,6 @@ from more_itertools import (
 )
 import urllib3
 
-from azul import (
-    cache,
-    mutable_furl,
-)
 from azul.http import (
     HasCachedHttpClient,
     HttpClient,
@@ -43,6 +39,8 @@ from azul.http import (
 )
 from azul.lib import (
     R,
+    cache,
+    mutable_furl,
 )
 from azul.lib.types import (
     MutableJSON,

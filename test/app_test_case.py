@@ -22,10 +22,12 @@ import requests
 
 from azul import (
     config,
-    mutable_furl,
 )
 from azul.chalice import (
     AzulChaliceApp,
+)
+from azul.lib import (
+    mutable_furl,
 )
 from azul.logging import (
     get_test_logger,

@@ -22,8 +22,6 @@ from furl import (
 )
 
 from azul import (
-    cache_per_thread,
-    cached_property,
     config,
 )
 from azul.auth import (
@@ -40,6 +38,8 @@ from azul.indexer import (
 )
 from azul.lib import (
     R,
+    cache_per_thread,
+    cached_property,
 )
 from azul.lib.bigquery import (
     BigQueryRows,

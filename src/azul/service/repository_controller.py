@@ -24,7 +24,6 @@ from more_itertools import (
 
 from azul import (
     CatalogName,
-    cached_property,
     config,
 )
 from azul.auth import (
@@ -49,6 +48,7 @@ from azul.indexer.repository_service import (
 )
 from azul.lib import (
     R,
+    cached_property,
 )
 from azul.lib.collections import (
     adict,

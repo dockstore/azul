@@ -18,14 +18,14 @@ import requests
 import requests.sessions
 import requests.structures
 
-from azul import (
-    cached_property,
-)
 from azul.auth import (
     HMACAuthentication,
 )
 from azul.deployment import (
     aws,
+)
+from azul.lib import (
+    cached_property,
 )
 
 log = logging.getLogger(__name__)

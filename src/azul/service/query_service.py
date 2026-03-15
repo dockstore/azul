@@ -46,7 +46,6 @@ from opensearchpy.helpers.response import (
 
 from azul import (
     CatalogName,
-    cached_property,
     config,
 )
 from azul.es import (
@@ -64,6 +63,7 @@ from azul.indexer.field import (
 )
 from azul.lib import (
     R,
+    cached_property,
 )
 from azul.lib.types import (
     AnyJSON,

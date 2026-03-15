@@ -6,7 +6,6 @@ from typing import (
 import chalice
 
 from azul import (
-    cached_property,
     config,
 )
 from azul.chalice import (
@@ -30,6 +29,9 @@ from azul.indexer.log_forwarding_controller import (
 )
 from azul.indexer.mirror_controller import (
     MirrorController,
+)
+from azul.lib import (
+    cached_property,
 )
 from azul.lib.types import (
     JSON,

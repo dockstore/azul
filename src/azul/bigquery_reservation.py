@@ -20,7 +20,6 @@ from more_itertools import (
 )
 
 from azul import (
-    cached_property,
     config,
 )
 from azul.deployment import (
@@ -28,6 +27,7 @@ from azul.deployment import (
 )
 from azul.lib import (
     R,
+    cached_property,
 )
 
 log = logging.getLogger(__name__)

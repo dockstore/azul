@@ -59,7 +59,6 @@ from requests import (
 )
 
 from azul import (
-    cache,
     config,
 )
 from azul.http import (
@@ -77,6 +76,7 @@ from azul.indexer.document import (
 )
 from azul.lib import (
     R,
+    cache,
 )
 from azul.lib.collections import (
     adict,

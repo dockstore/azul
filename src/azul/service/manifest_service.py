@@ -79,10 +79,7 @@ from opensearchpy.helpers.response import (
 
 from azul import (
     CatalogName,
-    cache,
-    cached_property,
     config,
-    mutable_furl,
 )
 from azul.auth import (
     Authentication,
@@ -110,6 +107,9 @@ from azul.indexer.mirror_service import (
 )
 from azul.lib import (
     R,
+    cache,
+    cached_property,
+    mutable_furl,
 )
 from azul.lib.attrs import (
     SerializableAttrs,
