@@ -10,7 +10,7 @@ from unittest.mock import (
 
 import requests
 
-from azul import (
+from azul.lib import (
     false,
 )
 from azul.logging import (
