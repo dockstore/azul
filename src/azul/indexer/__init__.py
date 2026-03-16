@@ -58,9 +58,6 @@ BundleUUID = str
 BundleVersion = str
 
 
-# PyCharm can't handle mixing `attrs` with `total_ordering` and falsely claims
-# that comparison operators besides `__lt__` are not defined.
-# noinspection PyDataclass
 @attrs.frozen(kw_only=True, eq=False)
 @total_ordering
 class BundleFQID(SerializableAttrs):
