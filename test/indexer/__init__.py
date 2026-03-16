@@ -232,8 +232,8 @@ class IndexerTestCase(CatalogTestCase,
         Deletes everything and is faster than deleting indices individually
         through the service.
         """
-        es = OpenSearchClientFactory.get()
-        es.indices.delete(index='*')
+        open_search = OpenSearchClientFactory.get()
+        open_search.indices.delete(index='*')
 
     def _get_all_hits(self):
         # Without `preserve_order`, hits are sorted by `_doc`, which is fastest

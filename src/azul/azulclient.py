@@ -273,7 +273,7 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
     def deindex(self, catalog: CatalogName, sources: Iterable[SourceSpec]):
         plugin = self.repository_plugin(catalog)
         source_ids = [plugin.resolve_source(s).id for s in sources]
-        es_client = OpenSearchClientFactory.get()
+        open_search = OpenSearchClientFactory.get()
         indices = ','.join(map(str, self.index_service.index_names(catalog)))
         query = {
             'query': {
@@ -297,7 +297,7 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
         }
         log.info('Deindexing sources %r from catalog %r', sources, catalog)
         log.debug('Using query: %r', query)
-        response = es_client.delete_by_query(index=indices, body=query, slices='auto')
+        response = open_search.delete_by_query(index=indices, body=query, slices='auto')
         if len(response['failures']) > 0:
             if response['version_conflicts'] > 0:
                 log.error('Version conflicts encountered. Do not deindex while '

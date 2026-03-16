@@ -310,19 +310,19 @@ class IndexService(DocumentService):
             return contributions, list(replicas_by_coords.values())
 
     def create_indices(self, catalog: CatalogName):
-        es_client = OpenSearchClientFactory.get()
+        open_search = OpenSearchClientFactory.get()
         for index_name in self.index_names(catalog):
             while True:
                 settings = self._settings(index_name)
                 mappings = self.metadata_plugin(catalog).mapping(index_name)
                 try:
                     with silenced_es_logger():
-                        index = es_client.indices.get(index=str(index_name))
+                        index = open_search.indices.get(index=str(index_name))
                 except NotFoundError:
                     try:
-                        es_client.indices.create(index=str(index_name),
-                                                 body=dict(settings=settings,
-                                                           mappings=mappings))
+                        open_search.indices.create(index=str(index_name),
+                                                   body=dict(settings=settings,
+                                                             mappings=mappings))
                     except RequestError as e:
                         if e.error == 'resource_already_exists_exception':
                             log.info('Another party concurrently created index %s (%r), retrying.',
@@ -410,10 +410,10 @@ class IndexService(DocumentService):
             raise IndexExistsAndDiffersException('mappings', mappings, index['mappings'])
 
     def delete_indices(self, catalog: CatalogName):
-        es_client = OpenSearchClientFactory.get()
+        open_search = OpenSearchClientFactory.get()
         for index_name in self.index_names(catalog):
-            if es_client.indices.exists(index=str(index_name)):
-                es_client.indices.delete(index=str(index_name))
+            if open_search.indices.exists(index=str(index_name)):
+                open_search.indices.delete(index=str(index_name))
 
     def contribute(self,
                    catalog: CatalogName,
@@ -587,7 +587,7 @@ class IndexService(DocumentService):
     def _read_contributions(self,
                             tallies: CataloguedTallies
                             ) -> list[CataloguedContribution]:
-        es_client = OpenSearchClientFactory.get()
+        open_search = OpenSearchClientFactory.get()
 
         entity_ids_by_index: dict[str, set[str]] = defaultdict(set)
         for entity in tallies.keys():
@@ -626,12 +626,12 @@ class IndexService(DocumentService):
         def pages() -> Iterable[JSONs]:
             body = dict(query=query)
             while True:
-                response = es_client.search(index=indices,
-                                            sort=['_index', 'document_id.keyword'],
-                                            body=body,
-                                            size=config.contribution_page_size,
-                                            track_total_hits=False,
-                                            seq_no_primary_term=True)
+                response = open_search.search(index=indices,
+                                              sort=['_index', 'document_id.keyword'],
+                                              body=body,
+                                              size=config.contribution_page_size,
+                                              track_total_hits=False,
+                                              seq_no_primary_term=True)
                 hits = response['hits']['hits']
                 log.debug('Read a page with %i contribution(s)', len(hits))
                 if hits:

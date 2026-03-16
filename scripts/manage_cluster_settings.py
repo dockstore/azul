@@ -12,8 +12,8 @@ configure_script_logging()
 
 
 def main():
-    es = OpenSearchClientFactory.get()
-    response = es.cluster.put_settings(body={
+    open_search = OpenSearchClientFactory.get()
+    response = open_search.cluster.put_settings(body={
         'persistent': {
             'action.auto_create_index': False
         }

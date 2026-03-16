@@ -1475,10 +1475,10 @@ class IndexingIntegrationTest(IntegrationTestCase):
         that we can instantiate a local ES client pointing at a real, remote
         ES domain.
         """
-        es_client = OpenSearchClientFactory.get()
+        open_search = OpenSearchClientFactory.get()
         service = IndexService()
         for index_name in service.index_names(catalog):
-            self.assertTrue(es_client.indices.exists(index=str(index_name)))
+            self.assertTrue(open_search.indices.exists(index=str(index_name)))
 
     def _test_managed_access(self,
                              catalog: CatalogName,
@@ -2092,16 +2092,16 @@ class DeployedVersionIntegrationTest(AzulTestCase):
 class DisableAutomaticIndexCreationTest(IntegrationTestCase):
 
     def test(self):
-        es = OpenSearchClientFactory.get()
+        open_search = OpenSearchClientFactory.get()
         index_name = 'no-auto-create-' + self.random.randbytes(4).hex() + '-it'
         try:
             with self.assertRaises(opensearchpy.exceptions.NotFoundError) as cm:
-                es.index(index=index_name, body={'foo': 'bar'})
+                open_search.index(index=index_name, body={'foo': 'bar'})
             expected = ('no such index [' + index_name + ']')
             self.assertEqual(expected, cm.exception.args[2]['error']['reason'])
         finally:
-            if es.indices.exists(index=index_name):
-                es.indices.delete(index=[index_name])
+            if open_search.indices.exists(index=index_name):
+                open_search.indices.delete(index=[index_name])
 
 
 class ResponseHeadersTest(AzulTestCase):
