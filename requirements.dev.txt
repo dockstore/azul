@@ -25,7 +25,7 @@ python-dxf==12.1.1
 python-gitlab==8.1.0
 pyyaml==6.0.3
 requirements-parser==v0.13.0+6  # match version with find-links entry above
-responses==0.25.8  # FIXME: Update to latest version after addressing https://github.com/DataBiosphere/azul/issues/7839
+responses==0.26.0
 strict-rfc3339==0.7
 types-chevron==0.14.2  # match with chevron in requirements.txt
 types-jsonschema==4.26.0.20260202
