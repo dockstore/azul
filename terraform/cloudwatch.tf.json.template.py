@@ -27,10 +27,10 @@ emit_tf({
     'data': [
         {
             'external': {
-                'elasticsearch_nodes': {
+                'open_search_nodes': {
                     'program': [
                         'python',
-                        f'{config.project_root}/scripts/elasticsearch_nodes.py'
+                        f'{config.project_root}/scripts/open_search_nodes.py'
                     ],
                     'query': {},
                     'depends_on': (
@@ -64,7 +64,7 @@ emit_tf({
         ),
     ],
     'locals': {
-        'nodes': '${jsondecode(data.external.elasticsearch_nodes.result.nodes)}'
+        'nodes': '${jsondecode(data.external.open_search_nodes.result.nodes)}'
     },
     'resource': [
         *(
