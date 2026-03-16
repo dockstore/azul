@@ -65,8 +65,6 @@ from azul.http import (
     parse_header,
 )
 from azul.indexer import (
-    Prefix,
-    SimpleSourceSpec,
     SourcedBundleFQID,
 )
 from azul.indexer.document import (
@@ -134,6 +132,10 @@ from azul.service.manifest_service import (
 )
 from azul.service.storage_service import (
     StorageService,
+)
+from azul.source import (
+    Prefix,
+    SimpleSourceSpec,
 )
 from azul_test_case import (
     patch_config,

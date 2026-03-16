@@ -49,7 +49,6 @@ from azul.field_type import (
 )
 from azul.indexer import (
     BundleFQID,
-    Prefix,
     SourcedBundleFQID,
 )
 from azul.indexer.document import (
@@ -91,6 +90,9 @@ from azul.service.query_service import (
 )
 from azul.service.source_service import (
     SourceService,
+)
+from azul.source import (
+    Prefix,
 )
 from azul.terra import (
     TDRSourceRef,

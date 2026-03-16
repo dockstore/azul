@@ -18,9 +18,6 @@ from azul.auth import (
 from azul.deployment import (
     aws,
 )
-from azul.indexer import (
-    SourceRef,
-)
 from azul.lib import (
     R,
     cache,
@@ -38,6 +35,9 @@ from azul.plugins import (
 from azul.resources import (
     NotInLambdaContextException,
     open_resource,
+)
+from azul.source import (
+    SourceRef,
 )
 
 log = logging.getLogger(__name__)

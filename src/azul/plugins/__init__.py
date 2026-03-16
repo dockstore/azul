@@ -44,10 +44,7 @@ from azul.drs import (
 )
 from azul.indexer import (
     Bundle,
-    Prefix,
     SourceConfig,
-    SourceRef,
-    SourceSpec,
     SourcedBundleFQID,
 )
 from azul.indexer.document import (
@@ -89,6 +86,11 @@ from azul.lib.types import (
 )
 from azul.lib.uuids import (
     validate_uuid_prefix,
+)
+from azul.source import (
+    Prefix,
+    SourceRef,
+    SourceSpec,
 )
 
 if TYPE_CHECKING:

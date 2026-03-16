@@ -75,10 +75,6 @@ from azul.http import (
     LimitedTimeoutException,
     Propagate429HttpClient,
 )
-from azul.indexer import (
-    SourceRef,
-    SourceSpec,
-)
 from azul.lib import (
     R,
     cache,
@@ -105,6 +101,10 @@ from azul.oauth2 import (
     OAuth2Client,
     ServiceAccountCredentials,
     TokenCredentials,
+)
+from azul.source import (
+    SourceRef,
+    SourceSpec,
 )
 
 log = logging.getLogger(__name__)

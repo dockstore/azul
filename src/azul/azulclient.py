@@ -44,7 +44,6 @@ from azul.http import (
 )
 from azul.indexer import (
     SourceConfig,
-    SourceSpec,
 )
 from azul.indexer.index_queue_service import (
     IndexQueueService,
@@ -76,6 +75,9 @@ from azul.queues import (
 )
 from azul.service.source_service import (
     SourceService,
+)
+from azul.source import (
+    SourceSpec,
 )
 
 log = logging.getLogger(__name__)

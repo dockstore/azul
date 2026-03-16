@@ -37,7 +37,6 @@ from azul.field_type import (
 )
 from azul.indexer import (
     BundleFQID,
-    SourceRef,
 )
 from azul.lib import (
     R,
@@ -58,6 +57,9 @@ from azul.lib.types import (
     json_sequence,
     json_str,
     optional,
+)
+from azul.source import (
+    SourceRef,
 )
 
 type EntityID = str

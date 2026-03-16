@@ -11,10 +11,6 @@ from more_itertools import (
     one,
 )
 
-from azul.indexer import (
-    SourceRef,
-    SourceSpec,
-)
 from azul.lib import (
     cached_property,
 )
@@ -47,6 +43,10 @@ from azul.service.index_service import (
 )
 from azul.service.query_service import (
     ResponseTriple,
+)
+from azul.source import (
+    SourceRef,
+    SourceSpec,
 )
 
 

@@ -31,9 +31,6 @@ from azul import (
 from azul.drs import (
     DRSURI,
 )
-from azul.indexer import (
-    Prefix,
-)
 from azul.indexer.document import (
     EntityReference,
     EntityType,
@@ -73,6 +70,9 @@ from azul.plugins.repository.tdr import (
     TDRBundle,
     TDRBundleFQID,
     TDRPlugin,
+)
+from azul.source import (
+    Prefix,
 )
 from azul.terra import (
     TDRSourceRef,

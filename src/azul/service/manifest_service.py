@@ -92,11 +92,6 @@ from azul.field_type import (
     FieldTypes,
     null_str,
 )
-from azul.indexer import (
-    Prefix,
-    SourceRef,
-    SourceSpec,
-)
 from azul.indexer.document import (
     DocumentType,
     EntityType,
@@ -187,6 +182,11 @@ from azul.service.query_service import (
 from azul.service.storage_service import (
     StorageObjectNotFound,
     StorageService,
+)
+from azul.source import (
+    Prefix,
+    SourceRef,
+    SourceSpec,
 )
 from azul.vendored.frozendict import (
     frozendict,

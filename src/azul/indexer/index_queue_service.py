@@ -19,8 +19,6 @@ from azul.deployment import (
 )
 from azul.indexer import (
     BundlePartition,
-    SourceRef,
-    SourceSpec,
 )
 from azul.indexer.document import (
     CataloguedEntityReference,
@@ -48,6 +46,10 @@ from azul.queues import (
     Queues,
     SQSFifoMessage,
     SQSMessage,
+)
+from azul.source import (
+    SourceRef,
+    SourceSpec,
 )
 
 if TYPE_CHECKING:

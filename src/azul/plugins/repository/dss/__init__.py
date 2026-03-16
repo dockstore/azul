@@ -33,9 +33,6 @@ from azul.http import (
     HasCachedHttpClient,
 )
 from azul.indexer import (
-    Prefix,
-    SimpleSourceSpec,
-    SourceRef,
     SourcedBundleFQID,
 )
 from azul.lib.collections import (
@@ -53,6 +50,11 @@ from azul.plugins import (
 )
 from azul.plugins.metadata.hca.bundle import (
     HCABundle,
+)
+from azul.source import (
+    Prefix,
+    SimpleSourceSpec,
+    SourceRef,
 )
 
 log = logging.getLogger(__name__)

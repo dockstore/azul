@@ -49,8 +49,6 @@ from azul.http import (
 )
 from azul.indexer import (
     SourceConfig,
-    SourceRef,
-    SourceSpec,
 )
 from azul.lib import (
     R,
@@ -93,6 +91,10 @@ from azul.service.source_service import (
 from azul.service.storage_service import (
     StorageObjectExists,
     StorageService,
+)
+from azul.source import (
+    SourceRef,
+    SourceSpec,
 )
 
 if TYPE_CHECKING:

@@ -65,9 +65,6 @@ from azul.auth import (
 from azul.docker import (
     resolve_docker_image_for_launch,
 )
-from azul.indexer import (
-    Prefix,
-)
 from azul.lib import (
     cached_property,
 )
@@ -98,6 +95,9 @@ from azul.plugins.repository.tdr_hca import (
     TDRHCABundle,
     TDRSourceRef,
     log as plugin_log,
+)
+from azul.source import (
+    Prefix,
 )
 from azul.terra import (
     TDRClient,

@@ -27,8 +27,6 @@ from azul.http import (
     HasCachedHttpClient,
 )
 from azul.indexer import (
-    SimpleSourceSpec,
-    SourceRef,
     SourcedBundleFQID,
 )
 from azul.lib import (
@@ -50,6 +48,10 @@ from azul.plugins.metadata.hca import (
 )
 from azul.plugins.metadata.hca.bundle import (
     HCABundle,
+)
+from azul.source import (
+    SimpleSourceSpec,
+    SourceRef,
 )
 from humancellatlas.data.metadata.helpers.staging_area import (
     CannedStagingAreaFactory,

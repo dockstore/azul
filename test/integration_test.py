@@ -107,10 +107,7 @@ from azul.http import (
     http_client,
 )
 from azul.indexer import (
-    Prefix,
     SourceConfig,
-    SourceRef,
-    SourceSpec,
     SourcedBundleFQID,
 )
 from azul.indexer.document import (
@@ -175,6 +172,11 @@ from azul.service.async_manifest_service import (
 from azul.service.manifest_service import (
     ManifestFormat,
     ManifestGenerator,
+)
+from azul.source import (
+    Prefix,
+    SourceRef,
+    SourceSpec,
 )
 from azul.terra import (
     ServiceAccountCredentialsProvider,

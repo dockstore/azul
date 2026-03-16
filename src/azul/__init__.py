@@ -286,7 +286,7 @@ class Config:
         catalog = self.default_catalog
         if self.is_dss_enabled(catalog):
             dss_source = one(self.sources(catalog))
-            from azul.indexer import (
+            from azul.source import (
                 SimpleSourceSpec,
             )
             return SimpleSourceSpec.parse(dss_source).name

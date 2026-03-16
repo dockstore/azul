@@ -54,10 +54,6 @@ from azul import (
 from azul.deployment import (
     aws,
 )
-from azul.indexer import (
-    Prefix,
-    SourceRef,
-)
 from azul.logging import (
     configure_test_logging,
     get_test_logger,
@@ -67,6 +63,10 @@ from azul.plugins.repository.dss import (
 )
 from azul.service.source_service import (
     SourceService,
+)
+from azul.source import (
+    Prefix,
+    SourceRef,
 )
 from azul.terra import (
     TDRSourceRef,

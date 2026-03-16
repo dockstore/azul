@@ -29,9 +29,6 @@ from azul import (
     CatalogName,
     config,
 )
-from azul.indexer import (
-    SourceSpec,
-)
 from azul.indexer.mirror_service import (
     MirrorService,
 )
@@ -63,6 +60,9 @@ from azul.service.query_service import (
     ResponseTriple,
     ToDictStage,
     _ElasticsearchStage,
+)
+from azul.source import (
+    SourceSpec,
 )
 
 log = logging.getLogger(__name__)
