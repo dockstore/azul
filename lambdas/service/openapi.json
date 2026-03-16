@@ -10038,7 +10038,7 @@
                         "description": "\nA redirect indicating that the manifest preparation job\nhas started. Wait for\nthe recommended number of seconds (see `Retry-After`\nheader) and then follow the redirect to check the status\nof that job.\n",
                         "headers": {
                             "Location": {
-                                "description": "\nThe URL of the manifest preparation job at\nthe [`GET\n                                /manifest/files/{token}`][2] endpoint.\n\n                                [2]: #operations-Manifests-get_fetch_manifest_files_token\n",
+                                "description": "\nThe URL of the manifest preparation job at\nthe [`GET /manifest/files/{token}`][2] endpoint.\n\n[2]: #operations-Manifests-get_fetch_manifest_files_token\n",
                                 "schema": {
                                     "type": "string",
                                     "format": "url"

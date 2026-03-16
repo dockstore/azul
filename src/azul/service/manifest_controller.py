@@ -272,10 +272,9 @@ class ManifestController(QueryController):
                             'Location': {
                                 'description': fd('''
                                     The URL of the manifest preparation job at
-                                ''') + fd('''the [`GET
-                                /manifest/files/{token}`][2] endpoint.
+                                    the [`GET /manifest/files/{token}`][2] endpoint.
 
-                                [2]: #operations-Manifests-get_fetch_manifest_files_token
+                                    [2]: #operations-Manifests-get_fetch_manifest_files_token
                                 ''') if initiate else fd('''
                                     The URL of this endpoint
                                 '''),
