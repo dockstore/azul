@@ -200,7 +200,7 @@ class ManifestController(QueryController):
                         Swagger UI. Please use [GET /fetch/manifest/files/{token}][1]
                         instead.
 
-                        [1]: #operations-Manifests-get_fetch_manifest_files
+                        [1]: #operations-Manifests-get_fetch_manifest_files__token_
                     ''') if not initiate and not fetch else fd('''
                         Create a manifest preparation job, returning a 200 status
                         response whose JSON body emulates the HTTP headers that would be
@@ -240,7 +240,7 @@ class ManifestController(QueryController):
                         upper limit on the number of consecutive redirects, before the
                         manifest generation job is done.
 
-                        [1]: #operations-Manifests-get_manifest_files
+                        [1]: #operations-Manifests-get_manifest_files__token_
                     '''),
                 'parameters': [
                     self._catalog_param_spec,
@@ -274,7 +274,7 @@ class ManifestController(QueryController):
                                     The URL of the manifest preparation job at
                                     the [`GET /manifest/files/{token}`][2] endpoint.
 
-                                    [2]: #operations-Manifests-get_fetch_manifest_files_token
+                                    [2]: #operations-Manifests-get_fetch_manifest_files__token_
                                 ''') if initiate else fd('''
                                     The URL of this endpoint
                                 '''),
@@ -337,7 +337,7 @@ class ManifestController(QueryController):
                             ''') if initiate else fd('''
                             [GET /manifest/files/{token}][1].
 
-                            [1]: #operations-Manifests-get_manifest_files
+                            [1]: #operations-Manifests-get_manifest_files__token_
                             ''')) + fd('''
 
                             Note: For a 200 status code response whose body has the
@@ -347,7 +347,7 @@ class ManifestController(QueryController):
                             redirect, this time a genuine (not emulated) 302 status
                             redirect to the actual location of the manifest.
 
-                            [2]: #operations-Manifests-get_manifest_files
+                            [2]: #operations-Manifests-get_manifest_files__token_
 
                             Note: A 200 status response with a `Status` property of
                             302 in its body additionally contains a `CommandLine`
