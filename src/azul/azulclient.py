@@ -64,7 +64,7 @@ from azul.lib.types import (
     JSONs,
 )
 from azul.opensearch import (
-    ESClientFactory,
+    OpenSearchClientFactory,
 )
 from azul.plugins import (
     MetadataPlugin,
@@ -273,7 +273,7 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
     def deindex(self, catalog: CatalogName, sources: Iterable[SourceSpec]):
         plugin = self.repository_plugin(catalog)
         source_ids = [plugin.resolve_source(s).id for s in sources]
-        es_client = ESClientFactory.get()
+        es_client = OpenSearchClientFactory.get()
         indices = ','.join(map(str, self.index_service.index_names(catalog)))
         query = {
             'query': {

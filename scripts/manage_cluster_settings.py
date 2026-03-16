@@ -5,14 +5,14 @@ from azul.logging import (
     configure_script_logging,
 )
 from azul.opensearch import (
-    ESClientFactory,
+    OpenSearchClientFactory,
 )
 
 configure_script_logging()
 
 
 def main():
-    es = ESClientFactory.get()
+    es = OpenSearchClientFactory.get()
     response = es.cluster.put_settings(body={
         'persistent': {
             'action.auto_create_index': False

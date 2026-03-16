@@ -149,7 +149,7 @@ from azul.oauth2 import (
     OAuth2Client,
 )
 from azul.opensearch import (
-    ESClientFactory,
+    OpenSearchClientFactory,
 )
 from azul.plugins import (
     File,
@@ -1475,7 +1475,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
         that we can instantiate a local ES client pointing at a real, remote
         ES domain.
         """
-        es_client = ESClientFactory.get()
+        es_client = OpenSearchClientFactory.get()
         service = IndexService()
         for index_name in service.index_names(catalog):
             self.assertTrue(es_client.indices.exists(index=str(index_name)))
@@ -2092,7 +2092,7 @@ class DeployedVersionIntegrationTest(AzulTestCase):
 class DisableAutomaticIndexCreationTest(IntegrationTestCase):
 
     def test(self):
-        es = ESClientFactory.get()
+        es = OpenSearchClientFactory.get()
         index_name = 'no-auto-create-' + self.random.randbytes(4).hex() + '-it'
         try:
             with self.assertRaises(opensearchpy.exceptions.NotFoundError) as cm:

@@ -32,7 +32,7 @@ from azul.modules import (
     load_module,
 )
 from azul.opensearch import (
-    ESClientFactory,
+    OpenSearchClientFactory,
 )
 
 log = logging.getLogger(__name__)
@@ -51,7 +51,7 @@ def get_node_ids() -> Sequence[str]:
     """
     Return a list of ES node IDs used by the current deployment.
     """
-    es_client = ESClientFactory.get()
+    es_client = OpenSearchClientFactory.get()
     nodes = es_client.nodes.info()
     return sorted(nodes['nodes'].keys())
 

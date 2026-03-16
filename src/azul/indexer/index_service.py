@@ -98,7 +98,7 @@ from azul.logging import (
     silenced_es_logger,
 )
 from azul.opensearch import (
-    ESClientFactory,
+    OpenSearchClientFactory,
 )
 
 log = logging.getLogger(__name__)
@@ -310,7 +310,7 @@ class IndexService(DocumentService):
             return contributions, list(replicas_by_coords.values())
 
     def create_indices(self, catalog: CatalogName):
-        es_client = ESClientFactory.get()
+        es_client = OpenSearchClientFactory.get()
         for index_name in self.index_names(catalog):
             while True:
                 settings = self._settings(index_name)
@@ -410,7 +410,7 @@ class IndexService(DocumentService):
             raise IndexExistsAndDiffersException('mappings', mappings, index['mappings'])
 
     def delete_indices(self, catalog: CatalogName):
-        es_client = ESClientFactory.get()
+        es_client = OpenSearchClientFactory.get()
         for index_name in self.index_names(catalog):
             if es_client.indices.exists(index=str(index_name)):
                 es_client.indices.delete(index=str(index_name))
@@ -563,8 +563,9 @@ class IndexService(DocumentService):
         for catalog in catalogs:
             aggregate_cls = self.aggregate_class(catalog)
             mandatory_source_fields.update(aggregate_cls.mandatory_source_fields())
-        response = ESClientFactory.get().mget(body=request,
-                                              _source_includes=list(mandatory_source_fields))
+        open_search = OpenSearchClientFactory.get()
+        response = open_search.mget(body=request,
+                                    _source_includes=list(mandatory_source_fields))
 
         def aggregates():
             for doc in response['docs']:
@@ -586,7 +587,7 @@ class IndexService(DocumentService):
     def _read_contributions(self,
                             tallies: CataloguedTallies
                             ) -> list[CataloguedContribution]:
-        es_client = ESClientFactory.get()
+        es_client = OpenSearchClientFactory.get()
 
         entity_ids_by_index: dict[str, set[str]] = defaultdict(set)
         for entity in tallies.keys():
@@ -854,7 +855,7 @@ class IndexWriter:
         self.refresh = refresh
         self.conflict_retry_limit = conflict_retry_limit
         self.error_retry_limit = error_retry_limit
-        self.es_client = ESClientFactory.get()
+        self.es_client = OpenSearchClientFactory.get()
         self.errors: dict[DocumentCoordinates, int] = defaultdict(int)
         self.conflicts: dict[DocumentCoordinates, int] = defaultdict(int)
         self.retries: set[DocumentCoordinates] = set()

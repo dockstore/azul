@@ -73,7 +73,7 @@ from azul.lib.types import (
     json_str,
 )
 from azul.opensearch import (
-    ESClientFactory,
+    OpenSearchClientFactory,
 )
 from azul.plugins import (
     DocumentSlice,
@@ -667,7 +667,7 @@ class QueryService(DocumentService):
 
     @cached_property
     def _es_client(self) -> OpenSearch:
-        return ESClientFactory.get()
+        return OpenSearchClientFactory.get()
 
     def create_chain(self,
                      *,

@@ -48,7 +48,7 @@ from azul.lib.types import (
     MutableJSONs,
 )
 from azul.opensearch import (
-    ESClientFactory,
+    OpenSearchClientFactory,
 )
 from azul.plugins import (
     FieldPath,
@@ -232,7 +232,7 @@ class IndexerTestCase(CatalogTestCase,
         Deletes everything and is faster than deleting indices individually
         through the service.
         """
-        es = ESClientFactory.get()
+        es = OpenSearchClientFactory.get()
         es.indices.delete(index='*')
 
     def _get_all_hits(self):

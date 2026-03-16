@@ -13,7 +13,7 @@ from azul.logging import (
     configure_test_logging,
 )
 from azul.opensearch import (
-    ESClientFactory,
+    OpenSearchClientFactory,
 )
 from indexer.test_indexer import (
     DCP1IndexerTestCase,
@@ -30,7 +30,7 @@ class TestDataExtractorTestCase(DCP1IndexerTestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.es_client = ESClientFactory.get()
+        cls.es_client = OpenSearchClientFactory.get()
 
     def setUp(self) -> None:
         super().setUp()

@@ -212,7 +212,7 @@ class AzulUrllib3HttpConnection(AzulConnection, Urllib3HttpConnection):
             self.pool = cast(urllib3.HTTPConnectionPool, client)
 
 
-class ESClientFactory:
+class OpenSearchClientFactory:
 
     @classmethod
     def get(cls) -> OpenSearch:

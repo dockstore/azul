@@ -19,7 +19,7 @@ from azul.logging import (
     silenced_es_logger,
 )
 from azul.opensearch import (
-    ESClientFactory,
+    OpenSearchClientFactory,
 )
 from docker_container_test_case import (
     DockerContainerTestCase,
@@ -54,7 +54,7 @@ class ElasticsearchTestCase(DockerContainerTestCase):
                                              es_instance_count=2)
             cls._env_patch = mock.patch.dict(os.environ, **new_env)
             cls._env_patch.start()
-            cls.es_client = ESClientFactory.get()
+            cls.es_client = OpenSearchClientFactory.get()
             cls._wait_for_es()
 
             # Disable the automatic creation of indexes when documents are

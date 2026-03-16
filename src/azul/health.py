@@ -58,7 +58,7 @@ from azul.openapi import (
     schema,
 )
 from azul.opensearch import (
-    ESClientFactory,
+    OpenSearchClientFactory,
 )
 from azul.plugins import (
     MetadataPlugin,
@@ -290,7 +290,7 @@ class Health:
         Indicates whether the Elasticsearch cluster is responsive.
         """
         return {
-            'up': ESClientFactory.get().ping(),
+            'up': OpenSearchClientFactory.get().ping(),
         }
 
     @lru_cache
