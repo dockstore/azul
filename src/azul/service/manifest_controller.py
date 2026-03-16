@@ -108,6 +108,38 @@ class ManifestController(QueryController):
     def _formats(self) -> Sequence[ManifestFormat]:
         return self._metadata_plugin.manifest_formats
 
+    def _describe_format_param(self) -> str:
+        return f'''
+            The desired format of the output.
+
+            - `{ManifestFormat.compact.value}` (the default) for a compact,
+              tab-separated manifest
+
+            - `{ManifestFormat.terra_pfb.value}` for a manifest in the [PFB
+              format][2]. This format is mainly used for exporting data to
+              Terra.
+
+            - `{ManifestFormat.curl.value}` for a [curl configuration
+              file][3] manifest. This manifest can be used with the curl
+              program to download all the files listed in the manifest.
+
+            - `{ManifestFormat.verbatim_jsonl.value}` for a verbatim
+              manifest in [JSONL][4] format. Each line contains an
+              unaltered metadata entity from the underlying repository.
+
+            - `{ManifestFormat.verbatim_pfb.value}` for a verbatim
+              manifest in the [PFB format][2]. This format is mainly
+              used for exporting data to Terra.
+
+            [1]: https://software.broadinstitute.org/firecloud/documentation/article?id=10954
+
+            [2]: https://github.com/uc-cdis/pypfb
+
+            [3]: https://curl.haxx.se/docs/manpage.html#-K
+
+            [4]: https://jsonlines.org/
+        '''
+
     def _route(self, *, fetch: bool, initiate: bool):
         path = self._manifest_path(fetch=fetch, token=None if initiate else '{token}')
         return self.app.route(
@@ -217,36 +249,7 @@ class ManifestController(QueryController):
                                 form=str
                             )
                         ),
-                        description=f'''
-                                The desired format of the output.
-
-                                - `{ManifestFormat.compact.value}` (the default) for a compact,
-                                  tab-separated manifest
-
-                                - `{ManifestFormat.terra_pfb.value}` for a manifest in the [PFB
-                                  format][2]. This format is mainly used for exporting data to
-                                  Terra.
-
-                                - `{ManifestFormat.curl.value}` for a [curl configuration
-                                  file][3] manifest. This manifest can be used with the curl
-                                  program to download all the files listed in the manifest.
-
-                                - `{ManifestFormat.verbatim_jsonl.value}` for a verbatim
-                                  manifest in [JSONL][4] format. Each line contains an
-                                  unaltered metadata entity from the underlying repository.
-
-                                - `{ManifestFormat.verbatim_pfb.value}` for a verbatim
-                                  manifest in the [PFB format][2]. This format is mainly
-                                  used for exporting data to Terra.
-
-                                [1]: https://software.broadinstitute.org/firecloud/documentation/article?id=10954
-
-                                [2]: https://github.com/uc-cdis/pypfb
-
-                                [3]: https://curl.haxx.se/docs/manpage.html#-K
-
-                                [4]: https://jsonlines.org/
-                            '''
+                        description=self._describe_format_param()
                     )
                 ] if initiate else [],
                 'responses': {
