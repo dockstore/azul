@@ -17,7 +17,7 @@ from azul.args import (
 from azul.azulclient import (
     AzulClient,
 )
-from azul.bigquery_reservation import (
+from azul.infra.bigquery_reservation import (
     BigQueryReservation,
 )
 from azul.logging import (

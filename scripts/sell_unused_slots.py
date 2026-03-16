@@ -19,11 +19,11 @@ from azul import (
 from azul.args import (
     AzulArgumentHelpFormatter,
 )
-from azul.bigquery_reservation import (
-    BigQueryReservation,
-)
 from azul.deployment import (
     aws,
+)
+from azul.infra.bigquery_reservation import (
+    BigQueryReservation,
 )
 from azul.lambdas import (
     LambdaFunction,
