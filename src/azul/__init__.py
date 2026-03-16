@@ -12,7 +12,7 @@ from enum import (
 from itertools import (
     chain,
 )
-import json as _json  # collides with azul.json
+import json
 import logging as _logging  # collides with azul.logging
 import os
 from pathlib import (
@@ -98,7 +98,7 @@ class Config:
     @property
     def aws_support_roles(self) -> list[str]:
         variable = 'azul_aws_support_roles'
-        roles = _json.loads(self.environ[variable])
+        roles = json.loads(self.environ[variable])
         assert isinstance(roles, list), R(
             f'{variable} must be a list', roles)
         assert all(isinstance(role, str) for role in roles), R(
@@ -298,7 +298,7 @@ class Config:
 
     @property
     def tdr_allowed_source_locations(self) -> Set[str]:
-        return frozenset(_json.loads(self.environ['AZUL_TDR_ALLOWED_SOURCE_LOCATIONS']))
+        return frozenset(json.loads(self.environ['AZUL_TDR_ALLOWED_SOURCE_LOCATIONS']))
 
     @property
     def tdr_source_location(self) -> str:
@@ -922,7 +922,7 @@ class Config:
             import base64
             import bz2
             catalogs = bz2.decompress(base64.b64decode(catalogs)).decode()
-        catalogs = _json.loads(catalogs)
+        catalogs = json.loads(catalogs)
         assert bool(catalogs), R('No catalogs configured')
         return {
             name: self.Catalog.from_json(name, catalog)
@@ -1122,7 +1122,7 @@ class Config:
 
     @property
     def _deployment_env(self) -> dict[str, str]:
-        return {'azul_deployment': _json.dumps(self.deployment.render())}
+        return {'azul_deployment': json.dumps(self.deployment.render())}
 
     @property
     def deployment(self) -> Deployment:
@@ -1132,7 +1132,7 @@ class Config:
             return self.Deployment(self.deployment_stage)
         else:
             return self.Deployment.reconstitute(name=self.deployment_stage,
-                                                rendered=_json.loads(deployment))
+                                                rendered=json.loads(deployment))
 
     @property
     def _shared_deployments(self) -> Mapping[str | None, Sequence[Deployment]]:
@@ -1141,7 +1141,7 @@ class Config:
         branch can be deployed to. The key of None signifies any other branch
         not mapped explicitly, or a detached head.
         """
-        deployments = _json.loads(self.environ['azul_shared_deployments'])
+        deployments = json.loads(self.environ['azul_shared_deployments'])
         assert all(isinstance(v, list) and v for v in deployments.values()), R(
             'Invalid value for azul_shared_deployments')
         return frozendict(
@@ -1177,7 +1177,7 @@ class Config:
 
     @property
     def browser_sites(self) -> Mapping[str, BrowserSite]:
-        return _json.loads(self.environ['azul_browser_sites'])
+        return json.loads(self.environ['azul_browser_sites'])
 
     class GitStatus(TypedDict):
         commit: str
@@ -1279,7 +1279,7 @@ class Config:
     def _outsourced_environ(self) -> dict[str, str]:
         try:
             with open_resource('environ.json') as f:
-                return _json.load(f)
+                return json.load(f)
         except NotInLambdaContextException:
             # An outsourced environment is only defined in a Lambda context,
             # outside of one the real environment still contains all variables
@@ -1628,7 +1628,7 @@ class Config:
         if value is None:
             return None
         else:
-            return _json.loads(value)
+            return json.loads(value)
 
     @property
     def contact_us(self) -> str:
@@ -1655,7 +1655,7 @@ class Config:
         if slack_integration is None:
             return None
         else:
-            return self.SlackIntegration(**_json.loads(slack_integration))
+            return self.SlackIntegration(**json.loads(slack_integration))
 
     manifest_column_joiner = '||'
 
@@ -1687,7 +1687,7 @@ class Config:
 
     @property
     def docker_images(self) -> dict[str, ImageSpec]:
-        return _json.loads(self.environ['azul_docker_images'])
+        return json.loads(self.environ['azul_docker_images'])
 
     docker_platforms = [
         'linux/arm64',
