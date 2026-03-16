@@ -52,14 +52,14 @@ from azul.service import (
     Filters,
 )
 from azul.service.query_service import (
-    ElasticsearchStage,
     IndexNotFoundError,
+    OpenSearchStage,
     Pagination,
     PaginationStage,
     QueryService,
     ResponseTriple,
     ToDictStage,
-    _ElasticsearchStage,
+    _OpenSearchStage,
 )
 from azul.source import (
     SourceSpec,
@@ -75,7 +75,7 @@ class EntityNotFoundError(Exception):
 
 
 @attrs.frozen(auto_attribs=True, kw_only=True)
-class SearchResponseStage(_ElasticsearchStage[ResponseTriple, MutableJSON],
+class SearchResponseStage(_OpenSearchStage[ResponseTriple, MutableJSON],
                           metaclass=ABCMeta):
     service: IndexService
     file_url_func: FileUrlFunc
@@ -99,7 +99,7 @@ class SearchResponseStage(_ElasticsearchStage[ResponseTriple, MutableJSON],
         return mirror_service.mirror_uri(source, file_cls, file)
 
 
-class SummaryResponseStage(ElasticsearchStage[JSON, MutableJSON],
+class SummaryResponseStage(OpenSearchStage[JSON, MutableJSON],
                            metaclass=ABCMeta):
 
     @property
