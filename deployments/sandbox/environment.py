@@ -267,6 +267,7 @@ def env() -> Mapping[str, str | None]:
         'AZUL_TDR_SERVICE_URL': 'https://jade.datarepo-dev.broadinstitute.org',
         'AZUL_SAM_SERVICE_URL': 'https://sam.dsde-dev.broadinstitute.org',
         'AZUL_TERRA_SERVICE_URL': 'https://firecloud-orchestration.dsde-dev.broadinstitute.org',
+        'azul_ecm_service_url': 'https://externalcreds.dsde-dev.broadinstitute.org',
 
         **(
             {
