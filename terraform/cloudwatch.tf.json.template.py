@@ -6,13 +6,13 @@ from azul import (
 from azul.deployment import (
     aws,
 )
+from azul.infra.terraform import (
+    emit_tf,
+    vpc,
+)
 from azul.modules import (
     load_app_module,
     load_module,
-)
-from azul.terraform import (
-    emit_tf,
-    vpc,
 )
 
 

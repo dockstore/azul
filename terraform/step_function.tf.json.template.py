@@ -6,14 +6,14 @@ from azul import (
 from azul.deployment import (
     aws,
 )
+from azul.infra.terraform import (
+    emit_tf,
+)
 from azul.modules import (
     load_app_module,
 )
 from azul.service.manifest_controller import (
     manifest_state_key,
-)
-from azul.terraform import (
-    emit_tf,
 )
 
 service = load_app_module('service')

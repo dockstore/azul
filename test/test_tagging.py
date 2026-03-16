@@ -1,11 +1,11 @@
+from azul.infra.terraform import (
+    _transform_tf,
+)
 from azul.lib.types import (
     JSON,
 )
 from azul.logging import (
     configure_test_logging,
-)
-from azul.terraform import (
-    _transform_tf,
 )
 from azul_test_case import (
     AzulUnitTestCase,

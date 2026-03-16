@@ -24,6 +24,12 @@ from azul import (
 from azul.deployment import (
     aws,
 )
+from azul.infra.terraform import (
+    block_public_s3_bucket_access,
+    emit_tf,
+    enable_s3_bucket_inventory,
+    set_empty_s3_bucket_lifecycle_config,
+)
 from azul.lib import (
     cached_property,
 )
@@ -41,12 +47,6 @@ from azul.lib.strings import (
 )
 from azul.lib.types import (
     JSON,
-)
-from azul.terraform import (
-    block_public_s3_bucket_access,
-    emit_tf,
-    enable_s3_bucket_inventory,
-    set_empty_s3_bucket_lifecycle_config,
 )
 
 sites = config.browser_sites

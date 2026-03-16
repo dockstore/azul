@@ -21,6 +21,11 @@ from azul.deployment import (
 from azul.docker import (
     resolve_docker_image_for_pull,
 )
+from azul.infra.terraform import (
+    chalice,
+    emit_tf,
+    vpc,
+)
 from azul.lib.collections import (
     alist,
     dict_merge,
@@ -30,11 +35,6 @@ from azul.lib.strings import (
     join_lines as jl,
     join_words as jw,
     single_quote as sq,
-)
-from azul.terraform import (
-    chalice,
-    emit_tf,
-    vpc,
 )
 
 # This Terraform config creates a single EC2 instance with a bunch of Docker

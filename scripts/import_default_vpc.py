@@ -10,15 +10,15 @@ from azul import (
 from azul.deployment import (
     aws,
 )
+from azul.infra.terraform import (
+    terraform,
+    vpc,
+)
 from azul.lib import (
     cached_property,
 )
 from azul.logging import (
     configure_script_logging,
-)
-from azul.terraform import (
-    terraform,
-    vpc,
 )
 
 log = logging.getLogger(__name__)

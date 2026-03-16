@@ -4,14 +4,14 @@ from azul import (
 from azul.deployment import (
     aws,
 )
+from azul.infra.terraform import (
+    chalice,
+)
 from azul.lib.collections import (
     alist,
 )
 from azul.modules import (
     load_app_module,
-)
-from azul.terraform import (
-    chalice,
 )
 
 direct_access_role = config.dss_direct_access_role('service')

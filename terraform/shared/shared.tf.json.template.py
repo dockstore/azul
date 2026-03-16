@@ -11,15 +11,15 @@ from azul import (
 from azul.deployment import (
     aws,
 )
-from azul.lib.strings import (
-    parenthesize as _parens,
-)
-from azul.terraform import (
+from azul.infra.terraform import (
     block_public_s3_bucket_access,
     emit_tf,
     enable_s3_bucket_inventory,
     set_empty_s3_bucket_lifecycle_config,
     vpc,
+)
+from azul.lib.strings import (
+    parenthesize as _parens,
 )
 
 

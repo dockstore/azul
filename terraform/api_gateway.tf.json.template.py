@@ -18,6 +18,11 @@ from azul.deployment import (
     aws,
     public_ip,
 )
+from azul.infra.terraform import (
+    chalice,
+    emit_tf,
+    vpc,
+)
 from azul.lib import (
     R,
     cached_property,
@@ -34,11 +39,6 @@ from azul.lib.types import (
 )
 from azul.modules import (
     load_app_module,
-)
-from azul.terraform import (
-    chalice,
-    emit_tf,
-    vpc,
 )
 
 

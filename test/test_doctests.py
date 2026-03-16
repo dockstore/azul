@@ -12,6 +12,7 @@ import azul.indexer
 import azul.indexer.aggregate
 import azul.indexer.document
 import azul.indexer.repository_service
+import azul.infra.terraform
 import azul.lib
 import azul.lib.attrs
 import azul.lib.bigquery
@@ -52,7 +53,6 @@ import azul.service.drs_controller
 import azul.service.manifest_service
 import azul.service.repository_controller
 import azul.terra
-import azul.terraform
 import azul.vendored.frozendict
 import service
 
@@ -112,7 +112,7 @@ def load_tests(_loader,
         azul.service.manifest_service,
         azul.service.repository_controller,
         azul.terra,
-        azul.terraform,
+        azul.infra.terraform,
         azul.vendored.frozendict,
         load_script('can_bundle'),
         load_script('envhook'),

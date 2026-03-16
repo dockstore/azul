@@ -4,11 +4,11 @@ from azul import (
 from azul.deployment import (
     aws,
 )
+from azul.infra.terraform import (
+    emit_tf,
+)
 from azul.lambda_layer import (
     DependenciesLayer,
-)
-from azul.terraform import (
-    emit_tf,
 )
 
 layer = DependenciesLayer()
