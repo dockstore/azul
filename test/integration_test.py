@@ -99,9 +99,6 @@ from azul.deployment import (
 from azul.drs import (
     AccessMethod,
 )
-from azul.es import (
-    ESClientFactory,
-)
 from azul.http import (
     HttpClient,
     http_client,
@@ -150,6 +147,9 @@ from azul.modules import (
 )
 from azul.oauth2 import (
     OAuth2Client,
+)
+from azul.opensearch import (
+    ESClientFactory,
 )
 from azul.plugins import (
     File,

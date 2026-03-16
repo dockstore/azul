@@ -1,11 +1,11 @@
-from azul.es import (
-    ESClientFactory,
-)
 from azul.lib import (
     R,
 )
 from azul.logging import (
     configure_script_logging,
+)
+from azul.opensearch import (
+    ESClientFactory,
 )
 
 configure_script_logging()

@@ -33,9 +33,6 @@ from azul import (
     CatalogName,
     config,
 )
-from azul.es import (
-    ESClientFactory,
-)
 from azul.hmac import (
     SignatureHelper,
 )
@@ -65,6 +62,9 @@ from azul.lib import (
 from azul.lib.types import (
     JSON,
     JSONs,
+)
+from azul.opensearch import (
+    ESClientFactory,
 )
 from azul.plugins import (
     MetadataPlugin,

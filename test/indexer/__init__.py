@@ -27,9 +27,6 @@ from azul import (
     CatalogName,
     config,
 )
-from azul.es import (
-    ESClientFactory,
-)
 from azul.indexer import (
     Bundle,
     BundleFQID,
@@ -49,6 +46,9 @@ from azul.lib.types import (
     JSONs,
     MutableJSON,
     MutableJSONs,
+)
+from azul.opensearch import (
+    ESClientFactory,
 )
 from azul.plugins import (
     FieldPath,

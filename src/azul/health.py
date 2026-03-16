@@ -40,9 +40,6 @@ from azul.chalice import (
 from azul.deployment import (
     aws,
 )
-from azul.es import (
-    ESClientFactory,
-)
 from azul.lib import (
     R,
     cache,
@@ -59,6 +56,9 @@ from azul.openapi import (
     params,
     responses,
     schema,
+)
+from azul.opensearch import (
+    ESClientFactory,
 )
 from azul.plugins import (
     MetadataPlugin,

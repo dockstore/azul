@@ -45,9 +45,6 @@ from azul import (
 from azul.deployment import (
     aws,
 )
-from azul.es import (
-    ESClientFactory,
-)
 from azul.field_type import (
     CataloguedFieldTypes,
 )
@@ -99,6 +96,9 @@ from azul.lib.types import (
 )
 from azul.logging import (
     silenced_es_logger,
+)
+from azul.opensearch import (
+    ESClientFactory,
 )
 
 log = logging.getLogger(__name__)

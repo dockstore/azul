@@ -10,9 +10,6 @@ from azul import (
 from azul.docker import (
     resolve_docker_image_for_launch,
 )
-from azul.es import (
-    ESClientFactory,
-)
 from azul.lib.json_freeze import (
     freeze,
     sort_frozen,
@@ -20,6 +17,9 @@ from azul.lib.json_freeze import (
 from azul.logging import (
     get_test_logger,
     silenced_es_logger,
+)
+from azul.opensearch import (
+    ESClientFactory,
 )
 from docker_container_test_case import (
     DockerContainerTestCase,

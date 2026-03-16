@@ -22,9 +22,6 @@ from more_itertools import (
 from azul import (
     config,
 )
-from azul.es import (
-    ESClientFactory,
-)
 from azul.lib import (
     R,
 )
@@ -33,6 +30,9 @@ from azul.logging import (
 )
 from azul.modules import (
     load_module,
+)
+from azul.opensearch import (
+    ESClientFactory,
 )
 
 log = logging.getLogger(__name__)

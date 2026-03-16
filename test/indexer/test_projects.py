@@ -2,9 +2,6 @@ from more_itertools import (
     one,
 )
 
-from azul.es import (
-    ESClientFactory,
-)
 from azul.indexer.document import (
     AggregateCoordinates,
     CataloguedEntityReference,
@@ -14,6 +11,9 @@ from azul.indexer.document import (
 )
 from azul.logging import (
     configure_test_logging,
+)
+from azul.opensearch import (
+    ESClientFactory,
 )
 from indexer.test_indexer import (
     DCP1IndexerTestCase,

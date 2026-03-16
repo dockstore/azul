@@ -48,9 +48,6 @@ from azul import (
     CatalogName,
     config,
 )
-from azul.es import (
-    ESClientFactory,
-)
 from azul.field_type import (
     Nested,
 )
@@ -74,6 +71,9 @@ from azul.lib.types import (
     PrimitiveJSON,
     json_list,
     json_str,
+)
+from azul.opensearch import (
+    ESClientFactory,
 )
 from azul.plugins import (
     DocumentSlice,
