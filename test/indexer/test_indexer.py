@@ -152,7 +152,7 @@ class DCP1IndexerTestCase(DCP1CannedBundleTestCase, IndexerTestCase):
         Verify that the indices contain the correct number of hits of each
         document type
 
-        :param hits: Hits from Elasticsearch
+        :param hits: Hits from OpenSearch
 
         :param num_contribs: Expected number of contributions
 

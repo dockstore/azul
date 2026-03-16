@@ -1536,7 +1536,7 @@ class Config:
     @property
     def es_refresh_interval(self) -> int:
         """
-        Integral number of seconds between index refreshes in Elasticsearch
+        Integral number of seconds between index refreshes in OpenSearch
         """
         return 1
 

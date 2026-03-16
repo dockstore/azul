@@ -68,7 +68,7 @@ type Form[T] = type[T] | TypeAliasType | UnionType
 type IndexForm = AnyJSON | IndexRange
 
 
-#: The Elasticsearch index representation of ranges along with a factory
+#: The OpenSearch index representation of ranges along with a factory
 #:
 class IndexRange[X: IndexForm](TypedDict):
     gte: X
@@ -84,8 +84,8 @@ def index_range[X: IndexForm](gte: X, lte: X) -> IndexRange[X]:
 type Range[E] = tuple[E, E]
 type ApiRange = Range[AnyJSON] | list[AnyJSON]
 
-#: While Elasticsearch distinguishes between integers and floating point numbers
-#: in its index, JSON does not. Since all payloads to and from Elasticsearch are
+#: While OpenSearch distinguishes between integers and floating point numbers
+#: in its index, JSON does not. Since all payloads to and from OpenSearch are
 #: serialized as JSON we have to be prepared to get 1 back when we write 1.0.
 #:
 type JSONNumber = int | float

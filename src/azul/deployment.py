@@ -303,7 +303,7 @@ class AWS:
     @_cache
     def _es_domain_status(self) -> ElasticsearchDomainStatusTypeDef:
         """
-        Return the status of the current deployment's Elasticsearch domain
+        Return the status of the current deployment's OpenSearch domain
         """
         es_domain = self.es.describe_elasticsearch_domain(DomainName=config.es_domain)
         return es_domain['DomainStatus']

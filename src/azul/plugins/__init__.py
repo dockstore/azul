@@ -166,7 +166,7 @@ def dotted(path_or_element: FieldPathElement | FieldPath,
 
 class DocumentSlice(TypedDict, total=False):
     """
-    Also known in Elasticsearch land as a *source filter*, but that phrase has
+    Also known in OpenSearch land as a *source filter*, but that phrase has
     a different meaning in Azul.
 
     https://www.elastic.co/guide/en/elasticsearch/reference/7.10/search-fields.html#source-filtering
@@ -953,7 +953,7 @@ class File(DiscriminatingPolymorphicSerializableAttrs,
     def from_index(cls, hit: JSON) -> Self:
         """
         Instantiate this class from an entity aggregate document retrieved from
-        Elasticsearch.
+        OpenSearch.
         """
         raise NotImplementedError
 

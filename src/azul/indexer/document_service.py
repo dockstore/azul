@@ -107,7 +107,7 @@ class DocumentService:
         """
         Returns a mapping of fields to field types
 
-        :return: dict with nested keys matching Elasticsearch fields and values
+        :return: dict with nested keys matching OpenSearch fields and values
                  with the field's type
         """
         field_types = deep_dict_merge.from_iterable(

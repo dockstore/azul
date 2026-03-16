@@ -287,7 +287,7 @@ class Health:
     @health_property
     def elasticsearch(self):
         """
-        Indicates whether the Elasticsearch cluster is responsive.
+        Indicates whether the OpenSearch cluster is responsive.
         """
         return {
             'up': OpenSearchClientFactory.get().ping(),

@@ -119,7 +119,7 @@ class IndexService(DocumentService):
     def _settings(self, index_name: IndexName) -> JSON:
         index_name.validate()
         aggregate = index_name.doc_type is DocumentType.aggregate
-        # There is a terminology collision between ElasticSearch's concept of an
+        # There is a terminology collision between OpenSearch's concept of an
         # index replica, and our Azul-specific concept of an entity/document
         # replica.
         replica = index_name.doc_type is DocumentType.replica
@@ -461,7 +461,7 @@ class IndexService(DocumentService):
         catalogs.
         """
         # Attempting to filter by an empty array of coordinates while reading
-        # the aggregates will fail with a 400 error from ElasticSearch. This
+        # the aggregates will fail with a 400 error from OpenSearch. This
         # happens when indexing replica bundles for AnVIL, since they emit no
         # contributions.
         if not tallies:

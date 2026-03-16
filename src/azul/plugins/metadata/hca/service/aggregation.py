@@ -102,7 +102,7 @@ class HCASummaryAggregationStage(HCAAggregationStage):
                 field='contents.cell_suspensions.total_estimated_cells_'
             )
         elif entity_type == 'samples':
-            # Add an organ aggregate to the Elasticsearch request
+            # Add an organ aggregate to the OpenSearch request
             request.aggs.bucket('organTypes',
                                 'terms',
                                 field='contents.samples.effective_organ.keyword',

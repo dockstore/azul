@@ -347,7 +347,7 @@
                         "description": "Bad gateway. The frontend server received an invalid response from the backend server. \nIt is unlikely that a retry will be successful until the problem is\nresolved by an operator.\n"
                     },
                     "503": {
-                        "description": "\nAt least one of the checked resources\nis not healthy.\n\nThe response consists of the following keys:\n\n* `other_lambdas` \nIndicates whether the companion REST API responds to HTTP requests.\n* `queues` \nReturns information about the SQS queues used by the indexer and the\nmirror.\n* `progress` \nThe number of Data Store bundles pending to be indexed and the number\nof index documents in need of updating.\n* `api_endpoints` \nIndicates whether important service API endpoints are operational.\n* `elasticsearch` \nIndicates whether the Elasticsearch cluster is responsive.\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`false`.\n\n\nAt least one of the nested `up` keys\nis `false`.\n",
+                        "description": "\nAt least one of the checked resources\nis not healthy.\n\nThe response consists of the following keys:\n\n* `other_lambdas` \nIndicates whether the companion REST API responds to HTTP requests.\n* `queues` \nReturns information about the SQS queues used by the indexer and the\nmirror.\n* `progress` \nThe number of Data Store bundles pending to be indexed and the number\nof index documents in need of updating.\n* `api_endpoints` \nIndicates whether important service API endpoints are operational.\n* `elasticsearch` \nIndicates whether the OpenSearch cluster is responsive.\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`false`.\n\n\nAt least one of the nested `up` keys\nis `false`.\n",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -394,7 +394,7 @@
                         "description": "Gateway timeout. The frontend server did not receive a timely response from the backend server. \nIt is unlikely that a retry will be successful until the problem is\nresolved by an operator.\n"
                     },
                     "200": {
-                        "description": "\nThe checked resources\nare healthy.\n\nThe response consists of the following keys:\n\n* `other_lambdas` \nIndicates whether the companion REST API responds to HTTP requests.\n* `queues` \nReturns information about the SQS queues used by the indexer and the\nmirror.\n* `progress` \nThe number of Data Store bundles pending to be indexed and the number\nof index documents in need of updating.\n* `api_endpoints` \nIndicates whether important service API endpoints are operational.\n* `elasticsearch` \nIndicates whether the Elasticsearch cluster is responsive.\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`true`.\n\n\nAll of the nested `up` keys\nare `true`.\n",
+                        "description": "\nThe checked resources\nare healthy.\n\nThe response consists of the following keys:\n\n* `other_lambdas` \nIndicates whether the companion REST API responds to HTTP requests.\n* `queues` \nReturns information about the SQS queues used by the indexer and the\nmirror.\n* `progress` \nThe number of Data Store bundles pending to be indexed and the number\nof index documents in need of updating.\n* `api_endpoints` \nIndicates whether important service API endpoints are operational.\n* `elasticsearch` \nIndicates whether the OpenSearch cluster is responsive.\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`true`.\n\n\nAll of the nested `up` keys\nare `true`.\n",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -565,7 +565,7 @@
                         "description": "Bad gateway. The frontend server received an invalid response from the backend server. \nIt is unlikely that a retry will be successful until the problem is\nresolved by an operator.\n"
                     },
                     "503": {
-                        "description": "\nAt least one of the checked resources\nis not healthy.\n\nThe response consists of the following keys:\n\n* `elasticsearch` \nIndicates whether the Elasticsearch cluster is responsive.\n* `api_endpoints` \nIndicates whether important service API endpoints are operational.\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`false`.\n\n\nAt least one of the nested `up` keys\nis `false`.\n",
+                        "description": "\nAt least one of the checked resources\nis not healthy.\n\nThe response consists of the following keys:\n\n* `elasticsearch` \nIndicates whether the OpenSearch cluster is responsive.\n* `api_endpoints` \nIndicates whether important service API endpoints are operational.\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`false`.\n\n\nAt least one of the nested `up` keys\nis `false`.\n",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -609,7 +609,7 @@
                         "description": "Gateway timeout. The frontend server did not receive a timely response from the backend server. \nIt is unlikely that a retry will be successful until the problem is\nresolved by an operator.\n"
                     },
                     "200": {
-                        "description": "\nThe checked resources\nare healthy.\n\nThe response consists of the following keys:\n\n* `elasticsearch` \nIndicates whether the Elasticsearch cluster is responsive.\n* `api_endpoints` \nIndicates whether important service API endpoints are operational.\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`true`.\n\n\nAll of the nested `up` keys\nare `true`.\n",
+                        "description": "\nThe checked resources\nare healthy.\n\nThe response consists of the following keys:\n\n* `elasticsearch` \nIndicates whether the OpenSearch cluster is responsive.\n* `api_endpoints` \nIndicates whether important service API endpoints are operational.\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`true`.\n\n\nAll of the nested `up` keys\nare `true`.\n",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -673,7 +673,7 @@
                         "description": "Bad gateway. The frontend server received an invalid response from the backend server. \nIt is unlikely that a retry will be successful until the problem is\nresolved by an operator.\n"
                     },
                     "503": {
-                        "description": "\nAt least one of the checked resources\nis not healthy.\n\nThe response consists of the following keys:\n\n* `elasticsearch` \nIndicates whether the Elasticsearch cluster is responsive.\n* `api_endpoints` \nIndicates whether important service API endpoints are operational.\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`false`.\n\n\nAt least one of the nested `up` keys\nis `false`.\n",
+                        "description": "\nAt least one of the checked resources\nis not healthy.\n\nThe response consists of the following keys:\n\n* `elasticsearch` \nIndicates whether the OpenSearch cluster is responsive.\n* `api_endpoints` \nIndicates whether important service API endpoints are operational.\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`false`.\n\n\nAt least one of the nested `up` keys\nis `false`.\n",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -717,7 +717,7 @@
                         "description": "Gateway timeout. The frontend server did not receive a timely response from the backend server. \nIt is unlikely that a retry will be successful until the problem is\nresolved by an operator.\n"
                     },
                     "200": {
-                        "description": "\nThe checked resources\nare healthy.\n\nThe response consists of the following keys:\n\n* `elasticsearch` \nIndicates whether the Elasticsearch cluster is responsive.\n* `api_endpoints` \nIndicates whether important service API endpoints are operational.\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`true`.\n\n\nAll of the nested `up` keys\nare `true`.\n",
+                        "description": "\nThe checked resources\nare healthy.\n\nThe response consists of the following keys:\n\n* `elasticsearch` \nIndicates whether the OpenSearch cluster is responsive.\n* `api_endpoints` \nIndicates whether important service API endpoints are operational.\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`true`.\n\n\nAll of the nested `up` keys\nare `true`.\n",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -802,7 +802,7 @@
                         "description": "Bad gateway. The frontend server received an invalid response from the backend server. \nIt is unlikely that a retry will be successful until the problem is\nresolved by an operator.\n"
                     },
                     "503": {
-                        "description": "\nAt least one of the checked resources\nis not healthy.\n\nThe response consists of the following keys:\n\n* `other_lambdas` \nIndicates whether the companion REST API responds to HTTP requests.\n* `queues` \nReturns information about the SQS queues used by the indexer and the\nmirror.\n* `progress` \nThe number of Data Store bundles pending to be indexed and the number\nof index documents in need of updating.\n* `api_endpoints` \nIndicates whether important service API endpoints are operational.\n* `elasticsearch` \nIndicates whether the Elasticsearch cluster is responsive.\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`false`.\n\n\nAt least one of the nested `up` keys\nis `false`.\n",
+                        "description": "\nAt least one of the checked resources\nis not healthy.\n\nThe response consists of the following keys:\n\n* `other_lambdas` \nIndicates whether the companion REST API responds to HTTP requests.\n* `queues` \nReturns information about the SQS queues used by the indexer and the\nmirror.\n* `progress` \nThe number of Data Store bundles pending to be indexed and the number\nof index documents in need of updating.\n* `api_endpoints` \nIndicates whether important service API endpoints are operational.\n* `elasticsearch` \nIndicates whether the OpenSearch cluster is responsive.\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`false`.\n\n\nAt least one of the nested `up` keys\nis `false`.\n",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -849,7 +849,7 @@
                         "description": "Gateway timeout. The frontend server did not receive a timely response from the backend server. \nIt is unlikely that a retry will be successful until the problem is\nresolved by an operator.\n"
                     },
                     "200": {
-                        "description": "\nThe checked resources\nare healthy.\n\nThe response consists of the following keys:\n\n* `other_lambdas` \nIndicates whether the companion REST API responds to HTTP requests.\n* `queues` \nReturns information about the SQS queues used by the indexer and the\nmirror.\n* `progress` \nThe number of Data Store bundles pending to be indexed and the number\nof index documents in need of updating.\n* `api_endpoints` \nIndicates whether important service API endpoints are operational.\n* `elasticsearch` \nIndicates whether the Elasticsearch cluster is responsive.\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`true`.\n\n\nAll of the nested `up` keys\nare `true`.\n",
+                        "description": "\nThe checked resources\nare healthy.\n\nThe response consists of the following keys:\n\n* `other_lambdas` \nIndicates whether the companion REST API responds to HTTP requests.\n* `queues` \nReturns information about the SQS queues used by the indexer and the\nmirror.\n* `progress` \nThe number of Data Store bundles pending to be indexed and the number\nof index documents in need of updating.\n* `api_endpoints` \nIndicates whether important service API endpoints are operational.\n* `elasticsearch` \nIndicates whether the OpenSearch cluster is responsive.\n* `up` \nindicates the overall result of the health check\n\n\nThe top-level `up` key of the response is\n`true`.\n\n\nAll of the nested `up` keys\nare `true`.\n",
                         "content": {
                             "application/json": {
                                 "schema": {

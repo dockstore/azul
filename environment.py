@@ -417,12 +417,12 @@ def env() -> Mapping[str, str | None]:
         #
         'AZUL_RESOURCE_PREFIX': 'azul',
 
-        # The host and port of the Elasticsearch instance to use. This takes
+        # The host and port of the OpenSearch instance to use. This takes
         # precedence over AZUL_ES_DOMAIN.
         #
         'AZUL_ES_ENDPOINT': None,
 
-        # The name of the AWS-hosted Elasticsearch instance (not a domain name)
+        # The name of the AWS-hosted OpenSearch instance (not a domain name)
         # to use. The given ES domain's endpoint will be looked up dynamically.
         #
         'AZUL_ES_DOMAIN': 'azul-index-{AZUL_DEPLOYMENT_STAGE}',
@@ -431,7 +431,7 @@ def env() -> Mapping[str, str | None]:
         #
         'AZUL_SHARE_ES_DOMAIN': '0',
 
-        # The number of nodes in the AWS-hosted Elasticsearch cluster
+        # The number of nodes in the AWS-hosted OpenSearch cluster
         #
         'AZUL_ES_INSTANCE_COUNT': None,
 
@@ -448,7 +448,7 @@ def env() -> Mapping[str, str | None]:
         #
         'AZUL_ES_VOLUME_SIZE': '0',
 
-        # Elasticsearch operation timeout in seconds. Matches AWS' own timeout
+        # OpenSearch operation timeout in seconds. Matches AWS' own timeout
         # on the ELB sitting in front of ES:
         #
         # https://forums.aws.amazon.com/thread.jspa?threadID=233378
@@ -575,7 +575,7 @@ def env() -> Mapping[str, str | None]:
         #
         # for details. These settings may also be used to drive other scaling
         # choices. For example, the non-retry contribution concurrency
-        # determines the number of shards in Elasticsearch.
+        # determines the number of shards in OpenSearch.
         #
         'AZUL_CONTRIBUTION_CONCURRENCY': '64',
         'AZUL_AGGREGATION_CONCURRENCY': '64',

@@ -67,7 +67,7 @@ def sort_frozen(x: AnyJSON) -> AnyJSON:
     """
     Attempt to recursively sort a frozen JSON structure. Not all JSON structures
     are supported. The restrictions are noted below. This method is really only
-    useful when comparing Elasticsearch documents. Elasticsearches semantics
+    useful when comparing OpenSearch documents. OpenSearch's semantics
     for lists is that the order in which list elements occur doesn't really
     matter. The "term" query {"foo": "bar"} matches a documents with
     "foo": "bar" and ones with "foo":["baz","bar"].

@@ -73,7 +73,7 @@ parser.add_argument('--sources',
 parser.add_argument('--delete',
                     default=False,
                     action='store_true',
-                    help='Delete all Elasticsearch indices in the current deployment. '
+                    help='Delete all OpenSearch indices in the current deployment. '
                          'Implies --create when combined with --index. '
                          'Behaves like --deindex instead if the operations is limited to a subset '
                          'of the configured sources.')
@@ -92,7 +92,7 @@ parser.add_argument('--deindex',
 parser.add_argument('--create',
                     default=False,
                     action='store_true',
-                    help='Create all Elasticsearch indices in the current deployment. '
+                    help='Create all OpenSearch indices in the current deployment. '
                          'Implied when --delete and --index are given.')
 parser.add_argument('--purge',
                     default=False,

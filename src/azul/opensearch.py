@@ -58,7 +58,7 @@ class CachedBotoAWSRequestsAuth(BotoAWSRequestsAuth):
 
 class AzulConnection(Connection):
     """
-    Improves the request logging by the Elasticsearch client library with
+    Improves the request logging by the OpenSearch client library with
     respect to performance and utility. Most importantly, this class logs a
     request *before* it is made, not just when a response is received. At INFO
     level, only the beginning of a request or response body is logged. At DEBUG
@@ -170,7 +170,7 @@ class AWSAuthHttpClient(HttpClient):
         # while PreparedRequest.prepare() requires an absolute URL, we can sneak
         # a relative one in by setting the attribute directly. This neatly
         # avoids having to compose an absolute URL and the URL-encoding
-        # ambiguities that entails. The Elasticsearch client, for example,
+        # ambiguities that entails. The OpenSearch client, for example,
         # encodes colons in absolute paths even though the leading slash in such
         # a path makes that unnecessary. These ambiguities could lead to an
         # invalid signature. The AWS signature algorithm only looks at path and

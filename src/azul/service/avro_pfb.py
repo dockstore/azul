@@ -95,7 +95,7 @@ def write_pfb_entities(entities: Iterable[JSON], pfb_schema: JSON, path: str):
 #        https://github.com/DataBiosphere/azul/issues/4606
 class PFBConverter:
     """
-    Converts documents from Elasticsearch into PFB entities. A document's inner
+    Converts documents from OpenSearch into PFB entities. A document's inner
     entities correspond to PFB entities which are normalized and linked via
     Relations.
     """
@@ -108,7 +108,7 @@ class PFBConverter:
 
     def add_doc(self, doc: JSON):
         """
-        Add an Elasticsearch document to be transformed.
+        Add an OpenSearch document to be transformed.
         """
         doc_copy = copy_json(doc, 'contents', self.entity_type)
         contents = doc_copy['contents']

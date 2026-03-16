@@ -842,7 +842,7 @@ class ManifestGenerator(metaclass=ABCMeta):
     def entity_type(self) -> EntityType:
         """
         The type of the index entities this generator consumes. This controls
-        which aggregate Elasticsearch index is queried to fetch the aggregate
+        which aggregate OpenSearch index is queried to fetch the aggregate
         entity documents that this generator consumes when generating the
         output manifest.
         """
@@ -1271,7 +1271,7 @@ class ManifestGenerator(metaclass=ABCMeta):
 class ClientSidePagingManifestGenerator(ManifestGenerator, metaclass=ABCMeta):
     """
     A mixin for manifest generators that use client-side paging to query
-    Elasticsearch.
+    OpenSearch.
     """
     page_size = 500
 
@@ -1308,9 +1308,9 @@ class PagedManifestGenerator(ClientSidePagingManifestGenerator):
     segments, also known as pages.
 
     In some subclasses, e.g. CompactManifestGenerator and CurlManifestGenerator,
-    a manifest page corresponds to a page of hits from a paginated Elasticsearch
+    a manifest page corresponds to a page of hits from a paginated OpenSearch
     request. In others, e.g. JSONLVerbatimManifestGenerator, the relationship
-    between manifest pages and Elasticsearch pages is more complicated.
+    between manifest pages and OpenSearch pages is more complicated.
     """
 
     @abstractmethod
@@ -1906,10 +1906,10 @@ class VerbatimManifestGenerator(ClientSidePagingManifestGenerator,
                        request_factory: Callable[[SortKey | None], Search]
                        ) -> Iterable[Hit]:
         """
-        Yield all hits in every page of Elasticsearch hits in responses to
+        Yield all hits in every page of OpenSearch hits in responses to
         requests that use client-side paging.
 
-        :param request_factory:  A callable that returns a prepared Elasticsearch
+        :param request_factory:  A callable that returns a prepared OpenSearch
                                  request for the given search-after key, with the
                                  appropriate filters and sorting applied. The
                                  returned request should yield one page worth of
@@ -1979,7 +1979,7 @@ class VerbatimManifestGenerator(ClientSidePagingManifestGenerator,
 
         # `_id` is currently the only index field that is unique to each replica
         # document (and thus results in an unambiguous total ordering). However,
-        # sorting just by `_id` is unacceptably slow, an Elasticsearch quirk. To
+        # sorting just by `_id` is unacceptably slow, an OpenSearch quirk. To
         # overcome the performance hit, we sort by a field that's *almost*
         # unique to each replica, so that `_id` only needs to be loaded and
         # compared in the infrequent event that it's needed as a tiebreaker.
@@ -2044,7 +2044,7 @@ class JSONLVerbatimManifestGenerator(PagedManifestGenerator,
         # All replicas from each source must be held in memory simultaneously to
         # avoid emitting duplicates. Therefore, each "page" of this manifest
         # must retrieve every replica from a given source, using multiple paged
-        # requests to ElasticSearch if necessary.
+        # requests to OpenSearch if necessary.
         source_ids = self.source_ids()
         page_index = not_none(partition.page_index)
         source_id = source_ids[page_index]

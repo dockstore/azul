@@ -30,8 +30,8 @@ log = get_test_logger(__name__)
 
 class ElasticsearchTestCase(DockerContainerTestCase):
     """
-    A test case that uses an Elasticsearch instance running in a container.
-    The same Elasticsearch instance will be shared by all tests in the class.
+    A test case that uses an OpenSearch instance running in a container.
+    The same OpenSearch instance will be shared by all tests in the class.
     """
     open_search = None
     _env_patch = None
@@ -80,13 +80,13 @@ class ElasticsearchTestCase(DockerContainerTestCase):
         with silenced_es_logger():
             while not cls.open_search.ping():
                 assert time.time() - start_time < 60, 'Docker container timed out'
-                log.debug('Could not ping Elasticsearch. Retrying...')
+                log.debug('Could not ping OpenSearch. Retrying...')
                 time.sleep(1)
         log.info(f'It took {time.time() - start_time:.3f}s for ES container to boot up')
 
     def assertElasticEqual(self, first, second):
         """
-        The ordering of list items in our Elasticsearch responses typically
+        The ordering of list items in our OpenSearch responses typically
         doesn't matter. The comparison done by this method is insensitive to
         ordering differences in lists.
 

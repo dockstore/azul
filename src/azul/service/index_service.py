@@ -136,7 +136,7 @@ class IndexService(QueryService):
         :param file_url_func: A function that is used only when getting a *list* of files data.
         It creates the files URL based on info from the request. It should have the type
         signature `(uuid: str, **params) -> str`
-        :return: The Elasticsearch JSON response
+        :return: The OpenSearch JSON response
         """
         if item_id is not None:
             validate_uuid(item_id)
@@ -178,7 +178,7 @@ class IndexService(QueryService):
         :param catalog: The name of the catalog to query
 
         :param entity_type: the string referring to the entity type used to get
-                            the ElasticSearch index to search
+                            the OpenSearch index to search
 
         :param aggregate: Whether to perform the aggregation stage or not.
 
@@ -287,7 +287,7 @@ class IndexService(QueryService):
         assert len(response.hits) == 0
 
         if config.debug == 2 and log.isEnabledFor(logging.DEBUG):
-            log.debug('Elasticsearch request: %s', json.dumps(request.to_dict(), indent=4))
+            log.debug('OpenSearch request: %s', json.dumps(request.to_dict(), indent=4))
 
         result = chain.process_response(response)
 

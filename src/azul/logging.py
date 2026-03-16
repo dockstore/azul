@@ -177,7 +177,7 @@ azul_boto3_log = logging.getLogger('azul.boto3')
 def silenced_es_logger():
     """
     Does nothing if AZUL_DEBUG is 2. Temporarily sets the level of the
-    Elasticsearch logger to WARNING if AZUL_DEBUG is 1, or ERROR if it is 0.
+    OpenSearch logger to WARNING if AZUL_DEBUG is 1, or ERROR if it is 0.
 
     Use sparingly since it assumes that only the current thread uses the ES
     client. If other threads use the ES client concurrently, their logging will

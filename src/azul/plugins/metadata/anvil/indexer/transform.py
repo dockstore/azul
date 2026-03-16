@@ -604,7 +604,7 @@ class BundleTransformer(SingletonTransformer):
             # don't include any files. Some of the replicas we emit here will be
             # redundant with those emitted by the file transformer, but these
             # will be consolidated by the index service before they are written
-            # to ElasticSearch.
+            # to OpenSearch.
             dataset = self._only_dataset()
             for entity in chain(self.bundle.orphans, self.bundle.entities):
                 if partition.contains(UUID(entity.entity_id)):

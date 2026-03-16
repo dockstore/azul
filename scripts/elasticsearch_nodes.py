@@ -1,6 +1,6 @@
 """
 This script is referenced by our TerraForm config as an external data source. It
-prints the current deployment's Elasticsearch node IDs as JSON to STDOUT. If the
+prints the current deployment's OpenSearch node IDs as JSON to STDOUT. If the
 list of node IDs contains fewer items than the number of placeholders in the
 Cloudwatch dashboard template, the output is padded with dummy entries.
 

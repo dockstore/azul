@@ -97,7 +97,7 @@ class IndexNotFoundError(Exception):
 
 class ElasticsearchStage[R1, R2](metaclass=ABCMeta):
     """
-    A stage in a chain of responsibility to prepare an Elasticsearch request and
+    A stage in a chain of responsibility to prepare an OpenSearch request and
     to process the response to that request. If an implementation modifies the
     argument in place, it must return the argument.
     """
@@ -174,7 +174,7 @@ TranslatedFilters = Mapping[FieldPath, Mapping[str, Sequence[PrimitiveJSON]]]
 @attr.s(frozen=True, auto_attribs=True, kw_only=True)
 class FilterStage(_ElasticsearchStage[Response, Response]):
     """
-    Converts the given filters to an Elasticsearch query and adds that query as
+    Converts the given filters to an OpenSearch query and adds that query as
     either a `query` or `post_filter` property to the request.
     """
     filters: Filters
@@ -211,7 +211,7 @@ class FilterStage(_ElasticsearchStage[Response, Response]):
     def _translate_filters(self, filters: FiltersJSON) -> TranslatedFilters:
         """
         Translate the field values in the given filter JSON to their respective
-        Elasticsearch form, using the field types, the field names to field
+        OpenSearch form, using the field types, the field names to field
         paths.
         """
         catalog = self.catalog
@@ -227,7 +227,7 @@ class FilterStage(_ElasticsearchStage[Response, Response]):
 
     def prepare_query(self, skip_field_paths: tuple[FieldPath] = ()) -> Query:
         """
-        Converts the given filters into an Elasticsearch DSL Query object.
+        Converts the given filters into an OpenSearch DSL Query object.
         """
         filter_list = []
         for field_path, filter in self.prepared_filters.items():
@@ -318,7 +318,7 @@ class AggregationStage(_ElasticsearchStage[MutableJSON, MutableJSON]):
 
     def _prepare_aggregation(self, *, facet: str, facet_path: FieldPath) -> Agg:
         """
-        Creates an aggregation to be used in an Elasticsearch search request.
+        Creates an aggregation to be used in an OpenSearch search request.
         """
         # Create a filter agg using a query that represents all filters
         # except for the current facet.
@@ -346,7 +346,7 @@ class AggregationStage(_ElasticsearchStage[MutableJSON, MutableJSON]):
 
     def _annotate_aggs_for_translation(self, request: Search):
         """
-        Annotate the aggregations in the given Elasticsearch search request so
+        Annotate the aggregations in the given OpenSearch search request so
         we can later translate substitutes for None in the aggregations part of
         the response.
         """
@@ -379,7 +379,7 @@ class AggregationStage(_ElasticsearchStage[MutableJSON, MutableJSON]):
     def _translate_response_aggs(self, aggs: MutableJSON):
         """
         Translate substitutes for None in the aggregations part of an
-        Elasticsearch response.
+        OpenSearch response.
         """
 
         def translate(k, v: MutableJSON):
@@ -426,7 +426,7 @@ class AggregationStage(_ElasticsearchStage[MutableJSON, MutableJSON]):
 class SlicingStage(_ElasticsearchStage[Response, Response]):
     """
     Augments the request with a document slice (known as a *source filter* in
-    Elasticsearch land) to restrict the set of properties in each hit in the
+    OpenSearch land) to restrict the set of properties in each hit in the
     response. If the given document slice is None, the default one from the
     plugin is used. If that is None, too, each hit will contain all properties.
     """
@@ -678,7 +678,7 @@ class QueryService(DocumentService):
                      document_slice: DocumentSlice | None
                      ) -> ElasticsearchChain[Response, Any, Response]:
         """
-        Create a chain for a basic Elasticsearch `search` request for documents
+        Create a chain for a basic OpenSearch `search` request for documents
         matching the given filter, optionally restricting the set of properties
         returned for each matching document.
         """
@@ -702,7 +702,7 @@ class QueryService(DocumentService):
                        doc_type: DocumentType = DocumentType.aggregate
                        ) -> Search:
         """
-        Create an Elasticsearch request against the index containing documents
+        Create an OpenSearch request against the index containing documents
         of the given entity and document types, in the given catalog.
         """
         return Search(using=self._open_search,
