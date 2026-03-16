@@ -87,6 +87,11 @@ from azul.auth import (
 from azul.deployment import (
     aws,
 )
+from azul.field_type import (
+    FieldType,
+    FieldTypes,
+    null_str,
+)
 from azul.indexer import (
     Prefix,
     SourceRef,
@@ -96,11 +101,6 @@ from azul.indexer.document import (
     DocumentType,
     EntityType,
     FieldPath,
-)
-from azul.indexer.field import (
-    FieldType,
-    FieldTypes,
-    null_str,
 )
 from azul.indexer.mirror_service import (
     MirrorService,

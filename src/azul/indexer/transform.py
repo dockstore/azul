@@ -11,6 +11,9 @@ from typing import (
 
 import attr
 
+from azul.field_type import (
+    FieldTypes,
+)
 from azul.indexer import (
     Bundle,
     BundleFQID,
@@ -27,9 +30,6 @@ from azul.indexer.document import (
     EntityType,
     Replica,
     ReplicaCoordinates,
-)
-from azul.indexer.field import (
-    FieldTypes,
 )
 from azul.lib.collections import (
     alist,

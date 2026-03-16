@@ -44,6 +44,9 @@ from azul import (
 from azul.deployment import (
     aws,
 )
+from azul.field_type import (
+    null_str,
+)
 from azul.indexer import (
     BundleFQID,
     Prefix,
@@ -52,9 +55,6 @@ from azul.indexer import (
 from azul.indexer.document import (
     DocumentType,
     IndexName,
-)
-from azul.indexer.field import (
-    null_str,
 )
 import azul.indexer.index_service
 from azul.lib import (

@@ -15,18 +15,18 @@ from azul import (
     CatalogName,
     config,
 )
-from azul.indexer.document import (
-    Aggregate,
-    Contribution,
-    Document,
-    FieldPath,
-)
-from azul.indexer.field import (
+from azul.field_type import (
     CataloguedFieldTypes,
     FieldType,
     FieldTypes,
     FieldTypes1,
     Nested,
+)
+from azul.indexer.document import (
+    Aggregate,
+    Contribution,
+    Document,
+    FieldPath,
 )
 from azul.indexer.transform import (
     Transformer,

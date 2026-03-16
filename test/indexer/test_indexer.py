@@ -47,6 +47,11 @@ from opensearchpy import (
 from azul import (
     config,
 )
+from azul.field_type import (
+    null_bool,
+    null_int,
+    null_str,
+)
 from azul.indexer import (
     Bundle,
     BundlePartition,
@@ -61,11 +66,6 @@ from azul.indexer.document import (
     IndexName,
     Replica,
     ReplicaCoordinates,
-)
-from azul.indexer.field import (
-    null_bool,
-    null_int,
-    null_str,
 )
 from azul.indexer.index_service import (
     IndexExistsAndDiffersException,

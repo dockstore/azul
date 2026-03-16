@@ -26,7 +26,7 @@ import attrs
 from azul import (
     config,
 )
-from azul.indexer.field import (
+from azul.field_type import (
     FieldTypes,
     pass_thru_str,
 )

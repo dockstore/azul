@@ -43,22 +43,7 @@ from more_itertools import (
 from azul import (
     config,
 )
-from azul.indexer import (
-    BundleFQID,
-    BundlePartition,
-)
-from azul.indexer.aggregate import (
-    EntityAggregator,
-    SimpleAggregator,
-)
-from azul.indexer.document import (
-    Contribution,
-    EntityID,
-    EntityReference,
-    EntityType,
-    Replica,
-)
-from azul.indexer.field import (
+from azul.field_type import (
     ClosedRange,
     FieldTypes,
     Mode,
@@ -73,6 +58,21 @@ from azul.indexer.field import (
     pass_thru_float,
     pass_thru_int,
     pass_thru_json,
+)
+from azul.indexer import (
+    BundleFQID,
+    BundlePartition,
+)
+from azul.indexer.aggregate import (
+    EntityAggregator,
+    SimpleAggregator,
+)
+from azul.indexer.document import (
+    Contribution,
+    EntityID,
+    EntityReference,
+    EntityType,
+    Replica,
 )
 from azul.indexer.transform import (
     ReplicaTransformer,

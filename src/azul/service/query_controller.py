@@ -25,7 +25,7 @@ from more_itertools import (
 from azul import (
     CatalogName,
 )
-from azul.indexer.field import (
+from azul.field_type import (
     FieldType,
     Mode,
     pass_thru_bool,

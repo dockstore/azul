@@ -48,6 +48,9 @@ from azul.deployment import (
 from azul.es import (
     ESClientFactory,
 )
+from azul.field_type import (
+    CataloguedFieldTypes,
+)
 from azul.indexer import (
     Bundle,
     BundleFQID,
@@ -73,9 +76,6 @@ from azul.indexer.document import (
 )
 from azul.indexer.document_service import (
     DocumentService,
-)
-from azul.indexer.field import (
-    CataloguedFieldTypes,
 )
 from azul.indexer.transform import (
     Transformer,

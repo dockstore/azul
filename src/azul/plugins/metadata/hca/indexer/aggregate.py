@@ -9,6 +9,10 @@ from more_itertools import (
     one,
 )
 
+from azul.field_type import (
+    FieldTypes,
+    null_int,
+)
 from azul.indexer.aggregate import (
     Accumulator,
     DictAccumulator,
@@ -26,10 +30,6 @@ from azul.indexer.aggregate import (
 )
 from azul.indexer.document import (
     Aggregate,
-)
-from azul.indexer.field import (
-    FieldTypes,
-    null_int,
 )
 from azul.lib import (
     cached_property,

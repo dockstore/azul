@@ -51,15 +51,15 @@ from azul import (
 from azul.es import (
     ESClientFactory,
 )
+from azul.field_type import (
+    Nested,
+)
 from azul.indexer.document import (
     DocumentType,
     IndexName,
 )
 from azul.indexer.document_service import (
     DocumentService,
-)
-from azul.indexer.field import (
-    Nested,
 )
 from azul.lib import (
     R,

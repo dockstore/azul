@@ -25,11 +25,7 @@ from azul import (
     CatalogName,
     config,
 )
-from azul.indexer import (
-    BundleFQID,
-    SourceRef,
-)
-from azul.indexer.field import (
+from azul.field_type import (
     CataloguedFieldTypes,
     FieldType,
     FieldTypes,
@@ -38,6 +34,10 @@ from azul.indexer.field import (
     pass_thru_int,
     pass_thru_json,
     pass_thru_str,
+)
+from azul.indexer import (
+    BundleFQID,
+    SourceRef,
 )
 from azul.lib import (
     R,

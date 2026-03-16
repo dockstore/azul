@@ -36,7 +36,7 @@ from more_itertools import (
 from azul import (
     config,
 )
-from azul.indexer.field import (
+from azul.field_type import (
     ClosedRange,
     FieldTypes,
     Nested,

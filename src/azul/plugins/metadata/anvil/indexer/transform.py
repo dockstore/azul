@@ -39,6 +39,14 @@ from more_itertools import (
 from azul import (
     config,
 )
+from azul.field_type import (
+    FieldTypes,
+    null_bool,
+    null_int,
+    null_str,
+    pass_thru_int,
+    pass_thru_json,
+)
 from azul.indexer import (
     BundleFQID,
     BundlePartition,
@@ -52,14 +60,6 @@ from azul.indexer.document import (
     EntityReference,
     EntityType,
     Replica,
-)
-from azul.indexer.field import (
-    FieldTypes,
-    null_bool,
-    null_int,
-    null_str,
-    pass_thru_int,
-    pass_thru_json,
 )
 from azul.indexer.transform import (
     ReplicaTransformer,
