@@ -33,7 +33,7 @@ class ElasticsearchTestCase(DockerContainerTestCase):
     A test case that uses an Elasticsearch instance running in a container.
     The same Elasticsearch instance will be shared by all tests in the class.
     """
-    es_client = None
+    open_search = None
     _env_patch = None
 
     @classmethod
@@ -54,7 +54,7 @@ class ElasticsearchTestCase(DockerContainerTestCase):
                                              es_instance_count=2)
             cls._env_patch = mock.patch.dict(os.environ, **new_env)
             cls._env_patch.start()
-            cls.es_client = OpenSearchClientFactory.get()
+            cls.open_search = OpenSearchClientFactory.get()
             cls._wait_for_es()
 
             # Disable the automatic creation of indexes when documents are
@@ -64,7 +64,7 @@ class ElasticsearchTestCase(DockerContainerTestCase):
             # created indices have a only a default mapping, resulting in
             # failure modes that are harder to diagnose.
             #
-            cls.es_client.cluster.put_settings(body={
+            cls.open_search.cluster.put_settings(body={
                 'persistent': {
                     'action.auto_create_index': False,
                     'action.destructive_requires_name': False
@@ -78,7 +78,7 @@ class ElasticsearchTestCase(DockerContainerTestCase):
     def _wait_for_es(cls):
         start_time = time.time()
         with silenced_es_logger():
-            while not cls.es_client.ping():
+            while not cls.open_search.ping():
                 assert time.time() - start_time < 60, 'Docker container timed out'
                 log.debug('Could not ping Elasticsearch. Retrying...')
                 time.sleep(1)

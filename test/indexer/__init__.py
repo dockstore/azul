@@ -241,7 +241,7 @@ class IndexerTestCase(CatalogTestCase,
         # the number of shards, for example, but also under what appear to be
         # unrelated code changes. This makes asserting test results verbatim
         # impossible. Thus we set `preserve_order` to True.
-        hits = list(scan(client=self.es_client,
+        hits = list(scan(client=self.open_search,
                          index=','.join(map(str, self.index_service.index_names(self.catalog))),
                          preserve_order=True))
 

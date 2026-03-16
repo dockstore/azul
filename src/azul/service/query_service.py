@@ -666,7 +666,7 @@ class PaginationStage(_ElasticsearchStage[JSON, ResponseTriple]):
 class QueryService(DocumentService):
 
     @cached_property
-    def _es_client(self) -> OpenSearch:
+    def _open_search(self) -> OpenSearch:
         return OpenSearchClientFactory.get()
 
     def create_chain(self,
@@ -705,7 +705,7 @@ class QueryService(DocumentService):
         Create an Elasticsearch request against the index containing documents
         of the given entity and document types, in the given catalog.
         """
-        return Search(using=self._es_client,
+        return Search(using=self._open_search,
                       index=str(IndexName.create(catalog=catalog,
                                                  qualifier=entity_type,
                                                  doc_type=doc_type)))

@@ -855,7 +855,7 @@ class IndexWriter:
         self.refresh = refresh
         self.conflict_retry_limit = conflict_retry_limit
         self.error_retry_limit = error_retry_limit
-        self.es_client = OpenSearchClientFactory.get()
+        self.open_search = OpenSearchClientFactory.get()
         self.errors: dict[DocumentCoordinates, int] = defaultdict(int)
         self.conflicts: dict[DocumentCoordinates, int] = defaultdict(int)
         self.retries: set[DocumentCoordinates] = set()
@@ -879,7 +879,7 @@ class IndexWriter:
         log.info('Writing documents individually')
         for doc in documents:
             try:
-                method = getattr(self.es_client, doc.op_type.name)
+                method = getattr(self.open_search, doc.op_type.name)
                 method(refresh=self.refresh, **doc.to_index(self.catalog, self.field_types))
             except ConflictError as e:
                 self._on_conflict(doc, e)
@@ -934,7 +934,7 @@ class IndexWriter:
         # `action` parameter but we're exploiting the undocumented fact that the
         # method immediately maps the value of the `expand_action_callback`
         # parameter over the list passed in the `actions` parameter.
-        response = streaming_bulk(client=self.es_client,
+        response = streaming_bulk(client=self.open_search,
                                   actions=list(documents.values()),
                                   expand_action_callback=expand_action,
                                   refresh=self.refresh,
