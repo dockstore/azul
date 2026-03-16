@@ -47,7 +47,7 @@ from azul.modules import (
     load_app_module,
 )
 from open_search_test_case import (
-    ElasticsearchTestCase,
+    OpenSearchTestCase,
 )
 from service import (
     StorageServiceTestCase,
@@ -70,7 +70,7 @@ def setUpModule():
 
 
 class HealthCheckTestCase(LocalAppTestCase,
-                          ElasticsearchTestCase,
+                          OpenSearchTestCase,
                           StorageServiceTestCase,
                           SqsTestCase,
                           metaclass=ABCMeta):

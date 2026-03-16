@@ -28,7 +28,7 @@ from docker_container_test_case import (
 log = get_test_logger(__name__)
 
 
-class ElasticsearchTestCase(DockerContainerTestCase):
+class OpenSearchTestCase(DockerContainerTestCase):
     """
     A test case that uses an OpenSearch instance running in a container.
     The same OpenSearch instance will be shared by all tests in the class.

@@ -76,7 +76,7 @@ from azul_test_case import (
     DCP2TestCase,
 )
 from open_search_test_case import (
-    ElasticsearchTestCase,
+    OpenSearchTestCase,
 )
 
 
@@ -212,7 +212,7 @@ class AnvilCannedBundleTestCase(AnvilTestCase,
 
 
 class IndexerTestCase(CatalogTestCase,
-                      ElasticsearchTestCase,
+                      OpenSearchTestCase,
                       CannedBundleTestCase,
                       metaclass=ABCMeta):
     index_service: ClassVar[IndexService | None] = None

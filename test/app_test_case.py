@@ -73,9 +73,9 @@ class LocalAppTestCase(CatalogTestCase, metaclass=ABCMeta):
     Function aka Chalice application. By default, the local instance will use
     the remote AWS OpenSearch domain configured via AZUL_ES_DOMAIN or
     AZUL_ES_ENDPOINT. To use a locally running ES instance, combine this mixin
-    with ElasticsearchTestCase. Be sure to list ElasticsearchTestCase first such
+    with OpenSearchTestCase. Be sure to list OpenSearchTestCase first such
     that this mixin picks up the environment overrides made by
-    ElasticsearchTestCase.
+    OpenSearchTestCase.
     """
 
     @classmethod
