@@ -75,7 +75,7 @@ from azul_test_case import (
     DCP1TestCase,
     DCP2TestCase,
 )
-from es_test_case import (
+from open_search_test_case import (
     ElasticsearchTestCase,
 )
 

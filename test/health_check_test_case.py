@@ -46,7 +46,7 @@ from azul.logging import (
 from azul.modules import (
     load_app_module,
 )
-from es_test_case import (
+from open_search_test_case import (
     ElasticsearchTestCase,
 )
 from service import (
