@@ -2258,7 +2258,7 @@ class TestIndexResponse(IndexResponseTestCase):
             with self.subTest(is_repo_dirty=dirty):
                 with mock.patch.dict(os.environ,
                                      azul_git_commit=commit,
-                                     azul_git_dirty=str(dirty)):
+                                     azul_git_dirty=str(int(dirty))):
                     url = self.base_url.set(path='/version')
                     response = requests.get(str(url))
                     response.raise_for_status()

@@ -1185,14 +1185,18 @@ class Config:
 
     @property
     def _git_status_env(self) -> dict[str, str]:
-        return {'azul_git_' + k: str(v) for k, v in self._git_status.items()}
+        status = self._git_status
+        return {
+            'azul_git_commit': status['commit'],
+            'azul_git_dirty': str(int(status['dirty']))
+        }
 
     @property
     def git_status(self) -> GitStatus:
         try:
             return {
                 'commit': self.environ['azul_git_commit'],
-                'dirty': str_to_bool(self.environ['azul_git_dirty'])
+                'dirty': self._boolean(self.environ['azul_git_dirty'])
             }
         except KeyError:
             return self._git_status
@@ -1804,15 +1808,6 @@ class Config:
 
 
 config = Config()
-
-
-def str_to_bool(string: str):
-    if string == 'True':
-        return True
-    elif string == 'False':
-        return False
-    else:
-        raise ValueError(string)
 
 
 def _check_submodule_conflicts():

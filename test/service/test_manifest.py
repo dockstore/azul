@@ -267,7 +267,7 @@ class ManifestTestCase(WebServiceTestCase,
         self.addPatch(patch.object(PagedManifestGenerator, 'page_size', 1))
         self.addPatch(patch.dict(os.environ,
                                  azul_git_commit='9347432ab0da43c73409ac7fd3edfe29cf3ae678',
-                                 azul_git_dirty=str(False)))
+                                 azul_git_dirty='0'))
         self._setup_indices()
 
     def tearDown(self):
