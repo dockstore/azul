@@ -32,20 +32,22 @@ from more_itertools import (
 
 from azul import (
     CatalogName,
+)
+from azul.lib import (
     cached_property,
 )
-from azul.openapi import (
-    schema,
-)
-from azul.time import (
+from azul.lib.time import (
     format_dcp2_datetime,
     parse_dcp2_datetime,
 )
-from azul.types import (
+from azul.lib.types import (
     AnyJSON,
     JSON,
     PrimitiveJSON,
     reify,
+)
+from azul.openapi import (
+    schema,
 )
 
 # A type variable named ``N`` denotes the native type of a field in documents as
@@ -66,7 +68,7 @@ type Form[T] = type[T] | TypeAliasType | UnionType
 type IndexForm = AnyJSON | IndexRange
 
 
-#: The Elasticsearch index representation of ranges along with a factory
+#: The OpenSearch index representation of ranges along with a factory
 #:
 class IndexRange[X: IndexForm](TypedDict):
     gte: X
@@ -82,8 +84,8 @@ def index_range[X: IndexForm](gte: X, lte: X) -> IndexRange[X]:
 type Range[E] = tuple[E, E]
 type ApiRange = Range[AnyJSON] | list[AnyJSON]
 
-#: While Elasticsearch distinguishes between integers and floating point numbers
-#: in its index, JSON does not. Since all payloads to and from Elasticsearch are
+#: While OpenSearch distinguishes between integers and floating point numbers
+#: in its index, JSON does not. Since all payloads to and from OpenSearch are
 #: serialized as JSON we have to be prepared to get 1 back when we write 1.0.
 #:
 type JSONNumber = int | float

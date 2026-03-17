@@ -26,6 +26,9 @@ from azul import (
 from azul.drs import (
     AccessMethod,
 )
+from azul.lib.types import (
+    MutableJSON,
+)
 from azul.logging import (
     configure_test_logging,
 )
@@ -34,9 +37,6 @@ from azul.service.drs_controller import (
     dss_dos_object_url,
     dss_drs_object_uri,
     dss_drs_object_url,
-)
-from azul.types import (
-    MutableJSON,
 )
 from azul_test_case import (
     AzulUnitTestCase,

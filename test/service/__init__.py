@@ -44,7 +44,6 @@ from app_test_case import (
     LocalAppTestCase,
 )
 from azul import (
-    cached_property,
     config,
 )
 from azul.deployment import (
@@ -59,6 +58,14 @@ from azul.indexer.document import (
     DocumentType,
     IndexName,
 )
+from azul.lib import (
+    cached_property,
+)
+from azul.lib.types import (
+    AnyJSON,
+    JSON,
+    JSONs,
+)
 from azul.logging import (
     configure_test_logging,
     get_test_logger,
@@ -69,11 +76,6 @@ from azul.service.source_service import (
 )
 from azul.service.storage_service import (
     StorageService,
-)
-from azul.types import (
-    AnyJSON,
-    JSON,
-    JSONs,
 )
 from azul_test_case import (
     AzulUnitTestCase,
@@ -159,14 +161,14 @@ class DocumentCloningTestCase(WebServiceTestCase, metaclass=ABCMeta):
     }
 
     def _get_all_hits(self):
-        response = self.es_client.search(index=self._index_name,
-                                         body=self._query)
+        response = self.open_search.search(index=self._index_name,
+                                           body=self._query)
         return response['hits']['hits']
 
     def _delete_all_hits(self):
-        self.es_client.delete_by_query(index=self._index_name,
-                                       body=self._query,
-                                       refresh=True)
+        self.open_search.delete_by_query(index=self._index_name,
+                                         body=self._query,
+                                         refresh=True)
 
     def _clone_doc(self, doc):
         """
@@ -198,7 +200,7 @@ class DocumentCloningTestCase(WebServiceTestCase, metaclass=ABCMeta):
                     for doc in docs
                 )
             )
-            self.es_client.bulk(body=body, index=self._index_name, refresh=True)
+            self.open_search.bulk(body=body, index=self._index_name, refresh=True)
 
     @property
     def _index_name(self):

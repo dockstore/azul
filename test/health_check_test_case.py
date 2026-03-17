@@ -37,17 +37,17 @@ from azul import (
 from azul.health import (
     Health,
 )
+from azul.lib.types import (
+    MutableJSON,
+)
 from azul.logging import (
     configure_test_logging,
 )
 from azul.modules import (
     load_app_module,
 )
-from azul.types import (
-    MutableJSON,
-)
-from es_test_case import (
-    ElasticsearchTestCase,
+from open_search_test_case import (
+    OpenSearchTestCase,
 )
 from service import (
     StorageServiceTestCase,
@@ -70,7 +70,7 @@ def setUpModule():
 
 
 class HealthCheckTestCase(LocalAppTestCase,
-                          ElasticsearchTestCase,
+                          OpenSearchTestCase,
                           StorageServiceTestCase,
                           SqsTestCase,
                           metaclass=ABCMeta):

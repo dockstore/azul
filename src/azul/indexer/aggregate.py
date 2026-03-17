@@ -15,20 +15,20 @@ from typing import (
     TYPE_CHECKING,
 )
 
-from azul import (
-    R,
-)
-from azul.collections import (
-    none_safe_key,
-)
 from azul.indexer.document import (
     EntityType,
 )
-from azul.json_freeze import (
+from azul.lib import (
+    R,
+)
+from azul.lib.collections import (
+    none_safe_key,
+)
+from azul.lib.json_freeze import (
     freeze,
     thaw,
 )
-from azul.types import (
+from azul.lib.types import (
     AnyJSON,
     JSON,
     JSONs,
@@ -132,7 +132,7 @@ class SetAccumulator[V: Hashable](Accumulator[V, list[V]]):
 
     def __init__(self,
                  max_size: int | None = None,
-                 key: Callable[[V], 'SupportsRichComparison'] | None = None
+                 key: Callable[[V], SupportsRichComparison] | None = None
                  ) -> None:
         """
         :param max_size: the maximum number of elements to retain

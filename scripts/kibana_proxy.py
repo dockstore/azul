@@ -1,6 +1,6 @@
 """
 Runs Kibana, Cerebro and aws-signing-proxy locally. The latter is used to sign
-requests by the former and forward them to an Amazon Elasticsearch domain. The
+requests by the former and forward them to an Amazon OpenSearch domain. The
 default domain is the one configured for current Azul deployment.
 
 Requires docker to be installed.
@@ -47,14 +47,14 @@ from docker.models.containers import (
     Container,
 )
 
-from azul import (
-    cached_property,
-)
 from azul.deployment import (
     aws,
 )
 from azul.docker import (
     resolve_docker_image_for_launch,
+)
+from azul.lib import (
+    cached_property,
 )
 from azul.logging import (
     configure_script_logging,
@@ -201,7 +201,7 @@ def main(argv):
                      help='The port the AWS signing proxy should be listening on. '
                           'The default is the Kibana port plus 2.')
     cli.add_argument('--domain', '-d', metavar='DOMAIN', default=os.environ.get('AZUL_ES_DOMAIN'),
-                     help='The AWS Elasticsearch domain to use.')
+                     help='The AWS OpenSearch domain to use.')
     cli.add_argument('--local-port', '-l', metavar='PORT', type=int,
                      help='Configure Kibana to connect to an ES container running on the local'
                           'machine at the specified port. This disables the signing proxy.')

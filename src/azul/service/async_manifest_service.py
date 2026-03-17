@@ -15,13 +15,13 @@ import msgpack
 from azul import (
     config,
 )
-from azul.attrs import (
-    strict_auto,
-)
 from azul.deployment import (
     aws,
 )
-from azul.types import (
+from azul.lib.attrs import (
+    strict_auto,
+)
+from azul.lib.types import (
     JSON,
 )
 

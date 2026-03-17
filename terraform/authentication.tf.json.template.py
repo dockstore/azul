@@ -3,7 +3,7 @@ import shlex
 from azul import (
     config,
 )
-from azul.terraform import (
+from azul.infra.terraform import (
     emit_tf,
 )
 

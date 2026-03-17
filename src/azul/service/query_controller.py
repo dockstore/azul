@@ -11,10 +11,8 @@ from typing import (
     Mapping,
 )
 
-from chalice import (
-    BadRequestError as BRE,
-)
 from chalice.app import (
+    BadRequestError as BRE,
     MultiDict,
     Request,
 )
@@ -26,15 +24,21 @@ from more_itertools import (
 
 from azul import (
     CatalogName,
-    cache,
 )
-from azul.collections import (
-    OrderedSet,
-)
-from azul.indexer.field import (
+from azul.field_type import (
     FieldType,
     Mode,
     pass_thru_bool,
+)
+from azul.lib import (
+    cache,
+)
+from azul.lib.collections import (
+    OrderedSet,
+)
+from azul.lib.types import (
+    JSON,
+    MutableJSON,
 )
 from azul.openapi import (
     application_json,
@@ -50,10 +54,6 @@ from azul.service.controller import (
 )
 from azul.service.query_service import (
     QueryService,
-)
-from azul.types import (
-    JSON,
-    MutableJSON,
 )
 
 log = logging.getLogger(__name__)

@@ -77,12 +77,8 @@ import urllib3
 from azul import (
     CatalogName,
     Config,
-    cache,
-    cached_property,
     config,
     drs,
-    false,
-    mutable_furl,
 )
 from azul.auth import (
     OAuth2,
@@ -94,10 +90,6 @@ from azul.azulclient import (
 from azul.chalice import (
     AzulChaliceApp,
 )
-from azul.collections import (
-    alist,
-    lookup,
-)
 from azul.csp import (
     CSP,
 )
@@ -107,18 +99,12 @@ from azul.deployment import (
 from azul.drs import (
     AccessMethod,
 )
-from azul.es import (
-    ESClientFactory,
-)
 from azul.http import (
     HttpClient,
     http_client,
 )
 from azul.indexer import (
-    Prefix,
     SourceConfig,
-    SourceRef,
-    SourceSpec,
     SourcedBundleFQID,
 )
 from azul.indexer.document import (
@@ -132,8 +118,24 @@ from azul.indexer.index_service import (
 from azul.indexer.mirror_service import (
     MirrorService,
 )
-from azul.json_freeze import (
+from azul.lib import (
+    cache,
+    cached_property,
+    false,
+    mutable_furl,
+)
+from azul.lib.collections import (
+    alist,
+    lookup,
+)
+from azul.lib.json_freeze import (
     freeze,
+)
+from azul.lib.types import (
+    JSON,
+    JSONs,
+    MutableJSON,
+    MutableJSONs,
 )
 from azul.logging import (
     configure_test_logging,
@@ -145,6 +147,9 @@ from azul.modules import (
 )
 from azul.oauth2 import (
     OAuth2Client,
+)
+from azul.opensearch import (
+    OpenSearchClientFactory,
 )
 from azul.plugins import (
     File,
@@ -168,18 +173,17 @@ from azul.service.manifest_service import (
     ManifestFormat,
     ManifestGenerator,
 )
+from azul.source import (
+    Prefix,
+    SourceRef,
+    SourceSpec,
+)
 from azul.terra import (
     ServiceAccountCredentialsProvider,
     TDRClient,
     TDRSourceRef,
     TDRSourceSpec,
     UserCredentialsProvider,
-)
-from azul.types import (
-    JSON,
-    JSONs,
-    MutableJSON,
-    MutableJSONs,
 )
 from azul_test_case import (
     AzulTestCase,
@@ -1471,10 +1475,10 @@ class IndexingIntegrationTest(IntegrationTestCase):
         that we can instantiate a local ES client pointing at a real, remote
         ES domain.
         """
-        es_client = ESClientFactory.get()
+        open_search = OpenSearchClientFactory.get()
         service = IndexService()
         for index_name in service.index_names(catalog):
-            self.assertTrue(es_client.indices.exists(index=str(index_name)))
+            self.assertTrue(open_search.indices.exists(index=str(index_name)))
 
     def _test_managed_access(self,
                              catalog: CatalogName,
@@ -2088,16 +2092,16 @@ class DeployedVersionIntegrationTest(AzulTestCase):
 class DisableAutomaticIndexCreationTest(IntegrationTestCase):
 
     def test(self):
-        es = ESClientFactory.get()
+        open_search = OpenSearchClientFactory.get()
         index_name = 'no-auto-create-' + self.random.randbytes(4).hex() + '-it'
         try:
             with self.assertRaises(opensearchpy.exceptions.NotFoundError) as cm:
-                es.index(index=index_name, body={'foo': 'bar'})
+                open_search.index(index=index_name, body={'foo': 'bar'})
             expected = ('no such index [' + index_name + ']')
             self.assertEqual(expected, cm.exception.args[2]['error']['reason'])
         finally:
-            if es.indices.exists(index=index_name):
-                es.indices.delete(index=[index_name])
+            if open_search.indices.exists(index=index_name):
+                open_search.indices.delete(index=[index_name])
 
 
 class ResponseHeadersTest(AzulTestCase):

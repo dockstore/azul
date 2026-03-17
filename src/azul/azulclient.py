@@ -31,13 +31,7 @@ from urllib3.exceptions import (
 
 from azul import (
     CatalogName,
-    R,
-    cache,
-    cached_property,
     config,
-)
-from azul.es import (
-    ESClientFactory,
 )
 from azul.hmac import (
     SignatureHelper,
@@ -47,7 +41,6 @@ from azul.http import (
 )
 from azul.indexer import (
     SourceConfig,
-    SourceSpec,
 )
 from azul.indexer.index_queue_service import (
     IndexQueueService,
@@ -61,6 +54,18 @@ from azul.indexer.mirror_service import (
 from azul.indexer.repository_service import (
     RepositoryService,
 )
+from azul.lib import (
+    R,
+    cache,
+    cached_property,
+)
+from azul.lib.types import (
+    JSON,
+    JSONs,
+)
+from azul.opensearch import (
+    OpenSearchClientFactory,
+)
 from azul.plugins import (
     MetadataPlugin,
     RepositoryPlugin,
@@ -71,9 +76,8 @@ from azul.queues import (
 from azul.service.source_service import (
     SourceService,
 )
-from azul.types import (
-    JSON,
-    JSONs,
+from azul.source import (
+    SourceSpec,
 )
 
 log = logging.getLogger(__name__)
@@ -151,9 +155,9 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
             # We want to send the request with urllib3 directly but HMAC
             # signing is only available for Requests, so we need to prepare a
             # request, sign it and then unpack it again before calling urllib3.
-            request = requests.Request(method='DELETE' if delete else 'POST',
-                                       url=str(indexer_url),
-                                       json=notification)
+            request = requests.models.Request(method='DELETE' if delete else 'POST',
+                                              url=str(indexer_url),
+                                              json=notification)
             request = request.prepare()
             self.sign(request)
             result: BaseHTTPResponse | HTTPError
@@ -269,7 +273,7 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
     def deindex(self, catalog: CatalogName, sources: Iterable[SourceSpec]):
         plugin = self.repository_plugin(catalog)
         source_ids = [plugin.resolve_source(s).id for s in sources]
-        es_client = ESClientFactory.get()
+        open_search = OpenSearchClientFactory.get()
         indices = ','.join(map(str, self.index_service.index_names(catalog)))
         query = {
             'query': {
@@ -293,7 +297,7 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
         }
         log.info('Deindexing sources %r from catalog %r', sources, catalog)
         log.debug('Using query: %r', query)
-        response = es_client.delete_by_query(index=indices, body=query, slices='auto')
+        response = open_search.delete_by_query(index=indices, body=query, slices='auto')
         if len(response['failures']) > 0:
             if response['version_conflicts'] > 0:
                 log.error('Version conflicts encountered. Do not deindex while '

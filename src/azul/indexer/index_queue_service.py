@@ -12,29 +12,34 @@ import attrs
 
 from azul import (
     CatalogName,
-    cached_property,
     config,
-    json_mapping,
 )
 from azul.deployment import (
     aws,
 )
 from azul.indexer import (
     BundlePartition,
-    SourceRef,
-    SourceSpec,
 )
 from azul.indexer.document import (
+    CataloguedEntityReference,
     Contribution,
     EntityReference,
     Replica,
 )
 from azul.indexer.index_service import (
-    CataloguedEntityReference,
     IndexService,
 )
 from azul.indexer.repository_service import (
     RepositoryService,
+)
+from azul.lib import (
+    cached_property,
+)
+from azul.lib.types import (
+    JSON,
+    json_int,
+    json_mapping,
+    json_str,
 )
 from azul.queues import (
     Action,
@@ -42,10 +47,9 @@ from azul.queues import (
     SQSFifoMessage,
     SQSMessage,
 )
-from azul.types import (
-    JSON,
-    json_int,
-    json_str,
+from azul.source import (
+    SourceRef,
+    SourceSpec,
 )
 
 if TYPE_CHECKING:
@@ -95,11 +99,11 @@ class IndexQueueService:
     def _queues(self) -> Queues:
         return Queues()
 
-    def _notifications_queue(self, *, retry: bool = False) -> 'Queue':
+    def _notifications_queue(self, *, retry: bool = False) -> Queue:
         name = config.notifications_queue.derive(retry=retry).name
         return aws.sqs_queue(name)
 
-    def _tallies_queue(self, *, retry: bool = False) -> 'Queue':
+    def _tallies_queue(self, *, retry: bool = False) -> Queue:
         name = config.tallies_queue.derive(retry=retry).name
         return aws.sqs_queue(name)
 
@@ -268,7 +272,7 @@ class IndexQueueService:
     #
     _num_batched_aggregation_attempts = 3
 
-    def aggregate(self, tallies: list['DocumentTally'], *, retry: bool):
+    def aggregate(self, tallies: list[DocumentTally], *, retry: bool):
         tallies_by_entity: dict[CataloguedEntityReference, list[DocumentTally]] = defaultdict(list)
         for tally in tallies:
             tallies_by_entity[tally.entity].append(tally)
@@ -361,7 +365,7 @@ class DocumentTally:
         return SQSFifoMessage(body=self.to_json(),
                               group_id=str(self.entity))
 
-    def consolidate(self, others: list['DocumentTally']) -> Self:
+    def consolidate(self, others: list[DocumentTally]) -> Self:
         assert all(self.entity == other.entity for other in others)
         num_contributions = sum((other.num_contributions for other in others),
                                 start=self.num_contributions)

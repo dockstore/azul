@@ -29,18 +29,10 @@ from more_itertools import (
 
 from azul import (
     CatalogName,
-    R,
-    cached_property,
     config,
 )
-from azul.attrs import (
-    DiscriminatingPolymorphicSerializableAttrs,
-)
-from azul.chalice import (
+from azul.auth import (
     Authentication,
-)
-from azul.digests import (
-    Digest,
 )
 from azul.drs import (
     CompactDRSURI,
@@ -52,10 +44,7 @@ from azul.drs import (
 )
 from azul.indexer import (
     Bundle,
-    Prefix,
     SourceConfig,
-    SourceRef,
-    SourceSpec,
     SourcedBundleFQID,
 )
 from azul.indexer.document import (
@@ -70,11 +59,21 @@ from azul.indexer.transform import (
     ReplicaTransformer,
     Transformer,
 )
-from azul.json import (
+from azul.lib import (
+    R,
+    cached_property,
+)
+from azul.lib.attrs import (
+    DiscriminatingPolymorphicSerializableAttrs,
+)
+from azul.lib.digests import (
+    Digest,
+)
+from azul.lib.json import (
     DynamicPolymorphicSerializable,
     SerializableEnum,
 )
-from azul.types import (
+from azul.lib.types import (
     AnyJSON,
     JSON,
     MutableJSON,
@@ -85,20 +84,25 @@ from azul.types import (
     json_sequence,
     json_str,
 )
-from azul.uuids import (
+from azul.lib.uuids import (
     validate_uuid_prefix,
+)
+from azul.source import (
+    Prefix,
+    SourceRef,
+    SourceSpec,
 )
 
 if TYPE_CHECKING:
-    from azul.service.query_service import (
-        AggregationStage,
-        FilterStage,
-    )
     # These are only needed for type hints and would otherwise introduce a
     # circular import since the service layer heavily depends on the plugin.
     from azul.service.index_service import (
         SearchResponseStage,
         SummaryResponseStage,
+    )
+    from azul.service.query_service import (
+        AggregationStage,
+        FilterStage,
     )
 
 #: Field names are used to reference fields in requests to the service, e.g.,
@@ -162,7 +166,7 @@ def dotted(path_or_element: FieldPathElement | FieldPath,
 
 class DocumentSlice(TypedDict, total=False):
     """
-    Also known in Elasticsearch land as a *source filter*, but that phrase has
+    Also known in OpenSearch land as a *source filter*, but that phrase has
     a different meaning in Azul.
 
     https://www.elastic.co/guide/en/elasticsearch/reference/7.10/search-fields.html#source-filtering
@@ -599,32 +603,32 @@ class MetadataPlugin[BUNDLE: Bundle](Plugin[BUNDLE]):
 
     @property
     @abstractmethod
-    def summary_response_stage(self) -> 'type[SummaryResponseStage]':
+    def summary_response_stage(self) -> type[SummaryResponseStage]:
         raise NotImplementedError
 
     @property
     @abstractmethod
-    def search_response_stage(self) -> 'type[SearchResponseStage]':
+    def search_response_stage(self) -> type[SearchResponseStage]:
         raise NotImplementedError
 
     @property
     @abstractmethod
-    def summary_aggregation_stage(self) -> 'type[AggregationStage]':
+    def summary_aggregation_stage(self) -> type[AggregationStage]:
         raise NotImplementedError
 
     @property
     @abstractmethod
-    def aggregation_stage(self) -> 'type[AggregationStage]':
+    def aggregation_stage(self) -> type[AggregationStage]:
         raise NotImplementedError
 
     @property
     @abstractmethod
-    def filter_stage(self) -> 'type[FilterStage]':
+    def filter_stage(self) -> type[FilterStage]:
         raise NotImplementedError
 
     @property
     @abstractmethod
-    def file_class(self) -> type['File']:
+    def file_class(self) -> type[File]:
         raise NotImplementedError
 
 
@@ -854,7 +858,7 @@ class RepositoryPlugin[BUNDLE: Bundle = Bundle[SourcedBundleFQID],
         raise NotImplementedError
 
     @abstractmethod
-    def list_files(self, source: SOURCE_REF, prefix: str) -> list['File']:
+    def list_files(self, source: SOURCE_REF, prefix: str) -> list[File]:
         """
         List the files in the given source whose digest value starts with the
         given prefix.
@@ -899,7 +903,7 @@ class RepositoryPlugin[BUNDLE: Bundle = Bundle[SourcedBundleFQID],
         return IdentifiersDotOrgClient()
 
     @abstractmethod
-    def file_download_class(self) -> type['RepositoryFileDownload']:
+    def file_download_class(self) -> type[RepositoryFileDownload]:
         raise NotImplementedError
 
     @abstractmethod
@@ -949,7 +953,7 @@ class File(DiscriminatingPolymorphicSerializableAttrs,
     def from_index(cls, hit: JSON) -> Self:
         """
         Instantiate this class from an entity aggregate document retrieved from
-        Elasticsearch.
+        OpenSearch.
         """
         raise NotImplementedError
 

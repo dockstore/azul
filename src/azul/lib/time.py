@@ -9,10 +9,10 @@ import email.utils
 import re
 import time
 
-from azul import (
+from azul.lib import (
     R,
 )
-from azul.types import (
+from azul.lib.types import (
     LambdaContext,
 )
 

@@ -31,19 +31,23 @@ from more_itertools import (
 )
 
 from azul import (
-    cache,
     config,
+)
+from azul.lib import (
+    cache,
+)
+from azul.lib.collections import (
+    OrderedSet,
+)
+from azul.lib.functions import (
     iif,
 )
-from azul.collections import (
-    OrderedSet,
+from azul.lib.strings import (
+    back_quote as bq,
+    join_grammatically,
 )
 from azul.modules import (
     load_script,
-)
-from azul.strings import (
-    back_quote as bq,
-    join_grammatically,
 )
 from azul.template import (
     emit_text,

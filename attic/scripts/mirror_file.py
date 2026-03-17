@@ -9,13 +9,15 @@ import sys
 
 from azul import (
     CatalogName,
-    R,
     config,
+)
+from azul.lib import (
+    R,
 )
 from azul.args import (
     AzulArgumentHelpFormatter,
 )
-from azul.digests import (
+from azul.lib.digests import (
     get_resumable_hasher,
 )
 from azul.http import (

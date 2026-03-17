@@ -3,11 +3,13 @@ from pathlib import (
 )
 
 from azul import (
-    R,
     config,
 )
-from azul.terraform import (
+from azul.infra.terraform import (
     emit_tf,
+)
+from azul.lib import (
+    R,
 )
 
 expected_component_path = Path(config.project_root) / 'terraform' / config.terraform_component

@@ -3,9 +3,6 @@ import sys
 
 import chalice.app
 
-from azul import (
-    cached_property,
-)
 from azul.chalice import (
     Controller,
 )
@@ -13,6 +10,9 @@ from azul.indexer.log_forwarding_service import (
     ALBLogForwardingService,
     LogForwardingService,
     S3AccessLogForwardingService,
+)
+from azul.lib import (
+    cached_property,
 )
 
 

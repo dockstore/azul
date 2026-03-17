@@ -12,19 +12,23 @@ from chalice.app import (
 )
 
 from azul import (
-    cached_property,
     config,
-    iif,
 )
 from azul.deployment import (
     aws,
 )
-from azul.queues import (
-    Queues,
+from azul.lib import (
+    cached_property,
 )
-from azul.types import (
+from azul.lib.functions import (
+    iif,
+)
+from azul.lib.types import (
     JSON,
     MutableJSONs,
+)
+from azul.queues import (
+    Queues,
 )
 from azul_test_case import (
     AzulUnitTestCase,

@@ -9,7 +9,7 @@ from argparse import (
 import logging
 import sys
 
-from azul.lambda_layer import (
+from azul.infra.lambda_layer import (
     DependenciesLayer,
 )
 from azul.logging import (

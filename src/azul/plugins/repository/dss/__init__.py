@@ -26,9 +26,6 @@ from azul import (
 from azul.auth import (
     Authentication,
 )
-from azul.collections import (
-    adict,
-)
 from azul.deployment import (
     aws,
 )
@@ -36,10 +33,16 @@ from azul.http import (
     HasCachedHttpClient,
 )
 from azul.indexer import (
-    Prefix,
-    SimpleSourceSpec,
-    SourceRef,
     SourcedBundleFQID,
+)
+from azul.lib.collections import (
+    adict,
+)
+from azul.lib.time import (
+    parse_dcp2_version,
+)
+from azul.lib.types import (
+    JSON,
 )
 from azul.plugins import (
     RepositoryFileDownload,
@@ -48,11 +51,10 @@ from azul.plugins import (
 from azul.plugins.metadata.hca.bundle import (
     HCABundle,
 )
-from azul.time import (
-    parse_dcp2_version,
-)
-from azul.types import (
-    JSON,
+from azul.source import (
+    Prefix,
+    SimpleSourceSpec,
+    SourceRef,
 )
 
 log = logging.getLogger(__name__)

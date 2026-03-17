@@ -40,14 +40,14 @@ from werkzeug.http import (
     parse_dict_header,
 )
 
-from azul import (
-    R,
-)
-from azul.collections import (
-    OrderedSet,
-)
 from azul.deployment import (
     aws,
+)
+from azul.lib import (
+    R,
+)
+from azul.lib.collections import (
+    OrderedSet,
 )
 
 if TYPE_CHECKING:
@@ -86,7 +86,7 @@ class StorageService:
         self.bucket_name = bucket_name
 
     @property
-    def _s3(self) -> 'S3Client':
+    def _s3(self) -> S3Client:
         return aws.s3
 
     def object_exists(self, object_key: str) -> bool:
@@ -97,7 +97,7 @@ class StorageService:
         else:
             return True
 
-    def head_object(self, object_key: str) -> 'HeadObjectOutputTypeDef':
+    def head_object(self, object_key: str) -> HeadObjectOutputTypeDef:
         try:
             return self._s3.head_object(Bucket=self.bucket_name,
                                         Key=object_key)
@@ -110,7 +110,7 @@ class StorageService:
     def get_object(self, object_key: str) -> bytes:
         return self._get_object(object_key)['Body'].read()
 
-    def _get_object(self, object_key: str) -> 'GetObjectOutputTypeDef':
+    def _get_object(self, object_key: str) -> GetObjectOutputTypeDef:
         try:
             response = self._s3.get_object(Bucket=self.bucket_name,
                                            Key=object_key)
@@ -369,7 +369,7 @@ class StorageService:
         return self._time_until_object_expires(response, expiration)
 
     def _time_until_object_expires(self,
-                                   head_response: 'HeadObjectOutputTypeDef',
+                                   head_response: HeadObjectOutputTypeDef,
                                    expiration: int
                                    ) -> float:
         now = datetime.now(timezone.utc)

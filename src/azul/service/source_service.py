@@ -10,12 +10,7 @@ from typing import (
 
 from azul import (
     CatalogName,
-    NotInLambdaContextException,
-    R,
-    cache,
-    cached_property,
     config,
-    open_resource,
 )
 from azul.auth import (
     Authentication,
@@ -23,17 +18,26 @@ from azul.auth import (
 from azul.deployment import (
     aws,
 )
-from azul.indexer import (
-    SourceRef,
+from azul.lib import (
+    R,
+    cache,
+    cached_property,
 )
-from azul.plugins import (
-    RepositoryPlugin,
-)
-from azul.types import (
+from azul.lib.types import (
     AnyJSON,
     JSON,
     json_element_strings,
     json_item_sequences,
+)
+from azul.plugins import (
+    RepositoryPlugin,
+)
+from azul.resources import (
+    NotInLambdaContextException,
+    open_resource,
+)
+from azul.source import (
+    SourceRef,
 )
 
 log = logging.getLogger(__name__)

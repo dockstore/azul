@@ -1,6 +1,6 @@
 """
 This script is referenced by our TerraForm config as an external data source. It
-prints the current deployment's Elasticsearch node IDs as JSON to STDOUT. If the
+prints the current deployment's OpenSearch node IDs as JSON to STDOUT. If the
 list of node IDs contains fewer items than the number of placeholders in the
 Cloudwatch dashboard template, the output is padded with dummy entries.
 
@@ -20,17 +20,19 @@ from more_itertools import (
 )
 
 from azul import (
-    R,
     config,
 )
-from azul.es import (
-    ESClientFactory,
+from azul.lib import (
+    R,
 )
 from azul.logging import (
     configure_script_logging,
 )
 from azul.modules import (
     load_module,
+)
+from azul.opensearch import (
+    OpenSearchClientFactory,
 )
 
 log = logging.getLogger(__name__)
@@ -49,8 +51,8 @@ def get_node_ids() -> Sequence[str]:
     """
     Return a list of ES node IDs used by the current deployment.
     """
-    es_client = ESClientFactory.get()
-    nodes = es_client.nodes.info()
+    open_search = OpenSearchClientFactory.get()
+    nodes = open_search.nodes.info()
     return sorted(nodes['nodes'].keys())
 
 

@@ -33,7 +33,7 @@ from more_itertools import (
     one,
 )
 
-from azul.collections import (
+from azul.lib.collections import (
     OrderedSet,
     none_safe_key,
 )
@@ -507,7 +507,7 @@ def derived_type_params(cls: type, /, *, root: Any = None) -> TypeParams:
     >>> derived_type_params(E, root=B)
     Traceback (most recent call last):
     ...
-    TypeError: ('Root is not an ancestor', <class 'azul.types.B'>, <class 'azul.types.E'>)
+    TypeError: ('Root is not an ancestor', <class 'azul.lib.types.B'>, <class 'azul.lib.types.E'>)
 
     Last but not least, the most useful invocation: specifying the oldest
     generic ancestor as the root. This invocation returns the parameterization
@@ -562,7 +562,7 @@ def derived_type_params(cls: type, /, *, root: Any = None) -> TypeParams:
     >>> derived_type_params(M, root=A)
     {T1: <class 'int'>, T2: <class 'float'>}
     """
-    from azul import (
+    from azul.lib import (
         R,
     )
     assert isinstance(cls, type), R('Not a type', cls, type(cls))

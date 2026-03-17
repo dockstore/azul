@@ -22,9 +22,6 @@ from typing import (
 import attr
 
 from azul import (
-    R,
-    cache,
-    cached_property,
     config,
 )
 from azul.chalice import (
@@ -33,14 +30,16 @@ from azul.chalice import (
 from azul.deployment import (
     aws,
 )
-from azul.json import (
+from azul.lib import (
+    R,
+    cache,
+    cached_property,
+)
+from azul.lib.json import (
     copy_any_json,
     copy_json,
 )
-from azul.template import (
-    emit,
-)
-from azul.types import (
+from azul.lib.types import (
     AnyMutableJSON,
     CompositeJSON,
     JSON,
@@ -54,6 +53,9 @@ from azul.types import (
     json_mapping,
     json_str,
     not_none,
+)
+from azul.template import (
+    emit,
 )
 
 log = logging.getLogger(__name__)
@@ -289,7 +291,7 @@ def _tags(resource_type: str, resource_name: str, tags: JSON) -> JSON:
 
     :param tags: Additional tags that override the defaults
 
-    >>> from azul.doctests import assert_json
+    >>> from azul.lib.doctests import assert_json
     >>> from test.azul_test_case import patch_config
 
     >>> with patch_config('terraform_component', 'foo'):
@@ -525,7 +527,7 @@ class Chalice:
         given Chalice-generated Terraform config. Definitions and references
         will be patched.
 
-        >>> from azul.doctests import assert_json
+        >>> from azul.lib.doctests import assert_json
 
         >>> assert_json(chalice.patch_resource_names('indexer', {
         ...     'locals': {

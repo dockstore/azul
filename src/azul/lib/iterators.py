@@ -15,7 +15,7 @@ from typing import (
     cast,
 )
 
-from azul import (
+from azul.lib import (
     R,
 )
 

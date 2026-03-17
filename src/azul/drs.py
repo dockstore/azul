@@ -31,18 +31,18 @@ from more_itertools import (
 )
 import urllib3
 
-from azul import (
-    R,
-    cache,
-    mutable_furl,
-)
 from azul.http import (
     HasCachedHttpClient,
     HttpClient,
     LimitedRetryHttpClient,
     Propagate429HttpClient,
 )
-from azul.types import (
+from azul.lib import (
+    R,
+    cache,
+    mutable_furl,
+)
+from azul.lib.types import (
     MutableJSON,
     json_dict,
     json_list,
@@ -100,7 +100,7 @@ class Access:
 class DRSURI(metaclass=ABCMeta):
 
     @classmethod
-    def parse(cls, drs_uri: str) -> 'DRSURI':
+    def parse(cls, drs_uri: str) -> DRSURI:
         """
         A data repository service URI as defined by the GA4GH alliance.
 
@@ -274,7 +274,7 @@ class CompactDRSURI(DRSURI):
     def _decode(cls, s: str) -> str:
         return urllib.parse.unquote(s, errors='strict')
 
-    def to_url(self, id_client: 'IdentifiersDotOrgClient') -> furl:
+    def to_url(self, id_client: IdentifiersDotOrgClient) -> furl:
         if self.provider_code is not None:
             raise NotImplementedError(
                 'Resolving compact identifier-based DRS URIs with '
@@ -303,7 +303,7 @@ class _BaseClient(HasCachedHttpClient):
 class DRSClient(metaclass=ABCMeta):
 
     @abstractmethod
-    def drs_object(self, drs_url: furl) -> 'DRSObject':
+    def drs_object(self, drs_url: furl) -> DRSObject:
         raise NotImplementedError
 
 
@@ -312,7 +312,7 @@ class UnauthenticatedDRSClient(DRSClient, _BaseClient):
     A generic DRS client that does not send authentication to the server.
     """
 
-    def drs_object(self, drs_url: furl) -> 'DRSObject':
+    def drs_object(self, drs_url: furl) -> DRSObject:
         return DRSObject(url=drs_url,
                          http_client=self._http_client)
 

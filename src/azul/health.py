@@ -17,9 +17,9 @@ import attr
 from botocore.exceptions import (
     ClientError,
 )
-import chalice
-from chalice import (
+from chalice.app import (
     ChaliceViewError,
+    CloudWatchEvent,
     NotFoundError,
     Response,
 )
@@ -30,11 +30,7 @@ import requests
 
 from azul import (
     CatalogName,
-    R,
-    cache,
-    cached_property,
     config,
-    lru_cache,
 )
 from azul.chalice import (
     AzulChaliceApp,
@@ -44,8 +40,16 @@ from azul.chalice import (
 from azul.deployment import (
     aws,
 )
-from azul.es import (
-    ESClientFactory,
+from azul.lib import (
+    R,
+    cache,
+    cached_property,
+    lru_cache,
+)
+from azul.lib.types import (
+    JSON,
+    MutableJSON,
+    json_bool,
 )
 from azul.openapi import (
     format_description,
@@ -53,17 +57,15 @@ from azul.openapi import (
     responses,
     schema,
 )
+from azul.opensearch import (
+    OpenSearchClientFactory,
+)
 from azul.plugins import (
     MetadataPlugin,
 )
 from azul.service.storage_service import (
     StorageObjectNotFound,
     StorageService,
-)
-from azul.types import (
-    JSON,
-    MutableJSON,
-    json_bool,
 )
 
 log = logging.getLogger(__name__)
@@ -260,7 +262,7 @@ class Health:
         url = str(config.service_endpoint.join(relative_url))
         log.info('Making HEAD request to %s', url)
         start = time.time()
-        response = requests.head(url)
+        response = requests.api.head(url)
         log.info('Got %s response after %.3fs from HEAD request to %s',
                  response.status_code, time.time() - start, url)
         try:
@@ -285,10 +287,10 @@ class Health:
     @health_property
     def elasticsearch(self):
         """
-        Indicates whether the Elasticsearch cluster is responsive.
+        Indicates whether the OpenSearch cluster is responsive.
         """
         return {
-            'up': ESClientFactory.get().ping(),
+            'up': OpenSearchClientFactory.get().ping(),
         }
 
     @lru_cache
@@ -297,7 +299,7 @@ class Health:
             url = config.lambda_endpoint(lambda_name).set(path='/health/basic',
                                                           args={'catalog': self.catalog})
             log.info('Requesting %r', url)
-            response = requests.get(str(url))
+            response = requests.api.get(str(url))
             response.raise_for_status()
             up = response.json()['up']
         except Exception as e:
@@ -523,7 +525,7 @@ class HealthApp(AzulChaliceApp):
             'rate(1 minute)',
             name=self.unqualified_app_name + 'cachehealth'
         )
-        def update_health_cache(_event: chalice.app.CloudWatchEvent):
+        def update_health_cache(_event: CloudWatchEvent):
             self.health_controller.update_cache()
 
         return {

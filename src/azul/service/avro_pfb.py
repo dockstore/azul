@@ -34,10 +34,9 @@ from more_itertools import (
 )
 
 from azul import (
-    R,
     config,
 )
-from azul.indexer.field import (
+from azul.field_type import (
     ClosedRange,
     FieldTypes,
     Nested,
@@ -49,19 +48,22 @@ from azul.indexer.field import (
     pass_thru_int,
     pass_thru_json,
 )
-from azul.json import (
+from azul.lib import (
+    R,
+)
+from azul.lib.json import (
     copy_json,
 )
-from azul.plugins.metadata.hca.indexer.transform import (
-    pass_thru_uuid4,
-    value_and_unit,
-)
-from azul.types import (
+from azul.lib.types import (
     AnyJSON,
     AnyMutableJSON,
     JSON,
     MutableJSON,
     MutableJSONs,
+)
+from azul.plugins.metadata.hca.indexer.transform import (
+    pass_thru_uuid4,
+    value_and_unit,
 )
 
 log = logging.getLogger(__name__)
@@ -93,7 +95,7 @@ def write_pfb_entities(entities: Iterable[JSON], pfb_schema: JSON, path: str):
 #        https://github.com/DataBiosphere/azul/issues/4606
 class PFBConverter:
     """
-    Converts documents from Elasticsearch into PFB entities. A document's inner
+    Converts documents from OpenSearch into PFB entities. A document's inner
     entities correspond to PFB entities which are normalized and linked via
     Relations.
     """
@@ -106,7 +108,7 @@ class PFBConverter:
 
     def add_doc(self, doc: JSON):
         """
-        Add an Elasticsearch document to be transformed.
+        Add an OpenSearch document to be transformed.
         """
         doc_copy = copy_json(doc, 'contents', self.entity_type)
         contents = doc_copy['contents']
@@ -237,7 +239,7 @@ class PFBEntity:
                                             object_=sub_object,
                                             schema=field)
 
-    def to_json(self, relations: Iterable['PFBRelation']) -> JSON:
+    def to_json(self, relations: Iterable[PFBRelation]) -> JSON:
         return {
             'id': self.id,
             'name': self.name,

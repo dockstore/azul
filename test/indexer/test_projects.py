@@ -2,9 +2,6 @@ from more_itertools import (
     one,
 )
 
-from azul.es import (
-    ESClientFactory,
-)
 from azul.indexer.document import (
     AggregateCoordinates,
     CataloguedEntityReference,
@@ -14,6 +11,9 @@ from azul.indexer.document import (
 )
 from azul.logging import (
     configure_test_logging,
+)
+from azul.opensearch import (
+    OpenSearchClientFactory,
 )
 from indexer.test_indexer import (
     DCP1IndexerTestCase,
@@ -30,7 +30,7 @@ class TestDataExtractorTestCase(DCP1IndexerTestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.es_client = ESClientFactory.get()
+        cls.open_search = OpenSearchClientFactory.get()
 
     def setUp(self) -> None:
         super().setUp()
@@ -65,12 +65,12 @@ class TestDataExtractorTestCase(DCP1IndexerTestCase):
                                                 qualifier=entity_type,
                                                 doc_type=doc_type))
 
-                total_projects = self.es_client.count(index=index_name('projects'))
+                total_projects = self.open_search.count(index=index_name('projects'))
                 # Three unique projects, six project contributions
                 self.assertEqual(3 if aggregate else 6, total_projects['count'])
-                total_files = self.es_client.count(index=index_name('files'))
+                total_files = self.open_search.count(index=index_name('files'))
                 self.assertEqual(776, total_files['count'])
-                total_samples = self.es_client.count(index=index_name('samples'))
+                total_samples = self.open_search.count(index=index_name('samples'))
                 self.assertEqual(129, total_samples['count'])
 
     # When two processes point at a file (this is the case for most files in
@@ -91,8 +91,8 @@ class TestDataExtractorTestCase(DCP1IndexerTestCase):
                     coordinates = ContributionCoordinates(entity=entity,
                                                           bundle=bundle_fqid,
                                                           deleted=False)
-                result = self.es_client.get(index=coordinates.index_name,
-                                            id=coordinates.document_id)
+                result = self.open_search.get(index=coordinates.index_name,
+                                              id=coordinates.document_id)
                 files = result['_source']['contents']['files']
                 num_files = 2  # fastqs
                 if aggregate:

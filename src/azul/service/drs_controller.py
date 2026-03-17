@@ -21,7 +21,7 @@ from warnings import (
     deprecated,
 )
 
-from chalice import (
+from chalice.app import (
     ChaliceViewError,
     Response,
 )
@@ -35,17 +35,24 @@ import requests
 
 from azul import (
     CatalogName,
-    R,
-    cached_property,
     config,
     dss,
-    mutable_furl,
 )
 from azul.drs import (
     AccessMethod,
     dos_object_url_path,
     drs_object_uri,
     drs_object_url_path,
+)
+from azul.lib import (
+    R,
+    cached_property,
+    mutable_furl,
+)
+from azul.lib.types import (
+    JSON,
+    MutableJSON,
+    not_none,
 )
 from azul.openapi import (
     format_description as fd,
@@ -62,11 +69,6 @@ from azul.service.controller import (
 )
 from azul.service.index_service import (
     IndexService,
-)
-from azul.types import (
-    JSON,
-    MutableJSON,
-    not_none,
 )
 
 
@@ -294,7 +296,7 @@ class DRSController(ServiceController):
             **kwargs
         }
         url = self.dss_file_url(file_uuid)
-        return requests.get(str(url), params=dss_params, allow_redirects=False)
+        return requests.api.get(str(url), params=dss_params, allow_redirects=False)
 
     @classmethod
     def dss_file_url(cls, file_uuid: str) -> mutable_furl:
@@ -322,7 +324,7 @@ class DRSController(ServiceController):
                       replica='gcp')
         while True:
             if self.lambda_context.get_remaining_time_in_millis() / 1000 > 3:
-                dss_response = requests.get(url, params=params, allow_redirects=False)
+                dss_response = requests.api.get(url, params=params, allow_redirects=False)
                 if dss_response.status_code == 302:
                     url = mutable_furl(dss_response.next.url)
                     assert url.scheme == 'gs', R('Expected a gs:// URL', url)
@@ -409,7 +411,7 @@ class DRSObject:
     def to_json(self) -> JSON:
         args = _url_query(replica='aws', version=self.version)
         url = DRSController.dss_file_url(self.uuid).add(args=args)
-        headers = requests.head(str(url)).headers
+        headers = requests.api.head(str(url)).headers
         version = headers['x-dss-version']
         if self.version is not None:
             assert version == self.version

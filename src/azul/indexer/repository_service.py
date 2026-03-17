@@ -8,18 +8,22 @@ from typing import (
 
 from azul import (
     CatalogName,
-    cache,
 )
 from azul.indexer import (
     Bundle,
-    SourceRef,
     SourcedBundleFQID,
+)
+from azul.lib import (
+    cache,
+)
+from azul.lib.types import (
+    JSON,
 )
 from azul.plugins import (
     RepositoryPlugin,
 )
-from azul.types import (
-    JSON,
+from azul.source import (
+    SourceRef,
 )
 
 log = logging.getLogger(__name__)
@@ -52,7 +56,7 @@ class RepositoryService:
         >>> service = RepositoryService()
         >>> service.filter_obsolete_bundle_versions([])
         []
-        >>> from azul.indexer import SimpleSourceSpec, SourceRef, Prefix
+        >>> from azul.source import SimpleSourceSpec, SourceRef, Prefix
         >>> p = Prefix.parse('/2')
         >>> s = SourceRef(id='i', spec=SimpleSourceSpec(name='n'), prefix=p)
         >>> def b(u, v):

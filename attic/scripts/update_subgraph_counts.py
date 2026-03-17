@@ -65,7 +65,7 @@ class SubgraphCounter:
                    plugin: RepositoryPlugin,
                    source: TDRSourceRef,
                    prefix: Prefix
-                   ) -> 'SubgraphCounter':
+                   ) -> SubgraphCounter:
         spec = attr.evolve(source.spec, prefix=prefix)
         source = attr.evolve(source, spec=spec)
         return cls(partition_sizes=plugin.list_partitions(source))

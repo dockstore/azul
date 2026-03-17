@@ -35,13 +35,13 @@ from more_itertools import (
     one,
 )
 
-from azul import (
-    R,
-)
 from azul.indexer.document import (
     EntityReference,
 )
-from azul.types import (
+from azul.lib import (
+    R,
+)
+from azul.lib.types import (
     JSON,
 )
 from azul_test_case import (

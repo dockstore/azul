@@ -20,7 +20,7 @@ from azul.deployment import (
 from azul.logging import (
     configure_script_logging,
 )
-from azul.types import (
+from azul.lib.types import (
     JSON,
 )
 

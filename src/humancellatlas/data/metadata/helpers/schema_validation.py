@@ -17,11 +17,11 @@ from referencing import (
 )
 import requests
 
-from azul import (
+from azul.lib import (
     R,
     cached_property,
 )
-from azul.types import (
+from azul.lib.types import (
     JSON,
 )
 

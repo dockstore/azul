@@ -26,13 +26,11 @@ from urllib.parse import (
 )
 
 import attrs
-from chalice import (
-    Chalice,
-    ChaliceViewError,
-)
 from chalice.app import (
     BadRequestError,
     CaseInsensitiveMapping,
+    Chalice,
+    ChaliceViewError,
     EventSourceHandler,
     HeadersType,
     MultiDict,
@@ -46,25 +44,38 @@ from furl import (
 )
 
 from azul import (
-    R,
     config,
-    mutable_furl,
-    open_resource,
 )
 from azul.auth import (
     Authentication,
 )
-from azul.collections import (
-    deep_dict_merge,
-)
 from azul.csp import (
     CSP,
 )
-from azul.enums import (
+from azul.lib import (
+    R,
+    mutable_furl,
+)
+from azul.lib.collections import (
+    deep_dict_merge,
+)
+from azul.lib.enums import (
     auto,
 )
-from azul.json import (
+from azul.lib.json import (
     copy_json,
+)
+from azul.lib.strings import (
+    join_words as jw,
+)
+from azul.lib.types import (
+    JSON,
+    LambdaContext,
+    MutableJSON,
+    json_dict,
+    json_list,
+    json_str,
+    not_none,
 )
 from azul.logging import (
     http_body_log_message,
@@ -78,17 +89,8 @@ from azul.openapi import (
     responses,
     schema,
 )
-from azul.strings import (
-    join_words as jw,
-)
-from azul.types import (
-    JSON,
-    LambdaContext,
-    MutableJSON,
-    json_dict,
-    json_list,
-    json_str,
-    not_none,
+from azul.resources import (
+    open_resource,
 )
 
 log = logging.getLogger(__name__)

@@ -8,11 +8,11 @@ from more_itertools import (
 from azul import (
     config,
 )
+from azul.infra.terraform import (
+    terraform,
+)
 from azul.logging import (
     configure_script_logging,
-)
-from azul.terraform import (
-    terraform,
 )
 
 log = logging.getLogger(__name__)

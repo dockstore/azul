@@ -9,7 +9,7 @@ import attr
 from azul import (
     CatalogName,
 )
-from azul.indexer.field import (
+from azul.field_type import (
     FieldTypes,
     null_str,
 )

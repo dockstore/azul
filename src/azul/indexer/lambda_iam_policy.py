@@ -1,14 +1,14 @@
 from azul import (
     config,
 )
-from azul.collections import (
-    alist,
-)
 from azul.deployment import (
     aws,
 )
-from azul.terraform import (
+from azul.infra.terraform import (
     chalice,
+)
+from azul.lib.collections import (
+    alist,
 )
 
 direct_access_role = config.dss_direct_access_role('indexer')
