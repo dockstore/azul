@@ -169,7 +169,7 @@ class IndexService(DocumentService):
             'index': {
                 'number_of_shards': num_shards,
                 'number_of_replicas': num_replicas,
-                'refresh_interval': f'{config.es_refresh_interval}s'
+                'refresh_interval': f'{config.open_search_refresh_interval}s'
             }
         }
 
