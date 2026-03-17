@@ -257,7 +257,7 @@ class AWS:
         return one(self.iam.list_account_aliases()['AccountAliases'])
 
     @property
-    def es(self) -> ElasticsearchServiceClient:
+    def open_search(self) -> ElasticsearchServiceClient:
         return self.client('es')
 
     @property
@@ -306,7 +306,7 @@ class AWS:
         """
         Return the status of the current deployment's OpenSearch domain
         """
-        response = self.es.describe_elasticsearch_domain(
+        response = self.open_search.describe_elasticsearch_domain(
             DomainName=config.open_search_domain
         )
         return response['DomainStatus']

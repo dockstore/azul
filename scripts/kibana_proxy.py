@@ -184,8 +184,8 @@ class KibanaProxy:
     @cached_property
     def open_search_endpoint(self):
         log.info('Getting domain endpoint')
-        es = aws.es
-        domain = es.describe_elasticsearch_domain(DomainName=self.options.domain)
+        client = aws.open_search
+        domain = client.describe_elasticsearch_domain(DomainName=self.options.domain)
         return 'https://' + domain['DomainStatus']['Endpoints']['vpc']
 
 
