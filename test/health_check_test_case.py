@@ -46,7 +46,7 @@ from azul.logging import (
 from azul.modules import (
     load_app_module,
 )
-from open_search_test_case import (
+from opensearch_test_case import (
     OpenSearchTestCase,
 )
 from service import (
