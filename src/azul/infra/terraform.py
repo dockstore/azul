@@ -772,12 +772,12 @@ class Chalice:
             env = config.es_endpoint_env(
                 es_endpoint=(
                     aws.open_search_endpoint
-                    if config.share_es_domain else
+                    if config.share_open_search_domain else
                     '${aws_opensearch_domain.index.endpoint}:443'
                 ),
                 es_instance_count=(
                     not_none(aws.es_instance_count)
-                    if config.share_es_domain else
+                    if config.share_open_search_domain else
                     '${aws_opensearch_domain.index.cluster_config[0].instance_count}'
                 )
             )

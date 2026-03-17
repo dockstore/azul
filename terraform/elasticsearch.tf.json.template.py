@@ -16,7 +16,7 @@ logs = {
 
 domain = config.open_search_domain
 
-emit_tf(None if config.share_es_domain else {
+emit_tf(None if config.share_open_search_domain else {
     'resource': [
         *(
             {

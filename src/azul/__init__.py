@@ -175,8 +175,8 @@ class Config:
         return self.environ['AZUL_OPEN_SEARCH_DOMAIN']
 
     @property
-    def share_es_domain(self) -> bool:
-        return self._boolean(self.environ['AZUL_SHARE_ES_DOMAIN'])
+    def share_open_search_domain(self) -> bool:
+        return self._boolean(self.environ['AZUL_SHARE_OPEN_SEARCH_DOMAIN'])
 
     def qualified_bucket_name(self,
                               *,

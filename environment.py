@@ -429,7 +429,7 @@ def env() -> Mapping[str, str | None]:
 
         # Boolean value, 1 to share `dev` ES domain, 0 to create your own
         #
-        'AZUL_SHARE_ES_DOMAIN': '0',
+        'AZUL_SHARE_OPEN_SEARCH_DOMAIN': '0',
 
         # The number of nodes in the AWS-hosted OpenSearch cluster
         #
