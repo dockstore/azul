@@ -109,36 +109,43 @@ class ManifestController(QueryController):
         return self._metadata_plugin.manifest_formats
 
     def _describe_format_param(self) -> str:
-        return f'''
-            The desired format of the output.
-
-            - `{ManifestFormat.compact.value}` (the default) for a compact,
-              tab-separated manifest
-
-            - `{ManifestFormat.terra_pfb.value}` for a manifest in the [PFB
-              format][2]. This format is mainly used for exporting data to
-              Terra.
-
-            - `{ManifestFormat.curl.value}` for a [curl configuration
-              file][3] manifest. This manifest can be used with the curl
-              program to download all the files listed in the manifest.
-
-            - `{ManifestFormat.verbatim_jsonl.value}` for a verbatim
-              manifest in [JSONL][4] format. Each line contains an
-              unaltered metadata entity from the underlying repository.
-
-            - `{ManifestFormat.verbatim_pfb.value}` for a verbatim
-              manifest in the [PFB format][2]. This format is mainly
-              used for exporting data to Terra.
-
-            [1]: https://software.broadinstitute.org/firecloud/documentation/article?id=10954
-
-            [2]: https://github.com/uc-cdis/pypfb
-
-            [3]: https://curl.haxx.se/docs/manpage.html#-K
-
-            [4]: https://jsonlines.org/
-        '''
+        descriptions_by_format = {
+            ManifestFormat.compact: fd('''
+                (the default) for a compact, tab-separated manifest.
+            '''),
+            ManifestFormat.terra_pfb: fd('''
+                for a manifest in the [PFB format][2]. This format is mainly
+                used for exporting data to Terra.
+            '''),
+            ManifestFormat.curl: fd('''
+                for a [curl configuration file][3] manifest. This manifest can
+                be used with the curl program to download all the files listed
+                in the manifest.
+            '''),
+            ManifestFormat.verbatim_jsonl: fd('''
+                for a verbatim manifest in [JSONL][4] format. Each line contains
+                an unaltered metadata entity from the underlying repository.
+            '''),
+            ManifestFormat.verbatim_pfb: fd('''
+                for a verbatim manifest in the [PFB format][2]. This format is
+                mainly used for exporting data to Terra.
+            ''')
+        }
+        format_descriptions = [
+            f'- `{format.value}` {descriptions_by_format[format]}'
+            for format in ManifestFormat
+        ]
+        links = [
+            '[1]: https://software.broadinstitute.org/firecloud/documentation/article?id=10954',
+            '[2]: https://github.com/uc-cdis/pypfb',
+            '[3]: https://curl.haxx.se/docs/manpage.html#-K',
+            '[4]: https://jsonlines.org/'
+        ]
+        return '\n\n'.join([
+            'The desired format of the output.',
+            *format_descriptions,
+            *links
+        ])
 
     def _route(self, *, fetch: bool, initiate: bool):
         path = self._manifest_path(fetch=fetch, token=None if initiate else '{token}')
