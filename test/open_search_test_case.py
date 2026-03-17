@@ -16,7 +16,7 @@ from azul.lib.json_freeze import (
 )
 from azul.logging import (
     get_test_logger,
-    silenced_es_logger,
+    silenced_open_search_logger,
 )
 from azul.opensearch import (
     OpenSearchClientFactory,
@@ -77,7 +77,7 @@ class OpenSearchTestCase(DockerContainerTestCase):
     @classmethod
     def _wait_for_es(cls):
         start_time = time.time()
-        with silenced_es_logger():
+        with silenced_open_search_logger():
             while not cls.open_search.ping():
                 assert time.time() - start_time < 60, 'Docker container timed out'
                 log.debug('Could not ping OpenSearch. Retrying...')

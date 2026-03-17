@@ -95,7 +95,7 @@ from azul.lib.types import (
     json_sequence,
 )
 from azul.logging import (
-    silenced_es_logger,
+    silenced_open_search_logger,
 )
 from azul.opensearch import (
     OpenSearchClientFactory,
@@ -316,7 +316,7 @@ class IndexService(DocumentService):
                 settings = self._settings(index_name)
                 mappings = self.metadata_plugin(catalog).mapping(index_name)
                 try:
-                    with silenced_es_logger():
+                    with silenced_open_search_logger():
                         index = open_search.indices.get(index=str(index_name))
                 except NotFoundError:
                     try:

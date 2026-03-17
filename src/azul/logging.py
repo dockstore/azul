@@ -148,7 +148,7 @@ def _configure_log_levels(*loggers):
     logging.getLogger().setLevel(root_level)
     # Only log AWS request & response bodies when AZUL_DEBUG is 2
     azul_boto3_log.setLevel(root_level)
-    es_log.setLevel(es_log_level())
+    open_search_log.setLevel(open_search_log_level())
     for logger in {*loggers, azul.log}:
         logger.setLevel(azul_level_)
 
@@ -161,20 +161,20 @@ def azul_log_level():
     return [logging.INFO, logging.DEBUG, logging.DEBUG][azul.config.debug]
 
 
-def es_log_level():
+def open_search_log_level():
     return root_log_level()
 
 
-def silent_es_log_level():
+def silent_open_search_log_level():
     return [logging.ERROR, logging.INFO, logging.DEBUG][azul.config.debug]
 
 
-es_log = logging.getLogger('opensearch')
+open_search_log = logging.getLogger('opensearch')
 azul_boto3_log = logging.getLogger('azul.boto3')
 
 
 @contextmanager
-def silenced_es_logger():
+def silenced_open_search_logger():
     """
     Does nothing if AZUL_DEBUG is 2. Temporarily sets the level of the
     OpenSearch logger to WARNING if AZUL_DEBUG is 1, or ERROR if it is 0.
@@ -186,15 +186,15 @@ def silenced_es_logger():
     if azul.config.debug > 1:
         yield
     else:
-        patched_log_level = silent_es_log_level()
-        original_log_level = es_log.level
+        patched_log_level = silent_open_search_log_level()
+        original_log_level = open_search_log.level
         try:
-            es_log.setLevel(patched_log_level)
-            assert es_log.level == patched_log_level
+            open_search_log.setLevel(patched_log_level)
+            assert open_search_log.level == patched_log_level
             yield
         finally:
-            es_log.setLevel(original_log_level)
-            assert es_log.level == original_log_level
+            open_search_log.setLevel(original_log_level)
+            assert open_search_log.level == original_log_level
 
 
 json_body_types = reify(JSON)
