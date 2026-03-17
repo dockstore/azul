@@ -127,23 +127,23 @@ class Config:
     def _validate_debug(self, debug):
         assert debug in (0, 1, 2), R('AZUL_DEBUG must be either 0, 1 or 2')
 
-    _open_search_endpoint_env_name = 'AZUL_OPEN_SEARCH_ENDPOINT'
+    _opensearch_endpoint_env_name = 'AZUL_OPEN_SEARCH_ENDPOINT'
 
     @property
-    def open_search_endpoint(self) -> Netloc | None:
+    def opensearch_endpoint(self) -> Netloc | None:
         try:
-            endpoint = self.environ[self._open_search_endpoint_env_name]
+            endpoint = self.environ[self._opensearch_endpoint_env_name]
         except KeyError:
             return None
         else:
             host, _, port = endpoint.partition(':')
             return host, int(port)
 
-    def open_search_endpoint_env(self,
-                                 *,
-                                 endpoint: Netloc | str,
-                                 instance_count: int | str,
-                                 ) -> Mapping[str, str]:
+    def opensearch_endpoint_env(self,
+                                *,
+                                endpoint: Netloc | str,
+                                instance_count: int | str,
+                                ) -> Mapping[str, str]:
         if isinstance(endpoint, tuple):
             host, port = endpoint
             assert isinstance(host, str), host
@@ -154,8 +154,8 @@ class Config:
         else:
             assert False, endpoint
         return {
-            self._open_search_endpoint_env_name: endpoint,
-            self._open_search_instance_count_env_name: str(instance_count)
+            self._opensearch_endpoint_env_name: endpoint,
+            self._opensearch_instance_count_env_name: str(instance_count)
         }
 
     @property
@@ -171,11 +171,11 @@ class Config:
         return self.environ['azul_chalice_bin']
 
     @property
-    def open_search_domain(self) -> str:
+    def opensearch_domain(self) -> str:
         return self.environ['AZUL_OPEN_SEARCH_DOMAIN']
 
     @property
-    def share_open_search_domain(self) -> bool:
+    def share_opensearch_domain(self) -> bool:
         return self._boolean(self.environ['AZUL_SHARE_OPEN_SEARCH_DOMAIN'])
 
     def qualified_bucket_name(self,
@@ -269,7 +269,7 @@ class Config:
     audit_log_retention_days = 365
 
     @property
-    def open_search_timeout(self) -> int:
+    def opensearch_timeout(self) -> int:
         return int(self.environ['AZUL_OPEN_SEARCH_TIMEOUT'])
 
     @property
@@ -753,17 +753,17 @@ class Config:
         return self._boolean(self.environ['AZUL_ENABLE_VERBATIM_RELATIONS'])
 
     @property
-    def open_search_instance_type(self) -> str:
+    def opensearch_instance_type(self) -> str:
         return self.environ['AZUL_OPEN_SEARCH_INSTANCE_TYPE']
 
-    _open_search_instance_count_env_name = 'AZUL_OPEN_SEARCH_INSTANCE_COUNT'
+    _opensearch_instance_count_env_name = 'AZUL_OPEN_SEARCH_INSTANCE_COUNT'
 
     @property
-    def open_search_instance_count(self) -> int:
-        return int(self.environ[self._open_search_instance_count_env_name])
+    def opensearch_instance_count(self) -> int:
+        return int(self.environ[self._opensearch_instance_count_env_name])
 
     @property
-    def open_search_volume_size(self) -> int:
+    def opensearch_volume_size(self) -> int:
         return int(self.environ['AZUL_OPEN_SEARCH_VOLUME_SIZE'])
 
     @property
@@ -1534,7 +1534,7 @@ class Config:
     ]
 
     @property
-    def open_search_refresh_interval(self) -> int:
+    def opensearch_refresh_interval(self) -> int:
         """
         Integral number of seconds between index refreshes in OpenSearch
         """

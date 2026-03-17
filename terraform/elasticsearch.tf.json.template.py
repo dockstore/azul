@@ -14,9 +14,9 @@ logs = {
     'error': ('ES_APPLICATION_LOGS', True)
 }
 
-domain = config.open_search_domain
+domain = config.opensearch_domain
 
-emit_tf(None if config.share_open_search_domain else {
+emit_tf(None if config.share_opensearch_domain else {
     'resource': [
         *(
             {
@@ -77,18 +77,18 @@ emit_tf(None if config.share_open_search_domain else {
                         'override_main_response_version': 'false'
                     },
                     'cluster_config': {
-                        'instance_count': config.open_search_instance_count,
-                        'instance_type': config.open_search_instance_type,
+                        'instance_count': config.opensearch_instance_count,
+                        'instance_type': config.opensearch_instance_type,
                         # Needed for using multiple subnets (1 per zone) in the VPC
                         'zone_awareness_enabled': True
                     },
                     'domain_name': domain,
                     'ebs_options': {
                         'ebs_enabled': 'true',
-                        'volume_size': config.open_search_volume_size,
+                        'volume_size': config.opensearch_volume_size,
                         'volume_type': 'gp2'
                     }
-                    if config.open_search_volume_size else
+                    if config.opensearch_volume_size else
                     {
                         'ebs_enabled': 'false',
                     },

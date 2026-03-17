@@ -95,7 +95,7 @@ from azul.lib.types import (
     json_sequence,
 )
 from azul.logging import (
-    silenced_open_search_logger,
+    silenced_opensearch_logger,
 )
 from azul.opensearch import (
     OpenSearchClientFactory,
@@ -137,7 +137,7 @@ class IndexService(DocumentService):
             num_shards = 1
             num_replicas = 0
         else:
-            num_nodes = aws.open_search_instance_count
+            num_nodes = aws.opensearch_instance_count
             num_workers = config.contribution_concurrency(retry=False)
 
             # Put the sole primary aggregate shard on one node and a replica
@@ -169,7 +169,7 @@ class IndexService(DocumentService):
             'index': {
                 'number_of_shards': num_shards,
                 'number_of_replicas': num_replicas,
-                'refresh_interval': f'{config.open_search_refresh_interval}s'
+                'refresh_interval': f'{config.opensearch_refresh_interval}s'
             }
         }
 
@@ -310,19 +310,19 @@ class IndexService(DocumentService):
             return contributions, list(replicas_by_coords.values())
 
     def create_indices(self, catalog: CatalogName):
-        open_search = OpenSearchClientFactory.get()
+        opensearch = OpenSearchClientFactory.get()
         for index_name in self.index_names(catalog):
             while True:
                 settings = self._settings(index_name)
                 mappings = self.metadata_plugin(catalog).mapping(index_name)
                 try:
-                    with silenced_open_search_logger():
-                        index = open_search.indices.get(index=str(index_name))
+                    with silenced_opensearch_logger():
+                        index = opensearch.indices.get(index=str(index_name))
                 except NotFoundError:
                     try:
-                        open_search.indices.create(index=str(index_name),
-                                                   body=dict(settings=settings,
-                                                             mappings=mappings))
+                        opensearch.indices.create(index=str(index_name),
+                                                  body=dict(settings=settings,
+                                                            mappings=mappings))
                     except RequestError as e:
                         if e.error == 'resource_already_exists_exception':
                             log.info('Another party concurrently created index %s (%r), retrying.',
@@ -410,10 +410,10 @@ class IndexService(DocumentService):
             raise IndexExistsAndDiffersException('mappings', mappings, index['mappings'])
 
     def delete_indices(self, catalog: CatalogName):
-        open_search = OpenSearchClientFactory.get()
+        opensearch = OpenSearchClientFactory.get()
         for index_name in self.index_names(catalog):
-            if open_search.indices.exists(index=str(index_name)):
-                open_search.indices.delete(index=str(index_name))
+            if opensearch.indices.exists(index=str(index_name)):
+                opensearch.indices.delete(index=str(index_name))
 
     def contribute(self,
                    catalog: CatalogName,
@@ -563,9 +563,9 @@ class IndexService(DocumentService):
         for catalog in catalogs:
             aggregate_cls = self.aggregate_class(catalog)
             mandatory_source_fields.update(aggregate_cls.mandatory_source_fields())
-        open_search = OpenSearchClientFactory.get()
-        response = open_search.mget(body=request,
-                                    _source_includes=list(mandatory_source_fields))
+        opensearch = OpenSearchClientFactory.get()
+        response = opensearch.mget(body=request,
+                                   _source_includes=list(mandatory_source_fields))
 
         def aggregates():
             for doc in response['docs']:
@@ -587,7 +587,7 @@ class IndexService(DocumentService):
     def _read_contributions(self,
                             tallies: CataloguedTallies
                             ) -> list[CataloguedContribution]:
-        open_search = OpenSearchClientFactory.get()
+        opensearch = OpenSearchClientFactory.get()
 
         entity_ids_by_index: dict[str, set[str]] = defaultdict(set)
         for entity in tallies.keys():
@@ -626,12 +626,12 @@ class IndexService(DocumentService):
         def pages() -> Iterable[JSONs]:
             body = dict(query=query)
             while True:
-                response = open_search.search(index=indices,
-                                              sort=['_index', 'document_id.keyword'],
-                                              body=body,
-                                              size=config.contribution_page_size,
-                                              track_total_hits=False,
-                                              seq_no_primary_term=True)
+                response = opensearch.search(index=indices,
+                                             sort=['_index', 'document_id.keyword'],
+                                             body=body,
+                                             size=config.contribution_page_size,
+                                             track_total_hits=False,
+                                             seq_no_primary_term=True)
                 hits = response['hits']['hits']
                 log.debug('Read a page with %i contribution(s)', len(hits))
                 if hits:
@@ -855,7 +855,7 @@ class IndexWriter:
         self.refresh = refresh
         self.conflict_retry_limit = conflict_retry_limit
         self.error_retry_limit = error_retry_limit
-        self.open_search = OpenSearchClientFactory.get()
+        self.opensearch = OpenSearchClientFactory.get()
         self.errors: dict[DocumentCoordinates, int] = defaultdict(int)
         self.conflicts: dict[DocumentCoordinates, int] = defaultdict(int)
         self.retries: set[DocumentCoordinates] = set()
@@ -879,7 +879,7 @@ class IndexWriter:
         log.info('Writing documents individually')
         for doc in documents:
             try:
-                method = getattr(self.open_search, doc.op_type.name)
+                method = getattr(self.opensearch, doc.op_type.name)
                 method(refresh=self.refresh, **doc.to_index(self.catalog, self.field_types))
             except ConflictError as e:
                 self._on_conflict(doc, e)
@@ -934,7 +934,7 @@ class IndexWriter:
         # `action` parameter but we're exploiting the undocumented fact that the
         # method immediately maps the value of the `expand_action_callback`
         # parameter over the list passed in the `actions` parameter.
-        response = streaming_bulk(client=self.open_search,
+        response = streaming_bulk(client=self.opensearch,
                                   actions=list(documents.values()),
                                   expand_action_callback=expand_action,
                                   refresh=self.refresh,

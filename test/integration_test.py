@@ -584,7 +584,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
             '',  # default keys for lambda
             '/',  # all keys
             '/basic',
-            '/open_search',
+            '/opensearch',
             '/queues',
             '/progress',
             '/api_endpoints',
@@ -1475,10 +1475,10 @@ class IndexingIntegrationTest(IntegrationTestCase):
         that we can instantiate a local ES client pointing at a real, remote
         ES domain.
         """
-        open_search = OpenSearchClientFactory.get()
+        opensearch = OpenSearchClientFactory.get()
         service = IndexService()
         for index_name in service.index_names(catalog):
-            self.assertTrue(open_search.indices.exists(index=str(index_name)))
+            self.assertTrue(opensearch.indices.exists(index=str(index_name)))
 
     def _test_managed_access(self,
                              catalog: CatalogName,
@@ -2092,16 +2092,16 @@ class DeployedVersionIntegrationTest(AzulTestCase):
 class DisableAutomaticIndexCreationTest(IntegrationTestCase):
 
     def test(self):
-        open_search = OpenSearchClientFactory.get()
+        opensearch = OpenSearchClientFactory.get()
         index_name = 'no-auto-create-' + self.random.randbytes(4).hex() + '-it'
         try:
             with self.assertRaises(opensearchpy.exceptions.NotFoundError) as cm:
-                open_search.index(index=index_name, body={'foo': 'bar'})
+                opensearch.index(index=index_name, body={'foo': 'bar'})
             expected = ('no such index [' + index_name + ']')
             self.assertEqual(expected, cm.exception.args[2]['error']['reason'])
         finally:
-            if open_search.indices.exists(index=index_name):
-                open_search.indices.delete(index=[index_name])
+            if opensearch.indices.exists(index=index_name):
+                opensearch.indices.delete(index=[index_name])
 
 
 class ResponseHeadersTest(AzulTestCase):

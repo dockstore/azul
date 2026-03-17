@@ -51,8 +51,8 @@ def get_node_ids() -> Sequence[str]:
     """
     Return a list of ES node IDs used by the current deployment.
     """
-    open_search = OpenSearchClientFactory.get()
-    nodes = open_search.nodes.info()
+    opensearch = OpenSearchClientFactory.get()
+    nodes = opensearch.nodes.info()
     return sorted(nodes['nodes'].keys())
 
 

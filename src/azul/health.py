@@ -285,7 +285,7 @@ class Health:
         return self._api_endpoint(entity_type)
 
     @health_property
-    def open_search(self):
+    def opensearch(self):
         """
         Indicates whether the OpenSearch cluster is responsive.
         """
@@ -314,12 +314,12 @@ class Health:
 
     fast_properties: ClassVar[Mapping[str, Iterable[health_property]]] = {
         'indexer': (
-            open_search,
+            opensearch,
             queues,
             progress
         ),
         'service': (
-            open_search,
+            opensearch,
             api_endpoints,
         )
     }

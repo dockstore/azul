@@ -341,7 +341,7 @@ class TestDCP1Indexer(DCP1IndexerTestCase):
 
     def test_disable_automatic_index_creation(self):
         with self.assertRaises(opensearchpy.exceptions.NotFoundError) as cm:
-            self.open_search.index(index='foo', body={'foo': 'bar'})
+            self.opensearch.index(index='foo', body={'foo': 'bar'})
         expected = 'no such index [foo]'
         self.assertEqual(expected, cm.exception.args[2]['error']['reason'])
 
@@ -413,7 +413,7 @@ class TestDCP1IndexerWithIndexesSetUp(DCP1IndexerTestCase):
                 ).with_catalog(self.catalog)
             )
         for c in coordinates:
-            self.open_search.delete(index=c.index_name, id=c.document_id)
+            self.opensearch.delete(index=c.index_name, id=c.document_id)
 
         # Contribute the bundle again, simulating a duplicate notification or
         # a retry of the original notification.
@@ -2082,7 +2082,7 @@ class TestDCP1IndexerWithIndexesSetUp(DCP1IndexerTestCase):
         index = str(IndexName.create(catalog=self.catalog,
                                      qualifier='files',
                                      doc_type=DocumentType.aggregate))
-        mapping = self.open_search.indices.get_mapping(index=index)
+        mapping = self.opensearch.indices.get_mapping(index=index)
         contents = mapping[index]['mappings']['properties']['contents']
         self.assertFalse(contents['properties']['files']['properties']['related_files']['enabled'])
 
@@ -2094,14 +2094,14 @@ class TestDCP1IndexerWithIndexesSetUp(DCP1IndexerTestCase):
 
         # … but that it can't be used for queries
         zattrs_file = '377f2f5a-4a45-4c62-8fb0-db9ef33f5cf0.zarr/.zattrs'
-        hits = self.open_search.search(index=index,
-                                       body={
-                                           'query': {
-                                               'match': {
-                                                   'contents.files.related_files.name': zattrs_file
-                                               }
-                                           }
-                                       })
+        hits = self.opensearch.search(index=index,
+                                      body={
+                                          'query': {
+                                              'match': {
+                                                  'contents.files.related_files.name': zattrs_file
+                                              }
+                                          }
+                                      })
         self.assertEqual({'value': 0, 'relation': 'eq'}, hits['hits']['total'])
 
     def test_downstream_entities(self):

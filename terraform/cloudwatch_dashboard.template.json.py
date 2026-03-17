@@ -23,9 +23,9 @@ from azul.lib.types import (
 )
 
 es_instance_count = (
-    aws.open_search_instance_count
-    if config.share_open_search_domain else
-    config.open_search_instance_count
+    aws.opensearch_instance_count
+    if config.share_opensearch_domain else
+    config.opensearch_instance_count
 )
 
 
@@ -464,7 +464,7 @@ def dashboard_body(name: str):
                                 'AWS/ES',
                                 'Shards.unassigned',
                                 'DomainName',
-                                config.open_search_domain,
+                                config.opensearch_domain,
                                 'ClientId',
                                 config.aws_account_id,
                                 {
@@ -479,7 +479,7 @@ def dashboard_body(name: str):
                                 'ShardRole',
                                 'Primary',
                                 'DomainName',
-                                config.open_search_domain,
+                                config.opensearch_domain,
                                 'NodeId',
                                 '${local.nodes[0]}',
                                 'ClientId',
@@ -579,7 +579,7 @@ def dashboard_body(name: str):
                                 'AWS/ES',
                                 'JVMMemoryPressure',
                                 'DomainName',
-                                config.open_search_domain,
+                                config.opensearch_domain,
                                 'NodeId',
                                 '${local.nodes[0]}',
                                 'ClientId',
@@ -634,7 +634,7 @@ def dashboard_body(name: str):
                                 'AWS/ES',
                                 'JVMGCOldCollectionTime',
                                 'DomainName',
-                                config.open_search_domain,
+                                config.opensearch_domain,
                                 'NodeId',
                                 '${local.nodes[0]}',
                                 'ClientId',

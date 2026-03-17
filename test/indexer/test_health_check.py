@@ -29,12 +29,12 @@ class TestIndexerHealthCheck(DCP1TestCase, HealthCheckTestCase):
 
     def _expected_health(self,
                          endpoints_up: bool = True,
-                         open_search_up: bool = True
+                         opensearch_up: bool = True
                          ) -> MutableJSON:
         return {
             'up': False,
-            **self._expected_open_search(up=open_search_up),
-            **self._expected_queues(up=not open_search_up),
+            **self._expected_opensearch(up=opensearch_up),
+            **self._expected_queues(up=not opensearch_up),
             **self._expected_progress()
         }
 

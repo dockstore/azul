@@ -257,7 +257,7 @@ class AWS:
         return one(self.iam.list_account_aliases()['AccountAliases'])
 
     @property
-    def open_search(self) -> OpenSearchServiceClient:
+    def opensearch(self) -> OpenSearchServiceClient:
         return self.client('opensearch')
 
     @property
@@ -285,29 +285,29 @@ class AWS:
         return self.client('dynamodb', azul_logging=True)
 
     @property
-    def open_search_endpoint(self) -> Netloc:
-        endpoint = config.open_search_endpoint
+    def opensearch_endpoint(self) -> Netloc:
+        endpoint = config.opensearch_endpoint
         if endpoint is None:
-            return self._open_search_domain_status['Endpoints']['vpc'], 443
+            return self._opensearch_domain_status['Endpoints']['vpc'], 443
         else:
             return endpoint
 
     @property
-    def open_search_instance_count(self) -> int:
-        if config.open_search_endpoint:
-            return config.open_search_instance_count
+    def opensearch_instance_count(self) -> int:
+        if config.opensearch_endpoint:
+            return config.opensearch_instance_count
         else:
-            status = self._open_search_domain_status
+            status = self._opensearch_domain_status
             return status['ClusterConfig']['InstanceCount']
 
     @property
     @_cache
-    def _open_search_domain_status(self) -> DomainStatusTypeDef:
+    def _opensearch_domain_status(self) -> DomainStatusTypeDef:
         """
         Return the status of the current deployment's OpenSearch domain
         """
-        response = self.open_search.describe_domain(
-            DomainName=config.open_search_domain
+        response = self.opensearch.describe_domain(
+            DomainName=config.opensearch_domain
         )
         return response['DomainStatus']
 

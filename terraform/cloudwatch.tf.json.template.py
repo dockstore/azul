@@ -35,7 +35,7 @@ emit_tf({
                     'query': {},
                     'depends_on': (
                         []
-                        if config.share_open_search_domain else
+                        if config.share_opensearch_domain else
                         ['aws_opensearch_domain.index']
                     )
                 }

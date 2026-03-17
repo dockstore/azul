@@ -666,7 +666,7 @@ class PaginationStage(_OpenSearchStage[JSON, ResponseTriple]):
 class QueryService(DocumentService):
 
     @cached_property
-    def _open_search(self) -> OpenSearch:
+    def _opensearch(self) -> OpenSearch:
         return OpenSearchClientFactory.get()
 
     def create_chain(self,
@@ -705,7 +705,7 @@ class QueryService(DocumentService):
         Create an OpenSearch request against the index containing documents
         of the given entity and document types, in the given catalog.
         """
-        return Search(using=self._open_search,
+        return Search(using=self._opensearch,
                       index=str(IndexName.create(catalog=catalog,
                                                  qualifier=entity_type,
                                                  doc_type=doc_type)))

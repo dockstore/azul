@@ -30,7 +30,7 @@ emit_tf(
                         config.tallies_queue.derive(retry=retry).unqual_name: {
                             'name': config.tallies_queue.derive(retry=retry).name,
                             'fifo_queue': True,
-                            'delay_seconds': config.open_search_refresh_interval + 9,
+                            'delay_seconds': config.opensearch_refresh_interval + 9,
                             'visibility_timeout_seconds': config.aggregation_lambda_timeout(retry=retry) + 10,
                             'message_retention_seconds': 7 * 24 * 60 * 60,
                             'redrive_policy': json.dumps({

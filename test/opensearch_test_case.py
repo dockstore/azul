@@ -16,7 +16,7 @@ from azul.lib.json_freeze import (
 )
 from azul.logging import (
     get_test_logger,
-    silenced_open_search_logger,
+    silenced_opensearch_logger,
 )
 from azul.opensearch import (
     OpenSearchClientFactory,
@@ -33,7 +33,7 @@ class OpenSearchTestCase(DockerContainerTestCase):
     A test case that uses an OpenSearch instance running in a container.
     The same OpenSearch instance will be shared by all tests in the class.
     """
-    open_search = None
+    opensearch = None
     _env_patch = None
 
     @classmethod
@@ -50,11 +50,11 @@ class OpenSearchTestCase(DockerContainerTestCase):
                                                       'ES_JAVA_OPTS=-Xms512m -Xmx512m',
                                                       'indices.breaker.total.use_real_memory=false'])
         try:
-            new_env = config.open_search_endpoint_env(endpoint=endpoint,
-                                                      instance_count=2)
+            new_env = config.opensearch_endpoint_env(endpoint=endpoint,
+                                                     instance_count=2)
             cls._env_patch = mock.patch.dict(os.environ, **new_env)
             cls._env_patch.start()
-            cls.open_search = OpenSearchClientFactory.get()
+            cls.opensearch = OpenSearchClientFactory.get()
             cls._wait_for_es()
 
             # Disable the automatic creation of indexes when documents are
@@ -64,7 +64,7 @@ class OpenSearchTestCase(DockerContainerTestCase):
             # created indices have a only a default mapping, resulting in
             # failure modes that are harder to diagnose.
             #
-            cls.open_search.cluster.put_settings(body={
+            cls.opensearch.cluster.put_settings(body={
                 'persistent': {
                     'action.auto_create_index': False,
                     'action.destructive_requires_name': False
@@ -77,8 +77,8 @@ class OpenSearchTestCase(DockerContainerTestCase):
     @classmethod
     def _wait_for_es(cls):
         start_time = time.time()
-        with silenced_open_search_logger():
-            while not cls.open_search.ping():
+        with silenced_opensearch_logger():
+            while not cls.opensearch.ping():
                 assert time.time() - start_time < 60, 'Docker container timed out'
                 log.debug('Could not ping OpenSearch. Retrying...')
                 time.sleep(1)

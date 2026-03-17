@@ -17,7 +17,7 @@ from azul.modules import (
 direct_access_role = config.dss_direct_access_role('service')
 service = load_app_module('service')
 
-domain = config.open_search_domain
+domain = config.opensearch_domain
 policy = {
     'Version': '2012-10-17',
     'Statement': [

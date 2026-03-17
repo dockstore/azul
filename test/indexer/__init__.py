@@ -232,8 +232,8 @@ class IndexerTestCase(CatalogTestCase,
         Deletes everything and is faster than deleting indices individually
         through the service.
         """
-        open_search = OpenSearchClientFactory.get()
-        open_search.indices.delete(index='*')
+        opensearch = OpenSearchClientFactory.get()
+        opensearch.indices.delete(index='*')
 
     def _get_all_hits(self):
         # Without `preserve_order`, hits are sorted by `_doc`, which is fastest
@@ -241,7 +241,7 @@ class IndexerTestCase(CatalogTestCase,
         # the number of shards, for example, but also under what appear to be
         # unrelated code changes. This makes asserting test results verbatim
         # impossible. Thus we set `preserve_order` to True.
-        hits = list(scan(client=self.open_search,
+        hits = list(scan(client=self.opensearch,
                          index=','.join(map(str, self.index_service.index_names(self.catalog))),
                          preserve_order=True))
 
