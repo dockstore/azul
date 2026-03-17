@@ -127,7 +127,7 @@ class Config:
     def _validate_debug(self, debug):
         assert debug in (0, 1, 2), R('AZUL_DEBUG must be either 0, 1 or 2')
 
-    _opensearch_endpoint_env_name = 'AZUL_OPEN_SEARCH_ENDPOINT'
+    _opensearch_endpoint_env_name = 'AZUL_OPENSEARCH_ENDPOINT'
 
     @property
     def opensearch_endpoint(self) -> Netloc | None:
@@ -172,11 +172,11 @@ class Config:
 
     @property
     def opensearch_domain(self) -> str:
-        return self.environ['AZUL_OPEN_SEARCH_DOMAIN']
+        return self.environ['AZUL_OPENSEARCH_DOMAIN']
 
     @property
     def share_opensearch_domain(self) -> bool:
-        return self._boolean(self.environ['AZUL_SHARE_OPEN_SEARCH_DOMAIN'])
+        return self._boolean(self.environ['AZUL_SHARE_OPENSEARCH_DOMAIN'])
 
     def qualified_bucket_name(self,
                               *,
@@ -270,7 +270,7 @@ class Config:
 
     @property
     def opensearch_timeout(self) -> int:
-        return int(self.environ['AZUL_OPEN_SEARCH_TIMEOUT'])
+        return int(self.environ['AZUL_OPENSEARCH_TIMEOUT'])
 
     @property
     def data_browser_domain(self):
@@ -754,9 +754,9 @@ class Config:
 
     @property
     def opensearch_instance_type(self) -> str:
-        return self.environ['AZUL_OPEN_SEARCH_INSTANCE_TYPE']
+        return self.environ['AZUL_OPENSEARCH_INSTANCE_TYPE']
 
-    _opensearch_instance_count_env_name = 'AZUL_OPEN_SEARCH_INSTANCE_COUNT'
+    _opensearch_instance_count_env_name = 'AZUL_OPENSEARCH_INSTANCE_COUNT'
 
     @property
     def opensearch_instance_count(self) -> int:
@@ -764,7 +764,7 @@ class Config:
 
     @property
     def opensearch_volume_size(self) -> int:
-        return int(self.environ['AZUL_OPEN_SEARCH_VOLUME_SIZE'])
+        return int(self.environ['AZUL_OPENSEARCH_VOLUME_SIZE'])
 
     @property
     def enable_replicas(self) -> bool:
