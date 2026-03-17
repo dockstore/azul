@@ -446,7 +446,7 @@ def env() -> Mapping[str, str | None]:
         # The size of the EBS volume backing each cluster node. Set to 0 when
         # using an instance type with SSD volumes.
         #
-        'AZUL_ES_VOLUME_SIZE': '0',
+        'AZUL_OPEN_SEARCH_VOLUME_SIZE': '0',
 
         # OpenSearch operation timeout in seconds. Matches AWS' own timeout
         # on the ELB sitting in front of ES:

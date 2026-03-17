@@ -85,10 +85,10 @@ emit_tf(None if config.share_open_search_domain else {
                     'domain_name': domain,
                     'ebs_options': {
                         'ebs_enabled': 'true',
-                        'volume_size': config.es_volume_size,
+                        'volume_size': config.open_search_volume_size,
                         'volume_type': 'gp2'
                     }
-                    if config.es_volume_size else
+                    if config.open_search_volume_size else
                     {
                         'ebs_enabled': 'false',
                     },

@@ -763,8 +763,8 @@ class Config:
         return int(self.environ[self._open_search_instance_count_env_name])
 
     @property
-    def es_volume_size(self) -> int:
-        return int(self.environ['AZUL_ES_VOLUME_SIZE'])
+    def open_search_volume_size(self) -> int:
+        return int(self.environ['AZUL_OPEN_SEARCH_VOLUME_SIZE'])
 
     @property
     def enable_replicas(self) -> bool:
