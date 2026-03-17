@@ -139,23 +139,23 @@ class Config:
             host, _, port = es_endpoint.partition(':')
             return host, int(port)
 
-    def es_endpoint_env(self,
-                        *,
-                        es_endpoint: Netloc | str,
-                        es_instance_count: int | str
-                        ) -> Mapping[str, str]:
-        if isinstance(es_endpoint, tuple):
-            host, port = es_endpoint
+    def open_search_endpoint_env(self,
+                                 *,
+                                 endpoint: Netloc | str,
+                                 instance_count: int | str,
+                                 ) -> Mapping[str, str]:
+        if isinstance(endpoint, tuple):
+            host, port = endpoint
             assert isinstance(host, str), host
             assert isinstance(port, int), port
-            es_endpoint = f'{host}:{port}'
-        elif isinstance(es_endpoint, str):
+            endpoint = f'{host}:{port}'
+        elif isinstance(endpoint, str):
             pass
         else:
-            assert False, es_endpoint
+            assert False, endpoint
         return {
-            self._open_search_endpoint_env_name: es_endpoint,
-            self._open_search_instance_count_env_name: str(es_instance_count)
+            self._open_search_endpoint_env_name: endpoint,
+            self._open_search_instance_count_env_name: str(instance_count)
         }
 
     @property

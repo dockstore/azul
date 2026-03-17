@@ -180,8 +180,9 @@ class HealthCheckTestCase(LocalAppTestCase,
     def test_open_search_down(self):
         self._create_mock_queues()
         mock_endpoint = ('7c9f2ddb-74ca-46a3-9438-24ce1fe7050e.com', 80)
-        with patch.dict(os.environ, **config.es_endpoint_env(es_endpoint=mock_endpoint,
-                                                             es_instance_count=1)):
+        mock_env = config.open_search_endpoint_env(endpoint=mock_endpoint,
+                                                   instance_count=1)
+        with patch.dict(os.environ, **mock_env):
             with self._mock():
                 response = self._test('/health/fast')
             self.assertEqual(503, response.status_code)
