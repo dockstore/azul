@@ -288,7 +288,7 @@ class AWS:
     def open_search_endpoint(self) -> Netloc:
         endpoint = config.open_search_endpoint
         if endpoint is None:
-            return self._es_domain_status['Endpoints']['vpc'], 443
+            return self._open_search_domain_status['Endpoints']['vpc'], 443
         else:
             return endpoint
 
@@ -297,11 +297,12 @@ class AWS:
         if config.open_search_endpoint:
             return config.open_search_instance_count
         else:
-            return self._es_domain_status['ElasticsearchClusterConfig']['InstanceCount']
+            status = self._open_search_domain_status
+            return status['ElasticsearchClusterConfig']['InstanceCount']
 
     @property
     @_cache
-    def _es_domain_status(self) -> ElasticsearchDomainStatusTypeDef:
+    def _open_search_domain_status(self) -> ElasticsearchDomainStatusTypeDef:
         """
         Return the status of the current deployment's OpenSearch domain
         """
