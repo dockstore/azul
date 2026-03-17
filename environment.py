@@ -441,7 +441,7 @@ def env() -> Mapping[str, str | None]:
         # `r` family, especially now that the number of shards is tied to the
         # indexer Lambda concurrency.
         #
-        'AZUL_ES_INSTANCE_TYPE': None,
+        'AZUL_OPEN_SEARCH_INSTANCE_TYPE': None,
 
         # The size of the EBS volume backing each cluster node. Set to 0 when
         # using an instance type with SSD volumes.

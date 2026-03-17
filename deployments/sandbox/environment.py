@@ -270,7 +270,7 @@ def env() -> Mapping[str, str | None]:
 
         **(
             {
-                'AZUL_ES_INSTANCE_TYPE': 'r6gd.large.search',
+                'AZUL_OPEN_SEARCH_INSTANCE_TYPE': 'r6gd.large.search',
                 'AZUL_ES_INSTANCE_COUNT': '2',
             } if is_sandbox else {
                 # Personal deployments share an ES domain with `sandbox`

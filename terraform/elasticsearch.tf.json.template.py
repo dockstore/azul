@@ -78,7 +78,7 @@ emit_tf(None if config.share_open_search_domain else {
                     },
                     'cluster_config': {
                         'instance_count': config.es_instance_count,
-                        'instance_type': config.es_instance_type,
+                        'instance_type': config.open_search_instance_type,
                         # Needed for using multiple subnets (1 per zone) in the VPC
                         'zone_awareness_enabled': True
                     },

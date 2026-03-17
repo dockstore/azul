@@ -753,8 +753,8 @@ class Config:
         return self._boolean(self.environ['AZUL_ENABLE_VERBATIM_RELATIONS'])
 
     @property
-    def es_instance_type(self) -> str:
-        return self.environ['AZUL_ES_INSTANCE_TYPE']
+    def open_search_instance_type(self) -> str:
+        return self.environ['AZUL_OPEN_SEARCH_INSTANCE_TYPE']
 
     _es_instance_count_env_name = 'AZUL_ES_INSTANCE_COUNT'
 
