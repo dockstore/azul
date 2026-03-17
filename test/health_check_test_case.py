@@ -172,7 +172,7 @@ class HealthCheckTestCase(LocalAppTestCase,
     def _expected_health(self,
                          *,
                          endpoints_up: bool = True,
-                         es_up: bool = True
+                         open_search_up: bool = True
                          ) -> MutableJSON:
         raise NotImplementedError
 
@@ -186,7 +186,7 @@ class HealthCheckTestCase(LocalAppTestCase,
             with self._mock():
                 response = self._test('/health/fast')
             self.assertEqual(503, response.status_code)
-            self.assertEqual(self._expected_health(es_up=False), response.json())
+            self.assertEqual(self._expected_health(open_search_up=False), response.json())
 
     def _expected_queues(self, *, up: bool) -> MutableJSON:
         return {
