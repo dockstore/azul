@@ -453,7 +453,7 @@ def env() -> Mapping[str, str | None]:
         #
         # https://forums.aws.amazon.com/thread.jspa?threadID=233378
         #
-        'AZUL_ES_TIMEOUT': '60',
+        'AZUL_OPEN_SEARCH_TIMEOUT': '60',
 
         # The number of workers pulling files from the DSS repository. There is
         # one such set of repository workers per index worker.

@@ -269,8 +269,8 @@ class Config:
     audit_log_retention_days = 365
 
     @property
-    def es_timeout(self) -> int:
-        return int(self.environ['AZUL_ES_TIMEOUT'])
+    def open_search_timeout(self) -> int:
+        return int(self.environ['AZUL_OPEN_SEARCH_TIMEOUT'])
 
     @property
     def data_browser_domain(self):
