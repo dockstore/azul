@@ -81,12 +81,6 @@ if TYPE_CHECKING:
     from mypy_boto3_ecr import (
         ECRClient,
     )
-    from mypy_boto3_es import (
-        ElasticsearchServiceClient,
-    )
-    from mypy_boto3_es.type_defs import (
-        ElasticsearchDomainStatusTypeDef,
-    )
     from mypy_boto3_iam import (
         IAMClient,
     )
@@ -95,6 +89,12 @@ if TYPE_CHECKING:
     )
     from mypy_boto3_lambda import (
         LambdaClient,
+    )
+    from mypy_boto3_opensearch import (
+        OpenSearchServiceClient,
+    )
+    from mypy_boto3_opensearch.type_defs import (
+        DomainStatusTypeDef,
     )
     from mypy_boto3_s3 import (
         S3Client,
@@ -257,8 +257,8 @@ class AWS:
         return one(self.iam.list_account_aliases()['AccountAliases'])
 
     @property
-    def open_search(self) -> ElasticsearchServiceClient:
-        return self.client('es')
+    def open_search(self) -> OpenSearchServiceClient:
+        return self.client('opensearch')
 
     @property
     def stepfunctions(self) -> SFNClient:
@@ -298,15 +298,15 @@ class AWS:
             return config.open_search_instance_count
         else:
             status = self._open_search_domain_status
-            return status['ElasticsearchClusterConfig']['InstanceCount']
+            return status['ClusterConfig']['InstanceCount']
 
     @property
     @_cache
-    def _open_search_domain_status(self) -> ElasticsearchDomainStatusTypeDef:
+    def _open_search_domain_status(self) -> DomainStatusTypeDef:
         """
         Return the status of the current deployment's OpenSearch domain
         """
-        response = self.open_search.describe_elasticsearch_domain(
+        response = self.open_search.describe_domain(
             DomainName=config.open_search_domain
         )
         return response['DomainStatus']
