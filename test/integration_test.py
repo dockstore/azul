@@ -584,7 +584,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
             '',  # default keys for lambda
             '/',  # all keys
             '/basic',
-            '/elasticsearch',
+            '/open_search',
             '/queues',
             '/progress',
             '/api_endpoints',

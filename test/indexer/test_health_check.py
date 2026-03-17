@@ -33,7 +33,7 @@ class TestIndexerHealthCheck(DCP1TestCase, HealthCheckTestCase):
                          ) -> MutableJSON:
         return {
             'up': False,
-            **self._expected_elasticsearch(up=es_up),
+            **self._expected_open_search(up=es_up),
             **self._expected_queues(up=not es_up),
             **self._expected_progress()
         }

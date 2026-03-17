@@ -33,7 +33,7 @@ class TestServiceHealthCheck(DCP1TestCase, HealthCheckTestCase):
                          ) -> MutableJSON:
         return {
             'up': es_up and endpoints_up,
-            **self._expected_elasticsearch(up=es_up),
+            **self._expected_open_search(up=es_up),
             **self._expected_api_endpoints(up=endpoints_up),
         }
 
