@@ -418,14 +418,14 @@ def env() -> Mapping[str, str | None]:
         'AZUL_RESOURCE_PREFIX': 'azul',
 
         # The host and port of the OpenSearch instance to use. This takes
-        # precedence over AZUL_ES_DOMAIN.
+        # precedence over AZUL_OPEN_SEARCH_DOMAIN.
         #
         'AZUL_OPEN_SEARCH_ENDPOINT': None,
 
         # The name of the AWS-hosted OpenSearch instance (not a domain name)
         # to use. The given ES domain's endpoint will be looked up dynamically.
         #
-        'AZUL_ES_DOMAIN': 'azul-index-{AZUL_DEPLOYMENT_STAGE}',
+        'AZUL_OPEN_SEARCH_DOMAIN': 'azul-index-{AZUL_DEPLOYMENT_STAGE}',
 
         # Boolean value, 1 to share `dev` ES domain, 0 to create your own
         #

@@ -200,14 +200,15 @@ def main(argv):
     cli.add_argument('--proxy-port', '-p', metavar='PORT', type=int,
                      help='The port the AWS signing proxy should be listening on. '
                           'The default is the Kibana port plus 2.')
-    cli.add_argument('--domain', '-d', metavar='DOMAIN', default=os.environ.get('AZUL_ES_DOMAIN'),
+    cli.add_argument('--domain', '-d', metavar='DOMAIN',
+                     default=os.environ.get('AZUL_OPEN_SEARCH_DOMAIN'),
                      help='The AWS OpenSearch domain to use.')
     cli.add_argument('--local-port', '-l', metavar='PORT', type=int,
                      help='Configure Kibana to connect to an ES container running on the local'
                           'machine at the specified port. This disables the signing proxy.')
     options = cli.parse_args(argv)
     if not options.domain:
-        raise RuntimeError('Please pass --domain or set AZUL_ES_DOMAIN')
+        raise RuntimeError('Please pass --domain or set AZUL_OPEN_SEARCH_DOMAIN')
     KibanaProxy(options).run()
 
 

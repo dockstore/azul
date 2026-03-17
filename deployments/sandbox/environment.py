@@ -275,7 +275,7 @@ def env() -> Mapping[str, str | None]:
             } if is_sandbox else {
                 # Personal deployments share an ES domain with `sandbox`
                 'AZUL_SHARE_ES_DOMAIN': '1',
-                'AZUL_ES_DOMAIN': 'azul-index-sandbox',
+                'AZUL_OPEN_SEARCH_DOMAIN': 'azul-index-sandbox',
                 # Personal deployments use fewer Lambda invocations in parallel.
                 'AZUL_CONTRIBUTION_CONCURRENCY': '8',
                 'AZUL_AGGREGATION_CONCURRENCY': '8',

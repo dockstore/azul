@@ -1339,7 +1339,7 @@ def env() -> Mapping[str, str | None]:
 
         # Personal deployments & `hammerbox` share an ES domain with `anvilprod`
         'AZUL_SHARE_ES_DOMAIN': '1',
-        'AZUL_ES_DOMAIN': 'azul-index-anvilprod',
+        'AZUL_OPEN_SEARCH_DOMAIN': 'azul-index-anvilprod',
 
         **(
             {

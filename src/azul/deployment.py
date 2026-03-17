@@ -305,8 +305,10 @@ class AWS:
         """
         Return the status of the current deployment's OpenSearch domain
         """
-        es_domain = self.es.describe_elasticsearch_domain(DomainName=config.es_domain)
-        return es_domain['DomainStatus']
+        response = self.es.describe_elasticsearch_domain(
+            DomainName=config.open_search_domain
+        )
+        return response['DomainStatus']
 
     def get_lambda_arn(self, function_name, suffix):
         return f'arn:aws:lambda:{self.region_name}:{self.account}:function:{function_name}-{suffix}'

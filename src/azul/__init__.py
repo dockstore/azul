@@ -171,8 +171,8 @@ class Config:
         return self.environ['azul_chalice_bin']
 
     @property
-    def es_domain(self) -> str:
-        return self.environ['AZUL_ES_DOMAIN']
+    def open_search_domain(self) -> str:
+        return self.environ['AZUL_OPEN_SEARCH_DOMAIN']
 
     @property
     def share_es_domain(self) -> bool:

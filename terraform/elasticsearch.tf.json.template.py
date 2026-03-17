@@ -14,7 +14,7 @@ logs = {
     'error': ('ES_APPLICATION_LOGS', True)
 }
 
-domain = config.es_domain
+domain = config.open_search_domain
 
 emit_tf(None if config.share_es_domain else {
     'resource': [

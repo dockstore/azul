@@ -69,13 +69,13 @@ class ChaliceServerThread(Thread):
 
 class LocalAppTestCase(CatalogTestCase, metaclass=ABCMeta):
     """
-    A mixin for test cases against a locally running instance of an AWS Lambda
-    Function aka Chalice application. By default, the local instance will use
-    the remote AWS OpenSearch domain configured via AZUL_ES_DOMAIN or
-    AZUL_OPEN_SEARCH_ENDPOINT. To use a locally running ES instance, combine this mixin
-    with OpenSearchTestCase. Be sure to list OpenSearchTestCase first such
-    that this mixin picks up the environment overrides made by
-    OpenSearchTestCase.
+    A mixin for test cases against a locally running Chalice application.
+
+    By default, the local instance will use the remote AWS OpenSearch domain
+    configured via AZUL_OPEN_SEARCH_DOMAIN or AZUL_OPEN_SEARCH_ENDPOINT. To use
+    a locally running ES instance, combine this mixin with OpenSearchTestCase.
+    Be sure to list OpenSearchTestCase first so that this mixin picks up the
+    environment overrides made by OpenSearchTestCase.
     """
 
     @classmethod
