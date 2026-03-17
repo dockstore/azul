@@ -132,11 +132,11 @@ class Config:
     @property
     def open_search_endpoint(self) -> Netloc | None:
         try:
-            es_endpoint = self.environ[self._open_search_endpoint_env_name]
+            endpoint = self.environ[self._open_search_endpoint_env_name]
         except KeyError:
             return None
         else:
-            host, _, port = es_endpoint.partition(':')
+            host, _, port = endpoint.partition(':')
             return host, int(port)
 
     def open_search_endpoint_env(self,

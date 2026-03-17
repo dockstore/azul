@@ -40,17 +40,17 @@ class OpenSearchTestCase(DockerContainerTestCase):
     def setUpClass(cls):
         super().setUpClass()
         image = resolve_docker_image_for_launch('opensearch')
-        es_endpoint = cls._create_container(image=image,
-                                            container_port=9200,
-                                            cached=True,
-                                            environment=['discovery.type=single-node',
-                                                         'DISABLE_INSTALL_DEMO_CONFIG=true',
-                                                         'DISABLE_SECURITY_PLUGIN=true',
-                                                         'DISABLE_SECURITY_DASHBOARDS_PLUGIN=true',
-                                                         'ES_JAVA_OPTS=-Xms512m -Xmx512m',
-                                                         'indices.breaker.total.use_real_memory=false'])
+        endpoint = cls._create_container(image=image,
+                                         container_port=9200,
+                                         cached=True,
+                                         environment=['discovery.type=single-node',
+                                                      'DISABLE_INSTALL_DEMO_CONFIG=true',
+                                                      'DISABLE_SECURITY_PLUGIN=true',
+                                                      'DISABLE_SECURITY_DASHBOARDS_PLUGIN=true',
+                                                      'ES_JAVA_OPTS=-Xms512m -Xmx512m',
+                                                      'indices.breaker.total.use_real_memory=false'])
         try:
-            new_env = config.open_search_endpoint_env(endpoint=es_endpoint,
+            new_env = config.open_search_endpoint_env(endpoint=endpoint,
                                                       instance_count=2)
             cls._env_patch = mock.patch.dict(os.environ, **new_env)
             cls._env_patch.start()
