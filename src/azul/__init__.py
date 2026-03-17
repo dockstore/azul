@@ -155,7 +155,7 @@ class Config:
             assert False, es_endpoint
         return {
             self._open_search_endpoint_env_name: es_endpoint,
-            self._es_instance_count_env_name: str(es_instance_count)
+            self._open_search_instance_count_env_name: str(es_instance_count)
         }
 
     @property
@@ -756,11 +756,11 @@ class Config:
     def open_search_instance_type(self) -> str:
         return self.environ['AZUL_OPEN_SEARCH_INSTANCE_TYPE']
 
-    _es_instance_count_env_name = 'AZUL_ES_INSTANCE_COUNT'
+    _open_search_instance_count_env_name = 'AZUL_OPEN_SEARCH_INSTANCE_COUNT'
 
     @property
-    def es_instance_count(self) -> int:
-        return int(self.environ[self._es_instance_count_env_name])
+    def open_search_instance_count(self) -> int:
+        return int(self.environ[self._open_search_instance_count_env_name])
 
     @property
     def es_volume_size(self) -> int:

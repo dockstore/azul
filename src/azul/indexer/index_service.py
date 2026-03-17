@@ -137,7 +137,7 @@ class IndexService(DocumentService):
             num_shards = 1
             num_replicas = 0
         else:
-            num_nodes = aws.es_instance_count
+            num_nodes = aws.open_search_instance_count
             num_workers = config.contribution_concurrency(retry=False)
 
             # Put the sole primary aggregate shard on one node and a replica

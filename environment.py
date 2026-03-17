@@ -433,7 +433,7 @@ def env() -> Mapping[str, str | None]:
 
         # The number of nodes in the AWS-hosted OpenSearch cluster
         #
-        'AZUL_ES_INSTANCE_COUNT': None,
+        'AZUL_OPEN_SEARCH_INSTANCE_COUNT': None,
 
         # The EC2 instance type to use for a cluster node.
         #

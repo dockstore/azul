@@ -1326,7 +1326,7 @@ def env() -> Mapping[str, str | None]:
         'AZUL_ENABLE_MONITORING': '1',
 
         'AZUL_OPEN_SEARCH_INSTANCE_TYPE': 'r6gd.xlarge.search',
-        'AZUL_ES_INSTANCE_COUNT': '6',
+        'AZUL_OPEN_SEARCH_INSTANCE_COUNT': '6',
 
         'AZUL_CONTRIBUTION_CONCURRENCY': '300/64',
 

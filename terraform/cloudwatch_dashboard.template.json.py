@@ -23,9 +23,9 @@ from azul.lib.types import (
 )
 
 es_instance_count = (
-    aws.es_instance_count
+    aws.open_search_instance_count
     if config.share_open_search_domain else
-    config.es_instance_count
+    config.open_search_instance_count
 )
 
 

@@ -293,9 +293,9 @@ class AWS:
             return endpoint
 
     @property
-    def es_instance_count(self) -> int:
+    def open_search_instance_count(self) -> int:
         if config.open_search_endpoint:
-            return config.es_instance_count
+            return config.open_search_instance_count
         else:
             return self._es_domain_status['ElasticsearchClusterConfig']['InstanceCount']
 

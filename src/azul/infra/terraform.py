@@ -776,7 +776,7 @@ class Chalice:
                     '${aws_opensearch_domain.index.endpoint}:443'
                 ),
                 es_instance_count=(
-                    not_none(aws.es_instance_count)
+                    not_none(aws.open_search_instance_count)
                     if config.share_open_search_domain else
                     '${aws_opensearch_domain.index.cluster_config[0].instance_count}'
                 )
