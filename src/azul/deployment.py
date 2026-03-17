@@ -285,8 +285,8 @@ class AWS:
         return self.client('dynamodb', azul_logging=True)
 
     @property
-    def es_endpoint(self) -> Netloc:
-        endpoint = config.es_endpoint
+    def open_search_endpoint(self) -> Netloc:
+        endpoint = config.open_search_endpoint
         if endpoint is None:
             return self._es_domain_status['Endpoints']['vpc'], 443
         else:
@@ -294,7 +294,7 @@ class AWS:
 
     @property
     def es_instance_count(self) -> int:
-        if config.es_endpoint:
+        if config.open_search_endpoint:
             return config.es_instance_count
         else:
             return self._es_domain_status['ElasticsearchClusterConfig']['InstanceCount']

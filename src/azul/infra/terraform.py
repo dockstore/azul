@@ -771,7 +771,7 @@ class Chalice:
             resource['publish'] = True
             env = config.es_endpoint_env(
                 es_endpoint=(
-                    aws.es_endpoint
+                    aws.open_search_endpoint
                     if config.share_es_domain else
                     '${aws_opensearch_domain.index.endpoint}:443'
                 ),

@@ -91,7 +91,7 @@ class KibanaProxy:
                 proxy = self.create_container(image=image,
                                               name='proxy',
                                               auto_remove=True,
-                                              command=['-target', self.es_endpoint, '-port', str(proxy_port)],
+                                              command=['-target', self.open_search_endpoint, '-port', str(proxy_port)],
                                               detach=True,
                                               environment={
                                                   'AWS_ACCESS_KEY_ID': creds.access_key,
@@ -182,7 +182,7 @@ class KibanaProxy:
         container.put_archive(str(path.parent), tar_buf.getvalue())
 
     @cached_property
-    def es_endpoint(self):
+    def open_search_endpoint(self):
         log.info('Getting domain endpoint')
         es = aws.es
         domain = es.describe_elasticsearch_domain(DomainName=self.options.domain)

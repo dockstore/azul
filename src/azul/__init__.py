@@ -127,12 +127,12 @@ class Config:
     def _validate_debug(self, debug):
         assert debug in (0, 1, 2), R('AZUL_DEBUG must be either 0, 1 or 2')
 
-    _es_endpoint_env_name = 'AZUL_ES_ENDPOINT'
+    _open_search_endpoint_env_name = 'AZUL_OPEN_SEARCH_ENDPOINT'
 
     @property
-    def es_endpoint(self) -> Netloc | None:
+    def open_search_endpoint(self) -> Netloc | None:
         try:
-            es_endpoint = self.environ[self._es_endpoint_env_name]
+            es_endpoint = self.environ[self._open_search_endpoint_env_name]
         except KeyError:
             return None
         else:
@@ -154,7 +154,7 @@ class Config:
         else:
             assert False, es_endpoint
         return {
-            self._es_endpoint_env_name: es_endpoint,
+            self._open_search_endpoint_env_name: es_endpoint,
             self._es_instance_count_env_name: str(es_instance_count)
         }
 

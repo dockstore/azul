@@ -216,7 +216,7 @@ class OpenSearchClientFactory:
 
     @classmethod
     def get(cls) -> OpenSearch:
-        host, port = aws.es_endpoint
+        host, port = aws.open_search_endpoint
         return cls._create_client(host, port, config.es_timeout)
 
     @classmethod

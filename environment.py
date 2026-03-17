@@ -420,7 +420,7 @@ def env() -> Mapping[str, str | None]:
         # The host and port of the OpenSearch instance to use. This takes
         # precedence over AZUL_ES_DOMAIN.
         #
-        'AZUL_ES_ENDPOINT': None,
+        'AZUL_OPEN_SEARCH_ENDPOINT': None,
 
         # The name of the AWS-hosted OpenSearch instance (not a domain name)
         # to use. The given ES domain's endpoint will be looked up dynamically.
