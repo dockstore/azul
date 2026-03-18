@@ -874,24 +874,15 @@ class TestManifests(DCP1ManifestTestCase):
         self.assertEqual(200, response.status_code)
         lines = response.content.decode().splitlines()
         expected_header = [
-            '--http1.1',
-            '',
-            '--create-dirs',
-            '',
-            '--compressed',
-            '',
-            '--location',
-            '',
-            '--globoff',
-            '',
-            '--fail',
-            '',
-            '--fail-early',
-            '',
-            '--continue-at -',
-            '',
-            '--write-out "Downloading to: %{filename_effective}\\n\\n"',
-            '',
+            '--http1.1', '',
+            '--create-dirs', '',
+            '--compressed', '',
+            '--location', '',
+            '--globoff', '',
+            '--fail', '',
+            '--fail-early', '',
+            '--continue-at -', '',
+            '--write-out "Downloading to: %{filename_effective}\\n\\n"', '',
         ]
         header_length = len(expected_header)
         header, body = lines[:header_length], lines[header_length:]
