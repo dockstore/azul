@@ -3,6 +3,7 @@ from collections.abc import (
 )
 from typing import (
     Any,
+    Sequence,
     TypedDict,
     Union,
     cast,
@@ -102,6 +103,49 @@ class ManifestController(QueryController):
     @cached_property
     def _service(self) -> ManifestService:
         return ManifestService(file_url_func=self._file_url)
+
+    @property
+    def _formats(self) -> Sequence[ManifestFormat]:
+        return self._metadata_plugin.manifest_formats
+
+    def _describe_format_param(self) -> str:
+        descriptions_by_format = {
+            ManifestFormat.compact: fd('''
+                (the default) for a compact, tab-separated manifest.
+            '''),
+            ManifestFormat.terra_pfb: fd('''
+                for a manifest in the [PFB format][2]. This format is mainly
+                used for exporting data to Terra.
+            '''),
+            ManifestFormat.curl: fd('''
+                for a [curl configuration file][3] manifest. This manifest can
+                be used with the curl program to download all the files listed
+                in the manifest.
+            '''),
+            ManifestFormat.verbatim_jsonl: fd('''
+                for a verbatim manifest in [JSONL][4] format. Each line contains
+                an unaltered metadata entity from the underlying repository.
+            '''),
+            ManifestFormat.verbatim_pfb: fd('''
+                for a verbatim manifest in the [PFB format][2]. This format is
+                mainly used for exporting data to Terra.
+            ''')
+        }
+        supported_format_descriptions = [
+            f'- `{format.value}` {descriptions_by_format[format]}'
+            for format in self._formats
+        ]
+        links = [
+            '[1]: https://software.broadinstitute.org/firecloud/documentation/article?id=10954',
+            '[2]: https://github.com/uc-cdis/pypfb',
+            '[3]: https://curl.haxx.se/docs/manpage.html#-K',
+            '[4]: https://jsonlines.org/'
+        ]
+        return '\n\n'.join([
+            'The desired format of the output.',
+            *supported_format_descriptions,
+            *links
+        ])
 
     def _route(self, *, fetch: bool, initiate: bool):
         path = self._manifest_path(fetch=fetch, token=None if initiate else '{token}')
@@ -207,41 +251,12 @@ class ManifestController(QueryController):
                             schema.enum(
                                 *[
                                     format.value
-                                    for format in self._metadata_plugin.manifest_formats
+                                    for format in self._formats
                                 ],
                                 form=str
                             )
                         ),
-                        description=f'''
-                                The desired format of the output.
-
-                                - `{ManifestFormat.compact.value}` (the default) for a compact,
-                                  tab-separated manifest
-
-                                - `{ManifestFormat.terra_pfb.value}` for a manifest in the [PFB
-                                  format][2]. This format is mainly used for exporting data to
-                                  Terra.
-
-                                - `{ManifestFormat.curl.value}` for a [curl configuration
-                                  file][3] manifest. This manifest can be used with the curl
-                                  program to download all the files listed in the manifest.
-
-                                - `{ManifestFormat.verbatim_jsonl.value}` for a verbatim
-                                  manifest in [JSONL][4] format. Each line contains an
-                                  unaltered metadata entity from the underlying repository.
-
-                                - `{ManifestFormat.verbatim_pfb.value}` for a verbatim
-                                  manifest in the [PFB format][2]. This format is mainly
-                                  used for exporting data to Terra.
-
-                                [1]: https://software.broadinstitute.org/firecloud/documentation/article?id=10954
-
-                                [2]: https://github.com/uc-cdis/pypfb
-
-                                [3]: https://curl.haxx.se/docs/manpage.html#-K
-
-                                [4]: https://jsonlines.org/
-                            '''
+                        description=self._describe_format_param()
                     )
                 ] if initiate else [],
                 'responses': {
@@ -410,7 +425,7 @@ class ManifestController(QueryController):
                             filters=self._validate_filters)
             # Now that the catalog is valid, we can provide the default format that
             # depends on it
-            default_format = self._metadata_plugin.manifest_formats[0].value
+            default_format = self._formats[0].value
             query_params.setdefault('format', default_format)
         else:
             validate_params(query_params)
@@ -421,7 +436,7 @@ class ManifestController(QueryController):
                               authentication=authentication)
 
     def _validate_manifest_format(self, format: str):
-        supported_formats = {f.value for f in self._metadata_plugin.manifest_formats}
+        supported_formats = {f.value for f in self._formats}
         try:
             ManifestFormat(format)
         except ValueError:
