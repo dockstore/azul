@@ -941,14 +941,20 @@ tf_config = {
         'aws_guardduty_detector': {
             'shared': {
                 'enable': True,
-                # All data sources are enabled in a new detector by default.
-                'datasources': {
-                    'kubernetes': {
-                        'audit_logs': {
-                            'enable': False
-                        }
-                    }
-                }
+            }
+        },
+        'aws_guardduty_detector_feature': {
+            # When a new detector resource is first deployed, all features
+            # supported at that time will be enabled by default. This means that
+            # we need to explicitly disable features not useful to us.
+            # Typically, detectors are deployed once, and the addition of
+            # supported features does not automatically enable them in those
+            # detectors. The enabling of features by default only becomes an
+            # issue in deployments that are frequently torn down and recreated.
+            'eks_audit_logs': {
+                'detector_id': '${aws_guardduty_detector.shared.id}',
+                'name': 'EKS_AUDIT_LOGS',
+                'status': 'DISABLED',
             }
         },
         'aws_securityhub_account': {

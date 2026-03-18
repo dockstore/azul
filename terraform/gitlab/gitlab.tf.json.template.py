@@ -1628,9 +1628,8 @@ emit_tf({} if config.terraform_component != 'gitlab' else {
                     'volume_size': 20
                 },
                 'key_name': '${aws_key_pair.gitlab.key_name}',
-                'network_interface': {
-                    'network_interface_id': '${aws_network_interface.gitlab.id}',
-                    'device_index': 0
+                'primary_network_interface': {
+                    'network_interface_id': '${aws_network_interface.gitlab.id}'
                 },
                 'user_data_replace_on_change': True,
                 'user_data': '#cloud-config\n' + yaml.dump({
