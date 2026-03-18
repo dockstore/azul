@@ -1,8 +1,6 @@
 blessed==1.38.0
 botocore-stubs==1.42.41
 click==8.3.2
-colorama==0.4.6
-docutils==0.19
 editor==1.7.0
 et_xmlfile==2.0.0
 gitdb==4.0.12
