@@ -8,6 +8,8 @@ from azul.infra.terraform import (
 emit_tf(tag_resources=False, config={
     'terraform': {
         'required_version': config.terraform_version,
+        # Note that a change to any of the providers below requires running
+        # `make provider_update`.
         'required_providers': {
             'external': {
                 'source': 'hashicorp/external',
