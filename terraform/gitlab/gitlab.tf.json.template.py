@@ -265,6 +265,12 @@ ami_id = {
     'us-east-1': 'ami-07f8da7e8a9c81dee'
 }
 
+# For instructions on finding the latest Amazon Linux 2023 release, see
+# "Updating software packages via release version upgrade in AL2023 instances"
+# section in OPERATOR.rst.
+#
+AL2023_release = '2023.10.20260302'
+
 # Cloud-init's cc_mounts module does not support the UUID=<uuid> device
 # specification format. We use the /dev/disk/by-uuid/<uuid> symlink as a
 # workaround, relying on udev to create the symlink when the volume is attached.
@@ -2227,11 +2233,22 @@ emit_tf({} if config.terraform_component != 'gitlab' else {
                             '-c', 'file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json',
                             '-s'  # restart agent afterwards
                         ],
-                        ['systemctl', 'enable', '--now', 'amazon-ssm-agent.service']
+                        ['systemctl', 'enable', '--now', 'amazon-ssm-agent.service'],
+                        [
+                            # Amazon Linux 2023 uses deterministic versioning,
+                            # requiring us to run `dnf upgrade` with a specific
+                            # release version. This command replaces CloudInit's
+                            # native `package_update` and `package_upgrade` keys
+                            # which appear to do nothing under AL2023.
+                            'cloud-init-per',
+                            'once',
+                            'upgrade-packages',
+                            'dnf',
+                            'upgrade',
+                            '--releasever=' + AL2023_release,
+                            '--assumeyes'
+                        ]
                     ],
-                    'package_update': True,
-                    'package_upgrade': True,
-                    'package_reboot_if_required': True,
                     'power_state': {
                         'mode': 'reboot',
                         # A bug in Amazon's AMI causes a 'condition' to be added

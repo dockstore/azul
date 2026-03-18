@@ -34,6 +34,7 @@ _period: 14 days
     - [ ] … update to [GitLab](https://hub.docker.com/r/gitlab/gitlab-ce/tags) & [GitLab runner images](https://hub.docker.com/r/gitlab/gitlab-runner/tags) <sub>or no update available</sub>
     - [ ] … update to [ClamAV image](https://hub.docker.com/r/clamav/clamav/tags) <sub>or no update available</sub>
     - [ ] … update to [GitLab AMI](https://github.com/DataBiosphere/azul/blob/develop/OPERATOR.rst#updating-the-ami-for-gitlab-instances) <sub>or no update available</sub>
+    - [ ] … update to [AL2023 release](https://github.com/DataBiosphere/azul/blob/develop/OPERATOR.rst#updating-software-packages-via-release-version-upgrade-in-al2023-instances) <sub>or no update available</sub>
     - [ ] … update to [Swagger UI](https://github.com/DataBiosphere/azul/blob/develop/OPERATOR.rst#updating-the-swagger-ui) <sub>or no update available</sub>
 - [ ] Created issues for any deferred updates to …
   - [ ] … the next major or minor Python version <sub>or such an issue already exists</sub>

@@ -645,6 +645,14 @@ def emit(t: T, target_branch: str):
                     'content': 'This PR is labeled `reqs`',
                     'alt': 'or does not modify `requirements*.txt`'
                 },
+                iif(t is T.upgrade, {
+                    'type': 'cli',
+                    'content': 'Updated the `AL2023_release` variable in [gitlab.tf.json.template.py]'
+                               '(../blob/develop/terraform/gitlab/gitlab.tf.json.template.py) to the '
+                               'most recent [AL2023 release](../blob/develop/OPERATOR.rst#updating-'
+                               'software-packages-via-release-version-upgrade-in-al2023-instances)',
+                    'alt': 'or no update is available'
+                }),
                 iif(t not in (T.backport, T.hotfix), {
                     'type': 'cli',
                     'content': '`make integration_test` passes in personal deployment',
