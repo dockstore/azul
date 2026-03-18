@@ -19,6 +19,13 @@ branch that does not have the listed changes, the steps would need to be
 reverted. This is all fairly informal and loosely defined. Hopefully we won't
 have too many entries in this file.
 
+#7862 Add ECM endpoints to browser CSP
+======================================
+
+Add the ``azul_ecm_service_url`` to your personal deployments'
+``environment.py`` files. As always, use the sandbox deployment's
+``environment.py`` as a model when upgrading personal deployments.
+
 
 #6779 Update to OpenSearch 2.x (#6779)
 ======================================

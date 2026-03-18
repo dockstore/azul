@@ -326,6 +326,10 @@ class Config:
         return mutable_furl(self.environ['AZUL_TERRA_SERVICE_URL'])
 
     @property
+    def ecm_service_url(self) -> mutable_furl:
+        return mutable_furl(self.environ['azul_ecm_service_url'])
+
+    @property
     def dss_query_prefix(self) -> str:
         return self.environ.get('AZUL_DSS_QUERY_PREFIX', '')
 

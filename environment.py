@@ -941,5 +941,10 @@ def env() -> Mapping[str, str | None]:
         # A Lambda runtime version to pin to, which overrides the AWS-managed
         # default.
         #
-        'azul_lambda_runtime_version': None
+        'azul_lambda_runtime_version': None,
+
+        # URL of Terra's external credentials manager (ECM) service used by the
+        # Azul deployment.
+        #
+        'azul_ecm_service_url': None
     }

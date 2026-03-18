@@ -573,7 +573,9 @@ def content_security_policy() -> str:
                     path='/register/user/v2/self/termsOfServiceDetails')),
            str(furl(config.terra_service_url,
                     path='/api/nih/status')),
-           str(config.service_endpoint))
+           str(config.service_endpoint),
+           str(furl(config.ecm_service_url,
+                    path='/api/oauth/v1/ras')))
     ])
 
 
