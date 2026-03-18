@@ -36,8 +36,8 @@ from azul.lib import (
     lru_cache,
 )
 from azul.logging import (
-    es_log,
     http_body_log_message,
+    opensearch_log,
 )
 
 log = logging.getLogger(__name__)
@@ -118,9 +118,9 @@ class AzulConnection(Connection):
         return full_url
 
     def _log_request(self, method, full_url, headers, body):
-        es_log.info('Making %s request to %s', method, full_url)
-        es_log.debug('… with request headers %r', headers)
-        es_log.info(http_body_log_message('request', body))
+        opensearch_log.info('Making %s request to %s', method, full_url)
+        opensearch_log.debug('… with request headers %r', headers)
+        opensearch_log.info(http_body_log_message('request', body))
 
     def _log_response(self,
                       log_level: int,
@@ -133,9 +133,9 @@ class AzulConnection(Connection):
                       ) -> None:
         status_code = 'no' if status_code is None else status_code
         # Note that here we log the full URL actually used, see _full_url above
-        es_log.log(log_level, 'Got %s response after %.3fs from %s to %s',
-                   status_code, duration, method, full_url, exc_info=exception)
-        es_log.log(log_level, http_body_log_message('response', response))
+        opensearch_log.log(log_level, 'Got %s response after %.3fs from %s to %s',
+                           status_code, duration, method, full_url, exc_info=exception)
+        opensearch_log.log(log_level, http_body_log_message('response', response))
 
 
 class AWSAuthHttpClient(HttpClient):
@@ -216,8 +216,8 @@ class OpenSearchClientFactory:
 
     @classmethod
     def get(cls) -> OpenSearch:
-        host, port = aws.es_endpoint
-        return cls._create_client(host, port, config.es_timeout)
+        host, port = aws.opensearch_endpoint
+        return cls._create_client(host, port, config.opensearch_timeout)
 
     @classmethod
     @lru_cache(maxsize=32)

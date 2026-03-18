@@ -81,12 +81,6 @@ if TYPE_CHECKING:
     from mypy_boto3_ecr import (
         ECRClient,
     )
-    from mypy_boto3_es import (
-        ElasticsearchServiceClient,
-    )
-    from mypy_boto3_es.type_defs import (
-        ElasticsearchDomainStatusTypeDef,
-    )
     from mypy_boto3_iam import (
         IAMClient,
     )
@@ -95,6 +89,12 @@ if TYPE_CHECKING:
     )
     from mypy_boto3_lambda import (
         LambdaClient,
+    )
+    from mypy_boto3_opensearch import (
+        OpenSearchServiceClient,
+    )
+    from mypy_boto3_opensearch.type_defs import (
+        DomainStatusTypeDef,
     )
     from mypy_boto3_s3 import (
         S3Client,
@@ -257,8 +257,8 @@ class AWS:
         return one(self.iam.list_account_aliases()['AccountAliases'])
 
     @property
-    def es(self) -> ElasticsearchServiceClient:
-        return self.client('es')
+    def opensearch(self) -> OpenSearchServiceClient:
+        return self.client('opensearch')
 
     @property
     def stepfunctions(self) -> SFNClient:
@@ -285,28 +285,31 @@ class AWS:
         return self.client('dynamodb', azul_logging=True)
 
     @property
-    def es_endpoint(self) -> Netloc:
-        endpoint = config.es_endpoint
+    def opensearch_endpoint(self) -> Netloc:
+        endpoint = config.opensearch_endpoint
         if endpoint is None:
-            return self._es_domain_status['Endpoints']['vpc'], 443
+            return self._opensearch_domain_status['Endpoints']['vpc'], 443
         else:
             return endpoint
 
     @property
-    def es_instance_count(self) -> int:
-        if config.es_endpoint:
-            return config.es_instance_count
+    def opensearch_instance_count(self) -> int:
+        if config.opensearch_endpoint:
+            return config.opensearch_instance_count
         else:
-            return self._es_domain_status['ElasticsearchClusterConfig']['InstanceCount']
+            status = self._opensearch_domain_status
+            return status['ClusterConfig']['InstanceCount']
 
     @property
     @_cache
-    def _es_domain_status(self) -> ElasticsearchDomainStatusTypeDef:
+    def _opensearch_domain_status(self) -> DomainStatusTypeDef:
         """
         Return the status of the current deployment's OpenSearch domain
         """
-        es_domain = self.es.describe_elasticsearch_domain(DomainName=config.es_domain)
-        return es_domain['DomainStatus']
+        response = self.opensearch.describe_domain(
+            DomainName=config.opensearch_domain
+        )
+        return response['DomainStatus']
 
     def get_lambda_arn(self, function_name, suffix):
         return f'arn:aws:lambda:{self.region_name}:{self.account}:function:{function_name}-{suffix}'

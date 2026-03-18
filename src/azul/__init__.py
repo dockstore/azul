@@ -127,35 +127,35 @@ class Config:
     def _validate_debug(self, debug):
         assert debug in (0, 1, 2), R('AZUL_DEBUG must be either 0, 1 or 2')
 
-    _es_endpoint_env_name = 'AZUL_ES_ENDPOINT'
+    _opensearch_endpoint_env_name = 'AZUL_OPENSEARCH_ENDPOINT'
 
     @property
-    def es_endpoint(self) -> Netloc | None:
+    def opensearch_endpoint(self) -> Netloc | None:
         try:
-            es_endpoint = self.environ[self._es_endpoint_env_name]
+            endpoint = self.environ[self._opensearch_endpoint_env_name]
         except KeyError:
             return None
         else:
-            host, _, port = es_endpoint.partition(':')
+            host, _, port = endpoint.partition(':')
             return host, int(port)
 
-    def es_endpoint_env(self,
-                        *,
-                        es_endpoint: Netloc | str,
-                        es_instance_count: int | str
-                        ) -> Mapping[str, str]:
-        if isinstance(es_endpoint, tuple):
-            host, port = es_endpoint
+    def opensearch_endpoint_env(self,
+                                *,
+                                endpoint: Netloc | str,
+                                instance_count: int | str,
+                                ) -> Mapping[str, str]:
+        if isinstance(endpoint, tuple):
+            host, port = endpoint
             assert isinstance(host, str), host
             assert isinstance(port, int), port
-            es_endpoint = f'{host}:{port}'
-        elif isinstance(es_endpoint, str):
+            endpoint = f'{host}:{port}'
+        elif isinstance(endpoint, str):
             pass
         else:
-            assert False, es_endpoint
+            assert False, endpoint
         return {
-            self._es_endpoint_env_name: es_endpoint,
-            self._es_instance_count_env_name: str(es_instance_count)
+            self._opensearch_endpoint_env_name: endpoint,
+            self._opensearch_instance_count_env_name: str(instance_count)
         }
 
     @property
@@ -171,12 +171,12 @@ class Config:
         return self.environ['azul_chalice_bin']
 
     @property
-    def es_domain(self) -> str:
-        return self.environ['AZUL_ES_DOMAIN']
+    def opensearch_domain(self) -> str:
+        return self.environ['AZUL_OPENSEARCH_DOMAIN']
 
     @property
-    def share_es_domain(self) -> bool:
-        return self._boolean(self.environ['AZUL_SHARE_ES_DOMAIN'])
+    def share_opensearch_domain(self) -> bool:
+        return self._boolean(self.environ['AZUL_SHARE_OPENSEARCH_DOMAIN'])
 
     def qualified_bucket_name(self,
                               *,
@@ -269,8 +269,8 @@ class Config:
     audit_log_retention_days = 365
 
     @property
-    def es_timeout(self) -> int:
-        return int(self.environ['AZUL_ES_TIMEOUT'])
+    def opensearch_timeout(self) -> int:
+        return int(self.environ['AZUL_OPENSEARCH_TIMEOUT'])
 
     @property
     def data_browser_domain(self):
@@ -753,18 +753,18 @@ class Config:
         return self._boolean(self.environ['AZUL_ENABLE_VERBATIM_RELATIONS'])
 
     @property
-    def es_instance_type(self) -> str:
-        return self.environ['AZUL_ES_INSTANCE_TYPE']
+    def opensearch_instance_type(self) -> str:
+        return self.environ['AZUL_OPENSEARCH_INSTANCE_TYPE']
 
-    _es_instance_count_env_name = 'AZUL_ES_INSTANCE_COUNT'
-
-    @property
-    def es_instance_count(self) -> int:
-        return int(self.environ[self._es_instance_count_env_name])
+    _opensearch_instance_count_env_name = 'AZUL_OPENSEARCH_INSTANCE_COUNT'
 
     @property
-    def es_volume_size(self) -> int:
-        return int(self.environ['AZUL_ES_VOLUME_SIZE'])
+    def opensearch_instance_count(self) -> int:
+        return int(self.environ[self._opensearch_instance_count_env_name])
+
+    @property
+    def opensearch_volume_size(self) -> int:
+        return int(self.environ['AZUL_OPENSEARCH_VOLUME_SIZE'])
 
     @property
     def enable_replicas(self) -> bool:
@@ -1534,7 +1534,7 @@ class Config:
     ]
 
     @property
-    def es_refresh_interval(self) -> int:
+    def opensearch_refresh_interval(self) -> int:
         """
         Integral number of seconds between index refreshes in OpenSearch
         """

@@ -20,6 +20,14 @@ reverted. This is all fairly informal and loosely defined. Hopefully we won't
 have too many entries in this file.
 
 
+#6779 Update to OpenSearch 2.x (#6779)
+======================================
+
+Several environment variables have been renamed (``_ES_`` was replaced with
+``_OPENSEARCH_``). Compare your personal deployment's ``environment.py`` with
+that of the collocated sandbox deployment and propagate the renamings.
+
+
 #7607 Update to Python 3.14.3
 =============================
 

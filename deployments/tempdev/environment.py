@@ -139,8 +139,8 @@ def env() -> Mapping[str, str | None]:
         'AZUL_ENABLE_MONITORING': '1',
 
         # $0.191/h × 2 × 24h/d × 30d/mo = $275.08/mo
-        'AZUL_ES_INSTANCE_TYPE': 'r6gd.large.search',
-        'AZUL_ES_INSTANCE_COUNT': '2',
+        'AZUL_OPENSEARCH_INSTANCE_TYPE': 'r6gd.large.search',
+        'AZUL_OPENSEARCH_INSTANCE_COUNT': '2',
 
         'AZUL_DEBUG': '1',
 

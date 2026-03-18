@@ -35,14 +35,14 @@ policy = {
                 'es:ESHttpPost',
                 'es:ESHttpDelete'
             ],
-            'Resource': f'arn:aws:es:{aws.region_name}:{aws.account}:domain/{config.es_domain}/*'
+            'Resource': f'arn:aws:es:{aws.region_name}:{aws.account}:domain/{config.opensearch_domain}/*'
         },
         {
             'Effect': 'Allow',
             'Action': [
                 'es:DescribeElasticsearchDomain'
             ],
-            'Resource': f'arn:aws:es:{aws.region_name}:{aws.account}:domain/{config.es_domain}'
+            'Resource': f'arn:aws:es:{aws.region_name}:{aws.account}:domain/{config.opensearch_domain}'
         },
         {
             'Effect': 'Allow',

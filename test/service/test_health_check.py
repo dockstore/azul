@@ -29,11 +29,11 @@ class TestServiceHealthCheck(DCP1TestCase, HealthCheckTestCase):
 
     def _expected_health(self,
                          endpoints_up: bool = True,
-                         es_up: bool = True
+                         opensearch_up: bool = True
                          ) -> MutableJSON:
         return {
-            'up': es_up and endpoints_up,
-            **self._expected_elasticsearch(up=es_up),
+            'up': opensearch_up and endpoints_up,
+            **self._expected_opensearch(up=opensearch_up),
             **self._expected_api_endpoints(up=endpoints_up),
         }
 

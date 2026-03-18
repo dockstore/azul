@@ -1338,8 +1338,8 @@ def env() -> Mapping[str, str | None]:
         'AZUL_TERRA_SERVICE_URL': 'https://firecloud-orchestration.dsde-prod.broadinstitute.org',
 
         # Personal deployments & `hammerbox` share an ES domain with `anvilprod`
-        'AZUL_SHARE_ES_DOMAIN': '1',
-        'AZUL_ES_DOMAIN': 'azul-index-anvilprod',
+        'AZUL_SHARE_OPENSEARCH_DOMAIN': '1',
+        'AZUL_OPENSEARCH_DOMAIN': 'azul-index-anvilprod',
 
         **(
             {

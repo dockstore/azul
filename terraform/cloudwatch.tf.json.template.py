@@ -27,15 +27,15 @@ emit_tf({
     'data': [
         {
             'external': {
-                'open_search_nodes': {
+                'opensearch_nodes': {
                     'program': [
                         'python',
-                        f'{config.project_root}/scripts/open_search_nodes.py'
+                        f'{config.project_root}/scripts/opensearch_nodes.py'
                     ],
                     'query': {},
                     'depends_on': (
                         []
-                        if config.share_es_domain else
+                        if config.share_opensearch_domain else
                         ['aws_opensearch_domain.index']
                     )
                 }
@@ -64,7 +64,7 @@ emit_tf({
         ),
     ],
     'locals': {
-        'nodes': '${jsondecode(data.external.open_search_nodes.result.nodes)}'
+        'nodes': '${jsondecode(data.external.opensearch_nodes.result.nodes)}'
     },
     'resource': [
         *(

@@ -270,12 +270,12 @@ def env() -> Mapping[str, str | None]:
 
         **(
             {
-                'AZUL_ES_INSTANCE_TYPE': 'r6gd.large.search',
-                'AZUL_ES_INSTANCE_COUNT': '2',
+                'AZUL_OPENSEARCH_INSTANCE_TYPE': 'r6gd.large.search',
+                'AZUL_OPENSEARCH_INSTANCE_COUNT': '2',
             } if is_sandbox else {
                 # Personal deployments share an ES domain with `sandbox`
-                'AZUL_SHARE_ES_DOMAIN': '1',
-                'AZUL_ES_DOMAIN': 'azul-index-sandbox',
+                'AZUL_SHARE_OPENSEARCH_DOMAIN': '1',
+                'AZUL_OPENSEARCH_DOMAIN': 'azul-index-sandbox',
                 # Personal deployments use fewer Lambda invocations in parallel.
                 'AZUL_CONTRIBUTION_CONCURRENCY': '8',
                 'AZUL_AGGREGATION_CONCURRENCY': '8',

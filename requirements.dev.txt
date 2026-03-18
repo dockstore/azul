@@ -2,7 +2,7 @@
 --find-links https://github.com/DataBiosphere/azul-requirements-parser/releases/expanded_assets/v0.13.0+6  # match version of requirements-parser requirement below
 atomicwrites==1.4.1
 awscli==1.44.52
-boto3-stubs-lite[apigateway,cloudwatch,dynamodb,ec2,ecr,es,iam,kms,lambda,s3,secretsmanager,securityhub,sns,sqs,ssm,stepfunctions,sts]==1.42.61  # match this with the version of the `boto3` runtime dendency
+boto3-stubs-lite[apigateway,cloudwatch,dynamodb,ec2,ecr,iam,kms,lambda,opensearch,s3,secretsmanager,securityhub,sns,sqs,ssm,stepfunctions,sts]==1.42.61  # match this with the version of the `boto3` runtime dendency
 chalice==1.32.0+20  # match version with find-links entry above
 coverage==7.13.4
 docker==7.1.0

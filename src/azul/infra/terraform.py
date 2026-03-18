@@ -769,15 +769,15 @@ class Chalice:
             # an atomic update of the function, avoiding a race condition
             # between the update of the function's configuration and its code.
             resource['publish'] = True
-            env = config.es_endpoint_env(
-                es_endpoint=(
-                    aws.es_endpoint
-                    if config.share_es_domain else
+            env = config.opensearch_endpoint_env(
+                endpoint=(
+                    aws.opensearch_endpoint
+                    if config.share_opensearch_domain else
                     '${aws_opensearch_domain.index.endpoint}:443'
                 ),
-                es_instance_count=(
-                    not_none(aws.es_instance_count)
-                    if config.share_es_domain else
+                instance_count=(
+                    not_none(aws.opensearch_instance_count)
+                    if config.share_opensearch_domain else
                     '${aws_opensearch_domain.index.cluster_config[0].instance_count}'
                 )
             )

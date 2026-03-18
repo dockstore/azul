@@ -161,14 +161,14 @@ class DocumentCloningTestCase(WebServiceTestCase, metaclass=ABCMeta):
     }
 
     def _get_all_hits(self):
-        response = self.open_search.search(index=self._index_name,
-                                           body=self._query)
+        response = self.opensearch.search(index=self._index_name,
+                                          body=self._query)
         return response['hits']['hits']
 
     def _delete_all_hits(self):
-        self.open_search.delete_by_query(index=self._index_name,
-                                         body=self._query,
-                                         refresh=True)
+        self.opensearch.delete_by_query(index=self._index_name,
+                                        body=self._query,
+                                        refresh=True)
 
     def _clone_doc(self, doc):
         """
@@ -200,7 +200,7 @@ class DocumentCloningTestCase(WebServiceTestCase, metaclass=ABCMeta):
                     for doc in docs
                 )
             )
-            self.open_search.bulk(body=body, index=self._index_name, refresh=True)
+            self.opensearch.bulk(body=body, index=self._index_name, refresh=True)
 
     @property
     def _index_name(self):
