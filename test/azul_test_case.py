@@ -111,8 +111,6 @@ class AzulTestCase(TestCase):
                 RE(r'.*<socket\.socket.*>'),
             },
             DeprecationWarning: {
-                RE(r'Call to deprecated method .*\. \(DOS support will be removed\)'),
-
                 'Call to deprecated method fetch_bundle_manifest',
 
                 'ProjectContact.contact_name is deprecated',
@@ -157,10 +155,6 @@ class AzulTestCase(TestCase):
                 #        https://github.com/DataBiosphere/azul/issues/7838
                 'Instead of decorating your test case, or its test methods in '
                 'it, mix in the appropriate subclass of CatalogTestCase.',
-
-                # FIXME: Remove deprecated DOS endpoints
-                #        https://github.com/DataBiosphere/azul/issues/7839
-                'DOS support will be removed',
 
                 # FIXME: Use response from `/index/files` to validate
                 #        https://github.com/DataBiosphere/azul/issues/2970

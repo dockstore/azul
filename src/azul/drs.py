@@ -78,10 +78,6 @@ def drs_object_url_path(*, object_id: str, access_id: str | None = None) -> str:
     ))
 
 
-def dos_object_url_path(object_id: str) -> str:
-    return f'/ga4gh/dos/v1/dataobjects/{object_id}'
-
-
 class AccessMethod(namedtuple('AccessMethod', 'scheme replica'), Enum):
     https = 'https', 'aws'
     gs = 'gs', 'gcp'

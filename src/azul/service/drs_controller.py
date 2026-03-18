@@ -12,14 +12,10 @@ from dataclasses import (
 from datetime import (
     datetime,
 )
-import time
 from typing import (
     Any,
 )
 import urllib.parse
-from warnings import (
-    deprecated,
-)
 
 from chalice.app import (
     ChaliceViewError,
@@ -34,34 +30,27 @@ from more_itertools import (
 import requests
 
 from azul import (
-    CatalogName,
     config,
     dss,
 )
 from azul.drs import (
     AccessMethod,
-    dos_object_url_path,
     drs_object_uri,
     drs_object_url_path,
 )
 from azul.lib import (
-    R,
     cached_property,
     mutable_furl,
 )
 from azul.lib.types import (
     JSON,
     MutableJSON,
-    not_none,
 )
 from azul.openapi import (
     format_description as fd,
     params,
     responses,
     schema,
-)
-from azul.plugins import (
-    File,
 )
 from azul.service.controller import (
     ServiceController,
@@ -77,12 +66,6 @@ class DRSController(ServiceController):
     @cached_property
     def _service(self) -> IndexService:
         return IndexService()
-
-    _deprecated_spec: JSON = {
-        'summary': 'This endpoint will be removed in the future.',
-        'tags': ['Deprecated'],
-        'deprecated': True
-    }
 
     _drs_spec_description = fd('''
         This is a partial implementation of the [DRS 1.0.0 spec][1]. Not all
@@ -211,30 +194,6 @@ class DRSController(ServiceController):
             validate_params(query_params, version=str)
             return self.get_object_access(access_id, file_uuid, query_params)
 
-        @self.app.route(
-            dos_object_url_path('{file_uuid}'),
-            methods=['GET'],
-            enabled=config.is_dss_enabled(),
-            cors=True,
-            spec=self._deprecated_spec
-        )
-        def dos_get_object(file_uuid):
-            """
-            Return a DRS data object dictionary for a given DSS file UUID and version.
-            """
-            request = self.current_request
-            authentication = self._authentication(request)
-            query_params = self._query_params(request)
-            validate_params(query_params,
-                            version=str,
-                            catalog=self._validate_catalog)
-            catalog = self.app.catalog
-            file_version = query_params.get('version')
-            return self.dos_get_object(catalog,
-                                       file_uuid,
-                                       file_version,
-                                       authentication)
-
         return locals()
 
     def _access_url(self, url):
@@ -301,83 +260,6 @@ class DRSController(ServiceController):
     @classmethod
     def dss_file_url(cls, file_uuid: str) -> mutable_furl:
         return mutable_furl(config.dss_endpoint).add(path=('files', file_uuid))
-
-    @deprecated('DOS support will be removed')
-    def dos_get_object(self, catalog, file_uuid, file_version, authentication):
-        file = self._service.get_data_file(catalog=catalog,
-                                           file_uuid=file_uuid,
-                                           file_version=file_version,
-                                           filters=self._prepare_filters(catalog, authentication, None))
-        if file is not None:
-            data_obj = self.file_to_drs(catalog, file)
-            assert data_obj['id'] == file_uuid
-            assert file_version is None or data_obj['version'] == file_version
-            return Response({'data_object': data_obj}, status_code=200)
-        else:
-            return Response({'msg': 'Data object not found.'}, status_code=404)
-
-    @deprecated('DOS support will be removed')
-    def _dos_gs_url(self, file_uuid, version) -> mutable_furl:
-        url = self.dss_file_url(file_uuid)
-        params = dict({'file_version': version} if version else {},
-                      directurl=True,
-                      replica='gcp')
-        while True:
-            if self.lambda_context.get_remaining_time_in_millis() / 1000 > 3:
-                dss_response = requests.api.get(url, params=params, allow_redirects=False)
-                if dss_response.status_code == 302:
-                    url = mutable_furl(dss_response.next.url)
-                    assert url.scheme == 'gs', R('Expected a gs:// URL', url)
-                    return url
-                elif dss_response.status_code == 301:
-                    url = dss_response.next.url
-                    remaining_lambda_seconds = self.lambda_context.get_remaining_time_in_millis() / 1000
-                    server_side_sleep = min(1,
-                                            max(remaining_lambda_seconds - config.api_gateway_timeout_padding - 3, 0))
-                    time.sleep(server_side_sleep)
-                else:
-                    raise ChaliceViewError({
-                        'msg': f'Received {dss_response.status_code} from DSS. Could not get file'
-                    })
-            else:
-                raise GatewayTimeoutError({
-                    'msg': f"DSS timed out getting file: '{file_uuid}', version: '{version}'."
-                })
-
-    @deprecated('DOS support will be removed')
-    def file_to_drs(self, catalog: CatalogName, file: File):
-        """
-        Converts an aggregate file document to a DRS data object response.
-        """
-        urls = [
-            self._file_url(catalog=catalog,
-                           file_uuid=file.uuid,
-                           version=not_none(file.version),
-                           fetch=False,
-                           wait='1',
-                           fileName=file.name),
-            self._dos_gs_url(file.uuid, file.version)
-        ]
-
-        return {
-            'id': file.uuid,
-            'urls': [
-                {
-                    'url': str(url)
-                }
-                for url in urls
-            ],
-            'size': str(file.size),
-            'checksums': [
-                {
-                    'checksum': file.digest.value,
-                    'type': file.digest.type
-                }
-            ],
-            'aliases': [file.name],
-            'version': file.version,
-            'name': file.name
-        }
 
 
 class GatewayTimeoutError(ChaliceViewError):
@@ -511,32 +393,6 @@ def dss_drs_object_uri(*,
     return drs_object_uri(base_url=_base_url(base_url),
                           path=(file_uuid,),
                           params=_url_query(version=file_version))
-
-
-def dss_dos_object_url(*,
-                       catalog: CatalogName,
-                       file_uuid: str,
-                       file_version: str | None = None,
-                       base_url: furl | None = None
-                       ) -> mutable_furl:
-    """
-    The http:// or https:// URL for a given DSS file UUID and version. The
-    return value will point at the bare-bones DOS data object endpoint in the
-    web service.
-
-    :param catalog: the name of the catalog to retrieve the file from
-
-    :param file_uuid: the DSS file UUID of the file
-
-    :param file_version: the DSS file version of the file
-
-    :param base_url: an optional service endpoint, e.g. for local test servers.
-                     If absent, the service endpoint for the current deployment
-                     will be used.
-    """
-    return mutable_furl(url=_base_url(base_url),
-                        path=dos_object_url_path(file_uuid),
-                        args=_url_query(version=file_version, catalog=catalog))
 
 
 def dss_drs_object_url(*,

@@ -78,7 +78,6 @@ from azul import (
     CatalogName,
     Config,
     config,
-    drs,
 )
 from azul.auth import (
     OAuth2,
@@ -522,7 +521,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
         for catalog in catalogs:
             self._test_manifest(catalog.name)
             self._test_manifest_tagging_race(catalog.name)
-            self._test_dos_and_drs(catalog.name)
+            self._test_drs(catalog.name)
             self._test_repository_files(catalog.name)
             self._test_managed_access(catalog=catalog.name,
                                       public_source=catalog.public_source,
@@ -868,12 +867,27 @@ class IndexingIntegrationTest(IntegrationTestCase):
         else:
             assert False, catalog
 
-    def _test_dos_and_drs(self, catalog: CatalogName):
+    def _test_drs(self, catalog: CatalogName):
         if config.is_dss_enabled(catalog) and config.dss_direct_access:
             outer_file, inner_file = self._get_one_file(catalog)
             source = self._source_spec(catalog, outer_file)
-            self._test_dos(catalog, inner_file)
-            self._test_drs(catalog, source, inner_file)
+            repository_plugin = self.azul_client.repository_plugin(catalog)
+            file_uuid = lookup(inner_file, 'document_id', 'uuid')
+            drs_uri = f'drs://{config.api_lambda_domain("service")}/{file_uuid}'
+            drs_object = repository_plugin.drs_object(drs_uri)
+            for access_method in AccessMethod:
+                with self.subTest('drs', catalog=catalog, access_method=AccessMethod.https):
+                    log.info('Resolving file %r with DRS using %r', file_uuid, access_method)
+                    access = drs_object.get(access_method)
+                    self.assertIsNone(access.headers)
+                    if access.method is AccessMethod.https:
+                        response = self._get_url(GET, furl(access.url), stream=True)
+                        self._validate_file_response(response, source, inner_file)
+                    elif access.method is AccessMethod.gs:
+                        content = self._get_gs_url_content(furl(access.url), size=self.num_fastq_bytes)
+                        self._validate_file_content(content, inner_file)
+                    else:
+                        self.fail(access_method)
 
     @property
     def _service_account_credentials(self) -> ContextManager:
@@ -1238,56 +1252,6 @@ class IndexingIntegrationTest(IntegrationTestCase):
                 self._validate_file_content(response, file)
         finally:
             response.close()
-
-    def _test_drs(self,
-                  catalog: CatalogName,
-                  source: SourceSpec,
-                  file: JSON
-                  ) -> None:
-        repository_plugin = self.azul_client.repository_plugin(catalog)
-        file_uuid = lookup(file, 'document_id', 'uuid')
-        drs_uri = f'drs://{config.api_lambda_domain("service")}/{file_uuid}'
-        drs_object = repository_plugin.drs_object(drs_uri)
-        for access_method in AccessMethod:
-            with self.subTest('drs', catalog=catalog, access_method=AccessMethod.https):
-                log.info('Resolving file %r with DRS using %r', file_uuid, access_method)
-                access = drs_object.get(access_method)
-                self.assertIsNone(access.headers)
-                if access.method is AccessMethod.https:
-                    response = self._get_url(GET, furl(access.url), stream=True)
-                    self._validate_file_response(response, source, file)
-                elif access.method is AccessMethod.gs:
-                    content = self._get_gs_url_content(furl(access.url), size=self.num_fastq_bytes)
-                    self._validate_file_content(content, file)
-                else:
-                    self.fail(access_method)
-
-    def _test_dos(self, catalog: CatalogName, file: JSON):
-        with self.subTest('dos', catalog=catalog):
-            file_uuid = lookup(file, 'document_id', 'uuid')
-            log.info('Resolving file %s with DOS', file_uuid)
-            response = self._check_endpoint(method=GET,
-                                            path=drs.dos_object_url_path(file_uuid),
-                                            args=dict(catalog=catalog))
-            json_data = json.loads(response)['data_object']
-            file_url = first(json_data['urls'])['azul_url']
-            while True:
-                with self._get_url(method=GET,
-                                   url=file_url,
-                                   stream=True
-                                   ) as response:
-                    if response.status in (301, 302):
-                        file_url = response.headers['Location']
-                        try:
-                            retry_after = response.headers['Retry-After']
-                        except KeyError:
-                            pass
-                        else:
-                            time.sleep(int(retry_after))
-                    else:
-                        break
-            self._assertResponseStatus(response, 200)
-            self._validate_file_content(response, file)
 
     def _get_gs_url_content(self,
                             url: furl,
