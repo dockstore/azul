@@ -311,7 +311,8 @@ class Plugin(MetadataPlugin[HCABundle]):
         source_prefix=SpecialField.symmetric('sourcePrefix'),
         bundle_uuid=SpecialField.symmetric('bundleUuid'),
         bundle_version=SpecialField.symmetric('bundleVersion'),
-        file_uuid=SpecialField(name='fileId', name_in_hit='uuid')
+        file_uuid=SpecialField(name='fileId', name_in_hit='uuid'),
+        file_name=SpecialField(name='fileName', name_in_hit='name')
     )
 
     @property

@@ -60,6 +60,7 @@ from requests import (
 
 from azul import (
     config,
+    iif,
 )
 from azul.http import (
     parse_header,
@@ -345,6 +346,24 @@ class ManifestTestCase(WebServiceTestCase,
         actual = list(csv.reader(actual, delimiter='\t'))
         actual[1:], expected[1:] = sorted(actual[1:]), sorted(expected[1:])
         self.assertEqual(expected, actual)
+
+    def _assert_curl(self, expected_body: list[list[str]], actual: Response):
+        expected_header = [
+            '--http1.1', '',
+            '--create-dirs', '',
+            '--compressed', '',
+            '--location', '',
+            '--globoff', '',
+            '--fail', '',
+            '--fail-early', '',
+            '--continue-at -', '',
+            '--write-out "Downloading to: %{filename_effective}\\n\\n"', '',
+        ]
+        lines = actual.content.decode().splitlines()
+        header_length = len(expected_header)
+        header, body = lines[:header_length], lines[header_length:]
+        self.assertEqual(expected_header, header)
+        self.assertEqual(expected_body, sorted(chunked(body, 3)))
 
     def _file_url(self, file_id, version):
         return str(self.base_url.set(path='/repository/files/' + file_id,
@@ -872,30 +891,6 @@ class TestManifests(DCP1ManifestTestCase):
         filters = {'fileFormat': {'is': ['pdf']}}
         response = self._get_manifest(ManifestFormat.curl, filters)
         self.assertEqual(200, response.status_code)
-        lines = response.content.decode().splitlines()
-        expected_header = [
-            '--http1.1',
-            '',
-            '--create-dirs',
-            '',
-            '--compressed',
-            '',
-            '--location',
-            '',
-            '--globoff',
-            '',
-            '--fail',
-            '',
-            '--fail-early',
-            '',
-            '--continue-at -',
-            '',
-            '--write-out "Downloading to: %{filename_effective}\\n\\n"',
-            '',
-        ]
-        header_length = len(expected_header)
-        header, body = lines[:header_length], lines[header_length:]
-        self.assertEqual(expected_header, header)
         base_url = str(self.base_url.set(path='/repository/files'))
         expected_body = [
             [
@@ -917,7 +912,7 @@ class TestManifests(DCP1ManifestTestCase):
                 ''
             ],
         ]
-        self.assertEqual(expected_body, sorted(chunked(body, 3)))
+        self._assert_curl(expected_body, response)
 
     def test_manifest_format_validation(self):
         url = self.base_url.set(path='/manifest/files',
@@ -1347,10 +1342,10 @@ class AnvilManifestTestCase(ManifestTestCase, AnvilCannedBundleTestCase):
     @classmethod
     def bundles(cls) -> list[SourcedBundleFQID]:
         return [
-            cls.bundle_fqid(uuid='2370f948-2783-aeb6-afea-e022897f4dcf'),
-            cls.bundle_fqid(uuid='595c469e-604d-ab34-af39-f5b9f5d61818'),
-            cls.bundle_fqid(uuid='826dea02-e274-affe-aabc-eb3db63ad068'),
-            cls.bundle_fqid(uuid='f4b39881-d519-ab6f-99a0-7cc5089caee6'),
+            cls.duos_bundle(),
+            cls.supplementary_bundle(),
+            cls.primary_bundle(),
+            cls.replica_bundle()
         ]
 
     source_id_filters: FiltersJSON = {
@@ -1805,6 +1800,44 @@ class TestAnvilManifests(AnvilManifestTestCase):
             )
         ]
         self._assert_tsv(expected, response)
+
+    def test_curl_manifest(self):
+        file_size_1 = 15079345
+        file_size_2 = 213021639
+        file_size_3 = 3306845592
+        cases = [-1, file_size_1, file_size_2, file_size_3]
+        for i, mirror_limit in enumerate(cases, start=1):
+            with self.subTest(mirror_limit=mirror_limit):
+                with self._patch_mirror_limit(self.catalog, mirror_limit):
+                    response = self._get_manifest(ManifestFormat.curl,
+                                                  # Redundant filter to avoid caching
+                                                  filters={'source_id': {'is': [self.source.id] * i}})
+                self.assertEqual(200, response.status_code)
+                base_url = str(self.base_url.set(path='/repository/files'))
+                expected_body = [
+                    *iif(file_size_2 <= mirror_limit, [[
+                        f'url="{base_url}/15b76f9c-6b46-433f-851d-34e89f1b9ba6' +
+                        '?catalog=test&version=2022-06-01T00%3A00%3A00.000000Z"',
+                        'output="826dea02-e274-affe-aabc-eb3db63ad068/' +
+                        '307500.merged.matefixed.sorted.markeddups.recal.g.vcf.gz"',
+                        ''
+                    ]]),
+                    *iif(file_size_3 <= mirror_limit, [[
+                        f'url="{base_url}/3b17377b-16b1-431c-9967-e5d01fc5923f' +
+                        '?catalog=test&version=2022-06-01T00%3A00%3A00.000000Z"',
+                        'output="826dea02-e274-affe-aabc-eb3db63ad068/' +
+                        '307500.merged.matefixed.sorted.markeddups.recal.bam"',
+                        ''
+                    ]]),
+                    *iif(file_size_1 <= mirror_limit, [[
+                        f'url="{base_url}/6b0f6c0f-5d80-4242-accb-840921351cd5' +
+                        '?catalog=test&version=2022-06-01T00%3A00%3A00.000000Z"',
+                        'output="595c469e-604d-ab34-af39-f5b9f5d61818/' +
+                        'CCDG_13607_B01_GRM_WGS_2019-02-19_chr15.recalibrated_variants.annotated.coding.txt"',
+                        ''
+                    ]])
+                ]
+                self._assert_curl(expected_body, response)
 
     def test_verbatim_jsonl_manifest(self):
         base_path = ['verbatim', 'jsonl', 'anvil']

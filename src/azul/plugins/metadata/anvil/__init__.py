@@ -110,6 +110,9 @@ class Plugin(MetadataPlugin[AnvilBundle]):
         return [
             ManifestFormat.compact,
             ManifestFormat.terra_pfb,
+            *iif(config.enable_mirroring, [
+                ManifestFormat.curl
+            ]),
             *iif(config.enable_replicas, [
                 ManifestFormat.verbatim_jsonl,
                 ManifestFormat.verbatim_pfb
@@ -275,7 +278,8 @@ class Plugin(MetadataPlugin[AnvilBundle]):
         source_prefix=SpecialField.symmetric('source_prefix'),
         bundle_uuid=SpecialField.symmetric('bundle_uuid'),
         bundle_version=SpecialField.symmetric('bundle_version'),
-        file_uuid=SpecialField(name='files.document_id', name_in_hit='document_id')
+        file_uuid=SpecialField(name='files.document_id', name_in_hit='document_id'),
+        file_name=SpecialField(name='files.file_name', name_in_hit='file_name'),
     )
 
     @property

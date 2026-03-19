@@ -210,6 +210,25 @@ class AnvilCannedBundleTestCase(AnvilTestCase,
                                   table_name=table_name,
                                   batch_prefix='' if BundleType.is_batched(table_name) else None)
 
+    @classmethod
+    def primary_bundle(cls) -> TDRAnvilBundleFQID:
+        return cls.bundle_fqid(uuid='826dea02-e274-affe-aabc-eb3db63ad068')
+
+    @classmethod
+    def supplementary_bundle(cls) -> TDRAnvilBundleFQID:
+        return cls.bundle_fqid(uuid='595c469e-604d-ab34-af39-f5b9f5d61818',
+                               table_name=BundleType.supplementary.value)
+
+    @classmethod
+    def duos_bundle(cls) -> TDRAnvilBundleFQID:
+        return cls.bundle_fqid(uuid='2370f948-2783-aeb6-afea-e022897f4dcf',
+                               table_name=BundleType.duos.value)
+
+    @classmethod
+    def replica_bundle(cls) -> TDRAnvilBundleFQID:
+        return cls.bundle_fqid(uuid='f4b39881-d519-ab6f-99a0-7cc5089caee6',
+                               table_name='non_schema_orphan_table')
+
 
 class IndexerTestCase(CatalogTestCase,
                       OpenSearchTestCase,
