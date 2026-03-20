@@ -52,6 +52,8 @@ from azul.service.query_service import (
 )
 from azul.types import (
     JSON,
+    PrimitiveJSON,
+    check_type,
 )
 from azul.uuids import (
     InvalidUUIDError,
@@ -474,6 +476,8 @@ class IndexController(QueryController):
         assert len(sort_key) == 2, R(
             'Not a tuple with two elements', sort_key)
         a, b = sort_key
+        assert check_type(PrimitiveJSON, a), R(
+            'First sort key element is not primitive JSON', sort_key)
         assert isinstance(b, str), R(
             'Second sort key element not a string', sort_key)
         return a, b

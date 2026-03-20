@@ -45,8 +45,11 @@ from azul.http import (
     TooManyRequestsException,
 )
 from azul.indexer.mirror_service import (
-    BaseMirrorService,
     MirrorFileDownload,
+    MirrorService,
+)
+from azul.indexer.repository_service import (
+    RepositoryService,
 )
 from azul.openapi import (
     format_description as fd,
@@ -79,14 +82,18 @@ log = logging.getLogger(__name__)
 class RepositoryController(ServiceController):
 
     @cached_property
-    def _service(self) -> IndexService:
+    def _repository_service(self) -> RepositoryService:
+        return RepositoryService()
+
+    @cached_property
+    def _index_service(self) -> IndexService:
         return IndexService()
 
-    def _mirror_service(self, catalog: CatalogName) -> BaseMirrorService:
-        return self._service.mirror_service(catalog)
+    def _mirror_service(self, catalog: CatalogName) -> MirrorService:
+        return self._index_service.mirror_service(catalog)
 
     def _repository_plugin(self, catalog: CatalogName) -> RepositoryPlugin:
-        return self._service.repository_plugin(catalog)
+        return self._repository_service.repository_plugin(catalog)
 
     @property
     def _repository_files_spec(self):
@@ -344,10 +351,10 @@ class RepositoryController(ServiceController):
 
         if request_index == 0:
             filters = self._prepare_filters(catalog, authentication, None)
-            file = self._service.get_data_file(catalog=catalog,
-                                               file_uuid=file_uuid,
-                                               file_version=file_version,
-                                               filters=filters)
+            file = self._index_service.get_data_file(catalog=catalog,
+                                                     file_uuid=file_uuid,
+                                                     file_version=file_version,
+                                                     filters=filters)
             if file is None:
                 raise NotFoundError(f'Unable to find file {file_uuid!r}, '
                                     f'version {file_version!r} in catalog {catalog!r}')
@@ -387,13 +394,14 @@ class RepositoryController(ServiceController):
 
         if mirror_url is None:
             download_cls = plugin.file_download_class()
-            download = download_cls(file=file, replica=replica, token=token)
+            download = download_cls(plugin=plugin, file=file, replica=replica, token=token)
         else:
             # The file's content type would be None on subsequent requests since
             # it isn't propagated via a query parameter. `MirrorFileDownload`
             # will always be ready immediately.
             assert request_index == 0, request_index
             download = MirrorFileDownload(
+                plugin=plugin,
                 file=file,
                 location=mirror_url,
                 replica=replica,
@@ -402,7 +410,7 @@ class RepositoryController(ServiceController):
             assert download.retry_after is None, download
 
         try:
-            download.update(plugin, authentication)
+            download.update(authentication)
         except LimitedTimeoutException as e:
             raise ServiceUnavailableError(*e.args)
         except TooManyRequestsException as e:
@@ -605,4 +613,4 @@ class RepositoryController(ServiceController):
     }
 
     def _file_class(self, catalog: CatalogName) -> type[File]:
-        return self._service.metadata_plugin(catalog).file_class
+        return self._index_service.metadata_plugin(catalog).file_class

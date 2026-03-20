@@ -1958,11 +1958,5 @@ def env() -> Mapping[str, str | None]:
         'AZUL_MIRRORING_CONCURRENCY': '128',
 
         # This deployment is busy so we can afford a more sensitive threshold.
-        'azul_waf_blocked_alarm_threshold': '25',
-
-        # FIXME: Disable bundle notifications after a month of this feature
-        #        being disabled on lower deployments without problems
-        #        https://github.com/DataBiosphere/azul/issues/6123
-        #
-        'AZUL_ENABLE_BUNDLE_NOTIFICATIONS': '1'
+        'azul_waf_blocked_alarm_threshold': '25'
     }

@@ -2,6 +2,9 @@ from copy import (
     copy,
     deepcopy,
 )
+from enum import (
+    Enum,
+)
 import hashlib
 import importlib
 from io import (
@@ -495,3 +498,13 @@ class Parseable(Serializable):
     @classmethod
     def parse(cls, value: str) -> Self:
         raise NotImplementedError
+
+
+class SerializableEnum(Serializable, Enum):
+
+    @classmethod
+    def from_json(cls, json: AnyJSON) -> Self:
+        return cls[json_str(json)]
+
+    def to_json(self) -> AnyJSON:
+        return self.name
