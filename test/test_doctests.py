@@ -20,7 +20,7 @@ import azul.http
 import azul.indexer
 import azul.indexer.aggregate
 import azul.indexer.document
-import azul.indexer.index_repository_service
+import azul.indexer.repository_service
 import azul.iterators
 import azul.json
 import azul.json_freeze
@@ -36,6 +36,7 @@ import azul.openapi
 import azul.openapi.params
 import azul.openapi.responses
 import azul.openapi.schema
+import azul.plugins
 import azul.plugins.metadata.hca.indexer.transform
 import azul.plugins.metadata.hca.service.contributor_matrices
 import azul.plugins.repository.canned
@@ -85,7 +86,7 @@ def load_tests(_loader,
         azul.indexer,
         azul.indexer.aggregate,
         azul.indexer.document,
-        azul.indexer.index_repository_service,
+        azul.indexer.repository_service,
         azul.iterators,
         azul.json,
         azul.json_freeze,
@@ -94,6 +95,7 @@ def load_tests(_loader,
         azul.openapi.params,
         azul.openapi.responses,
         azul.openapi.schema,
+        azul.plugins,
         azul.plugins.metadata.hca.service.contributor_matrices,
         azul.plugins.repository.canned,
         azul.plugins.repository.tdr_hca,

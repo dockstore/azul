@@ -34,11 +34,10 @@ from azul.indexer import (
     SourceSpec,
 )
 from azul.indexer.mirror_service import (
-    BaseMirrorService,
+    MirrorService,
 )
 from azul.plugins import (
     File,
-    RepositoryPlugin,
     dotted,
 )
 from azul.service import (
@@ -82,15 +81,9 @@ class SearchResponseStage(_ElasticsearchStage[ResponseTriple, MutableJSON],
     def prepare_request(self, request: Search) -> Search:
         return request
 
-    @property
-    def repository_plugin(self) -> RepositoryPlugin:
-        return self.service.repository_plugin(self.catalog)
-
     def _file_url(self, *, uuid: str, version: str, drs_uri: str | None) -> str | None:
-        plugin = self.repository_plugin
-        if drs_uri is None and plugin.file_download_class().needs_drs_uri:
-            # Don't emit a download URL if a DRS URI is needed for downloading a
-            # file, but none is available
+        if drs_uri is None:
+            # To download a file we need its DRS URI
             return None
         else:
             return str(self.file_url_func(catalog=self.catalog,
@@ -119,8 +112,8 @@ class SummaryResponseStage(ElasticsearchStage[JSON, MutableJSON],
 class IndexService(QueryService):
 
     @cache
-    def mirror_service(self, catalog: CatalogName) -> BaseMirrorService:
-        return BaseMirrorService(catalog=catalog)
+    def mirror_service(self, catalog: CatalogName) -> MirrorService:
+        return MirrorService(catalog=catalog)
 
     def search(self,
                *,

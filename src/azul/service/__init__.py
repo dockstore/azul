@@ -16,6 +16,7 @@ from typing import (
     TypeGuard,
     TypedDict,
     Union,
+    final,
 )
 
 import attr
@@ -58,13 +59,20 @@ type IsFilterValueJSON = Union[
     Sequence[FlatJSON | None],
 ]
 
+
 # `is` is a reserved keyword so we can't use the class-based syntax for
-# TypedDict, but have to use the constructor-based one instead. This also
-# prevents us from using JSONTypedDict.
+# TypedDict, but have to use the alternative syntax instead. This also prevents
+# us from using JSONTypedDict. I wasn't able to use `final` with the alternative
+# syntax, hence the need to subclass again. @final is needed to enable mypy to
+# narrow `filter: FilterJSON` using `assert 'in' in filter`.
 #
-IsFilterJSON = TypedDict('IsFilterJSON', {'is': ReadOnly[IsFilterValueJSON]})
+@final
+class IsFilterJSON(TypedDict('_IsFilterJSON',
+                             {'is': ReadOnly[IsFilterValueJSON]})):
+    pass
 
 
+@final
 class IsNotFilterJSON(JSONTypedDict):
     is_not: ReadOnly[IsFilterValueJSON]
 
@@ -76,6 +84,7 @@ type RangeFilterValueJSON = Union[
 ]
 
 
+@final
 class IntersectsFilterJSON(JSONTypedDict):
     intersects: ReadOnly[RangeFilterValueJSON]
 
@@ -87,10 +96,12 @@ type ContainsFilterValueJSON = Union[
 ]
 
 
+@final
 class ContainsFilterJSON(JSONTypedDict):
     contains: ReadOnly[ContainsFilterValueJSON]
 
 
+@final
 class WithinFilterJSON(JSONTypedDict):
     within: ReadOnly[RangeFilterValueJSON]
 

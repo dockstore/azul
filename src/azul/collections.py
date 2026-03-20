@@ -25,7 +25,6 @@ from typing import (
     Callable,
     Protocol,
     Self,
-    TypeVar,
     Union,
     cast,
     overload,
@@ -420,20 +419,28 @@ class NestedDict(defaultdict):
 # FIXME: Remove once upstream issue is closed
 #        https://github.com/python/typeshed/issues/11822
 
-_KT_contra = TypeVar("_KT_contra", contravariant=True)
-_VT_co = TypeVar("_VT_co", covariant=True)
+
+class SupportsGetItem[K, V](Protocol):
+
+    def __getitem__(self, key: K, /) -> V: ...
 
 
-class SupportsGetItem(Protocol[_KT_contra, _VT_co]):
+@overload
+def getitem[K, V](d: SupportsGetItem[K, V], k: K,
+                  /,
+                  default: V
+                  ) -> V: ...
 
-    def __getitem__(self, key: _KT_contra, /) -> _VT_co: ...
+
+@overload
+def getitem[K, V](d: SupportsGetItem[K, V],
+                  k: K,
+                  /,
+                  default: None = None
+                  ) -> V | None: ...
 
 
-def getitem(d: SupportsGetItem[_KT_contra, _VT_co],
-            k: _KT_contra,
-            /,
-            default: _VT_co | None = None
-            ) -> _VT_co | None:
+def getitem(d, k, /, default=None):
     """
     For mappings that implement ``.__getitem__()`` but forego the recommended
     implementation of ``.get()``:

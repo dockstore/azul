@@ -230,7 +230,7 @@ def env() -> Mapping[str, str | None]:
         # and committing the resulting changes. It also requires redeploying the
         # `shared` component.
         #
-        'azul_python_version': '3.13.12',
+        'azul_python_version': '3.14.3',
 
         # The version of Terraform used throughout the system.
         #
@@ -265,7 +265,7 @@ def env() -> Mapping[str, str | None]:
                 'url': 'https://hub.docker.com/_/python',
             },
             'pycharm': {
-                'ref': 'docker.io/ucscgi/azul-pycharm:2025.2.6-74',
+                'ref': 'docker.io/ucscgi/azul-pycharm:2025.2.6-75',
                 'url': 'https://hub.docker.com/repository/docker/ucscgi/azul-pycharm',
                 'is_custom': True
             },
@@ -275,18 +275,18 @@ def env() -> Mapping[str, str | None]:
                 'is_custom': False
             },
             'bigquery_emulator': {
-                'ref': 'docker.io/ucscgi/azul-bigquery-emulator:0.4.4-55',
+                'ref': 'docker.io/ucscgi/azul-bigquery-emulator:0.4.4-56',
                 'url': 'https://hub.docker.com/repository/docker/ucscgi/azul-bigquery-emulator',
                 'is_custom': True
             },
             # Updating any of the four images below additionally requires
             # redeploying the `gitlab` TF component.
             'clamav': {
-                'ref': 'docker.io/clamav/clamav:1.5.1-26',
+                'ref': 'docker.io/clamav/clamav:1.5.2-29',
                 'url': 'https://hub.docker.com/r/clamav/clamav'
             },
             'gitlab': {
-                'ref': 'docker.io/gitlab/gitlab-ce:18.9.0-ce.0',
+                'ref': 'docker.io/gitlab/gitlab-ce:18.9.1-ce.0',
                 'url': 'https://hub.docker.com/r/gitlab/gitlab-ce'
             },
             'gitlab_runner': {
@@ -936,5 +936,10 @@ def env() -> Mapping[str, str | None]:
         # FIXME: Enable bundle notifications again #7183
         #        https://github.com/DataBiosphere/azul/issues/7183
         #
-        'AZUL_ENABLE_BUNDLE_NOTIFICATIONS': '0'
+        'AZUL_ENABLE_BUNDLE_NOTIFICATIONS': '0',
+
+        # A Lambda runtime version to pin to, which overrides the AWS-managed
+        # default.
+        #
+        'azul_lambda_runtime_version': None
     }

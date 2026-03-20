@@ -20,6 +20,15 @@ reverted. This is all fairly informal and loosely defined. Hopefully we won't
 have too many entries in this file.
 
 
+#7607 Update to Python 3.14.3
+=============================
+
+Update Python on your developer machines to version 3.14.3.
+
+It may be necessary to install the ``gdbm`` package to prevent compilation
+errors if using ``pyenv``. Running ``brew install gdbm`` will address this.
+
+
 #7815 No files found during mirroring IT
 ========================================
 
