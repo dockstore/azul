@@ -22,16 +22,15 @@ import attr
 from furl import (
     furl,
 )
-
 import git
 
-from azul import (
-    R,
-)
 from azul.indexer.document import (
     EntityReference,
 )
-from azul.types import (
+from azul.lib import (
+    R,
+)
+from azul.lib.types import (
     JSON,
     MutableJSON,
 )
@@ -60,7 +59,7 @@ class JsonFile:
         self._validator.validate_json(self.content, self.name)
 
     @classmethod
-    def from_json(cls, file_name: str, content: MutableJSON) -> 'JsonFile':
+    def from_json(cls, file_name: str, content: MutableJSON) -> JsonFile:
         def parse_file_name(file_name: str) -> Sequence[str]:
             suffix = '.json'
             assert file_name.endswith(suffix), file_name

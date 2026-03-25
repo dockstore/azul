@@ -40,6 +40,7 @@ def as_json(obj, fld: field = None):
 
 def _issubclass_(t, s):
     import humancellatlas.data.metadata
+
     # FIXME: This is ugly for various reasons: We might get a forward ref from a different module, not
     # humancellatlas.data.metadata. _ForwardRef and _eval_type are internals of `typing`. They are exposed via
     # typing.get_type_hints but I am currently struggling to make that work.

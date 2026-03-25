@@ -254,11 +254,12 @@ def env() -> Mapping[str, str | None]:
         'AZUL_TDR_SERVICE_URL': 'https://jade.datarepo-dev.broadinstitute.org',
         'AZUL_SAM_SERVICE_URL': 'https://sam.dsde-dev.broadinstitute.org',
         'AZUL_TERRA_SERVICE_URL': 'https://firecloud-orchestration.dsde-dev.broadinstitute.org',
+        'azul_ecm_service_url': 'https://externalcreds.dsde-dev.broadinstitute.org',
 
         'AZUL_ENABLE_MONITORING': '1',
 
-        'AZUL_ES_INSTANCE_TYPE': 'r6gd.large.search',
-        'AZUL_ES_INSTANCE_COUNT': '4',
+        'AZUL_OPENSEARCH_INSTANCE_TYPE': 'r6gd.large.search',
+        'AZUL_OPENSEARCH_INSTANCE_COUNT': '4',
 
         'AZUL_DEBUG': '1',
 

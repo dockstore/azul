@@ -20,7 +20,7 @@ from azul import (
 from azul.deployment import (
     aws,
 )
-from azul.json_freeze import (
+from azul.lib.json_freeze import (
     freeze,
     thaw,
 )

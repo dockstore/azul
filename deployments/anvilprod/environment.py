@@ -1322,11 +1322,12 @@ def env() -> Mapping[str, str | None]:
         'AZUL_SAM_SERVICE_URL': 'https://sam.dsde-prod.broadinstitute.org',
         'AZUL_DUOS_SERVICE_URL': 'https://consent.dsde-prod.broadinstitute.org',
         'AZUL_TERRA_SERVICE_URL': 'https://firecloud-orchestration.dsde-prod.broadinstitute.org',
+        'azul_ecm_service_url': 'https://externalcreds.dsde-prod.broadinstitute.org',
 
         'AZUL_ENABLE_MONITORING': '1',
 
-        'AZUL_ES_INSTANCE_TYPE': 'r6gd.xlarge.search',
-        'AZUL_ES_INSTANCE_COUNT': '6',
+        'AZUL_OPENSEARCH_INSTANCE_TYPE': 'r6gd.xlarge.search',
+        'AZUL_OPENSEARCH_INSTANCE_COUNT': '6',
 
         'AZUL_CONTRIBUTION_CONCURRENCY': '300/64',
 

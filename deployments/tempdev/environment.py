@@ -135,12 +135,13 @@ def env() -> Mapping[str, str | None]:
         'AZUL_SAM_SERVICE_URL': 'https://sam.dsde-dev.broadinstitute.org',
         'AZUL_DUOS_SERVICE_URL': 'https://consent.dsde-dev.broadinstitute.org',
         'AZUL_TERRA_SERVICE_URL': 'https://firecloud-orchestration.dsde-dev.broadinstitute.org',
+        'azul_ecm_service_url': 'https://externalcreds.dsde-dev.broadinstitute.org',
 
         'AZUL_ENABLE_MONITORING': '1',
 
         # $0.191/h × 2 × 24h/d × 30d/mo = $275.08/mo
-        'AZUL_ES_INSTANCE_TYPE': 'r6gd.large.search',
-        'AZUL_ES_INSTANCE_COUNT': '2',
+        'AZUL_OPENSEARCH_INSTANCE_TYPE': 'r6gd.large.search',
+        'AZUL_OPENSEARCH_INSTANCE_COUNT': '2',
 
         'AZUL_DEBUG': '1',
 

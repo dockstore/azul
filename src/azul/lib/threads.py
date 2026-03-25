@@ -14,7 +14,7 @@ import logging
 import threading
 import time
 
-from azul import (
+from azul.lib import (
     R,
 )
 

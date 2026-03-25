@@ -34,20 +34,16 @@ from more_itertools import (
     only,
 )
 
-from azul import (
-    cached_property,
-    format_description as fd,
-)
 from azul.http import (
     http_client,
 )
-from azul.json import (
+from azul.lib import (
+    cached_property,
+)
+from azul.lib.json import (
     dig,
 )
-from azul.logging import (
-    configure_script_logging,
-)
-from azul.types import (
+from azul.lib.types import (
     AnyJSON,
     JSON,
     JSONs,
@@ -58,6 +54,12 @@ from azul.types import (
     json_mapping,
     json_sequence_of_mappings,
     json_str,
+)
+from azul.logging import (
+    configure_script_logging,
+)
+from azul.openapi import (
+    format_description as fd,
 )
 
 log = logging.getLogger(__name__)

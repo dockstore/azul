@@ -1,8 +1,8 @@
-from azul import (
-    R,
-)
 from azul.deployment import (
     aws,
+)
+from azul.lib import (
+    R,
 )
 from azul_test_case import (
     AzulUnitTestCase,

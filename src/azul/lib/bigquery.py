@@ -10,7 +10,7 @@ from typing import (
     Union,
 )
 
-from azul.strings import (
+from azul.lib.strings import (
     back_quote as bq,
 )
 

@@ -8,7 +8,6 @@ import sys
 
 from azul import (
     CatalogName,
-    R,
     config,
 )
 from azul.args import (
@@ -17,6 +16,9 @@ from azul.args import (
 )
 from azul.azulclient import (
     AzulClient,
+)
+from azul.lib import (
+    R,
 )
 from azul.logging import (
     configure_script_logging,

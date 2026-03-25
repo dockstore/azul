@@ -904,23 +904,69 @@ process.
 ## 4.2 Running the Data Browser locally
 
 Follow the steps in the [Data Browser's README] to install the prerequisites
-and launch a local version of the Data Browser's server.
+and launch a local version of the Data Browser's server. For the Node.js
+prerequisite, a specific version of Node.js can be installed on macOS or Linux
+using the Node.js version management tool "[n]".
 
 [Data Browser's README]: https://github.com/DataBiosphere/data-browser/blob/main/README.md
+[n]: https://www.npmjs.com/package/n#third-party-installers
 
-The argument you specify in the launch command controls which deployment of Azul
-the server will connect to (e.g. `dev:hca-dcp` for the HCA `dev` deployment).
-To connect to another Azul deployment, see the list of site configs in the
-`/site-config` folder. To connect to a personal deployment of Azul, temporarily
-modify a related site config (e.g. `/site-config/hca-dcp/dev/config.ts` for an
-HCA-based personal deployment), set the `CATALOG` and `DATA_URL` properties to
-values matching your personal deployment, and then launch the Data Browser's
-server with the modified config specified.
+When running the Data Browser locally, the argument specified in the `npm run`
+command controls which site config is used, and by extension, which deployment
+of Azul the Data Browser will connect to. In your clone of the Data Browser
+repository, the full list of command arguments can be found in `/package.json`.
+However, since the names of the arguments can be confusing, it is recommended
+that you reference one of the GitLab configurations found at
+`/.gitlab/sites/{deployment}/{atlas}/base.yaml` to help identify the correct
+command argument to use.
+
+For example, to run a Data Browser for the `dev` deployment and `hca` atlas:
+
+1. Navigate to your clone of the Data Browser repository.
+
+2. Open `/.gitlab/sites/dev/hca/base.yaml` and note the variables
+   `data_browser_build_script` and `data_browser_build_env`, with values
+   `build-ma-dev:hca-dcp` and `ma-dev` respectively. The value
+   `build-ma-dev:hca-dcp` is made of two parts, however it is only the second
+   part (`hca-dcp`) that is needed for our purposes.
+
+3. Open `/package.json`, and under the `scripts` section, find the key of a
+   value that mentions `dev.sh hca-dcp ma-dev`, which is the script used when
+   running the Data Browser locally, and the two values obtained in step 2.
+
+4. If no such line can be found in `/package.json`, you can temporarily add one
+   using one of the existing lines that mention `dev.sh` as a guide. Be sure to
+   give the new line a unique key.
+
+5. Run `npm run {key}`, where `{key}` is the key of the line you found, or
+   added.
+
+To run a Data Browser that connects to a personal deployment of Azul:
+
+1. Navigate to your clone of the Data Browser repository.
+
+2. Open `/.gitlab/sites/{deployment}/{atlas}/base.yaml` for a GitLab colocated
+   with your personal deployment, and note the values of the variables
+   `data_browser_build_script` and `data_browser_build_env`.
+
+3. Locate and open `/.site-config/{foo}/{bar}/config.ts`, where `{foo}` is the
+   second part of the `data_browser_build_script` value, and `{bar}` is the
+   `data_browser_build_env` value.
+
+4. In `config.ts`, change `CATALOG` and `DATA_URL` to values appropriate for
+   your personal deployment.
+
+5. Open `/package.json`, and under the `scripts` section, find (or add) a line
+   that mentions `dev.sh` and the values obtained in step 2 (e.g. `hca-dcp` and
+   `ma-dev`).
+
+6. Run `npm run {key}`, where `{key}` is the key of the line you found, or
+   added.
 
 Note that when run locally, the Data Browser will make duplicate requests to
-Azul on every page load. This is due to React being run in dev mode with
-StrictMode enabled. To disable this behavior, modify `/next.config.mjs` and set
-the `reactStrictMode` property to false.
+Azul on every page load. This is due to React being run in `dev` mode with
+`StrictMode` enabled. To disable this behavior, modify `/next.config.mjs` and
+set the `reactStrictMode` property to false.
 
 
 # 5. Troubleshooting

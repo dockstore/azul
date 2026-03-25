@@ -63,6 +63,9 @@ from azul.indexer.index_service import (
 from azul.indexer.repository_service import (
     RepositoryService,
 )
+from azul.lib.types import (
+    JSON,
+)
 from azul.logging import (
     configure_test_logging,
     get_test_logger,
@@ -79,9 +82,6 @@ from azul.plugins.repository.tdr_hca import (
 )
 from azul.terra import (
     TDRSourceRef,
-)
-from azul.types import (
-    JSON,
 )
 from azul_test_case import (
     BundleNotificationTestCase,

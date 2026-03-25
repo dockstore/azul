@@ -1,13 +1,13 @@
 import hashlib
 import logging
 
-import chalice
-from http_message_signatures import (
+import chalice.app
+from http_message_signatures import (  # type:ignore[attr-defined]
     HTTPMessageSigner,
     HTTPMessageVerifier,
     HTTPSignatureKeyResolver,
 )
-from http_message_signatures.algorithms import (
+from http_message_signatures.algorithms import (  # type:ignore[attr-defined]
     HMAC_SHA256,
 )
 import http_sfv
@@ -18,14 +18,14 @@ import requests
 import requests.sessions
 import requests.structures
 
-from azul import (
-    cached_property,
-)
 from azul.auth import (
     HMACAuthentication,
 )
 from azul.deployment import (
     aws,
+)
+from azul.lib import (
+    cached_property,
 )
 
 log = logging.getLogger(__name__)
@@ -77,27 +77,34 @@ class SignatureHelper(HTTPSignatureKeyResolver):
             endpoint = f'http://{base_url}{path}'
             method = current_request.context['httpMethod']
             headers = current_request.headers
-            request = requests.Request(method, endpoint, headers, data=current_request.raw_body).prepare()
+            request = requests.models.Request(method=method,
+                                              url=endpoint,
+                                              headers=headers,
+                                              data=current_request.raw_body)
+            request = request.prepare()
             result = one(self.verifier.verify(request))
         except BaseException as e:
             log.warning('Exception while validating HMAC: ', exc_info=e)
-            raise chalice.UnauthorizedError('Invalid authorization credentials')
+            raise chalice.app.UnauthorizedError('Invalid authorization credentials')
         else:
             return result.parameters
 
-    def sign_and_send(self, request: requests.Request) -> requests.Response:
+    def sign_and_send(self,
+                      request: requests.models.Request
+                      ) -> requests.models.Response:
         request = request.prepare()
         self.sign(request)
         with requests.sessions.Session() as session:
             response = session.send(request)
         return response
 
-    def sign(self, request: requests.PreparedRequest):
+    def sign(self, request: requests.models.PreparedRequest):
         body = request.body
         assert body is not None
         digest = hashlib.sha256(body).digest()
         assert isinstance(request.headers, requests.structures.CaseInsensitiveDict)
-        request.headers['Content-Digest'] = str(http_sfv.Dictionary({'sha-256': digest}))
+        header = http_sfv.dictionary.Dictionary({'sha-256': digest})
+        request.headers['Content-Digest'] = str(header)
         key, key_id = aws.get_hmac_key_and_id()
         self.signer.sign(request,
                          key_id=key_id,

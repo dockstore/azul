@@ -22,9 +22,6 @@ from typing import (
 import attr
 
 from azul import (
-    R,
-    cache,
-    cached_property,
     config,
 )
 from azul.chalice import (
@@ -33,14 +30,16 @@ from azul.chalice import (
 from azul.deployment import (
     aws,
 )
-from azul.json import (
+from azul.lib import (
+    R,
+    cache,
+    cached_property,
+)
+from azul.lib.json import (
     copy_any_json,
     copy_json,
 )
-from azul.template import (
-    emit,
-)
-from azul.types import (
+from azul.lib.types import (
     AnyMutableJSON,
     CompositeJSON,
     JSON,
@@ -54,6 +53,9 @@ from azul.types import (
     json_mapping,
     json_str,
     not_none,
+)
+from azul.template import (
+    emit,
 )
 
 log = logging.getLogger(__name__)
@@ -289,7 +291,7 @@ def _tags(resource_type: str, resource_name: str, tags: JSON) -> JSON:
 
     :param tags: Additional tags that override the defaults
 
-    >>> from azul.doctests import assert_json
+    >>> from azul.lib.doctests import assert_json
     >>> from test.azul_test_case import patch_config
 
     >>> with patch_config('terraform_component', 'foo'):
@@ -525,7 +527,7 @@ class Chalice:
         given Chalice-generated Terraform config. Definitions and references
         will be patched.
 
-        >>> from azul.doctests import assert_json
+        >>> from azul.lib.doctests import assert_json
 
         >>> assert_json(chalice.patch_resource_names('indexer', {
         ...     'locals': {
@@ -767,15 +769,15 @@ class Chalice:
             # an atomic update of the function, avoiding a race condition
             # between the update of the function's configuration and its code.
             resource['publish'] = True
-            env = config.es_endpoint_env(
-                es_endpoint=(
-                    aws.es_endpoint
-                    if config.share_es_domain else
+            env = config.opensearch_endpoint_env(
+                endpoint=(
+                    aws.opensearch_endpoint
+                    if config.share_opensearch_domain else
                     '${aws_opensearch_domain.index.endpoint}:443'
                 ),
-                es_instance_count=(
-                    not_none(aws.es_instance_count)
-                    if config.share_es_domain else
+                instance_count=(
+                    not_none(aws.opensearch_instance_count)
+                    if config.share_opensearch_domain else
                     '${aws_opensearch_domain.index.cluster_config[0].instance_count}'
                 )
             )
@@ -1025,6 +1027,16 @@ class Chalice:
                 }
             assert resource_type not in resources, resources
             resources[resource_type] = runtime_version_configs
+
+        resource_type = 'aws_lambda_function_recursion_config'
+        recursion_configs: MutableJSON = {}
+        for resource_name, resource in resource_items('aws_lambda_function'):
+            recursion_configs[resource_name] = {
+                'function_name': '${aws_lambda_function.%s.function_name}' % resource_name,
+                'recursive_loop': 'Allow'
+            }
+        assert resource_type not in resources, resources
+        resources[resource_type] = recursion_configs
 
         return {
             'resource': resources,

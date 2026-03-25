@@ -13,8 +13,13 @@ from more_itertools import (
 
 from azul import (
     CatalogName,
-    cache,
     config,
+)
+from azul.lib import (
+    cache,
+)
+from azul.lib.types import (
+    JSON,
 )
 from azul.openapi import (
     format_description as fd,
@@ -28,9 +33,6 @@ from azul.plugins import (
 )
 from azul.service.controller import (
     ServiceController,
-)
-from azul.types import (
-    JSON,
 )
 
 

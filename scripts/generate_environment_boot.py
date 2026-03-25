@@ -7,7 +7,7 @@ from azul import (
 from azul.docker import (
     resolve_docker_image_for_pull,
 )
-from azul.files import (
+from azul.lib.files import (
     write_file_atomically,
 )
 from azul.logging import (

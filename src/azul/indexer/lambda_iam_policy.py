@@ -1,14 +1,14 @@
 from azul import (
     config,
 )
-from azul.collections import (
-    alist,
-)
 from azul.deployment import (
     aws,
 )
-from azul.terraform import (
+from azul.infra.terraform import (
     chalice,
+)
+from azul.lib.collections import (
+    alist,
 )
 
 direct_access_role = config.dss_direct_access_role('indexer')
@@ -35,14 +35,14 @@ policy = {
                 'es:ESHttpPost',
                 'es:ESHttpDelete'
             ],
-            'Resource': f'arn:aws:es:{aws.region_name}:{aws.account}:domain/{config.es_domain}/*'
+            'Resource': f'arn:aws:es:{aws.region_name}:{aws.account}:domain/{config.opensearch_domain}/*'
         },
         {
             'Effect': 'Allow',
             'Action': [
                 'es:DescribeElasticsearchDomain'
             ],
-            'Resource': f'arn:aws:es:{aws.region_name}:{aws.account}:domain/{config.es_domain}'
+            'Resource': f'arn:aws:es:{aws.region_name}:{aws.account}:domain/{config.opensearch_domain}'
         },
         {
             'Effect': 'Allow',

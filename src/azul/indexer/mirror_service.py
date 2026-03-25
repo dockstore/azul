@@ -33,16 +33,7 @@ from furl import (
 
 from azul import (
     CatalogName,
-    R,
-    cached_property,
     config,
-    json_mapping,
-    mutable_furl,
-)
-from azul.attrs import (
-    SerializableAttrs,
-    devolve,
-    serializable,
 )
 from azul.auth import (
     Authentication,
@@ -50,25 +41,39 @@ from azul.auth import (
 from azul.deployment import (
     aws,
 )
-from azul.digests import (
-    Hasher,
-    get_resumable_hasher,
-    hasher_from_json,
-    hasher_to_json,
-)
 from azul.drs import (
     AccessMethod,
-)
-from azul.functions import (
-    compose,
 )
 from azul.http import (
     HasCachedHttpClient,
 )
 from azul.indexer import (
     SourceConfig,
-    SourceRef,
-    SourceSpec,
+)
+from azul.lib import (
+    R,
+    cached_property,
+    mutable_furl,
+)
+from azul.lib.attrs import (
+    SerializableAttrs,
+    devolve,
+    serializable,
+)
+from azul.lib.digests import (
+    Hasher,
+    get_resumable_hasher,
+    hasher_from_json,
+    hasher_to_json,
+)
+from azul.lib.functions import (
+    compose,
+)
+from azul.lib.types import (
+    JSON,
+    MutableJSON,
+    json_element_strings,
+    json_mapping,
 )
 from azul.plugins import (
     File,
@@ -87,10 +92,9 @@ from azul.service.storage_service import (
     StorageObjectExists,
     StorageService,
 )
-from azul.types import (
-    JSON,
-    MutableJSON,
-    json_element_strings,
+from azul.source import (
+    SourceRef,
+    SourceSpec,
 )
 
 if TYPE_CHECKING:
@@ -415,7 +419,7 @@ class MirrorService:
 
         self._queue_actions(actions())
 
-    def _mirror_queue(self) -> 'Queue':
+    def _mirror_queue(self) -> Queue:
         name = config.mirror_queue.name
         return aws.sqs_queue(name)
 

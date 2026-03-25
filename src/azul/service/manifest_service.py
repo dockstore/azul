@@ -79,55 +79,75 @@ from opensearchpy.helpers.response import (
 
 from azul import (
     CatalogName,
-    R,
-    cache,
-    cached_property,
     config,
-    mutable_furl,
-)
-from azul.attrs import (
-    SerializableAttrs,
-    is_uuid,
-    serializable,
-    serializable_uuid,
-    strict_auto,
 )
 from azul.auth import (
     Authentication,
 )
-from azul.bytes import (
-    azul_urlsafe_b64decode,
-    azul_urlsafe_b64encode,
-)
-from azul.collections import (
-    getitem,
-)
 from azul.deployment import (
     aws,
 )
-from azul.functions import (
-    compose,
-)
-from azul.indexer import (
-    Prefix,
-    SourceRef,
-    SourceSpec,
+from azul.field_type import (
+    FieldType,
+    FieldTypes,
+    null_str,
 )
 from azul.indexer.document import (
     DocumentType,
     EntityType,
     FieldPath,
 )
-from azul.indexer.field import (
-    FieldType,
-    FieldTypes,
-    null_str,
-)
 from azul.indexer.mirror_service import (
     MirrorService,
 )
-from azul.json import (
+from azul.lib import (
+    R,
+    cache,
+    cached_property,
+    mutable_furl,
+)
+from azul.lib.attrs import (
+    SerializableAttrs,
+    is_uuid,
+    serializable,
+    serializable_uuid,
+    strict_auto,
+)
+from azul.lib.bytes import (
+    azul_urlsafe_b64decode,
+    azul_urlsafe_b64encode,
+)
+from azul.lib.collections import (
+    getitem,
+)
+from azul.lib.functions import (
+    compose,
+)
+from azul.lib.json import (
     copy_json,
+)
+from azul.lib.strings import (
+    double_quote as dq,
+)
+from azul.lib.types import (
+    FlatJSON,
+    JSON,
+    JSONs,
+    MutableJSON,
+    json_dict,
+    json_element_dicts,
+    json_element_mappings,
+    json_element_strings,
+    json_elements_are_mappings,
+    json_list_of_dicts,
+    json_mapping,
+    json_sequence,
+    json_str,
+    not_none,
+    optional,
+)
+from azul.lib.uuids import (
+    uuid5_for_bytes,
 )
 from azul.plugins import (
     ColumnMapping,
@@ -150,7 +170,7 @@ from azul.service.avro_pfb import (
     PFBRelation,
 )
 from azul.service.query_service import (
-    ElasticsearchChain,
+    OpenSearchChain,
     Pagination,
     PaginationStage,
     QueryService,
@@ -163,28 +183,10 @@ from azul.service.storage_service import (
     StorageObjectNotFound,
     StorageService,
 )
-from azul.strings import (
-    double_quote as dq,
-)
-from azul.types import (
-    FlatJSON,
-    JSON,
-    JSONs,
-    MutableJSON,
-    json_dict,
-    json_element_dicts,
-    json_element_mappings,
-    json_element_strings,
-    json_elements_are_mappings,
-    json_list_of_dicts,
-    json_mapping,
-    json_sequence,
-    json_str,
-    not_none,
-    optional,
-)
-from azul.uuids import (
-    uuid5_for_bytes,
+from azul.source import (
+    Prefix,
+    SourceRef,
+    SourceSpec,
 )
 from azul.vendored.frozendict import (
     frozendict,
@@ -634,7 +636,7 @@ class ManifestService(QueryService):
             return self._generate_manifest(generator, manifest_key, partition)
 
     def _generate_manifest(self,
-                           generator: 'ManifestGenerator',
+                           generator: ManifestGenerator,
                            manifest_key: ManifestKey,
                            partition: ManifestPartition
                            ) -> Manifest | ManifestPartition:
@@ -691,7 +693,7 @@ class ManifestService(QueryService):
         return self._get_cached_manifest(generator_cls, manifest_key)
 
     def _get_cached_manifest(self,
-                             generator_cls: type['ManifestGenerator'],
+                             generator_cls: type[ManifestGenerator],
                              manifest_key: ManifestKey
                              ) -> Manifest:
         file_name = self._get_cached_manifest_file_name(generator_cls, manifest_key)
@@ -704,7 +706,7 @@ class ManifestService(QueryService):
                                        was_cached=True)
 
     def _make_manifest(self,
-                       generator_cls: type['ManifestGenerator'],
+                       generator_cls: type[ManifestGenerator],
                        manifest_key: ManifestKey,
                        file_name: str | None,
                        was_cached: bool
@@ -725,7 +727,7 @@ class ManifestService(QueryService):
     file_name_tag = 'azul_file_name'
 
     def _get_cached_manifest_file_name(self,
-                                       generator_cls: type['ManifestGenerator'],
+                                       generator_cls: type[ManifestGenerator],
                                        manifest_key: ManifestKey
                                        ) -> str | None:
         """
@@ -840,7 +842,7 @@ class ManifestGenerator(metaclass=ABCMeta):
     def entity_type(self) -> EntityType:
         """
         The type of the index entities this generator consumes. This controls
-        which aggregate Elasticsearch index is queried to fetch the aggregate
+        which aggregate OpenSearch index is queried to fetch the aggregate
         entity documents that this generator consumes when generating the
         output manifest.
         """
@@ -869,7 +871,7 @@ class ManifestGenerator(metaclass=ABCMeta):
             if field_name is not None
         ]
 
-    _cls_for_format: dict[ManifestFormat, type['ManifestGenerator']] = {}
+    _cls_for_format: dict[ManifestFormat, type[ManifestGenerator]] = {}
 
     def __init_subclass__(cls) -> None:
         super().__init_subclass__()
@@ -881,7 +883,7 @@ class ManifestGenerator(metaclass=ABCMeta):
     @classmethod
     def cls_for_format(cls,
                        format: ManifestFormat | None
-                       ) -> type['ManifestGenerator']:
+                       ) -> type[ManifestGenerator]:
         """
         Return the generator class  for the given format.
 
@@ -1036,7 +1038,7 @@ class ManifestGenerator(metaclass=ABCMeta):
         # The response is processed by the generator, not the pipeline
         return request
 
-    def _create_pipeline(self) -> ElasticsearchChain[Response, Any, Response]:
+    def _create_pipeline(self) -> OpenSearchChain[Response, Any, Response]:
         if self.included_fields is None:
             document_slice = DocumentSlice()
         else:
@@ -1269,7 +1271,7 @@ class ManifestGenerator(metaclass=ABCMeta):
 class ClientSidePagingManifestGenerator(ManifestGenerator, metaclass=ABCMeta):
     """
     A mixin for manifest generators that use client-side paging to query
-    Elasticsearch.
+    OpenSearch.
     """
     page_size = 500
 
@@ -1306,9 +1308,9 @@ class PagedManifestGenerator(ClientSidePagingManifestGenerator):
     segments, also known as pages.
 
     In some subclasses, e.g. CompactManifestGenerator and CurlManifestGenerator,
-    a manifest page corresponds to a page of hits from a paginated Elasticsearch
+    a manifest page corresponds to a page of hits from a paginated OpenSearch
     request. In others, e.g. JSONLVerbatimManifestGenerator, the relationship
-    between manifest pages and Elasticsearch pages is more complicated.
+    between manifest pages and OpenSearch pages is more complicated.
     """
 
     @abstractmethod
@@ -1904,10 +1906,10 @@ class VerbatimManifestGenerator(ClientSidePagingManifestGenerator,
                        request_factory: Callable[[SortKey | None], Search]
                        ) -> Iterable[Hit]:
         """
-        Yield all hits in every page of Elasticsearch hits in responses to
+        Yield all hits in every page of OpenSearch hits in responses to
         requests that use client-side paging.
 
-        :param request_factory:  A callable that returns a prepared Elasticsearch
+        :param request_factory:  A callable that returns a prepared OpenSearch
                                  request for the given search-after key, with the
                                  appropriate filters and sorting applied. The
                                  returned request should yield one page worth of
@@ -1977,7 +1979,7 @@ class VerbatimManifestGenerator(ClientSidePagingManifestGenerator,
 
         # `_id` is currently the only index field that is unique to each replica
         # document (and thus results in an unambiguous total ordering). However,
-        # sorting just by `_id` is unacceptably slow, an Elasticsearch quirk. To
+        # sorting just by `_id` is unacceptably slow, an OpenSearch quirk. To
         # overcome the performance hit, we sort by a field that's *almost*
         # unique to each replica, so that `_id` only needs to be loaded and
         # compared in the infrequent event that it's needed as a tiebreaker.
@@ -2042,7 +2044,7 @@ class JSONLVerbatimManifestGenerator(PagedManifestGenerator,
         # All replicas from each source must be held in memory simultaneously to
         # avoid emitting duplicates. Therefore, each "page" of this manifest
         # must retrieve every replica from a given source, using multiple paged
-        # requests to ElasticSearch if necessary.
+        # requests to OpenSearch if necessary.
         source_ids = self.source_ids()
         page_index = not_none(partition.page_index)
         source_id = source_ids[page_index]

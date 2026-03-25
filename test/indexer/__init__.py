@@ -27,9 +27,6 @@ from azul import (
     CatalogName,
     config,
 )
-from azul.es import (
-    ESClientFactory,
-)
 from azul.indexer import (
     Bundle,
     BundleFQID,
@@ -42,6 +39,16 @@ from azul.indexer.document import (
 from azul.indexer.index_service import (
     IndexService,
     IndexWriter,
+)
+from azul.lib.types import (
+    AnyJSON,
+    JSON,
+    JSONs,
+    MutableJSON,
+    MutableJSONs,
+)
+from azul.opensearch import (
+    OpenSearchClientFactory,
 )
 from azul.plugins import (
     FieldPath,
@@ -61,13 +68,6 @@ from azul.plugins.repository.tdr_anvil import (
 from azul.plugins.repository.tdr_hca import (
     TDRHCABundle,
 )
-from azul.types import (
-    AnyJSON,
-    JSON,
-    JSONs,
-    MutableJSON,
-    MutableJSONs,
-)
 from azul_test_case import (
     AnvilTestCase,
     AzulUnitTestCase,
@@ -75,8 +75,8 @@ from azul_test_case import (
     DCP1TestCase,
     DCP2TestCase,
 )
-from es_test_case import (
-    ElasticsearchTestCase,
+from opensearch_test_case import (
+    OpenSearchTestCase,
 )
 
 
@@ -212,7 +212,7 @@ class AnvilCannedBundleTestCase(AnvilTestCase,
 
 
 class IndexerTestCase(CatalogTestCase,
-                      ElasticsearchTestCase,
+                      OpenSearchTestCase,
                       CannedBundleTestCase,
                       metaclass=ABCMeta):
     index_service: ClassVar[IndexService | None] = None
@@ -232,8 +232,8 @@ class IndexerTestCase(CatalogTestCase,
         Deletes everything and is faster than deleting indices individually
         through the service.
         """
-        es = ESClientFactory.get()
-        es.indices.delete(index='*')
+        opensearch = OpenSearchClientFactory.get()
+        opensearch.indices.delete(index='*')
 
     def _get_all_hits(self):
         # Without `preserve_order`, hits are sorted by `_doc`, which is fastest
@@ -241,7 +241,7 @@ class IndexerTestCase(CatalogTestCase,
         # the number of shards, for example, but also under what appear to be
         # unrelated code changes. This makes asserting test results verbatim
         # impossible. Thus we set `preserve_order` to True.
-        hits = list(scan(client=self.es_client,
+        hits = list(scan(client=self.opensearch,
                          index=','.join(map(str, self.index_service.index_names(self.catalog))),
                          preserve_order=True))
 

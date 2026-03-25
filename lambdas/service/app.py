@@ -5,7 +5,6 @@ from chalice import (
 )
 
 from azul import (
-    cached_property,
     config,
 )
 from azul.auth import (
@@ -13,6 +12,12 @@ from azul.auth import (
 )
 from azul.health import (
     HealthApp,
+)
+from azul.lib import (
+    cached_property,
+)
+from azul.lib.types import (
+    JSON,
 )
 from azul.logging import (
     configure_app_logging,
@@ -38,9 +43,6 @@ from azul.service.manifest_controller import (
 from azul.service.repository_controller import (
     RepositoryController,
 )
-from azul.types import (
-    JSON,
-)
 
 log = logging.getLogger(__name__)
 
@@ -53,7 +55,7 @@ spec = {
         # changes and reset the minor version to zero. Otherwise, increment only
         # the minor version for backwards compatible changes. A backwards
         # compatible change is one that does not require updates to clients.
-        'version': '15.1',
+        'version': '16.1',
         'description': fd(f'''
             # Overview
 

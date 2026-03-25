@@ -55,6 +55,7 @@ class EnvHook:
 
     def _main(self, argv):
         import argparse
+
         from azul.args import (
             AzulArgumentHelpFormatter,
         )
@@ -203,7 +204,7 @@ class EnvHook:
 
 class Path(pathlib.PosixPath):
 
-    def follow(self) -> 'Path':
+    def follow(self) -> Path:
         """
         This method performs one level of symbolic link resolution. For paths
         representing a symbolic link with an absolute target, this method is
@@ -223,7 +224,7 @@ class Path(pathlib.PosixPath):
     def is_relative(self):
         return not self.is_absolute()
 
-    def is_prefix_of(self, other: 'Path'):
+    def is_prefix_of(self, other: Path):
         """
         >>> Path('/').is_prefix_of(Path('/'))
         True

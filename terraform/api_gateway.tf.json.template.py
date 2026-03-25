@@ -9,10 +9,7 @@ from more_itertools import (
 )
 
 from azul import (
-    R,
-    cached_property,
     config,
-    iif,
 )
 from azul.chalice import (
     AzulChaliceApp,
@@ -21,20 +18,27 @@ from azul.deployment import (
     aws,
     public_ip,
 )
-from azul.modules import (
-    load_app_module,
-)
-from azul.objects import (
-    InternMeta,
-)
-from azul.terraform import (
+from azul.infra.terraform import (
     chalice,
     emit_tf,
     vpc,
 )
-from azul.types import (
+from azul.lib import (
+    R,
+    cached_property,
+)
+from azul.lib.functions import (
+    iif,
+)
+from azul.lib.objects import (
+    InternMeta,
+)
+from azul.lib.types import (
     JSON,
     JSONs,
+)
+from azul.modules import (
+    load_app_module,
 )
 
 

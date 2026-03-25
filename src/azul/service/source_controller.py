@@ -1,13 +1,12 @@
 import logging
 
-from chalice import (
+from chalice.app import (
     TooManyRequestsError,
     UnauthorizedError,
 )
 
 from azul import (
     CatalogName,
-    cached_property,
 )
 from azul.auth import (
     Authentication,
@@ -21,11 +20,14 @@ from azul.http import (
     LimitedTimeoutException,
     TooManyRequestsException,
 )
+from azul.lib import (
+    cached_property,
+)
+from azul.lib.types import (
+    JSONs,
+)
 from azul.service.source_service import (
     SourceService,
-)
-from azul.types import (
-    JSONs,
 )
 
 log = logging.getLogger(__name__)

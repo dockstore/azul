@@ -1,6 +1,6 @@
 certifi==2026.2.25
 cffi==2.0.0
-charset-normalizer==3.4.5
+charset-normalizer==3.4.6
 cryptography==46.0.5
 events==0.5
 google-cloud-core==2.5.0
@@ -16,10 +16,10 @@ orderedmultidict==1.0.2
 packaging==26.0
 proto-plus==1.27.1
 protobuf==6.33.5
-pyasn1==0.6.2
+pyasn1==0.6.3
 pyasn1_modules==0.4.2
 pycparser==3.0
-pyopenssl==25.3.0
+pyopenssl==26.0.0
 python-dateutil==2.9.0.post0
 rpds-py==0.30.0
 s3transfer==0.16.0

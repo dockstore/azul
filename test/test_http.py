@@ -34,13 +34,13 @@ from urllib3.exceptions import (
 from azul import (
     config,
 )
-from azul.collections import (
-    OrderedSet,
-)
 from azul.http import (
     LimitedRetryHttpClient,
     LimitedTimeoutException,
     http_client,
+)
+from azul.lib.collections import (
+    OrderedSet,
 )
 from azul.logging import (
     configure_test_logging,

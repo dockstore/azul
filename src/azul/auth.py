@@ -11,10 +11,10 @@ from typing import (
 
 import attr
 
-from azul.json import (
+from azul.lib.json import (
     copy_json,
 )
-from azul.types import (
+from azul.lib.types import (
     JSON,
 )
 
@@ -64,13 +64,13 @@ class Authentication(metaclass=ABCMeta):
         return json
 
     @classmethod
-    def from_json(cls, json: JSON) -> 'Authentication':
+    def from_json(cls, json: JSON) -> Authentication:
         json = copy_json(json)
         cls_name = json.pop(cls._cls_field)
         assert isinstance(cls_name, str)
         return cls._cls_for_name[cls_name](**json)
 
-    _cls_for_name: ClassVar[dict[str, type['Authentication']]] = {}
+    _cls_for_name: ClassVar[dict[str, type[Authentication]]] = {}
 
     def __init_subclass__(cls) -> None:
         super().__init_subclass__()

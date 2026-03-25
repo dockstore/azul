@@ -20,10 +20,6 @@ from furl import (
     furl,
 )
 
-from azul import (
-    R,
-    lru_cache,
-)
 from azul.auth import (
     Authentication,
 )
@@ -31,9 +27,17 @@ from azul.http import (
     HasCachedHttpClient,
 )
 from azul.indexer import (
-    SimpleSourceSpec,
-    SourceRef,
     SourcedBundleFQID,
+)
+from azul.lib import (
+    R,
+    lru_cache,
+)
+from azul.lib.time import (
+    parse_dcp2_version,
+)
+from azul.lib.types import (
+    JSON,
 )
 from azul.plugins import (
     RepositoryFileDownload,
@@ -45,11 +49,9 @@ from azul.plugins.metadata.hca import (
 from azul.plugins.metadata.hca.bundle import (
     HCABundle,
 )
-from azul.time import (
-    parse_dcp2_version,
-)
-from azul.types import (
-    JSON,
+from azul.source import (
+    SimpleSourceSpec,
+    SourceRef,
 )
 from humancellatlas.data.metadata.helpers.staging_area import (
     CannedStagingAreaFactory,

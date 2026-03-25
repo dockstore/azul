@@ -45,13 +45,12 @@ from opensearchpy import (
 )
 
 from azul import (
-    R,
-    cached_property,
     config,
-    true,
 )
-from azul.collections import (
-    NestedDict,
+from azul.field_type import (
+    null_bool,
+    null_int,
+    null_str,
 )
 from azul.indexer import (
     Bundle,
@@ -68,11 +67,6 @@ from azul.indexer.document import (
     Replica,
     ReplicaCoordinates,
 )
-from azul.indexer.field import (
-    null_bool,
-    null_int,
-    null_str,
-)
 from azul.indexer.index_service import (
     IndexExistsAndDiffersException,
     IndexService,
@@ -80,8 +74,23 @@ from azul.indexer.index_service import (
     Tallies,
     log as index_service_log,
 )
-from azul.json import (
+from azul.lib import (
+    R,
+    cached_property,
+    true,
+)
+from azul.lib.collections import (
+    NestedDict,
+)
+from azul.lib.json import (
     json_hash,
+)
+from azul.lib.threads import (
+    Latch,
+)
+from azul.lib.types import (
+    JSON,
+    JSONs,
 )
 from azul.logging import (
     configure_test_logging,
@@ -98,13 +107,6 @@ from azul.plugins.repository.dss import (
     DSSBundle,
     DSSBundleFQID,
     DSSSourceRef,
-)
-from azul.threads import (
-    Latch,
-)
-from azul.types import (
-    JSON,
-    JSONs,
 )
 from azul_test_case import (
     AzulUnitTestCase,
@@ -150,7 +152,7 @@ class DCP1IndexerTestCase(DCP1CannedBundleTestCase, IndexerTestCase):
         Verify that the indices contain the correct number of hits of each
         document type
 
-        :param hits: Hits from Elasticsearch
+        :param hits: Hits from OpenSearch
 
         :param num_contribs: Expected number of contributions
 
@@ -339,7 +341,7 @@ class TestDCP1Indexer(DCP1IndexerTestCase):
 
     def test_disable_automatic_index_creation(self):
         with self.assertRaises(opensearchpy.exceptions.NotFoundError) as cm:
-            self.es_client.index(index='foo', body={'foo': 'bar'})
+            self.opensearch.index(index='foo', body={'foo': 'bar'})
         expected = 'no such index [foo]'
         self.assertEqual(expected, cm.exception.args[2]['error']['reason'])
 
@@ -411,7 +413,7 @@ class TestDCP1IndexerWithIndexesSetUp(DCP1IndexerTestCase):
                 ).with_catalog(self.catalog)
             )
         for c in coordinates:
-            self.es_client.delete(index=c.index_name, id=c.document_id)
+            self.opensearch.delete(index=c.index_name, id=c.document_id)
 
         # Contribute the bundle again, simulating a duplicate notification or
         # a retry of the original notification.
@@ -2080,7 +2082,7 @@ class TestDCP1IndexerWithIndexesSetUp(DCP1IndexerTestCase):
         index = str(IndexName.create(catalog=self.catalog,
                                      qualifier='files',
                                      doc_type=DocumentType.aggregate))
-        mapping = self.es_client.indices.get_mapping(index=index)
+        mapping = self.opensearch.indices.get_mapping(index=index)
         contents = mapping[index]['mappings']['properties']['contents']
         self.assertFalse(contents['properties']['files']['properties']['related_files']['enabled'])
 
@@ -2092,14 +2094,14 @@ class TestDCP1IndexerWithIndexesSetUp(DCP1IndexerTestCase):
 
         # … but that it can't be used for queries
         zattrs_file = '377f2f5a-4a45-4c62-8fb0-db9ef33f5cf0.zarr/.zattrs'
-        hits = self.es_client.search(index=index,
-                                     body={
-                                         'query': {
-                                             'match': {
-                                                 'contents.files.related_files.name': zattrs_file
-                                             }
-                                         }
-                                     })
+        hits = self.opensearch.search(index=index,
+                                      body={
+                                          'query': {
+                                              'match': {
+                                                  'contents.files.related_files.name': zattrs_file
+                                              }
+                                          }
+                                      })
         self.assertEqual({'value': 0, 'relation': 'eq'}, hits['hits']['total'])
 
     def test_downstream_entities(self):

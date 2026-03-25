@@ -1,19 +1,10 @@
 import base64
 import json
-from unittest import (
-    mock,
-)
 from unittest.mock import (
     MagicMock,
 )
 import urllib.parse
 
-from chalice.config import (
-    Config as ChaliceConfig,
-)
-from furl import (
-    furl,
-)
 import requests
 import responses
 
@@ -26,17 +17,16 @@ from azul import (
 from azul.drs import (
     AccessMethod,
 )
+from azul.lib.types import (
+    MutableJSON,
+)
 from azul.logging import (
     configure_test_logging,
 )
 from azul.service.drs_controller import (
     DRSController,
-    dss_dos_object_url,
     dss_drs_object_uri,
     dss_drs_object_url,
-)
-from azul.types import (
-    MutableJSON,
 )
 from azul_test_case import (
     AzulUnitTestCase,
@@ -44,92 +34,11 @@ from azul_test_case import (
 from indexer import (
     DCP1CannedBundleTestCase,
 )
-from service import (
-    WebServiceTestCase,
-)
 
 
 # noinspection PyPep8Naming
 def setUpModule():
     configure_test_logging()
-
-
-class TestDOSEndpoint(DCP1CannedBundleTestCase, WebServiceTestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls._setup_indices()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls._teardown_indices()
-        super().tearDownClass()
-
-    def chalice_config(self):
-        return ChaliceConfig.create(lambda_timeout=15)
-
-    def _get_data_object(self, file_uuid, file_version):
-        with responses.RequestsMock() as helper:
-            helper.add_passthru(str(self.base_url))
-            drs_url = dss_dos_object_url(file_uuid=file_uuid,
-                                         catalog=self.catalog,
-                                         file_version=file_version,
-                                         base_url=self.base_url)
-            with mock.patch('time.time', new=lambda: 1547691253.07010):
-                dss_url = str(furl(config.dss_endpoint).add(path=('files', file_uuid)))
-                helper.add(responses.Response(method=responses.GET,
-                                              url=dss_url,
-                                              status=301,
-                                              headers={'location': dss_url}))
-                helper.add(responses.Response(method=responses.GET,
-                                              url=dss_url,
-                                              status=302,
-                                              headers={'location': 'gs://foo/bar'}))
-                drs_response = requests.get(str(drs_url))
-            drs_response.raise_for_status()
-            drs_response_json = drs_response.json()
-            data_object = drs_response_json['data_object']
-            return data_object
-
-    def test_get_data_object(self):
-        file_uuid = '7b07f99e-4a8a-4ad0-bd4f-db0d7a00c7bb'
-        file_version = '2018-11-02T11:33:44.698028Z'
-        data_object = self._get_data_object(file_uuid, file_version)
-        self.assertEqual({
-            'id': file_uuid,
-            'urls': [
-                {
-                    'url': str(self.base_url.set(path=('repository', 'files', file_uuid),
-                                                 args=dict(catalog=self.catalog,
-                                                           version=file_version,
-                                                           wait=1,
-                                                           fileName='SRR3562915_1.fastq.gz')))
-                },
-                {
-                    'url':
-                        'gs://foo/bar'
-                }
-            ],
-            'size': '195142097',
-            'checksums': [
-                {
-                    'checksum': '77337cb51b2e584b5ae1b99db6c163b988cbc5b894dda2f5d22424978c3bfc7a',
-                    'type': 'sha256'
-                }
-            ],
-            'aliases': ['SRR3562915_1.fastq.gz'],
-            'version': file_version,
-            'name': 'SRR3562915_1.fastq.gz'
-        }, data_object)
-
-    def test_data_object_not_found(self):
-        try:
-            self._get_data_object('NOT_A_GOOD_IDEA', None)
-        except requests.exceptions.HTTPError as e:
-            self.assertEqual(e.response.status_code, 404)
-        else:
-            self.fail()
 
 
 class TestDRSEndpoint(DCP1CannedBundleTestCase, LocalAppTestCase):

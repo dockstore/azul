@@ -1,6 +1,6 @@
 """
 Runs Kibana, Cerebro and aws-signing-proxy locally. The latter is used to sign
-requests by the former and forward them to an Amazon Elasticsearch domain. The
+requests by the former and forward them to an Amazon OpenSearch domain. The
 default domain is the one configured for current Azul deployment.
 
 Requires docker to be installed.
@@ -47,14 +47,14 @@ from docker.models.containers import (
     Container,
 )
 
-from azul import (
-    cached_property,
-)
 from azul.deployment import (
     aws,
 )
 from azul.docker import (
     resolve_docker_image_for_launch,
+)
+from azul.lib import (
+    cached_property,
 )
 from azul.logging import (
     configure_script_logging,
@@ -91,7 +91,7 @@ class KibanaProxy:
                 proxy = self.create_container(image=image,
                                               name='proxy',
                                               auto_remove=True,
-                                              command=['-target', self.es_endpoint, '-port', str(proxy_port)],
+                                              command=['-target', self.opensearch_endpoint, '-port', str(proxy_port)],
                                               detach=True,
                                               environment={
                                                   'AWS_ACCESS_KEY_ID': creds.access_key,
@@ -182,10 +182,10 @@ class KibanaProxy:
         container.put_archive(str(path.parent), tar_buf.getvalue())
 
     @cached_property
-    def es_endpoint(self):
+    def opensearch_endpoint(self):
         log.info('Getting domain endpoint')
-        es = aws.es
-        domain = es.describe_elasticsearch_domain(DomainName=self.options.domain)
+        client = aws.opensearch
+        domain = client.describe_elasticsearch_domain(DomainName=self.options.domain)
         return 'https://' + domain['DomainStatus']['Endpoints']['vpc']
 
 
@@ -200,14 +200,15 @@ def main(argv):
     cli.add_argument('--proxy-port', '-p', metavar='PORT', type=int,
                      help='The port the AWS signing proxy should be listening on. '
                           'The default is the Kibana port plus 2.')
-    cli.add_argument('--domain', '-d', metavar='DOMAIN', default=os.environ.get('AZUL_ES_DOMAIN'),
-                     help='The AWS Elasticsearch domain to use.')
+    cli.add_argument('--domain', '-d', metavar='DOMAIN',
+                     default=os.environ.get('AZUL_OPENSEARCH_DOMAIN'),
+                     help='The AWS OpenSearch domain to use.')
     cli.add_argument('--local-port', '-l', metavar='PORT', type=int,
                      help='Configure Kibana to connect to an ES container running on the local'
                           'machine at the specified port. This disables the signing proxy.')
     options = cli.parse_args(argv)
     if not options.domain:
-        raise RuntimeError('Please pass --domain or set AZUL_ES_DOMAIN')
+        raise RuntimeError('Please pass --domain or set AZUL_OPENSEARCH_DOMAIN')
     KibanaProxy(options).run()
 
 

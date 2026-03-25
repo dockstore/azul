@@ -7,21 +7,25 @@ from more_itertools import (
 )
 
 from azul import (
-    R,
     config,
-    iif,
+)
+from azul.lib import (
+    R,
 )
 from azul.deployment import (
     aws,
 )
-from azul.types import (
+from azul.lib.functions import (
+    iif,
+)
+from azul.lib.types import (
     JSON,
 )
 
 es_instance_count = (
-    aws.es_instance_count
-    if config.share_es_domain else
-    config.es_instance_count
+    aws.opensearch_instance_count
+    if config.share_opensearch_domain else
+    config.opensearch_instance_count
 )
 
 
@@ -460,7 +464,7 @@ def dashboard_body(name: str):
                                 'AWS/ES',
                                 'Shards.unassigned',
                                 'DomainName',
-                                config.es_domain,
+                                config.opensearch_domain,
                                 'ClientId',
                                 config.aws_account_id,
                                 {
@@ -475,7 +479,7 @@ def dashboard_body(name: str):
                                 'ShardRole',
                                 'Primary',
                                 'DomainName',
-                                config.es_domain,
+                                config.opensearch_domain,
                                 'NodeId',
                                 '${local.nodes[0]}',
                                 'ClientId',
@@ -575,7 +579,7 @@ def dashboard_body(name: str):
                                 'AWS/ES',
                                 'JVMMemoryPressure',
                                 'DomainName',
-                                config.es_domain,
+                                config.opensearch_domain,
                                 'NodeId',
                                 '${local.nodes[0]}',
                                 'ClientId',
@@ -630,7 +634,7 @@ def dashboard_body(name: str):
                                 'AWS/ES',
                                 'JVMGCOldCollectionTime',
                                 'DomainName',
-                                config.es_domain,
+                                config.opensearch_domain,
                                 'NodeId',
                                 '${local.nodes[0]}',
                                 'ClientId',

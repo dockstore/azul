@@ -7,10 +7,10 @@ from typing import (
 import attrs
 import resumablehash
 
-from azul import (
+from azul.lib import (
     R,
 )
-from azul.types import (
+from azul.lib.types import (
     AnyJSON,
     json_str,
 )

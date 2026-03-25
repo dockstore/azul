@@ -19,7 +19,7 @@ from urllib import (
 from azul.indexer import (
     Bundle,
 )
-from azul.types import (
+from azul.lib.types import (
     JSON,
     MutableJSONs,
 )

@@ -17,7 +17,7 @@ from azul.plugins import (
 from azul.portal_service import (
     PortalService,
 )
-from azul.types import (
+from azul.lib.types import (
     JSONs,
 )
 from azul.version_service import (

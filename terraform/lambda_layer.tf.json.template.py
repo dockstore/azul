@@ -4,10 +4,10 @@ from azul import (
 from azul.deployment import (
     aws,
 )
-from azul.lambda_layer import (
+from azul.infra.lambda_layer import (
     DependenciesLayer,
 )
-from azul.terraform import (
+from azul.infra.terraform import (
     emit_tf,
 )
 

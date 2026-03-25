@@ -9,7 +9,7 @@ from typing import (
 )
 
 import attr
-from chalice import (
+from chalice.app import (
     BadRequestError,
     ChaliceViewError,
     NotFoundError,
@@ -18,13 +18,23 @@ from furl import (
     furl,
 )
 
-from azul import (
-    R,
-    cached_property,
-    iif,
-)
 from azul.indexer.document import (
     EntityType,
+)
+from azul.lib import (
+    R,
+    cached_property,
+)
+from azul.lib.functions import (
+    iif,
+)
+from azul.lib.types import (
+    JSON,
+    PrimitiveJSON,
+    check_type,
+)
+from azul.lib.uuids import (
+    InvalidUUIDError,
 )
 from azul.openapi import (
     format_description as fd,
@@ -49,14 +59,6 @@ from azul.service.query_service import (
     IndexNotFoundError,
     Pagination,
     SortKey,
-)
-from azul.types import (
-    JSON,
-    PrimitiveJSON,
-    check_type,
-)
-from azul.uuids import (
-    InvalidUUIDError,
 )
 
 log = logging.getLogger(__name__)

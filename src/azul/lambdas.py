@@ -13,12 +13,14 @@ from more_itertools import (
 )
 
 from azul import (
-    R,
-    cache,
     config,
 )
 from azul.deployment import (
     aws,
+)
+from azul.lib import (
+    R,
+    cache,
 )
 from azul.modules import (
     load_app_module,
@@ -79,7 +81,7 @@ class LambdaFunction:
         )
 
     @classmethod
-    def from_response(cls, response: 'FunctionConfigurationTypeDef') -> Self:
+    def from_response(cls, response: FunctionConfigurationTypeDef) -> Self:
         name = response['FunctionName']
         role = response['Role']
         try:

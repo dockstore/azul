@@ -50,10 +50,10 @@ from azul.indexer import (
 from azul.logging import (
     configure_script_logging,
 )
-from azul.time import (
+from azul.lib.time import (
     format_dcp2_datetime,
 )
-from azul.types import (
+from azul.lib.types import (
     AnyJSON,
     JSON,
     MutableJSON,

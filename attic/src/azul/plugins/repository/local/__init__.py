@@ -31,10 +31,10 @@ from azul.plugins import (
     RepositoryFileDownload,
     RepositoryPlugin,
 )
-from azul.types import (
+from azul.lib.types import (
     JSONs,
 )
-from azul.uuids import (
+from azul.lib.uuids import (
     validate_uuid_prefix,
 )
 
@@ -81,7 +81,7 @@ class Plugin(RepositoryPlugin[SimpleSourceSpec, LocalSourceRef]):
         return spec.name
 
     @classmethod
-    def create(cls, catalog: CatalogName) -> 'RepositoryPlugin':
+    def create(cls, catalog: CatalogName) -> RepositoryPlugin:
         assert config.catalogs[catalog].is_integration_test_catalog, catalog
         return cls(sources=frozenset(
             SimpleSourceSpec.parse(name).effective
@@ -143,7 +143,7 @@ class Plugin(RepositoryPlugin[SimpleSourceSpec, LocalSourceRef]):
     def dss_subscription_query(self, prefix: str) -> JSON:
         return {}
 
-    def file_download_class(self) -> Type['RepositoryFileDownload']:
+    def file_download_class(self) -> Type[RepositoryFileDownload]:
         raise NotImplementedError
 
     def direct_file_url(self,

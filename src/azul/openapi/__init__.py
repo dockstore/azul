@@ -5,7 +5,7 @@ from typing import (
     Any,
 )
 
-from azul.types import (
+from azul.lib.types import (
     AnyJSON,
     JSON,
 )
@@ -42,7 +42,7 @@ def format_description_key(kwargs: dict[str, Any]) -> None:
     """
     Clean up the `description` key's value in `kwargs` (if it exists)
 
-    >>> from azul.doctests import assert_json
+    >>> from azul.lib.doctests import assert_json
     >>> kwargs = {"foo": "bar", "description": '''
     ...                                        Multi-lined,
     ...                                        indented,

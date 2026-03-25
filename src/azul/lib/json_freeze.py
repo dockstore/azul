@@ -1,4 +1,4 @@
-from azul.types import (
+from azul.lib.types import (
     AnyJSON,
     AnyMutableJSON,
 )
@@ -67,7 +67,7 @@ def sort_frozen(x: AnyJSON) -> AnyJSON:
     """
     Attempt to recursively sort a frozen JSON structure. Not all JSON structures
     are supported. The restrictions are noted below. This method is really only
-    useful when comparing Elasticsearch documents. Elasticsearches semantics
+    useful when comparing OpenSearch documents. OpenSearch's semantics
     for lists is that the order in which list elements occur doesn't really
     matter. The "term" query {"foo": "bar"} matches a documents with
     "foo": "bar" and ones with "foo":["baz","bar"].
@@ -131,7 +131,7 @@ class TupleKey(object):
     >>> {TupleKey((True,)):1}
     Traceback (most recent call last):
     ...
-    TypeError: cannot use 'azul.json_freeze.TupleKey' as a dict key (unhashable type: 'TupleKey')
+    TypeError: cannot use 'azul.lib.json_freeze.TupleKey' as a dict key (unhashable type: 'TupleKey')
     """
     __slots__ = ['obj']
 

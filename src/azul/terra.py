@@ -21,7 +21,7 @@ from typing import (
 )
 
 import attrs
-from chalice import (
+from chalice.app import (
     UnauthorizedError,
 )
 from furl import (
@@ -57,16 +57,10 @@ import urllib3.response
 
 from azul import (
     Config,
-    R,
-    cache,
     config,
-    mutable_furl,
 )
 from azul.auth import (
     OAuth2,
-)
-from azul.bigquery import (
-    BigQueryRows,
 )
 from azul.deployment import (
     aws,
@@ -81,20 +75,18 @@ from azul.http import (
     LimitedTimeoutException,
     Propagate429HttpClient,
 )
-from azul.indexer import (
-    SourceRef,
-    SourceSpec,
+from azul.lib import (
+    R,
+    cache,
+    mutable_furl,
 )
-from azul.oauth2 import (
-    CredentialsProvider,
-    OAuth2Client,
-    ServiceAccountCredentials,
-    TokenCredentials,
+from azul.lib.bigquery import (
+    BigQueryRows,
 )
-from azul.strings import (
+from azul.lib.strings import (
     trunc_ellipses,
 )
-from azul.types import (
+from azul.lib.types import (
     JSON,
     MutableJSON,
     is_of_type,
@@ -103,6 +95,16 @@ from azul.types import (
     json_list,
     json_mapping,
     json_str,
+)
+from azul.oauth2 import (
+    CredentialsProvider,
+    OAuth2Client,
+    ServiceAccountCredentials,
+    TokenCredentials,
+)
+from azul.source import (
+    SourceRef,
+    SourceSpec,
 )
 
 log = logging.getLogger(__name__)

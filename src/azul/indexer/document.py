@@ -23,17 +23,9 @@ from more_itertools import (
 
 from azul import (
     CatalogName,
-    R,
     config,
 )
-from azul.enums import (
-    auto,
-)
-from azul.indexer import (
-    BundleFQID,
-    SourceRef,
-)
-from azul.indexer.field import (
+from azul.field_type import (
     CataloguedFieldTypes,
     FieldType,
     FieldTypes,
@@ -43,10 +35,19 @@ from azul.indexer.field import (
     pass_thru_json,
     pass_thru_str,
 )
-from azul.json import (
+from azul.indexer import (
+    BundleFQID,
+)
+from azul.lib import (
+    R,
+)
+from azul.lib.enums import (
+    auto,
+)
+from azul.lib.json import (
     Parseable,
 )
-from azul.types import (
+from azul.lib.types import (
     AnyJSON,
     AnyMutableJSON,
     JSON,
@@ -56,6 +57,9 @@ from azul.types import (
     json_sequence,
     json_str,
     optional,
+)
+from azul.source import (
+    SourceRef,
 )
 
 type EntityID = str
@@ -102,7 +106,7 @@ class DocumentType(Enum):
 @frozen(kw_only=True)
 class IndexName:
     """
-    The name of an Elasticsearch index used by an Azul deployment, parsed into
+    The name of an OpenSearch index used by an Azul deployment, parsed into
     its components. The index naming scheme underwent a number of changes during
     the evolution of Azul. The different naming schemes are captured in a
     `version` component. Note that the first version of the index name syntax
@@ -415,7 +419,7 @@ type CataloguedDocumentCoordinates = DocumentCoordinates[CataloguedEntityReferen
 class DocumentCoordinates[E: EntityReference](metaclass=ABCMeta):
     """
     The coordinates of a document ultimately define two strings: 1) the name of
-    the Elasticsearch index that contains the document and 2) the unique ID by
+    the OpenSearch index that contains the document and 2) the unique ID by
     which it can be retrieved from that index. Both of these strings are
     composed of smaller elements information, e.g., a reference to the entity
     the document contains metadata about and the type of the document. Concrete
@@ -430,7 +434,7 @@ class DocumentCoordinates[E: EntityReference](metaclass=ABCMeta):
     @property
     def index_name(self) -> str:
         """
-        The fully qualified name of the Elasticsearch index for a document with
+        The fully qualified name of the OpenSearch index for a document with
         these coordinates. Only call this if these coordinates use a catalogued
         entity reference. You can use `.with_catalog()` to create one.
         """
@@ -473,7 +477,7 @@ class DocumentCoordinates[E: EntityReference](metaclass=ABCMeta):
                     ) -> CataloguedDocumentCoordinates:
         raise NotImplementedError
 
-    def with_catalog(self: 'DocumentCoordinates',
+    def with_catalog(self: DocumentCoordinates,
                      catalog: CatalogName | None
                      ) -> CataloguedDocumentCoordinates:
         """
@@ -736,8 +740,8 @@ class Document[C: DocumentCoordinates](metaclass=ABCMeta):
                          ) -> AnyMutableJSON:
         """
         Traverse a document to translate field values for insert into
-        Elasticsearch, or to translate back response data. This is done to
-        support None/null values since Elasticsearch does not index these
+        OpenSearch, or to translate back response data. This is done to
+        support None/null values since OpenSearch does not index these
         values. Values that are empty lists ([]) and lists of None ([None]) are
         both forward converted to [null_string]
 
@@ -746,7 +750,7 @@ class Document[C: DocumentCoordinates](metaclass=ABCMeta):
         :param field_types: A mapping of field paths to field type
 
         :param forward: If True, substitute None values with their respective
-                        Elasticsearch placeholder.
+                        OpenSearch placeholder.
 
         :param allowed_paths: A list of field paths expected to be present in
                               the resulting document. If an unexpected field is
@@ -943,7 +947,7 @@ class Contribution[E: EntityReference](Document[ContributionCoordinates[E]]):
     source: SourceRef
 
     #: The op_type attribute will change to OpType.index if writing
-    #: to Elasticsearch fails with 409
+    #: to OpenSearch fails with 409
     _op_type: OpType = OpType.create
 
     @property

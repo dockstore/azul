@@ -11,20 +11,24 @@ from opensearchpy.helpers.aggs import (
 )
 
 from azul import (
-    cached_property,
     config,
 )
-from azul.plugins import (
+from azul.indexer.document import (
     FieldPath,
+)
+from azul.lib import (
+    cached_property,
+)
+from azul.lib.types import (
+    MutableJSON,
+    json_dict,
+    json_int,
+)
+from azul.plugins import (
     dotted,
 )
 from azul.service.query_service import (
     AggregationStage,
-)
-from azul.types import (
-    MutableJSON,
-    json_dict,
-    json_int,
 )
 
 
@@ -98,7 +102,7 @@ class HCASummaryAggregationStage(HCAAggregationStage):
                 field='contents.cell_suspensions.total_estimated_cells_'
             )
         elif entity_type == 'samples':
-            # Add an organ aggregate to the Elasticsearch request
+            # Add an organ aggregate to the OpenSearch request
             request.aggs.bucket('organTypes',
                                 'terms',
                                 field='contents.samples.effective_organ.keyword',

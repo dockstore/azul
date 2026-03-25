@@ -36,6 +36,10 @@ from azul.indexer.document import (
     DocumentType,
     EntityReference,
 )
+from azul.lib.types import (
+    JSONs,
+    MutableJSONs,
+)
 from azul.logging import (
     configure_test_logging,
 )
@@ -49,10 +53,6 @@ from azul.plugins.repository.tdr_anvil import (
 )
 from azul.terra import (
     TDRClient,
-)
-from azul.types import (
-    JSONs,
-    MutableJSONs,
 )
 from azul_test_case import (
     TDRTestCase,
