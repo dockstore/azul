@@ -23,10 +23,6 @@ from more_itertools.more import (
 
 from azul import (
     config,
-    iif,
-)
-from azul.digests import (
-    Digest,
 )
 from azul.indexer.document import (
     DocumentType,
@@ -35,12 +31,34 @@ from azul.indexer.document import (
     FieldPathElement,
     IndexName,
 )
+from azul.lib.digests import (
+    Digest,
+)
+from azul.lib.functions import (
+    iif,
+)
+from azul.lib.types import (
+    AnyMutableJSON,
+    JSON,
+    MutableJSON,
+    MutableJSONArray,
+    MutableJSONs,
+    json_bool,
+    json_element_mappings,
+    json_element_strings,
+    json_int,
+    json_list,
+    json_mapping,
+    json_str,
+    optional,
+)
 from azul.plugins import (
     DocumentSlice,
     FieldName,
     File,
     InverseFieldMapping,
     ManifestConfig,
+    ManifestFormat,
     MetadataPlugin,
     Sorting,
     SpecialField,
@@ -71,24 +89,6 @@ from azul.plugins.metadata.anvil.service.filter import (
 from azul.plugins.metadata.anvil.service.response import (
     AnvilSearchResponseStage,
     AnvilSummaryResponseStage,
-)
-from azul.service.manifest_service import (
-    ManifestFormat,
-)
-from azul.types import (
-    AnyMutableJSON,
-    JSON,
-    MutableJSON,
-    MutableJSONArray,
-    MutableJSONs,
-    json_bool,
-    json_element_mappings,
-    json_element_strings,
-    json_int,
-    json_list,
-    json_mapping,
-    json_str,
-    optional,
 )
 
 
@@ -515,23 +515,23 @@ class Plugin(MetadataPlugin[AnvilBundle]):
         return None
 
     @property
-    def summary_response_stage(self) -> 'type[AnvilSummaryResponseStage]':
+    def summary_response_stage(self) -> type[AnvilSummaryResponseStage]:
         return AnvilSummaryResponseStage
 
     @property
-    def search_response_stage(self) -> 'type[AnvilSearchResponseStage]':
+    def search_response_stage(self) -> type[AnvilSearchResponseStage]:
         return AnvilSearchResponseStage
 
     @property
-    def summary_aggregation_stage(self) -> 'type[AnvilSummaryAggregationStage]':
+    def summary_aggregation_stage(self) -> type[AnvilSummaryAggregationStage]:
         return AnvilSummaryAggregationStage
 
     @property
-    def aggregation_stage(self) -> 'type[AnvilAggregationStage]':
+    def aggregation_stage(self) -> type[AnvilAggregationStage]:
         return AnvilAggregationStage
 
     @property
-    def filter_stage(self) -> 'type[AnvilFilterStage]':
+    def filter_stage(self) -> type[AnvilFilterStage]:
         return AnvilFilterStage
 
     @property

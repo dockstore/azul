@@ -4,24 +4,24 @@ from typing import (
     Any,
 )
 
-from chalice import (
+from chalice.app import (
     BadRequestError,
 )
 
-from azul import (
-    format_description as fd,
-    mutable_furl,
-)
 from azul.chalice import (
     Controller,
 )
+from azul.lib import (
+    mutable_furl,
+)
+from azul.lib.types import (
+    JSON,
+)
 from azul.openapi import (
+    format_description as fd,
     params,
     responses,
     schema,
-)
-from azul.types import (
-    JSON,
 )
 
 

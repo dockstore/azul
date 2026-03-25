@@ -258,6 +258,9 @@ format: check_venv check_docker
 	    /opt/pycharm/bin/format.sh -r -settings .pycharm.style.xml -mask '*.py' $(relative_sources); \
 	rm -rf $$tmp/pycharm && rm -d $$tmp
 
+.PHONY: isort
+isort: check_python
+	isort --dont-order-by-type $(relative_sources)
 
 test_args = -m unittest discover --verbose test
 

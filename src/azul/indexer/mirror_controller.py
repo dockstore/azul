@@ -14,8 +14,6 @@ from chalice.app import (
 
 from azul import (
     CatalogName,
-    R,
-    cache,
     config,
 )
 from azul.chalice import (
@@ -27,6 +25,10 @@ from azul.indexer.action_controller import (
 from azul.indexer.mirror_service import (
     MirrorAction,
     MirrorWorkerService,
+)
+from azul.lib import (
+    R,
+    cache,
 )
 from azul.schemas import (
     SchemaController,

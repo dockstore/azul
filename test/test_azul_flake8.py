@@ -177,13 +177,13 @@ class TestAzulFlake8(AzulUnitTestCase):
         self.assertNoErrors("""
             # imports in different blocks should be checked against each other
             # for correct ordering.
-            import azul.strings
+            import azul.lib.strings
 
             def foo():
                 import azul.modules
 
                 def foo_too():
-                    import azul.json
+                    import azul.lib.json
 
             def bar():
                 import azul.chalice

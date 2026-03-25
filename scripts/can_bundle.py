@@ -18,17 +18,25 @@ import sys
 import uuid
 
 from azul import (
-    cache,
     config,
 )
 from azul.args import (
     AzulArgumentHelpFormatter,
 )
-from azul.files import (
-    write_file_atomically,
-)
 from azul.indexer import (
     Bundle,
+)
+from azul.lib import (
+    cache,
+)
+from azul.lib.files import (
+    write_file_atomically,
+)
+from azul.lib.types import (
+    AnyJSON,
+    AnyMutableJSON,
+    JSON,
+    json_dict,
 )
 from azul.logging import (
     configure_script_logging,
@@ -38,12 +46,6 @@ from azul.plugins import (
 )
 from azul.plugins.metadata.anvil.bundle import (
     AnvilBundle,
-)
-from azul.types import (
-    AnyJSON,
-    AnyMutableJSON,
-    JSON,
-    json_dict,
 )
 
 log = logging.getLogger(__name__)

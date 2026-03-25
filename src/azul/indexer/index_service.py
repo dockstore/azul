@@ -40,15 +40,13 @@ from opensearchpy.helpers import (
 
 from azul import (
     CatalogName,
-    R,
     config,
-    json_mapping,
 )
 from azul.deployment import (
     aws,
 )
-from azul.es import (
-    ESClientFactory,
+from azul.field_type import (
+    CataloguedFieldTypes,
 )
 from azul.indexer import (
     Bundle,
@@ -76,19 +74,16 @@ from azul.indexer.document import (
 from azul.indexer.document_service import (
     DocumentService,
 )
-from azul.indexer.field import (
-    CataloguedFieldTypes,
-)
 from azul.indexer.transform import (
     Transformer,
 )
-from azul.json_freeze import (
+from azul.lib import (
+    R,
+)
+from azul.lib.json_freeze import (
     freeze,
 )
-from azul.logging import (
-    silenced_es_logger,
-)
-from azul.types import (
+from azul.lib.types import (
     AnyJSON,
     JSON,
     JSONArray,
@@ -96,7 +91,14 @@ from azul.types import (
     PrimitiveJSON,
     json_element_mappings,
     json_items_are_sequences_of_mappings,
+    json_mapping,
     json_sequence,
+)
+from azul.logging import (
+    silenced_opensearch_logger,
+)
+from azul.opensearch import (
+    OpenSearchClientFactory,
 )
 
 log = logging.getLogger(__name__)
@@ -117,7 +119,7 @@ class IndexService(DocumentService):
     def _settings(self, index_name: IndexName) -> JSON:
         index_name.validate()
         aggregate = index_name.doc_type is DocumentType.aggregate
-        # There is a terminology collision between ElasticSearch's concept of an
+        # There is a terminology collision between OpenSearch's concept of an
         # index replica, and our Azul-specific concept of an entity/document
         # replica.
         replica = index_name.doc_type is DocumentType.replica
@@ -135,7 +137,7 @@ class IndexService(DocumentService):
             num_shards = 1
             num_replicas = 0
         else:
-            num_nodes = aws.es_instance_count
+            num_nodes = aws.opensearch_instance_count
             num_workers = config.contribution_concurrency(retry=False)
 
             # Put the sole primary aggregate shard on one node and a replica
@@ -167,7 +169,7 @@ class IndexService(DocumentService):
             'index': {
                 'number_of_shards': num_shards,
                 'number_of_replicas': num_replicas,
-                'refresh_interval': f'{config.es_refresh_interval}s'
+                'refresh_interval': f'{config.opensearch_refresh_interval}s'
             }
         }
 
@@ -308,19 +310,19 @@ class IndexService(DocumentService):
             return contributions, list(replicas_by_coords.values())
 
     def create_indices(self, catalog: CatalogName):
-        es_client = ESClientFactory.get()
+        opensearch = OpenSearchClientFactory.get()
         for index_name in self.index_names(catalog):
             while True:
                 settings = self._settings(index_name)
                 mappings = self.metadata_plugin(catalog).mapping(index_name)
                 try:
-                    with silenced_es_logger():
-                        index = es_client.indices.get(index=str(index_name))
+                    with silenced_opensearch_logger():
+                        index = opensearch.indices.get(index=str(index_name))
                 except NotFoundError:
                     try:
-                        es_client.indices.create(index=str(index_name),
-                                                 body=dict(settings=settings,
-                                                           mappings=mappings))
+                        opensearch.indices.create(index=str(index_name),
+                                                  body=dict(settings=settings,
+                                                            mappings=mappings))
                     except RequestError as e:
                         if e.error == 'resource_already_exists_exception':
                             log.info('Another party concurrently created index %s (%r), retrying.',
@@ -408,10 +410,10 @@ class IndexService(DocumentService):
             raise IndexExistsAndDiffersException('mappings', mappings, index['mappings'])
 
     def delete_indices(self, catalog: CatalogName):
-        es_client = ESClientFactory.get()
+        opensearch = OpenSearchClientFactory.get()
         for index_name in self.index_names(catalog):
-            if es_client.indices.exists(index=str(index_name)):
-                es_client.indices.delete(index=str(index_name))
+            if opensearch.indices.exists(index=str(index_name)):
+                opensearch.indices.delete(index=str(index_name))
 
     def contribute(self,
                    catalog: CatalogName,
@@ -459,7 +461,7 @@ class IndexService(DocumentService):
         catalogs.
         """
         # Attempting to filter by an empty array of coordinates while reading
-        # the aggregates will fail with a 400 error from ElasticSearch. This
+        # the aggregates will fail with a 400 error from OpenSearch. This
         # happens when indexing replica bundles for AnVIL, since they emit no
         # contributions.
         if not tallies:
@@ -561,8 +563,9 @@ class IndexService(DocumentService):
         for catalog in catalogs:
             aggregate_cls = self.aggregate_class(catalog)
             mandatory_source_fields.update(aggregate_cls.mandatory_source_fields())
-        response = ESClientFactory.get().mget(body=request,
-                                              _source_includes=list(mandatory_source_fields))
+        opensearch = OpenSearchClientFactory.get()
+        response = opensearch.mget(body=request,
+                                   _source_includes=list(mandatory_source_fields))
 
         def aggregates():
             for doc in response['docs']:
@@ -584,7 +587,7 @@ class IndexService(DocumentService):
     def _read_contributions(self,
                             tallies: CataloguedTallies
                             ) -> list[CataloguedContribution]:
-        es_client = ESClientFactory.get()
+        opensearch = OpenSearchClientFactory.get()
 
         entity_ids_by_index: dict[str, set[str]] = defaultdict(set)
         for entity in tallies.keys():
@@ -623,12 +626,12 @@ class IndexService(DocumentService):
         def pages() -> Iterable[JSONs]:
             body = dict(query=query)
             while True:
-                response = es_client.search(index=indices,
-                                            sort=['_index', 'document_id.keyword'],
-                                            body=body,
-                                            size=config.contribution_page_size,
-                                            track_total_hits=False,
-                                            seq_no_primary_term=True)
+                response = opensearch.search(index=indices,
+                                             sort=['_index', 'document_id.keyword'],
+                                             body=body,
+                                             size=config.contribution_page_size,
+                                             track_total_hits=False,
+                                             seq_no_primary_term=True)
                 hits = response['hits']['hits']
                 log.debug('Read a page with %i contribution(s)', len(hits))
                 if hits:
@@ -804,7 +807,7 @@ class IndexService(DocumentService):
     def _create_writer(self,
                        doc_type: DocumentType,
                        catalog: CatalogName | None
-                       ) -> 'IndexWriter':
+                       ) -> IndexWriter:
         # We allow one conflict retry in the case of duplicate notifications and
         # switch from 'add' to 'update'. After that, there should be no
         # conflicts because we use an SQS FIFO message group per entity.
@@ -852,7 +855,7 @@ class IndexWriter:
         self.refresh = refresh
         self.conflict_retry_limit = conflict_retry_limit
         self.error_retry_limit = error_retry_limit
-        self.es_client = ESClientFactory.get()
+        self.opensearch = OpenSearchClientFactory.get()
         self.errors: dict[DocumentCoordinates, int] = defaultdict(int)
         self.conflicts: dict[DocumentCoordinates, int] = defaultdict(int)
         self.retries: set[DocumentCoordinates] = set()
@@ -876,7 +879,7 @@ class IndexWriter:
         log.info('Writing documents individually')
         for doc in documents:
             try:
-                method = getattr(self.es_client, doc.op_type.name)
+                method = getattr(self.opensearch, doc.op_type.name)
                 method(refresh=self.refresh, **doc.to_index(self.catalog, self.field_types))
             except ConflictError as e:
                 self._on_conflict(doc, e)
@@ -931,7 +934,7 @@ class IndexWriter:
         # `action` parameter but we're exploiting the undocumented fact that the
         # method immediately maps the value of the `expand_action_callback`
         # parameter over the list passed in the `actions` parameter.
-        response = streaming_bulk(client=self.es_client,
+        response = streaming_bulk(client=self.opensearch,
                                   actions=list(documents.values()),
                                   expand_action_callback=expand_action,
                                   refresh=self.refresh,

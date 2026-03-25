@@ -38,6 +38,7 @@ Linked issue: #0000
 - [ ] Ran `make requirements_update` <sub>or this PR does not modify `Dockerfile`, `environment`, `requirements*.txt`, `common.mk`, `Makefile` or `environment.boot`</sub>
 - [ ] Added `R` tag to commit title <sub>or this PR does not modify `requirements*.txt`</sub>
 - [ ] This PR is labeled `reqs` <sub>or does not modify `requirements*.txt`</sub>
+- [ ] Updated the `AL2023_release` variable in [gitlab.tf.json.template.py](../blob/develop/terraform/gitlab/gitlab.tf.json.template.py) to the most recent [AL2023 release](../blob/develop/OPERATOR.rst#updating-software-packages-via-release-version-upgrade-in-al2023-instances) <sub>or no update is available</sub>
 - [ ] `make integration_test` passes in personal deployment <sub>or this PR does not modify functionality that could affect the IT outcome</sub>
 - [ ] PR is not a draft
 - [ ] PR is awaiting requested review from system administrator

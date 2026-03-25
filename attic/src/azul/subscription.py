@@ -13,7 +13,7 @@ from azul import (
     config,
     deployment,
 )
-from azul.json_freeze import (
+from azul.lib.json_freeze import (
     freeze,
     thaw,
 )

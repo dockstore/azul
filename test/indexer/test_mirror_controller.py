@@ -21,8 +21,6 @@ from app_test_case import (
     LocalAppTestCase,
 )
 from azul import (
-    R,
-    cached_property,
     config,
 )
 from azul.deployment import (
@@ -42,8 +40,17 @@ from azul.indexer.mirror_service import (
     MirrorAction,
     MirrorWorkerService,
 )
-from azul.json import (
+from azul.lib import (
+    R,
+    cached_property,
+)
+from azul.lib.json import (
     copy_json,
+)
+from azul.lib.types import (
+    JSON,
+    MutableJSON,
+    MutableJSONs,
 )
 from azul.logging import (
     configure_test_logging,
@@ -57,11 +64,6 @@ from azul.queues import (
 )
 from azul.service.source_service import (
     SourceService,
-)
-from azul.types import (
-    JSON,
-    MutableJSON,
-    MutableJSONs,
 )
 from azul_test_case import (
     DCP2TestCase,

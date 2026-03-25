@@ -1,11 +1,11 @@
 from azul import (
     config,
 )
+from azul.infra.terraform import (
+    emit_tf,
+)
 from azul.service.source_service import (
     SourceService,
-)
-from azul.terraform import (
-    emit_tf,
 )
 
 emit_tf(

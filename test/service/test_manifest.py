@@ -59,21 +59,12 @@ from requests import (
 )
 
 from azul import (
-    R,
-    cache,
     config,
-)
-from azul.collections import (
-    adict,
-    compose_keys,
-    none_safe_tuple_key,
 )
 from azul.http import (
     parse_header,
 )
 from azul.indexer import (
-    Prefix,
-    SimpleSourceSpec,
     SourcedBundleFQID,
 )
 from azul.indexer.document import (
@@ -81,9 +72,28 @@ from azul.indexer.document import (
     EntityReference,
     EntityType,
 )
-from azul.json import (
+from azul.lib import (
+    R,
+    cache,
+)
+from azul.lib.collections import (
+    adict,
+    compose_keys,
+    none_safe_tuple_key,
+)
+from azul.lib.json import (
     copy_json,
     json_hash,
+)
+from azul.lib.strings import (
+    single_quote as sq,
+)
+from azul.lib.types import (
+    JSON,
+    JSONs,
+    MutableCompositeJSON,
+    MutableJSON,
+    MutableJSONs,
 )
 from azul.logging import (
     configure_test_logging,
@@ -123,15 +133,9 @@ from azul.service.manifest_service import (
 from azul.service.storage_service import (
     StorageService,
 )
-from azul.strings import (
-    single_quote as sq,
-)
-from azul.types import (
-    JSON,
-    JSONs,
-    MutableCompositeJSON,
-    MutableJSON,
-    MutableJSONs,
+from azul.source import (
+    Prefix,
+    SimpleSourceSpec,
 )
 from azul_test_case import (
     patch_config,
@@ -265,7 +269,7 @@ class ManifestTestCase(WebServiceTestCase,
         self.addPatch(patch.object(PagedManifestGenerator, 'page_size', 1))
         self.addPatch(patch.dict(os.environ,
                                  azul_git_commit='9347432ab0da43c73409ac7fd3edfe29cf3ae678',
-                                 azul_git_dirty=str(False)))
+                                 azul_git_dirty='0'))
         self._setup_indices()
 
     def tearDown(self):

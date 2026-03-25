@@ -14,7 +14,6 @@ from unittest.mock import (
 import chalice.app
 
 from azul import (
-    cached_property,
     config,
 )
 from azul.deployment import (
@@ -23,10 +22,13 @@ from azul.deployment import (
 from azul.indexer.log_forwarding_controller import (
     LogForwardingController,
 )
-from azul.strings import (
+from azul.lib import (
+    cached_property,
+)
+from azul.lib.strings import (
     double_quote as dq,
 )
-from azul.types import (
+from azul.lib.types import (
     JSONs,
 )
 from service import (

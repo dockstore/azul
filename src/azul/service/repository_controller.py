@@ -11,7 +11,7 @@ from typing import (
 
 import attr
 import attrs
-from chalice import (
+from chalice.app import (
     BadRequestError,
     NotFoundError,
     Response,
@@ -24,8 +24,6 @@ from more_itertools import (
 
 from azul import (
     CatalogName,
-    R,
-    cached_property,
     config,
 )
 from azul.auth import (
@@ -33,9 +31,6 @@ from azul.auth import (
 )
 from azul.chalice import (
     ServiceUnavailableError,
-)
-from azul.collections import (
-    adict,
 )
 from azul.drs import (
     DRSStatusException,
@@ -50,6 +45,18 @@ from azul.indexer.mirror_service import (
 )
 from azul.indexer.repository_service import (
     RepositoryService,
+)
+from azul.lib import (
+    R,
+    cached_property,
+)
+from azul.lib.collections import (
+    adict,
+)
+from azul.lib.types import (
+    MutableJSON,
+    is_optional,
+    json_int,
 )
 from azul.openapi import (
     format_description as fd,
@@ -69,11 +76,6 @@ from azul.service.controller import (
 )
 from azul.service.index_service import (
     IndexService,
-)
-from azul.types import (
-    MutableJSON,
-    is_optional,
-    json_int,
 )
 
 log = logging.getLogger(__name__)

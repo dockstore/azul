@@ -4,19 +4,24 @@ from typing import (
     Mapping,
 )
 
-from chalice import (
+from chalice.app import (
     BadRequestError as BRE,
     NotFoundError,
 )
 
 from azul import (
     CatalogName,
-    R,
     config,
-    mutable_furl,
 )
 from azul.auth import (
     Authentication,
+)
+from azul.lib import (
+    R,
+    mutable_furl,
+)
+from azul.lib.strings import (
+    pluralize,
 )
 from azul.openapi import (
     format_description as fd,
@@ -32,9 +37,6 @@ from azul.service import (
 )
 from azul.service.source_controller import (
     SourceController,
-)
-from azul.strings import (
-    pluralize,
 )
 
 

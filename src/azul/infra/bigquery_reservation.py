@@ -20,12 +20,14 @@ from more_itertools import (
 )
 
 from azul import (
-    R,
-    cached_property,
     config,
 )
 from azul.deployment import (
     aws,
+)
+from azul.lib import (
+    R,
+    cached_property,
 )
 
 log = logging.getLogger(__name__)

@@ -13,35 +13,37 @@ from more_itertools import (
 
 from azul import (
     CatalogName,
-    cache,
     config,
 )
-from azul.collections import (
-    deep_dict_merge,
-)
-from azul.indexer.document import (
-    Aggregate,
-    Contribution,
-    Document,
-)
-from azul.indexer.field import (
+from azul.field_type import (
     CataloguedFieldTypes,
     FieldType,
     FieldTypes,
     FieldTypes1,
     Nested,
 )
+from azul.indexer.document import (
+    Aggregate,
+    Contribution,
+    Document,
+    FieldPath,
+)
 from azul.indexer.transform import (
     Transformer,
 )
-from azul.plugins import (
-    FieldPath,
-    MetadataPlugin,
+from azul.lib import (
+    cache,
 )
-from azul.types import (
+from azul.lib.collections import (
+    deep_dict_merge,
+)
+from azul.lib.types import (
     JSON,
     MutableJSON,
     json_dict,
+)
+from azul.plugins import (
+    MetadataPlugin,
 )
 
 
@@ -105,7 +107,7 @@ class DocumentService:
         """
         Returns a mapping of fields to field types
 
-        :return: dict with nested keys matching Elasticsearch fields and values
+        :return: dict with nested keys matching OpenSearch fields and values
                  with the field's type
         """
         field_types = deep_dict_merge.from_iterable(

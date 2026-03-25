@@ -37,18 +37,20 @@ from more_itertools import (
 )
 
 from azul import (
-    R,
-    cached_property,
     config,
 )
-from azul.functions import (
+from azul.lib import (
+    R,
+    cached_property,
+)
+from azul.lib.functions import (
     compose,
 )
-from azul.json import (
+from azul.lib.json import (
     PolymorphicSerializable,
     Serializable,
 )
-from azul.types import (
+from azul.lib.types import (
     AnyJSON,
     CompositeJSON,
     JSON,
@@ -82,7 +84,7 @@ def as_annotated():
     type. Has some limited magic for parameterized types such as typing.Union
     and typing.Optional.
 
-    >>> from azul.types import AnyJSON
+    >>> from azul.lib.types import AnyJSON
     >>> @attrs.define
     ... class Foo:
     ...     x: Optional[bool] = strict_auto()
@@ -462,7 +464,7 @@ class SerializableAttrs(Serializable, attrs.AttrsInstance):
 
     @attrs.frozen
     class Strategy[T](metaclass=ABCMeta):
-        cls: type['SerializableAttrs']
+        cls: type[SerializableAttrs]
         field: attrs.Attribute
         globals: dict[str, Any]
         depth: Iterator[int] = attrs.field(factory=count)
@@ -832,7 +834,7 @@ def polymorphic[T](field: T | None = None,
     that field. The given discriminator property of a serialized instance
     represents the type to use when deserializing that instance again.
 
-    >>> from azul.json import StaticRegisteredPolymorphicSerializable
+    >>> from azul.lib.json import StaticRegisteredPolymorphicSerializable
 
     >>> class Inner(SerializableAttrs, StaticRegisteredPolymorphicSerializable):
     ...     pass
@@ -850,7 +852,7 @@ def polymorphic[T](field: T | None = None,
     ...     inner: Inner = polymorphic(discriminator='type')
     ...     inners: list[Inner] = polymorphic(discriminator='_cls')
 
-    >>> from azul.doctests import assert_json
+    >>> from azul.lib.doctests import assert_json
 
     >>> outer = Outer(inner=InnerWithInt(42),
     ...               inners=[InnerWithStr('foo'), InnerWithInt(7)])
@@ -909,7 +911,7 @@ def polymorphic[T](field: T | None = None,
 
     >>> outer = AbstractOuter(InnerWithInt(42))
     >>> AbstractOuter.from_json(outer.to_json()).inner  # doctest: +ELLIPSIS
-    <azul.attrs.Inner object at ...>
+    <azul.lib.attrs.Inner object at ...>
     """
     return _set_field_metadata(field, 'discriminator', discriminator)
 

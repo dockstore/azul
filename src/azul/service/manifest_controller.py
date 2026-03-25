@@ -3,13 +3,14 @@ from collections.abc import (
 )
 from typing import (
     Any,
+    Sequence,
     TypedDict,
     Union,
     cast,
     get_type_hints,
 )
 
-from chalice import (
+from chalice.app import (
     BadRequestError,
     ChaliceViewError,
     Response,
@@ -19,17 +20,28 @@ from furl import (
 )
 
 from azul import (
-    cached_property,
     config,
-    json_int,
-    json_mapping,
-    mutable_furl,
 )
 from azul.auth import (
     Authentication,
 )
 from azul.chalice import (
     GoneError,
+)
+from azul.lib import (
+    cached_property,
+    mutable_furl,
+)
+from azul.lib.types import (
+    AnyJSON,
+    FlatJSON,
+    JSON,
+    LambdaContext,
+    is_of_type,
+    json_int,
+    json_mapping,
+    not_none,
+    optional,
 )
 from azul.openapi import (
     format_description as fd,
@@ -68,15 +80,6 @@ from azul.service.manifest_service import (
 from azul.service.query_controller import (
     QueryController,
 )
-from azul.types import (
-    AnyJSON,
-    FlatJSON,
-    JSON,
-    LambdaContext,
-    is_of_type,
-    not_none,
-    optional,
-)
 
 manifest_state_key = 'manifest'
 
@@ -100,6 +103,49 @@ class ManifestController(QueryController):
     @cached_property
     def _service(self) -> ManifestService:
         return ManifestService(file_url_func=self._file_url)
+
+    @property
+    def _formats(self) -> Sequence[ManifestFormat]:
+        return self._metadata_plugin.manifest_formats
+
+    def _describe_format_param(self) -> str:
+        descriptions_by_format = {
+            ManifestFormat.compact: fd('''
+                (the default) for a compact, tab-separated manifest.
+            '''),
+            ManifestFormat.terra_pfb: fd('''
+                for a manifest in the [PFB format][2]. This format is mainly
+                used for exporting data to Terra.
+            '''),
+            ManifestFormat.curl: fd('''
+                for a [curl configuration file][3] manifest. This manifest can
+                be used with the curl program to download all the files listed
+                in the manifest.
+            '''),
+            ManifestFormat.verbatim_jsonl: fd('''
+                for a verbatim manifest in [JSONL][4] format. Each line contains
+                an unaltered metadata entity from the underlying repository.
+            '''),
+            ManifestFormat.verbatim_pfb: fd('''
+                for a verbatim manifest in the [PFB format][2]. This format is
+                mainly used for exporting data to Terra.
+            ''')
+        }
+        supported_format_descriptions = [
+            f'- `{format.value}` {descriptions_by_format[format]}'
+            for format in self._formats
+        ]
+        links = [
+            '[1]: https://software.broadinstitute.org/firecloud/documentation/article?id=10954',
+            '[2]: https://github.com/uc-cdis/pypfb',
+            '[3]: https://curl.haxx.se/docs/manpage.html#-K',
+            '[4]: https://jsonlines.org/'
+        ]
+        return '\n\n'.join([
+            'The desired format of the output.',
+            *supported_format_descriptions,
+            *links
+        ])
 
     def _route(self, *, fetch: bool, initiate: bool):
         path = self._manifest_path(fetch=fetch, token=None if initiate else '{token}')
@@ -154,7 +200,7 @@ class ManifestController(QueryController):
                         Swagger UI. Please use [GET /fetch/manifest/files/{token}][1]
                         instead.
 
-                        [1]: #operations-Manifests-get_fetch_manifest_files
+                        [1]: #operations-Manifests-get_fetch_manifest_files__token_
                     ''') if not initiate and not fetch else fd('''
                         Create a manifest preparation job, returning a 200 status
                         response whose JSON body emulates the HTTP headers that would be
@@ -194,7 +240,7 @@ class ManifestController(QueryController):
                         upper limit on the number of consecutive redirects, before the
                         manifest generation job is done.
 
-                        [1]: #operations-Manifests-get_manifest_files
+                        [1]: #operations-Manifests-get_manifest_files__token_
                     '''),
                 'parameters': [
                     self._catalog_param_spec,
@@ -205,41 +251,12 @@ class ManifestController(QueryController):
                             schema.enum(
                                 *[
                                     format.value
-                                    for format in self._metadata_plugin.manifest_formats
+                                    for format in self._formats
                                 ],
                                 form=str
                             )
                         ),
-                        description=f'''
-                                The desired format of the output.
-
-                                - `{ManifestFormat.compact.value}` (the default) for a compact,
-                                  tab-separated manifest
-
-                                - `{ManifestFormat.terra_pfb.value}` for a manifest in the [PFB
-                                  format][2]. This format is mainly used for exporting data to
-                                  Terra.
-
-                                - `{ManifestFormat.curl.value}` for a [curl configuration
-                                  file][3] manifest. This manifest can be used with the curl
-                                  program to download all the files listed in the manifest.
-
-                                - `{ManifestFormat.verbatim_jsonl.value}` for a verbatim
-                                  manifest in [JSONL][4] format. Each line contains an
-                                  unaltered metadata entity from the underlying repository.
-
-                                - `{ManifestFormat.verbatim_pfb.value}` for a verbatim
-                                  manifest in the [PFB format][2]. This format is mainly
-                                  used for exporting data to Terra.
-
-                                [1]: https://software.broadinstitute.org/firecloud/documentation/article?id=10954
-
-                                [2]: https://github.com/uc-cdis/pypfb
-
-                                [3]: https://curl.haxx.se/docs/manpage.html#-K
-
-                                [4]: https://jsonlines.org/
-                            '''
+                        description=self._describe_format_param()
                     )
                 ] if initiate else [],
                 'responses': {
@@ -255,10 +272,9 @@ class ManifestController(QueryController):
                             'Location': {
                                 'description': fd('''
                                     The URL of the manifest preparation job at
-                                ''') + fd('''the [`GET
-                                /manifest/files/{token}`][2] endpoint.
+                                    the [`GET /manifest/files/{token}`][2] endpoint.
 
-                                [2]: #operations-Manifests-get_fetch_manifest_files_token
+                                    [2]: #operations-Manifests-get_fetch_manifest_files__token_
                                 ''') if initiate else fd('''
                                     The URL of this endpoint
                                 '''),
@@ -321,7 +337,7 @@ class ManifestController(QueryController):
                             ''') if initiate else fd('''
                             [GET /manifest/files/{token}][1].
 
-                            [1]: #operations-Manifests-get_manifest_files
+                            [1]: #operations-Manifests-get_manifest_files__token_
                             ''')) + fd('''
 
                             Note: For a 200 status code response whose body has the
@@ -331,7 +347,7 @@ class ManifestController(QueryController):
                             redirect, this time a genuine (not emulated) 302 status
                             redirect to the actual location of the manifest.
 
-                            [2]: #operations-Manifests-get_manifest_files
+                            [2]: #operations-Manifests-get_manifest_files__token_
 
                             Note: A 200 status response with a `Status` property of
                             302 in its body additionally contains a `CommandLine`
@@ -408,7 +424,7 @@ class ManifestController(QueryController):
                             filters=self._validate_filters)
             # Now that the catalog is valid, we can provide the default format that
             # depends on it
-            default_format = self._metadata_plugin.manifest_formats[0].value
+            default_format = self._formats[0].value
             query_params.setdefault('format', default_format)
         else:
             validate_params(query_params)
@@ -419,7 +435,7 @@ class ManifestController(QueryController):
                               authentication=authentication)
 
     def _validate_manifest_format(self, format: str):
-        supported_formats = {f.value for f in self._metadata_plugin.manifest_formats}
+        supported_formats = {f.value for f in self._formats}
         try:
             ManifestFormat(format)
         except ValueError:

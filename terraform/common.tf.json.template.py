@@ -3,11 +3,13 @@ from pathlib import (
 )
 
 from azul import (
-    R,
     config,
 )
-from azul.terraform import (
+from azul.infra.terraform import (
     emit_tf,
+)
+from azul.lib import (
+    R,
 )
 
 expected_component_path = Path(config.project_root) / 'terraform' / config.terraform_component
@@ -37,7 +39,7 @@ emit_tf({
     ],
     "locals": {
         "account_id": "${data.aws_caller_identity.current.account_id}",
-        "region": "${data.aws_region.current.name}",
+        "region": "${data.aws_region.current.region}",
         "google_project": "${data.google_client_config.current.project}" if config.enable_gcp() else None
     },
 })

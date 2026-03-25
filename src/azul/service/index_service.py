@@ -27,14 +27,20 @@ from opensearchpy.helpers.response import (
 
 from azul import (
     CatalogName,
-    cache,
     config,
-)
-from azul.indexer import (
-    SourceSpec,
 )
 from azul.indexer.mirror_service import (
     MirrorService,
+)
+from azul.lib import (
+    cache,
+)
+from azul.lib.types import (
+    JSON,
+    MutableJSON,
+)
+from azul.lib.uuids import (
+    validate_uuid,
 )
 from azul.plugins import (
     File,
@@ -46,21 +52,17 @@ from azul.service import (
     Filters,
 )
 from azul.service.query_service import (
-    ElasticsearchStage,
     IndexNotFoundError,
+    OpenSearchStage,
     Pagination,
     PaginationStage,
     QueryService,
     ResponseTriple,
     ToDictStage,
-    _ElasticsearchStage,
+    _OpenSearchStage,
 )
-from azul.types import (
-    JSON,
-    MutableJSON,
-)
-from azul.uuids import (
-    validate_uuid,
+from azul.source import (
+    SourceSpec,
 )
 
 log = logging.getLogger(__name__)
@@ -73,9 +75,9 @@ class EntityNotFoundError(Exception):
 
 
 @attrs.frozen(auto_attribs=True, kw_only=True)
-class SearchResponseStage(_ElasticsearchStage[ResponseTriple, MutableJSON],
+class SearchResponseStage(_OpenSearchStage[ResponseTriple, MutableJSON],
                           metaclass=ABCMeta):
-    service: 'IndexService'
+    service: IndexService
     file_url_func: FileUrlFunc
 
     def prepare_request(self, request: Search) -> Search:
@@ -97,7 +99,7 @@ class SearchResponseStage(_ElasticsearchStage[ResponseTriple, MutableJSON],
         return mirror_service.mirror_uri(source, file_cls, file)
 
 
-class SummaryResponseStage(ElasticsearchStage[JSON, MutableJSON],
+class SummaryResponseStage(OpenSearchStage[JSON, MutableJSON],
                            metaclass=ABCMeta):
 
     @property
@@ -134,7 +136,7 @@ class IndexService(QueryService):
         :param file_url_func: A function that is used only when getting a *list* of files data.
         It creates the files URL based on info from the request. It should have the type
         signature `(uuid: str, **params) -> str`
-        :return: The Elasticsearch JSON response
+        :return: The OpenSearch JSON response
         """
         if item_id is not None:
             validate_uuid(item_id)
@@ -176,7 +178,7 @@ class IndexService(QueryService):
         :param catalog: The name of the catalog to query
 
         :param entity_type: the string referring to the entity type used to get
-                            the ElasticSearch index to search
+                            the OpenSearch index to search
 
         :param aggregate: Whether to perform the aggregation stage or not.
 
@@ -285,7 +287,7 @@ class IndexService(QueryService):
         assert len(response.hits) == 0
 
         if config.debug == 2 and log.isEnabledFor(logging.DEBUG):
-            log.debug('Elasticsearch request: %s', json.dumps(request.to_dict(), indent=4))
+            log.debug('OpenSearch request: %s', json.dumps(request.to_dict(), indent=4))
 
         result = chain.process_response(response)
 

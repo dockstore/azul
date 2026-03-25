@@ -22,10 +22,10 @@ from more_itertools.more import (
     mark_ends,
 )
 
-from azul import (
+from azul.lib import (
     R,
 )
-from azul.types import (
+from azul.lib.types import (
     AnyJSON,
     AnyMutableJSON,
     CompositeJSON,
@@ -416,7 +416,7 @@ class StaticRegisteredPolymorphicSerializable(PolymorphicSerializable):
     unique, regardless of the module the subclass is defined in.
     """
 
-    _registry: ClassVar[dict[str, type['StaticRegisteredPolymorphicSerializable']]] = {}
+    _registry: ClassVar[dict[str, type[StaticRegisteredPolymorphicSerializable]]] = {}
 
     @classmethod
     def cls_to_json(cls) -> AnyJSON:

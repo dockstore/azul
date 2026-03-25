@@ -39,28 +39,33 @@ from app_test_case import (
     LocalAppTestCase,
 )
 from azul import (
-    cached_property,
     config,
-)
-from azul.collections import (
-    none_safe_key,
 )
 from azul.deployment import (
     aws,
 )
+from azul.field_type import (
+    null_str,
+)
 from azul.indexer import (
     BundleFQID,
-    Prefix,
     SourcedBundleFQID,
 )
 from azul.indexer.document import (
     DocumentType,
     IndexName,
 )
-from azul.indexer.field import (
-    null_str,
-)
 import azul.indexer.index_service
+from azul.lib import (
+    cached_property,
+)
+from azul.lib.collections import (
+    none_safe_key,
+)
+from azul.lib.types import (
+    JSON,
+    JSONs,
+)
 from azul.logging import (
     configure_test_logging,
 )
@@ -86,13 +91,12 @@ from azul.service.query_service import (
 from azul.service.source_service import (
     SourceService,
 )
+from azul.source import (
+    Prefix,
+)
 from azul.terra import (
     TDRSourceRef,
     TDRSourceSpec,
-)
-from azul.types import (
-    JSON,
-    JSONs,
 )
 from indexer import (
     DCP1CannedBundleTestCase,
@@ -183,7 +187,7 @@ class TestIndexResponse(IndexResponseTestCase):
         index_name = str(IndexName.create(catalog=self.catalog,
                                           qualifier=entity_type,
                                           doc_type=DocumentType.aggregate))
-        results = self.es_client.search(index=index_name, body=body)
+        results = self.opensearch.search(index=index_name, body=body)
         service = self._indexer_index_service
         doc = results['hits']['hits'][0]['_source']
         doc = service.translate_fields(catalog=self.catalog, doc=doc, forward=False)
@@ -2256,7 +2260,7 @@ class TestIndexResponse(IndexResponseTestCase):
             with self.subTest(is_repo_dirty=dirty):
                 with mock.patch.dict(os.environ,
                                      azul_git_commit=commit,
-                                     azul_git_dirty=str(dirty)):
+                                     azul_git_dirty=str(int(dirty))):
                     url = self.base_url.set(path='/version')
                     response = requests.get(str(url))
                     response.raise_for_status()

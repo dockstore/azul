@@ -14,21 +14,23 @@ import time
 import attr
 
 from azul import (
-    cache,
     config,
 )
 from azul.args import (
     AzulArgumentHelpFormatter,
 )
-from azul.bigquery_reservation import (
-    BigQueryReservation,
-)
 from azul.deployment import (
     aws,
+)
+from azul.infra.bigquery_reservation import (
+    BigQueryReservation,
 )
 from azul.lambdas import (
     LambdaFunction,
     LambdaFunctions,
+)
+from azul.lib import (
+    cache,
 )
 from azul.logging import (
     configure_script_logging,

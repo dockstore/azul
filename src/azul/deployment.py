@@ -47,26 +47,25 @@ from more_itertools import (
 
 from azul import (
     Netloc,
-    R,
-    cache,
-    cached_property,
     config,
 )
 from azul.http import (
     http_client,
 )
+from azul.lib import (
+    R,
+    cache,
+    cached_property,
+)
+from azul.lib.types import (
+    JSONs,
+)
 from azul.logging import (
     azul_boto3_log as boto3_log,
     http_body_log_message,
 )
-from azul.types import (
-    JSONs,
-)
 
 if TYPE_CHECKING:
-    from azul import (
-        Config,
-    )
     from mypy_boto3_apigateway import (
         APIGatewayClient,
     )
@@ -82,12 +81,6 @@ if TYPE_CHECKING:
     from mypy_boto3_ecr import (
         ECRClient,
     )
-    from mypy_boto3_es import (
-        ElasticsearchServiceClient,
-    )
-    from mypy_boto3_es.type_defs import (
-        ElasticsearchDomainStatusTypeDef,
-    )
     from mypy_boto3_iam import (
         IAMClient,
     )
@@ -96,6 +89,12 @@ if TYPE_CHECKING:
     )
     from mypy_boto3_lambda import (
         LambdaClient,
+    )
+    from mypy_boto3_opensearch import (
+        OpenSearchServiceClient,
+    )
+    from mypy_boto3_opensearch.type_defs import (
+        DomainStatusTypeDef,
     )
     from mypy_boto3_s3 import (
         S3Client,
@@ -122,6 +121,10 @@ if TYPE_CHECKING:
     )
     from mypy_boto3_sts import (
         STSClient,
+    )
+
+    from azul import (
+        Config,
     )
 
 log = logging.getLogger(__name__)
@@ -203,11 +206,11 @@ class AWS:
         return self.sts.meta.region_name
 
     @property
-    def s3(self) -> 'S3Client':
+    def s3(self) -> S3Client:
         return self.client('s3', azul_logging=True)
 
     @property
-    def s3_resource(self) -> 'S3ServiceResource':
+    def s3_resource(self) -> S3ServiceResource:
         return self.resource('s3', azul_logging=True)
 
     #: https://docs.aws.amazon.com/AmazonS3/latest/dev/qfacts.html
@@ -217,31 +220,31 @@ class AWS:
     s3_max_num_parts = 10000
 
     @property
-    def securityhub(self) -> 'SecurityHubClient':
+    def securityhub(self) -> SecurityHubClient:
         return self.client('securityhub')
 
     @property
-    def sns(self) -> 'SNSClient':
+    def sns(self) -> SNSClient:
         return self.client('sns')
 
     @property
-    def sts(self) -> 'STSClient':
+    def sts(self) -> STSClient:
         return self.client('sts')
 
     @property
-    def lambda_(self) -> 'LambdaClient':
+    def lambda_(self) -> LambdaClient:
         return self.client('lambda')
 
     @property
-    def cloudwatch(self) -> 'CloudWatchClient':
+    def cloudwatch(self) -> CloudWatchClient:
         return self.client('cloudwatch')
 
     @property
-    def apigateway(self) -> 'APIGatewayClient':
+    def apigateway(self) -> APIGatewayClient:
         return self.client('apigateway')
 
     @property
-    def ecr(self) -> 'ECRClient':
+    def ecr(self) -> ECRClient:
         return self.client('ecr')
 
     @property
@@ -254,56 +257,59 @@ class AWS:
         return one(self.iam.list_account_aliases()['AccountAliases'])
 
     @property
-    def es(self) -> 'ElasticsearchServiceClient':
-        return self.client('es')
+    def opensearch(self) -> OpenSearchServiceClient:
+        return self.client('opensearch')
 
     @property
-    def stepfunctions(self) -> 'SFNClient':
+    def stepfunctions(self) -> SFNClient:
         return self.client('stepfunctions')
 
     @property
-    def iam(self) -> 'IAMClient':
+    def iam(self) -> IAMClient:
         return self.client('iam')
 
     @property
-    def kms(self) -> 'KMSClient':
+    def kms(self) -> KMSClient:
         return self.client('kms')
 
     @property
-    def secretsmanager(self) -> 'SecretsManagerClient':
+    def secretsmanager(self) -> SecretsManagerClient:
         return self.client('secretsmanager')
 
     @property
-    def ec2(self) -> 'EC2Client':
+    def ec2(self) -> EC2Client:
         return self.client('ec2')
 
     @property
-    def dynamodb(self) -> 'DynamoDBClient':
+    def dynamodb(self) -> DynamoDBClient:
         return self.client('dynamodb', azul_logging=True)
 
     @property
-    def es_endpoint(self) -> Netloc:
-        endpoint = config.es_endpoint
+    def opensearch_endpoint(self) -> Netloc:
+        endpoint = config.opensearch_endpoint
         if endpoint is None:
-            return self._es_domain_status['Endpoints']['vpc'], 443
+            return self._opensearch_domain_status['Endpoints']['vpc'], 443
         else:
             return endpoint
 
     @property
-    def es_instance_count(self) -> int:
-        if config.es_endpoint:
-            return config.es_instance_count
+    def opensearch_instance_count(self) -> int:
+        if config.opensearch_endpoint:
+            return config.opensearch_instance_count
         else:
-            return self._es_domain_status['ElasticsearchClusterConfig']['InstanceCount']
+            status = self._opensearch_domain_status
+            return status['ClusterConfig']['InstanceCount']
 
     @property
     @_cache
-    def _es_domain_status(self) -> 'ElasticsearchDomainStatusTypeDef':
+    def _opensearch_domain_status(self) -> DomainStatusTypeDef:
         """
-        Return the status of the current deployment's Elasticsearch domain
+        Return the status of the current deployment's OpenSearch domain
         """
-        es_domain = self.es.describe_elasticsearch_domain(DomainName=config.es_domain)
-        return es_domain['DomainStatus']
+        response = self.opensearch.describe_domain(
+            DomainName=config.opensearch_domain
+        )
+        return response['DomainStatus']
 
     def get_lambda_arn(self, function_name, suffix):
         return f'arn:aws:lambda:{self.region_name}:{self.account}:function:{function_name}-{suffix}'
@@ -362,13 +368,13 @@ class AWS:
         return dss_config[bucket_key]
 
     @_cache
-    def _service_account_creds(self, secret_name: str) -> 'GetSecretValueResponseTypeDef':
+    def _service_account_creds(self, secret_name: str) -> GetSecretValueResponseTypeDef:
         sm = self.secretsmanager
         creds = sm.get_secret_value(SecretId=secret_name)
         return creds
 
     @contextmanager
-    def service_account_credentials(self, service_account: 'Config.ServiceAccount'):
+    def service_account_credentials(self, service_account: Config.ServiceAccount):
         """
         A context manager that provides a temporary file containing the
         credentials of the Google service account that represents the Azul
@@ -743,11 +749,11 @@ class AWS:
                                               stage=config.main_deployment_stage)
 
     @property
-    def sqs_resource(self) -> 'SQSServiceResource':
+    def sqs_resource(self) -> SQSServiceResource:
         return self.resource('sqs', azul_logging=config.is_in_lambda)
 
     @_cache
-    def sqs_queue(self, queue_name: str) -> 'Queue':
+    def sqs_queue(self, queue_name: str) -> Queue:
         return self.sqs_resource.get_queue_by_name(QueueName=queue_name)
 
     #: The maximum number of SendMessage, ReceiveMessage, or DeleteMessage API

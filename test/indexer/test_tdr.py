@@ -57,20 +57,25 @@ from more_itertools import (
 import urllib3
 
 from azul import (
-    cached_property,
     config,
 )
 from azul.auth import (
     OAuth2,
 )
-from azul.bigquery import (
-    BigQueryRow,
-)
 from azul.docker import (
     resolve_docker_image_for_launch,
 )
-from azul.indexer import (
-    Prefix,
+from azul.lib import (
+    cached_property,
+)
+from azul.lib.bigquery import (
+    BigQueryRow,
+)
+from azul.lib.types import (
+    AnyJSON,
+    JSON,
+    JSONs,
+    reify,
 )
 from azul.logging import (
     configure_test_logging,
@@ -91,17 +96,14 @@ from azul.plugins.repository.tdr_hca import (
     TDRSourceRef,
     log as plugin_log,
 )
+from azul.source import (
+    Prefix,
+)
 from azul.terra import (
     TDRClient,
     TDRSourceSpec,
     TerraClient,
     TerraCredentialsProvider,
-)
-from azul.types import (
-    AnyJSON,
-    JSON,
-    JSONs,
-    reify,
 )
 from azul_test_case import (
     AzulUnitTestCase,

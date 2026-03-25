@@ -417,23 +417,23 @@ def env() -> Mapping[str, str | None]:
         #
         'AZUL_RESOURCE_PREFIX': 'azul',
 
-        # The host and port of the Elasticsearch instance to use. This takes
-        # precedence over AZUL_ES_DOMAIN.
+        # The host and port of the OpenSearch instance to use. This takes
+        # precedence over AZUL_OPENSEARCH_DOMAIN.
         #
-        'AZUL_ES_ENDPOINT': None,
+        'AZUL_OPENSEARCH_ENDPOINT': None,
 
-        # The name of the AWS-hosted Elasticsearch instance (not a domain name)
+        # The name of the AWS-hosted OpenSearch instance (not a domain name)
         # to use. The given ES domain's endpoint will be looked up dynamically.
         #
-        'AZUL_ES_DOMAIN': 'azul-index-{AZUL_DEPLOYMENT_STAGE}',
+        'AZUL_OPENSEARCH_DOMAIN': 'azul-index-{AZUL_DEPLOYMENT_STAGE}',
 
         # Boolean value, 1 to share `dev` ES domain, 0 to create your own
         #
-        'AZUL_SHARE_ES_DOMAIN': '0',
+        'AZUL_SHARE_OPENSEARCH_DOMAIN': '0',
 
-        # The number of nodes in the AWS-hosted Elasticsearch cluster
+        # The number of nodes in the AWS-hosted OpenSearch cluster
         #
-        'AZUL_ES_INSTANCE_COUNT': None,
+        'AZUL_OPENSEARCH_INSTANCE_COUNT': None,
 
         # The EC2 instance type to use for a cluster node.
         #
@@ -441,19 +441,19 @@ def env() -> Mapping[str, str | None]:
         # `r` family, especially now that the number of shards is tied to the
         # indexer Lambda concurrency.
         #
-        'AZUL_ES_INSTANCE_TYPE': None,
+        'AZUL_OPENSEARCH_INSTANCE_TYPE': None,
 
         # The size of the EBS volume backing each cluster node. Set to 0 when
         # using an instance type with SSD volumes.
         #
-        'AZUL_ES_VOLUME_SIZE': '0',
+        'AZUL_OPENSEARCH_VOLUME_SIZE': '0',
 
-        # Elasticsearch operation timeout in seconds. Matches AWS' own timeout
+        # OpenSearch operation timeout in seconds. Matches AWS' own timeout
         # on the ELB sitting in front of ES:
         #
         # https://forums.aws.amazon.com/thread.jspa?threadID=233378
         #
-        'AZUL_ES_TIMEOUT': '60',
+        'AZUL_OPENSEARCH_TIMEOUT': '60',
 
         # The number of workers pulling files from the DSS repository. There is
         # one such set of repository workers per index worker.
@@ -575,7 +575,7 @@ def env() -> Mapping[str, str | None]:
         #
         # for details. These settings may also be used to drive other scaling
         # choices. For example, the non-retry contribution concurrency
-        # determines the number of shards in Elasticsearch.
+        # determines the number of shards in OpenSearch.
         #
         'AZUL_CONTRIBUTION_CONCURRENCY': '64',
         'AZUL_AGGREGATION_CONCURRENCY': '64',
@@ -660,7 +660,7 @@ def env() -> Mapping[str, str | None]:
         'azul_gitlab_user': None,
 
         'PYTHONPATH': '{project_root}/src:{project_root}/test',
-        'MYPYPATH': '{project_root}/src:{project_root}/stubs',
+        'MYPYPATH': '{project_root}/src:{project_root}/stubs:{project_root}/test',
 
         # The path of a directory containing a wheel for each runtime
         # dependency. Settng this variable causes our fork of Chalice to skip
@@ -941,5 +941,10 @@ def env() -> Mapping[str, str | None]:
         # A Lambda runtime version to pin to, which overrides the AWS-managed
         # default.
         #
-        'azul_lambda_runtime_version': None
+        'azul_lambda_runtime_version': None,
+
+        # URL of Terra's external credentials manager (ECM) service used by the
+        # Azul deployment.
+        #
+        'azul_ecm_service_url': None
     }

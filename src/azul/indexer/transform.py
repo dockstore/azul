@@ -11,8 +11,8 @@ from typing import (
 
 import attr
 
-from azul.collections import (
-    alist,
+from azul.field_type import (
+    FieldTypes,
 )
 from azul.indexer import (
     Bundle,
@@ -31,13 +31,13 @@ from azul.indexer.document import (
     Replica,
     ReplicaCoordinates,
 )
-from azul.indexer.field import (
-    FieldTypes,
+from azul.lib.collections import (
+    alist,
 )
-from azul.json import (
+from azul.lib.json import (
     json_hash,
 )
-from azul.types import (
+from azul.lib.types import (
     JSON,
 )
 

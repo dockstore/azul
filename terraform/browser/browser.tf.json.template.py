@@ -19,29 +19,33 @@ from more_itertools import (
 )
 
 from azul import (
-    cached_property,
     config,
-    iif,
-)
-from azul.collections import (
-    adict,
-    dict_merge,
 )
 from azul.deployment import (
     aws,
 )
-from azul.strings import (
-    double_quote as dq,
-    join_words as jw,
-    single_quote as sq,
-)
-from azul.terraform import (
+from azul.infra.terraform import (
     block_public_s3_bucket_access,
     emit_tf,
     enable_s3_bucket_inventory,
     set_empty_s3_bucket_lifecycle_config,
 )
-from azul.types import (
+from azul.lib import (
+    cached_property,
+)
+from azul.lib.collections import (
+    adict,
+    dict_merge,
+)
+from azul.lib.functions import (
+    iif,
+)
+from azul.lib.strings import (
+    double_quote as dq,
+    join_words as jw,
+    single_quote as sq,
+)
+from azul.lib.types import (
     JSON,
 )
 
@@ -569,7 +573,9 @@ def content_security_policy() -> str:
                     path='/register/user/v2/self/termsOfServiceDetails')),
            str(furl(config.terra_service_url,
                     path='/api/nih/status')),
-           str(config.service_endpoint))
+           str(config.service_endpoint),
+           str(furl(config.ecm_service_url,
+                    path='/api/oauth/v1/ras')))
     ])
 
 

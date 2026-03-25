@@ -1,19 +1,19 @@
-from azul import (
+from azul.lib import (
     R,
-)
-from azul.es import (
-    ESClientFactory,
 )
 from azul.logging import (
     configure_script_logging,
+)
+from azul.opensearch import (
+    OpenSearchClientFactory,
 )
 
 configure_script_logging()
 
 
 def main():
-    es = ESClientFactory.get()
-    response = es.cluster.put_settings(body={
+    opensearch = OpenSearchClientFactory.get()
+    response = opensearch.cluster.put_settings(body={
         'persistent': {
             'action.auto_create_index': False
         }

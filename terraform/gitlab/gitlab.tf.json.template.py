@@ -15,26 +15,26 @@ import yaml
 from azul import (
     config,
 )
-from azul.collections import (
-    alist,
-    dict_merge,
-)
 from azul.deployment import (
     aws,
 )
 from azul.docker import (
     resolve_docker_image_for_pull,
 )
-from azul.strings import (
+from azul.infra.terraform import (
+    chalice,
+    emit_tf,
+    vpc,
+)
+from azul.lib.collections import (
+    alist,
+    dict_merge,
+)
+from azul.lib.strings import (
     departition,
     join_lines as jl,
     join_words as jw,
     single_quote as sq,
-)
-from azul.terraform import (
-    chalice,
-    emit_tf,
-    vpc,
 )
 
 # This Terraform config creates a single EC2 instance with a bunch of Docker
@@ -264,6 +264,12 @@ runner_image, _ = resolve_docker_image_for_pull('gitlab_runner')
 ami_id = {
     'us-east-1': 'ami-07f8da7e8a9c81dee'
 }
+
+# For instructions on finding the latest Amazon Linux 2023 release, see
+# "Updating software packages via release version upgrade in AL2023 instances"
+# section in OPERATOR.rst.
+#
+AL2023_release = '2023.10.20260302'
 
 # Cloud-init's cc_mounts module does not support the UUID=<uuid> device
 # specification format. We use the /dev/disk/by-uuid/<uuid> symlink as a
@@ -1622,9 +1628,8 @@ emit_tf({} if config.terraform_component != 'gitlab' else {
                     'volume_size': 20
                 },
                 'key_name': '${aws_key_pair.gitlab.key_name}',
-                'network_interface': {
-                    'network_interface_id': '${aws_network_interface.gitlab.id}',
-                    'device_index': 0
+                'primary_network_interface': {
+                    'network_interface_id': '${aws_network_interface.gitlab.id}'
                 },
                 'user_data_replace_on_change': True,
                 'user_data': '#cloud-config\n' + yaml.dump({
@@ -2227,11 +2232,22 @@ emit_tf({} if config.terraform_component != 'gitlab' else {
                             '-c', 'file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json',
                             '-s'  # restart agent afterwards
                         ],
-                        ['systemctl', 'enable', '--now', 'amazon-ssm-agent.service']
+                        ['systemctl', 'enable', '--now', 'amazon-ssm-agent.service'],
+                        [
+                            # Amazon Linux 2023 uses deterministic versioning,
+                            # requiring us to run `dnf upgrade` with a specific
+                            # release version. This command replaces CloudInit's
+                            # native `package_update` and `package_upgrade` keys
+                            # which appear to do nothing under AL2023.
+                            'cloud-init-per',
+                            'once',
+                            'upgrade-packages',
+                            'dnf',
+                            'upgrade',
+                            '--releasever=' + AL2023_release,
+                            '--assumeyes'
+                        ]
                     ],
-                    'package_update': True,
-                    'package_upgrade': True,
-                    'package_reboot_if_required': True,
                     'power_state': {
                         'mode': 'reboot',
                         # A bug in Amazon's AMI causes a 'condition' to be added

@@ -13,10 +13,10 @@ from typing import (
     Optional,
 )
 
-from azul.files import (
+from azul.lib.files import (
     write_file_atomically,
 )
-from azul.strings import (
+from azul.lib.strings import (
     single_quote as sq,
 )
 
