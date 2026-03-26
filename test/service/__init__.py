@@ -26,6 +26,7 @@ from warnings import (
     deprecated,
 )
 
+import attrs
 from more_itertools import (
     flatten,
     one,
@@ -44,6 +45,7 @@ from app_test_case import (
     LocalAppTestCase,
 )
 from azul import (
+    CatalogName,
     config,
 )
 from azul.deployment import (
@@ -252,6 +254,16 @@ class MirrorTestCase(S3TestCase):
                                    'mirror_bucket',
                                    new=PropertyMock(return_value=self.mirror_bucket)))
         self._create_test_bucket(self.mirror_bucket)
+
+    @classmethod
+    def _patch_mirror_limit(cls,
+                            catalog: CatalogName,
+                            size: int | None
+                            ) -> patch.dict:
+        catalogs = config.catalogs
+        return patch.dict(catalogs, {
+            catalog: attrs.evolve(catalogs[catalog], mirror_limit=size)
+        })
 
 
 # FIXME: Remove deprecation, convert doctests, prevent use as decorator

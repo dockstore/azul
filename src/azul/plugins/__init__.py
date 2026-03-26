@@ -227,6 +227,7 @@ class SpecialFields:
     bundle_uuid: SpecialField
     bundle_version: SpecialField
     file_uuid: SpecialField
+    file_name: SpecialField
 
 
 class ManifestFormat(SerializableEnum):
