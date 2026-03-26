@@ -626,11 +626,11 @@ tf_config = {
                     # from triggering false positive alarms, we include a
                     # sub-pattern to also match successful power-offs & reboots.
                     ('clamscan', '?"clamscan succeeded" '
-                                 '?"systemd: Starting Reboot" '
-                                 '?"systemd: Starting Power-Off"'),
+                                 '?"System is rebooting" '
+                                 '?"System is powering down"'),
                     ('freshclam', '?"freshclam succeeded" '
-                                  '?"systemd: Starting Reboot" '
-                                  '?"systemd: Starting Power-Off"'),
+                                  '?"System is rebooting" '
+                                  '?"System is powering down"'),
                     ('clam_fail', '?"clamscan failed" '
                                   '?"freshclam failed"')
                 ]
