@@ -318,15 +318,8 @@ class TestMirrorController(DCP2TestCase,
             messages = self._mirror_sources(SourceConfig(mirror=False))
             self.assertEqual([], messages)
 
-        catalog = config.catalogs[self.catalog]
-
-        def patch_mirror_limit(size):
-            return patch.dict(config.catalogs, {
-                self.catalog: attrs.evolve(catalog, mirror_limit=size)
-            })
-
         with self.subTest(mirror_limit=-1):
-            with patch_mirror_limit(-1):
+            with self._patch_mirror_limit(self.catalog, -1):
                 messages = self._mirror_sources()
                 self.assertEqual([], messages)
 
@@ -336,7 +329,7 @@ class TestMirrorController(DCP2TestCase,
                                    size=self._file.size + 1)
             source_message = self._test_mirror_sources()
             partition_message = self._test_mirror_source(source_message)
-            with patch_mirror_limit(self._file.size):
+            with self._patch_mirror_limit(self.catalog, self._file.size):
                 self._test_mirror_partition(partition_message, [too_big, self._file])
 
     def test_multi_part_upload(self):

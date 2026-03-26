@@ -50,7 +50,6 @@ from typing import (
     IO,
     Protocol,
     Self,
-    cast,
 )
 import unicodedata
 from uuid import (
@@ -139,9 +138,11 @@ from azul.lib.types import (
     json_element_mappings,
     json_element_strings,
     json_elements_are_mappings,
+    json_int,
     json_list_of_dicts,
     json_mapping,
     json_sequence,
+    json_sequence_of_mappings,
     json_str,
     not_none,
     optional,
@@ -1518,6 +1519,11 @@ class CurlManifestGenerator(PagedManifestGenerator):
                       ) -> ManifestPartition:
 
         def _write(file: JSON, is_related_file: bool = False):
+            special_fields = self.metadata_plugin.special_fields
+            file_name_field = special_fields.file_name.name_in_hit
+            file_uuid_field = special_fields.file_uuid.name_in_hit
+
+            file_name = json_str(file[file_name_field])
             # Related files are indexed differently than normal files (they
             # don't have their own document but are listed inside the main
             # file's document), so to ensure that the /repository/files
@@ -1526,15 +1532,15 @@ class CurlManifestGenerator(PagedManifestGenerator):
             # need to query the index for that information.
             args = {
                 'requestIndex': 1,
-                'fileName': file['name'],
+                'fileName': file_name,
                 'drsUri': file['drs_uri']
             } if is_related_file else {
             }
 
             file_url = self._azul_file_url(file, args)
             if file_url is None:
-                output.write(f"# File {file['uuid']!r}, version {file['version']!r} is "
-                             f"currently not available in catalog {self.catalog!r}.\n\n")
+                output.write(f"# File {file[file_uuid_field]!r}, version {file['version']!r} "
+                             f"is currently not available in catalog {self.catalog!r}.\n\n")
             else:
                 # To prevent overwriting one file with another one of the same name
                 # but different content we nest each file in a folder using the
@@ -1542,7 +1548,7 @@ class CurlManifestGenerator(PagedManifestGenerator):
                 # the one with the most recent version.
                 bundle = max(json_element_mappings(doc['bundles']),
                              key=itemgetter('version', 'uuid'))
-                output_name = json_str(bundle['uuid']) + '/' + json_str(file['name'])
+                output_name = json_str(bundle['uuid']) + '/' + file_name
                 output_name = self._sanitize_path(output_name)
                 output.write(f'url={self._option(file_url)}\n'
                              f'output={self._option(output_name)}\n\n')
@@ -1573,9 +1579,29 @@ class CurlManifestGenerator(PagedManifestGenerator):
                 contents = json_mapping(doc['contents'])
                 files = json_sequence(contents['files'])
                 file = json_mapping(one(files))
-                _write(file)
-                for related_file in json_element_mappings(file['related_files']):
-                    _write(related_file, is_related_file=True)
+                source: JSON = one(json_sequence_of_mappings(doc['sources']))
+                source: SourceRef = SourceRef.from_json(source)
+
+                # On AnVIL, and for political reasons, we are not permitted to
+                # include managed-access files, even if they are accessible to
+                # the requesting user. Because we only mirror open-access files,
+                # we can use the mirrorability of a file as a proxy condition
+                # for excluding managed-access files. It is possible that the
+                # condition is true for a file that has yet to be mirrored.
+                # Until the mirrored copy exists, the download will fall back to
+                # TDR's original. We accept that caveat. Also note that if
+                # managed-access files were to be included, we would need to
+                # ensure that the signed URL of the manifest expired after one
+                # hour.
+                #
+                if not config.is_anvil_enabled(self.catalog) or (
+                    self.mirror_service.may_mirror_files_from_source(source.spec)
+                    and self.mirror_service.may_mirror(json_int(file['file_size']))
+                ):
+                    _write(file)
+                    if config.is_hca_enabled(self.catalog):
+                        for related_file in json_element_mappings(file['related_files']):
+                            _write(related_file, is_related_file=True)
             assert hit is not None
             return partition.next_page(file_name=None,
                                        search_after=self._search_after(hit))
@@ -1722,7 +1748,7 @@ class CompactManifestGenerator(PagedManifestGenerator):
                 sources = json_element_mappings(doc['sources'])
                 source: SourceSpec = SourceRef.from_json(one(sources)).spec
                 if len(project_short_names) < 2 and 'projects' in contents:
-                    project = one(cast(JSONs, contents['projects']))
+                    project = one(json_sequence_of_mappings(contents['projects']))
                     short_names = json_element_strings(project['project_short_name'])
                     project_short_names.update(short_names)
                 row: Cells = {}

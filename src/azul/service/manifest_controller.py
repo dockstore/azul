@@ -546,26 +546,31 @@ class ManifestController(QueryController):
             }
         else:
             assert manifest.manifest_key == manifest_key
+
             # The manifest is ultimately downloaded via a signed URL that points
-            # to the storage bucket. This signed URL expires after one hour,
-            # which is desirable because it is a client and its short lifespan
-            # reduces the risk of it being shared. However, this also makes it
-            # unsuitable for cURL downloads that may need to be retried over
-            # longer timespans (https://github.com/DataBiosphere/azul/issues/2875)
-            # To allow for cURL manifests to remain valid for longer than 1
-            # hour, we instead return a 301 redirect to the non-fetch
-            # `/manifest/files` endpoint with the object key of the cached
-            # manifest specified as a query parameter. This object key is also a
-            # client secret; it is mutually exclusive with OAuth tokens and
-            # allows for the cached manifest to be downloaded without
-            # authentication for as long as the cached manifest persists in S3.
-            # This increases the risk of the secret being shared, but is
-            # necessary to preserve the functionality of the cURL download.
+            # to the storage bucket. This URL expires after one hour. The signed
+            # URL is a client-side secret and a short expiration reduces the
+            # impact of it being accidentially shared with unauthorized parties.
+            #
+            # A short expiration, however, is unsuitable for cURL downloads that
+            # may need to be retried over a longer time period. To allow for
+            # cURL manifests to remain valid for longer than one hour, we
+            # instead return a 301 redirect to the non-fetch `/manifest/files`
+            # endpoint with the object key of the cached manifest specified as a
+            # query parameter. This object key is also a client secret; it is
+            # mutually exclusive with OAuth tokens and allows for the cached
+            # manifest to be downloaded without authentication for as long as
+            # the cached manifest persists in S3. This increases the risk of the
+            # secret being shared, but is necessary to preserve the utility of
+            # the cURL download feature in general.
+            #
+            # Note that on AnVIL, we are prohibited from exposing manifest URLs
+            # that remain valid for longer than one hour, if those manifests
+            # contain managed-access data or metadata. Fortunately, there's
+            # currently no need to enforce this here because the AnVIL plugin's
+            # cURL-format manifest never includes managed-access files.
+            #
             if fetch and manifest.format is ManifestFormat.curl:
-                # For AnVIL, we are prohibited from exposing a manifest URL that
-                # remains valid for longer than 1 hour. Currently, the AnVIL
-                # plugin does not support cURL-format manifests.
-                assert not config.is_anvil_enabled(manifest_key.catalog)
                 manifest_key = self._service.sign_manifest_key(manifest_key)
                 url = self._manifest_url(fetch=False, token_or_key=manifest_key.encode())
             else:
