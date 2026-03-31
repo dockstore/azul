@@ -16,17 +16,17 @@
         }
     },
     "docker.io/library/python:3.14.3-slim-trixie": {
-        "digest": "sha256:6a27522252aef8432841f224d9baaa6e9fce07b07584154fa0b9a96603af7456",
-        "mirror_digest": "sha256:1c0855b5e91e780a3dfa6218b961c1c78c349019faf71a1bb57f038567d3b57f",
+        "digest": "sha256:fb83750094b46fd6b8adaa80f66e2302ecbe45d513f6cece637a841e1025b4ca",
+        "mirror_digest": "sha256:c9c300fc0cf86a9624e77479c7d64d269bf49e586ddda16042a0b8df1425f66a",
         "parts": {
             "linux/amd64": {
-                "digest": "sha256:586f424e29bbb3bc840dd9759d90d20692641fd62c251fe5a88e19a55a0d9c79",
-                "id": "sha256:c2f9dd0ca5d1f9226c033719d6e721960fe43637de095800dc69b74a62514a23",
+                "digest": "sha256:f1567b2546e86b2d9403776d370e8fed4dd57060b6a4671770b9e0bc28f03079",
+                "id": "sha256:3876b2cb3811cb0de4cd9ef1d1ea71841b49544365e61f77b626464f352fae11",
                 "platform": "linux/amd64"
             },
             "linux/arm64": {
-                "digest": "sha256:59d1c72e5d0af7b4b38a8f6093f867940ddd595aa10924580613199ca15a7236",
-                "id": "sha256:b107f2784ffaf12bbbaf0a9cd9d9b3673c31830578e4ff79c8fce9eb7f8e898a",
+                "digest": "sha256:2fe2c120207ce9135b43d6e0dff01d4424b01750941557b27ca7fce322101cf9",
+                "id": "sha256:672634ae9f48407bfd38385d90abe1342e8ee51f955cb5f060107c8eb3713c98",
                 "platform": "linux/arm64"
             }
         }
