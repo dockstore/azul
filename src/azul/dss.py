@@ -1,5 +1,6 @@
 from datetime import (
     datetime,
+    timezone,
 )
 import logging
 
@@ -9,9 +10,7 @@ version_format = '%Y-%m-%dT%H%M%S.%fZ'
 
 
 def new_version():
-    # FIXME: DeprecationWarning for datetime methods in Python 3.12
-    #        https://github.com/DataBiosphere/azul/issues/5953
-    return datetime.utcnow().strftime(version_format)
+    return datetime.now(timezone.utc).strftime(version_format)
 
 
 def validate_version(version: str):
