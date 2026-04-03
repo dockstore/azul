@@ -27,6 +27,11 @@ _period: 14 days
     - [ ] … upgrade direct Python dependencies, [reference the operator manual](https://github.com/DataBiosphere/azul/blob/develop/OPERATOR.rst#upgrade-direct-python-dependencies) for instructions <sub>or not applicable</sub>
     - [ ] … update to [Python](https://hub.docker.com/_/python/tags) (only patch versions) <sub>or no update available</sub>
     - [ ] … update to [Terraform](https://hub.docker.com/r/hashicorp/terraform/tags) (only patch versions) <sub>or no update available</sub>
+    - [ ] … update to Terraform provider (only minor and patch versions) …
+        - [ ] … [hashicorp/aws](https://registry.terraform.io/providers/hashicorp/aws/latest) <sub>or no update available</sub>
+        - [ ] … [hashicorp/external](https://registry.terraform.io/providers/hashicorp/external/latest) <sub>or no update available</sub>
+        - [ ] … [hashicorp/google](https://registry.terraform.io/providers/hashicorp/google/latest) <sub>or no update available</sub>
+        - [ ] … [hashicorp/null](https://registry.terraform.io/providers/hashicorp/null/latest) <sub>or no update available</sub>
     - [ ] … new [PyCharm image](https://hub.docker.com/repository/docker/ucscgi/azul-pycharm/tags)
     - [ ] … new [BigQuery Emulator image](https://hub.docker.com/repository/docker/ucscgi/azul-bigquery-emulator/tags)
     - [ ] … update to [OpenSearch image](https://hub.docker.com/r/opensearchproject/opensearch/tags) (only minor and patch versions) <sub>or no update available</sub>
@@ -40,4 +45,5 @@ _period: 14 days
   - [ ] … the next major or minor Python version <sub>or such an issue already exists</sub>
   - [ ] … the next major Docker version <sub>or such an issue already exists</sub>
   - [ ] … the next major or minor Terraform version <sub>or such an issue already exists</sub>
+  - [ ] … the next major version of any Terraform provider used by Azul <sub>or such issues already exist</sub>
   - [ ] … the next major OpenSearch version <sub>or such an issue already exists</sub>
