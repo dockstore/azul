@@ -92,7 +92,7 @@ class TestServiceAppLogging(DCP1CannedBundleTestCase, WebServiceTestCase):
                 body_log_level, body_log_message = logs.pop()  # asserted separately
                 request_headers = {
                     'host': url.netloc,
-                    'user-agent': 'python-requests/2.32.5',
+                    'user-agent': 'python-requests/2.33.1',
                     'accept-encoding': 'gzip, deflate, zstd',
                     'accept': '*/*',
                     'connection': 'keep-alive',
