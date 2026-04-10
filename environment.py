@@ -942,6 +942,9 @@ def env() -> Mapping[str, str | None]:
         # default. Pin the runtime to python:3.14.v36 to prevent OutOfMemory
         # errors in the mirror Lambda function.
         #
+        # FIXME: Remove pinned Lambda runtime version ARN
+        #        https://github.com/DataBiosphere/azul/issues/7730
+        #
         'azul_lambda_runtime_version': '027e67fdaf9cea74675a8052be97d7232acebbdfdde682b84171030a9773437f',
 
         # URL of Terra's external credentials manager (ECM) service used by the
