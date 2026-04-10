@@ -939,9 +939,10 @@ def env() -> Mapping[str, str | None]:
         'AZUL_ENABLE_BUNDLE_NOTIFICATIONS': '0',
 
         # A Lambda runtime version to pin to, which overrides the AWS-managed
-        # default.
+        # default. Pin the runtime to python:3.14.v36 to prevent OutOfMemory
+        # errors in the mirror Lambda function.
         #
-        'azul_lambda_runtime_version': None,
+        'azul_lambda_runtime_version': '027e67fdaf9cea74675a8052be97d7232acebbdfdde682b84171030a9773437f',
 
         # URL of Terra's external credentials manager (ECM) service used by the
         # Azul deployment.
