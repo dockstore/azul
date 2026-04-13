@@ -1249,7 +1249,7 @@ anvil12_sources = union(anvil11_sources, 369, delta([
     source('12211c34', 'T2T_20230714_ANV5_202510101315'),
 ]))
 
-anvil13_sources = union(anvil12_sources, 381, delta([
+anvil13_sources = union(anvil12_sources, 375, delta([
     source('1156aa70', 'ADOPT_PGx_Acute_Pain_GRU_R1_20260122_ANV5_202601222214'),
     source('48fde710', 'ADOPT_PGx_Acute_Pain_HMB_R1_20260122_ANV5_202601222221'),
     source('6db4e098', 'CCDG_Baylor_CVD_ARIC_20231008_ANV5_202503171456', pop),
@@ -1259,9 +1259,12 @@ anvil13_sources = union(anvil12_sources, 381, delta([
     source('042b9f74', 'CCDG_NYGC_NP_Autism_SPARK_GRU_WGS_20260109_ANV5_202601261729'),
     source('0e8a00bd', 'DepMap_GRU_20260127_ANV5_202601271632'),
     source('d5e12b9d', 'DepMap_HMB_MDS_R3_20260127_ANV5_202601271642'),
-    source('29644563', 'GREGOR_R03_GRU_20250612_ANV5_202601221513'),
-    source('e2c1eb50', 'GREGOR_R04_GRU_20250917_ANV5_202601221518'),
-    source('9829560b', 'GREGoR_R01_GRU_20240208_ANV5_202601221345'),
+    source('29644563', 'GREGOR_R03_GRU_20250612_ANV5_202601221513', pop),
+    source('a50f51b8', 'GREGOR_R03_HMB_20250612_ANV5_202506271503', pop),
+    source('e2c1eb50', 'GREGOR_R04_GRU_20250917_ANV5_202601221518', pop),
+    source('f71485a8', 'GREGOR_R04_HMB_20250910_ANV5_202509221540', pop),
+    source('9829560b', 'GREGoR_R01_GRU_20240208_ANV5_202601221345', pop),
+    source('88e6ae93', 'GREGoR_R02_HMB_20241105_ANV5_202502202131', pop),
     source('6c5111aa', 'GTEx_v11_hg38_20260126_ANV5_202601261749'),
     source('0a4ee218', 'HPRC_20260121_ANV5_202601222125'),
     source('042719c0', 'IGVF_GRU_PUB_NPU_R1_20260122_ANV5_202601222237'),
