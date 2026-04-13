@@ -9,14 +9,14 @@ from chalice import (
     ForbiddenError,
 )
 
-from azul.plugins import (
-    SpecialField,
-    SpecialFields,
-)
-from azul.service import (
+from azul.filters import (
     FilterJSON,
     Filters,
     FiltersJSON,
+)
+from azul.plugins import (
+    SpecialField,
+    SpecialFields,
 )
 from azul_test_case import (
     AzulTestCase,

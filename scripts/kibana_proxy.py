@@ -40,8 +40,11 @@ from pathlib import (
 import sys
 import tarfile
 import time
+from typing import (
+    Callable,
+)
 
-import docker
+import docker.client
 import docker.errors
 from docker.models.containers import (
     Container,
@@ -56,6 +59,9 @@ from azul.docker import (
 from azul.lib import (
     cached_property,
 )
+from azul.lib.types import (
+    not_none,
+)
 from azul.logging import (
     configure_script_logging,
 )
@@ -67,7 +73,7 @@ class KibanaProxy:
 
     def __init__(self, options) -> None:
         self.options = options
-        self.docker = docker.from_env()
+        self.docker = docker.client.from_env()
 
     def create_container(self, image: str, *args, **kwargs) -> Container:
         try:
@@ -80,7 +86,8 @@ class KibanaProxy:
 
     def run(self):
         # aws-signing-proxy doesn't support credentials
-        creds = aws.boto3_session.get_credentials().get_frozen_credentials()
+        creds = not_none(aws.boto3_session.get_credentials())
+        creds = creds.get_frozen_credentials()
         kibana_port = self.options.kibana_port
         cerebro_port = self.options.cerebro_port or kibana_port + 1
         proxy_port = self.options.proxy_port or kibana_port + 2
@@ -155,10 +162,10 @@ class KibanaProxy:
                          'http://127.0.0.1:%i/#!/overview?host=http://localhost:%i/',
                          kibana_port, cerebro_port, es_port)
 
-            tasks = [
+            tasks: list[Callable[[], None]] = [
                 start_containers,
                 print_instructions,
-                *((partial(handle_container, c)) for c in containers)
+                *map(partial(partial, handle_container), containers)
             ]
             with ThreadPoolExecutor(max_workers=len(tasks)) as tpe:
                 futures = list(map(tpe.submit, tasks))
@@ -185,7 +192,7 @@ class KibanaProxy:
     def opensearch_endpoint(self):
         log.info('Getting domain endpoint')
         client = aws.opensearch
-        domain = client.describe_elasticsearch_domain(DomainName=self.options.domain)
+        domain = client.describe_domain(DomainName=self.options.domain)
         return 'https://' + domain['DomainStatus']['Endpoints']['vpc']
 
 

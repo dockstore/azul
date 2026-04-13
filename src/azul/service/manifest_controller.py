@@ -28,6 +28,9 @@ from azul.auth import (
 from azul.chalice import (
     GoneError,
 )
+from azul.filters import (
+    Filters,
+)
 from azul.lib import (
     cached_property,
     mutable_furl,
@@ -51,9 +54,6 @@ from azul.openapi import (
 )
 from azul.plugins import (
     ManifestFormat,
-)
-from azul.service import (
-    Filters,
 )
 from azul.service.async_manifest_service import (
     AsyncManifestService,
