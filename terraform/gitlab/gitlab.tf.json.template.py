@@ -1235,6 +1235,7 @@ emit_tf({} if config.terraform_component != 'gitlab' else {
                     'root_certificate_chain_arn': '${data.aws_acm_certificate.gitlab_vpn.arn}'
                 },
                 'session_timeout_hours': 8,
+                'disconnect_on_session_timeout': True,
                 'vpc_id': '${aws_vpc.gitlab.id}',
                 'connection_log_options': {
                     'enabled': True,
