@@ -13,7 +13,7 @@ idna==3.11
 jsonschema-specifications==2025.9.1
 markupsafe==3.0.3
 orderedmultidict==1.0.2
-packaging==26.0
+packaging==26.1
 proto-plus==1.27.2
 protobuf==6.33.6
 pyasn1==0.6.3

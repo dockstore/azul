@@ -86,7 +86,7 @@ openapi-spec-validator==0.7.2
 openpyxl==3.1.5
 opensearch-py==2.8.0
 orderedmultidict==1.0.2
-packaging==26.0
+packaging==26.1
 pathable==0.4.4
 pathspec==1.0.4
 pip==26.0.1
