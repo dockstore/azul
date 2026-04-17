@@ -29,6 +29,9 @@ from azul import (
     CatalogName,
     config,
 )
+from azul.filters import (
+    Filters,
+)
 from azul.indexer.mirror_service import (
     MirrorService,
 )
@@ -49,7 +52,6 @@ from azul.plugins import (
 from azul.service import (
     BadArgumentException,
     FileUrlFunc,
-    Filters,
 )
 from azul.service.query_service import (
     IndexNotFoundError,

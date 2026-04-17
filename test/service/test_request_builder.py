@@ -13,6 +13,9 @@ from azul.field_type import (
     FieldTypes,
     null_str,
 )
+from azul.filters import (
+    Filters,
+)
 from azul.logging import (
     configure_test_logging,
 )
@@ -27,9 +30,6 @@ from azul.plugins.metadata.hca import (
 )
 from azul.plugins.metadata.hca.service.aggregation import (
     HCAAggregationStage,
-)
-from azul.service import (
-    Filters,
 )
 from azul.service.query_service import (
     QueryService,

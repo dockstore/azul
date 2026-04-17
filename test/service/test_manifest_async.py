@@ -36,6 +36,10 @@ import requests
 from app_test_case import (
     LocalAppTestCase,
 )
+from azul.filters import (
+    Filters,
+    FiltersJSON,
+)
 from azul.lib.types import (
     JSON,
 )
@@ -44,10 +48,6 @@ from azul.logging import (
 )
 from azul.plugins import (
     ManifestFormat,
-)
-from azul.service import (
-    Filters,
-    FiltersJSON,
 )
 from azul.service.async_manifest_service import (
     AsyncManifestService,

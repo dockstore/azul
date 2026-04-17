@@ -7,6 +7,7 @@ import azul.csp
 import azul.docker
 import azul.drs
 import azul.dss
+import azul.filters
 import azul.http
 import azul.indexer
 import azul.indexer.aggregate
@@ -74,6 +75,7 @@ def load_tests(_loader,
         azul.docker,
         azul.drs,
         azul.dss,
+        azul.filters,
         azul.http,
         azul.indexer,
         azul.indexer.aggregate,
