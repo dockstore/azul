@@ -246,6 +246,19 @@ def env() -> Mapping[str, str | None]:
         #
         'azul_terraform_version': '1.14.8',
 
+        # The version of the AWS CLI v2 used throughout the system.
+        #
+        # This variable is not intended to be overridden per deployment or
+        # locally.
+        #
+        # This variable is duplicated in a file called `environment.boot`
+        # because it is referenced in the early stages of the GitLab build.
+        #
+        # Modifying this variable requires running `make environment.boot` and
+        # committing the resulting changes.
+        #
+        'azul_awscli_version': '2.34.30',
+
         # A dictionary mapping the short name of each Docker image used in Azul
         # to its fully qualified name. Note that a change to any of the image
         # references below requires running `make docker_images.json` and
