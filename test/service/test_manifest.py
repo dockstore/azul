@@ -62,6 +62,10 @@ from azul import (
     config,
     iif,
 )
+from azul.filters import (
+    Filters,
+    FiltersJSON,
+)
 from azul.http import (
     parse_header,
 )
@@ -113,8 +117,6 @@ from azul.plugins.repository.dss import (
     DSSSourceRef,
 )
 from azul.service import (
-    Filters,
-    FiltersJSON,
     avro_pfb,
     manifest_service,
 )

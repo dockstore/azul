@@ -16,6 +16,13 @@ from azul import (
 from azul.auth import (
     Authentication,
 )
+from azul.filters import (
+    Filters,
+    FiltersJSON,
+    normalize_filters,
+    parse_filters,
+    validate_filters,
+)
 from azul.lib import (
     R,
     mutable_furl,
@@ -27,13 +34,6 @@ from azul.openapi import (
     format_description as fd,
     params,
     schema,
-)
-from azul.service import (
-    Filters,
-    FiltersJSON,
-    normalize_filters,
-    parse_filters,
-    validate_filters,
 )
 from azul.service.source_controller import (
     SourceController,

@@ -6,6 +6,7 @@ import argparse
 from datetime import (
     datetime,
     timedelta,
+    timezone,
 )
 import logging
 import sys
@@ -79,9 +80,7 @@ class ReindexDetector:
         ]
 
     def _lambda_invocation_counts(self) -> dict[LambdaFunction, int]:
-        # FIXME: DeprecationWarning for datetime methods in Python 3.12
-        #        https://github.com/DataBiosphere/azul/issues/5953
-        end = datetime.utcnow()
+        end = datetime.now(timezone.utc)
         start = end - timedelta(minutes=self.interval)
         lambdas_by_name = {
             lambda_.name: lambda_ for lambda_ in self._list_contribution_lambda_functions()

@@ -51,6 +51,10 @@ from azul import (
 from azul.field_type import (
     Nested,
 )
+from azul.filters import (
+    Filters,
+    FiltersJSON,
+)
 from azul.indexer.document import (
     DocumentType,
     IndexName,
@@ -80,10 +84,6 @@ from azul.plugins import (
     FieldPath,
     MetadataPlugin,
     dotted,
-)
-from azul.service import (
-    Filters,
-    FiltersJSON,
 )
 
 log = logging.getLogger(__name__)

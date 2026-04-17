@@ -91,6 +91,10 @@ from azul.field_type import (
     FieldTypes,
     null_str,
 )
+from azul.filters import (
+    Filters,
+    FiltersJSON,
+)
 from azul.indexer.document import (
     DocumentType,
     EntityType,
@@ -163,8 +167,6 @@ from azul.plugins import (
 )
 from azul.service import (
     FileUrlFunc,
-    Filters,
-    FiltersJSON,
     avro_pfb,
 )
 from azul.service.avro_pfb import (
