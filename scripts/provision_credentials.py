@@ -1,5 +1,6 @@
 import argparse
 import base64
+import getpass
 import json
 import logging
 import os
@@ -9,6 +10,9 @@ from typing import (
 )
 import uuid
 
+from furl import (
+    furl,
+)
 import google.auth
 import googleapiclient.discovery
 from googleapiclient.errors import (
@@ -22,10 +26,14 @@ from azul.deployment import (
     aws,
 )
 from azul.lib import (
+    R,
     cached_property,
 )
 from azul.logging import (
     configure_script_logging,
+)
+from azul.openapi import (
+    format_description,
 )
 
 if TYPE_CHECKING:
@@ -109,6 +117,52 @@ class CredentialsProvisioner:
         key = base64.encodebytes(os.urandom(48)).decode().replace('=', '').replace('\n', '')
         assert len(key) == 64
         return json.dumps({'key': key, 'key_id': str(uuid.uuid4())})
+
+    def provision_oauth2_client_secret(self, args: argparse.Namespace) -> None:
+        self._provision_oauth2_client_secret(args.create)
+
+    def _provision_oauth2_client_secret(self, create: bool) -> None:
+        secret_name = config.secrets_manager_secret_name('google_oauth2_client_secret')
+        if create:
+            self._create_secret(secret_name)
+            client_id = config.google_oauth2_client_id
+            assert client_id is not None, R('AZUL_GOOGLE_OAUTH2_CLIENT_ID is not set')
+            google_project = config.google_project()
+            assert google_project is not None, R('GOOGLE_PROJECT is not set')
+            url = furl(scheme='https',
+                       host='console.cloud.google.com',
+                       path=['auth', 'clients', client_id],
+                       args={'project': google_project})
+            print(format_description('''
+                Visit {url} and …
+
+                1) Delete any disabled secrets, leaving only the current secret
+
+                2) Add a new secret
+
+                3) Copy the secret value
+
+                4) Paste the secret value into the prompt below
+            ''', url=url))
+            secret_value = getpass.getpass('OAuth2 client secret (input will not be echoed back): ')
+            assert secret_value, R('No secret value provided')
+            self._write_secret_value(secret_name, secret_value)
+            print(format_description('''
+                The secret was successfully stored. Now it's time to …
+
+                1) Deploy this Azul instance, unless you already did so before
+                   invoking this script
+
+                2) Test logging into the Swagger UI and any Data Browser
+                   instance backed by this Azul deployment
+
+                3) Wait 1 hour and 10 minutes for all access tokens to expire
+
+                4) Repeat the tests from step 2, then disable (do not delete)
+                   the old secret
+            '''))
+        else:
+            self._destroy_secret(secret_name)
 
     def _secret_is_stored(self, name: str) -> bool:
         try:
@@ -212,6 +266,14 @@ if __name__ == '__main__':
              'Secrets Manager secret.'
     )
     hmac_parser.set_defaults(func=CredentialsProvisioner.provision_hmac)
+
+    oauth_parser = subparsers.add_parser(
+        'oauth2_client_secret',
+        parents=[mode_parser],
+        help='Store or rotate the OAuth2 client secret in an AWS '
+             'Secrets Manager secret.'
+    )
+    oauth_parser.set_defaults(func=CredentialsProvisioner.provision_oauth2_client_secret)
 
     args = parser.parse_args()
     credentials_provisioner = CredentialsProvisioner()
