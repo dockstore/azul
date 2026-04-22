@@ -122,7 +122,7 @@ class CredentialsProvisioner:
         self._provision_oauth2_client_secret(args.create)
 
     def _provision_oauth2_client_secret(self, create: bool) -> None:
-        secret_name = config.secret_name('google_oauth2_client_secret')
+        secret_name = config.oauth2_client_secret_name()
         if create:
             self._create_secret(secret_name)
             client_id = config.google_oauth2_client_id

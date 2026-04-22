@@ -1364,6 +1364,9 @@ class Config:
     def hmac_secret_name(self):
         return self.secret_name('indexer', 'hmac')
 
+    def oauth2_client_secret_name(self):
+        return self.secret_name('google_oauth2_client_secret')
+
     def enable_gcp(self):
         return self.google_project() is not None
 
