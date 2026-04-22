@@ -71,8 +71,7 @@ class CredentialsProvisioner:
             self._destroy_sa_credentials(email, secret_name)
             self._destroy_secret(secret_name)
 
-    @classmethod
-    def _random_hmac_key(cls):
+    def _random_hmac_key(self):
         # Even though an HMAC key can be any sequence of bytes, we restrict to
         # base64 in order to encode as string
         key = base64.encodebytes(os.urandom(48)).decode().replace('=', '').replace('\n', '')
