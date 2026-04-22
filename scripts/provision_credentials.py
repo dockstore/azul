@@ -35,41 +35,41 @@ def parse_google_key(response):
 class CredentialsProvisioner:
 
     @cached_property
-    def google_iam(self):
+    def _google_iam(self):
         credentials, project_id = google.auth.default(
             scopes=['https://www.googleapis.com/auth/cloud-platform']
         )
         return googleapiclient.discovery.build('iam', 'v1', credentials=credentials)
 
     @property
-    def secrets_manager(self):
+    def _secrets_manager(self):
         return aws.secretsmanager
 
-    def provision_google_from_args(self, args):
-        self.provision_google(args.create, args.email, args.secret_name)
+    def provision_sa(self, args):
+        self._provision_sa(args.create, args.email, args.secret_name)
 
-    def provision_hmac_from_args(self, args):
-        self.provision_hmac(args.create)
+    def provision_hmac(self, args):
+        self._provision_hmac(args.create)
 
-    def provision_hmac(self, create):
+    def _provision_hmac(self, create):
         secret_name = config.secrets_manager_secret_name('indexer', 'hmac')
         if create:
             self._create_secret(secret_name)
             if not self._secret_is_stored(secret_name):
                 self._write_secret_value(secret_name, self._random_hmac_key())
         else:
-            self._destroy_aws_secrets_manager_secret(secret_name)
+            self._destroy_secret(secret_name)
 
-    def provision_google(self, create, email, secret_name):
+    def _provision_sa(self, create, email, secret_name):
         secret_name = config.secrets_manager_secret_name(secret_name)
         if create:
             self._create_secret(secret_name)
             if not self._secret_is_stored(secret_name):
-                google_key = self._create_service_account_creds(email)
+                google_key = self._create_sa_credentials(email)
                 self._write_secret_value(secret_name, google_key)
         else:
-            self._destroy_service_account_creds(email, secret_name)
-            self._destroy_aws_secrets_manager_secret(secret_name)
+            self._destroy_sa_credentials(email, secret_name)
+            self._destroy_secret(secret_name)
 
     @classmethod
     def _random_hmac_key(cls):
@@ -80,7 +80,7 @@ class CredentialsProvisioner:
         return json.dumps({'key': key, 'key_id': str(uuid.uuid4())})
 
     def _write_secret_value(self, name, value):
-        self.secrets_manager.put_secret_value(
+        self._secrets_manager.put_secret_value(
             SecretId=name,
             SecretString=value
         )
@@ -88,38 +88,37 @@ class CredentialsProvisioner:
 
     def _create_secret(self, name):
         try:
-            self.secrets_manager.create_secret(Name=name)
-        except self.secrets_manager.exceptions.ResourceExistsException:
+            self._secrets_manager.create_secret(Name=name)
+        except self._secrets_manager.exceptions.ResourceExistsException:
             log.info('AWS secret %s already exists.', name)
         else:
             log.info('AWS secret %s created.', name)
 
     def _secret_is_stored(self, name):
         try:
-            response = self.secrets_manager.get_secret_value(SecretId=name)
-        except self.secrets_manager.exceptions.ResourceNotFoundException:
+            response = self._secrets_manager.get_secret_value(SecretId=name)
+        except self._secrets_manager.exceptions.ResourceNotFoundException:
             return False
         try:
             return response['SecretString'] != ''
         except KeyError:
             return False
 
-    def _create_service_account_creds(self, service_account_email):
-        iam = self.google_iam
-        key_name = 'projects/-/serviceAccounts/' + service_account_email
-        key = iam.projects().serviceAccounts().keys().create(name=key_name,
-                                                             body={}).execute()
-        log.info("Successfully created service account key for user '%s'",
-                 service_account_email)
+    def _create_sa_credentials(self, email):
+        iam = self._google_iam
+        key_name = 'projects/-/serviceAccounts/' + email
+        keys = iam.projects().serviceAccounts().keys()
+        key = keys.create(name=key_name, body={}).execute()
+        log.info("Successfully created service account key for user '%s'", email)
         return parse_google_key(key)
 
-    def _destroy_aws_secrets_manager_secret(self, secret_name):
+    def _destroy_secret(self, secret_name):
         try:
-            response = self.secrets_manager.delete_secret(
+            response = self._secrets_manager.delete_secret(
                 SecretId=secret_name,
                 ForceDeleteWithoutRecovery=True
             )
-        except self.secrets_manager.exceptions.ResourceNotFoundException:
+        except self._secrets_manager.exceptions.ResourceNotFoundException:
             log.info('AWS secret %s does not exist. No changes will be made.',
                      secret_name)
         else:
@@ -132,8 +131,8 @@ class CredentialsProvisioner:
             deadline = time.time() + 60
             while True:
                 try:
-                    self.secrets_manager.describe_secret(SecretId=secret_name)
-                except self.secrets_manager.exceptions.ResourceNotFoundException:
+                    self._secrets_manager.describe_secret(SecretId=secret_name)
+                except self._secrets_manager.exceptions.ResourceNotFoundException:
                     log.info('Successfully deleted AWS secret %r.', secret_name)
                     break
                 else:
@@ -145,18 +144,18 @@ class CredentialsProvisioner:
                                  secret_name, deadline - now)
                         time.sleep(5)
 
-    def _destroy_service_account_creds(self, service_account_email, secret_name):
+    def _destroy_sa_credentials(self, service_account_email, secret_name):
         try:
-            creds = self.secrets_manager.get_secret_value(
+            creds = self._secrets_manager.get_secret_value(
                 SecretId=config.secrets_manager_secret_name(secret_name)
             )
-        except self.secrets_manager.exceptions.ResourceNotFoundException:
+        except self._secrets_manager.exceptions.ResourceNotFoundException:
             log.info('Secret already deleted, cannot get key_id for %s',
                      service_account_email)
             return
         else:
             key_id = json.loads(creds['SecretString'])['private_key_id']
-            iam = self.google_iam
+            iam = self._google_iam
             try:
                 key_name = f'projects/-/serviceAccounts/{service_account_email}/keys/{key_id}'
                 iam.projects().serviceAccounts().keys().delete(name=key_name).execute()
@@ -175,13 +174,13 @@ if __name__ == '__main__':
     logging.getLogger('googleapiclient.discovery_cache').setLevel(logging.ERROR)
 
     configure_script_logging(log)
-    parent_parser = argparse.ArgumentParser(add_help=False)
-    group = parent_parser.add_mutually_exclusive_group(required=True)
-    group.add_argument(
+    mode_parser = argparse.ArgumentParser(add_help=False)
+    mode_group = mode_parser.add_mutually_exclusive_group(required=True)
+    mode_group.add_argument(
         '--create', '-c', action='store_true', dest='create',
         help='Idempotently create credentials instead of destroying them.'
     )
-    group.add_argument(
+    mode_group.add_argument(
         '--destroy', '-d', action='store_false', dest='create',
         help='Idempotently destroy credentials instead of creating them.'
     )
@@ -192,11 +191,11 @@ if __name__ == '__main__':
 
     sa_parser = subparsers.add_parser(
         'service_account',
-        parents=[parent_parser],
+        parents=[mode_parser],
         help='Create credentials for a Google service account and them in an '
              'AWS Secrets Manager secret.'
     )
-    sa_parser.set_defaults(func=CredentialsProvisioner.provision_google_from_args)
+    sa_parser.set_defaults(func=CredentialsProvisioner.provision_sa)
     sa_parser.add_argument(
         'email', type=str,
         help='The email address of the service account'
@@ -207,11 +206,12 @@ if __name__ == '__main__':
     )
 
     hmac_parser = subparsers.add_parser(
-        'hmac', parents=[parent_parser],
+        'hmac', parents=[mode_parser],
         help='Generate a random HMAC signing key and store it in an AWS '
              'Secrets Manager secret.'
     )
-    hmac_parser.set_defaults(func=CredentialsProvisioner.provision_hmac_from_args)
+    hmac_parser.set_defaults(func=CredentialsProvisioner.provision_hmac)
+
     args = parser.parse_args()
     credentials_provisioner = CredentialsProvisioner()
     args.func(credentials_provisioner, args)
