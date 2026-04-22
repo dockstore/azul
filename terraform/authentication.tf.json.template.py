@@ -86,7 +86,7 @@ emit_tf({
                                 "command": ' '.join(map(shlex.quote, [
                                     "python",
                                     config.project_root + "/scripts/provision_credentials.py",
-                                    "hmac-key",
+                                    "hmac",
                                     "--create",
                                 ]))
                             }
@@ -96,7 +96,7 @@ emit_tf({
                                 "command": ' '.join(map(shlex.quote, [
                                     "python",
                                     config.project_root + "/scripts/provision_credentials.py",
-                                    "hmac-key",
+                                    "hmac",
                                     "--destroy",
                                 ]))
                             }

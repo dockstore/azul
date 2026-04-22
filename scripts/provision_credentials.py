@@ -207,7 +207,7 @@ if __name__ == '__main__':
     )
 
     hmac_parser = subparsers.add_parser(
-        'hmac-key', parents=[parent_parser],
+        'hmac', parents=[parent_parser],
         help='Generate a random HMAC signing key and store it in an AWS '
              'Secrets Manager secret.'
     )
