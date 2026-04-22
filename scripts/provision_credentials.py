@@ -180,7 +180,7 @@ if __name__ == '__main__':
     )
 
     parser = argparse.ArgumentParser()
-    subparsers = parser.add_subparsers(help='Specify action', dest='action')
+    subparsers = parser.add_subparsers(help='Specify action', dest='resource')
     subparsers.required = True
 
     sa_parser = subparsers.add_parser(
