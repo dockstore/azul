@@ -1361,6 +1361,9 @@ class Config:
     def secrets_manager_secret_name(self, *args):
         return '/'.join(['dcp', 'azul', self.deployment_stage, *args])
 
+    def hmac_secret_name(self):
+        return self.secrets_manager_secret_name('indexer', 'hmac')
+
     def enable_gcp(self):
         return self.google_project() is not None
 

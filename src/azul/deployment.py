@@ -338,7 +338,7 @@ class AWS:
     def get_hmac_key_and_id(self) -> tuple[bytes, str]:
         # Note: dict contains 'key' and 'key_id' as keys and is provisioned in
         # scripts/provision_credentials.py
-        secret_id = config.secrets_manager_secret_name('indexer', 'hmac')
+        secret_id = config.hmac_secret_name()
         response = self.secretsmanager.get_secret_value(SecretId=secret_id)
         secret_dict = json.loads(response['SecretString'])
         return secret_dict['key'].encode(), secret_dict['key_id']

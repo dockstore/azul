@@ -103,7 +103,7 @@ class CredentialsProvisioner:
                      key_id, email)
 
     def _provision_hmac(self, create: bool) -> None:
-        secret_name = config.secrets_manager_secret_name('indexer', 'hmac')
+        secret_name = config.hmac_secret_name()
         if create:
             self._create_secret(secret_name)
             if not self._secret_is_stored(secret_name):
