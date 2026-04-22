@@ -64,7 +64,7 @@ class CredentialsProvisioner:
         self._provision_hmac(args.create)
 
     def _provision_sa(self, create: bool, email: str, secret_name: str) -> None:
-        secret_name = config.secrets_manager_secret_name(secret_name)
+        secret_name = config.secret_name(secret_name)
         if create:
             self._create_secret(secret_name)
             if not self._secret_is_stored(secret_name):
@@ -85,7 +85,7 @@ class CredentialsProvisioner:
     def _destroy_sa_credentials(self, email: str, secret_name: str) -> None:
         try:
             creds = self._secrets_manager.get_secret_value(
-                SecretId=config.secrets_manager_secret_name(secret_name)
+                SecretId=config.secret_name(secret_name)
             )
         except self._secrets_manager.exceptions.ResourceNotFoundException:
             log.info('Secret already deleted, cannot get key_id for %s', email)
@@ -122,7 +122,7 @@ class CredentialsProvisioner:
         self._provision_oauth2_client_secret(args.create)
 
     def _provision_oauth2_client_secret(self, create: bool) -> None:
-        secret_name = config.secrets_manager_secret_name('google_oauth2_client_secret')
+        secret_name = config.secret_name('google_oauth2_client_secret')
         if create:
             self._create_secret(secret_name)
             client_id = config.google_oauth2_client_id

@@ -1358,11 +1358,11 @@ class Config:
     def validate_qualifier(cls, qualifier: str) -> None:
         cls._validate_term(qualifier, name='qualifier')
 
-    def secrets_manager_secret_name(self, *args):
+    def secret_name(self, *args):
         return '/'.join(['dcp', 'azul', self.deployment_stage, *args])
 
     def hmac_secret_name(self):
-        return self.secrets_manager_secret_name('indexer', 'hmac')
+        return self.secret_name('indexer', 'hmac')
 
     def enable_gcp(self):
         return self.google_project() is not None

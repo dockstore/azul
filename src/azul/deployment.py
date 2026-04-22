@@ -384,7 +384,7 @@ class AWS:
         credentials is prevented by patching the environment variable
         GOOGLE_APPLICATION_CREDENTIALS to the empty string.
         """
-        secret_name = config.secrets_manager_secret_name(service_account.secret_name)
+        secret_name = config.secret_name(service_account.secret_name)
         secret = self._service_account_creds(secret_name)['SecretString']
         with tempfile.NamedTemporaryFile(mode='w+') as f:
             f.write(secret)
