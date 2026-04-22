@@ -132,17 +132,16 @@ class CredentialsProvisioner:
         )
         log.info('Successfully wrote value to AWS secret %r.', name)
 
-    def _destroy_secret(self, secret_name):
+    def _destroy_secret(self, name):
         try:
             response = self._secrets_manager.delete_secret(
-                SecretId=secret_name,
+                SecretId=name,
                 ForceDeleteWithoutRecovery=True
             )
         except self._secrets_manager.exceptions.ResourceNotFoundException:
-            log.info('AWS secret %s does not exist. No changes will be made.',
-                     secret_name)
+            log.info('AWS secret %s does not exist. No changes will be made.', name)
         else:
-            assert response['Name'] == secret_name
+            assert response['Name'] == name
             # AWS docs recommend waiting for ResourceNotFoundException: "The
             # deletion is an asynchronous process. There might be a short delay"
             #
@@ -151,17 +150,17 @@ class CredentialsProvisioner:
             deadline = time.time() + 60
             while True:
                 try:
-                    self._secrets_manager.describe_secret(SecretId=secret_name)
+                    self._secrets_manager.describe_secret(SecretId=name)
                 except self._secrets_manager.exceptions.ResourceNotFoundException:
-                    log.info('Successfully deleted AWS secret %r.', secret_name)
+                    log.info('Successfully deleted AWS secret %r.', name)
                     break
                 else:
                     now = time.time()
                     if now >= deadline:
-                        raise RuntimeError('Secret could not be destroyed', secret_name)
+                        raise RuntimeError('Secret could not be destroyed', name)
                     else:
                         log.info('Secret %r not yet deleted. Will keep checking for %.3fs.',
-                                 secret_name, deadline - now)
+                                 name, deadline - now)
                         time.sleep(5)
 
 
