@@ -74,26 +74,25 @@ class CredentialsProvisioner:
         log.info('Successfully created service account key for user %r', email)
         return base64.decodebytes(bytes(key['privateKeyData'], 'ascii')).decode()
 
-    def _destroy_sa_credentials(self, service_account_email: str, secret_name: str) -> None:
+    def _destroy_sa_credentials(self, email: str, secret_name: str) -> None:
         try:
             creds = self._secrets_manager.get_secret_value(
                 SecretId=config.secrets_manager_secret_name(secret_name)
             )
         except self._secrets_manager.exceptions.ResourceNotFoundException:
-            log.info('Secret already deleted, cannot get key_id for %s',
-                     service_account_email)
+            log.info('Secret already deleted, cannot get key_id for %s', email)
             return
         else:
             key_id = json.loads(creds['SecretString'])['private_key_id']
             iam = self._google_iam
             try:
-                key_name = f'projects/-/serviceAccounts/{service_account_email}/keys/{key_id}'
+                key_name = f'projects/-/serviceAccounts/{email}/keys/{key_id}'
                 iam.projects().serviceAccounts().keys().delete(name=key_name).execute()
             except HttpError as e:
                 if e.resp.reason != 'Not Found':
                     raise
             log.info('Successfully deleted service account key with id %r for user %r',
-                     key_id, service_account_email)
+                     key_id, email)
 
     def _provision_hmac(self, create: bool) -> None:
         secret_name = config.secrets_manager_secret_name('indexer', 'hmac')
