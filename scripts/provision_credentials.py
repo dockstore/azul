@@ -4,6 +4,9 @@ import json
 import logging
 import os
 import time
+from typing import (
+    TYPE_CHECKING,
+)
 import uuid
 
 import google.auth
@@ -25,6 +28,11 @@ from azul.logging import (
     configure_script_logging,
 )
 
+if TYPE_CHECKING:
+    from mypy_boto3_secretsmanager import (
+        SecretsManagerClient,
+    )
+
 log = logging.getLogger(__name__)
 
 
@@ -38,16 +46,16 @@ class CredentialsProvisioner:
         return googleapiclient.discovery.build('iam', 'v1', credentials=credentials)
 
     @property
-    def _secrets_manager(self):
+    def _secrets_manager(self) -> SecretsManagerClient:
         return aws.secretsmanager
 
-    def provision_sa(self, args):
+    def provision_sa(self, args: argparse.Namespace) -> None:
         self._provision_sa(args.create, args.email, args.secret_name)
 
-    def provision_hmac(self, args):
+    def provision_hmac(self, args: argparse.Namespace) -> None:
         self._provision_hmac(args.create)
 
-    def _provision_sa(self, create, email, secret_name):
+    def _provision_sa(self, create: bool, email: str, secret_name: str) -> None:
         secret_name = config.secrets_manager_secret_name(secret_name)
         if create:
             self._create_secret(secret_name)
@@ -58,7 +66,7 @@ class CredentialsProvisioner:
             self._destroy_sa_credentials(email, secret_name)
             self._destroy_secret(secret_name)
 
-    def _create_sa_credentials(self, email):
+    def _create_sa_credentials(self, email: str) -> str:
         iam = self._google_iam
         key_name = 'projects/-/serviceAccounts/' + email
         keys = iam.projects().serviceAccounts().keys()
@@ -66,7 +74,7 @@ class CredentialsProvisioner:
         log.info('Successfully created service account key for user %r', email)
         return base64.decodebytes(bytes(key['privateKeyData'], 'ascii')).decode()
 
-    def _destroy_sa_credentials(self, service_account_email, secret_name):
+    def _destroy_sa_credentials(self, service_account_email: str, secret_name: str) -> None:
         try:
             creds = self._secrets_manager.get_secret_value(
                 SecretId=config.secrets_manager_secret_name(secret_name)
@@ -87,7 +95,7 @@ class CredentialsProvisioner:
             log.info('Successfully deleted service account key with id %r for user %r',
                      key_id, service_account_email)
 
-    def _provision_hmac(self, create):
+    def _provision_hmac(self, create: bool) -> None:
         secret_name = config.secrets_manager_secret_name('indexer', 'hmac')
         if create:
             self._create_secret(secret_name)
@@ -96,14 +104,14 @@ class CredentialsProvisioner:
         else:
             self._destroy_secret(secret_name)
 
-    def _random_hmac_key(self):
+    def _random_hmac_key(self) -> str:
         # Even though an HMAC key can be any sequence of bytes, we restrict to
         # base64 in order to encode as string
         key = base64.encodebytes(os.urandom(48)).decode().replace('=', '').replace('\n', '')
         assert len(key) == 64
         return json.dumps({'key': key, 'key_id': str(uuid.uuid4())})
 
-    def _secret_is_stored(self, name):
+    def _secret_is_stored(self, name: str) -> bool:
         try:
             response = self._secrets_manager.get_secret_value(SecretId=name)
         except self._secrets_manager.exceptions.ResourceNotFoundException:
@@ -113,7 +121,7 @@ class CredentialsProvisioner:
         except KeyError:
             return False
 
-    def _create_secret(self, name):
+    def _create_secret(self, name: str) -> None:
         try:
             self._secrets_manager.create_secret(Name=name)
         except self._secrets_manager.exceptions.ResourceExistsException:
@@ -121,14 +129,14 @@ class CredentialsProvisioner:
         else:
             log.info('AWS secret %s created.', name)
 
-    def _write_secret_value(self, name, value):
+    def _write_secret_value(self, name: str, value: str) -> None:
         self._secrets_manager.put_secret_value(
             SecretId=name,
             SecretString=value
         )
         log.info('Successfully wrote value to AWS secret %r.', name)
 
-    def _destroy_secret(self, name):
+    def _destroy_secret(self, name: str) -> None:
         try:
             response = self._secrets_manager.delete_secret(
                 SecretId=name,
