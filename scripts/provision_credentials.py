@@ -84,7 +84,7 @@ class CredentialsProvisioner:
             SecretId=name,
             SecretString=value
         )
-        log.info("Successfully wrote value to AWS secret '%s'.", name)
+        log.info('Successfully wrote value to AWS secret %r.', name)
 
     def _create_secret(self, name):
         try:
@@ -109,7 +109,7 @@ class CredentialsProvisioner:
         key_name = 'projects/-/serviceAccounts/' + email
         keys = iam.projects().serviceAccounts().keys()
         key = keys.create(name=key_name, body={}).execute()
-        log.info("Successfully created service account key for user '%s'", email)
+        log.info('Successfully created service account key for user %r', email)
         return parse_google_key(key)
 
     def _destroy_secret(self, secret_name):
@@ -162,7 +162,7 @@ class CredentialsProvisioner:
             except HttpError as e:
                 if e.resp.reason != 'Not Found':
                     raise
-            log.info("Successfully deleted service account key with id '%s' for user '%s'",
+            log.info('Successfully deleted service account key with id %r for user %r',
                      key_id, service_account_email)
 
 
