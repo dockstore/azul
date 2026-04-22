@@ -28,10 +28,6 @@ from azul.logging import (
 log = logging.getLogger(__name__)
 
 
-def parse_google_key(response):
-    return base64.decodebytes(bytes(response['privateKeyData'], 'ascii')).decode()
-
-
 class CredentialsProvisioner:
 
     @cached_property
@@ -68,7 +64,7 @@ class CredentialsProvisioner:
         keys = iam.projects().serviceAccounts().keys()
         key = keys.create(name=key_name, body={}).execute()
         log.info('Successfully created service account key for user %r', email)
-        return parse_google_key(key)
+        return base64.decodebytes(bytes(key['privateKeyData'], 'ascii')).decode()
 
     def _destroy_sa_credentials(self, service_account_email, secret_name):
         try:
