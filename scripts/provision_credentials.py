@@ -186,7 +186,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(help='Specify action', dest='action')
     subparsers.required = True
-    google_parser = subparsers.add_parser('google-key', parents=[provision_parser],
+    google_parser = subparsers.add_parser('service_account', parents=[provision_parser],
                                           help='Create Google service account key and store in an AWS secret.')
     google_parser.set_defaults(func=CredentialsProvisioner.provision_google_from_args)
     google_parser.add_argument('email', type=str,

@@ -22,7 +22,7 @@ emit_tf({
                                 "command": ' '.join(map(shlex.quote, [
                                     "python",
                                     config.project_root + "/scripts/provision_credentials.py",
-                                    "google-key",
+                                    "service_account",
                                     "--create",
                                     "${self.email}",
                                     service_account.secret_name
@@ -34,7 +34,7 @@ emit_tf({
                                 "command": ' '.join(map(shlex.quote, [
                                     "python",
                                     config.project_root + "/scripts/provision_credentials.py",
-                                    "google-key",
+                                    "service_account",
                                     "--destroy",
                                     "${self.email}",
                                     service_account.secret_name
