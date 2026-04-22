@@ -23,7 +23,7 @@ emit_tf({
                                     "python",
                                     config.project_root + "/scripts/provision_credentials.py",
                                     "google-key",
-                                    "--build",
+                                    "--create",
                                     "${self.email}",
                                     service_account.secret_name
                                 ]))
@@ -87,7 +87,7 @@ emit_tf({
                                     "python",
                                     config.project_root + "/scripts/provision_credentials.py",
                                     "hmac-key",
-                                    "--build",
+                                    "--create",
                                 ]))
                             }
                         }, {

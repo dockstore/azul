@@ -46,23 +46,23 @@ class CredentialsProvisioner:
         return aws.secretsmanager
 
     def provision_google_from_args(self, args):
-        self.provision_google(args.build, args.email, args.secret_name)
+        self.provision_google(args.create, args.email, args.secret_name)
 
     def provision_hmac_from_args(self, args):
-        self.provision_hmac(args.build)
+        self.provision_hmac(args.create)
 
-    def provision_hmac(self, build):
+    def provision_hmac(self, create):
         secret_name = config.secrets_manager_secret_name('indexer', 'hmac')
-        if build:
+        if create:
             self._create_secret(secret_name)
             if not self._secret_is_stored(secret_name):
                 self._write_secret_value(secret_name, self._random_hmac_key())
         else:
             self._destroy_aws_secrets_manager_secret(secret_name)
 
-    def provision_google(self, build, email, secret_name):
+    def provision_google(self, create, email, secret_name):
         secret_name = config.secrets_manager_secret_name(secret_name)
-        if build:
+        if create:
             self._create_secret(secret_name)
             if not self._secret_is_stored(secret_name):
                 google_key = self._create_service_account_creds(email)
@@ -177,11 +177,11 @@ if __name__ == '__main__':
     configure_script_logging(log)
     provision_parser = argparse.ArgumentParser(add_help=False)
     group = provision_parser.add_mutually_exclusive_group(required=True)
-    group.add_argument('--build', '-b', action='store_true', dest='build',
+    group.add_argument('--create', '-c', action='store_true', dest='create',
                        help='Create credentials instead of destroying them. '
                             'This action is idempotent.')
-    group.add_argument('--destroy', '-d', action='store_false', dest='build',
-                       help='Destroy credentials instead of building them. '
+    group.add_argument('--destroy', '-d', action='store_false', dest='create',
+                       help='Destroy credentials instead of creating them. '
                             'This action is idempotent.')
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(help='Specify action', dest='action')
