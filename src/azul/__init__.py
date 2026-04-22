@@ -51,6 +51,9 @@ from azul.lib.functions import (
 from azul.lib.objects import (
     Sentinel,
 )
+from azul.lib.strings import (
+    format_and_dedent,
+)
 from azul.lib.types import (
     JSON,
     MutableJSON,
@@ -59,9 +62,6 @@ from azul.lib.types import (
     json_mapping,
     json_str,
     optional,
-)
-from azul.openapi import (
-    format_description,
 )
 from azul.resources import (
     NotInLambdaContextException,
@@ -1641,7 +1641,7 @@ class Config:
     @property
     def contact_us(self) -> str:
         email = self.monitoring_email
-        return format_description(f'''
+        return format_and_dedent(f'''
 
             ## Contact us
 

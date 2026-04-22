@@ -29,11 +29,11 @@ from azul.lib import (
     R,
     cached_property,
 )
+from azul.lib.strings import (
+    format_and_dedent,
+)
 from azul.logging import (
     configure_script_logging,
-)
-from azul.openapi import (
-    format_description,
 )
 
 if TYPE_CHECKING:
@@ -133,7 +133,7 @@ class CredentialsProvisioner:
                        host='console.cloud.google.com',
                        path=['auth', 'clients', client_id],
                        args={'project': google_project})
-            print(format_description('''
+            print(format_and_dedent('''
                 Visit {url} and …
 
                 1) Delete any disabled secrets, leaving only the current secret
@@ -147,7 +147,7 @@ class CredentialsProvisioner:
             secret_value = getpass.getpass('OAuth2 client secret (input will not be echoed back): ')
             assert secret_value, R('No secret value provided')
             self._write_secret_value(secret_name, secret_value)
-            print(format_description('''
+            print(format_and_dedent('''
                 The secret was successfully stored. Now it's time to …
 
                 1) Deploy this Azul instance, unless you already did so before
