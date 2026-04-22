@@ -175,27 +175,42 @@ if __name__ == '__main__':
     logging.getLogger('googleapiclient.discovery_cache').setLevel(logging.ERROR)
 
     configure_script_logging(log)
-    provision_parser = argparse.ArgumentParser(add_help=False)
-    group = provision_parser.add_mutually_exclusive_group(required=True)
-    group.add_argument('--create', '-c', action='store_true', dest='create',
-                       help='Create credentials instead of destroying them. '
-                            'This action is idempotent.')
-    group.add_argument('--destroy', '-d', action='store_false', dest='create',
-                       help='Destroy credentials instead of creating them. '
-                            'This action is idempotent.')
+    parent_parser = argparse.ArgumentParser(add_help=False)
+    group = parent_parser.add_mutually_exclusive_group(required=True)
+    group.add_argument(
+        '--create', '-c', action='store_true', dest='create',
+        help='Idempotently create credentials instead of destroying them.'
+    )
+    group.add_argument(
+        '--destroy', '-d', action='store_false', dest='create',
+        help='Idempotently destroy credentials instead of creating them.'
+    )
+
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(help='Specify action', dest='action')
     subparsers.required = True
-    google_parser = subparsers.add_parser('service_account', parents=[provision_parser],
-                                          help='Create Google service account key and store in an AWS secret.')
-    google_parser.set_defaults(func=CredentialsProvisioner.provision_google_from_args)
-    google_parser.add_argument('email', type=str,
-                               help='Email address for the Google service account '
-                                    'for which to provision credentials')
-    google_parser.add_argument('secret_name', type=str,
-                               help='Name of the AWS secret to store the Google service account credentials')
-    hmac_parser = subparsers.add_parser('hmac-key', parents=[provision_parser],
-                                        help='Create a random HMAC key and store in an AWS secret.')
+
+    sa_parser = subparsers.add_parser(
+        'service_account',
+        parents=[parent_parser],
+        help='Create credentials for a Google service account and them in an '
+             'AWS Secrets Manager secret.'
+    )
+    sa_parser.set_defaults(func=CredentialsProvisioner.provision_google_from_args)
+    sa_parser.add_argument(
+        'email', type=str,
+        help='The email address of the service account'
+    )
+    sa_parser.add_argument(
+        'secret_name', type=str,
+        help='The name of secret to store the service account credentials in'
+    )
+
+    hmac_parser = subparsers.add_parser(
+        'hmac-key', parents=[parent_parser],
+        help='Generate a random HMAC signing key and store it in an AWS '
+             'Secrets Manager secret.'
+    )
     hmac_parser.set_defaults(func=CredentialsProvisioner.provision_hmac_from_args)
     args = parser.parse_args()
     credentials_provisioner = CredentialsProvisioner()
