@@ -1358,14 +1358,24 @@ class Config:
     def validate_qualifier(cls, qualifier: str) -> None:
         cls._validate_term(qualifier, name='qualifier')
 
-    def secret_name(self, *args):
+    def secret_path(self, *args):
+        """
+        The fully qualified name of a secret in AWS Secrets Manager. Internally,
+        we use the term "secret path" for this in order to better distinguish
+        fully qualified names ("paths") from unqualified ones ("names"). Also
+        note that AWS Secrets Manager uses the term "secret ID" as well. These
+        can be either a fully qualified name or the ARN of a secret. The latter
+        is made up of the secrets's account ID, its fully qualified name and an
+        optional suffix consisting of a dash followed by six characters. We
+        don't use ARNs in Azul to refer to secrets.
+        """
         return '/'.join(['dcp', 'azul', self.deployment_stage, *args])
 
-    def hmac_secret_name(self):
-        return self.secret_name('indexer', 'hmac')
+    def hmac_secret_path(self):
+        return self.secret_path('indexer', 'hmac')
 
-    def oauth2_client_secret_name(self):
-        return self.secret_name('google_oauth2_client_secret')
+    def oauth2_client_secret_path(self):
+        return self.secret_path('google_oauth2_client_secret')
 
     def enable_gcp(self):
         return self.google_project() is not None

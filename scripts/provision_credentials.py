@@ -64,15 +64,15 @@ class CredentialsProvisioner:
         self._provision_hmac(args.create)
 
     def _provision_sa(self, create: bool, email: str, secret_name: str) -> None:
-        secret_name = config.secret_name(secret_name)
+        secret_path = config.secret_path(secret_name)
         if create:
-            self._create_secret(secret_name)
-            if not self._secret_is_stored(secret_name):
+            self._create_secret(secret_path)
+            if not self._secret_is_stored(secret_path):
                 google_key = self._create_sa_credentials(email)
-                self._write_secret_value(secret_name, google_key)
+                self._write_secret_value(secret_path, google_key)
         else:
-            self._destroy_sa_credentials(email, secret_name)
-            self._destroy_secret(secret_name)
+            self._destroy_sa_credentials(email, secret_path)
+            self._destroy_secret(secret_path)
 
     def _create_sa_credentials(self, email: str) -> str:
         iam = self._google_iam
@@ -84,9 +84,7 @@ class CredentialsProvisioner:
 
     def _destroy_sa_credentials(self, email: str, secret_name: str) -> None:
         try:
-            creds = self._secrets_manager.get_secret_value(
-                SecretId=secret_name
-            )
+            creds = self._secrets_manager.get_secret_value(SecretId=secret_name)
         except self._secrets_manager.exceptions.ResourceNotFoundException:
             log.info('Secret already deleted, cannot get key_id for %s', email)
             return
@@ -103,13 +101,13 @@ class CredentialsProvisioner:
                      key_id, email)
 
     def _provision_hmac(self, create: bool) -> None:
-        secret_name = config.hmac_secret_name()
+        secret_path = config.hmac_secret_path()
         if create:
-            self._create_secret(secret_name)
-            if not self._secret_is_stored(secret_name):
-                self._write_secret_value(secret_name, self._random_hmac_key())
+            self._create_secret(secret_path)
+            if not self._secret_is_stored(secret_path):
+                self._write_secret_value(secret_path, self._random_hmac_key())
         else:
-            self._destroy_secret(secret_name)
+            self._destroy_secret(secret_path)
 
     def _random_hmac_key(self) -> str:
         # Even though an HMAC key can be any sequence of bytes, we restrict to
@@ -122,9 +120,9 @@ class CredentialsProvisioner:
         self._provision_oauth2_client_secret(args.create)
 
     def _provision_oauth2_client_secret(self, create: bool) -> None:
-        secret_name = config.oauth2_client_secret_name()
+        secret_path = config.oauth2_client_secret_path()
         if create:
-            self._create_secret(secret_name)
+            self._create_secret(secret_path)
             client_id = config.google_oauth2_client_id
             assert client_id is not None, R('AZUL_GOOGLE_OAUTH2_CLIENT_ID is not set')
             google_project = config.google_project()
@@ -146,7 +144,7 @@ class CredentialsProvisioner:
             ''', url=url))
             secret_value = getpass.getpass('OAuth2 client secret (input will not be echoed back): ')
             assert secret_value, R('No secret value provided')
-            self._write_secret_value(secret_name, secret_value)
+            self._write_secret_value(secret_path, secret_value)
             print(format_and_dedent('''
                 The secret was successfully stored. Now it's time to …
 
@@ -162,11 +160,11 @@ class CredentialsProvisioner:
                    the old secret
             '''))
         else:
-            self._destroy_secret(secret_name)
+            self._destroy_secret(secret_path)
 
-    def _secret_is_stored(self, name: str) -> bool:
+    def _secret_is_stored(self, path: str) -> bool:
         try:
-            response = self._secrets_manager.get_secret_value(SecretId=name)
+            response = self._secrets_manager.get_secret_value(SecretId=path)
         except self._secrets_manager.exceptions.ResourceNotFoundException:
             return False
         try:
@@ -174,31 +172,28 @@ class CredentialsProvisioner:
         except KeyError:
             return False
 
-    def _create_secret(self, name: str) -> None:
+    def _create_secret(self, path: str) -> None:
         try:
-            self._secrets_manager.create_secret(Name=name)
+            self._secrets_manager.create_secret(Name=path)
         except self._secrets_manager.exceptions.ResourceExistsException:
-            log.info('AWS secret %s already exists.', name)
+            log.info('AWS secret %s already exists.', path)
         else:
-            log.info('AWS secret %s created.', name)
+            log.info('AWS secret %s created.', path)
 
-    def _write_secret_value(self, name: str, value: str) -> None:
-        self._secrets_manager.put_secret_value(
-            SecretId=name,
-            SecretString=value
-        )
-        log.info('Successfully wrote value to AWS secret %r.', name)
+    def _write_secret_value(self, path: str, value: str) -> None:
+        self._secrets_manager.put_secret_value(SecretId=path, SecretString=value)
+        log.info('Successfully wrote value to AWS secret %r.', path)
 
-    def _destroy_secret(self, name: str) -> None:
+    def _destroy_secret(self, path: str) -> None:
         try:
             response = self._secrets_manager.delete_secret(
-                SecretId=name,
+                SecretId=path,
                 ForceDeleteWithoutRecovery=True
             )
         except self._secrets_manager.exceptions.ResourceNotFoundException:
-            log.info('AWS secret %s does not exist. No changes will be made.', name)
+            log.info('AWS secret %s does not exist. No changes will be made.', path)
         else:
-            assert response['Name'] == name
+            assert response['Name'] == path
             # AWS docs recommend waiting for ResourceNotFoundException: "The
             # deletion is an asynchronous process. There might be a short delay"
             #
@@ -207,17 +202,17 @@ class CredentialsProvisioner:
             deadline = time.time() + 60
             while True:
                 try:
-                    self._secrets_manager.describe_secret(SecretId=name)
+                    self._secrets_manager.describe_secret(SecretId=path)
                 except self._secrets_manager.exceptions.ResourceNotFoundException:
-                    log.info('Successfully deleted AWS secret %r.', name)
+                    log.info('Successfully deleted AWS secret %r.', path)
                     break
                 else:
                     now = time.time()
                     if now >= deadline:
-                        raise RuntimeError('Secret could not be destroyed', name)
+                        raise RuntimeError('Secret could not be destroyed', path)
                     else:
                         log.info('Secret %r not yet deleted. Will keep checking for %.3fs.',
-                                 name, deadline - now)
+                                 path, deadline - now)
                         time.sleep(5)
 
 
