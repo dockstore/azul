@@ -650,6 +650,14 @@ These steps are performed once per deployment (multiple times per project).
 
 9. `_refresh`
 
+10. Provision the OAuth2 client secret in AWS Secrets Manager:
+
+    ```
+    python scripts/provision_credentials.py oauth2_client_secret --create
+    ```
+
+    Follow the prompts to store the client secret.
+
 ## 3.3 Provisioning cloud infrastructure
 
 Once you've configured the project and your personal deployment or a shared

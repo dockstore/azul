@@ -53,13 +53,15 @@ from azul.lib import (
 from azul.lib.collections import (
     adict,
 )
+from azul.lib.strings import (
+    format_and_dedent as fd,
+)
 from azul.lib.types import (
     MutableJSON,
     is_optional,
     json_int,
 )
 from azul.openapi import (
-    format_description as fd,
     params,
     responses,
     schema,
