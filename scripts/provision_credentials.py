@@ -85,7 +85,7 @@ class CredentialsProvisioner:
     def _destroy_sa_credentials(self, email: str, secret_name: str) -> None:
         try:
             creds = self._secrets_manager.get_secret_value(
-                SecretId=config.secret_name(secret_name)
+                SecretId=secret_name
             )
         except self._secrets_manager.exceptions.ResourceNotFoundException:
             log.info('Secret already deleted, cannot get key_id for %s', email)
