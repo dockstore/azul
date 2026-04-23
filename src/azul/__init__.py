@@ -1375,7 +1375,7 @@ class Config:
         return self.secret_path('indexer', 'hmac')
 
     def oauth2_client_secret_path(self):
-        return self.secret_path('google_oauth2_client_secret')
+        return self.secret_path('service', 'google_oauth2_client_secret')
 
     def enable_gcp(self):
         return self.google_project() is not None
