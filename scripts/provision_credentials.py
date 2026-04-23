@@ -63,6 +63,9 @@ class CredentialsProvisioner:
     def provision_hmac(self, args: argparse.Namespace) -> None:
         self._provision_hmac(args.create)
 
+    def provision_oauth2_client_secret(self, args: argparse.Namespace) -> None:
+        self._provision_oauth2_client_secret(args.create)
+
     def _provision_sa(self, create: bool, email: str, secret_name: str) -> None:
         secret_path = config.secret_path(secret_name)
         if create:
@@ -115,9 +118,6 @@ class CredentialsProvisioner:
         key = base64.encodebytes(os.urandom(48)).decode().replace('=', '').replace('\n', '')
         assert len(key) == 64
         return json.dumps({'key': key, 'key_id': str(uuid.uuid4())})
-
-    def provision_oauth2_client_secret(self, args: argparse.Namespace) -> None:
-        self._provision_oauth2_client_secret(args.create)
 
     def _provision_oauth2_client_secret(self, create: bool) -> None:
         secret_path = config.oauth2_client_secret_path()
