@@ -44,7 +44,6 @@ from azul.drs import (
 )
 from azul.indexer import (
     Bundle,
-    SourceConfig,
     SourcedBundleFQID,
 )
 from azul.indexer.document import (
@@ -89,6 +88,7 @@ from azul.lib.uuids import (
 )
 from azul.source import (
     Prefix,
+    SourceConfig,
     SourceRef,
     SourceSpec,
 )

@@ -28,9 +28,6 @@ from app_test_case import (
 from azul.http import (
     http_client,
 )
-from azul.indexer import (
-    SourceConfig,
-)
 from azul.logging import (
     configure_test_logging,
     get_test_logger,
@@ -42,6 +39,9 @@ from azul.service.source_service import (
     Expired,
     NotFound,
     SourceService,
+)
+from azul.source import (
+    SourceConfig,
 )
 from azul.terra import (
     TDRClient,

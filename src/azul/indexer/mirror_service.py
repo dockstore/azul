@@ -47,9 +47,6 @@ from azul.drs import (
 from azul.http import (
     HasCachedHttpClient,
 )
-from azul.indexer import (
-    SourceConfig,
-)
 from azul.lib import (
     R,
     cached_property,
@@ -93,6 +90,7 @@ from azul.service.storage_service import (
     StorageService,
 )
 from azul.source import (
+    SourceConfig,
     SourceRef,
     SourceSpec,
 )

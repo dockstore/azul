@@ -103,7 +103,6 @@ from azul.http import (
     http_client,
 )
 from azul.indexer import (
-    SourceConfig,
     SourcedBundleFQID,
 )
 from azul.indexer.document import (
@@ -174,6 +173,7 @@ from azul.service.manifest_service import (
 )
 from azul.source import (
     Prefix,
+    SourceConfig,
     SourceRef,
     SourceSpec,
 )

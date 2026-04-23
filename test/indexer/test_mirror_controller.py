@@ -29,9 +29,6 @@ from azul.deployment import (
 from azul.http import (
     http_client,
 )
-from azul.indexer import (
-    SourceConfig,
-)
 from azul.indexer.mirror_controller import (
     MirrorController,
 )
@@ -64,6 +61,9 @@ from azul.queues import (
 )
 from azul.service.source_service import (
     SourceService,
+)
+from azul.source import (
+    SourceConfig,
 )
 from azul_test_case import (
     DCP2TestCase,
