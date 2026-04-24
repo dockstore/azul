@@ -368,3 +368,12 @@ class SourceConfig(SerializableAttrs):
     Configuration on how to index or mirror a specific source.
     """
     mirror: bool
+
+
+@attrs.frozen(kw_only=True)
+class Source(SerializableAttrs):
+    ref: SourceRef
+    config: SourceConfig
+
+    def with_prefix(self, prefix: Prefix) -> Self:
+        return attrs.evolve(self, ref=self.ref.with_prefix(prefix=prefix))

@@ -173,6 +173,7 @@ from azul.service.manifest_service import (
 )
 from azul.source import (
     Prefix,
+    Source,
     SourceConfig,
     SourceRef,
     SourceSpec,
@@ -311,7 +312,7 @@ class IntegrationTestCase(AzulTestCase):
                        *,
                        public: bool | None = None,
                        mirror: bool = False,
-                       ) -> tuple[SourceRef, SourceConfig] | None:
+                       ) -> Source | None:
         """
         Choose an indexed source at random.
 
@@ -363,8 +364,8 @@ class IntegrationTestCase(AzulTestCase):
             assert public is False, 'An IT catalog must contain at least one public source'
             return None
         else:
-            source, cfg = self.random.choice(sorted(sources.items()))
-            return plugin.resolve_source(source), cfg
+            source, config = self.random.choice(sorted(sources.items()))
+            return Source(ref=plugin.resolve_source(source), config=config)
 
 
 class IndexingIntegrationTest(IntegrationTestCase):
@@ -479,7 +480,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
         catalogs: list[Catalog] = []
         for catalog in config.integration_test_catalogs.values():
             if index:
-                public_source, _ = self._select_source(
+                public_source = self._select_source(
                     catalog.name,
                     public=True,
                     # If test_mirroring is run for the catalog, ensure that the
@@ -490,10 +491,9 @@ class IndexingIntegrationTest(IntegrationTestCase):
                     #        https://github.com/DataBiosphere/azul/issues/7955
                     #
                     mirror=True and self._mirror_service(catalog.name).may_mirror()
-                )
+                ).ref
                 ma_source = self._select_source(catalog.name, public=False)
-                if ma_source is not None:
-                    ma_source = ma_source[0]
+                ma_source = None if ma_source is None else ma_source.ref
                 sources = alist(public_source, ma_source)
                 notifications, fqids = self._prepare_notifications(catalog.name, sources)
             else:
@@ -1995,7 +1995,7 @@ class CanBundleScriptIntegrationTest(IntegrationTestCase):
             self._test_catalog(mock_catalog)
 
     def bundle_fqid(self, catalog: CatalogName) -> SourcedBundleFQID:
-        source, _ = self._select_source(catalog)
+        source = self._select_source(catalog).ref
         # The plugin will raise an exception if the source lacks a prefix
         source = source.with_prefix(Prefix.of_everything)
         bundle_fqids = self.azul_client.repository_service.list_bundles(catalog, source, prefix='')
