@@ -13,6 +13,7 @@ import attr
 import attrs
 from chalice.app import (
     BadRequestError,
+    ForbiddenError,
     NotFoundError,
     Response,
     TooManyRequestsError,
@@ -33,6 +34,7 @@ from azul.chalice import (
     TemporaryRedirectError,
 )
 from azul.drs import (
+    DRSRequesterPaysRequired,
     DRSStatusException,
 )
 from azul.http import (
@@ -425,6 +427,9 @@ class RepositoryController(ServiceController):
                 raise UnauthorizedError(msg)
             else:
                 raise
+        except DRSRequesterPaysRequired as e:
+            msg, status, data = e.args
+            raise ForbiddenError(msg)
         if download.retry_after is not None:
             retry_after = min(download.retry_after, int(1.3 ** request_index))
             if wait is not None:

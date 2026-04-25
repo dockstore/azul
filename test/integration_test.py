@@ -1205,6 +1205,11 @@ class IndexingIntegrationTest(IntegrationTestCase):
             self.assertEqual(prefix, msg[:len(prefix)])
             self.assertNotIn(str(config.tdr_service_url), msg)
             return None
+        elif response.status == 403:
+            msg = json.loads(response.data)['Message']
+            prefix = 'DRS server requires requester-pays for '
+            self.assertEqual(prefix, msg[:len(prefix)])
+            return None
         else:
             self.assertEqual(200, response.status)
             response = json.loads(response.data)
