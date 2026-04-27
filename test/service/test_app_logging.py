@@ -20,11 +20,11 @@ from azul.chalice import (
     AzulChaliceApp,
     log,
 )
+from azul.lib.types import (
+    JSON,
+)
 from azul.logging import (
     configure_test_logging,
-)
-from azul.types import (
-    JSON,
 )
 from indexer import (
     DCP1CannedBundleTestCase,
@@ -92,8 +92,8 @@ class TestServiceAppLogging(DCP1CannedBundleTestCase, WebServiceTestCase):
                 body_log_level, body_log_message = logs.pop()  # asserted separately
                 request_headers = {
                     'host': url.netloc,
-                    'user-agent': 'python-requests/2.32.5',
-                    'accept-encoding': 'gzip, deflate',
+                    'user-agent': 'python-requests/2.33.1',
+                    'accept-encoding': 'gzip, deflate, zstd',
                     'accept': '*/*',
                     'connection': 'keep-alive',
                     **request_headers,

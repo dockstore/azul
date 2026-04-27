@@ -22,10 +22,11 @@ from unittest.mock import (
     patch,
 )
 import uuid
-
-from deprecated import (
+from warnings import (
     deprecated,
 )
+
+import attrs
 from more_itertools import (
     flatten,
     one,
@@ -44,7 +45,7 @@ from app_test_case import (
     LocalAppTestCase,
 )
 from azul import (
-    cached_property,
+    CatalogName,
     config,
 )
 from azul.deployment import (
@@ -59,12 +60,17 @@ from azul.indexer.document import (
     DocumentType,
     IndexName,
 )
+from azul.lib import (
+    cached_property,
+)
+from azul.lib.types import (
+    AnyJSON,
+    JSON,
+    JSONs,
+)
 from azul.logging import (
     configure_test_logging,
     get_test_logger,
-)
-from azul.plugins import (
-    MetadataPlugin,
 )
 from azul.service.source_service import (
     NotFound,
@@ -72,11 +78,6 @@ from azul.service.source_service import (
 )
 from azul.service.storage_service import (
     StorageService,
-)
-from azul.types import (
-    AnyJSON,
-    JSON,
-    JSONs,
 )
 from azul_test_case import (
     AzulUnitTestCase,
@@ -137,16 +138,6 @@ class WebServiceTestCase(IndexerTestCase, LocalAppTestCase, metaclass=ABCMeta):
             **params
         }
 
-    @property
-    def _metadata_plugin(self) -> MetadataPlugin:
-        """
-        Returns the app's plugin instance for the default catalog, which is
-        assumed to have been patched adequately to match the test requirements.
-        """
-        plugin = self._app.metadata_plugin
-        assert isinstance(plugin, MetadataPlugin)
-        return plugin
-
 
 class DocumentCloningTestCase(WebServiceTestCase, metaclass=ABCMeta):
     _templates: JSONs
@@ -172,14 +163,14 @@ class DocumentCloningTestCase(WebServiceTestCase, metaclass=ABCMeta):
     }
 
     def _get_all_hits(self):
-        response = self.es_client.search(index=self._index_name,
-                                         body=self._query)
+        response = self.opensearch.search(index=self._index_name,
+                                          body=self._query)
         return response['hits']['hits']
 
     def _delete_all_hits(self):
-        self.es_client.delete_by_query(index=self._index_name,
-                                       body=self._query,
-                                       refresh=True)
+        self.opensearch.delete_by_query(index=self._index_name,
+                                        body=self._query,
+                                        refresh=True)
 
     def _clone_doc(self, doc):
         """
@@ -211,7 +202,7 @@ class DocumentCloningTestCase(WebServiceTestCase, metaclass=ABCMeta):
                     for doc in docs
                 )
             )
-            self.es_client.bulk(body=body, index=self._index_name, refresh=True)
+            self.opensearch.bulk(body=body, index=self._index_name, refresh=True)
 
     @property
     def _index_name(self):
@@ -264,7 +255,20 @@ class MirrorTestCase(S3TestCase):
                                    new=PropertyMock(return_value=self.mirror_bucket)))
         self._create_test_bucket(self.mirror_bucket)
 
+    @classmethod
+    def _patch_mirror_limit(cls,
+                            catalog: CatalogName,
+                            size: int | None
+                            ) -> patch.dict:
+        catalogs = config.catalogs
+        return patch.dict(catalogs, {
+            catalog: attrs.evolve(catalogs[catalog], mirror_limit=size)
+        })
 
+
+# FIXME: Remove deprecation, convert doctests, prevent use as decorator
+#        https://github.com/DataBiosphere/azul/issues/7838
+#
 @deprecated('Instead of decorating your test case, or its test methods in it, '
             'mix in the appropriate subclass of CatalogTestCase.')
 def patch_source_cache(target: Union[None, type, Callable] = None,

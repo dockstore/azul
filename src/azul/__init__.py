@@ -9,11 +9,10 @@ from collections.abc import (
 from enum import (
     Enum,
 )
-import functools
 from itertools import (
     chain,
 )
-import json as _json  # collides with azul.json
+import json
 import logging as _logging  # collides with azul.logging
 import os
 from pathlib import (
@@ -22,20 +21,10 @@ from pathlib import (
 import re
 import shlex
 from typing import (
-    Any,
-    BinaryIO,
-    Callable,
     ClassVar,
-    Hashable,
-    IO,
-    Literal,
     NotRequired,
     Self,
-    TYPE_CHECKING,
-    TextIO,
     TypedDict,
-    final,
-    overload,
 )
 
 from attrs import (
@@ -43,26 +32,29 @@ from attrs import (
     field,
     frozen,
 )
-from furl import (
-    furl,
-)
 from more_itertools import (
     first,
     one,
 )
-from typing_extensions import (
-    TypeIs,
-    deprecated,
-)
 
-import azul.caching
-from azul.collections import (
+from azul.lib import (
+    R,
+    cached_property,
+    mutable_furl,
+)
+from azul.lib.collections import (
     atuple,
 )
-from azul.openapi import (
-    format_description,
+from azul.lib.functions import (
+    iif,
 )
-from azul.types import (
+from azul.lib.objects import (
+    Sentinel,
+)
+from azul.lib.strings import (
+    format_and_dedent,
+)
+from azul.lib.types import (
     JSON,
     MutableJSON,
     json_bool,
@@ -70,6 +62,10 @@ from azul.types import (
     json_mapping,
     json_str,
     optional,
+)
+from azul.resources import (
+    NotInLambdaContextException,
+    open_resource,
 )
 from azul.vendored.frozendict import (
     frozendict,
@@ -80,103 +76,6 @@ log = _logging.getLogger(__name__)
 Netloc = tuple[str, int]
 
 CatalogName = str
-
-cached_property = azul.caching.CachedProperty
-
-lru_cache = functools.lru_cache
-
-if TYPE_CHECKING:
-    # Work around https://github.com/python/typeshed/issues/15139
-    @final
-    class CacheWrapper[_T]:
-
-        def __call__(self, *args: Hashable, **kwargs: Hashable) -> _T:
-            ...
-
-
-    def cache[_T](f: Callable[..., _T], /) -> CacheWrapper[_T]:  # noqa: E303
-        ...
-else:
-    cache = functools.cache
-
-
-def cache_per_thread(f, /):
-    return azul.caching.lru_cache_per_thread(maxsize=None)(f)
-
-
-#: A type alias for annotating the return value of methods that return a
-#: ``furl`` instance that can be modified without side effects in the object
-#: whose method returned it.
-#:
-mutable_furl = furl
-
-
-@final
-class Sentinel(object):
-    """
-    Use an instance of this class instead of ``object()`` as the default value
-    for function arguments for which ``None`` isn't a suitable default value.
-    """
-
-    def is_(self, other: Any) -> TypeIs['Sentinel']:
-        """
-        Detect if the given argument is this sentinel, and if it isn't, that it
-        is no no other instance of this class.
-
-        :return: True, if the given value is this sentinel. False, if the given
-                 value is no sentinel. Otherwise, a requirement assertion is
-                 raised
-
-        A typical usage would look as follows:
-
-        >>> zero = Sentinel()
-
-        >>> def f(x: int | Sentinel = zero) -> list[int]:
-        ...     if zero.is_(x):
-        ...         x = 0
-        ...     # `x` is now narrowed to just `int`
-        ...     return [x]
-
-        This is equivalent to.
-
-        >>> def f(x: int | Sentinel = zero) -> list[int]:
-        ...     if x is zero:
-        ...         x = 0
-        ...     assert not isinstance(zero, Sentinel)
-        ...     return [x]
-
-        Without the narrowing done by this method, or by the assertion in the
-        second example, the type checker would reject the return statement
-        as it would consider its type to be ``list[x | Sentinel]``, not just
-        ``list[int]`` as required by the return type annotation of ``f``.
-        """
-        if self is other:
-            return True
-        else:
-            assert not isinstance(other, type(self)), R('Invalid sentinel')
-            return False
-
-
-def false() -> bool:
-    """
-    Use this to disable code while keeping it in scope for type checkers and
-    refactorings, but without tripping static detection of "dead" code. The
-    disablement is usually temporary (a work around) but may even be permanent,
-    in order to, say, document a hypothetical.
-
-    :return: Always ``False``
-
-    >>> if false():
-    ...     print('Entering the forbidden zone')
-    """
-    return False
-
-
-def true() -> bool:
-    """
-    See :meth:`false`
-    """
-    return True
 
 
 class Config:
@@ -199,7 +98,7 @@ class Config:
     @property
     def aws_support_roles(self) -> list[str]:
         variable = 'azul_aws_support_roles'
-        roles = _json.loads(self.environ[variable])
+        roles = json.loads(self.environ[variable])
         assert isinstance(roles, list), R(
             f'{variable} must be a list', roles)
         assert all(isinstance(role, str) for role in roles), R(
@@ -226,37 +125,37 @@ class Config:
         self.environ['AZUL_DEBUG'] = str(debug)
 
     def _validate_debug(self, debug):
-        assert debug in (0, 1, 2), R('AZUL_DEBUG must be either 0, 1 or 2')
+        assert debug in (0, 1, 2, 3), R('AZUL_DEBUG must be either 0, 1, 2 or 3')
 
-    _es_endpoint_env_name = 'AZUL_ES_ENDPOINT'
+    _opensearch_endpoint_env_name = 'AZUL_OPENSEARCH_ENDPOINT'
 
     @property
-    def es_endpoint(self) -> Netloc | None:
+    def opensearch_endpoint(self) -> Netloc | None:
         try:
-            es_endpoint = self.environ[self._es_endpoint_env_name]
+            endpoint = self.environ[self._opensearch_endpoint_env_name]
         except KeyError:
             return None
         else:
-            host, _, port = es_endpoint.partition(':')
+            host, _, port = endpoint.partition(':')
             return host, int(port)
 
-    def es_endpoint_env(self,
-                        *,
-                        es_endpoint: Netloc | str,
-                        es_instance_count: int | str
-                        ) -> Mapping[str, str]:
-        if isinstance(es_endpoint, tuple):
-            host, port = es_endpoint
+    def opensearch_endpoint_env(self,
+                                *,
+                                endpoint: Netloc | str,
+                                instance_count: int | str,
+                                ) -> Mapping[str, str]:
+        if isinstance(endpoint, tuple):
+            host, port = endpoint
             assert isinstance(host, str), host
             assert isinstance(port, int), port
-            es_endpoint = f'{host}:{port}'
-        elif isinstance(es_endpoint, str):
+            endpoint = f'{host}:{port}'
+        elif isinstance(endpoint, str):
             pass
         else:
-            assert False, es_endpoint
+            assert False, endpoint
         return {
-            self._es_endpoint_env_name: es_endpoint,
-            self._es_instance_count_env_name: str(es_instance_count)
+            self._opensearch_endpoint_env_name: endpoint,
+            self._opensearch_instance_count_env_name: str(instance_count)
         }
 
     @property
@@ -272,12 +171,12 @@ class Config:
         return self.environ['azul_chalice_bin']
 
     @property
-    def es_domain(self) -> str:
-        return self.environ['AZUL_ES_DOMAIN']
+    def opensearch_domain(self) -> str:
+        return self.environ['AZUL_OPENSEARCH_DOMAIN']
 
     @property
-    def share_es_domain(self) -> bool:
-        return self._boolean(self.environ['AZUL_SHARE_ES_DOMAIN'])
+    def share_opensearch_domain(self) -> bool:
+        return self._boolean(self.environ['AZUL_SHARE_OPENSEARCH_DOMAIN'])
 
     def qualified_bucket_name(self,
                               *,
@@ -370,8 +269,8 @@ class Config:
     audit_log_retention_days = 365
 
     @property
-    def es_timeout(self) -> int:
-        return int(self.environ['AZUL_ES_TIMEOUT'])
+    def opensearch_timeout(self) -> int:
+        return int(self.environ['AZUL_OPENSEARCH_TIMEOUT'])
 
     @property
     def data_browser_domain(self):
@@ -387,7 +286,7 @@ class Config:
         catalog = self.default_catalog
         if self.is_dss_enabled(catalog):
             dss_source = one(self.sources(catalog))
-            from azul.indexer import (
+            from azul.source import (
                 SimpleSourceSpec,
             )
             return SimpleSourceSpec.parse(dss_source).name
@@ -399,7 +298,7 @@ class Config:
 
     @property
     def tdr_allowed_source_locations(self) -> Set[str]:
-        return frozenset(_json.loads(self.environ['AZUL_TDR_ALLOWED_SOURCE_LOCATIONS']))
+        return frozenset(json.loads(self.environ['AZUL_TDR_ALLOWED_SOURCE_LOCATIONS']))
 
     @property
     def tdr_source_location(self) -> str:
@@ -411,20 +310,24 @@ class Config:
 
     @property
     def tdr_service_url(self) -> mutable_furl:
-        return furl(self.environ['AZUL_TDR_SERVICE_URL'])
+        return mutable_furl(self.environ['AZUL_TDR_SERVICE_URL'])
 
     @property
     def sam_service_url(self) -> mutable_furl:
-        return furl(self.environ['AZUL_SAM_SERVICE_URL'])
+        return mutable_furl(self.environ['AZUL_SAM_SERVICE_URL'])
 
     @property
     def duos_service_url(self) -> mutable_furl | None:
         url = self.environ.get('AZUL_DUOS_SERVICE_URL')
-        return None if url is None else furl(url)
+        return None if url is None else mutable_furl(url)
 
     @property
     def terra_service_url(self) -> mutable_furl:
-        return furl(self.environ['AZUL_TERRA_SERVICE_URL'])
+        return mutable_furl(self.environ['AZUL_TERRA_SERVICE_URL'])
+
+    @property
+    def ecm_service_url(self) -> mutable_furl:
+        return mutable_furl(self.environ['azul_ecm_service_url'])
 
     @property
     def dss_query_prefix(self) -> str:
@@ -509,10 +412,7 @@ class Config:
     def _parse_principals(self, accounts) -> dict[str, list[str]]:
         # noinspection PyProtectedMember
         """
-        >>> from azul import config  # Without this import, these doctests fail
-        ...                          # in Pycharm since the fully qualified
-        ...                          # class name of the exception would be
-        ...                          # azul.RequirementError
+        >>> from azul import config
 
         >>> config._parse_principals('123,foo*')
         {'123': ['foo*']}
@@ -742,7 +642,7 @@ class Config:
         return [self.drs_domain] if lambda_name == 'service' and self.drs_domain else []
 
     def lambda_endpoint(self, lambda_name: str) -> mutable_furl:
-        return furl(scheme='https', netloc=self.api_lambda_domain(lambda_name))
+        return mutable_furl(scheme='https', netloc=self.api_lambda_domain(lambda_name))
 
     @property
     def indexer_endpoint(self) -> mutable_furl:
@@ -755,7 +655,7 @@ class Config:
     @property
     def drs_endpoint(self) -> mutable_furl:
         if self.drs_domain:
-            return furl(scheme='https', netloc=self.drs_domain)
+            return mutable_furl(scheme='https', netloc=self.drs_domain)
         else:
             return self.service_endpoint
 
@@ -857,18 +757,18 @@ class Config:
         return self._boolean(self.environ['AZUL_ENABLE_VERBATIM_RELATIONS'])
 
     @property
-    def es_instance_type(self) -> str:
-        return self.environ['AZUL_ES_INSTANCE_TYPE']
+    def opensearch_instance_type(self) -> str:
+        return self.environ['AZUL_OPENSEARCH_INSTANCE_TYPE']
 
-    _es_instance_count_env_name = 'AZUL_ES_INSTANCE_COUNT'
-
-    @property
-    def es_instance_count(self) -> int:
-        return int(self.environ[self._es_instance_count_env_name])
+    _opensearch_instance_count_env_name = 'AZUL_OPENSEARCH_INSTANCE_COUNT'
 
     @property
-    def es_volume_size(self) -> int:
-        return int(self.environ['AZUL_ES_VOLUME_SIZE'])
+    def opensearch_instance_count(self) -> int:
+        return int(self.environ[self._opensearch_instance_count_env_name])
+
+    @property
+    def opensearch_volume_size(self) -> int:
+        return int(self.environ['AZUL_OPENSEARCH_VOLUME_SIZE'])
 
     @property
     def enable_replicas(self) -> bool:
@@ -1023,10 +923,10 @@ class Config:
         """
         catalogs = self.environ['AZUL_CATALOGS']
         if catalogs.startswith('Qlpo'):  # bzip2 header, `BZh`, base64-encoded
-            import bz2
             import base64
+            import bz2
             catalogs = bz2.decompress(base64.b64decode(catalogs)).decode()
-        catalogs = _json.loads(catalogs)
+        catalogs = json.loads(catalogs)
         assert bool(catalogs), R('No catalogs configured')
         return {
             name: self.Catalog.from_json(name, catalog)
@@ -1226,7 +1126,7 @@ class Config:
 
     @property
     def _deployment_env(self) -> dict[str, str]:
-        return {'azul_deployment': _json.dumps(self.deployment.render())}
+        return {'azul_deployment': json.dumps(self.deployment.render())}
 
     @property
     def deployment(self) -> Deployment:
@@ -1236,7 +1136,7 @@ class Config:
             return self.Deployment(self.deployment_stage)
         else:
             return self.Deployment.reconstitute(name=self.deployment_stage,
-                                                rendered=_json.loads(deployment))
+                                                rendered=json.loads(deployment))
 
     @property
     def _shared_deployments(self) -> Mapping[str | None, Sequence[Deployment]]:
@@ -1245,7 +1145,7 @@ class Config:
         branch can be deployed to. The key of None signifies any other branch
         not mapped explicitly, or a detached head.
         """
-        deployments = _json.loads(self.environ['azul_shared_deployments'])
+        deployments = json.loads(self.environ['azul_shared_deployments'])
         assert all(isinstance(v, list) and v for v in deployments.values()), R(
             'Invalid value for azul_shared_deployments')
         return frozendict(
@@ -1281,7 +1181,7 @@ class Config:
 
     @property
     def browser_sites(self) -> Mapping[str, BrowserSite]:
-        return _json.loads(self.environ['azul_browser_sites'])
+        return json.loads(self.environ['azul_browser_sites'])
 
     class GitStatus(TypedDict):
         commit: str
@@ -1289,14 +1189,18 @@ class Config:
 
     @property
     def _git_status_env(self) -> dict[str, str]:
-        return {'azul_git_' + k: str(v) for k, v in self._git_status.items()}
+        status = self._git_status
+        return {
+            'azul_git_commit': status['commit'],
+            'azul_git_dirty': str(int(status['dirty']))
+        }
 
     @property
     def git_status(self) -> GitStatus:
         try:
             return {
                 'commit': self.environ['azul_git_commit'],
-                'dirty': str_to_bool(self.environ['azul_git_dirty'])
+                'dirty': self._boolean(self.environ['azul_git_dirty'])
             }
         except KeyError:
             return self._git_status
@@ -1376,10 +1280,14 @@ class Config:
         }
 
     @cached_property
+    def lambda_runtime_version(self) -> str | None:
+        return self.environ.get('azul_lambda_runtime_version')
+
+    @cached_property
     def _outsourced_environ(self) -> dict[str, str]:
         try:
             with open_resource('environ.json') as f:
-                return _json.load(f)
+                return json.load(f)
         except NotInLambdaContextException:
             # An outsourced environment is only defined in a Lambda context,
             # outside of one the real environment still contains all variables
@@ -1450,8 +1358,24 @@ class Config:
     def validate_qualifier(cls, qualifier: str) -> None:
         cls._validate_term(qualifier, name='qualifier')
 
-    def secrets_manager_secret_name(self, *args):
+    def secret_path(self, *args):
+        """
+        The fully qualified name of a secret in AWS Secrets Manager. Internally,
+        we use the term "secret path" for this in order to better distinguish
+        fully qualified names ("paths") from unqualified ones ("names"). Also
+        note that AWS Secrets Manager uses the term "secret ID" as well. These
+        can be either a fully qualified name or the ARN of a secret. The latter
+        is made up of the secrets's account ID, its fully qualified name and an
+        optional suffix consisting of a dash followed by six characters. We
+        don't use ARNs in Azul to refer to secrets.
+        """
         return '/'.join(['dcp', 'azul', self.deployment_stage, *args])
+
+    def hmac_secret_path(self):
+        return self.secret_path('indexer', 'hmac')
+
+    def oauth2_client_secret_path(self):
+        return self.secret_path('service', 'google_oauth2_client_secret')
 
     def enable_gcp(self):
         return self.google_project() is not None
@@ -1464,7 +1388,7 @@ class Config:
         public = '_public'
         unregistered = '_unregistered'
 
-        def id(self, config: 'Config') -> str:
+        def id(self, config: Config) -> str:
             return config.environ['AZUL_GOOGLE_SERVICE_ACCOUNT' + self.value.upper()]
 
         @property
@@ -1630,9 +1554,9 @@ class Config:
     ]
 
     @property
-    def es_refresh_interval(self) -> int:
+    def opensearch_refresh_interval(self) -> int:
         """
-        Integral number of seconds between index refreshes in Elasticsearch
+        Integral number of seconds between index refreshes in OpenSearch
         """
         return 1
 
@@ -1670,6 +1594,10 @@ class Config:
     @property
     def gitlab_access_token(self) -> str | None:
         return self.environ.get('azul_gitlab_access_token')
+
+    @property
+    def gitlab_data_volume_id(self) -> str | None:
+        return self.environ.get('azul_gitlab_data_volume_id')
 
     @property
     def lambda_layer_key(self) -> str:
@@ -1724,12 +1652,12 @@ class Config:
         if value is None:
             return None
         else:
-            return _json.loads(value)
+            return json.loads(value)
 
     @property
     def contact_us(self) -> str:
         email = self.monitoring_email
-        return format_description(f'''
+        return format_and_dedent(f'''
 
             ## Contact us
 
@@ -1751,7 +1679,7 @@ class Config:
         if slack_integration is None:
             return None
         else:
-            return self.SlackIntegration(**_json.loads(slack_integration))
+            return self.SlackIntegration(**json.loads(slack_integration))
 
     manifest_column_joiner = '||'
 
@@ -1783,7 +1711,7 @@ class Config:
 
     @property
     def docker_images(self) -> dict[str, ImageSpec]:
-        return _json.loads(self.environ['azul_docker_images'])
+        return json.loads(self.environ['azul_docker_images'])
 
     docker_platforms = [
         'linux/arm64',
@@ -1894,308 +1822,12 @@ class Config:
     def mirror_bucket(self) -> str | None:
         return self.environ.get('AZUL_MIRROR_BUCKET')
 
-
-config: Config = Config()  # yes, the type hint does help PyCharm
-
-
-class R:
-    """
-    R is short for Requirement. We think this abbreviation is justified by how
-    frequently this class is used.
-
-    Use an instance of this class as the second argument to `assert` in order to
-    express that the assertion fired due to an invalid input to a component of
-    the program, rather than a defect *in* the program component itself. A
-    program component can be a function, class or module. Individual methods
-    typically aren't components. A regular assertion firing constitutes a defect
-    inside the component, an unsatisfied requirement constitutes a defect
-    outside of it.
-
-    >>> foo = 1
-    >>> assert foo > 42, R('Invalid foo', foo)
-    Traceback (most recent call last):
-    ...
-    AssertionError: R('Invalid foo', 1)
-
-    There are two advantages to using `assert` to enforce requirements as
-    opposed to the now deprecated :func:`require()` or :func:`reject()`: One
-    advantage is that the second argument to assert is evaluated lazily, thereby
-    avoiding potentially expensive operations in case the assert does not fire.
-
-    >>> foo = 43
-    >>> assert foo > 42, R('Invalid foo', (foo:=0))
-    >>> foo
-    43
-
-    The second advantage is that `assert` can help type checkers to infer a more
-    narrow type:
-
-    >>> strict = True
-    >>> def f(x:int | None) -> bytes:
-    ...     if strict:
-    ...         assert x is not None, R('x may not be None')
-    ...         return x.to_bytes()
-    """
-
-    @classmethod
-    def caused(cls, e: AssertionError) -> bool:
-        """
-        Use this method to check if the given exception was raised due to an
-        unsatisfied requirement. Typical usage looks as follows:
-
-        >>> try:
-        ...     foo = 1
-        ...     assert foo > 42, R('Invalid foo', foo)
-        ... except AssertionError as e:
-        ...     if R.caused(e):
-        ...         pass  # handle the unsatisfied requirement
-        ...     else:
-        ...         raise  # some other type of assertion
-        """
-        return bool(e.args) and isinstance(e.args[0], cls)
-
-    @classmethod
-    def propagate[E:BaseException](cls,
-                                   cause: AssertionError,
-                                   effect_cls: type[E]
-                                   ) -> E:
-        """
-        Propagate the arguments of an R instance that caused the given exception
-        to a new exception of the given type.
-
-        >>> try:
-        ...     foo = 1
-        ...     assert foo > 42, R('Invalid foo', foo)
-        ... except AssertionError as e:
-        ...     if R.caused(e):
-        ...         raise R.propagate(e, ValueError)
-        Traceback (most recent call last):
-        ...
-        ValueError: ('Invalid foo', 1)
-
-        :param cause: an exception for which :meth:`caused` returns True
-
-        :param effect_cls: the type of exception to propagate to
-
-        :return: an instance of the given type, instantiated with the arguments
-                 of the R instance that's the sole argument of the given
-                 exception
-        """
-        args = one(cause.args).args
-        if isinstance(cause, RequirementError):
-            placeholder, *args = args
-            assert placeholder == cause.placeholder
-        return effect_cls(*args)
-
-    def __init__(self, message: str, *args):
-        super().__init__()
-        self.args = message, *args
-
-    def __repr__(self):
-        class_name = type(self).__name__
-        match self.args:
-            case (message, ):
-                return f'{class_name}({message!r})'
-            case args:
-                return class_name + repr(args)
-
-    @final
-    def __eq__(self, other: object):
-        return isinstance(other, R) and self.args == other.args
+    @property
+    def enable_bundle_notifications(self):
+        return self._boolean(self.environ['AZUL_ENABLE_BUNDLE_NOTIFICATIONS'])
 
 
-@deprecated("Use 'assert False, R(…)' instead", category=None)
-class RequirementError(AssertionError):
-    placeholder = 'placeholder'
-
-    def __init__(self, *args):
-        # Unlike the R() constructor, the deprecated reject() and require()
-        # methods don't enforce that a message is being passed. To work around
-        # this while also maintaining backwards compatibility, we insert a
-        # placeholder and remove it in ``__str__()`` below.
-        super().__init__(R(self.placeholder, *args))
-
-    def __str__(self) -> str:
-        # Unpack the Requirement instance, remove the placeholder and emulate
-        # BaseException.__str__
-        #
-        # https://github.com/python/cpython/blob/v3.12.8/Objects/exceptions.c#L118
-        #
-        match one(self.args).args[1:]:
-            case ():
-                return ''
-            case (message, ):
-                return str(message)
-            case args:
-                return str(args)
-
-
-@deprecated("Use 'assert …, R(…)' instead", category=None)
-def require(condition: bool, *args, exception: type = RequirementError):
-    """
-    Raise a RequirementError, or an instance of the given exception class, if
-    the given condition is False.
-
-    :param condition: The boolean condition to be required.
-
-    :param args: optional positional arguments to be passed to the exception
-                 constructor. Typically this should be a string containing a
-                 textual description of the requirement, and optionally one or
-                 more values involved in the required condition.
-
-    :param exception: A custom exception class to be instantiated and raised if
-                      the condition does not hold.
-    """
-    reject(not condition, *args, exception=exception)
-
-
-@deprecated("Use 'assert not …, R(…)' instead", category=None)
-def reject(condition: bool, *args, exception: type = RequirementError):
-    """
-    Raise a RequirementError, or an instance of the given exception class, if
-    the given condition is True.
-
-    :param condition: The boolean condition to be rejected.
-
-    :param args: Optional positional arguments to be passed to the exception
-                 constructor. Typically this should be a string containing a
-                 textual description of the rejected condition, and optionally
-                 one or more values involved in the rejected condition.
-
-    :param exception: A custom exception class to be instantiated and raised if
-                      the condition occurs.
-    """
-    if condition:
-        raise exception(*args)
-
-
-@overload
-def open_resource(*path: str,
-                  package_root: str | None = None,
-                  binary: Literal[False] = False
-                  ) -> TextIO: ...
-
-
-@overload
-def open_resource(*path: str,
-                  package_root: str | None = None,
-                  binary: Literal[True]
-                  ) -> BinaryIO: ...
-
-
-def open_resource(*path: str,
-                  package_root: str | None = None,
-                  binary: bool = False
-                  ) -> IO[Any]:
-    """
-    Return a file object for the resources at the given path. A resource is
-    a source file that can be loaded at runtime. Resources typically aren't
-    Python code. We further distinguish between static resources that are
-    committed to source control and dynamic ones that are generated at build
-    time. Static resources can be accessed by passing 'static' as the first
-    positional argument.
-
-    This method must be called from within a real AWS Lambda execution context.
-    A fake one created by `chalice local` or LocalAppTestCase will do provided
-    that the `package_root` argument is passed and points to the directory
-    that contains the `app.py` module and the `vendor` directory.
-
-    :param path: The path to the resource relative to the `vendor/resources`
-                 directory. The last positional argument is the file name.
-
-    :param package_root: See description above
-
-    :param binary: True to load a binary resource
-    """
-    assert len(path) > 0, R('Must pass at least the file name of the resource')
-    if package_root is None:
-        module_dir = os.path.dirname(os.path.abspath(__file__))
-        assert module_dir.endswith('/azul'), module_dir
-        package_root = os.path.dirname(module_dir)
-    if package_root.endswith('/src'):
-        raise NotInLambdaContextException(package_root)
-    vendor_dir = os.path.join(package_root, 'vendor')
-    # The `chalice package` command dissolves the content of the `vendor`
-    # directory into the package root so in a deployed Lambda function, the
-    # vendor directory is gone. During `chalice local` or in a running
-    # LocalAppTestCase, the vendor directory still exists.
-    resource_dir = vendor_dir if os.path.exists(vendor_dir) else package_root
-    resource_file = os.path.join(resource_dir, 'resources', *path)
-    return open(resource_file, mode='rb' if binary else 'r')
-
-
-class NotInLambdaContextException(RuntimeError):
-
-    def __init__(self, package_root) -> None:
-        super().__init__('The package root suggests that no Lambda context is active',
-                         package_root)
-
-
-def str_to_bool(string: str):
-    if string == 'True':
-        return True
-    elif string == 'False':
-        return False
-    else:
-        raise ValueError(string)
-
-
-absent = Sentinel()
-
-
-def iif[T, E](condition: bool, then: T, otherwise: E | Sentinel = absent) -> T | E:
-    """
-    An alternative to ``if`` expressions, that, in certain situations, might
-    be more convenient or readable, such as when the ``else`` branch
-    evaluates to the zero value of a given type. Example zero values are
-    ``0`` for ``int``, ``[]`` for ``list``, ``()`` for ``tuple``, ``{}`` for
-    ``dict`` and ``''`` for ``str``.
-
-    Specifically, if the ``then`` and ``else`` branches of an ``if``
-    expression yield values of the same type, and the ``else`` branch yields
-    the zero value of that type, the ``if`` expression can be replaced with a
-    call to ``iif`` that omits the 3rd argument. If the first argument in
-    those calls evaluates to ``False``, ``iif`` returns a zero value, which
-    is created by calling, without arguments, the constructor for the type of
-    the 2nd argument.
-
-    >>> iif(True, 42)
-    42
-
-    >>> iif(False, 42)
-    0
-
-    >>> iif(True, 42, None)
-    42
-
-    >>> iif(False, 42, None)
-
-    >>> iif(False, [42])
-    []
-
-    Do not use ``iif`` as a replacement for an ``if`` expression whose
-    branches are expensive to evaluate. ``if`` expressions are lazy, ``iif``
-    is not:
-
-    >>> 42 if True else 42/0
-    42
-
-    >>> iif(True, 42, 42/0)
-    Traceback (most recent call last):
-    ...
-    ZeroDivisionError: division by zero
-    """
-    if condition:
-        return then
-    else:
-        if absent.is_(otherwise):
-            return type(then)()
-        else:
-            return otherwise
-
-
-def either[T, E](value: T | None, alternative: E) -> T | E:
-    return alternative if value is None else value
+config = Config()
 
 
 def _check_submodule_conflicts():

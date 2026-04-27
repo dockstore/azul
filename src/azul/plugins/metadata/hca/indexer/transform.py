@@ -41,15 +41,23 @@ from more_itertools import (
 )
 
 from azul import (
-    R,
-    cached_property,
     config,
 )
-from azul.collections import (
-    OrderedSet,
-)
-from azul.enums import (
-    auto,
+from azul.field_type import (
+    ClosedRange,
+    FieldTypes,
+    Mode,
+    Nested,
+    Nullable,
+    NullableString,
+    PassThrough,
+    null_bool,
+    null_datetime,
+    null_int,
+    null_str,
+    pass_thru_float,
+    pass_thru_int,
+    pass_thru_json,
 )
 from azul.indexer import (
     BundleFQID,
@@ -66,27 +74,36 @@ from azul.indexer.document import (
     EntityType,
     Replica,
 )
-from azul.indexer.field import (
-    ClosedRange,
-    FieldTypes,
-    Nested,
-    Nullable,
-    NullableString,
-    PassThrough,
-    null_bool,
-    null_datetime,
-    null_int,
-    null_str,
-    pass_thru_float,
-    pass_thru_int,
-    pass_thru_json,
-)
 from azul.indexer.transform import (
     ReplicaTransformer,
     Transformer,
 )
-from azul.iterators import (
+from azul.lib import (
+    R,
+    cached_property,
+)
+from azul.lib.collections import (
+    OrderedSet,
+)
+from azul.lib.enums import (
+    auto,
+)
+from azul.lib.iterators import (
     generable,
+)
+from azul.lib.time import (
+    format_dcp2_datetime,
+    parse_dcp2_version,
+)
+from azul.lib.types import (
+    JSON,
+    MutableJSON,
+    json_element_mappings,
+    json_element_strings,
+    json_sorted,
+    json_str,
+    not_none,
+    optional,
 )
 from azul.openapi import (
     schema,
@@ -111,20 +128,6 @@ from azul.plugins.metadata.hca.indexer.aggregate import (
 )
 from azul.plugins.metadata.hca.service.contributor_matrices import (
     parse_strata,
-)
-from azul.time import (
-    format_dcp2_datetime,
-    parse_dcp2_version,
-)
-from azul.types import (
-    JSON,
-    MutableJSON,
-    json_element_mappings,
-    json_element_strings,
-    json_sorted,
-    json_str,
-    not_none,
-    optional,
 )
 from humancellatlas.data.metadata import (
     api,
@@ -294,9 +297,9 @@ class ValueAndUnit(Nullable[JSON, str]):
     def to_tsv(self, value: JSON | None) -> str:
         return '' if value is None else self.to_index(value)
 
-    @property
-    def api_schema(self) -> JSON:
-        return schema.object(value=str, unit=str)
+    def api_schema(self, mode: Mode) -> JSON:
+        return schema.nullable(schema.object(value=str, unit=str),
+                               for_openapi=mode is Mode.openapi)
 
 
 value_and_unit: ValueAndUnit = ValueAndUnit(dict, str)
@@ -321,8 +324,8 @@ class Submitters:
     # These class attributes must be defined in a separate class because Enum
     # and EnumMeta would get confused if they were defined in the Enum subclass.
     # It also helps with mypy.
-    by_id: ClassVar[dict[str, 'Submitter']] = {}
-    by_title: ClassVar[dict[str, 'Submitter']] = {}
+    by_id: ClassVar[dict[str, Submitter]] = {}
+    by_title: ClassVar[dict[str, Submitter]] = {}
     id_namespace: ClassVar[UUID] = UUID('382415e5-67a6-49be-8f3c-aaaa707d82db')
 
 
@@ -408,14 +411,14 @@ class Submitter(Enum):
         Submitters.by_id[id] = self
 
     @classmethod
-    def for_id(cls, submitter_id: str) -> 'Submitter | None':
+    def for_id(cls, submitter_id: str) -> Submitter | None:
         try:
             return Submitters.by_id[submitter_id]
         except KeyError:
             return None
 
     @classmethod
-    def for_file(cls, file: api.File) -> 'Submitter | None':
+    def for_file(cls, file: api.File) -> Submitter | None:
         if file.file_source is None:
             if (
                 # The DCP/2 system design specification mistakenly required that
@@ -1222,7 +1225,12 @@ class BaseTransformer(Transformer, metaclass=ABCMeta):
             'developmentStage': {
                 donor.development_stage
                 for donor in visitor.donors.values()
-                if donor.development_stage is not None
+                if donor.development_stage is not None and not (
+                    # FIXME: Remove LungMAP-specific check for empty string value
+                    #        https://github.com/DataBiosphere/azul/issues/7742
+                    donor.development_stage == ''
+                    and self.bundle.fqid.source.spec.name.startswith('lungmap_')
+                )
             },
             'organ': {
                 sample.organ if hasattr(sample, 'organ') else sample.model_organ
@@ -1237,7 +1245,8 @@ class BaseTransformer(Transformer, metaclass=ABCMeta):
         for dimension, values in points.items():
             if values:
                 for value in values:
-                    assert self.dimension_value_re.fullmatch(value), value
+                    assert self.dimension_value_re.fullmatch(value), R(
+                        'Invalid dimension value', dimension, value)
                 point_strings.append(dimension + '=' + ','.join(sorted(values)))
         return ';'.join(point_strings)
 

@@ -1,4 +1,4 @@
-from azul.service.elasticsearch_service import (
+from azul.service.query_service import (
     FilterStage,
 )
 

@@ -59,7 +59,7 @@ from azul import (
     cached_property,
     lru_cache,
 )
-from azul.json import (
+from azul.lib.json import (
     JSON,
 )
 from azul.logging import (

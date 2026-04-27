@@ -11,15 +11,15 @@ from azul import (
 from azul.deployment import (
     aws,
 )
-from azul.strings import (
-    parenthesize as _parens,
-)
-from azul.terraform import (
+from azul.infra.terraform import (
     block_public_s3_bucket_access,
     emit_tf,
     enable_s3_bucket_inventory,
     set_empty_s3_bucket_lifecycle_config,
     vpc,
+)
+from azul.lib.strings import (
+    parenthesize as _parens,
 )
 
 
@@ -626,11 +626,11 @@ tf_config = {
                     # from triggering false positive alarms, we include a
                     # sub-pattern to also match successful power-offs & reboots.
                     ('clamscan', '?"clamscan succeeded" '
-                                 '?"systemd: Starting Reboot" '
-                                 '?"systemd: Starting Power-Off"'),
+                                 '?"System is rebooting" '
+                                 '?"System is powering down"'),
                     ('freshclam', '?"freshclam succeeded" '
-                                  '?"systemd: Starting Reboot" '
-                                  '?"systemd: Starting Power-Off"'),
+                                  '?"System is rebooting" '
+                                  '?"System is powering down"'),
                     ('clam_fail', '?"clamscan failed" '
                                   '?"freshclam failed"')
                 ]
@@ -941,14 +941,20 @@ tf_config = {
         'aws_guardduty_detector': {
             'shared': {
                 'enable': True,
-                # All data sources are enabled in a new detector by default.
-                'datasources': {
-                    'kubernetes': {
-                        'audit_logs': {
-                            'enable': False
-                        }
-                    }
-                }
+            }
+        },
+        'aws_guardduty_detector_feature': {
+            # When a new detector resource is first deployed, all features
+            # supported at that time will be enabled by default. This means that
+            # we need to explicitly disable features not useful to us.
+            # Typically, detectors are deployed once, and the addition of
+            # supported features does not automatically enable them in those
+            # detectors. The enabling of features by default only becomes an
+            # issue in deployments that are frequently torn down and recreated.
+            'eks_audit_logs': {
+                'detector_id': '${aws_guardduty_detector.shared.id}',
+                'name': 'EKS_AUDIT_LOGS',
+                'status': 'DISABLED',
             }
         },
         'aws_securityhub_account': {

@@ -37,17 +37,17 @@ from azul import (
 from azul.health import (
     Health,
 )
+from azul.lib.types import (
+    MutableJSON,
+)
 from azul.logging import (
     configure_test_logging,
 )
 from azul.modules import (
     load_app_module,
 )
-from azul.types import (
-    MutableJSON,
-)
-from es_test_case import (
-    ElasticsearchTestCase,
+from opensearch_test_case import (
+    OpenSearchTestCase,
 )
 from service import (
     StorageServiceTestCase,
@@ -70,7 +70,7 @@ def setUpModule():
 
 
 class HealthCheckTestCase(LocalAppTestCase,
-                          ElasticsearchTestCase,
+                          OpenSearchTestCase,
                           StorageServiceTestCase,
                           SqsTestCase,
                           metaclass=ABCMeta):
@@ -81,7 +81,7 @@ class HealthCheckTestCase(LocalAppTestCase,
         self.assertEqual({'up': True}, response.json())
 
     def test_validation(self):
-        for path in ['foo', 'elasticsearch,', ',elasticsearch', ',', '1']:
+        for path in ['foo', 'opensearch,', ',opensearch', ',', '1']:
             response = requests.get(str(self.base_url.set(path=('health', path))))
             self.assertEqual(400, response.status_code)
 
@@ -93,7 +93,7 @@ class HealthCheckTestCase(LocalAppTestCase,
         self.assertEqual(200, response.status_code)
         self.assertEqual({
             'up': True,
-            **self._expected_elasticsearch(up=True),
+            **self._expected_opensearch(up=True),
             **self._expected_queues(up=True),
             **self._expected_other_lambdas(up=True),
             **self._expected_api_endpoints(up=True),
@@ -107,7 +107,7 @@ class HealthCheckTestCase(LocalAppTestCase,
                 'up': True,
                 **expected_response
             } for keys, expected_response in [
-                ('elasticsearch', self._expected_elasticsearch(up=True)),
+                ('opensearch', self._expected_opensearch(up=True)),
                 ('queues', self._expected_queues(up=True)),
                 ('other_lambdas', self._expected_other_lambdas(up=True)),
                 ('api_endpoints', self._expected_api_endpoints(up=True)),
@@ -172,20 +172,21 @@ class HealthCheckTestCase(LocalAppTestCase,
     def _expected_health(self,
                          *,
                          endpoints_up: bool = True,
-                         es_up: bool = True
+                         opensearch_up: bool = True
                          ) -> MutableJSON:
         raise NotImplementedError
 
     @mock_aws
-    def test_elasticsearch_down(self):
+    def test_opensearch_down(self):
         self._create_mock_queues()
         mock_endpoint = ('7c9f2ddb-74ca-46a3-9438-24ce1fe7050e.com', 80)
-        with patch.dict(os.environ, **config.es_endpoint_env(es_endpoint=mock_endpoint,
-                                                             es_instance_count=1)):
+        mock_env = config.opensearch_endpoint_env(endpoint=mock_endpoint,
+                                                  instance_count=1)
+        with patch.dict(os.environ, **mock_env):
             with self._mock():
                 response = self._test('/health/fast')
             self.assertEqual(503, response.status_code)
-            self.assertEqual(self._expected_health(es_up=False), response.json())
+            self.assertEqual(self._expected_health(opensearch_up=False), response.json())
 
     def _expected_queues(self, *, up: bool) -> MutableJSON:
         return {
@@ -252,9 +253,9 @@ class HealthCheckTestCase(LocalAppTestCase,
             }
         }
 
-    def _expected_elasticsearch(self, *, up: bool) -> MutableJSON:
+    def _expected_opensearch(self, *, up: bool) -> MutableJSON:
         return {
-            'elasticsearch': {
+            'opensearch': {
                 'up': up
             }
         }

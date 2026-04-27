@@ -16,6 +16,9 @@ from azul.args import (
 from azul.azulclient import (
     AzulClient,
 )
+from azul.lib.types import (
+    JSON,
+)
 from azul.logging import (
     configure_script_logging,
 )
@@ -24,9 +27,6 @@ from azul.plugins.repository.tdr import (
 )
 from azul.terra import (
     TDRSourceSpec,
-)
-from azul.types import (
-    JSON,
 )
 
 log = logging.getLogger(__name__)

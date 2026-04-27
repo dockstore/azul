@@ -22,18 +22,11 @@ from furl import (
 )
 
 from azul import (
-    cache_per_thread,
-    cached_property,
     config,
-    require,
 )
 from azul.auth import (
     Authentication,
     OAuth2,
-)
-from azul.bigquery import (
-    BigQueryRows,
-    backtick,
 )
 from azul.drs import (
     AccessMethod,
@@ -43,24 +36,33 @@ from azul.indexer import (
     Bundle,
     SourcedBundleFQID,
 )
+from azul.lib import (
+    R,
+    cache_per_thread,
+    cached_property,
+)
+from azul.lib.bigquery import (
+    BigQueryRows,
+    backtick,
+)
+from azul.lib.strings import (
+    longest_common_prefix,
+)
+from azul.lib.time import (
+    format_dcp2_datetime,
+    parse_dcp2_version,
+)
+from azul.lib.types import (
+    JSON,
+)
 from azul.plugins import (
     RepositoryFileDownload,
     RepositoryPlugin,
-)
-from azul.strings import (
-    longest_common_prefix,
 )
 from azul.terra import (
     TDRClient,
     TDRSourceRef,
     TDRSourceSpec,
-)
-from azul.time import (
-    format_dcp2_datetime,
-    parse_dcp2_version,
-)
-from azul.types import (
-    JSON,
 )
 
 log = logging.getLogger(__name__)
@@ -99,6 +101,11 @@ class TDRPlugin[TDR_BUNDLE: TDRBundle,
                        authentication: Authentication | None,
                        tdr_callback: Callable[[TDRClient], T]
                        ) -> T:
+        """
+        Terra rejects credentials for users are not registered with Terra's SAM.
+        This method invokes the given callback with the given credentials but
+        invokes the callback again if they are rejected for that reason.
+        """
         # The line below raises UnauthorizedError for invalid tokens. We don't
         # want to fall back to anonymous authentication in that case.
         tdr = self._user_authenticated_tdr(authentication)
@@ -108,8 +115,7 @@ class TDRPlugin[TDR_BUNDLE: TDRBundle,
             if authentication is None or tdr.is_registered():
                 raise
             else:
-                log.info('Falling back to default authentication because the '
-                         'request included credentials from an unregistered account')
+                log.info('Falling back to anonymous access')
                 tdr = self._user_authenticated_tdr(None)
                 return tdr_callback(tdr)
 
@@ -125,15 +131,28 @@ class TDRPlugin[TDR_BUNDLE: TDRBundle,
     def list_sources(self,
                      authentication: Authentication | None
                      ) -> list[TDRSourceRef]:
-        names_by_id = self._auth_fallback(authentication,
-                                          lambda tdr: tdr.snapshot_names_by_id(filter=self._common_source_filter))
-        return self._match_sources(names_by_id)
+        def list_snapshots(tdr: TDRClient):
+            return tdr.list_snapshots(filter=self._common_source_filter)
+
+        snapshots_by_id = self._auth_fallback(authentication, list_snapshots)
+
+        return [
+            TDRSourceRef(id=id,
+                         spec=TDRSourceSpec(name=snapshot['name'],
+                                            type=TDRSourceSpec.Type.bigquery,
+                                            domain=TDRSourceSpec.Domain.gcp,
+                                            subdomain=snapshot['dataProject']),
+                         prefix=None)
+            for id, snapshot in snapshots_by_id.items()
+        ]
 
     def list_source_ids(self,
                         authentication: Authentication | None
                         ) -> set[str]:
-        return self._auth_fallback(authentication,
-                                   lambda tdr: tdr.snapshot_ids())
+        def list_snapshot_ids(tdr: TDRClient):
+            return tdr.list_snapshot_ids()
+
+        return self._auth_fallback(authentication, list_snapshot_ids)
 
     @property
     def tdr(self):
@@ -255,24 +274,20 @@ class TDRPlugin[TDR_BUNDLE: TDRBundle,
 class TDRFileDownload(RepositoryFileDownload):
     _location: str | None = None
 
-    needs_drs_uri = True
-
-    def update(self,
-               plugin: RepositoryPlugin,
-               authentication: Authentication | None
-               ) -> None:
-        require(self.replica is None or self.replica == 'gcp')
+    def update(self, authentication: Authentication | None) -> None:
+        assert self.replica is None or self.replica == 'gcp', R(
+            'Invalid replica', self.replica)
         if self.file.drs_uri is None:
             assert self.location is None, self
             assert self.retry_after is None, self
         else:
-            drs_client = plugin.drs_object(self.file.drs_uri, authentication)
+            drs_client = self._plugin.drs_object(self.file.drs_uri, authentication)
             access = drs_client.get(access_method=AccessMethod.gs)
-            require(access.method is AccessMethod.https, access.method)
-            require(access.headers is None, access.headers)
+            assert access.method is AccessMethod.https, R(str(access.method))
+            assert access.headers is None, R(str(access.headers))
             signed_url = access.url
             args = furl(signed_url).args
-            require('X-Goog-Signature' in args, args)
+            assert 'X-Goog-Signature' in args, R(str(args))
             self._location = signed_url
 
     @property

@@ -2,9 +2,6 @@ from abc import (
     ABCMeta,
     abstractmethod,
 )
-from enum import (
-    Enum,
-)
 import importlib
 from inspect import (
     isabstract,
@@ -32,18 +29,10 @@ from more_itertools import (
 
 from azul import (
     CatalogName,
-    R,
-    cached_property,
     config,
 )
-from azul.attrs import (
-    DiscriminatingPolymorphicSerializableAttrs,
-)
-from azul.chalice import (
+from azul.auth import (
     Authentication,
-)
-from azul.digests import (
-    Digest,
 )
 from azul.drs import (
     CompactDRSURI,
@@ -55,10 +44,6 @@ from azul.drs import (
 )
 from azul.indexer import (
     Bundle,
-    Prefix,
-    SourceConfig,
-    SourceRef,
-    SourceSpec,
     SourcedBundleFQID,
 )
 from azul.indexer.document import (
@@ -73,30 +58,51 @@ from azul.indexer.transform import (
     ReplicaTransformer,
     Transformer,
 )
-from azul.json import (
-    DynamicPolymorphicSerializable,
+from azul.lib import (
+    R,
+    cached_property,
 )
-from azul.types import (
+from azul.lib.attrs import (
+    DiscriminatingPolymorphicSerializableAttrs,
+)
+from azul.lib.digests import (
+    Digest,
+)
+from azul.lib.json import (
+    DynamicPolymorphicSerializable,
+    SerializableEnum,
+)
+from azul.lib.types import (
+    AnyJSON,
     JSON,
     MutableJSON,
     MutableJSONs,
+    check_type,
     derived_type_params,
+    json_element_strings,
+    json_sequence,
     json_str,
 )
-from azul.uuids import (
+from azul.lib.uuids import (
     validate_uuid_prefix,
+)
+from azul.source import (
+    Prefix,
+    SourceConfig,
+    SourceRef,
+    SourceSpec,
 )
 
 if TYPE_CHECKING:
-    from azul.service.elasticsearch_service import (
-        AggregationStage,
-        FilterStage,
-    )
     # These are only needed for type hints and would otherwise introduce a
     # circular import since the service layer heavily depends on the plugin.
-    from azul.service.repository_service import (
+    from azul.service.index_service import (
         SearchResponseStage,
         SummaryResponseStage,
+    )
+    from azul.service.query_service import (
+        AggregationStage,
+        FilterStage,
     )
 
 #: Field names are used to reference fields in requests to the service, e.g.,
@@ -121,10 +127,25 @@ type InverseFieldMapping = Mapping[
     FieldName | InverseFieldMapping
 ]
 
-ColumnMapping = Mapping[FieldPathElement, FieldName | None]
-ManifestConfig = Mapping[FieldPath, ColumnMapping]
-MutableColumnMapping = dict[FieldPathElement, FieldName]
-MutableManifestConfig = dict[FieldPath, MutableColumnMapping]
+type ColumnMapping = Mapping[FieldPathElement, FieldName | None]
+type ManifestConfig = Mapping[FieldPath, ColumnMapping]
+
+
+def manifest_config_from_json(c: AnyJSON) -> ManifestConfig:
+    def f(e: AnyJSON) -> tuple[FieldPath, ColumnMapping]:
+        k, v = json_sequence(e)
+        assert check_type(ColumnMapping, v)
+        return tuple(json_element_strings(k)), cast(ColumnMapping, v)
+
+    return dict(map(f, json_sequence(c)))
+
+
+def manifest_config_to_json(c: ManifestConfig) -> AnyJSON:
+    return [[list(k), v] for k, v in c.items()]
+
+
+type MutableColumnMapping = dict[FieldPathElement, FieldName]
+type MutableManifestConfig = dict[FieldPath, MutableColumnMapping]
 
 DottedFieldPath = str
 FieldGlobs = list[DottedFieldPath]
@@ -145,7 +166,7 @@ def dotted(path_or_element: FieldPathElement | FieldPath,
 
 class DocumentSlice(TypedDict, total=False):
     """
-    Also known in Elasticsearch land as a *source filter*, but that phrase has
+    Also known in OpenSearch land as a *source filter*, but that phrase has
     a different meaning in Azul.
 
     https://www.elastic.co/guide/en/elasticsearch/reference/7.10/search-fields.html#source-filtering
@@ -206,9 +227,16 @@ class SpecialFields:
     bundle_uuid: SpecialField
     bundle_version: SpecialField
     file_uuid: SpecialField
+    file_name: SpecialField
 
 
-class ManifestFormat(Enum):
+class ManifestFormat(SerializableEnum):
+    """
+    >>> ManifestFormat.verbatim_jsonl.to_json()
+    'verbatim_jsonl'
+    >>> ManifestFormat.from_json('verbatim_jsonl')
+    <ManifestFormat.verbatim_jsonl: 'verbatim.jsonl'>
+    """
     compact = 'compact'
     terra_pfb = 'terra.pfb'
     curl = 'curl'
@@ -291,7 +319,7 @@ class Plugin[BUNDLE: Bundle](metaclass=ABCMeta):
         plugin_package_path = f'{__name__}.{plugin_type_name}.{plugin_package_name}'
         plugin_module = importlib.import_module(plugin_package_path)
         plugin_cls = getattr(plugin_module, 'Plugin')
-        assert issubclass(plugin_cls, cls)
+        assert issubclass(plugin_cls, cls), (plugin_cls, cls)
         return plugin_cls
 
 
@@ -496,7 +524,7 @@ class MetadataPlugin[BUNDLE: Bundle](Plugin[BUNDLE]):
         raise NotImplementedError
 
     @property
-    def root_entity_type(self) -> str:
+    def root_entity_type(self) -> EntityType:
         """
         The type of entity that sits at the root of the entity graph, and that
         all other entities are directly or indirectly associated with.
@@ -510,7 +538,7 @@ class MetadataPlugin[BUNDLE: Bundle](Plugin[BUNDLE]):
         raise NotImplementedError
 
     @property
-    def hot_entity_types(self) -> Iterable[str]:
+    def hot_entity_types(self) -> Iterable[EntityType]:
         """
         The types of inner entities that do not explicitly track their hubs in
         replica documents in order to avoid a large list of hub references in
@@ -537,7 +565,7 @@ class MetadataPlugin[BUNDLE: Bundle](Plugin[BUNDLE]):
     def verbatim_pfb_entity_id(self, replica: JSON) -> str:
         return json_str(replica['entity_id'])
 
-    def verbatim_pfb_schema(self, replicas: list[JSON]) -> list[JSON]:
+    def verbatim_pfb_schema(self, replicas: Iterable[JSON]) -> MutableJSONs:
         """
         Generate the azul-specific parts of the PFB schema for the verbatim
         manifest. The default, metadata-agnostic implementation loads all
@@ -549,7 +577,7 @@ class MetadataPlugin[BUNDLE: Bundle](Plugin[BUNDLE]):
 
         :param replicas: The replica documents to be described by the PFB schema
 
-        :return: a list of PFB entity schemas describing the replicas
+        :return: the PFB entity schemas describing the replicas
         """
         from azul.service import (
             avro_pfb,
@@ -576,39 +604,54 @@ class MetadataPlugin[BUNDLE: Bundle](Plugin[BUNDLE]):
 
     @property
     @abstractmethod
-    def summary_response_stage(self) -> 'type[SummaryResponseStage]':
+    def summary_response_stage(self) -> type[SummaryResponseStage]:
         raise NotImplementedError
 
     @property
     @abstractmethod
-    def search_response_stage(self) -> 'type[SearchResponseStage]':
+    def search_response_stage(self) -> type[SearchResponseStage]:
         raise NotImplementedError
 
     @property
     @abstractmethod
-    def summary_aggregation_stage(self) -> 'type[AggregationStage]':
+    def summary_aggregation_stage(self) -> type[AggregationStage]:
         raise NotImplementedError
 
     @property
     @abstractmethod
-    def aggregation_stage(self) -> 'type[AggregationStage]':
+    def aggregation_stage(self) -> type[AggregationStage]:
         raise NotImplementedError
 
     @property
     @abstractmethod
-    def filter_stage(self) -> 'type[FilterStage]':
+    def filter_stage(self) -> type[FilterStage]:
         raise NotImplementedError
 
     @property
     @abstractmethod
-    def file_class(self) -> type['File']:
+    def file_class(self) -> type[File]:
         raise NotImplementedError
 
 
+# Without slots=False, attrs creates a copy of the class as opposed to
+# augmenting the original. A weak reference to the original remains present in
+# the __subclasses__ attribute of the superclass until a GC run is performed.
+# The attrs documentation explicitly mentions this caveat:
+#
+# > The type.__subclasses__ attribute needs a garbage collection run (which can
+# > be manually triggered using gc.collect()), for the original class to be
+# > removed.
+#
+# https://www.attrs.org/en/stable/glossary.html#term-slotted-classes
+#
+# In our case, __subclasses__ is used by Plugin.types(), so any caller of that
+# may temporarily observe the left-over. This will cause problems like false
+# negatives in subclass checks like the one in Plugin._load.
+#
 # FIXME: Maybe remove the defaults after enabling mypy's disallow_any_generics
 #        https://github.com/DataBiosphere/azul/issues/7495
-
-@attrs.frozen(auto_attribs=True, kw_only=True)
+#
+@attrs.frozen(auto_attribs=True, kw_only=True, slots=False)
 class RepositoryPlugin[BUNDLE: Bundle = Bundle[SourcedBundleFQID],
                        SOURCE_SPEC: SourceSpec = SourceSpec,
                        SOURCE_REF: SourceRef = SourceRef[SourceSpec],
@@ -653,40 +696,20 @@ class RepositoryPlugin[BUNDLE: Bundle = Bundle[SourcedBundleFQID],
         assert source.prefix is not None, source
         assert prefix in source.prefix, (source, prefix)
 
-    def _match_sources(self,
-                       source_names_by_id: Mapping[str, str]
-                       ) -> list[SOURCE_REF]:
-        """
-        Filter the given sources to only include sources that the plugin is
-        configured to read metadata from, and return a ``SourceRef`` instance
-        for each matching source.`
-        """
-        configured_specs_by_name = {spec.name: spec for spec in self.sources}
-        assert len(self.sources) == len(configured_specs_by_name), R(
-            'Source names are not unique', self.sources)
-        source_ids_by_name = {
-            name: id
-            for id, name in source_names_by_id.items()
-            if name in configured_specs_by_name
-        }
-        source_ref_cls = self.source_ref_cls
-        return [
-            source_ref_cls(id=id,
-                           spec=configured_specs_by_name[name],
-                           prefix=None)
-            for name, id in source_ids_by_name.items()
-        ]
-
     @abstractmethod
     def list_sources(self,
                      authentication: Authentication | None
-                     ) -> Iterable[SOURCE_REF]:
+                     ) -> list[SOURCE_REF]:
         """
-        The sources the plugin is configured to read metadata from that are
-        accessible using the provided authentication. Retrieving this
-        information may require a round-trip to the underlying repository.
-        Implementations should raise PermissionError if the provided
+        List the sources in the underlying repository that are accessible using
+        the provided authentication.
+
+        Retrieving this information may require a round-trip to the underlying
+        repository. Implementations should raise PermissionError if the provided
         authentication is insufficient to access the repository.
+
+        The returned set may include sources that the plugin is not configured
+        to read metadata from.
         """
         raise NotImplementedError
 
@@ -701,6 +724,9 @@ class RepositoryPlugin[BUNDLE: Bundle = Bundle[SourcedBundleFQID],
         Retrieving this information may require a round-trip to the underlying
         repository. Implementations should raise PermissionError if the provided
         authentication is insufficient to access the repository.
+
+        The returned set may include the IDs of sources that the plugin is
+        not configured to read metadata from.
         """
         return {source.id for source in self.list_sources(authentication)}
 
@@ -742,8 +768,8 @@ class RepositoryPlugin[BUNDLE: Bundle = Bundle[SourcedBundleFQID],
     @abstractmethod
     def _lookup_source_id(self, spec: SOURCE_SPEC) -> str:
         """
-        Return the ID of the repository source with the specified name or raise
-        an exception if no such source exists.
+        Return the ID of the specified source or raise an exception if no such
+        source exists.
         """
         raise NotImplementedError
 
@@ -848,7 +874,7 @@ class RepositoryPlugin[BUNDLE: Bundle = Bundle[SourcedBundleFQID],
         raise NotImplementedError
 
     @abstractmethod
-    def list_files(self, source: SOURCE_REF, prefix: str) -> list['File']:
+    def list_files(self, source: SOURCE_REF, prefix: str) -> list[File]:
         """
         List the files in the given source whose digest value starts with the
         given prefix.
@@ -893,7 +919,7 @@ class RepositoryPlugin[BUNDLE: Bundle = Bundle[SourcedBundleFQID],
         return IdentifiersDotOrgClient()
 
     @abstractmethod
-    def file_download_class(self) -> type['RepositoryFileDownload']:
+    def file_download_class(self) -> type[RepositoryFileDownload]:
         raise NotImplementedError
 
     @abstractmethod
@@ -943,7 +969,7 @@ class File(DiscriminatingPolymorphicSerializableAttrs,
     def from_index(cls, hit: JSON) -> Self:
         """
         Instantiate this class from an entity aggregate document retrieved from
-        Elasticsearch.
+        OpenSearch.
         """
         raise NotImplementedError
 
@@ -959,11 +985,11 @@ class File(DiscriminatingPolymorphicSerializableAttrs,
 
 @attrs.define(auto_attribs=True, kw_only=True)
 class RepositoryFileDownload(metaclass=ABCMeta):
+    #: The plugin for the repository that contains the file to be downloaded
+    _plugin: RepositoryPlugin
+
     #: The file being downloaded
     file: File
-
-    #: True if the download of a file requires its DRS URI
-    needs_drs_uri: ClassVar[bool] = False
 
     #: The name of the replica to download the file from. Defaults to the name
     #: of the default replica. The set of valid replica names depends on the
@@ -975,19 +1001,13 @@ class RepositoryFileDownload(metaclass=ABCMeta):
     token: str | None
 
     @abstractmethod
-    def update(self,
-               plugin: RepositoryPlugin,
-               authentication: Authentication | None
-               ) -> None:
+    def update(self, authentication: Authentication | None) -> None:
         """
         Initiate the preparation of a URL from which the file can be downloaded.
         Set any attributes that are None to their default values. If a download
         is already being prepared, update those attributes and set the
         `retry_after` property. If the download has been prepared, set the
         `location` property.
-
-        :param plugin: The plugin for the repository from which the file is to
-                       be downloaded.
 
         :param authentication: The authentication provided with the download
                                request.

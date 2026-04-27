@@ -6,6 +6,10 @@ from collections import (
     ChainMap,
     defaultdict,
 )
+from collections.abc import (
+    Collection,
+    Set,
+)
 from functools import (
     cached_property,
     partial,
@@ -18,9 +22,7 @@ from operator import (
     attrgetter,
 )
 from typing import (
-    AbstractSet,
     Callable,
-    Collection,
     Iterable,
     Iterator,
     Self,
@@ -35,11 +37,15 @@ from more_itertools import (
 )
 
 from azul import (
-    cache,
     config,
 )
-from azul.collections import (
-    deep_dict_merge,
+from azul.field_type import (
+    FieldTypes,
+    null_bool,
+    null_int,
+    null_str,
+    pass_thru_int,
+    pass_thru_json,
 )
 from azul.indexer import (
     BundleFQID,
@@ -55,17 +61,28 @@ from azul.indexer.document import (
     EntityType,
     Replica,
 )
-from azul.indexer.field import (
-    FieldTypes,
-    null_bool,
-    null_int,
-    null_str,
-    pass_thru_int,
-    pass_thru_json,
-)
 from azul.indexer.transform import (
     ReplicaTransformer,
     Transformer,
+)
+from azul.lib import (
+    cache,
+)
+from azul.lib.collections import (
+    deep_dict_merge,
+)
+from azul.lib.strings import (
+    pluralize,
+)
+from azul.lib.types import (
+    AnyMutableJSON,
+    JSON,
+    MutableJSON,
+    MutableJSONs,
+    json_element_mappings,
+    json_sequence_of_optional_strings,
+    json_sorted,
+    json_str,
 )
 from azul.plugins.metadata.anvil.bundle import (
     AnvilBundle,
@@ -78,19 +95,6 @@ from azul.plugins.metadata.anvil.indexer.aggregate import (
     DiagnosisAggregator,
     DonorAggregator,
     FileAggregator,
-)
-from azul.strings import (
-    pluralize,
-)
-from azul.types import (
-    AnyMutableJSON,
-    JSON,
-    MutableJSON,
-    MutableJSONs,
-    json_element_mappings,
-    json_sequence_of_optional_strings,
-    json_sorted,
-    json_str,
 )
 
 log = logging.getLogger(__name__)
@@ -418,8 +422,8 @@ class BaseTransformer(Transformer, metaclass=ABCMeta):
             return one(o for o in self.bundle.orphans if o.entity_type == 'anvil_dataset')
 
     @cached_property
-    def _activity_polymorphic_types(self) -> AbstractSet[str]:
-        from azul.plugins.metadata.anvil import (
+    def _activity_polymorphic_types(self) -> Set[str]:
+        from azul.plugins.metadata.anvil.schema import (
             anvil_schema,
         )
         return {
@@ -468,7 +472,7 @@ class BaseTransformer(Transformer, metaclass=ABCMeta):
 
     @classmethod
     @cache
-    def _complete_dataset_keys(cls) -> AbstractSet[str]:
+    def _complete_dataset_keys(cls) -> Set[str]:
         field_types = cls.field_types()['datasets']
         assert isinstance(field_types, dict), field_types
         return field_types.keys()
@@ -600,7 +604,7 @@ class BundleTransformer(SingletonTransformer):
             # don't include any files. Some of the replicas we emit here will be
             # redundant with those emitted by the file transformer, but these
             # will be consolidated by the index service before they are written
-            # to ElasticSearch.
+            # to OpenSearch.
             dataset = self._only_dataset()
             for entity in chain(self.bundle.orphans, self.bundle.entities):
                 if partition.contains(UUID(entity.entity_id)):

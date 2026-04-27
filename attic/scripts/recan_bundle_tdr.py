@@ -29,7 +29,7 @@ from azul import (
     config,
     dss,
 )
-from azul.files import (
+from azul.lib.files import (
     write_file_atomically,
 )
 from azul.indexer import (
@@ -41,7 +41,7 @@ from azul.indexer import (
 from azul.indexer.document import (
     EntityID,
 )
-from azul.json import (
+from azul.lib.json import (
     copy_json,
     copy_jsons,
 )
@@ -62,7 +62,7 @@ from azul.plugins.repository.tdr_hca import (
 from azul.terra import (
     TDRSourceSpec,
 )
-from azul.types import (
+from azul.lib.types import (
     JSON,
     MutableJSON,
     MutableJSONs,

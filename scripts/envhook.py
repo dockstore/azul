@@ -55,6 +55,7 @@ class EnvHook:
 
     def _main(self, argv):
         import argparse
+
         from azul.args import (
             AzulArgumentHelpFormatter,
         )
@@ -184,14 +185,26 @@ class EnvHook:
     def export_environment(self):
         return self.import_sibling_script('export_environment')
 
+    prefix = pathlib.Path(__file__).resolve().name + ':'
+
     @classmethod
     def print(cls, msg):
-        print(Path(__file__).resolve().name + ':', msg, file=sys.stderr)
+        k = 'ENVHOOK_SILENT'
+        if int(os.environ.get('%s' % k, '0')):
+            cls._print(k + ' is set, expect no further diagnostic output.')
+            cls.print = lambda *_, **__: None
+        else:
+            cls._print(msg)
+            cls.print = cls._print
+
+    @classmethod
+    def _print(cls, msg):
+        print(cls.prefix, msg, file=sys.stderr)
 
 
 class Path(pathlib.PosixPath):
 
-    def follow(self) -> 'Path':
+    def follow(self) -> Path:
         """
         This method performs one level of symbolic link resolution. For paths
         representing a symbolic link with an absolute target, this method is
@@ -211,7 +224,7 @@ class Path(pathlib.PosixPath):
     def is_relative(self):
         return not self.is_absolute()
 
-    def is_prefix_of(self, other: 'Path'):
+    def is_prefix_of(self, other: Path):
         """
         >>> Path('/').is_prefix_of(Path('/'))
         True

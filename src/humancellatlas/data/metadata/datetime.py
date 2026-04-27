@@ -82,7 +82,7 @@ def parse_jsonschema_date_time(s: str) -> datetime | None:
     >>> parse_jsonschema_date_time('2021-05-05T24:24:26Z')
     Traceback (most recent call last):
         ...
-    ValueError: hour must be in 0..23
+    ValueError: hour must be in 0..23, not 24
 
     Out of range time offset:
 
@@ -101,7 +101,7 @@ def parse_jsonschema_date_time(s: str) -> datetime | None:
     >>> parse_jsonschema_date_time('2021-02-29T00:00:00.0Z')
     Traceback (most recent call last):
         ...
-    ValueError: day is out of range for month
+    ValueError: day 29 must be in range 1..28 for month 2 in year 2021
     """
     pattern = re.compile(r'''
         (?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})

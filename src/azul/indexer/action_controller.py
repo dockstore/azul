@@ -14,7 +14,7 @@ from chalice.app import (
 )
 
 from azul.chalice import (
-    AppController,
+    Controller,
 )
 from azul.queues import (
     Action,
@@ -25,7 +25,7 @@ from azul.queues import (
 log = logging.getLogger(__name__)
 
 
-class ActionController[A: Action](AppController, metaclass=ABCMeta):
+class ActionController[A: Action](Controller, metaclass=ABCMeta):
 
     @property
     @abstractmethod

@@ -3,14 +3,14 @@ import requests
 from azul.deployment import (
     aws,
 )
+from azul.lib.types import (
+    JSON,
+)
 from azul.logging import (
     configure_test_logging,
 )
 from azul.plugins.repository.tdr_anvil import (
     TDRAnvilBundleFQID,
-)
-from azul.types import (
-    JSON,
 )
 from indexer.test_anvil import (
     AnvilIndexerTestCase,

@@ -27,9 +27,6 @@ from azul import (
     CatalogName,
     config,
 )
-from azul.es import (
-    ESClientFactory,
-)
 from azul.indexer import (
     Bundle,
     BundleFQID,
@@ -42,6 +39,16 @@ from azul.indexer.document import (
 from azul.indexer.index_service import (
     IndexService,
     IndexWriter,
+)
+from azul.lib.types import (
+    AnyJSON,
+    JSON,
+    JSONs,
+    MutableJSON,
+    MutableJSONs,
+)
+from azul.opensearch import (
+    OpenSearchClientFactory,
 )
 from azul.plugins import (
     FieldPath,
@@ -61,13 +68,6 @@ from azul.plugins.repository.tdr_anvil import (
 from azul.plugins.repository.tdr_hca import (
     TDRHCABundle,
 )
-from azul.types import (
-    AnyJSON,
-    JSON,
-    JSONs,
-    MutableJSON,
-    MutableJSONs,
-)
 from azul_test_case import (
     AnvilTestCase,
     AzulUnitTestCase,
@@ -75,8 +75,8 @@ from azul_test_case import (
     DCP1TestCase,
     DCP2TestCase,
 )
-from es_test_case import (
-    ElasticsearchTestCase,
+from opensearch_test_case import (
+    OpenSearchTestCase,
 )
 
 
@@ -164,7 +164,7 @@ class DCP1CannedBundleTestCase(DCP1TestCase, CannedBundleTestCase[DSSBundle]):
 
     @classmethod
     def bundle_fqid(cls, *, uuid: str, version: str) -> DSSBundleFQID:
-        return DSSBundleFQID(source=cls.source,
+        return DSSBundleFQID(source=cls.source.ref,
                              uuid=uuid,
                              version=version)
 
@@ -184,7 +184,7 @@ class DCP2CannedBundleTestCase(DCP2TestCase, CannedBundleTestCase[TDRHCABundle])
 
     @classmethod
     def bundle_fqid(cls, *, uuid: str, version: str) -> TDRBundleFQID:
-        return TDRBundleFQID(source=cls.source,
+        return TDRBundleFQID(source=cls.source.ref,
                              uuid=uuid,
                              version=version)
 
@@ -204,15 +204,34 @@ class AnvilCannedBundleTestCase(AnvilTestCase,
                     uuid: str,
                     table_name: str = BundleType.primary.value,
                     ) -> TDRAnvilBundleFQID:
-        return TDRAnvilBundleFQID(source=cls.source,
+        return TDRAnvilBundleFQID(source=cls.source.ref,
                                   uuid=uuid,
                                   version=cls.version,
                                   table_name=table_name,
                                   batch_prefix='' if BundleType.is_batched(table_name) else None)
 
+    @classmethod
+    def primary_bundle(cls) -> TDRAnvilBundleFQID:
+        return cls.bundle_fqid(uuid='826dea02-e274-affe-aabc-eb3db63ad068')
+
+    @classmethod
+    def supplementary_bundle(cls) -> TDRAnvilBundleFQID:
+        return cls.bundle_fqid(uuid='595c469e-604d-ab34-af39-f5b9f5d61818',
+                               table_name=BundleType.supplementary.value)
+
+    @classmethod
+    def duos_bundle(cls) -> TDRAnvilBundleFQID:
+        return cls.bundle_fqid(uuid='2370f948-2783-aeb6-afea-e022897f4dcf',
+                               table_name=BundleType.duos.value)
+
+    @classmethod
+    def replica_bundle(cls) -> TDRAnvilBundleFQID:
+        return cls.bundle_fqid(uuid='f4b39881-d519-ab6f-99a0-7cc5089caee6',
+                               table_name='non_schema_orphan_table')
+
 
 class IndexerTestCase(CatalogTestCase,
-                      ElasticsearchTestCase,
+                      OpenSearchTestCase,
                       CannedBundleTestCase,
                       metaclass=ABCMeta):
     index_service: ClassVar[IndexService | None] = None
@@ -232,8 +251,8 @@ class IndexerTestCase(CatalogTestCase,
         Deletes everything and is faster than deleting indices individually
         through the service.
         """
-        es = ESClientFactory.get()
-        es.indices.delete(index='*')
+        opensearch = OpenSearchClientFactory.get()
+        opensearch.indices.delete(index='*')
 
     def _get_all_hits(self):
         # Without `preserve_order`, hits are sorted by `_doc`, which is fastest
@@ -241,7 +260,7 @@ class IndexerTestCase(CatalogTestCase,
         # the number of shards, for example, but also under what appear to be
         # unrelated code changes. This makes asserting test results verbatim
         # impossible. Thus we set `preserve_order` to True.
-        hits = list(scan(client=self.es_client,
+        hits = list(scan(client=self.opensearch,
                          index=','.join(map(str, self.index_service.index_names(self.catalog))),
                          preserve_order=True))
 

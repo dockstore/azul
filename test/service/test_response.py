@@ -22,6 +22,9 @@ from urllib.parse import (
     parse_qsl,
     urlparse,
 )
+from warnings import (
+    deprecated,
+)
 
 import attr
 from furl import (
@@ -36,35 +39,39 @@ from app_test_case import (
     LocalAppTestCase,
 )
 from azul import (
-    cached_property,
     config,
-)
-from azul.collections import (
-    none_safe_key,
 )
 from azul.deployment import (
     aws,
 )
+from azul.field_type import (
+    null_str,
+)
 from azul.indexer import (
     BundleFQID,
-    Prefix,
     SourcedBundleFQID,
 )
 from azul.indexer.document import (
     DocumentType,
     IndexName,
 )
-from azul.indexer.field import (
-    null_str,
+import azul.indexer.index_service
+from azul.lib import (
+    cached_property,
 )
-from azul.indexer.index_service import (
-    IndexService,
+from azul.lib.collections import (
+    none_safe_key,
+)
+from azul.lib.types import (
+    JSON,
+    JSONs,
 )
 from azul.logging import (
     configure_test_logging,
 )
 from azul.plugins import (
     FieldPath,
+    MetadataPlugin,
 )
 from azul.plugins.metadata.hca import (
     HCABundle,
@@ -72,19 +79,24 @@ from azul.plugins.metadata.hca import (
 from azul.plugins.metadata.hca.service.response import (
     HCASearchResponseStage,
 )
-from azul.service.elasticsearch_service import (
+from azul.service.index_controller import (
+    IndexController,
+)
+from azul.service.index_service import (
+    IndexService,
+)
+from azul.service.query_service import (
     ResponsePagination,
 )
 from azul.service.source_service import (
     SourceService,
 )
+from azul.source import (
+    Prefix,
+)
 from azul.terra import (
     TDRSourceRef,
     TDRSourceSpec,
-)
-from azul.types import (
-    JSON,
-    JSONs,
 )
 from indexer import (
     DCP1CannedBundleTestCase,
@@ -108,7 +120,18 @@ def parse_url_qs(url) -> dict[str, str]:
 
 
 class IndexResponseTestCase(DCP1CannedBundleTestCase, WebServiceTestCase):
-    pass
+
+    @property
+    def _controller(self) -> IndexController:
+        controller = self._app.index_controller
+        assert isinstance(controller, IndexController)
+        return controller
+
+    @property
+    def _metadata_plugin(self) -> MetadataPlugin:
+        plugin = self._controller._metadata_plugin
+        assert isinstance(plugin, MetadataPlugin)
+        return plugin
 
 
 class TestIndexResponse(IndexResponseTestCase):
@@ -143,8 +166,12 @@ class TestIndexResponse(IndexResponseTestCase):
 
     @property
     def file_url_func(self):
-        return self._app.file_url
+        return self._controller._file_url
 
+    # FIXME: Use response from `/index/files` to validate
+    #        https://github.com/DataBiosphere/azul/issues/2970
+    #
+    @deprecated('Verify the response, not the index content')
     def _get_hits(self, entity_type: str, entity_id: str):
         """
         Fetches hits from ES instance searching for a particular entity ID
@@ -157,24 +184,29 @@ class TestIndexResponse(IndexResponseTestCase):
             }
         }
         # Tests are assumed to only ever run with the azul dev index
-        results = self.es_client.search(index=str(IndexName.create(catalog=self.catalog,
-                                                                   qualifier=entity_type,
-                                                                   doc_type=DocumentType.aggregate)),
-                                        body=body)
-        return self._index_service.translate_fields(catalog=self.catalog,
-                                                    doc=[results['hits']['hits'][0]['_source']],
-                                                    forward=False)
+        index_name = str(IndexName.create(catalog=self.catalog,
+                                          qualifier=entity_type,
+                                          doc_type=DocumentType.aggregate))
+        results = self.opensearch.search(index=index_name, body=body)
+        service = self._indexer_index_service
+        doc = results['hits']['hits'][0]['_source']
+        doc = service.translate_fields(catalog=self.catalog, doc=doc, forward=False)
+        return [doc]
 
+    # FIXME: Use response from `/index/files` to validate
+    #        https://github.com/DataBiosphere/azul/issues/2970
+    #
     @cached_property
-    def _index_service(self):
-        return IndexService()
+    @deprecated('Verify the response, not the index content')
+    def _indexer_index_service(self):
+        return azul.indexer.index_service.IndexService()
 
     @property
-    def _repository_service(self):
-        return self._app.repository_controller.service
+    def _service_index_service(self) -> IndexService:
+        return self._controller._service
 
     def _response_stage(self, entity_type: str) -> HCASearchResponseStage:
-        return HCASearchResponseStage(service=self._repository_service,
+        return HCASearchResponseStage(service=self._service_index_service,
                                       entity_type=entity_type,
                                       catalog=self.catalog,
                                       file_url_func=self.file_url_func)
@@ -306,11 +338,13 @@ class TestIndexResponse(IndexResponseTestCase):
                         ],
                     }
                 ],
-                'sources': [{
-                    'sourceId': self.source.id,
-                    'sourcePrefix': str(self.source.prefix),
-                    'sourceSpec': str(self.source.spec)
-                }],
+                'sources': [
+                    {
+                        'sourceId': self.source.ref.id,
+                        'sourcePrefix': str(self.source.ref.prefix),
+                        'sourceSpec': str(self.source.ref.spec)
+                    }
+                ],
                 'specimens': [
                     {
                         'disease': ['normal'],
@@ -633,11 +667,13 @@ class TestIndexResponse(IndexResponseTestCase):
                             ],
                         }
                     ],
-                    'sources': [{
-                        'sourceId': self.source.id,
-                        'sourcePrefix': str(self.source.prefix),
-                        'sourceSpec': str(self.source.spec)
-                    }],
+                    'sources': [
+                        {
+                            'sourceId': self.source.ref.id,
+                            'sourcePrefix': str(self.source.ref.prefix),
+                            'sourceSpec': str(self.source.ref.spec)
+                        }
+                    ],
                     'specimens': [
                         {
                             'disease': ['normal'],
@@ -900,11 +936,13 @@ class TestIndexResponse(IndexResponseTestCase):
                         ],
                     }
                 ],
-                'sources': [{
-                    'sourceId': self.source.id,
-                    'sourcePrefix': str(self.source.prefix),
-                    'sourceSpec': str(self.source.spec)
-                }],
+                'sources': [
+                    {
+                        'sourceId': self.source.ref.id,
+                        'sourcePrefix': str(self.source.ref.prefix),
+                        'sourceSpec': str(self.source.ref.spec)
+                    }
+                ],
                 'specimens': [
                     {
                         'disease': ['H syndrome'],
@@ -1250,14 +1288,14 @@ class TestIndexResponse(IndexResponseTestCase):
             ('within', (gte2 + 10000, lte2 - 1000), []),
             ('intersects', (lte2 + 100, gte0 - 199000), [])
         ]
-        for relation, value, expected_hits in test_cases:
+        for operator, value, expected_hits in test_cases:
             for ends_type in int, float:
                 if isinstance(value, (tuple, list)):
                     value = list(map(ends_type, value))
                 else:
                     value = ends_type(value)
-                with self.subTest(relation=relation, value=value, ends_type=ends_type):
-                    params = self._params(filters={'organismAgeRange': {relation: [value]}},
+                with self.subTest(operator=operator, value=value, ends_type=ends_type):
+                    params = self._params(filters={'organismAgeRange': {operator: [value]}},
                                           order='desc',
                                           sort='entryId')
                     url = self.base_url.set(path='/index/projects', args=params)
@@ -1970,41 +2008,19 @@ class TestIndexResponse(IndexResponseTestCase):
         test_cases = [
             (
                 '627cb0ba-b8a1-405a-b58f-0add82c3d635',
-                {
-                    'is': [
-                        {
-                            'value': '20',
-                            'unit': 'year'
-                        }
-                    ]
-                }
+                {'is': [{'value': '20', 'unit': 'year'}]}
             ),
             (
                 'c765e3f9-7cfc-4501-8832-79e5f7abd321',
-                {
-                    'is': [
-                        None
-                    ]
-                }
+                {'is': [None]}
             ),
             (
                 None,
-                {
-                    'is': [
-                        {}
-                    ]
-                }
+                {'is': [{}]}
             ),
             (
                 None,
-                {
-                    'is': [
-                        {
-                            'value': None,
-                            'unit': 'weeks'
-                        }
-                    ]
-                }
+                {'is': [{'value': None, 'unit': 'weeks'}]}
             )
         ]
         for project_id, filters in test_cases:
@@ -2250,7 +2266,7 @@ class TestIndexResponse(IndexResponseTestCase):
             with self.subTest(is_repo_dirty=dirty):
                 with mock.patch.dict(os.environ,
                                      azul_git_commit=commit,
-                                     azul_git_dirty=str(dirty)):
+                                     azul_git_dirty=str(int(dirty))):
                     url = self.base_url.set(path='/version')
                     response = requests.get(str(url))
                     response.raise_for_status()
@@ -3722,7 +3738,10 @@ class TestListCatalogsResponse(DCP1CannedBundleTestCase, LocalAppTestCase):
                         'repository': {
                             'name': 'dss',
                             'sources': [
-                                'https://fake_dss_instance/v1'
+                                {
+                                    'sourceSpec': 'https://fake_dss_instance/v1',
+                                    'sourceConfig': {'mirror': True}
+                                }
                             ],
                         }
                     }
@@ -3767,7 +3786,7 @@ class TestResponseWithDCP2Cans(DCP2CannedBundleTestCase, WebServiceTestCase):
             source = TDRSourceRef(id=source[id_field],
                                   spec=TDRSourceSpec.parse(source[spec_field]),
                                   prefix=Prefix.parse(source[prefix_field]))
-            self.assertEqual(self.source, source)
+            self.assertEqual(self.source.ref, source)
 
     def get_file(self, entry_id: str) -> JSON:
         url = self.base_url.set(path=('index', 'files', entry_id))
@@ -3783,7 +3802,7 @@ class TestResponseWithDCP2Cans(DCP2CannedBundleTestCase, WebServiceTestCase):
                                                            version='2019-09-24T09:35:06.958773Z')))
             expected_drs_uri = str(furl(scheme='drs',
                                         netloc=self.mock_tdr_service_url.netloc,
-                                        path=f'v1_{self.source.id}_9d6f268f-f484-5381-9095-f0998fa0c961'))
+                                        path=f'v1_{self.source.ref.id}_9d6f268f-f484-5381-9095-f0998fa0c961'))
 
             self.assertEqual(expected_url, file['azul_url'])
             self.assertEqual(expected_drs_uri, file['drs_uri'])

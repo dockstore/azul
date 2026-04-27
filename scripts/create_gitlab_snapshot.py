@@ -21,17 +21,18 @@ from more_itertools import (
 
 from azul import (
     config,
-    reject,
-    require,
 )
 from azul.deployment import (
     aws,
 )
+from azul.lib import (
+    R,
+)
+from azul.lib.types import (
+    JSON,
+)
 from azul.logging import (
     configure_script_logging,
-)
-from azul.types import (
-    JSON,
 )
 
 log = logging.getLogger(__name__)
@@ -65,8 +66,9 @@ def main(argv):
                         'volume must be deleted manually. A shell command to '
                         'do so will be printed for your convenience.')
     args = parser.parse_args(argv)
-    require(config.terraform_component == 'gitlab',
-            "Select the 'gitlab' component ('dev.gitlab' or 'prod.gitlab', for example).")
+    assert config.terraform_component == 'gitlab', R(
+        "Select the 'gitlab' component ('dev.gitlab' or 'prod.gitlab', for example)."
+    )
     volume = gitlab_volume_info()
     instance: Optional[JSON] = only(volume['Attachments'])
     if instance is None:
@@ -88,7 +90,7 @@ def confirm_instance_is_stopped(id: str):
         InstanceIds=[id],
     )
     instance_active = response['InstanceStatuses']
-    reject(instance_active, f'Instance {id} is not in stopped state.')
+    assert not instance_active, R(f'Instance {id} is not in stopped state.')
 
 
 def gitlab_volume_info() -> JSON:

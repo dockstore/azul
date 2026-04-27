@@ -57,20 +57,25 @@ from more_itertools import (
 import urllib3
 
 from azul import (
-    cached_property,
     config,
 )
 from azul.auth import (
     OAuth2,
 )
-from azul.bigquery import (
-    BigQueryRow,
-)
 from azul.docker import (
     resolve_docker_image_for_launch,
 )
-from azul.indexer import (
-    Prefix,
+from azul.lib import (
+    cached_property,
+)
+from azul.lib.bigquery import (
+    BigQueryRow,
+)
+from azul.lib.types import (
+    AnyJSON,
+    JSON,
+    JSONs,
+    reify,
 )
 from azul.logging import (
     configure_test_logging,
@@ -91,17 +96,14 @@ from azul.plugins.repository.tdr_hca import (
     TDRSourceRef,
     log as plugin_log,
 )
+from azul.source import (
+    Prefix,
+)
 from azul.terra import (
     TDRClient,
     TDRSourceSpec,
     TerraClient,
     TerraCredentialsProvider,
-)
-from azul.types import (
-    AnyJSON,
-    JSON,
-    JSONs,
-    reify,
 )
 from azul_test_case import (
     AzulUnitTestCase,
@@ -175,7 +177,7 @@ class TDRPluginTestCase(TDRTestCase,
 
     @classmethod
     def _patch_tdr_client(cls):
-        source = cls.source.spec
+        source = cls.source.ref.spec
         credentials_provider = MockCredentialsProvider(project_id=source.subdomain)
         tdr = MockTDRClient(credentials_provider=credentials_provider)
         assert cls.netloc is not None
@@ -198,8 +200,8 @@ class TDRPluginTestCase(TDRTestCase,
                                            command=[
                                                '--log-level=debug',
                                                '--port=9050',
-                                               '--project=' + cls.source.spec.subdomain,
-                                               '--dataset=' + cls.source.spec.name
+                                               '--project=' + cls.source.ref.spec.subdomain,
+                                               '--dataset=' + cls.source.ref.spec.name
                                            ])
         cls._patch_tdr_client()
         cls._patch_timestamp_conversion()
@@ -325,7 +327,7 @@ class TestTDRHCAPlugin(DCP2CannedBundleTestCase,
         return tdr_hca.Plugin
 
     def test_list_and_count_bundles(self):
-        source = self.source
+        source = self.source.ref
         current_version = '2001-01-01T00:00:00.100001Z'
         links_ids = ['42-abc', '42-def', '42-ghi', '86-xyz']
         self._make_mock_table(source=source.spec,
@@ -355,7 +357,7 @@ class TestTDRHCAPlugin(DCP2CannedBundleTestCase,
             self.assertEqual(len(expected_bundle_ids), actual_bundle_count)
 
     def test_list_and_count_files(self):
-        source = self.source
+        source = self.source.ref
         self._make_mock_tables(source)
         tables = self._load_canned_file_version(uuid=source.id,
                                                 version=None,
@@ -396,7 +398,7 @@ class TestTDRHCAPlugin(DCP2CannedBundleTestCase,
         # Test valid links
         self._test_fetch_bundle(bundle, load_tables=True)
         # Test invalid links by modifying the canned bundle
-        spec = self.source.spec
+        spec = self.source.ref.spec
         plugin = self.plugin
         links_id = bundle.uuid
         links = one(plugin.tdr.run_sql(f'''
@@ -466,7 +468,8 @@ class TestTDRSourceList(AzulUnitTestCase):
     def _mock_snapshots(self, access_token: str) -> JSONs:
         return [{
             'id': 'foo',
-            'name': f'{access_token}_snapshot'
+            'name': f'{access_token}_snapshot',
+            'dataProject': 'mock_project'
         }]
 
     def _mock_tdr_enumerate_snapshots(self,
@@ -515,14 +518,14 @@ class TestTDRSourceList(AzulUnitTestCase):
                 with self._patch_urlopen(new=self._mock_google_oauth_tokeninfo()):
                     tdr_client = TDRClient.for_registered_user(OAuth2(token))
             expected_snapshots = {
-                snapshot['id']: snapshot['name']
+                snapshot['id']: snapshot
                 for snapshot in self._mock_snapshots(token)
             }
             # The patching here is deliberately "deep" into the implementation
             # to ensure that the proper authorization headers are being sent
             # when nothing is mocked.
             with self._patch_urlopen(new=self._mock_tdr_enumerate_snapshots(tdr_client)):
-                self.assertEqual(tdr_client.snapshot_names_by_id(), expected_snapshots)
+                self.assertEqual(tdr_client.list_snapshots(), expected_snapshots)
 
     def test_list_snapshots_paging(self):
         for page_size in [1, 10]:
@@ -536,13 +539,14 @@ class TestTDRSourceList(AzulUnitTestCase):
                             tdr_client = TDRClient.for_anonymous_user()
                             page_size = 1000
                             snapshots = [
-                                {'id': str(n), 'name': f'snapshot_{n}'}
+                                {
+                                    'id': str(n),
+                                    'name': f'snapshot_{n}',
+                                    'dataProject': 'mock-project'
+                                }
                                 for n in range(page_size * num_full_pages + last_page_size)
                             ]
-                            expected = {
-                                snapshot['id']: snapshot['name']
-                                for snapshot in snapshots
-                            }
+                            expected = {snapshot['id']: snapshot for snapshot in snapshots}
 
                             def responses():
                                 iterator = iter(snapshots)
@@ -561,7 +565,7 @@ class TestTDRSourceList(AzulUnitTestCase):
                                 self.assertEqual(page_size, tdr_client.page_size)
                                 with mock.patch.object(TerraClient, '_request') as _request:
                                     _request.side_effect = responses()
-                                    actual = tdr_client.snapshot_names_by_id(filter=filter)
+                                    actual = tdr_client.list_snapshots(filter=filter)
                             self.assertEqual(expected, actual)
                             num_expected_calls = max(1, num_full_pages + (1 if last_page_size else 0))
                             self.assertEqual(num_expected_calls, _request.call_count)

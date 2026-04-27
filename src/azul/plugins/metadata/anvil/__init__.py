@@ -8,6 +8,7 @@ from typing import (
     Iterable,
     Self,
     Sequence,
+    cast,
 )
 
 from attrs import (
@@ -22,10 +23,6 @@ from more_itertools.more import (
 
 from azul import (
     config,
-    iif,
-)
-from azul.digests import (
-    Digest,
 )
 from azul.indexer.document import (
     DocumentType,
@@ -34,12 +31,34 @@ from azul.indexer.document import (
     FieldPathElement,
     IndexName,
 )
+from azul.lib.digests import (
+    Digest,
+)
+from azul.lib.functions import (
+    iif,
+)
+from azul.lib.types import (
+    AnyMutableJSON,
+    JSON,
+    MutableJSON,
+    MutableJSONArray,
+    MutableJSONs,
+    json_bool,
+    json_element_mappings,
+    json_element_strings,
+    json_int,
+    json_list,
+    json_mapping,
+    json_str,
+    optional,
+)
 from azul.plugins import (
     DocumentSlice,
     FieldName,
     File,
     InverseFieldMapping,
     ManifestConfig,
+    ManifestFormat,
     MetadataPlugin,
     Sorting,
     SpecialField,
@@ -71,23 +90,6 @@ from azul.plugins.metadata.anvil.service.response import (
     AnvilSearchResponseStage,
     AnvilSummaryResponseStage,
 )
-from azul.service.manifest_service import (
-    ManifestFormat,
-)
-from azul.types import (
-    AnyMutableJSON,
-    JSON,
-    MutableJSON,
-    MutableJSONs,
-    json_bool,
-    json_element_mappings,
-    json_element_strings,
-    json_int,
-    json_list,
-    json_mapping,
-    json_str,
-    optional,
-)
 
 
 class Plugin(MetadataPlugin[AnvilBundle]):
@@ -108,6 +110,9 @@ class Plugin(MetadataPlugin[AnvilBundle]):
         return [
             ManifestFormat.compact,
             ManifestFormat.terra_pfb,
+            *iif(config.enable_mirroring, [
+                ManifestFormat.curl
+            ]),
             *iif(config.enable_replicas, [
                 ManifestFormat.verbatim_jsonl,
                 ManifestFormat.verbatim_pfb
@@ -273,7 +278,8 @@ class Plugin(MetadataPlugin[AnvilBundle]):
         source_prefix=SpecialField.symmetric('source_prefix'),
         bundle_uuid=SpecialField.symmetric('bundle_uuid'),
         bundle_version=SpecialField.symmetric('bundle_version'),
-        file_uuid=SpecialField(name='files.document_id', name_in_hit='document_id')
+        file_uuid=SpecialField(name='files.document_id', name_in_hit='document_id'),
+        file_name=SpecialField(name='files.file_name', name_in_hit='file_name'),
     )
 
     @property
@@ -436,7 +442,7 @@ class Plugin(MetadataPlugin[AnvilBundle]):
             ]
         )
 
-    def verbatim_pfb_schema(self, replicas: list[JSON]) -> list[JSON]:
+    def verbatim_pfb_schema(self, replicas: Iterable[JSON]) -> MutableJSONs:
         table_schemas_by_name = {
             json_str(schema['name']): schema
             for schema in json_element_mappings(anvil_schema['tables'])
@@ -473,7 +479,10 @@ class Plugin(MetadataPlugin[AnvilBundle]):
             entity_schemas.append({
                 'name': table_name,
                 'type': 'record',
-                'fields': field_schemas
+                # The cast is safe because `field_schemas` is reassigned in the
+                # next loop iteration, or goes out of scope when the function
+                # returns  after the loop exits. Mypy just doesn't realize that.
+                'fields': cast(MutableJSONArray, field_schemas)
             })
         return entity_schemas
 
@@ -510,23 +519,23 @@ class Plugin(MetadataPlugin[AnvilBundle]):
         return None
 
     @property
-    def summary_response_stage(self) -> 'type[AnvilSummaryResponseStage]':
+    def summary_response_stage(self) -> type[AnvilSummaryResponseStage]:
         return AnvilSummaryResponseStage
 
     @property
-    def search_response_stage(self) -> 'type[AnvilSearchResponseStage]':
+    def search_response_stage(self) -> type[AnvilSearchResponseStage]:
         return AnvilSearchResponseStage
 
     @property
-    def summary_aggregation_stage(self) -> 'type[AnvilSummaryAggregationStage]':
+    def summary_aggregation_stage(self) -> type[AnvilSummaryAggregationStage]:
         return AnvilSummaryAggregationStage
 
     @property
-    def aggregation_stage(self) -> 'type[AnvilAggregationStage]':
+    def aggregation_stage(self) -> type[AnvilAggregationStage]:
         return AnvilAggregationStage
 
     @property
-    def filter_stage(self) -> 'type[AnvilFilterStage]':
+    def filter_stage(self) -> type[AnvilFilterStage]:
         return AnvilFilterStage
 
     @property

@@ -1,37 +1,39 @@
 import logging
 
-from chalice import (
+from chalice.app import (
     TooManyRequestsError,
     UnauthorizedError,
 )
 
 from azul import (
     CatalogName,
-    cached_property,
 )
 from azul.auth import (
     Authentication,
 )
 from azul.chalice import (
-    AppController,
     BadGatewayError,
-    TerraTimeoutError,
+    Controller,
+    TemporaryRedirectError,
 )
 from azul.http import (
     LimitedTimeoutException,
     TooManyRequestsException,
 )
+from azul.lib import (
+    cached_property,
+)
+from azul.lib.types import (
+    JSONs,
+)
 from azul.service.source_service import (
     SourceService,
-)
-from azul.types import (
-    JSONs,
 )
 
 log = logging.getLogger(__name__)
 
 
-class SourceController(AppController):
+class SourceController(Controller):
 
     @cached_property
     def _source_service(self) -> SourceService:
@@ -46,11 +48,11 @@ class SourceController(AppController):
         except PermissionError:
             raise UnauthorizedError
         except LimitedTimeoutException as e:
-            raise TerraTimeoutError(*e.args)
+            raise TemporaryRedirectError(*e.args)
         except TooManyRequestsException as e:
             raise TooManyRequestsError(*e.args)
         else:
-            authoritative_source_ids = {source.id for source in sources}
+            authoritative_source_ids = {source.ref.id for source in sources}
             cached_source_ids = self._list_source_ids(catalog, authentication)
             # For optimized performance, the cache may include source IDs that
             # are accessible but are not configured for indexing. Therefore, we
@@ -61,7 +63,11 @@ class SourceController(AppController):
                 log.debug(diff)
                 raise BadGatewayError('Inconsistent response from repository')
             return [
-                {'sourceId': source.id, 'sourceSpec': str(source.spec)}
+                {
+                    'sourceId': source.ref.id,
+                    'sourceSpec': source.ref.spec.to_json(),
+                    'sourceConfig': source.config.to_json()
+                }
                 for source in sources
             ]
 
@@ -74,7 +80,7 @@ class SourceController(AppController):
         except PermissionError:
             raise UnauthorizedError
         except LimitedTimeoutException as e:
-            raise TerraTimeoutError(*e.args)
+            raise TemporaryRedirectError(*e.args)
         except TooManyRequestsException as e:
             raise TooManyRequestsError(*e.args)
         else:

@@ -10,11 +10,7 @@ from typing import (
 
 from azul import (
     CatalogName,
-    NotInLambdaContextException,
-    cache,
-    cached_property,
     config,
-    open_resource,
 )
 from azul.auth import (
     Authentication,
@@ -22,17 +18,26 @@ from azul.auth import (
 from azul.deployment import (
     aws,
 )
-from azul.indexer import (
-    SourceRef,
+from azul.lib import (
+    R,
+    cache,
+    cached_property,
 )
-from azul.plugins import (
-    RepositoryPlugin,
-)
-from azul.types import (
+from azul.lib.types import (
     AnyJSON,
     JSON,
     json_element_strings,
     json_item_sequences,
+)
+from azul.plugins import (
+    RepositoryPlugin,
+)
+from azul.resources import (
+    NotInLambdaContextException,
+    open_resource,
+)
+from azul.source import (
+    Source,
 )
 
 log = logging.getLogger(__name__)
@@ -85,7 +90,7 @@ class SourceService:
         the result is then cached until the instance is destroyed.
         """
         if authentication is None:
-            source_ids = {source.id for source in self._public_sources[catalog]}
+            source_ids = {source.ref.id for source in self._public_sources[catalog]}
         else:
             plugin = self.repository_plugin(catalog)
             cache_key = (catalog, authentication.identity())
@@ -102,7 +107,7 @@ class SourceService:
     def list_sources(self,
                      catalog: CatalogName,
                      authentication: Authentication | None
-                     ) -> Iterable[SourceRef]:
+                     ) -> Iterable[Source]:
         """
         List the sources in the given catalog that are accessible using the
         provided authentication.
@@ -125,8 +130,31 @@ class SourceService:
     def _list_sources(self,
                       catalog: CatalogName,
                       authentication: Authentication | None
-                      ) -> Iterable[SourceRef]:
-        return self.repository_plugin(catalog).list_sources(authentication)
+                      ) -> Iterable[Source]:
+        plugin = self.repository_plugin(catalog)
+        refs = plugin.list_sources(authentication)
+        configs_by_spec = plugin.sources
+
+        specs_by_name = {spec.name: spec for spec in configs_by_spec.keys()}
+        assert len(configs_by_spec) == len(specs_by_name), R(
+            'Duplicate source names in catalog configuration', configs_by_spec)
+
+        refs_by_name = {ref.spec.name: ref for ref in refs}
+        assert len(refs) == len(refs_by_name), R(
+            'Duplicate source names in repository', refs)
+
+        sources = []
+        for ref in refs:
+            try:
+                spec = specs_by_name[ref.spec.name]
+            except KeyError:
+                pass
+            else:
+                assert spec == ref.spec, R('Misconfigured source', spec, ref)
+                source = Source(ref=ref, config=configs_by_spec[spec])
+                sources.append(source)
+
+        return sources
 
     table_name = config.dynamo_sources_cache_table_name
 
@@ -172,7 +200,7 @@ class SourceService:
         return int(time())
 
     @cached_property
-    def _public_sources(self) -> Mapping[CatalogName, Iterable[SourceRef]]:
+    def _public_sources(self) -> Mapping[CatalogName, Iterable[Source]]:
         """
         The set of all sources included in any catalog in the current
         deployment that are accessible to the public service account. When
@@ -189,7 +217,7 @@ class SourceService:
             }
         else:
             return {
-                catalog: [SourceRef.from_json(source) for source in sources]
+                catalog: [Source.from_json(source) for source in sources]
                 for catalog, sources in json_item_sequences(public_sources)
             }
 

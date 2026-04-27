@@ -18,28 +18,26 @@ from furl import (
 from google.auth.transport.urllib3 import (
     AuthorizedHttp,
 )
-from google.oauth2.credentials import (
-    Credentials as TokenCredentials,
-)
-from google.oauth2.service_account import (
-    Credentials as ServiceAccountCredentials,
-)
+import google.oauth2.credentials
+import google.oauth2.service_account
 
 from azul import (
-    R,
-    cached_property,
     config,
-    reject,
-    require,
 )
 from azul.http import (
     HasCachedHttpClient,
     HttpClient,
     HttpClientDecorator,
 )
+from azul.lib import (
+    R,
+    cached_property,
+)
 
 log = logging.getLogger(__name__)
 
+TokenCredentials = google.oauth2.credentials.Credentials
+ServiceAccountCredentials = google.oauth2.service_account.Credentials
 ScopedCredentials = ServiceAccountCredentials | TokenCredentials
 
 
@@ -135,46 +133,45 @@ class OAuth2Client(HasCachedHttpClient):
         token must not be expired and the service account must belong to the
         current Google Cloud project.
 
-        :raise RequirementError: if the token is definitely invalid
+        :raise AssertionError: if the token is definitely invalid
 
         :raise Exception: if the validity of the token cannot be determined
         """
         credentials = self.credentials
         url = furl(url='https://www.googleapis.com/oauth2/v3/tokeninfo',
-                   args=dict(access_token=credentials.token))
+                   args=dict(access_token=str(credentials.token)))
         response = self._http_client_without_credentials.request('GET', str(url))
-        reject(response.status == 400,
-               'The token is not valid')
-        require(response.status == 200,
-                'Unexpected response status', response.status)
+        assert response.status != 400, R('The token is not valid')
+        assert response.status == 200, R(
+            'Unexpected response status', response.status)
         token_info: TokenInfo = json.loads(response.data)
         # The error messages here intentionally lack detail, for confidentiality
         if isinstance(credentials, ServiceAccountCredentials):
             # Actual service account credentials
-            require(token_info['email_verified'] == 'true',
-                    'Service account email is not verified')
-            require(token_info['email'] == credentials.service_account_email,
-                    'Service account email does not match')
+            assert token_info['email_verified'] == 'true', R(
+                'Service account email is not verified')
+            assert token_info['email'] == credentials.service_account_email, R(
+                'Service account email does not match')
         elif isinstance(credentials, TokenCredentials):
             authorized_party = token_info['azp']
             email = token_info.get('email')
             if authorized_party.endswith('.apps.googleusercontent.com'):
                 # A user's access token originating from an OAuth 2.0 client
                 azul_client_id = config.google_oauth2_client_id
-                reject(azul_client_id is None,
-                       'Acceptance of OAuth 2.0 user access tokens is disabled')
+                assert azul_client_id is not None, R(
+                    'Acceptance of OAuth 2.0 user access tokens is disabled')
                 project_id = self._project_id_from_client_id(azul_client_id)
                 authorized_project_id = self._project_id_from_client_id(authorized_party)
-                require(project_id == authorized_project_id,
-                        'OAuth 2.0 client project does not match')
+                assert project_id == authorized_project_id, R(
+                    'OAuth 2.0 client project does not match')
             elif email is not None and email.endswith('.iam.gserviceaccount.com'):
                 # A service account's bare access token
-                require(token_info['email_verified'] == 'true',
-                        'Service account email is not verified')
+                assert token_info['email_verified'] == 'true', R(
+                    'Service account email is not verified')
                 local_part, _, host = email.partition('@')
                 host, _, domain = host.partition('.')
-                require(host == config.google_project(),
-                        'Service account project does not match')
+                assert host == config.google_project(), R(
+                    'Service account project does not match')
             else:
                 assert False, 'Unexpected type of authorized party'
         else:

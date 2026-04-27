@@ -11,8 +11,8 @@
         "$schema": {
             "type": "string",
             "format": "uri",
-            "pattern": "^https?://.*/info/v\\d+\\.json$",
-            "description": "URL of a JSON schema the JSON containing this property is valid against"
+            "pattern": "^https?://.*/info/v[1-9][0-9]*\\.json$",
+            "description": "URL of a JSON schema the document containing this property is valid against"
         }
     },
     "required": [

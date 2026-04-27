@@ -17,14 +17,14 @@ from azul import (
 from azul.deployment import (
     aws,
 )
-from azul.logging import (
-    configure_script_logging,
-)
-from azul.types import (
+from azul.lib.types import (
     JSON,
     JSONs,
     MutableJSON,
     PrimitiveJSON,
+)
+from azul.logging import (
+    configure_script_logging,
 )
 
 log = logging.getLogger(__name__)

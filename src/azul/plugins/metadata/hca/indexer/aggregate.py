@@ -9,14 +9,9 @@ from more_itertools import (
     one,
 )
 
-from azul import (
-    cached_property,
-)
-from azul.collections import (
-    compose_keys,
-    none_safe_itemgetter,
-    none_safe_key,
-    none_safe_tuple_key,
+from azul.field_type import (
+    FieldTypes,
+    null_int,
 )
 from azul.indexer.aggregate import (
     Accumulator,
@@ -36,11 +31,16 @@ from azul.indexer.aggregate import (
 from azul.indexer.document import (
     Aggregate,
 )
-from azul.indexer.field import (
-    FieldTypes,
-    null_int,
+from azul.lib import (
+    cached_property,
 )
-from azul.types import (
+from azul.lib.collections import (
+    compose_keys,
+    none_safe_itemgetter,
+    none_safe_key,
+    none_safe_tuple_key,
+)
+from azul.lib.types import (
     JSON,
     json_element_mappings,
     json_int,

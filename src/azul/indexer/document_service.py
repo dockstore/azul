@@ -2,6 +2,8 @@ from collections.abc import (
     Iterable,
 )
 from typing import (
+    Mapping,
+    Sequence,
     Type,
 )
 
@@ -11,34 +13,37 @@ from more_itertools import (
 
 from azul import (
     CatalogName,
-    cache,
     config,
 )
-from azul.collections import (
-    deep_dict_merge,
+from azul.field_type import (
+    CataloguedFieldTypes,
+    FieldType,
+    FieldTypes,
+    FieldTypes1,
+    Nested,
 )
 from azul.indexer.document import (
     Aggregate,
     Contribution,
     Document,
-)
-from azul.indexer.field import (
-    CataloguedFieldTypes,
-    FieldType,
-    FieldTypes,
-    Nested,
+    FieldPath,
 )
 from azul.indexer.transform import (
     Transformer,
 )
-from azul.plugins import (
-    FieldPath,
-    MetadataPlugin,
-    RepositoryPlugin,
+from azul.lib import (
+    cache,
 )
-from azul.types import (
-    AnyJSON,
-    AnyMutableJSON,
+from azul.lib.collections import (
+    deep_dict_merge,
+)
+from azul.lib.types import (
+    JSON,
+    MutableJSON,
+    json_dict,
+)
+from azul.plugins import (
+    MetadataPlugin,
 )
 
 
@@ -47,10 +52,6 @@ class DocumentService:
     @cache
     def metadata_plugin(self, catalog: CatalogName) -> MetadataPlugin:
         return MetadataPlugin.load(catalog).create()
-
-    @cache
-    def repository_plugin(self, catalog: CatalogName) -> RepositoryPlugin:
-        return RepositoryPlugin.load(catalog).create(catalog)
 
     @cache
     def aggregate_class(self, catalog: CatalogName) -> Type[Aggregate]:
@@ -86,26 +87,27 @@ class DocumentService:
 
         :param path: A tuple of keys to traverse document.
         """
-        field_types = self.field_types(catalog)
-        for element in path:
-            try:
-                field_types = field_types[element]
-            except (KeyError, TypeError) as e:
-                if isinstance(field_types, list):
-                    field_types = one(field_types)
-                if isinstance(field_types, Nested) and element == field_types.agg_property:
-                    field_types = field_types.properties[element]
-                else:
-                    raise type(e)('Path not represented in field_types', path)
-        if isinstance(field_types, list):
+        field_types: FieldTypes | FieldTypes1 = self.field_types(catalog)
+        elements = iter(path)
+        while isinstance(field_types, Mapping):
+            field_types = field_types[next(elements)]
+        if isinstance(field_types, Sequence):
             field_types = one(field_types)
+        if isinstance(field_types, Nested):
+            element = next(elements, None)
+            if element is not None:
+                assert element == field_types.agg_property, (element, field_types)
+                field_types = field_types.properties[element]
+        assert isinstance(field_types, FieldType), (path, field_types)
+        element = next(elements, None)
+        assert element is None, (element, field_types)
         return field_types
 
     def field_types(self, catalog: CatalogName) -> FieldTypes:
         """
         Returns a mapping of fields to field types
 
-        :return: dict with nested keys matching Elasticsearch fields and values
+        :return: dict with nested keys matching OpenSearch fields and values
                  with the field's type
         """
         field_types = deep_dict_merge.from_iterable(
@@ -128,12 +130,12 @@ class DocumentService:
 
     def translate_fields(self,
                          catalog: CatalogName,
-                         doc: AnyJSON,
+                         doc: JSON,
                          *,
                          forward: bool,
                          allowed_paths: list[FieldPath] | None = None
-                         ) -> AnyMutableJSON:
-        return Document.translate_fields(doc,
-                                         self.field_types(catalog),
-                                         forward=forward,
-                                         allowed_paths=allowed_paths)
+                         ) -> MutableJSON:
+        return json_dict(Document.translate_fields(doc,
+                                                   self.field_types(catalog),
+                                                   forward=forward,
+                                                   allowed_paths=allowed_paths))

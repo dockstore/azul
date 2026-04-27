@@ -25,6 +25,7 @@ def env() -> Mapping[str, Optional[str]]:
     provide the value.
     """
     return {
+        'azul_gitlab_data_volume_id': '6de99059-9912-4ae1-b76e-4565372a1302',
         'azul_terraform_component': 'gitlab',
         'azul_vpc_cidr': '172.25.0.0/16',
         'azul_vpn_subnet': '10.46.0.0/16'

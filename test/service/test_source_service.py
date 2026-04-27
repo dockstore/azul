@@ -25,9 +25,6 @@ from mypy_boto3_dynamodb.literals import (
 from app_test_case import (
     LocalAppTestCase,
 )
-from azul import (
-    NotInLambdaContextException,
-)
 from azul.http import (
     http_client,
 )
@@ -35,10 +32,17 @@ from azul.logging import (
     configure_test_logging,
     get_test_logger,
 )
+from azul.resources import (
+    NotInLambdaContextException,
+)
 from azul.service.source_service import (
     Expired,
     NotFound,
     SourceService,
+)
+from azul.source import (
+    Source,
+    SourceConfig,
 )
 from azul.terra import (
     TDRClient,
@@ -100,9 +104,13 @@ class TestPublicSources(DCP2TestCase):
 
         class MockPlugin:
 
+            @property
+            def sources(self):
+                return {source.ref.spec: source.config for source in cls._sources()}
+
             def list_sources(self, authentication):
                 assert authentication is None, authentication
-                return [cls.source]
+                return [cls.source.ref]
 
         cls.addClassPatch(mock.patch.object(SourceService,
                                             'repository_plugin',
@@ -140,23 +148,32 @@ class TestListSources(DCP2TestCase, LocalAppTestCase):
     def app_name(cls) -> str:
         return 'service'
 
-    source_names = ['mock_snapshot_1', 'mock_snapshot_2']
-    make_spec = 'tdr:bigquery:gcp:mock:{}'.format
+    snapshot_names = ['mock_snapshot_1', 'mock_snapshot_2']
+    make_spec_str = 'tdr:bigquery:gcp:mock-project:{}'.format
 
-    # Includes extra sources to check that the endpoint only returns results
-    # for the current catalog
-    extra_sources = ['foo', 'bar']
-    source_names_by_id = {
-        str(i): name
-        for i, name in enumerate(source_names + extra_sources)
+    mock_list_snapshots_response = {
+        str(i): {
+            'id': str(i),
+            'dataProject': 'mock-project',
+            'name': name
+        }
+        # Include extra sources to check that the endpoint only returns results
+        # for the current catalog
+        for i, name in enumerate(snapshot_names + ['foo', 'bar'])
     }
 
     @classmethod
     def _sources(cls):
-        return {
-            cls.make_spec(n): {'mirror': True}
-            for n in cls.source_names
-        }
+        return [
+            Source(
+                config=SourceConfig(mirror=True),
+                ref=TDRSourceRef(id=id,
+                                 spec=TDRSourceSpec.parse(cls.make_spec_str(snapshot['name'])),
+                                 prefix=None)
+            )
+            for id, snapshot in cls.mock_list_snapshots_response.items()
+            if snapshot['name'] in cls.snapshot_names
+        ]
 
     @classmethod
     def _patch_public_sources(cls):
@@ -164,29 +181,18 @@ class TestListSources(DCP2TestCase, LocalAppTestCase):
             patch.object(SourceService,
                          '_public_sources',
                          new_callable=PropertyMock,
-                         return_value=cls._sources_by_catalog())
+                         return_value={cls.catalog: cls._sources()})
         )
 
-    @classmethod
-    def _sources_by_catalog(cls) -> dict[str, list[TDRSourceRef]]:
-        return {
-            cls.catalog: [
-                TDRSourceRef(id=id,
-                             spec=TDRSourceSpec.parse(cls.make_spec(name)),
-                             prefix=None)
-                for id, name in cls.source_names_by_id.items()
-                if name not in cls.extra_sources
-            ]}
-
     @patch.object(SourceService, '_get')
-    @patch.object(TDRClient, 'snapshot_names_by_id')
+    @patch.object(TDRClient, 'list_snapshots')
     @patch.object(TDRClient, 'validate', new=MagicMock())
-    def test(self, mock_tdr_client__snapshot_names_by_id, mock_source_service__get):
-        mock_tdr_client__snapshot_names_by_id.return_value = self.source_names_by_id
+    def test(self, mock_list_snapshots, mock_source_cache_get):
+        mock_list_snapshots.return_value = self.mock_list_snapshots_response
         client = http_client(log)
         azul_url = furl(url=self.base_url,
                         path='/repository/sources',
-                        query_params=dict(catalog=self.catalog))
+                        args=dict(catalog=self.catalog))
 
         def _test(*, authenticate: bool, cache: bool):
             with self.subTest(authenticate=authenticate, cache=cache):
@@ -198,20 +204,21 @@ class TestListSources(DCP2TestCase, LocalAppTestCase):
                     'sources': [
                         {
                             'sourceId': id,
-                            'sourceSpec': str(TDRSourceSpec.parse(self.make_spec(name)))
+                            'sourceSpec': self.make_spec_str(snapshot['name']),
+                            'sourceConfig': {'mirror': True}
                         }
-                        for id, name in self.source_names_by_id.items()
-                        if name not in self.extra_sources
+                        for id, snapshot in self.mock_list_snapshots_response.items()
+                        if snapshot['name'] in self.snapshot_names
                     ]
                 }
                 self.assertEqual(expected, actual)
 
-        mock_source_service__get.return_value = list(self.source_names_by_id.keys())
+        mock_source_cache_get.return_value = list(self.mock_list_snapshots_response.keys())
         _test(authenticate=True, cache=True)
         _test(authenticate=False, cache=True)
-        mock_source_service__get.return_value = None
-        mock_source_service__get.side_effect = NotFound('foo_token')
-        with patch('azul.terra.TDRClient.snapshot_ids',
-                   return_value=self.source_names_by_id.keys() | {'not_indexed'}):
+        mock_source_cache_get.return_value = None
+        mock_source_cache_get.side_effect = NotFound('foo_token')
+        with patch('azul.terra.TDRClient.list_snapshot_ids',
+                   return_value=self.mock_list_snapshots_response.keys() | {'not_indexed'}):
             _test(authenticate=True, cache=False)
             _test(authenticate=False, cache=False)

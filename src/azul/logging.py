@@ -15,13 +15,13 @@ from more_itertools import (
 )
 
 import azul
-from azul.json import (
+from azul.lib.json import (
     json_head,
 )
-from azul.strings import (
+from azul.lib.strings import (
     trunc_ellipses,
 )
-from azul.types import (
+from azul.lib.types import (
     JSON,
     reify,
 )
@@ -34,7 +34,7 @@ if TYPE_CHECKING:
 
 @attr.s(frozen=False, kw_only=False, auto_attribs=True)
 class LambdaLogFilter(logging.Filter):
-    app: Optional['AzulChaliceApp'] = None
+    app: Optional[AzulChaliceApp] = None
 
     def filter(self, record):
         if self.app is None or self.app.lambda_context is None:
@@ -77,7 +77,7 @@ lambda_log_format = '\t'.join([
 lambda_log_date_format = '%Y-%m-%dT%H:%M:%S'
 
 
-def configure_app_logging(app: 'AzulChaliceApp', *loggers):
+def configure_app_logging(app: AzulChaliceApp, *loggers):
     _configure_log_levels(app.log, *loggers)
     if not app.loaded_dynamically:
         # Environment is not unit test
@@ -148,36 +148,39 @@ def _configure_log_levels(*loggers):
     logging.getLogger().setLevel(root_level)
     # Only log AWS request & response bodies when AZUL_DEBUG is 2
     azul_boto3_log.setLevel(root_level)
-    es_log.setLevel(es_log_level())
+    opensearch_log.setLevel(opensearch_log_level())
     for logger in {*loggers, azul.log}:
         logger.setLevel(azul_level_)
 
 
 def root_log_level():
-    return [logging.WARN, logging.INFO, logging.DEBUG][azul.config.debug]
+    levels = [logging.WARN, logging.INFO, logging.DEBUG, logging.DEBUG]
+    return levels[azul.config.debug]
 
 
 def azul_log_level():
-    return [logging.INFO, logging.DEBUG, logging.DEBUG][azul.config.debug]
+    levels = [logging.INFO, logging.DEBUG, logging.DEBUG, logging.DEBUG]
+    return levels[azul.config.debug]
 
 
-def es_log_level():
+def opensearch_log_level():
     return root_log_level()
 
 
-def silent_es_log_level():
-    return [logging.ERROR, logging.INFO, logging.DEBUG][azul.config.debug]
+def silent_opensearch_log_level():
+    levels = [logging.ERROR, logging.INFO, logging.DEBUG, logging.DEBUG]
+    return levels[azul.config.debug]
 
 
-es_log = logging.getLogger('opensearch')
+opensearch_log = logging.getLogger('opensearch')
 azul_boto3_log = logging.getLogger('azul.boto3')
 
 
 @contextmanager
-def silenced_es_logger():
+def silenced_opensearch_logger():
     """
     Does nothing if AZUL_DEBUG is 2. Temporarily sets the level of the
-    Elasticsearch logger to WARNING if AZUL_DEBUG is 1, or ERROR if it is 0.
+    OpenSearch logger to WARNING if AZUL_DEBUG is 1, or ERROR if it is 0.
 
     Use sparingly since it assumes that only the current thread uses the ES
     client. If other threads use the ES client concurrently, their logging will
@@ -186,15 +189,15 @@ def silenced_es_logger():
     if azul.config.debug > 1:
         yield
     else:
-        patched_log_level = silent_es_log_level()
-        original_log_level = es_log.level
+        patched_log_level = silent_opensearch_log_level()
+        original_log_level = opensearch_log.level
         try:
-            es_log.setLevel(patched_log_level)
-            assert es_log.level == patched_log_level
+            opensearch_log.setLevel(patched_log_level)
+            assert opensearch_log.level == patched_log_level
             yield
         finally:
-            es_log.setLevel(original_log_level)
-            assert es_log.level == original_log_level
+            opensearch_log.setLevel(original_log_level)
+            assert opensearch_log.level == original_log_level
 
 
 json_body_types = reify(JSON)

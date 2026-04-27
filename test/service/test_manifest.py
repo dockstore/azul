@@ -59,21 +59,17 @@ from requests import (
 )
 
 from azul import (
-    R,
-    cache,
     config,
+    iif,
 )
-from azul.collections import (
-    adict,
-    compose_keys,
-    none_safe_tuple_key,
+from azul.filters import (
+    Filters,
+    FiltersJSON,
 )
 from azul.http import (
     parse_header,
 )
 from azul.indexer import (
-    Prefix,
-    SimpleSourceSpec,
     SourcedBundleFQID,
 )
 from azul.indexer.document import (
@@ -81,9 +77,28 @@ from azul.indexer.document import (
     EntityReference,
     EntityType,
 )
-from azul.json import (
+from azul.lib import (
+    R,
+    cache,
+)
+from azul.lib.collections import (
+    adict,
+    compose_keys,
+    none_safe_tuple_key,
+)
+from azul.lib.json import (
     copy_json,
     json_hash,
+)
+from azul.lib.strings import (
+    single_quote as sq,
+)
+from azul.lib.types import (
+    JSON,
+    JSONs,
+    MutableCompositeJSON,
+    MutableJSON,
+    MutableJSONs,
 )
 from azul.logging import (
     configure_test_logging,
@@ -91,6 +106,7 @@ from azul.logging import (
 )
 from azul.plugins import (
     ManifestFormat,
+    MetadataPlugin,
 )
 from azul.plugins.metadata.hca import (
     FileTransformer,
@@ -101,10 +117,11 @@ from azul.plugins.repository.dss import (
     DSSSourceRef,
 )
 from azul.service import (
-    Filters,
-    FiltersJSON,
     avro_pfb,
     manifest_service,
+)
+from azul.service.manifest_controller import (
+    ManifestController,
 )
 from azul.service.manifest_service import (
     CachedManifestNotFound,
@@ -119,15 +136,12 @@ from azul.service.manifest_service import (
 from azul.service.storage_service import (
     StorageService,
 )
-from azul.strings import (
-    single_quote as sq,
+from azul.source import (
+    Prefix,
+    SimpleSourceSpec,
 )
-from azul.types import (
-    JSON,
-    JSONs,
-    MutableCompositeJSON,
-    MutableJSON,
-    MutableJSONs,
+from azul_test_case import (
+    patch_config,
 )
 from indexer import (
     AnvilCannedBundleTestCase,
@@ -258,7 +272,7 @@ class ManifestTestCase(WebServiceTestCase,
         self.addPatch(patch.object(PagedManifestGenerator, 'page_size', 1))
         self.addPatch(patch.dict(os.environ,
                                  azul_git_commit='9347432ab0da43c73409ac7fd3edfe29cf3ae678',
-                                 azul_git_dirty=str(False)))
+                                 azul_git_dirty='0'))
         self._setup_indices()
 
     def tearDown(self):
@@ -266,11 +280,23 @@ class ManifestTestCase(WebServiceTestCase,
         super().tearDown()
 
     def _filters(self, filters: FiltersJSON) -> Filters:
-        return Filters(explicit=filters, source_ids={self.source.id})
+        return Filters(explicit=filters, source_ids={self.source.ref.id})
+
+    @property
+    def _controller(self) -> ManifestController:
+        controller = self._app.manifest_controller
+        assert isinstance(controller, ManifestController)
+        return controller
+
+    @property
+    def _metadata_plugin(self) -> MetadataPlugin:
+        plugin = self._controller._metadata_plugin
+        assert isinstance(plugin, MetadataPlugin)
+        return plugin
 
     @property
     def _service(self):
-        return ManifestService(self.storage_service, self._app.file_url)
+        return ManifestService(file_url_func=self._controller._file_url)
 
     def _get_manifest(self,
                       format: ManifestFormat,
@@ -322,6 +348,24 @@ class ManifestTestCase(WebServiceTestCase,
         actual = list(csv.reader(actual, delimiter='\t'))
         actual[1:], expected[1:] = sorted(actual[1:]), sorted(expected[1:])
         self.assertEqual(expected, actual)
+
+    def _assert_curl(self, expected_body: list[list[str]], actual: Response):
+        expected_header = [
+            '--http1.1', '',
+            '--create-dirs', '',
+            '--compressed', '',
+            '--location', '',
+            '--globoff', '',
+            '--fail', '',
+            '--fail-early', '',
+            '--continue-at -', '',
+            '--write-out "Downloading to: %{filename_effective}\\n\\n"', '',
+        ]
+        lines = actual.content.decode().splitlines()
+        header_length = len(expected_header)
+        header, body = lines[:header_length], lines[header_length:]
+        self.assertEqual(expected_header, header)
+        self.assertEqual(expected_body, sorted(chunked(body, 3)))
 
     def _file_url(self, file_id, version):
         return str(self.base_url.set(path='/repository/files/' + file_id,
@@ -476,8 +520,8 @@ class TestManifests(DCP1ManifestTestCase):
 
     def test_compact_manifest(self):
         expected = [
-            ('source_id', self.source.id, self.source.id),
-            ('source_spec', str(self.source.spec), str(self.source.spec)),
+            ('source_id', self.source.ref.id, self.source.ref.id),
+            ('source_spec', str(self.source.ref.spec), str(self.source.ref.spec)),
             ('bundle_uuid',
              'b81656cf-231b-47a3-9317-10f1e501a05c || f79257a7-dfc6-46d6-ae00-ba4b25313c10',
              'f79257a7-dfc6-46d6-ae00-ba4b25313c10'),
@@ -849,30 +893,6 @@ class TestManifests(DCP1ManifestTestCase):
         filters = {'fileFormat': {'is': ['pdf']}}
         response = self._get_manifest(ManifestFormat.curl, filters)
         self.assertEqual(200, response.status_code)
-        lines = response.content.decode().splitlines()
-        expected_header = [
-            '--http1.1',
-            '',
-            '--create-dirs',
-            '',
-            '--compressed',
-            '',
-            '--location',
-            '',
-            '--globoff',
-            '',
-            '--fail',
-            '',
-            '--fail-early',
-            '',
-            '--continue-at -',
-            '',
-            '--write-out "Downloading to: %{filename_effective}\\n\\n"',
-            '',
-        ]
-        header_length = len(expected_header)
-        header, body = lines[:header_length], lines[header_length:]
-        self.assertEqual(expected_header, header)
         base_url = str(self.base_url.set(path='/repository/files'))
         expected_body = [
             [
@@ -894,7 +914,7 @@ class TestManifests(DCP1ManifestTestCase):
                 ''
             ],
         ]
-        self.assertEqual(expected_body, sorted(chunked(body, 3)))
+        self._assert_curl(expected_body, response)
 
     def test_manifest_format_validation(self):
         url = self.base_url.set(path='/manifest/files',
@@ -909,18 +929,29 @@ class TestManifests(DCP1ManifestTestCase):
         response = requests.put(str(url))
         self.assertEqual(400, response.status_code, response.content)
 
-    def test_manifest_content_disposition_header(self):
+    @patch_config('enable_bundle_notifications', True)
+    def test_content_disposition_header_with_notifications_enabled(self) -> None:
+        self._test_content_disposition_header()
+
+    @patch_config('enable_bundle_notifications', False)
+    def test_content_disposition_header_with_notifications_disabled(self) -> None:
+        self._test_content_disposition_header()
+
+    def _test_content_disposition_header(self):
         bundle_fqid = self.bundle_fqid(uuid='f79257a7-dfc6-46d6-ae00-ba4b25313c10',
                                        version='2018-09-14T13:33:14.453337Z')
         self._index_canned_bundle(bundle_fqid)
         with patch.object(manifest_service, 'datetime') as mock_datetime:
             mock_datetime.now.return_value = datetime(1985, 10, 25, 1, 21)
             for format in [ManifestFormat.compact]:
+                source_hash = '4bc67e84-4873-591f-b524-a5fe4ec215eb'
                 cases = [
                     # For a single project, the content disposition file name should
                     # be the project name followed by the date and time
                     (
                         {'project': {'is': ['Single of human pancreas']}},
+                        'Single of human pancreas 1985-10-25 01.21'
+                        if config.enable_bundle_notifications else
                         'Single of human pancreas 1985-10-25 01.21'
                     ),
                     # In all other cases, the standard content disposition file name
@@ -928,11 +959,15 @@ class TestManifests(DCP1ManifestTestCase):
                     # a pair of deterministically derived v5 UUIDs.
                     (
                         {'project': {'is': ['Single of human pancreas', 'Mouse Melanoma']}},
-                        'hca-manifest-89bc9973-de91-5fc4-9c6a-8c1f547d45c6.4bc67e84-4873-591f-b524-a5fe4ec215eb'
+                        'hca-manifest-89bc9973-de91-5fc4-9c6a-8c1f547d45c6.' + source_hash
+                        if config.enable_bundle_notifications else
+                        'hca-manifest-e639622e-55b5-597e-907d-e28ceca3357e.' + source_hash
                     ),
                     (
                         {},
-                        'hca-manifest-832a257c-5540-567b-bcb6-260d2e374508.4bc67e84-4873-591f-b524-a5fe4ec215eb'
+                        'hca-manifest-832a257c-5540-567b-bcb6-260d2e374508.' + source_hash
+                        if config.enable_bundle_notifications else
+                        'hca-manifest-57a7eb28-d918-5a62-9462-36b53b1ed111.' + source_hash
                     )
                 ]
                 for filters, expected_name in cases:
@@ -1066,55 +1101,69 @@ class TestManifestCache(DCP1ManifestTestCase):
                 self.assertEqual([2, 2], list(map(len, file_names.values())))
                 self.assertEqual([1, 1], list(map(len, map(set, file_names.values()))))
 
-    def test_hash_validity(self):
+    @patch_config('enable_bundle_notifications', True)
+    def test_hash_validity_with_notifications_enabled(self) -> None:
+        self._test_hash_validity()
+
+    @patch_config('enable_bundle_notifications', False)
+    def test_hash_validity_with_notifications_disabled(self) -> None:
+        self._test_hash_validity()
+
+    def _test_hash_validity(self):
         self.maxDiff = None
-        bundle_uuid = 'aaa96233-bf27-44c7-82df-b4dc15ad4d9d'
-        version1 = '2018-11-02T11:33:44.698028Z'
-        version2 = '2018-11-04T11:33:44.698028Z'
-        assert (version1 != version2)
-        original_fqid = self.bundle_fqid(uuid=bundle_uuid, version=version1)
-        self._index_canned_bundle(original_fqid)
-        filters = self._filters({'project': {'is': ['Single of human pancreas']}})
-        old_keys = {}
-        service = ManifestService(self.storage_service, self._app.file_url)
+        bundles_by_project = {
+            '67bc798b-a34a-4104-8cab-cad648471f69':
+                self.bundle_fqid(uuid='f79257a7-dfc6-46d6-ae00-ba4b25313c10',
+                                 version='2018-09-14T13:33:14.453337Z'),
+            '6615efae-fca8-4dd2-a223-9cfcf30fe94d':
+                self.bundle_fqid(uuid='587d74b4-1075-4bbf-b96a-4d1ede0481b2',
+                                 version='2018-09-14T13:33:14.453337Z'),
+            '091cf39b-01bc-42e5-9437-f419a66c8a45':
+                self.bundle_fqid(uuid='cfab8304-dc9f-439e-af29-f8eb75b0729d',
+                                 version='2019-07-18T21:28:20.595913Z'),
+        }
+        projects, bundles = zip(*bundles_by_project.items())
+        self._index_canned_bundle(bundles[0])
+        filters = self._filters(cast(FiltersJSON, {
+            'projectId': {
+                'is': [projects[0], projects[1]]
+            }
+        }))
+        service = ManifestService(file_url_func=self._controller._file_url)
 
         def manifest_generator(format: ManifestFormat) -> ManifestGenerator:
             generator_cls = ManifestGenerator.cls_for_format(format)
             return generator_cls(service, self.catalog, filters)
 
-        for format in ManifestFormat:
-            with self.subTest('indexing new bundle', format=format):
-                # When a new bundle is indexed and its compact manifest cached,
-                # a matching manifest key is generated ...
-                generator = manifest_generator(format)
-                old_bundle_key = generator.manifest_key()
-                # and should remain valid ...
-                self.assertEqual(old_bundle_key, generator.manifest_key())
-                old_keys[format] = old_bundle_key
+        keys = [{}, {}]
 
-        # ... until a new bundle belonging to the same project is indexed, at
-        # which point a manifest request will generate a different key ...
-        update_fqid = self.bundle_fqid(uuid=bundle_uuid, version=version2)
-        self._index_canned_bundle(update_fqid)
-        new_keys = {}
         for format in ManifestFormat:
-            with self.subTest('indexing second bundle', format=format):
+            with self.subTest('First bundle indexed', format=format):
+                # A manifest for a filter matching files in the first bundle …
                 generator = manifest_generator(format)
-                new_bundle_key = generator.manifest_key()
-                # ... invalidating the cached object previously used for the same filter.
-                self.assertNotEqual(old_keys[format], new_bundle_key)
-                new_keys[format] = new_bundle_key
+                manifest_key = generator.manifest_key()
+                # … should remain cached …
+                self.assertEqual(manifest_key, generator.manifest_key())
+                keys[0][format] = manifest_key
 
-        # Updates or additions, unrelated to that project do not affect object
-        # key generation
-        other_fqid = self.bundle_fqid(uuid='f79257a7-dfc6-46d6-ae00-ba4b25313c10',
-                                      version='2018-09-14T13:33:14.453337Z')
-        self._index_canned_bundle(other_fqid)
+        # … until a new bundle with files also matching the filter is indexed.
+        self._index_canned_bundle(bundles[1])
         for format in ManifestFormat:
-            with self.subTest('indexing unrelated bundle', format=format):
+            with self.subTest('Second bundle indexed', format=format):
                 generator = manifest_generator(format)
-                latest_bundle_key = generator.manifest_key()
-                self.assertEqual(latest_bundle_key, new_keys[format])
+                manifest_key = generator.manifest_key()
+                # The updated manifest is cached under a different key.
+                self.assertNotEqual(keys[0][format], manifest_key)
+                keys[1][format] = manifest_key
+
+        # After indexing a bundle with files that don't match the filter, the
+        # cached manifest remains valid.
+        self._index_canned_bundle(bundles[2])
+        for format in ManifestFormat:
+            with self.subTest('Unrelated bundle indexed', format=format):
+                generator = manifest_generator(format)
+                manifest_key = generator.manifest_key()
+                self.assertEqual(keys[1][format], manifest_key)
 
     @patch.object(StorageService, '_time_until_object_expires')
     def test_get_cached_manifest(self, _time_until_object_expires: MagicMock):
@@ -1295,10 +1344,10 @@ class AnvilManifestTestCase(ManifestTestCase, AnvilCannedBundleTestCase):
     @classmethod
     def bundles(cls) -> list[SourcedBundleFQID]:
         return [
-            cls.bundle_fqid(uuid='2370f948-2783-aeb6-afea-e022897f4dcf'),
-            cls.bundle_fqid(uuid='595c469e-604d-ab34-af39-f5b9f5d61818'),
-            cls.bundle_fqid(uuid='826dea02-e274-affe-aabc-eb3db63ad068'),
-            cls.bundle_fqid(uuid='f4b39881-d519-ab6f-99a0-7cc5089caee6'),
+            cls.duos_bundle(),
+            cls.supplementary_bundle(),
+            cls.primary_bundle(),
+            cls.replica_bundle()
         ]
 
     source_id_filters: FiltersJSON = {
@@ -1337,7 +1386,7 @@ class AnvilManifestTestCase(ManifestTestCase, AnvilCannedBundleTestCase):
                     expect_relations = (
                         enable_relations
                         and expect_orphans
-                        and not self.source.prefix.common
+                        and not self.source.ref.prefix.common
                     )
                     expected_manifest = self._expected_pfb_manifest(expect_orphans, expect_relations)
                     expected_schema, expected_entities = expected_manifest
@@ -1754,6 +1803,44 @@ class TestAnvilManifests(AnvilManifestTestCase):
         ]
         self._assert_tsv(expected, response)
 
+    def test_curl_manifest(self):
+        file_size_1 = 15079345
+        file_size_2 = 213021639
+        file_size_3 = 3306845592
+        cases = [-1, file_size_1, file_size_2, file_size_3]
+        for i, mirror_limit in enumerate(cases, start=1):
+            with self.subTest(mirror_limit=mirror_limit):
+                with self._patch_mirror_limit(self.catalog, mirror_limit):
+                    response = self._get_manifest(ManifestFormat.curl,
+                                                  # Redundant filter to avoid caching
+                                                  filters={'source_id': {'is': [self.source.ref.id] * i}})
+                self.assertEqual(200, response.status_code)
+                base_url = str(self.base_url.set(path='/repository/files'))
+                expected_body = [
+                    *iif(file_size_2 <= mirror_limit, [[
+                        f'url="{base_url}/15b76f9c-6b46-433f-851d-34e89f1b9ba6' +
+                        '?catalog=test&version=2022-06-01T00%3A00%3A00.000000Z"',
+                        'output="826dea02-e274-affe-aabc-eb3db63ad068/' +
+                        '307500.merged.matefixed.sorted.markeddups.recal.g.vcf.gz"',
+                        ''
+                    ]]),
+                    *iif(file_size_3 <= mirror_limit, [[
+                        f'url="{base_url}/3b17377b-16b1-431c-9967-e5d01fc5923f' +
+                        '?catalog=test&version=2022-06-01T00%3A00%3A00.000000Z"',
+                        'output="826dea02-e274-affe-aabc-eb3db63ad068/' +
+                        '307500.merged.matefixed.sorted.markeddups.recal.bam"',
+                        ''
+                    ]]),
+                    *iif(file_size_1 <= mirror_limit, [[
+                        f'url="{base_url}/6b0f6c0f-5d80-4242-accb-840921351cd5' +
+                        '?catalog=test&version=2022-06-01T00%3A00%3A00.000000Z"',
+                        'output="595c469e-604d-ab34-af39-f5b9f5d61818/' +
+                        'CCDG_13607_B01_GRM_WGS_2019-02-19_chr15.recalibrated_variants.annotated.coding.txt"',
+                        ''
+                    ]])
+                ]
+                self._assert_curl(expected_body, response)
+
     def test_verbatim_jsonl_manifest(self):
         base_path = ['verbatim', 'jsonl', 'anvil']
         linked_rows = self._load_canned_manifest(*base_path, 'linked.json')
@@ -1872,7 +1959,6 @@ class TestVerbatimJSONLManifestPartitioningBySource(DCP1ManifestTestCase):
                        })
 
     def test_manifest_partitioning_by_source(self):
-
         # We can't assert the presence of every entity from the indexed bundles
         # because some HCA entities still lack replicas.
         #

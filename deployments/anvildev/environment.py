@@ -133,11 +133,12 @@ def env() -> Mapping[str, str | None]:
         'AZUL_SAM_SERVICE_URL': 'https://sam.dsde-dev.broadinstitute.org',
         'AZUL_DUOS_SERVICE_URL': 'https://consent.dsde-dev.broadinstitute.org',
         'AZUL_TERRA_SERVICE_URL': 'https://firecloud-orchestration.dsde-dev.broadinstitute.org',
+        'azul_ecm_service_url': 'https://externalcreds.dsde-dev.broadinstitute.org',
 
         'AZUL_ENABLE_MONITORING': '1',
 
-        'AZUL_ES_INSTANCE_TYPE': 'r6gd.large.search',
-        'AZUL_ES_INSTANCE_COUNT': '2',
+        'AZUL_OPENSEARCH_INSTANCE_TYPE': 'r6gd.large.search',
+        'AZUL_OPENSEARCH_INSTANCE_COUNT': '2',
 
         'AZUL_DEBUG': '1',
 
@@ -162,4 +163,9 @@ def env() -> Mapping[str, str | None]:
             'workspace_id': 'T09P9H91S',  # ucsc-gi.slack.com
             'channel_id': 'C04K4BQET7G'  # #team-boardwalk-anvildev
         }),
+
+        # FIXME: Revert, once the underlying issue with requester-pays is fixed
+        #        https://github.com/DataBiosphere/azul/issues/7955
+        #
+        'azul_it_flags': 'no_mirror',
     }

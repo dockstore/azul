@@ -146,15 +146,16 @@ def env() -> Mapping[str, str | None]:
         'AZUL_SAM_SERVICE_URL': 'https://sam.dsde-dev.broadinstitute.org',
         'AZUL_DUOS_SERVICE_URL': 'https://consent.dsde-dev.broadinstitute.org',
         'AZUL_TERRA_SERVICE_URL': 'https://firecloud-orchestration.dsde-dev.broadinstitute.org',
+        'azul_ecm_service_url': 'https://externalcreds.dsde-dev.broadinstitute.org',
 
         **(
             {
-                'AZUL_ES_INSTANCE_TYPE': 'r6gd.large.search',
-                'AZUL_ES_INSTANCE_COUNT': '2',
+                'AZUL_OPENSEARCH_INSTANCE_TYPE': 'r6gd.large.search',
+                'AZUL_OPENSEARCH_INSTANCE_COUNT': '2',
             } if is_sandbox else {
                 # Personal deployments share an ES domain with `anvilbox`
-                'AZUL_SHARE_ES_DOMAIN': '1',
-                'AZUL_ES_DOMAIN': 'azul-index-anvilbox',
+                'AZUL_SHARE_OPENSEARCH_DOMAIN': '1',
+                'AZUL_OPENSEARCH_DOMAIN': 'azul-index-anvilbox',
                 # Personal deployments use fewer Lambda invocations in parallel.
                 'AZUL_CONTRIBUTION_CONCURRENCY': '8',
                 'AZUL_AGGREGATION_CONCURRENCY': '8',
@@ -182,4 +183,9 @@ def env() -> Mapping[str, str | None]:
         'AZUL_GOOGLE_OAUTH2_CLIENT_ID': '561542988117-cpo2avhomdh6t7fetp91js78cdhm9p47.apps.googleusercontent.com',
 
         'AZUL_ENABLE_MIRRORING': '1',
+
+        # FIXME: Revert, once the underlying issue with requester-pays is fixed
+        #        https://github.com/DataBiosphere/azul/issues/7955
+        #
+        'azul_it_flags': 'no_mirror',
     }

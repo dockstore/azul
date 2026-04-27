@@ -13,12 +13,14 @@ from more_itertools import (
 )
 
 from azul import (
-    R,
-    cache,
     config,
 )
 from azul.deployment import (
     aws,
+)
+from azul.lib import (
+    R,
+    cache,
 )
 from azul.modules import (
     load_app_module,
@@ -79,7 +81,7 @@ class LambdaFunction:
         )
 
     @classmethod
-    def from_response(cls, response: 'FunctionConfigurationTypeDef') -> Self:
+    def from_response(cls, response: FunctionConfigurationTypeDef) -> Self:
         name = response['FunctionName']
         role = response['Role']
         try:
@@ -114,15 +116,28 @@ class LambdaFunctions:
             for function in response['Functions']
         ]
 
-    def delete_older_versions(self, function_name: str, keep_version: int) -> None:
+    def delete_older_versions(self,
+                              function_name: str,
+                              function_version: int,
+                              *,
+                              num_older_versions_to_keep: int = 0
+                              ) -> None:
         """
-        Delete all versions of a Lambda function prior to the specified one.
+        Delete Lambda function versions older than the specified version.
 
         :param function_name: The fully qualified name of the function
                               e.g. 'azul-service-dev'
 
-        :param keep_version: The version of the function to not delete.
+        :param function_version: The version of the function to keep.
+
+        :param num_older_versions_to_keep: The number of versions older than
+                                           `function_version` to also keep.
         """
+        assert num_older_versions_to_keep >= 0, R(
+            'num_older_versions_to_keep must be non-negative', num_older_versions_to_keep)
+        keep_version = function_version - num_older_versions_to_keep
+        log.info('Deleting function %r versions older than %r',
+                 function_name, keep_version)
         paginator = self._lambda.get_paginator('list_versions_by_function')
         versions = [
             function['Version']

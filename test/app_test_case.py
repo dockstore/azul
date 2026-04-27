@@ -22,10 +22,12 @@ import requests
 
 from azul import (
     config,
-    mutable_furl,
 )
 from azul.chalice import (
     AzulChaliceApp,
+)
+from azul.lib import (
+    mutable_furl,
 )
 from azul.logging import (
     get_test_logger,
@@ -67,13 +69,13 @@ class ChaliceServerThread(Thread):
 
 class LocalAppTestCase(CatalogTestCase, metaclass=ABCMeta):
     """
-    A mixin for test cases against a locally running instance of an AWS Lambda
-    Function aka Chalice application. By default, the local instance will use
-    the remote AWS Elasticsearch domain configured via AZUL_ES_DOMAIN or
-    AZUL_ES_ENDPOINT. To use a locally running ES instance, combine this mixin
-    with ElasticsearchTestCase. Be sure to list ElasticsearchTestCase first such
-    that this mixin picks up the environment overrides made by
-    ElasticsearchTestCase.
+    A mixin for test cases against a locally running Chalice application.
+
+    By default, the local instance will use the remote AWS OpenSearch domain
+    configured via AZUL_OPENSEARCH_DOMAIN or AZUL_OPENSEARCH_ENDPOINT. To use
+    a locally running ES instance, combine this mixin with OpenSearchTestCase.
+    Be sure to list OpenSearchTestCase first so that this mixin picks up the
+    environment overrides made by OpenSearchTestCase.
     """
 
     @classmethod

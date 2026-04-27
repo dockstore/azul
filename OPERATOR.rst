@@ -330,6 +330,23 @@ update the ``ami_id`` entry for the respective region. Instead of selecting a
 ``….gitlab`` component, you can just specify the region of the component using
 the ``--region`` option to ``aws ec2 describe-images``.
 
+Updating software packages via release version upgrade in AL2023 instances
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Amazon Linux 2023 uses deterministic versioning, so package updates require
+upgrading to a specific release version rather than using the default already
+hard-coded in the AMI. Otherwise, packages would never be updated. To obtain the
+Amazon Linux 2023 release version, SSH into the GitLab instance, say,
+``anvildev.gitlab``, and run::
+
+    sudo dnf check-release-update
+
+This prints the list of available AL2023 releases. Note that the most recent
+release is listed last. Each entry shows the release version string and the
+command to apply it. Copy the version string (e.g., ``2023.10.20260302``) from
+the last entry in the command's output and update the ``AL2023_release``
+variable in ``terraform/gitlab/gitlab.tf.json.template.py``.
+
 Upgrading GitLab & ClamAV
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -426,8 +443,8 @@ Finally, SSH into the instance to complete the setup of new data volume. Use the
 ``resize2fs`` to grow the size of the mounted file system so that it matches
 that of the volume. Run::
 
-    df # Verify device /dev/nvme1n1 is mounted on /mnt/gitlab, note available size
-    sudo resize2fs /dev/nvme1n1
+    df | grep /mnt/gitlab # Verify the name of the mounted device (e.g. /dev/nvme1n1) and note the available size
+    sudo resize2fs <device_name> # Match the device name emitted by the previous command
     df # Verify the new available size is larger
 
 The output of the last ``df`` command should inform of the success of these
@@ -448,19 +465,6 @@ the instance::
 For GitLab or ClamAV updates, use the ``--no-restart`` flag in order to leave
 the instance stopped after the snapshot has been created. There is no point in
 starting the instance only to have the update terminate it again.
-
-Updating software packages on GitLab instances
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Once a week, operators must update all Linux packages installed on the root
-volume of each GitLab instance. SSH access to the instances is necessary to
-perform these instructions but on production instances this access is
-unavailable, even to operators. In these cases the operator must request the
-help of the system administrator via Slack to perform these steps.
-
-SSH into the instance, and run ``sudo yum update`` followed by ``sudo reboot``.
-Wait for the GitLab web application to become available again and perform a
-``git fetch`` from one of the Git repositories hosted on that instance.
 
 Updating the Swagger UI
 ^^^^^^^^^^^^^^^^^^^^^^^

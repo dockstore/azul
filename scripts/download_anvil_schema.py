@@ -13,17 +13,19 @@ from furl import (
 
 from azul import (
     config,
-    require,
 )
 from azul.http import (
     http_client,
 )
-from azul.logging import (
-    configure_script_logging,
+from azul.lib import (
+    R,
 )
-from azul.types import (
+from azul.lib.types import (
     JSON,
     MutableJSON,
+)
+from azul.logging import (
+    configure_script_logging,
 )
 
 repository_url = 'https://raw.githubusercontent.com/broadinstitute/anvil_tdr_ingest'
@@ -37,7 +39,7 @@ def read_schema() -> MutableJSON:
     schema_object_url = furl(repository_url) / commit / object_path
     http = http_client(log)
     response = http.request('GET', str(schema_object_url))
-    require(response.status == 200)
+    assert response.status == 200, R('Unexpected response', response.status)
     schema = json.loads(response.data)
     log.info('Downloaded AnVIL schema version %d', schema['version'])
     return schema
@@ -55,7 +57,7 @@ def write_schema(schema: JSON) -> None:
             """
         '''))
         f.write(dedent('''
-            from azul.types import (
+            from azul.lib.types import (
                 JSON,
             )
         '''))
@@ -68,9 +70,9 @@ def write_schema(schema: JSON) -> None:
                 .replace('false', 'False')
                 .replace('"', "'"))
         f.write('\n')
-        import azul.plugins.metadata.anvil.schema as actual_schema
-        assert actual_schema.anvil_schema == schema
-        assert actual_schema.__file__ == str(output_path)
+    import azul.plugins.metadata.anvil.schema as actual_schema
+    assert actual_schema.anvil_schema == schema
+    assert actual_schema.__file__ == str(output_path)
     log.info('Wrote AnVIL schema to %s', output_path)
 
 

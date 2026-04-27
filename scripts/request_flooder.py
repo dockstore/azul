@@ -13,11 +13,11 @@ import time
 
 import requests
 
-from azul import (
-    R,
-)
 from azul.args import (
     AzulArgumentHelpFormatter,
+)
+from azul.lib import (
+    R,
 )
 from azul.logging import (
     configure_script_logging,

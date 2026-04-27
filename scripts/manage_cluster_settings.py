@@ -1,24 +1,24 @@
-from azul import (
-    require,
-)
-from azul.es import (
-    ESClientFactory,
+from azul.lib import (
+    R,
 )
 from azul.logging import (
     configure_script_logging,
+)
+from azul.opensearch import (
+    OpenSearchClientFactory,
 )
 
 configure_script_logging()
 
 
 def main():
-    es = ESClientFactory.get()
-    response = es.cluster.put_settings(body={
+    opensearch = OpenSearchClientFactory.get()
+    response = opensearch.cluster.put_settings(body={
         'persistent': {
             'action.auto_create_index': False
         }
     })
-    require(response['acknowledged'], 'Failed to update cluster settings', response)
+    assert response['acknowledged'], R('Failed to update cluster settings', response)
 
 
 if __name__ == '__main__':

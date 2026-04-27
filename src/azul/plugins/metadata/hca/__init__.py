@@ -12,13 +12,7 @@ from attrs import (
 
 from azul import (
     CatalogName,
-    R,
     config,
-    iif,
-    json_mapping,
-)
-from azul.digests import (
-    Digest,
 )
 from azul.drs import (
     HostBasedDRSURI,
@@ -29,11 +23,32 @@ from azul.indexer.document import (
     EntityType,
     IndexName,
 )
+from azul.lib import (
+    R,
+)
+from azul.lib.digests import (
+    Digest,
+)
+from azul.lib.functions import (
+    iif,
+)
+from azul.lib.types import (
+    JSON,
+    MutableJSON,
+    json_dict,
+    json_dict_of_dicts,
+    json_int,
+    json_list,
+    json_mapping,
+    json_str,
+    optional,
+)
 from azul.plugins import (
     DocumentSlice,
     File,
     InverseFieldMapping,
     ManifestConfig,
+    ManifestFormat,
     MetadataPlugin,
     Sorting,
     SpecialField,
@@ -63,19 +78,6 @@ from azul.plugins.metadata.hca.service.filter import (
 from azul.plugins.metadata.hca.service.response import (
     HCASearchResponseStage,
     HCASummaryResponseStage,
-)
-from azul.service.manifest_service import (
-    ManifestFormat,
-)
-from azul.types import (
-    JSON,
-    MutableJSON,
-    json_dict,
-    json_dict_of_dicts,
-    json_int,
-    json_list,
-    json_str,
-    optional,
 )
 from humancellatlas.data.metadata import (
     api,
@@ -309,7 +311,8 @@ class Plugin(MetadataPlugin[HCABundle]):
         source_prefix=SpecialField.symmetric('sourcePrefix'),
         bundle_uuid=SpecialField.symmetric('bundleUuid'),
         bundle_version=SpecialField.symmetric('bundleVersion'),
-        file_uuid=SpecialField(name='fileId', name_in_hit='uuid')
+        file_uuid=SpecialField(name='fileId', name_in_hit='uuid'),
+        file_name=SpecialField(name='fileName', name_in_hit='name')
     )
 
     @property

@@ -54,10 +54,6 @@ from azul import (
 from azul.deployment import (
     aws,
 )
-from azul.indexer import (
-    Prefix,
-    SourceRef,
-)
 from azul.logging import (
     configure_test_logging,
     get_test_logger,
@@ -65,13 +61,16 @@ from azul.logging import (
 from azul.plugins.repository.dss import (
     DSSSourceRef,
 )
-from azul.plugins.repository.tdr_hca import (
-    TDRSourceRef,
-)
 from azul.service.source_service import (
     SourceService,
 )
+from azul.source import (
+    Prefix,
+    Source,
+    SourceConfig,
+)
 from azul.terra import (
+    TDRSourceRef,
     TDRSourceSpec,
 )
 from humancellatlas.data.metadata import (
@@ -89,7 +88,7 @@ def setUpModule():
 type Patch = _patch | _patch_dict
 
 
-def patch_config(name: str, value: str) -> Patch:
+def patch_config(name: str, value: bool | int | str) -> Patch:
     return patch.object(Config, name, new=PropertyMock(return_value=value))
 
 
@@ -113,8 +112,6 @@ class AzulTestCase(TestCase):
                 RE(r'.*<socket\.socket.*>'),
             },
             DeprecationWarning: {
-                RE(r'Call to deprecated method .*\. \(DOS support will be removed\)'),
-
                 'Call to deprecated method fetch_bundle_manifest',
 
                 'ProjectContact.contact_name is deprecated',
@@ -154,6 +151,15 @@ class AzulTestCase(TestCase):
                 # FIXME: DeprecationWarning for datetime methods in Python 3.12
                 #        https://github.com/DataBiosphere/azul/issues/5953
                 'datetime.datetime.utcnow() is deprecated',
+
+                # FIXME: DeprecationWarning for patch_source_cache
+                #        https://github.com/DataBiosphere/azul/issues/7838
+                'Instead of decorating your test case, or its test methods in '
+                'it, mix in the appropriate subclass of CatalogTestCase.',
+
+                # FIXME: Use response from `/index/files` to validate
+                #        https://github.com/DataBiosphere/azul/issues/2970
+                'Verify the response, not the index content',
             },
             OpenSearchWarning: {
                 # FIXME: ES DeprecationWarning for using _id as sort key
@@ -354,7 +360,7 @@ class AzulUnitTestCase(AzulTestCase):
 
 class CatalogTestCase(AzulUnitTestCase, metaclass=ABCMeta):
     catalog: CatalogName = 'test'
-    source: SourceRef
+    source: Source
 
     @classmethod
     @abstractmethod
@@ -431,7 +437,10 @@ class DSSTestCase(CatalogTestCase, metaclass=ABCMeta):
         cls._patch_source_cache()
         cls._patch_drs_domain()
 
-    source = DSSSourceRef.for_dss_source('https://fake_dss_instance/v1', '/2')
+    source = Source(
+        config=SourceConfig(mirror=True),
+        ref=DSSSourceRef.for_dss_source('https://fake_dss_instance/v1', '/2')
+    )
 
     @classmethod
     def _patch_source_cache(cls):
@@ -463,6 +472,7 @@ class DCP1TestCase(DSSTestCase):
 
     @classmethod
     def catalog_config(cls) -> dict[CatalogName, Config.Catalog]:
+        sources = {str(cls.source.ref.spec): cls.source.config.to_json()}
         return {
             cls.catalog: config.Catalog(name=cls.catalog,
                                         atlas='hca',
@@ -470,7 +480,7 @@ class DCP1TestCase(DSSTestCase):
                                         mirror_limit=None,
                                         plugins=dict(metadata=config.Catalog.Plugin(name='hca'),
                                                      repository=config.Catalog.Plugin(name='dss')),
-                                        sources={str(cls.source.spec): {'mirror': True}})
+                                        sources=sources)
         }
 
 
@@ -494,23 +504,32 @@ class TDRTestCase(CatalogTestCase, metaclass=ABCMeta):
 
     @classmethod
     def _sources(cls):
-        return {str(cls.source.spec): {'mirror': True}}
+        return [cls.source]
 
     @classmethod
     def _patch_source_cache(cls):
         from service import (
             patch_source_cache,
         )
-        cls.addClassPatch(patch_source_cache(hit=[cls.source.id]))
+        cls.addClassPatch(patch_source_cache(hit=[cls.source.ref.id]))
 
 
 class DCP2TestCase(TDRTestCase):
-    source = TDRSourceRef(id='d8c20944-739f-4e7d-9161-b720953432ce',
-                          spec=TDRSourceSpec.parse('tdr:bigquery:gcp:test_hca_project:hca_snapshot'),
-                          prefix=Prefix.parse('/2'))
+    source = Source(
+        config=SourceConfig(mirror=True),
+        ref=TDRSourceRef(
+            id='d8c20944-739f-4e7d-9161-b720953432ce',
+            spec=TDRSourceSpec.parse('tdr:bigquery:gcp:test_hca_project:hca_snapshot'),
+            prefix=Prefix.parse('/2')
+        )
+    )
 
     @classmethod
     def catalog_config(cls) -> dict[CatalogName, Config.Catalog]:
+        sources = {
+            str(source.ref.spec): source.config.to_json()
+            for source in cls._sources()
+        }
         return {
             cls.catalog: config.Catalog(name=cls.catalog,
                                         atlas='hca',
@@ -518,17 +537,23 @@ class DCP2TestCase(TDRTestCase):
                                         mirror_limit=None,
                                         plugins=dict(metadata=config.Catalog.Plugin(name='hca'),
                                                      repository=config.Catalog.Plugin(name='tdr_hca')),
-                                        sources=cls._sources())
+                                        sources=sources)
         }
 
 
 class AnvilTestCase(TDRTestCase):
-    source = TDRSourceRef(id='6c87f0e1-509d-46a4-b845-7584df39263b',
-                          spec=TDRSourceSpec.parse('tdr:bigquery:gcp:test_anvil_project:anvil_snapshot'),
-                          prefix=Prefix.parse('/0'))
+    source = Source(
+        config=SourceConfig(mirror=True),
+        ref=TDRSourceRef(
+            id='6c87f0e1-509d-46a4-b845-7584df39263b',
+            spec=TDRSourceSpec.parse('tdr:bigquery:gcp:test_anvil_project:anvil_snapshot'),
+            prefix=Prefix.parse('/0')
+        )
+    )
 
     @classmethod
     def catalog_config(cls) -> dict[CatalogName, Config.Catalog]:
+        sources = {str(cls.source.ref.spec): cls.source.config.to_json()}
         return {
             cls.catalog: config.Catalog(name=cls.catalog,
                                         atlas='anvil',
@@ -536,5 +561,16 @@ class AnvilTestCase(TDRTestCase):
                                         mirror_limit=None,
                                         plugins=dict(metadata=config.Catalog.Plugin(name='anvil'),
                                                      repository=config.Catalog.Plugin(name='tdr_anvil')),
-                                        sources={str(cls.source.spec): {'mirror': True}})
+                                        sources=sources)
         }
+
+
+class BundleNotificationTestCase(AzulUnitTestCase, metaclass=ABCMeta):
+    """
+    A mixin for test cases that depend on bundle notifications being enabled
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.addClassPatch(patch_config('enable_bundle_notifications', True))

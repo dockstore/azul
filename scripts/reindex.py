@@ -17,7 +17,7 @@ from azul.args import (
 from azul.azulclient import (
     AzulClient,
 )
-from azul.bigquery_reservation import (
+from azul.infra.bigquery_reservation import (
     BigQueryReservation,
 )
 from azul.logging import (
@@ -73,7 +73,7 @@ parser.add_argument('--sources',
 parser.add_argument('--delete',
                     default=False,
                     action='store_true',
-                    help='Delete all Elasticsearch indices in the current deployment. '
+                    help='Delete all OpenSearch indices in the current deployment. '
                          'Implies --create when combined with --index. '
                          'Behaves like --deindex instead if the operations is limited to a subset '
                          'of the configured sources.')
@@ -92,7 +92,7 @@ parser.add_argument('--deindex',
 parser.add_argument('--create',
                     default=False,
                     action='store_true',
-                    help='Create all Elasticsearch indices in the current deployment. '
+                    help='Create all OpenSearch indices in the current deployment. '
                          'Implied when --delete and --index are given.')
 parser.add_argument('--purge',
                     default=False,
@@ -173,7 +173,7 @@ def main(argv: list[str]):
                 if args.local:
                     num_notifications += azul.local_reindex(catalog, args.prefix)
                 else:
-                    azul.index_queue_service.remote_reindex(catalog, sources)
+                    azul.index_queue_service.index_catalog(catalog, sources)
                     num_notifications = -1
             else:
                 log.info('Skipping catalog %r (no matching sources)', catalog)

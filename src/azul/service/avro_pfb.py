@@ -34,10 +34,9 @@ from more_itertools import (
 )
 
 from azul import (
-    R,
     config,
 )
-from azul.indexer.field import (
+from azul.field_type import (
     ClosedRange,
     FieldTypes,
     Nested,
@@ -49,22 +48,22 @@ from azul.indexer.field import (
     pass_thru_int,
     pass_thru_json,
 )
-from azul.json import (
+from azul.lib import (
+    R,
+)
+from azul.lib.json import (
     copy_json,
 )
-from azul.plugins import (
-    RepositoryPlugin,
-)
-from azul.plugins.metadata.hca.indexer.transform import (
-    pass_thru_uuid4,
-    value_and_unit,
-)
-from azul.types import (
+from azul.lib.types import (
     AnyJSON,
     AnyMutableJSON,
     JSON,
     MutableJSON,
     MutableJSONs,
+)
+from azul.plugins.metadata.hca.indexer.transform import (
+    pass_thru_uuid4,
+    value_and_unit,
 )
 
 log = logging.getLogger(__name__)
@@ -96,21 +95,20 @@ def write_pfb_entities(entities: Iterable[JSON], pfb_schema: JSON, path: str):
 #        https://github.com/DataBiosphere/azul/issues/4606
 class PFBConverter:
     """
-    Converts documents from Elasticsearch into PFB entities. A document's inner
+    Converts documents from OpenSearch into PFB entities. A document's inner
     entities correspond to PFB entities which are normalized and linked via
     Relations.
     """
 
     entity_type = 'files'
 
-    def __init__(self, schema: JSON, repository_plugin: RepositoryPlugin):
+    def __init__(self, schema: JSON):
         self.schema = schema
-        self.repository_plugin = repository_plugin
         self._entities: dict[PFBEntity, MutableSet[PFBRelation]] = defaultdict(set)
 
     def add_doc(self, doc: JSON):
         """
-        Add an Elasticsearch document to be transformed.
+        Add an OpenSearch document to be transformed.
         """
         doc_copy = copy_json(doc, 'contents', self.entity_type)
         contents = doc_copy['contents']
@@ -241,7 +239,7 @@ class PFBEntity:
                                             object_=sub_object,
                                             schema=field)
 
-    def to_json(self, relations: Iterable['PFBRelation']) -> JSON:
+    def to_json(self, relations: Iterable[PFBRelation]) -> JSON:
         return {
             'id': self.id,
             'name': self.name,
@@ -263,7 +261,8 @@ class PFBRelation:
         return cls(dst_id=entity.id, dst_name=entity.name)
 
 
-def pfb_links_from_field_types(field_types: FieldTypes) -> MutableJSON:
+def pfb_links_from_field_types(field_types: FieldTypes
+                               ) -> dict[str, MutableJSONs]:
     return {
         entity_type: [] if entity_type == 'files' else [{
             'multiplicity': 'MANY_TO_MANY',
@@ -315,7 +314,7 @@ def pfb_schema_from_field_types(field_types: FieldTypes) -> JSON:
     return avro_pfb_schema(entity_schemas)
 
 
-def pfb_schema_from_replicas(replicas: Iterable[JSON]) -> list[JSON]:
+def pfb_schema_from_replicas(replicas: Iterable[JSON]) -> MutableJSONs:
     schemas_by_replica_type: dict[str, MutableJSON] = {}
     for replica in replicas:
         replica_type, replica_contents = replica['replica_type'], replica['contents']

@@ -1,3 +1,8 @@
+from azul.lib.types import (
+    AnyJSON,
+    JSON,
+    PrimitiveJSON,
+)
 from azul.openapi import (
     application_json,
     format_description_key,
@@ -5,11 +10,6 @@ from azul.openapi import (
 )
 from azul.openapi.schema import (
     Form,
-)
-from azul.types import (
-    AnyJSON,
-    JSON,
-    PrimitiveJSON,
 )
 
 
@@ -26,7 +26,7 @@ def header(form: Form, **kwargs: PrimitiveJSON) -> JSON:
     """
     Returns the schema and description for a response header.
 
-    >>> from azul.doctests import assert_json
+    >>> from azul.lib.doctests import assert_json
     >>> assert_json(header(float, description='futz'))
     {
         "schema": {

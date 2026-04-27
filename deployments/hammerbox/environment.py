@@ -1251,21 +1251,26 @@ anvil12_sources = union(anvil11_sources, 369, delta([
     source('12211c34', 'T2T_20230714_ANV5_202510101315'),
 ]))
 
-anvil13_sources = union(anvil12_sources, 383, delta([
+anvil13_sources = union(anvil12_sources, 375, delta([
     source('1156aa70', 'ADOPT_PGx_Acute_Pain_GRU_R1_20260122_ANV5_202601222214'),
     source('48fde710', 'ADOPT_PGx_Acute_Pain_HMB_R1_20260122_ANV5_202601222221'),
+    source('6db4e098', 'CCDG_Baylor_CVD_ARIC_20231008_ANV5_202503171456', pop),
+    source('69a5161a', 'CCDG_Broad_AI_IBD_Brant_DS_IBD_WGS_20240113_ANV5_202409302325', pop),
     source('f0697a02', 'CCDG_NYGC_NP_Autism_GASD_GRU_WGS_20260109_ANV5_202602021433'),
     source('0098f4fd', 'CCDG_NYGC_NP_Autism_SEARCHLIGHT_DS_WGS_20260109_ANV5_202601261720'),
     source('042b9f74', 'CCDG_NYGC_NP_Autism_SPARK_GRU_WGS_20260109_ANV5_202601261729'),
     source('0e8a00bd', 'DepMap_GRU_20260127_ANV5_202601271632'),
     source('d5e12b9d', 'DepMap_HMB_MDS_R3_20260127_ANV5_202601271642'),
-    source('29644563', 'GREGOR_R03_GRU_20250612_ANV5_202601221513'),
-    source('e2c1eb50', 'GREGOR_R04_GRU_20250917_ANV5_202601221518'),
-    source('9829560b', 'GREGoR_R01_GRU_20240208_ANV5_202601221345'),
+    source('29644563', 'GREGOR_R03_GRU_20250612_ANV5_202601221513', pop),
+    source('a50f51b8', 'GREGOR_R03_HMB_20250612_ANV5_202506271503', pop),
+    source('e2c1eb50', 'GREGOR_R04_GRU_20250917_ANV5_202601221518', pop),
+    source('f71485a8', 'GREGOR_R04_HMB_20250910_ANV5_202509221540', pop),
+    source('9829560b', 'GREGoR_R01_GRU_20240208_ANV5_202601221345', pop),
+    source('88e6ae93', 'GREGoR_R02_HMB_20241105_ANV5_202502202131', pop),
     source('6c5111aa', 'GTEx_v11_hg38_20260126_ANV5_202601261749'),
     source('0a4ee218', 'HPRC_20260121_ANV5_202601222125'),
     source('042719c0', 'IGVF_GRU_PUB_NPU_R1_20260122_ANV5_202601222237'),
-    source('cb2b8d7d', 'IGVF_GRU_R1_20260122_ANV5_202601222140'),
+    source('c2f121d2', 'IGVF_GRU_R1_20260219_ANV5_202602191350'),
     source('4e167035', 'OurHealth_GRU_R2_20260122_ANV5_202601222246'),
 ]))
 
@@ -1322,7 +1327,6 @@ def env() -> Mapping[str, str | None]:
                                                     repository=dict(name='tdr_anvil')),
                                        sources=condense(sources))
             for atlas, catalog, sources, mirror_limit, it_mirror_limit in [
-                ('anvil', 'anvil12', anvil12_sources, int(1.5 * 1024 ** 3), int(1.5 * 1024 ** 3)),
                 ('anvil', 'anvil13', anvil13_sources, int(1.5 * 1024 ** 3), int(1.5 * 1024 ** 3)),
             ]
             for suffix, is_it in [
@@ -1336,10 +1340,11 @@ def env() -> Mapping[str, str | None]:
         'AZUL_SAM_SERVICE_URL': 'https://sam.dsde-prod.broadinstitute.org',
         'AZUL_DUOS_SERVICE_URL': 'https://consent.dsde-prod.broadinstitute.org',
         'AZUL_TERRA_SERVICE_URL': 'https://firecloud-orchestration.dsde-prod.broadinstitute.org',
+        'azul_ecm_service_url': 'https://externalcreds.dsde-prod.broadinstitute.org',
 
         # Personal deployments & `hammerbox` share an ES domain with `anvilprod`
-        'AZUL_SHARE_ES_DOMAIN': '1',
-        'AZUL_ES_DOMAIN': 'azul-index-anvilprod',
+        'AZUL_SHARE_OPENSEARCH_DOMAIN': '1',
+        'AZUL_OPENSEARCH_DOMAIN': 'azul-index-anvilprod',
 
         **(
             {

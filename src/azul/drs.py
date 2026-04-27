@@ -31,22 +31,23 @@ from more_itertools import (
 )
 import urllib3
 
-from azul import (
-    R,
-    cache,
-    mutable_furl,
-)
 from azul.http import (
     HasCachedHttpClient,
     HttpClient,
     LimitedRetryHttpClient,
     Propagate429HttpClient,
 )
-from azul.types import (
+from azul.lib import (
+    R,
+    cache,
+    mutable_furl,
+)
+from azul.lib.types import (
     MutableJSON,
     json_dict,
     json_list,
     json_str,
+    not_none,
 )
 
 log = logging.getLogger(__name__)
@@ -57,8 +58,8 @@ def drs_object_uri(*,
                    path: Sequence[str],
                    params: Mapping[str, str]
                    ) -> mutable_furl:
-    assert ':' not in base_url.netloc
-    return furl(url=base_url, scheme='drs', path=path, args=params)
+    assert ':' not in not_none(base_url.netloc)
+    return mutable_furl(url=base_url, scheme='drs', path=path, args=params)
 
 
 def drs_object_url_path(*, object_id: str, access_id: str | None = None) -> str:
@@ -75,10 +76,6 @@ def drs_object_url_path(*, object_id: str, access_id: str | None = None) -> str:
         object_id,
         *(('access', access_id) if access_id else ())
     ))
-
-
-def dos_object_url_path(object_id: str) -> str:
-    return f'/ga4gh/dos/v1/dataobjects/{object_id}'
 
 
 class AccessMethod(namedtuple('AccessMethod', 'scheme replica'), Enum):
@@ -99,7 +96,7 @@ class Access:
 class DRSURI(metaclass=ABCMeta):
 
     @classmethod
-    def parse(cls, drs_uri: str) -> 'DRSURI':
+    def parse(cls, drs_uri: str) -> DRSURI:
         """
         A data repository service URI as defined by the GA4GH alliance.
 
@@ -218,7 +215,7 @@ class HostBasedDRSURI(DRSURI):
         assert not parsed_uri.fragment, R('Fragment is disallowed in a DRS URI')
         path = parsed_uri.path.segments
         assert len(path) == 1, R('Invalid path', drs_uri)
-        return cls(server=parsed_uri.netloc, object_id=path[0])
+        return cls(server=not_none(parsed_uri.netloc), object_id=path[0])
 
     def to_url(self) -> furl:
         path = drs_object_url_path(object_id=self.object_id)
@@ -273,7 +270,7 @@ class CompactDRSURI(DRSURI):
     def _decode(cls, s: str) -> str:
         return urllib.parse.unquote(s, errors='strict')
 
-    def to_url(self, id_client: 'IdentifiersDotOrgClient') -> furl:
+    def to_url(self, id_client: IdentifiersDotOrgClient) -> furl:
         if self.provider_code is not None:
             raise NotImplementedError(
                 'Resolving compact identifier-based DRS URIs with '
@@ -302,7 +299,7 @@ class _BaseClient(HasCachedHttpClient):
 class DRSClient(metaclass=ABCMeta):
 
     @abstractmethod
-    def drs_object(self, drs_url: furl) -> 'DRSObject':
+    def drs_object(self, drs_url: furl) -> DRSObject:
         raise NotImplementedError
 
 
@@ -311,7 +308,7 @@ class UnauthenticatedDRSClient(DRSClient, _BaseClient):
     A generic DRS client that does not send authentication to the server.
     """
 
-    def drs_object(self, drs_url: furl) -> 'DRSObject':
+    def drs_object(self, drs_url: furl) -> DRSObject:
         return DRSObject(url=drs_url,
                          http_client=self._http_client)
 
@@ -327,7 +324,7 @@ class IdentifiersDotOrgClient(_BaseClient):
         assert placeholder in url_pattern, R(
             'Missing accession placeholder in URL pattern', url_pattern)
         url = url_pattern.replace(placeholder, accession)
-        return furl(url)
+        return mutable_furl(url)
 
     _api_url = 'https://registry.api.identifiers.org/restApi/'
 
@@ -346,7 +343,7 @@ class IdentifiersDotOrgClient(_BaseClient):
         return json_str(resource['name']), json_str(resource['urlPattern'])
 
     def _api_request(self, path: str, **args) -> MutableJSON:
-        url = furl(self._api_url).add(path=path, args=args)
+        url = mutable_furl(self._api_url).add(path=path, args=args)
         response = self._http_client.request('GET', str(url))
         if response.status == 200:
             return json.loads(response.data)
@@ -413,7 +410,7 @@ class DRSObject:
             response = self._request(url)
             if response.status == 200:
                 response_data = json_dict(json.loads(response.data))
-                scheme = furl(response_data['url']).scheme
+                scheme = furl(json_str(response_data['url'])).scheme
                 assert scheme == access_method.scheme, R(
                     'Unexpected access URL scheme', scheme)
                 access_url = json_str(response_data['url'])
@@ -426,6 +423,8 @@ class DRSObject:
             elif response.status == 202:
                 wait_time = int(response.headers['retry-after'])
                 time.sleep(wait_time)
+            elif response.status == 400 and b'requires an x-user-project' in response.data:
+                raise DRSRequesterPaysRequired(url, response)
             else:
                 raise DRSStatusException(url, response)
 
@@ -437,4 +436,11 @@ class DRSStatusException(Exception):
 
     def __init__(self, url: furl, response: urllib3.BaseHTTPResponse) -> None:
         super().__init__(f'Unexpected response from {url}',
+                         response.status, response.data)
+
+
+class DRSRequesterPaysRequired(Exception):
+
+    def __init__(self, url: furl, response: urllib3.BaseHTTPResponse) -> None:
+        super().__init__(f'DRS server requires requester-pays for {url}',
                          response.status, response.data)

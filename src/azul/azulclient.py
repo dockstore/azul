@@ -3,6 +3,7 @@ from collections import (
 )
 from collections.abc import (
     Iterable,
+    Set,
 )
 from concurrent.futures import (
     Future,
@@ -15,9 +16,6 @@ from functools import (
 import logging
 from pprint import (
     PrettyPrinter,
-)
-from typing import (
-    AbstractSet,
 )
 import uuid
 
@@ -33,13 +31,7 @@ from urllib3.exceptions import (
 
 from azul import (
     CatalogName,
-    R,
-    cache,
-    cached_property,
     config,
-)
-from azul.es import (
-    ESClientFactory,
 )
 from azul.hmac import (
     SignatureHelper,
@@ -47,21 +39,29 @@ from azul.hmac import (
 from azul.http import (
     HasCachedHttpClient,
 )
-from azul.indexer import (
-    SourceConfig,
-    SourceSpec,
-)
 from azul.indexer.index_queue_service import (
     IndexQueueService,
-)
-from azul.indexer.index_repository_service import (
-    IndexRepositoryService,
 )
 from azul.indexer.index_service import (
     IndexService,
 )
 from azul.indexer.mirror_service import (
-    BaseMirrorService,
+    MirrorService,
+)
+from azul.indexer.repository_service import (
+    RepositoryService,
+)
+from azul.lib import (
+    R,
+    cache,
+    cached_property,
+)
+from azul.lib.types import (
+    JSON,
+    JSONs,
+)
+from azul.opensearch import (
+    OpenSearchClientFactory,
 )
 from azul.plugins import (
     MetadataPlugin,
@@ -70,9 +70,12 @@ from azul.plugins import (
 from azul.queues import (
     Queues,
 )
-from azul.types import (
-    JSON,
-    JSONs,
+from azul.service.source_service import (
+    SourceService,
+)
+from azul.source import (
+    SourceConfig,
+    SourceSpec,
 )
 
 log = logging.getLogger(__name__)
@@ -95,21 +98,25 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
         return IndexQueueService()
 
     @cached_property
-    def index_repository_service(self) -> IndexRepositoryService:
-        return IndexRepositoryService()
+    def repository_service(self) -> RepositoryService:
+        return RepositoryService()
 
     def repository_plugin(self, catalog: CatalogName) -> RepositoryPlugin:
-        return self.index_repository_service.repository_plugin(catalog)
+        return self.repository_service.repository_plugin(catalog)
 
     def metadata_plugin(self, catalog: CatalogName) -> MetadataPlugin:
         return self.index_service.metadata_plugin(catalog)
 
     @cache
-    def mirror_service(self, catalog: CatalogName) -> BaseMirrorService:
-        return BaseMirrorService(catalog=catalog)
+    def mirror_service(self, catalog: CatalogName) -> MirrorService:
+        return MirrorService(catalog=catalog)
+
+    @cached_property
+    def source_service(self) -> SourceService:
+        return SourceService()
 
     def local_reindex(self, catalog: CatalogName, prefix: str) -> int:
-        service = self.index_repository_service
+        service = self.repository_service
         plugin = self.repository_plugin(catalog)
         notifications: JSONs = [
             # Notifications sent organically by DSS had a different structure,
@@ -146,9 +153,9 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
             # We want to send the request with urllib3 directly but HMAC
             # signing is only available for Requests, so we need to prepare a
             # request, sign it and then unpack it again before calling urllib3.
-            request = requests.Request(method='DELETE' if delete else 'POST',
-                                       url=str(indexer_url),
-                                       json=notification)
+            request = requests.models.Request(method='DELETE' if delete else 'POST',
+                                              url=str(indexer_url),
+                                              json=notification)
             request = request.prepare()
             self.sign(request)
             result: BaseHTTPResponse | HTTPError
@@ -209,11 +216,11 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
             log.error('Unsent notifications and their HTTP status code:\n%s',
                       printer.pformat(missing))
         if errors or missing:
-            raise AzulClientNotificationError
+            raise AzulClientNotificationError(set(errors.keys()))
 
     def matching_sources(self,
                          catalogs: Iterable[CatalogName],
-                         globs: AbstractSet[str] = frozenset('*')
+                         globs: Set[str] = frozenset('*')
                          ) -> dict[CatalogName, dict[SourceSpec, SourceConfig]]:
         result = {}
         matched_globs: set[str] = set()
@@ -264,7 +271,7 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
     def deindex(self, catalog: CatalogName, sources: Iterable[SourceSpec]):
         plugin = self.repository_plugin(catalog)
         source_ids = [plugin.resolve_source(s).id for s in sources]
-        es_client = ESClientFactory.get()
+        opensearch = OpenSearchClientFactory.get()
         indices = ','.join(map(str, self.index_service.index_names(catalog)))
         query = {
             'query': {
@@ -288,7 +295,7 @@ class AzulClient(SignatureHelper, HasCachedHttpClient):
         }
         log.info('Deindexing sources %r from catalog %r', sources, catalog)
         log.debug('Using query: %r', query)
-        response = es_client.delete_by_query(index=indices, body=query, slices='auto')
+        response = opensearch.delete_by_query(index=indices, body=query, slices='auto')
         if len(response['failures']) > 0:
             if response['version_conflicts'] > 0:
                 log.error('Version conflicts encountered. Do not deindex while '
@@ -397,5 +404,5 @@ class AzulClientError(RuntimeError):
 
 class AzulClientNotificationError(AzulClientError):
 
-    def __init__(self) -> None:
-        super().__init__('Some notifications could not be sent')
+    def __init__(self, *args) -> None:
+        super().__init__('Some notifications could not be sent', *args)

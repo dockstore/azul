@@ -12,21 +12,24 @@ from typing import (
     Iterator,
     Sequence,
 )
-import urllib.parse
+from urllib.parse import (
+    unquote,
+)
 
 from botocore.response import (
     StreamingBody,
 )
 
-from azul import (
-    cached_property,
-    require,
-)
 from azul.deployment import (
     aws,
 )
-from azul.types import (
+from azul.lib import (
+    R,
+    cached_property,
+)
+from azul.lib.types import (
     MutableJSON,
+    json_str,
 )
 
 
@@ -55,8 +58,8 @@ class LogForwardingService(metaclass=ABCMeta):
             # When new fields are introduced, they are added at the end of
             # the log entry, so observing more fields than expected does not
             # indicate a problem.
-            require(len(row) >= len(self.fields), 'Missing expected fields')
-            fields = dict(zip(self.fields, row))
+            assert len(row) >= len(self.fields), R('Missing expected fields')
+            fields: MutableJSON = dict(zip(self.fields, row))
             yield fields
 
     @abstractmethod
@@ -145,7 +148,7 @@ class S3AccessLogForwardingService(LogForwardingService):
             message['time'] = time.strip('[]')
             # Experiments indicate that the `key` field is url-encoded *twice*,
             # e.g., a quotation mark is represented as "%2522"
-            message['key'] = urllib.parse.unquote(urllib.parse.unquote(message['key']))
+            message['key'] = unquote(unquote(json_str(message['key'])))
             yield message
 
     @cached_property

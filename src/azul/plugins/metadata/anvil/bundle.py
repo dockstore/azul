@@ -14,14 +14,6 @@ from typing import (
 
 import attrs
 
-from azul.attrs import (
-    SerializableAttrs,
-    serializable,
-)
-from azul.collections import (
-    aset,
-    none_safe_apply,
-)
 from azul.indexer import (
     Bundle,
     SourcedBundleFQID,
@@ -30,7 +22,15 @@ from azul.indexer.document import (
     EntityReference,
     EntityType,
 )
-from azul.types import (
+from azul.lib.attrs import (
+    SerializableAttrs,
+    serializable,
+)
+from azul.lib.collections import (
+    aset,
+    none_safe_apply,
+)
+from azul.lib.types import (
     MutableJSON,
     json_element_mappings,
     json_element_strings,

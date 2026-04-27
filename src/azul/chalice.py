@@ -26,13 +26,11 @@ from urllib.parse import (
 )
 
 import attrs
-from chalice import (
-    Chalice,
-    ChaliceViewError,
-)
 from chalice.app import (
     BadRequestError,
     CaseInsensitiveMapping,
+    Chalice,
+    ChaliceViewError,
     EventSourceHandler,
     HeadersType,
     MultiDict,
@@ -47,42 +45,31 @@ from furl import (
 
 from azul import (
     config,
-    mutable_furl,
-    open_resource,
-    reject,
-    require,
 )
 from azul.auth import (
     Authentication,
 )
-from azul.collections import (
-    deep_dict_merge,
-)
 from azul.csp import (
     CSP,
 )
-from azul.enums import (
+from azul.lib import (
+    R,
+    mutable_furl,
+)
+from azul.lib.collections import (
+    deep_dict_merge,
+)
+from azul.lib.enums import (
     auto,
 )
-from azul.json import (
+from azul.lib.json import (
     copy_json,
 )
-from azul.logging import (
-    http_body_log_message,
-)
-from azul.modules import (
-    module_loaded_dynamically,
-)
-from azul.openapi import (
-    format_description,
-    params,
-    responses,
-    schema,
-)
-from azul.strings import (
+from azul.lib.strings import (
+    format_and_dedent,
     join_words as jw,
 )
-from azul.types import (
+from azul.lib.types import (
     JSON,
     LambdaContext,
     MutableJSON,
@@ -91,19 +78,25 @@ from azul.types import (
     json_str,
     not_none,
 )
+from azul.logging import (
+    http_body_log_message,
+)
+from azul.modules import (
+    module_loaded_dynamically,
+)
+from azul.openapi import (
+    params,
+    responses,
+    schema,
+)
+from azul.resources import (
+    open_resource,
+)
 
 log = logging.getLogger(__name__)
 
 
-class AzulRequest(Request):
-    """
-    Use only for type hints. The actual requests will be instances of the parent
-    class, but they will have the attributes defined here.
-    """
-    authentication: Authentication | None
-
-
-class TerraTimeoutError(ChaliceViewError):
+class TemporaryRedirectError(ChaliceViewError):
     STATUS_CODE = 307
 
 
@@ -136,7 +129,6 @@ class LambdaMetric(Enum):
 
 class AzulChaliceApp(Chalice):
     lambda_context: LambdaContext | None
-    current_request: AzulRequest | None
 
     def __init__(self,
                  app_name: str,
@@ -145,11 +137,11 @@ class AzulChaliceApp(Chalice):
                  spec: JSON):
         self._patch_event_source_handler()
         app_module_path = globals['__file__']
-        require(app_module_path.endswith('/app.py'), app_module_path)
+        assert app_module_path.endswith('/app.py'), R(app_module_path)
         self.app_module_path = app_module_path
         self.loaded_dynamically = module_loaded_dynamically(globals)
         self.non_interactive_routes: set[tuple[str, str]] = set()
-        reject('paths' in spec, 'The top-level spec must not define paths')
+        assert 'paths' not in spec, R('The top-level spec must not define paths')
         self._specs = self._add_contact_to_spec(spec)
         self._specs['paths'] = {}
         # The `debug` arg controls whether tracebacks appear in error responses
@@ -299,7 +291,7 @@ class AzulChaliceApp(Chalice):
     HttpMethod = Literal['GET', 'POST', 'PUT', 'PATCH', 'HEAD', 'OPTIONS', 'DELETE']
 
     def route[C: Callable](self,
-                           path: str,
+                           path: str | tuple[str, ...],
                            *,
                            methods: Sequence[HttpMethod] = ('GET',),
                            enabled: bool = True,
@@ -347,11 +339,15 @@ class AzulChaliceApp(Chalice):
                      override is compatible with that of the overridden method,
                      a mypy requirement.
         """
-        require(spec is not None, "Argument 'spec' is required")
-        assert spec is not None
+        assert spec is not None, R("Argument 'spec' is required")
         if enabled:
+            if isinstance(path, tuple):
+                assert len(path) > 0, R('Empty path', path)
+                assert all(len(e) > 0 for e in path), R('Empty path element', path)
+                assert all('/' not in e for e in path), R('Invalid path element', path)
+                path = '/' + '/'.join(path)
             if not interactive:
-                require(bool(methods), 'Must list methods with interactive=False')
+                assert bool(methods), R('Must list methods with interactive=False')
                 self.non_interactive_routes.update((path, method) for method in methods)
             spec = deep_dict_merge(self.default_specs(), spec, override=True)
             chalice_decorator = super().route(path, methods=methods, **kwargs)
@@ -377,7 +373,7 @@ class AzulChaliceApp(Chalice):
             for method in json_dict(path).values() if isinstance(method, dict)
             for tag in json_list(method.get('tags', []))
         )
-        reject('servers' in self._specs, "The 'servers' entry is computed")
+        assert 'servers' not in self._specs, R("The 'servers' entry is computed")
         return {
             **self._specs,
             'tags': [
@@ -425,14 +421,15 @@ class AzulChaliceApp(Chalice):
             else:
                 # Invocation via API Gateway
                 pass
-            self_url = furl(scheme=scheme, netloc=self.current_request.headers['host'])
+            self_url = mutable_furl(scheme=scheme,
+                                    netloc=self.current_request.headers['host'])
         else:
             assert False, self.current_request
         return self_url
 
     @property
     def is_running_locally(self) -> bool:
-        host = self.base_url.netloc.partition(':')[0]
+        host = not_none(self.base_url.netloc).partition(':')[0]
         return host in ('localhost', '127.0.0.1')
 
     def _register_spec(self,
@@ -445,8 +442,7 @@ class AzulChaliceApp(Chalice):
         """
         paths = json_dict(self._specs['paths'])
         if path_spec is not None:
-            reject(path in paths,
-                   'Only specify path_spec once per route path')
+            assert path not in paths, R('Only specify path_spec once per route path')
             paths[path] = copy_json(path_spec)
 
         for method in methods:
@@ -454,8 +450,8 @@ class AzulChaliceApp(Chalice):
             method = method.lower()
             # This may override duplicate specs from path_specs
             path_methods = json_dict(paths.setdefault(path, {}))
-            reject(method in path_methods,
-                   "Only specify 'spec' once per route path and method")
+            assert method not in path_methods, R(
+                "Only specify 'spec' once per route path and method")
             path_methods[method] = copy_json(spec)
 
     class _LogJSONEncoder(json.JSONEncoder):
@@ -482,7 +478,6 @@ class AzulChaliceApp(Chalice):
     def __authenticate(self):
         auth = self._authenticate()
         attribute_name = 'authentication'
-        assert attribute_name in AzulRequest.__annotations__
         setattr(self.current_request, attribute_name, auth)
         if auth is None:
             log.info('Did not authenticate request.')
@@ -763,8 +758,8 @@ class AzulChaliceApp(Chalice):
             file_name = 'swagger-initializer.js.template.mustache'
             template = self.load_static_resource('swagger', file_name)
             base_url = self.base_url
-            redirect_url = furl(base_url).add(path='swagger/oauth2-redirect.html')
-            openapi_spec = furl(base_url).add(path='openapi.json')
+            redirect_url = mutable_furl(base_url).add(path='swagger/oauth2-redirect.html')
+            openapi_spec = mutable_furl(base_url).add(path='openapi.json')
             body = chevron.render(template, {
                 'OPENAPI_SPEC': json.dumps(str(openapi_spec.path)),
                 'OAUTH2_CLIENT_ID': json.dumps(config.google_oauth2_client_id),
@@ -810,7 +805,7 @@ class AzulChaliceApp(Chalice):
             cors=True,
             spec={
                 'summary': 'Return OpenAPI specifications for this REST API',
-                'description': format_description('''
+                'description': format_and_dedent('''
                                 This endpoint returns the [OpenAPI specifications]'
                                 (https://github.com/OAI/OpenAPI-Specification) for this REST
                                 API. These are the specifications used to generate the page
@@ -874,7 +869,7 @@ class AzulChaliceApp(Chalice):
                 'tags': ['Auxiliary'],
                 'responses': {
                     '200': {
-                        'description': format_description('''
+                        'description': format_and_dedent('''
                             The robots.txt resource according to
                             [RFC9309](https://datatracker.ietf.org/doc/html/rfc9309)
                         '''),
@@ -897,11 +892,11 @@ class AzulChaliceApp(Chalice):
         return locals()
 
     def default_specs(self):
-        retry_after = format_description('''
+        retry_after = format_and_dedent('''
             Clients should wait the number of seconds specified in the
             Retry-After response header and then retry the request.
         ''')
-        do_not_retry = format_description('''
+        do_not_retry = format_and_dedent('''
             It is unlikely that a retry will be successful until the problem is
             resolved by an operator.
         ''')
@@ -936,15 +931,26 @@ class AzulChaliceApp(Chalice):
 
 
 @attrs.frozen(kw_only=True)
-class AppController:
+class Controller:
     app: AzulChaliceApp
 
     @property
     def lambda_context(self) -> LambdaContext:
-        assert self.app.lambda_context is not None
-        return self.app.lambda_context
+        return not_none(self.app.lambda_context)
 
     @property
-    def current_request(self) -> AzulRequest:
-        assert self.app.current_request is not None
-        return self.app.current_request
+    def current_request(self) -> Request:
+        return not_none(self.app.current_request)
+
+    def _authentication(self, request: Request) -> Authentication | None:
+        authentication = getattr(request, 'authentication', None)
+        if authentication is not None:
+            assert isinstance(authentication, Authentication)
+        return authentication
+
+    def _query_params(self, request: Request) -> MultiDict:
+        params = request.query_params
+        if params is None:
+            params = MultiDict({})
+            request.query_params = params
+        return params

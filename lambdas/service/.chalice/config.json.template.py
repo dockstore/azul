@@ -1,14 +1,14 @@
 from azul import (
     config,
 )
+from azul.infra.terraform import (
+    chalice,
+)
 from azul.modules import (
     load_app_module,
 )
 from azul.template import (
     emit,
-)
-from azul.terraform import (
-    chalice,
 )
 
 suffix = '-' + config.deployment_stage

@@ -47,8 +47,8 @@ from azul.http import (
     http_client,
 )
 from azul.indexer.mirror_service import (
-    BaseMirrorService,
     MirrorService,
+    MirrorWorkerService,
 )
 from azul.logging import (
     configure_test_logging,
@@ -57,8 +57,8 @@ from azul.logging import (
 from azul.plugins.metadata.hca import (
     HCAFile,
 )
-from azul.service.repository_service import (
-    RepositoryService,
+from azul.service.index_service import (
+    IndexService,
 )
 from azul.terra import (
     TerraClient,
@@ -105,7 +105,7 @@ class RepositoryFilesTestCase(LocalAppTestCase, metaclass=ABCMeta):
 
 class TestRepositoryFilesWithTDR(DCP2TestCase, RepositoryFilesTestCase):
 
-    @patch.object(BaseMirrorService, 'info_exists', new=Mock(return_value=False))
+    @patch.object(MirrorService, 'info_exists', new=Mock(return_value=False))
     @patch.object(TerraClient,
                   '_http_client',
                   AuthorizedHttp(MagicMock(),
@@ -128,7 +128,7 @@ class TestRepositoryFilesWithTDR(DCP2TestCase, RepositoryFilesTestCase):
                        crc32c='abc')
         for fetch in True, False:
             with self.subTest(fetch=fetch):
-                with patch.object(RepositoryService,
+                with patch.object(IndexService,
                                   'get_data_file',
                                   return_value=file):
                     azul_url = self.base_url.set(path=['repository', 'files', file_uuid],
@@ -164,7 +164,7 @@ class TestRepositoryFilesWithTDR(DCP2TestCase, RepositoryFilesTestCase):
 
         file = attr.evolve(file, drs_uri=None)
         with self.subTest('phantom'):
-            with patch.object(RepositoryService,
+            with patch.object(IndexService,
                               'get_data_file',
                               return_value=file):
                 response = client.request('GET', str(azul_url), redirect=False)
@@ -175,7 +175,7 @@ class TestRepositoryFilesWithDSS(DCP1TestCase,
                                  RepositoryFilesTestCase,
                                  S3TestCase):
 
-    @patch.object(BaseMirrorService, 'info_exists', new=Mock(return_value=False))
+    @patch.object(MirrorService, 'info_exists', new=Mock(return_value=False))
     @patch.object(type(config), 'dss_direct_access_role', new=Mock(return_value=None))
     def test(self):
         self.maxDiff = None
@@ -199,7 +199,7 @@ class TestRepositoryFilesWithDSS(DCP1TestCase,
                        content_type='text/plain',
                        sha256='123',
                        crc32c='abc')
-        with patch.object(RepositoryService, 'get_data_file', return_value=file):
+        with patch.object(IndexService, 'get_data_file', return_value=file):
             args = {
                 'replica': 'aws',
                 'version': file_version
@@ -321,16 +321,16 @@ class TestRepositoryFilesWithMirroring(DCP2TestCase,
                        sha256=hashlib.sha256(file_content).hexdigest(),
                        crc32c=None)
 
-        mirror_service = MirrorService(catalog=self.catalog,
-                                       schema_url_func=MagicMock())
-        with patch.object(MirrorService, '_download', return_value=file_content):
+        mirror_service = MirrorWorkerService(catalog=self.catalog,
+                                             schema_url_func=MagicMock())
+        with patch.object(MirrorWorkerService, '_download', return_value=file_content):
             mirror_service._mirror_file(file)
         self.assertTrue(mirror_service.info_exists(file))
 
         client = http_client(log)
         args = dict(catalog=self.catalog, version=file_version)
         azul_url = self.base_url.set(path=['repository', 'files', file_uuid], args=args)
-        with patch.object(RepositoryService, 'get_data_file', return_value=file):
+        with patch.object(IndexService, 'get_data_file', return_value=file):
             response = client.request('GET', str(azul_url), redirect=False)
         self.assertEqual(302, response.status)
 

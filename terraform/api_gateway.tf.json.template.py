@@ -9,10 +9,7 @@ from more_itertools import (
 )
 
 from azul import (
-    R,
-    cached_property,
     config,
-    iif,
 )
 from azul.chalice import (
     AzulChaliceApp,
@@ -21,20 +18,27 @@ from azul.deployment import (
     aws,
     public_ip,
 )
-from azul.modules import (
-    load_app_module,
-)
-from azul.objects import (
-    InternMeta,
-)
-from azul.terraform import (
+from azul.infra.terraform import (
     chalice,
     emit_tf,
     vpc,
 )
-from azul.types import (
+from azul.lib import (
+    R,
+    cached_property,
+)
+from azul.lib.functions import (
+    iif,
+)
+from azul.lib.objects import (
+    InternMeta,
+)
+from azul.lib.types import (
     JSON,
     JSONs,
+)
+from azul.modules import (
+    load_app_module,
 )
 
 
@@ -432,6 +436,29 @@ emit_tf({
                                     'cloudwatch_metrics_enabled': True
                                 }
                             },
+                            # The IP Reputation rule is given higher priority than the Common Rule Set so
+                            # that malicious requests can be blocked before the Common Rule Set is
+                            # evaluated. This reduces Web ACL Capacity Unit (WCU) consumption, and also
+                            # avoids triggering the WAF Blocked alarm unnecessarily, as requests blocked by
+                            # the Common Rule Set rule trigger the alarm however those blocked by the IP
+                            # Reputation rule do not.
+                            {
+                                'name': config.aws_ip_reputation_list_term,
+                                'statement': {
+                                    'managed_rule_group_statement': {
+                                        'name': 'AWSManagedRulesAmazonIpReputationList',
+                                        'vendor_name': 'AWS'
+                                    }
+                                },
+                                'override_action': {
+                                    'none': {}
+                                },
+                                'visibility_config': {
+                                    'metric_name': config.aws_ip_reputation_list_term,
+                                    'sampled_requests_enabled': True,
+                                    'cloudwatch_metrics_enabled': True
+                                }
+                            },
                             {
                                 'name': 'aws_common_rule_set',
                                 'statement': {
@@ -476,23 +503,6 @@ emit_tf({
                                 },
                                 'visibility_config': {
                                     'metric_name': 'aws_common_rule_set',
-                                    'sampled_requests_enabled': True,
-                                    'cloudwatch_metrics_enabled': True
-                                }
-                            },
-                            {
-                                'name': config.aws_ip_reputation_list_term,
-                                'statement': {
-                                    'managed_rule_group_statement': {
-                                        'name': 'AWSManagedRulesAmazonIpReputationList',
-                                        'vendor_name': 'AWS'
-                                    }
-                                },
-                                'override_action': {
-                                    'none': {}
-                                },
-                                'visibility_config': {
-                                    'metric_name': config.aws_ip_reputation_list_term,
                                     'sampled_requests_enabled': True,
                                     'cloudwatch_metrics_enabled': True
                                 }

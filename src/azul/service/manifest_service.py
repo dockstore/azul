@@ -14,6 +14,9 @@ import csv
 from datetime import (
     datetime,
 )
+from functools import (
+    partial,
+)
 from inspect import (
     isabstract,
 )
@@ -41,12 +44,12 @@ from tempfile import (
 )
 import time
 from typing import (
+    Any,
     Callable,
     ClassVar,
     IO,
     Protocol,
     Self,
-    cast,
 )
 import unicodedata
 from uuid import (
@@ -70,50 +73,86 @@ from opensearchpy import (
 )
 from opensearchpy.helpers.response import (
     Hit,
+    Response,
 )
 
 from azul import (
     CatalogName,
-    R,
-    cached_property,
     config,
-    mutable_furl,
-)
-from azul.attrs import (
-    is_uuid,
-    strict_auto,
 )
 from azul.auth import (
     Authentication,
 )
-from azul.bytes import (
-    azul_urlsafe_b64decode,
-    azul_urlsafe_b64encode,
-)
-from azul.collections import (
-    getitem,
-)
 from azul.deployment import (
     aws,
 )
-from azul.indexer import (
-    Prefix,
-    SourceRef,
-    SourceSpec,
-)
-from azul.indexer.document import (
-    DocumentType,
-    FieldPath,
-)
-from azul.indexer.field import (
+from azul.field_type import (
+    FieldType,
     FieldTypes,
     null_str,
 )
-from azul.indexer.mirror_service import (
-    BaseMirrorService,
+from azul.filters import (
+    Filters,
+    FiltersJSON,
 )
-from azul.json import (
+from azul.indexer.document import (
+    DocumentType,
+    EntityType,
+    FieldPath,
+)
+from azul.indexer.mirror_service import (
+    MirrorService,
+)
+from azul.lib import (
+    R,
+    cache,
+    cached_property,
+    mutable_furl,
+)
+from azul.lib.attrs import (
+    SerializableAttrs,
+    is_uuid,
+    serializable,
+    serializable_uuid,
+    strict_auto,
+)
+from azul.lib.bytes import (
+    azul_urlsafe_b64decode,
+    azul_urlsafe_b64encode,
+)
+from azul.lib.collections import (
+    getitem,
+)
+from azul.lib.functions import (
+    compose,
+)
+from azul.lib.json import (
     copy_json,
+)
+from azul.lib.strings import (
+    double_quote as dq,
+)
+from azul.lib.types import (
+    FlatJSON,
+    JSON,
+    JSONs,
+    MutableJSON,
+    json_dict,
+    json_element_dicts,
+    json_element_mappings,
+    json_element_strings,
+    json_elements_are_mappings,
+    json_int,
+    json_list_of_dicts,
+    json_mapping,
+    json_sequence,
+    json_sequence_of_mappings,
+    json_str,
+    not_none,
+    optional,
+)
+from azul.lib.uuids import (
+    uuid5_for_bytes,
 )
 from azul.plugins import (
     ColumnMapping,
@@ -121,42 +160,36 @@ from azul.plugins import (
     ManifestConfig,
     ManifestFormat,
     MetadataPlugin,
-    RepositoryPlugin,
     SpecialField,
     dotted,
+    manifest_config_from_json,
+    manifest_config_to_json,
 )
 from azul.service import (
     FileUrlFunc,
-    Filters,
     avro_pfb,
 )
 from azul.service.avro_pfb import (
     PFBRelation,
 )
-from azul.service.elasticsearch_service import (
-    ElasticsearchChain,
-    ElasticsearchService,
+from azul.service.query_service import (
+    OpenSearchChain,
     Pagination,
     PaginationStage,
+    QueryService,
     SortKey,
     ToDictStage,
+    sort_key_from_json,
+    sort_key_to_json,
 )
 from azul.service.storage_service import (
     StorageObjectNotFound,
     StorageService,
 )
-from azul.strings import (
-    double_quote as dq,
-)
-from azul.types import (
-    AnyJSON,
-    FlatJSON,
-    JSON,
-    JSONs,
-    MutableJSON,
-)
-from azul.uuids import (
-    uuid5_for_bytes,
+from azul.source import (
+    Prefix,
+    SourceRef,
+    SourceSpec,
 )
 from azul.vendored.frozendict import (
     frozendict,
@@ -210,7 +243,7 @@ class AbstractManifestKey(metaclass=ABCMeta):
 
 
 @attrs.frozen(kw_only=True)
-class BareManifestKey(AbstractManifestKey):
+class BareManifestKey(AbstractManifestKey, SerializableAttrs):
     """
     An untrusted manifest key. Instances can be freely serialized and
     deserialized but the service won't accept them. To obtain a key the service
@@ -289,8 +322,8 @@ class BareManifestKey(AbstractManifestKey):
     """
     catalog: CatalogName = strict_auto()
     format: ManifestFormat = strict_auto()
-    manifest_hash: UUID = attrs.field(validator=is_uuid(5))
-    source_hash: UUID = attrs.field(validator=is_uuid(5))
+    manifest_hash: UUID = serializable_uuid(attrs.field(validator=is_uuid(5)))
+    source_hash: UUID = serializable_uuid(attrs.field(validator=is_uuid(5)))
 
     def pack(self) -> bytes:
         return msgpack.packb([
@@ -375,28 +408,13 @@ class ManifestKey(BareManifestKey):
     """
 
     @classmethod
-    def unpack(cls, pack: bytes) -> None:
+    def unpack(cls, pack: bytes) -> Self:
         """
         Do not call this method. It is unsafe to deserialize an instance of
         this class. Instead, deserialize a :class:`SignedManifestKey` and use
         :meth:`ManifestService.verify_manifest_key_signature`.
         """
         assert False
-
-    def to_json(self) -> JSON:
-        return {
-            'catalog': self.catalog,
-            'format': self.format.value,
-            'manifest_hash': str(self.manifest_hash),
-            'source_hash': str(self.source_hash)
-        }
-
-    @classmethod
-    def from_json(cls, json: JSON) -> Self:
-        return cls(catalog=json['catalog'],
-                   format=ManifestFormat(json['format']),
-                   manifest_hash=UUID(json['manifest_hash']),
-                   source_hash=UUID(json['source_hash']))
 
     _uuid_namespace: ClassVar[UUID] = UUID('c5a0cd95-44f7-4216-972f-623f00f8fd22')
 
@@ -411,7 +429,7 @@ class InvalidManifestKeySignature(Exception):
 
 
 @attrs.frozen(kw_only=True)
-class Manifest:
+class Manifest(SerializableAttrs):
     """
     Contains the details of a prepared manifest.
     """
@@ -431,24 +449,7 @@ class Manifest:
 
     #: The proposed file name of the manifest when downloading it to a user's
     #: system
-    file_name: str
-
-    def to_json(self) -> JSON:
-        return {
-            'object_key': self.object_key,
-            'was_cached': self.was_cached,
-            'format': self.format.value,
-            'manifest_key': self.manifest_key.to_json(),
-            'file_name': self.file_name
-        }
-
-    @classmethod
-    def from_json(cls, json: JSON) -> Self:
-        return cls(object_key=json['object_key'],
-                   was_cached=json['was_cached'],
-                   format=ManifestFormat(json['format']),
-                   manifest_key=ManifestKey.from_json(json['manifest_key']),
-                   file_name=json['file_name'])
+    file_name: str | None
 
 
 def tuple_or_none(v):
@@ -456,7 +457,7 @@ def tuple_or_none(v):
 
 
 @attrs.frozen(kw_only=True)
-class ManifestPartition:
+class ManifestPartition(SerializableAttrs):
     """
     A partial manifest. An instance of this class encapsulates the state that
     might need to be tracked while a manifest is populated, in increments of
@@ -486,7 +487,9 @@ class ManifestPartition:
     #: The cached configuration of the manifest that contains this partition.
     #: Manifest generators whose `manifest_config` property is expensive should
     #: cache the returned value here for subsequent partitions to reuse.
-    config: AnyJSON | None = None
+    config: ManifestConfig | None = serializable(attrs.field(default=None),
+                                                 from_json=partial(optional, manifest_config_from_json),
+                                                 to_json=partial(optional, manifest_config_to_json))
 
     #: The ID of the S3 multi-part upload this partition is a part of. If a
     #: manifest consists of just one partition, this may be None, but it doesn't
@@ -494,8 +497,9 @@ class ManifestPartition:
     multipart_upload_id: str | None = None
 
     #: The S3 ETag of each partition; the current one and all the ones before it
-    part_etags: tuple[str, ...] | None = attrs.field(converter=tuple_or_none,
-                                                     default=None)
+    part_etags: tuple[str, ...] | None = serializable(attrs.field(default=None),
+                                                      from_json=partial(optional, compose(tuple, json_element_strings)),
+                                                      to_json=partial(optional, list))
 
     #: The index of the current page. The index is zero-based and global. For
     #: example, if the first partition contains five pages, the index of the
@@ -509,17 +513,9 @@ class ManifestPartition:
 
     #: The `sort` value of the first hit of the current page in this partition,
     #: or None if there is no current page.
-    search_after: SortKey | None = None
-
-    @classmethod
-    def from_json(cls, partition: JSON) -> Self:
-        return cls(**{
-            k: tuple(v) if k == 'search_after' and v is not None else v
-            for k, v in partition.items()
-        })
-
-    def to_json(self) -> MutableJSON:
-        return attrs.asdict(self)
+    search_after: SortKey | None = serializable(attrs.field(default=None),
+                                                from_json=partial(optional, sort_key_from_json),
+                                                to_json=partial(optional, sort_key_to_json))
 
     @classmethod
     def first(cls) -> Self:
@@ -530,7 +526,7 @@ class ManifestPartition:
     def is_first(self) -> bool:
         return not (self.index or self.page_index)
 
-    def with_config(self, config: AnyJSON) -> Self:
+    def with_config(self, config: ManifestConfig) -> Self:
         return attrs.evolve(self, config=config)
 
     def with_upload(self, multipart_upload_id) -> Self:
@@ -564,7 +560,7 @@ class ManifestPartition:
     def next(self, part_etag: str) -> Self:
         return attrs.evolve(self,
                             index=self.index + 1,
-                            part_etags=(*self.part_etags, part_etag))
+                            part_etags=(*not_none(self.part_etags), part_etag))
 
     def last(self, file_name: str) -> Self:
         return attrs.evolve(self,
@@ -577,12 +573,13 @@ class CachedManifestNotFound(Exception):
     manifest_key: ManifestKey
 
 
-class ManifestService(ElasticsearchService):
+@attrs.frozen(kw_only=True)
+class ManifestService(QueryService):
+    file_url_func: FileUrlFunc
 
-    def __init__(self, storage_service: StorageService, file_url_func: FileUrlFunc):
-        super().__init__()
-        self.storage_service = storage_service
-        self.file_url_func = file_url_func
+    @cached_property
+    def storage_service(self) -> StorageService:
+        return StorageService()
 
     def get_manifest(self,
                      *,
@@ -642,7 +639,7 @@ class ManifestService(ElasticsearchService):
             return self._generate_manifest(generator, manifest_key, partition)
 
     def _generate_manifest(self,
-                           generator: 'ManifestGenerator',
+                           generator: ManifestGenerator,
                            manifest_key: ManifestKey,
                            partition: ManifestPartition
                            ) -> Manifest | ManifestPartition:
@@ -699,7 +696,7 @@ class ManifestService(ElasticsearchService):
         return self._get_cached_manifest(generator_cls, manifest_key)
 
     def _get_cached_manifest(self,
-                             generator_cls: type['ManifestGenerator'],
+                             generator_cls: type[ManifestGenerator],
                              manifest_key: ManifestKey
                              ) -> Manifest:
         file_name = self._get_cached_manifest_file_name(generator_cls, manifest_key)
@@ -712,12 +709,12 @@ class ManifestService(ElasticsearchService):
                                        was_cached=True)
 
     def _make_manifest(self,
-                       generator_cls: type['ManifestGenerator'],
+                       generator_cls: type[ManifestGenerator],
                        manifest_key: ManifestKey,
                        file_name: str | None,
                        was_cached: bool
                        ) -> Manifest:
-        if not generator_cls.use_content_disposition_file_name:
+        if not generator_cls.use_content_disposition_file_name():
             file_name = None
         object_key = generator_cls.s3_object_key(manifest_key)
         return Manifest(object_key=object_key,
@@ -733,7 +730,7 @@ class ManifestService(ElasticsearchService):
     file_name_tag = 'azul_file_name'
 
     def _get_cached_manifest_file_name(self,
-                                       generator_cls: type['ManifestGenerator'],
+                                       generator_cls: type[ManifestGenerator],
                                        manifest_key: ManifestKey
                                        ) -> str | None:
         """
@@ -756,7 +753,7 @@ class ManifestService(ElasticsearchService):
             if time_left > config.manifest_expiration_margin:
                 tagging = self.storage_service.get_object_tagging(object_key)
                 try:
-                    encoded_file_name = tagging[self.file_name_tag]
+                    file_name = tagging[self.file_name_tag]
                 except KeyError:
                     # While unpaged manifest generators apply the tag *at*
                     # object creation, paged ones do so in a separate request.
@@ -770,7 +767,7 @@ class ManifestService(ElasticsearchService):
                     # be complete.
                     return None
                 else:
-                    encoded_file_name = encoded_file_name.encode('ascii')
+                    encoded_file_name = file_name.encode('ascii')
                     return base64.urlsafe_b64decode(encoded_file_name).decode('utf-8')
             else:
                 log.info('Cached manifest is about to expire: %s', object_key)
@@ -787,7 +784,7 @@ class ManifestService(ElasticsearchService):
         return generator_cls.command_lines(url, file_name, authentication)
 
 
-Cells = dict[str, str]
+type Cells = dict[str, str]
 
 
 class ManifestGenerator(metaclass=ABCMeta):
@@ -810,18 +807,13 @@ class ManifestGenerator(metaclass=ABCMeta):
         """
         raise NotImplementedError
 
-    @cached_property
-    def repository_plugin(self) -> RepositoryPlugin:
-        catalog = self.catalog
-        return RepositoryPlugin.load(catalog).create(catalog)
-
     @property
     def metadata_plugin(self) -> MetadataPlugin:
         return self.service.metadata_plugin(self.catalog)
 
     @cached_property
-    def mirror_service(self) -> BaseMirrorService:
-        return BaseMirrorService(catalog=self.catalog)
+    def mirror_service(self) -> MirrorService:
+        return MirrorService(catalog=self.catalog)
 
     @classmethod
     @abstractmethod
@@ -850,10 +842,10 @@ class ManifestGenerator(metaclass=ABCMeta):
 
     @property
     @abstractmethod
-    def entity_type(self) -> str:
+    def entity_type(self) -> EntityType:
         """
         The type of the index entities this generator consumes. This controls
-        which aggregate Elasticsearch index is queried to fetch the aggregate
+        which aggregate OpenSearch index is queried to fetch the aggregate
         entity documents that this generator consumes when generating the
         output manifest.
         """
@@ -882,7 +874,7 @@ class ManifestGenerator(metaclass=ABCMeta):
             if field_name is not None
         ]
 
-    _cls_for_format: dict[ManifestFormat, type['ManifestGenerator']] = {}
+    _cls_for_format: dict[ManifestFormat, type[ManifestGenerator]] = {}
 
     def __init_subclass__(cls) -> None:
         super().__init_subclass__()
@@ -894,7 +886,7 @@ class ManifestGenerator(metaclass=ABCMeta):
     @classmethod
     def cls_for_format(cls,
                        format: ManifestFormat | None
-                       ) -> type['ManifestGenerator']:
+                       ) -> type[ManifestGenerator]:
         """
         Return the generator class  for the given format.
 
@@ -992,7 +984,7 @@ class ManifestGenerator(metaclass=ABCMeta):
         # The explicit filters are already normalized so we don't to do anything
         # special to desensitize the hash to insignificat differences
         filter_string = json.dumps(self.filters.explicit)
-        content_hash = str(self.manifest_content_hash)
+        content_hash = self._content_hash(by_bundle=config.enable_bundle_notifications)
         catalog = self.catalog
         format = self.format()
         manifest_hash_input = [
@@ -1042,14 +1034,14 @@ class ManifestGenerator(metaclass=ABCMeta):
             file_name = atlas + '-manifest-' + self.s3_object_key_base(manifest_key)
         return file_name
 
-    def _create_request(self) -> Search:
+    def _create_request(self, entity_type: EntityType) -> Search:
         pipeline = self._create_pipeline()
-        request = self.service.create_request(self.catalog, self.entity_type)
+        request = self.service.create_request(self.catalog, entity_type)
         request = pipeline.prepare_request(request)
         # The response is processed by the generator, not the pipeline
         return request
 
-    def _create_pipeline(self) -> ElasticsearchChain:
+    def _create_pipeline(self) -> OpenSearchChain[Response, Any, Response]:
         if self.included_fields is None:
             document_slice = DocumentSlice()
         else:
@@ -1090,6 +1082,7 @@ class ManifestGenerator(metaclass=ABCMeta):
         """
         field_types = self._field_types
         for field in field_path:
+            assert isinstance(field_types, dict)
             field_types = field_types[field]
 
         def convert(field_name, field_value):
@@ -1103,6 +1096,7 @@ class ManifestGenerator(metaclass=ABCMeta):
             else:
                 if isinstance(field_type, list):
                     field_type = one(field_type)
+            assert isinstance(field_type, FieldType)
             return field_type.to_tsv(field_value)
 
         def validate(field_value: str) -> str:
@@ -1140,22 +1134,23 @@ class ManifestGenerator(metaclass=ABCMeta):
         assert field_path, field_path
         d = doc
         for key in field_path[:-1]:
-            d = d.get(key, {})
-        entities = d.get(field_path[-1], [])
+            d = json_mapping(d.get(key, {}))
+        entities = json_sequence(d.get(field_path[-1], []))
+        assert json_elements_are_mappings(entities)
         return entities
 
     def _azul_file_url(self,
                        file: JSON,
                        args: Mapping = frozendict()
                        ) -> str | None:
-        download_cls = self.repository_plugin.file_download_class()
-        if download_cls.needs_drs_uri and file['drs_uri'] is None:
+        if file['drs_uri'] is None:
+            # To download a file we need its DRS URI
             return None
         else:
             special_fields = self.metadata_plugin.special_fields
             return str(self.file_url_func(catalog=self.catalog,
-                                          file_uuid=file[special_fields.file_uuid.name_in_hit],
-                                          version=file['version'],
+                                          file_uuid=json_str(file[special_fields.file_uuid.name_in_hit]),
+                                          version=json_str(file['version']),
                                           fetch=False,
                                           **args))
 
@@ -1163,22 +1158,67 @@ class ManifestGenerator(metaclass=ABCMeta):
         file_cls = self.metadata_plugin.file_class
         return self.mirror_service.mirror_uri(source, file_cls, file)
 
-    @cached_property
-    def manifest_content_hash(self) -> int:
-        log.debug('Computing content hash for manifest using filters %r ...', self.filters)
+    @cache
+    def _content_hash(self, *, by_bundle: bool) -> str:
+        """
+        Return a hash of the input this generator builds the manifest from. The
+        input is the set of ES documents from the files index. For two generator
+        instances g1 and g2 created at two different points in time, and any
+        boolean value b, if
+
+        g1.manifest_hash(by_bundle=b) == g2.manifest_hash(by_bundle=b)
+
+        then there is a high probability that the manifests generated by g1 and
+        g2 contain the same set of entries. This test can be used in deciding
+        whether g2 can reuse g1's manifest, thereby avoiding an expensive
+        operation. A false positive occurs when the hashes are equal but the
+        inputs differ. A false negative occurs when the hashes differ, but the
+        inputs are equal. False negatives are less problematic because they only
+        lead to redundant computations: the manifest is regenerated when it
+        could have been reused. False positives are problematic because they
+        lead to a manifest being reused erroneously, yielding an incorrect
+        manifest that is inconsistent with the input.
+
+        If ``by_bundle`` is True, the hash is computed from the fully-qualified
+        identifiers (FQID) of all bundles (subgraphs) containing files that
+        match the current filter. The rate of false negatives is low because a
+        change to any file entity requires a new bundle or a new bundle version,
+        both of which have different FQIDs, leading to a different hash. This
+        mode is slower and should be used if the index is changing or is likely
+        to change due to the incremental incorporation of bundles.
+
+        If ``by_bundle`` is False, the hash is instead computed from the set of
+        identifiers of the sources that contributed files matching the current
+        filters. This mode should *not* be used if the index is changing or is
+        likely to change due to the incremental incorporation of bundles.
+        """
+        log.debug('Computing content hash from %s matching %r ...',
+                  'bundles' if by_bundle else 'sources', self.filters)
         start_time = time.time()
-        request = self._create_request()
+        if by_bundle:
+            entity_type = self.entity_type
+        else:
+            entity_type = self.metadata_plugin.root_entity_type
+        request = self._create_request(entity_type)
         request.aggs.metric(
             'hash',
             'scripted_metric',
             init_script='''
                 state.fields = 0
             ''',
-            map_script='''
-                for (bundle in params._source.bundles) {
-                    state.fields += (bundle.uuid + bundle.version).hashCode()
-                }
-            ''',
+            map_script=(
+                '''
+                    for (bundle in params._source.bundles) {
+                        state.fields += (bundle.uuid + bundle.version).hashCode()
+                    }
+                '''
+                if by_bundle else
+                '''
+                    for (source in params._source.sources) {
+                        state.fields += source.id.hashCode()
+                    }
+                '''
+            ),
             combine_script='''
                 return state.fields.hashCode()
             ''',
@@ -1192,8 +1232,8 @@ class ManifestGenerator(metaclass=ABCMeta):
         request = request.extra(size=0)
         response = request.execute()
         assert len(response.hits) == 0
-        hash_value = response.aggregations.hash.value
-        log.info('Manifest content hash %i was computed in %.3fs using filters %r.',
+        hash_value = str(response.aggregations.hash.value)
+        log.info('Computed content hash %r from %s matching %r',
                  hash_value, time.time() - start_time, self.filters)
         return hash_value
 
@@ -1234,7 +1274,7 @@ class ManifestGenerator(metaclass=ABCMeta):
 class ClientSidePagingManifestGenerator(ManifestGenerator, metaclass=ABCMeta):
     """
     A mixin for manifest generators that use client-side paging to query
-    Elasticsearch.
+    OpenSearch.
     """
     page_size = 500
 
@@ -1271,9 +1311,9 @@ class PagedManifestGenerator(ClientSidePagingManifestGenerator):
     segments, also known as pages.
 
     In some subclasses, e.g. CompactManifestGenerator and CurlManifestGenerator,
-    a manifest page corresponds to a page of hits from a paginated Elasticsearch
+    a manifest page corresponds to a page of hits from a paginated OpenSearch
     request. In others, e.g. JSONLVerbatimManifestGenerator, the relationship
-    between manifest pages and Elasticsearch pages is more complicated.
+    between manifest pages and OpenSearch pages is more complicated.
     """
 
     @abstractmethod
@@ -1306,13 +1346,9 @@ class PagedManifestGenerator(ClientSidePagingManifestGenerator):
               ) -> ManifestPartition:
         assert not partition.is_last, partition
         if partition.config is None:
-            # The keys in manifest config are tuples which aren't allowed in
-            # JSON. We convert the outer mapping to a list of entries.
-            config = [[list(k), v] for k, v in self.manifest_config.items()]
-            partition = partition.with_config(config)
+            partition = partition.with_config(self.manifest_config)
         else:
-            config = {tuple(k): v for k, v in partition.config}
-            type(self).manifest_config.fset(self, config)
+            type(self).manifest_config.fset(self, partition.config)
         object_key = self.s3_object_key(manifest_key)
         if partition.multipart_upload_id is None:
             upload_id = self.storage.create_multipart_upload(object_key=object_key)
@@ -1339,7 +1375,7 @@ class PagedManifestGenerator(ClientSidePagingManifestGenerator):
                 if partition.is_last_page:
                     self.storage.complete_multipart_upload(object_key=object_key,
                                                            upload_id=upload_id,
-                                                           etags=partition.part_etags)
+                                                           etags=not_none(partition.part_etags))
                     file_name = self.file_name(manifest_key, base_name=partition.file_name)
                     tagging = self.tagging(file_name)
                     if tagging is not None:
@@ -1398,13 +1434,13 @@ class CurlManifestGenerator(PagedManifestGenerator):
         return 'curlrc'
 
     @property
-    def entity_type(self) -> str:
+    def entity_type(self) -> EntityType:
         return 'files'
 
     @cached_property
     def included_fields(self) -> list[FieldPath] | None:
         return [
-            *super().included_fields,
+            *not_none(super().included_fields),
             ('contents', 'files', 'related_files')
         ]
 
@@ -1485,7 +1521,11 @@ class CurlManifestGenerator(PagedManifestGenerator):
                       ) -> ManifestPartition:
 
         def _write(file: JSON, is_related_file: bool = False):
-            name = file['name']
+            special_fields = self.metadata_plugin.special_fields
+            file_name_field = special_fields.file_name.name_in_hit
+            file_uuid_field = special_fields.file_uuid.name_in_hit
+
+            file_name = json_str(file[file_name_field])
             # Related files are indexed differently than normal files (they
             # don't have their own document but are listed inside the main
             # file's document), so to ensure that the /repository/files
@@ -1494,22 +1534,24 @@ class CurlManifestGenerator(PagedManifestGenerator):
             # need to query the index for that information.
             args = {
                 'requestIndex': 1,
-                'fileName': name,
+                'fileName': file_name,
                 'drsUri': file['drs_uri']
             } if is_related_file else {
             }
 
             file_url = self._azul_file_url(file, args)
             if file_url is None:
-                output.write(f"# File {file['uuid']!r}, version {file['version']!r} is "
-                             f"currently not available in catalog {self.catalog!r}.\n\n")
+                output.write(f"# File {file[file_uuid_field]!r}, version {file['version']!r} "
+                             f"is currently not available in catalog {self.catalog!r}.\n\n")
             else:
                 # To prevent overwriting one file with another one of the same name
                 # but different content we nest each file in a folder using the
                 # bundle UUID. Because a file can belong to multiple bundles we use
                 # the one with the most recent version.
-                bundle = max(cast(JSONs, doc['bundles']), key=itemgetter('version', 'uuid'))
-                output_name = self._sanitize_path(bundle['uuid'] + '/' + name)
+                bundle = max(json_element_mappings(doc['bundles']),
+                             key=itemgetter('version', 'uuid'))
+                output_name = json_str(bundle['uuid']) + '/' + file_name
+                output_name = self._sanitize_path(output_name)
                 output.write(f'url={self._option(file_url)}\n'
                              f'output={self._option(output_name)}\n\n')
 
@@ -1536,10 +1578,32 @@ class CurlManifestGenerator(PagedManifestGenerator):
             hit = None
             for hit in response.hits:
                 doc = self._hit_to_doc(hit)
-                file = one(cast(JSONs, doc['contents']['files']))
-                _write(file)
-                for related_file in file['related_files']:
-                    _write(related_file, is_related_file=True)
+                contents = json_mapping(doc['contents'])
+                files = json_sequence(contents['files'])
+                file = json_mapping(one(files))
+                source: JSON = one(json_sequence_of_mappings(doc['sources']))
+                source: SourceRef = SourceRef.from_json(source)
+
+                # On AnVIL, and for political reasons, we are not permitted to
+                # include managed-access files, even if they are accessible to
+                # the requesting user. Because we only mirror open-access files,
+                # we can use the mirrorability of a file as a proxy condition
+                # for excluding managed-access files. It is possible that the
+                # condition is true for a file that has yet to be mirrored.
+                # Until the mirrored copy exists, the download will fall back to
+                # TDR's original. We accept that caveat. Also note that if
+                # managed-access files were to be included, we would need to
+                # ensure that the signed URL of the manifest expired after one
+                # hour.
+                #
+                if not config.is_anvil_enabled(self.catalog) or (
+                    self.mirror_service.may_mirror_files_from_source(source.spec)
+                    and self.mirror_service.may_mirror(json_int(file['file_size']))
+                ):
+                    _write(file)
+                    if config.is_hca_enabled(self.catalog):
+                        for related_file in json_element_mappings(file['related_files']):
+                            _write(related_file, is_related_file=True)
             assert hit is not None
             return partition.next_page(file_name=None,
                                        search_after=self._search_after(hit))
@@ -1652,13 +1716,13 @@ class CompactManifestGenerator(PagedManifestGenerator):
         return 'tsv'
 
     @property
-    def entity_type(self) -> str:
+    def entity_type(self) -> EntityType:
         return 'files'
 
     @cached_property
     def included_fields(self) -> list[FieldPath] | None:
         return [
-            *super().included_fields,
+            *not_none(super().included_fields),
             ('contents', 'files', 'related_files')
         ]
 
@@ -1677,19 +1741,20 @@ class CompactManifestGenerator(PagedManifestGenerator):
         request = self._create_paged_request(partition.search_after)
         response = request.execute()
         if response.hits:
-            project_short_names = set()
+            project_short_names: set[str] = set()
             hit = None
             for hit in response.hits:
                 doc = self._hit_to_doc(hit)
                 assert isinstance(doc, dict)
-                contents = doc['contents']
-                source = SourceRef.from_json(one(doc['sources'])).spec
+                contents = json_mapping(doc['contents'])
+                sources = json_element_mappings(doc['sources'])
+                source: SourceSpec = SourceRef.from_json(one(sources)).spec
                 if len(project_short_names) < 2 and 'projects' in contents:
-                    project = one(cast(JSONs, contents['projects']))
-                    short_names = project['project_short_name']
+                    project = one(json_sequence_of_mappings(contents['projects']))
+                    short_names = json_element_strings(project['project_short_name'])
                     project_short_names.update(short_names)
-                row = {}
-                related_rows = []
+                row: Cells = {}
+                related_rows: list[Cells] = []
                 for field_path, column_mapping in self.manifest_config.items():
                     entities = self._get_entities(field_path, doc)
                     if field_path == ('contents', 'files'):
@@ -1707,8 +1772,8 @@ class CompactManifestGenerator(PagedManifestGenerator):
                         file = copy_json(one(entities))
                         if 'related_files' in file:
                             field_path = (*field_path, 'related_files')
-                            for related_file in file['related_files']:
-                                related_row = {}
+                            for related_file in json_element_dicts(file['related_files']):
+                                related_row: Cells = {}
                                 file.update(related_file)
                                 if 'file_url' in column_mapping:
                                     file['file_url'] = self._azul_file_url(file)
@@ -1767,7 +1832,7 @@ class PFBManifestGenerator(FileBasedManifestGenerator):
         return None
 
     def _all_docs_sorted(self) -> Iterable[JSON]:
-        request = self._create_request()
+        request = self._create_request(self.entity_type)
         request = request.params(preserve_order=True).sort('entity_id.keyword')
         for hit in request.scan():
             doc = self._hit_to_doc(hit)
@@ -1779,7 +1844,7 @@ class PFBManifestGenerator(FileBasedManifestGenerator):
         field_types = transformer.field_types()
         pfb_schema = avro_pfb.pfb_schema_from_field_types(field_types)
 
-        converter = avro_pfb.PFBConverter(pfb_schema, self.repository_plugin)
+        converter = avro_pfb.PFBConverter(pfb_schema)
         for doc in self._all_docs_sorted():
             converter.add_doc(doc)
 
@@ -1797,7 +1862,7 @@ class VerbatimManifestGenerator(ClientSidePagingManifestGenerator,
                                 metaclass=ABCMeta):
 
     @property
-    def entity_type(self) -> str:
+    def entity_type(self) -> EntityType:
         # Orphans only have projects/datasets as hubs, so we need to retrieve
         # aggregates of those types in order to join against orphan replicas
         root_entity_type = self.metadata_plugin.root_entity_type
@@ -1869,10 +1934,10 @@ class VerbatimManifestGenerator(ClientSidePagingManifestGenerator,
                        request_factory: Callable[[SortKey | None], Search]
                        ) -> Iterable[Hit]:
         """
-        Yield all hits in every page of Elasticsearch hits in responses to
+        Yield all hits in every page of OpenSearch hits in responses to
         requests that use client-side paging.
 
-        :param request_factory:  A callable that returns a prepared Elasticsearch
+        :param request_factory:  A callable that returns a prepared OpenSearch
                                  request for the given search-after key, with the
                                  appropriate filters and sorting applied. The
                                  returned request should yield one page worth of
@@ -1907,7 +1972,7 @@ class VerbatimManifestGenerator(ClientSidePagingManifestGenerator,
             yield self.ReplicaKeys(hub_id=hit['entity_id'],
                                    replica_ids=document_ids)
 
-    def _list_replicas(self) -> Iterable[JSON]:
+    def _list_replicas(self) -> Iterable[MutableJSON]:
         emitted_replica_ids = set()
         for page in chunked(self._list_replica_keys(), self.page_size):
             num_replicas = 0
@@ -1920,7 +1985,7 @@ class VerbatimManifestGenerator(ClientSidePagingManifestGenerator,
                 replica_id = replica.meta.id
                 if replica_id not in emitted_replica_ids:
                     num_new_replicas += 1
-                    yield replica.to_dict()
+                    yield copy_json(replica.to_dict())
                     emitted_replica_ids.add(replica_id)
             log.info('Found %d replicas (%d already emitted) from page of %d hubs',
                      num_replicas, num_replicas - num_new_replicas, len(page))
@@ -1942,7 +2007,7 @@ class VerbatimManifestGenerator(ClientSidePagingManifestGenerator,
 
         # `_id` is currently the only index field that is unique to each replica
         # document (and thus results in an unambiguous total ordering). However,
-        # sorting just by `_id` is unacceptably slow, an Elasticsearch quirk. To
+        # sorting just by `_id` is unacceptably slow, an OpenSearch quirk. To
         # overcome the performance hit, we sort by a field that's *almost*
         # unique to each replica, so that `_id` only needs to be loaded and
         # compared in the infrequent event that it's needed as a tiebreaker.
@@ -1990,12 +2055,14 @@ class JSONLVerbatimManifestGenerator(PagedManifestGenerator,
         # It's possible that inaccessible sources are included in the explicit
         # sources. If they are, an exception will be raised when the filters are
         # reified, so it's safe to skip that check here.
+        sources: Iterable[str]
         try:
             source_filter = self.filters.explicit[self.source_id_field.name]
         except KeyError:
             sources = self.filters.source_ids
         else:
-            sources = source_filter['is']
+            assert 'is' in source_filter
+            sources = json_element_strings(source_filter['is'])
         return sorted(sources)
 
     def write_page_to(self,
@@ -2005,12 +2072,13 @@ class JSONLVerbatimManifestGenerator(PagedManifestGenerator,
         # All replicas from each source must be held in memory simultaneously to
         # avoid emitting duplicates. Therefore, each "page" of this manifest
         # must retrieve every replica from a given source, using multiple paged
-        # requests to ElasticSearch if necessary.
+        # requests to OpenSearch if necessary.
         source_ids = self.source_ids()
-        source_id = source_ids[partition.page_index]
+        page_index = not_none(partition.page_index)
+        source_id = source_ids[page_index]
         log.info('Listing replicas from source %r for manifest page %d',
-                 source_id, partition.page_index)
-        partition_filter = {self.source_id_field.name: {'is': [source_id]}}
+                 source_id, page_index)
+        partition_filter: FiltersJSON = {self.source_id_field.name: {'is': [source_id]}}
         original_filters = self.filters
         try:
             self.filters = original_filters.update(partition_filter)
@@ -2025,9 +2093,9 @@ class JSONLVerbatimManifestGenerator(PagedManifestGenerator,
         finally:
             self.filters = original_filters
         last_page = len(source_ids) - 1
-        if partition.page_index < last_page:
+        if page_index < last_page:
             return partition.next_page(file_name=None, search_after=None)
-        elif partition.page_index == last_page:
+        elif page_index == last_page:
             return partition.last_page()
         else:
             assert False, (partition, source_ids)
@@ -2078,7 +2146,8 @@ class PFBVerbatimManifestGenerator(FileBasedManifestGenerator,
         # (1) can only occur when orphans are included, and (2) and (3)
         # can only occur when orphans are *not* included.
         #
-        prefix = Prefix.parse(replica['source']['prefix'])
+        source = json_mapping(replica['source'])
+        prefix = Prefix.parse(json_str(source['prefix']))
         return (
             config.enable_verbatim_relations
             and self.include_orphans
@@ -2093,19 +2162,23 @@ class PFBVerbatimManifestGenerator(FileBasedManifestGenerator,
         #        https://github.com/DataBiosphere/azul/issues/7411
         if config.is_anvil_enabled(self.catalog):
             for replica in replicas:
-                source_id = replica['source']['id']
-                replica['contents']['source_datarepo_snapshot_id'] = source_id
+                source = json_dict(replica['source'])
+                source_id = json_str(source['id'])
+                contents = json_dict(replica['contents'])
+                contents['source_datarepo_snapshot_id'] = source_id
             for schema in replica_schemas:
-                field_schema = plugin._pfb_schema_from_anvil_column(table_name=schema['name'],
-                                                                    column_name='source_datarepo_snapshot_id',
-                                                                    anvil_datatype='string',
-                                                                    is_optional=False)
-                insort(schema['fields'], field_schema, key=itemgetter('name'))
+                schema_from_column = getattr(plugin, '_pfb_schema_from_anvil_column')
+                field_schema: MutableJSON = schema_from_column(table_name=schema['name'],
+                                                               column_name='source_datarepo_snapshot_id',
+                                                               anvil_datatype='string',
+                                                               is_optional=False)
+                fields = json_list_of_dicts(schema['fields'])
+                insort(fields, field_schema, key=itemgetter('name'))
         # Ensure field order is consistent for unit tests
         replica_schemas.sort(key=itemgetter('name'))
         links = {
             replica_type: plugin.verbatim_pfb_links(replica_type)
-            for replica_type in ([s['name'] for s in replica_schemas])
+            for replica_type in ([json_str(s['name']) for s in replica_schemas])
         }
         pfb_metadata_entity = avro_pfb.pfb_metadata_entity(links)
         pfb_schema = avro_pfb.avro_pfb_schema(replica_schemas)

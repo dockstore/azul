@@ -216,7 +216,7 @@ def env() -> Mapping[str, str | None]:
         # `gitlab` components, as well as building and pushing the executor
         # image (see terraform/gitlab/runner/Dockerfile for how).
         #
-        'azul_docker_version': '29.2.1',
+        'azul_docker_version': '29.4.0',
 
         # The version of Python used throughout the system.
         #
@@ -230,7 +230,7 @@ def env() -> Mapping[str, str | None]:
         # and committing the resulting changes. It also requires redeploying the
         # `shared` component.
         #
-        'azul_python_version': '3.13.12',
+        'azul_python_version': '3.14.4',
 
         # The version of Terraform used throughout the system.
         #
@@ -244,7 +244,20 @@ def env() -> Mapping[str, str | None]:
         # `make -C terraform update_schema`, and committing the resulting
         # changes.
         #
-        'azul_terraform_version': '1.13.5',
+        'azul_terraform_version': '1.14.8',
+
+        # The version of the AWS CLI v2 used throughout the system.
+        #
+        # This variable is not intended to be overridden per deployment or
+        # locally.
+        #
+        # This variable is duplicated in a file called `environment.boot`
+        # because it is referenced in the early stages of the GitLab build.
+        #
+        # Modifying this variable requires running `make environment.boot` and
+        # committing the resulting changes.
+        #
+        'azul_awscli_version': '2.34.30',
 
         # A dictionary mapping the short name of each Docker image used in Azul
         # to its fully qualified name. Note that a change to any of the image
@@ -265,32 +278,32 @@ def env() -> Mapping[str, str | None]:
                 'url': 'https://hub.docker.com/_/python',
             },
             'pycharm': {
-                'ref': 'docker.io/ucscgi/azul-pycharm:2025.2.6-73',
+                'ref': 'docker.io/ucscgi/azul-pycharm:2025.2.6-78',
                 'url': 'https://hub.docker.com/repository/docker/ucscgi/azul-pycharm',
                 'is_custom': True
             },
             'opensearch': {
-                'ref': 'docker.io/opensearchproject/opensearch:2.19.4',
+                'ref': 'docker.io/opensearchproject/opensearch:2.19.5',
                 'url': 'https://hub.docker.com/r/opensearchproject/opensearch',
                 'is_custom': False
             },
             'bigquery_emulator': {
-                'ref': 'docker.io/ucscgi/azul-bigquery-emulator:0.4.4-54',
+                'ref': 'docker.io/ucscgi/azul-bigquery-emulator:0.4.4-61',
                 'url': 'https://hub.docker.com/repository/docker/ucscgi/azul-bigquery-emulator',
                 'is_custom': True
             },
             # Updating any of the four images below additionally requires
             # redeploying the `gitlab` TF component.
             'clamav': {
-                'ref': 'docker.io/clamav/clamav:1.5.1-25',
+                'ref': 'docker.io/clamav/clamav:1.5.2-35',
                 'url': 'https://hub.docker.com/r/clamav/clamav'
             },
             'gitlab': {
-                'ref': 'docker.io/gitlab/gitlab-ce:18.8.4-ce.0',
+                'ref': 'docker.io/gitlab/gitlab-ce:18.10.3-ce.0',
                 'url': 'https://hub.docker.com/r/gitlab/gitlab-ce'
             },
             'gitlab_runner': {
-                'ref': 'docker.io/gitlab/gitlab-runner:ubuntu-v18.8.0',
+                'ref': 'docker.io/gitlab/gitlab-runner:ubuntu-v18.10.1',
                 'url': 'https://hub.docker.com/r/gitlab/gitlab-runner'
             },
             'dind': {
@@ -417,23 +430,23 @@ def env() -> Mapping[str, str | None]:
         #
         'AZUL_RESOURCE_PREFIX': 'azul',
 
-        # The host and port of the Elasticsearch instance to use. This takes
-        # precedence over AZUL_ES_DOMAIN.
+        # The host and port of the OpenSearch instance to use. This takes
+        # precedence over AZUL_OPENSEARCH_DOMAIN.
         #
-        'AZUL_ES_ENDPOINT': None,
+        'AZUL_OPENSEARCH_ENDPOINT': None,
 
-        # The name of the AWS-hosted Elasticsearch instance (not a domain name)
+        # The name of the AWS-hosted OpenSearch instance (not a domain name)
         # to use. The given ES domain's endpoint will be looked up dynamically.
         #
-        'AZUL_ES_DOMAIN': 'azul-index-{AZUL_DEPLOYMENT_STAGE}',
+        'AZUL_OPENSEARCH_DOMAIN': 'azul-index-{AZUL_DEPLOYMENT_STAGE}',
 
         # Boolean value, 1 to share `dev` ES domain, 0 to create your own
         #
-        'AZUL_SHARE_ES_DOMAIN': '0',
+        'AZUL_SHARE_OPENSEARCH_DOMAIN': '0',
 
-        # The number of nodes in the AWS-hosted Elasticsearch cluster
+        # The number of nodes in the AWS-hosted OpenSearch cluster
         #
-        'AZUL_ES_INSTANCE_COUNT': None,
+        'AZUL_OPENSEARCH_INSTANCE_COUNT': None,
 
         # The EC2 instance type to use for a cluster node.
         #
@@ -441,19 +454,19 @@ def env() -> Mapping[str, str | None]:
         # `r` family, especially now that the number of shards is tied to the
         # indexer Lambda concurrency.
         #
-        'AZUL_ES_INSTANCE_TYPE': None,
+        'AZUL_OPENSEARCH_INSTANCE_TYPE': None,
 
         # The size of the EBS volume backing each cluster node. Set to 0 when
         # using an instance type with SSD volumes.
         #
-        'AZUL_ES_VOLUME_SIZE': '0',
+        'AZUL_OPENSEARCH_VOLUME_SIZE': '0',
 
-        # Elasticsearch operation timeout in seconds. Matches AWS' own timeout
+        # OpenSearch operation timeout in seconds. Matches AWS' own timeout
         # on the ELB sitting in front of ES:
         #
         # https://forums.aws.amazon.com/thread.jspa?threadID=233378
         #
-        'AZUL_ES_TIMEOUT': '60',
+        'AZUL_OPENSEARCH_TIMEOUT': '60',
 
         # The number of workers pulling files from the DSS repository. There is
         # one such set of repository workers per index worker.
@@ -575,7 +588,7 @@ def env() -> Mapping[str, str | None]:
         #
         # for details. These settings may also be used to drive other scaling
         # choices. For example, the non-retry contribution concurrency
-        # determines the number of shards in Elasticsearch.
+        # determines the number of shards in OpenSearch.
         #
         'AZUL_CONTRIBUTION_CONCURRENCY': '64',
         'AZUL_AGGREGATION_CONCURRENCY': '64',
@@ -648,12 +661,19 @@ def env() -> Mapping[str, str | None]:
         #
         'azul_gitlab_access_token': None,
 
+        # The filesystem UUID of the EBS volume attached to the GitLab EC2
+        # instance. This variable is only used in the `.gitlab` component. For
+        # additional info, see section 8.5 of the README (Storage) and the
+        # comments in `terraform/gitlab/gitlab.tf.json.template.py`.
+        #
+        'azul_gitlab_data_volume_id': None,
+
         # The name of the user owning the token in `azul_gitlab_access_token`.
         #
         'azul_gitlab_user': None,
 
         'PYTHONPATH': '{project_root}/src:{project_root}/test',
-        'MYPYPATH': '{project_root}/src:{project_root}/stubs',
+        'MYPYPATH': '{project_root}/src:{project_root}/stubs:{project_root}/test',
 
         # The path of a directory containing a wheel for each runtime
         # dependency. Settng this variable causes our fork of Chalice to skip
@@ -922,5 +942,26 @@ def env() -> Mapping[str, str | None]:
         # requests, divided by the number of all requests, times 100) for a
         # configured period before a metric alarm is tripped.
         #
-        'azul_waf_blocked_alarm_threshold': '50'
+        'azul_waf_blocked_alarm_threshold': '50',
+
+        # Whether to enable bundle notifications for incremental index changes
+        #
+        # FIXME: Enable bundle notifications again #7183
+        #        https://github.com/DataBiosphere/azul/issues/7183
+        #
+        'AZUL_ENABLE_BUNDLE_NOTIFICATIONS': '0',
+
+        # A Lambda runtime version to pin to, which overrides the AWS-managed
+        # default. Pin the runtime to python:3.14.v35 to prevent OutOfMemory
+        # errors in the mirror Lambda function.
+        #
+        # FIXME: Remove pinned Lambda runtime version ARN
+        #        https://github.com/DataBiosphere/azul/issues/7730
+        #
+        'azul_lambda_runtime_version': '6e4c2a8804e47c3599d89c0a896af2312961578a5546d2d9a288c0d93e6b1a2d',
+
+        # URL of Terra's external credentials manager (ECM) service used by the
+        # Azul deployment.
+        #
+        'azul_ecm_service_url': None
     }

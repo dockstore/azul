@@ -6,10 +6,10 @@ from itertools import (
     product,
 )
 
-from azul.collections import (
+from azul.lib.collections import (
     NestedDict,
 )
-from azul.types import (
+from azul.lib.types import (
     JSON,
     JSONs,
     json_sequence,
@@ -26,7 +26,7 @@ default_order_of_matrix_dimensions = [
 
 def parse_strata(strata: str) -> JSONs:
     """
-    >>> from azul.doctests import assert_json
+    >>> from azul.lib.doctests import assert_json
     >>> def f(strata):
     ...     return assert_json(parse_strata(strata))
 
@@ -80,7 +80,7 @@ def parse_strata(strata: str) -> JSONs:
 
 def make_stratification_tree(files: JSONs) -> JSON:
     """
-    >>> from azul.doctests import assert_json
+    >>> from azul.lib.doctests import assert_json
     >>> def f(files):
     ...     return assert_json(make_stratification_tree(files))
 
@@ -298,7 +298,7 @@ def make_stratification_tree(files: JSONs) -> JSON:
     ... )
     Traceback (most recent call last):
     ...
-    ValueError: 'foo' is not in list
+    ValueError: list.index(x): x not in list
     """
     assert len(set(file['uuid'] for file in files)) == len(files), files
 

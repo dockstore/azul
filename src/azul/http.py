@@ -18,11 +18,12 @@ import urllib3.connectionpool
 import urllib3.exceptions
 
 from azul import (
+    config,
+)
+from azul.lib import (
     R,
     cache,
     cached_property,
-    config,
-    require,
 )
 from azul.logging import (
     http_body_log_message,
@@ -290,7 +291,7 @@ class LimitedRetryHttpClient(HttpClientDecorator):
 
     def urlopen(self, method, url, *args, **kwargs) -> urllib3.BaseHTTPResponse:
         timeout, retries = self.timeout, self.retries
-        require('retries' not in kwargs, "Argument 'retries' is disallowed")
+        assert 'retries' not in kwargs, R("Argument 'retries' is disallowed")
         retry = _LimitedRetry.create(retries=retries, timeout=timeout)
         try:
             response = super().urlopen(method,

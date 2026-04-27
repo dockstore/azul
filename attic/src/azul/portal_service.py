@@ -28,7 +28,7 @@ from azul.deployment import (
 from azul.plugins import (
     RepositoryPlugin,
 )
-from azul.types import (
+from azul.lib.types import (
     JSON,
     JSONs,
 )

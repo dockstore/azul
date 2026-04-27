@@ -20,6 +20,75 @@ reverted. This is all fairly informal and loosely defined. Hopefully we won't
 have too many entries in this file.
 
 
+#7950 Store OAuth2 client secret in AWS Secrets Manager
+=======================================================
+
+Everyone
+--------
+
+For each of your personal deployments that have
+``AZUL_GOOGLE_OAUTH2_CLIENT_ID`` configured, run::
+
+    python scripts/provision_credentials.py oauth2_client_secret --create
+
+Follow the prompts to store the OAuth2 client secret. The prompts include steps
+to test the application and wait before disabling the secret. Because the
+application does not actually use the secret just yet, you can ignore the
+testing and waiting steps, but only those.
+
+Operator
+--------
+
+Follow the steps above for all shared deployments.
+
+
+#6774 Install AWS CLI v2
+========================
+
+Update the AWS CLI on your developer machine to the pinned version in
+``environment.boot``. Refer to section 2.1 (Development Prerequisites) under
+``AWS CLI v2`` in ``README.md`` for installation instructions.
+
+
+#7862 Add ECM endpoints to browser CSP
+======================================
+
+Add the ``azul_ecm_service_url`` to your personal deployments'
+``environment.py`` files. As always, use the sandbox deployment's
+``environment.py`` as a model when upgrading personal deployments.
+
+
+#6779 Update to OpenSearch 2.x (#6779)
+======================================
+
+Several environment variables have been renamed (``_ES_`` was replaced with
+``_OPENSEARCH_``). Compare your personal deployment's ``environment.py`` with
+that of the collocated sandbox deployment and propagate the renamings.
+
+
+#7607 Update to Python 3.14.3
+=============================
+
+Update Python on your developer machines to version 3.14.3.
+
+It may be necessary to install the ``gdbm`` package to prevent compilation
+errors if using ``pyenv``. Running ``brew install gdbm`` will address this.
+
+
+#7815 No files found during mirroring IT
+========================================
+
+Flag the following sources as ``no_mirror`` in your personal deployments
+colocated with ``dev``:
+
+ - ``datarepo-dev-3041c2cf:hca_dev_2af52a1365cb4973b51339be38f2df3f__20210830_20210903``
+ - ``datarepo-dev-40283c27:hca_dev_3a69470330844ece9abed935fd5f6748__20210901_20210903``
+ - ``datarepo-dev-788c3b52:hca_dev_955dfc2ca8c64d04aa4d907610545d11__20210831_20210903``
+
+As always, use the sandbox deployment's ``environment.py`` as a model when
+upgrading personal deployments.
+
+
 #6675 Docker build with Bookworm base image fails on GL
 =======================================================
 

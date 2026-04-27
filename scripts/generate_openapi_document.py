@@ -18,13 +18,15 @@ from furl import (
 )
 
 from azul import (
-    cached_property,
     config,
 )
 from azul.chalice import (
     AzulChaliceApp,
 )
-from azul.files import (
+from azul.lib import (
+    cached_property,
+)
+from azul.lib.files import (
     write_file_atomically,
 )
 from azul.modules import (
@@ -53,12 +55,16 @@ def main():
         patch_config(f'{app_name}_function_name', f'azul-{app_name}-dev'),
         patch_config('enable_log_forwarding', False),
         patch_config('enable_replicas', True),
-        patch_config('monitoring_email', 'azul-group@ucsc.edu')
+        patch_config('monitoring_email', 'azul-group@ucsc.edu'),
+        # FIXME: Remove patch once bundle notifications are enabled again
+        #        https://github.com/DataBiosphere/azul/issues/7183
+        patch_config('enable_bundle_notifications', True)
     ):
         lambda_endpoint = furl('http://localhost')
         with patch.object(target=AzulChaliceApp,
                           attribute='base_url',
-                          new=lambda_endpoint):
+                          new_callable=PropertyMock,
+                          side_effect=lambda_endpoint.copy):
             app_module = load_app_module(app_name)
             assert app_module.app.base_url == lambda_endpoint
             app_spec = app_module.app.spec()

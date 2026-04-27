@@ -30,11 +30,11 @@ from requirements.requirement import (
 )
 
 from azul import (
-    RequirementError,
-    cached_property,
     config,
-    reject,
-    require,
+)
+from azul.lib import (
+    R,
+    cached_property,
 )
 from azul.logging import (
     configure_script_logging,
@@ -53,7 +53,7 @@ class Versions(frozenset[Version]):
     def __str__(self) -> str:
         return ','.join('==' + v for v in sorted(self))
 
-    def __or__(self, other: 'Versions') -> 'Versions':
+    def __or__(self, other: Versions) -> Versions:
         # We need to hand-implement this because the overridden base class
         # method returns a base class instance, unfortunately.
         return type(self)(*self, *other)
@@ -69,20 +69,21 @@ class PinnedRequirement:
     versions: Versions = Versions()
 
     @classmethod
-    def create(cls, req: Requirement) -> Optional['PinnedRequirement']:
+    def create(cls, req: Requirement) -> Optional[PinnedRequirement]:
         if req.specifier:
             op, version = one(req.specs)
             assert op == '=='
             return cls(name=req.name.lower(), versions=Versions(version))
         elif req.vcs:
-            reject(req.revision is None, 'VCS requirements must carry a specific revision', req)
+            assert req.revision is not None, R(
+                'VCS requirements must carry a specific revision', req)
             return cls(name=req.name.lower())
         elif req.recursive:
             return None
         else:
-            raise RequirementError('Unable to handle requirement', req)
+            assert False, R('Unable to handle requirement', req)
 
-    def __or__(self, other: Optional['PinnedRequirement']) -> 'PinnedRequirement':
+    def __or__(self, other: Optional[PinnedRequirement]) -> PinnedRequirement:
         assert self.name == other.name
         if self.versions == other.versions:
             return self
@@ -90,7 +91,7 @@ class PinnedRequirement:
             return PinnedRequirement(name=other.name,
                                      versions=self.versions | other.versions)
 
-    def __lt__(self, other: 'PinnedRequirement'):
+    def __lt__(self, other: PinnedRequirement):
         if self.name < other.name:
             return True
         elif self.name == other.name:
@@ -111,7 +112,7 @@ class PinnedRequirements:
         self._reqs = {req.name: req for req in reqs}
         assert len(reqs) == len(self._reqs)
 
-    def __and__(self, other: 'PinnedRequirements') -> 'PinnedRequirements':
+    def __and__(self, other: PinnedRequirements) -> PinnedRequirements:
         def lookup(req: PinnedRequirement) -> Optional[PinnedRequirement]:
             try:
                 other_req = other[req]
@@ -122,10 +123,10 @@ class PinnedRequirements:
 
         return PinnedRequirements(lookup(req) for req in self)
 
-    def __sub__(self, other: 'PinnedRequirements') -> 'PinnedRequirements':
+    def __sub__(self, other: PinnedRequirements) -> PinnedRequirements:
         return PinnedRequirements(req for req in self if req not in other)
 
-    def __le__(self, other: 'PinnedRequirements') -> bool:
+    def __le__(self, other: PinnedRequirements) -> bool:
         return self._reqs.keys() <= other._reqs.keys()
 
     def __iter__(self):
@@ -195,13 +196,14 @@ class Main:
         direct_runtime_reqs = self.get_direct_reqs(self.runtime)
         direct_build_reqs = self.get_direct_reqs(self.build)
         dupes = direct_build_reqs & direct_runtime_reqs
-        require(not dupes, 'Some requirements are declared as both run and build time', dupes)
+        assert not dupes, R(
+            'Some requirements are declared as both run and build time', dupes)
 
         build_reqs = self.get_reqs(self.build)
         runtime_reqs = self.get_reqs(self.runtime)
-        require(runtime_reqs <= build_reqs,
-                'Runtime requirements are not a subset of build requirements',
-                runtime_reqs - build_reqs)
+        assert runtime_reqs <= build_reqs, R(
+            'Runtime requirements are not a subset of build requirements',
+            runtime_reqs - build_reqs)
         overlap = build_reqs & runtime_reqs
         ambiguities = PinnedRequirements(req for req in overlap if len(req.versions) > 1)
         for req in ambiguities:
@@ -215,9 +217,9 @@ class Main:
             log.error('Ambiguous version of transitive runtime requirement %s. '
                       'Consider pinning it to the version used at build time (%s).',
                       req, build_req.versions)
-        require(not ambiguities,
-                'Ambiguous transitive runtime requirement versions',
-                ambiguities)
+        assert not ambiguities, R(
+            'Ambiguous transitive runtime requirement versions',
+            ambiguities)
 
         build_only_reqs = build_reqs - pip_reqs - runtime_reqs
         transitive_build_reqs = build_only_reqs - direct_build_reqs

@@ -9,14 +9,15 @@ from typing import (
 
 from azul import (
     CatalogName,
-    R,
-    cache_per_thread,
-    cached_property,
     config,
-    require,
 )
 from azul.azulclient import (
     AzulClient,
+)
+from azul.lib import (
+    R,
+    cache_per_thread,
+    cached_property,
 )
 from azul.logging import (
     configure_script_logging,
@@ -70,7 +71,7 @@ class TerraValidator:
     def register_with_sam(self) -> None:
         for tdr in self.tdr, self.public_tdr:
             tdr.register_with_sam()
-            require(tdr.is_registered())
+            assert tdr.is_registered(), R('Failed to verify registration')
 
     def verify_sources(self) -> None:
         futures = []
@@ -102,16 +103,16 @@ class TerraValidator:
         else:
             ref = plugin.partition_source_for_indexing(catalog, ref)
             subgraph_count = plugin.count_bundles(ref)
-            require(subgraph_count > 0, 'Common prefix is too long', ref.spec)
-            require(subgraph_count <= 512, 'Common prefix is too short', ref.spec)
+            assert subgraph_count > 0, R('Common prefix is too long', ref.spec)
+            assert subgraph_count <= 512, R('Common prefix is too short', ref.spec)
 
     def verify_source_access(self) -> None:
-        public_snapshots = self.public_tdr.snapshot_ids()
-        all_snapshots = self.tdr.snapshot_ids()
+        public_snapshots = self.public_tdr.list_snapshot_ids()
+        all_snapshots = self.tdr.list_snapshot_ids()
         diff = public_snapshots - all_snapshots
-        require(not diff,
-                'The public service account can access snapshots that the indexer '
-                'service account cannot', diff)
+        assert not diff, R(
+            'The public service account can access snapshots that the indexer '
+            'service account cannot', diff)
 
 
 def main():

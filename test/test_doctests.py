@@ -2,28 +2,37 @@ import doctest
 import unittest
 
 import azul
-import azul.attrs
 import azul.auth
-import azul.bigquery
-import azul.bytes
-import azul.caching
-import azul.collections
 import azul.csp
 import azul.docker
-import azul.doctests
 import azul.drs
 import azul.dss
-import azul.exceptions
-import azul.files
-import azul.functions
+import azul.filters
 import azul.http
 import azul.indexer
 import azul.indexer.aggregate
 import azul.indexer.document
-import azul.indexer.index_repository_service
-import azul.iterators
-import azul.json
-import azul.json_freeze
+import azul.indexer.repository_service
+import azul.infra.terraform
+import azul.lib
+import azul.lib.attrs
+import azul.lib.bigquery
+import azul.lib.bytes
+import azul.lib.caching
+import azul.lib.collections
+import azul.lib.doctests
+import azul.lib.exceptions
+import azul.lib.files
+import azul.lib.functions
+import azul.lib.iterators
+import azul.lib.json
+import azul.lib.json_freeze
+import azul.lib.objects
+import azul.lib.strings
+import azul.lib.threads
+import azul.lib.time
+import azul.lib.types
+import azul.lib.uuids
 from azul.logging import (
     configure_test_logging,
 )
@@ -31,26 +40,20 @@ from azul.modules import (
     load_module,
     load_script,
 )
-import azul.objects
 import azul.openapi
 import azul.openapi.params
 import azul.openapi.responses
 import azul.openapi.schema
+import azul.plugins
 import azul.plugins.metadata.hca.indexer.transform
 import azul.plugins.metadata.hca.service.contributor_matrices
 import azul.plugins.repository.canned
 import azul.plugins.repository.tdr_hca
-import azul.service.app_controller
-import azul.service.download_controller
+import azul.service.controller
 import azul.service.drs_controller
 import azul.service.manifest_service
-import azul.strings
+import azul.service.repository_controller
 import azul.terra
-import azul.terraform
-import azul.threads
-import azul.time
-import azul.types
-import azul.uuids
 import azul.vendored.frozendict
 import service
 
@@ -67,48 +70,51 @@ def load_tests(_loader,
     root = azul.config.project_root
     for module in [
         azul,
-        azul.attrs,
         azul.auth,
-        azul.bigquery,
-        azul.bytes,
-        azul.caching,
-        azul.collections,
         azul.csp,
-        azul.doctests,
         azul.docker,
         azul.drs,
         azul.dss,
-        azul.exceptions,
-        azul.files,
-        azul.functions,
+        azul.filters,
         azul.http,
         azul.indexer,
         azul.indexer.aggregate,
         azul.indexer.document,
-        azul.indexer.index_repository_service,
-        azul.iterators,
-        azul.json,
-        azul.json_freeze,
-        azul.objects,
+        azul.indexer.repository_service,
+        azul.lib,
+        azul.lib.attrs,
+        azul.lib.bigquery,
+        azul.lib.bytes,
+        azul.lib.caching,
+        azul.lib.collections,
+        azul.lib.doctests,
+        azul.lib.exceptions,
+        azul.lib.files,
+        azul.lib.functions,
+        azul.lib.iterators,
+        azul.lib.json,
+        azul.lib.json_freeze,
+        azul.lib.objects,
+        azul.lib.strings,
+        azul.lib.threads,
+        azul.lib.time,
+        azul.lib.types,
+        azul.lib.uuids,
         azul.openapi,
         azul.openapi.params,
         azul.openapi.responses,
         azul.openapi.schema,
+        azul.plugins,
         azul.plugins.metadata.hca.service.contributor_matrices,
         azul.plugins.repository.canned,
         azul.plugins.repository.tdr_hca,
         azul.plugins.metadata.hca.indexer.transform,
-        azul.service.app_controller,
-        azul.service.download_controller,
+        azul.service.controller,
         azul.service.drs_controller,
         azul.service.manifest_service,
-        azul.strings,
+        azul.service.repository_controller,
         azul.terra,
-        azul.terraform,
-        azul.threads,
-        azul.time,
-        azul.types,
-        azul.uuids,
+        azul.infra.terraform,
         azul.vendored.frozendict,
         load_script('can_bundle'),
         load_script('envhook'),

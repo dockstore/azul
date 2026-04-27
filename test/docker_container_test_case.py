@@ -26,7 +26,7 @@ from more_itertools import (
 from azul import (
     Netloc,
 )
-from azul.json import (
+from azul.lib.json import (
     json_hash,
 )
 from azul.logging import (

@@ -14,8 +14,6 @@ from chalice.app import (
 
 from azul import (
     CatalogName,
-    R,
-    cache,
     config,
 )
 from azul.chalice import (
@@ -26,7 +24,11 @@ from azul.indexer.action_controller import (
 )
 from azul.indexer.mirror_service import (
     MirrorAction,
-    MirrorService,
+    MirrorWorkerService,
+)
+from azul.lib import (
+    R,
+    cache,
 )
 from azul.schemas import (
     SchemaController,
@@ -46,10 +48,10 @@ class MirrorController(ActionController[MirrorAction], SchemaController):
         return MirrorAction
 
     @cache
-    def service(self, catalog: CatalogName) -> MirrorService:
+    def service(self, catalog: CatalogName) -> MirrorWorkerService:
         schema_url_func = partial(self.schema_url, facility='mirror')
-        return MirrorService(catalog=catalog,
-                             schema_url_func=schema_url_func)
+        return MirrorWorkerService(catalog=catalog,
+                                   schema_url_func=schema_url_func)
 
     def handlers(self) -> dict[str, Any]:
         if config.enable_mirroring:
@@ -69,7 +71,7 @@ class MirrorController(ActionController[MirrorAction], SchemaController):
     def mirror(self, event: Iterable[SQSRecord]):
         assert config.enable_mirroring, R('Mirroring is disabled')
 
-        def message_handler(action: MirrorAction):
+        def action_handler(action: MirrorAction):
             self.service(action.catalog).mirror(action)
 
-        self._handle_events(event, message_handler)
+        self._handle_events(event, action_handler)

@@ -15,26 +15,26 @@ import yaml
 from azul import (
     config,
 )
-from azul.collections import (
-    alist,
-    dict_merge,
-)
 from azul.deployment import (
     aws,
 )
 from azul.docker import (
     resolve_docker_image_for_pull,
 )
-from azul.strings import (
+from azul.infra.terraform import (
+    chalice,
+    emit_tf,
+    vpc,
+)
+from azul.lib.collections import (
+    alist,
+    dict_merge,
+)
+from azul.lib.strings import (
     departition,
     join_lines as jl,
     join_words as jw,
     single_quote as sq,
-)
-from azul.terraform import (
-    chalice,
-    emit_tf,
-    vpc,
 )
 
 # This Terraform config creates a single EC2 instance with a bunch of Docker
@@ -152,8 +152,11 @@ from azul.terraform import (
 # To then format the volume, you can then either attach it to some other Linux
 # instance and format it there or use `make terraform` to create the actual
 # Gitlab instance and attach the volume. For the latter you would need to ssh
-# into the Gitlab instance, format `/dev/xvdf` (`/dev/nvme1n1` on newer
-# instance types) and reboot the instance. For example:
+# into the Gitlab instance, format `/dev/nvme1n1`. Occasionally, the device name
+# may be different, like `/dev/nvme0n1`. The invariant is that there should be
+# two controller devices, one for the root volume and one for the data volume.
+# Determine the controller device name to which the root volume is attached and
+# then simply use the other controller device name. For example:
 #
 # docker stop gitlab-runner
 # docker stop gitlab
@@ -161,8 +164,20 @@ from azul.terraform import (
 # sudo mv /mnt/gitlab /mnt/gitlab.deleteme
 # sudo mkdir /mnt/gitlab
 # sudo mkfs.ext4 /dev/nvme1n1
-# sudo reboot
-# sudo rm -rf /mnt/gitlab.deleteme
+#
+# After formatting the volume, obtain its UUID and set it as the value of
+# `azul_gitlab_data_volume_id` in the `.gitlab` component's `environment.py`.
+#
+# To get the UUID of an unmounted volume, run
+#
+# sudo lsblk -f
+#
+# For a mounted volume, use
+#
+# sudo blkid /dev/nvme1n1
+#
+# After setting `azul_gitlab_data_volume_id` to the obtained volume UUID,
+# terminate the instance and (re)deploy the `.gitlab` component.
 #
 # The EBS volume should be backed up (EBS snapshot) periodically. Not only does
 # it contain Gitlab's data but also its config.
@@ -244,11 +259,23 @@ runner_image, _ = resolve_docker_image_for_pull('gitlab_runner')
 # For instructions on finding the latest CIS-hardened AMI, see "Updating the AMI
 # for GitLab instances" section in OPERATOR.rst.
 #
-# CIS Amazon Linux 2023 Benchmark - Level 1 - v02 -prod-fvm47vekg24oc
+# CIS Amazon Linux 2023 Benchmark - Level 1 - v04 -prod-fvm47vekg24oc
 #
 ami_id = {
-    'us-east-1': 'ami-07f8da7e8a9c81dee'
+    'us-east-1': 'ami-0ab667a62d55ac8d0'
 }
+
+# For instructions on finding the latest Amazon Linux 2023 release, see
+# "Updating software packages via release version upgrade in AL2023 instances"
+# section in OPERATOR.rst.
+#
+AL2023_release = '2023.11.20260413'
+
+# Cloud-init's cc_mounts module does not support the UUID=<uuid> device
+# specification format. We use the /dev/disk/by-uuid/<uuid> symlink as a
+# workaround, relying on udev to create the symlink when the volume is attached.
+#
+data_volume_device = f'/dev/disk/by-uuid/{config.gitlab_data_volume_id}'
 
 gitlab_mount = '/mnt/gitlab'
 
@@ -1208,6 +1235,7 @@ emit_tf({} if config.terraform_component != 'gitlab' else {
                     'root_certificate_chain_arn': '${data.aws_acm_certificate.gitlab_vpn.arn}'
                 },
                 'session_timeout_hours': 8,
+                'disconnect_on_session_timeout': True,
                 'vpc_id': '${aws_vpc.gitlab.id}',
                 'connection_log_options': {
                     'enabled': True,
@@ -1601,14 +1629,13 @@ emit_tf({} if config.terraform_component != 'gitlab' else {
                     'volume_size': 20
                 },
                 'key_name': '${aws_key_pair.gitlab.key_name}',
-                'network_interface': {
-                    'network_interface_id': '${aws_network_interface.gitlab.id}',
-                    'device_index': 0
+                'primary_network_interface': {
+                    'network_interface_id': '${aws_network_interface.gitlab.id}'
                 },
                 'user_data_replace_on_change': True,
                 'user_data': '#cloud-config\n' + yaml.dump({
                     'mounts': [
-                        ['/dev/nvme1n1', gitlab_mount, 'ext4', '']
+                        [data_volume_device, gitlab_mount, 'ext4', '']
                     ],
                     'packages': [
                         'docker',
@@ -1626,10 +1653,10 @@ emit_tf({} if config.terraform_component != 'gitlab' else {
                     'ssh_genkeytypes': ['rsa', 'dsa', 'ecdsa'],
                     'bootcmd': [
                         '; '.join([
-                            'until [ -b /dev/nvme1n1 ]',
-                            'do echo "/dev/nvme1n1 does not exist, sleeping 1s"',
+                            f'until [ -b {data_volume_device} ]',
+                            f'do echo "{data_volume_device} does not exist, sleeping 1s"',
                             'sleep 1',
-                            'done'
+                            f'done && echo "Data volume attached to $(readlink -f {data_volume_device})"'
                         ]),
                         [
                             'cloud-init-per',
@@ -2206,11 +2233,22 @@ emit_tf({} if config.terraform_component != 'gitlab' else {
                             '-c', 'file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json',
                             '-s'  # restart agent afterwards
                         ],
-                        ['systemctl', 'enable', '--now', 'amazon-ssm-agent.service']
+                        ['systemctl', 'enable', '--now', 'amazon-ssm-agent.service'],
+                        [
+                            # Amazon Linux 2023 uses deterministic versioning,
+                            # requiring us to run `dnf upgrade` with a specific
+                            # release version. This command replaces CloudInit's
+                            # native `package_update` and `package_upgrade` keys
+                            # which appear to do nothing under AL2023.
+                            'cloud-init-per',
+                            'once',
+                            'upgrade-packages',
+                            'dnf',
+                            'upgrade',
+                            '--releasever=' + AL2023_release,
+                            '--assumeyes'
+                        ]
                     ],
-                    'package_update': True,
-                    'package_upgrade': True,
-                    'package_reboot_if_required': True,
                     'power_state': {
                         'mode': 'reboot',
                         # A bug in Amazon's AMI causes a 'condition' to be added

@@ -16,6 +16,7 @@ from typing import (
     Iterator,
     Protocol,
     Self,
+    TYPE_CHECKING,
     final,
 )
 from uuid import (
@@ -32,16 +33,7 @@ from furl import (
 
 from azul import (
     CatalogName,
-    R,
-    cached_property,
     config,
-    json_mapping,
-    mutable_furl,
-)
-from azul.attrs import (
-    SerializableAttrs,
-    devolve,
-    serializable,
 )
 from azul.auth import (
     Authentication,
@@ -49,25 +41,36 @@ from azul.auth import (
 from azul.deployment import (
     aws,
 )
-from azul.digests import (
+from azul.drs import (
+    AccessMethod,
+)
+from azul.http import (
+    HasCachedHttpClient,
+)
+from azul.lib import (
+    R,
+    cached_property,
+    mutable_furl,
+)
+from azul.lib.attrs import (
+    SerializableAttrs,
+    devolve,
+    serializable,
+)
+from azul.lib.digests import (
     Hasher,
     get_resumable_hasher,
     hasher_from_json,
     hasher_to_json,
 )
-from azul.drs import (
-    AccessMethod,
-)
-from azul.functions import (
+from azul.lib.functions import (
     compose,
 )
-from azul.http import (
-    HasCachedHttpClient,
-)
-from azul.indexer import (
-    SourceConfig,
-    SourceRef,
-    SourceSpec,
+from azul.lib.types import (
+    JSON,
+    MutableJSON,
+    json_element_strings,
+    json_mapping,
 )
 from azul.plugins import (
     File,
@@ -86,10 +89,16 @@ from azul.service.storage_service import (
     StorageObjectExists,
     StorageService,
 )
-from azul.types import (
-    JSON,
-    json_element_strings,
+from azul.source import (
+    Source,
+    SourceRef,
+    SourceSpec,
 )
+
+if TYPE_CHECKING:
+    from mypy_boto3_sqs.service_resource import (
+        Queue,
+    )
 
 log = logging.getLogger(__name__)
 
@@ -175,16 +184,13 @@ class MirrorFileDownload(RepositoryFileDownload):
     def location(self) -> str | None:
         return self._location
 
-    def update(self,
-               plugin: RepositoryPlugin,
-               authentication: Authentication | None
-               ) -> None:
+    def update(self, authentication: Authentication | None) -> None:
         pass
 
 
 class SchemaUrlFunc(Protocol):
 
-    def __call__(self, *, schema_name: str, version: int) -> mutable_furl: ...
+    def __call__(self, *, name: str, version: int) -> mutable_furl: ...
 
 
 @attrs.frozen(kw_only=True)
@@ -317,7 +323,7 @@ class FinalizeFileAction(MultiPartUploadAction):
 
 
 @attrs.frozen(kw_only=True, slots=False)
-class BaseMirrorService:
+class MirrorService:
     """
     Service for queuing mirroring work, e.g., sending action messages, and
     reading mirrored files. The most prominent reader of mirrored files is the
@@ -325,6 +331,8 @@ class BaseMirrorService:
     """
 
     catalog: CatalogName
+
+    info_schema_version = 2
 
     @cached_property
     def _queues(self) -> Queues:
@@ -359,7 +367,7 @@ class BaseMirrorService:
                 public_sources = self._source_service.list_sources(self.catalog,
                                                                    authentication=None)
                 is_public = any(
-                    source_spec == source.spec
+                    source_spec == source.ref.spec
                     for source in public_sources
                 )
                 return is_public
@@ -382,18 +390,18 @@ class BaseMirrorService:
         else:
             return False
 
-    def mirror_sources(self, sources: Iterable[tuple[SourceRef, SourceConfig]]):
+    def mirror_sources(self, sources: Iterable[Source]):
         if self.may_mirror():
             def actions():
-                for source, source_config in sources:
-                    if source_config.mirror:
+                for source in sources:
+                    if source.config.mirror:
                         log.info('Mirroring files in source %r from catalog %r',
-                                 str(source.spec), self.catalog)
-                        yield MirrorSourceAction(catalog=self.catalog, source=source)
+                                 str(source.ref.spec), self.catalog)
+                        yield MirrorSourceAction(catalog=self.catalog, source=source.ref)
                     else:
                         log.info('Not mirroring any files in source %r from catalog %r because '
                                  'mirroring is explicitly disabled',
-                                 str(source.spec), self.catalog)
+                                 str(source.ref.spec), self.catalog)
 
             self._queue_actions(actions())
         else:
@@ -409,7 +417,7 @@ class BaseMirrorService:
 
         self._queue_actions(actions())
 
-    def _mirror_queue(self):
+    def _mirror_queue(self) -> Queue:
         name = config.mirror_queue.name
         return aws.sqs_queue(name)
 
@@ -475,6 +483,9 @@ class BaseMirrorService:
                                                file_name=file.name,
                                                content_type=file.content_type)
 
+    def info(self, file: File) -> MutableJSON:
+        return json.loads(self._storage.get_object(self._info_object_key(file)))
+
     def info_exists(self, file: File) -> bool:
         return self._storage.object_exists(self._info_object_key(file))
 
@@ -519,7 +530,7 @@ class BaseMirrorService:
 
 
 @attrs.frozen(kw_only=True, slots=False)
-class MirrorService(BaseMirrorService, HasCachedHttpClient):
+class MirrorWorkerService(MirrorService, HasCachedHttpClient):
     """
     Service that carries out mirroring work. Requires a mechanism to compose
     schema URLs. This function is currently offered by the indexer app, so
@@ -582,8 +593,7 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
 
     @_mirror.register
     def _(self, a: MirrorPartitionAction) -> Iterator[MirrorAction]:
-        plugin = self.repository_plugin
-        files = plugin.list_files(a.source, a.prefix)
+        files = self.repository_plugin.list_files(a.source, a.prefix)
         for file in files:
             assert file.size is not None, R('File size unknown', file)
             assert file.size <= self.max_file_size, R(
@@ -712,7 +722,8 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
             content_types.add(file.content_type)
         return {
             content_type: sorted(content_types),
-            '$schema': str(self._schema_url_func(schema_name='info', version=2))
+            '$schema': str(self._schema_url_func(name='info',
+                                                 version=self.info_schema_version)),
         }
 
     def _update_info(self, file: File):
@@ -768,4 +779,4 @@ class MirrorService(BaseMirrorService, HasCachedHttpClient):
         actual_digest_value = hasher.hexdigest()
         assert expected_digest.value == actual_digest_value, R(
             'File digest value does not match its contents',
-            expected_digest, file)
+            actual_digest_value, file)

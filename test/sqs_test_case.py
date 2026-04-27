@@ -12,19 +12,23 @@ from chalice.app import (
 )
 
 from azul import (
-    cached_property,
     config,
-    iif,
 )
 from azul.deployment import (
     aws,
 )
-from azul.queues import (
-    Queues,
+from azul.lib import (
+    cached_property,
 )
-from azul.types import (
+from azul.lib.functions import (
+    iif,
+)
+from azul.lib.types import (
     JSON,
     MutableJSONs,
+)
+from azul.queues import (
+    Queues,
 )
 from azul_test_case import (
     AzulUnitTestCase,
@@ -45,9 +49,6 @@ class SqsTestCase(AzulUnitTestCase):
         for queue_name in queue_names:
             sqs.create_queue(QueueName=queue_name,
                              Attributes=dict(FifoQueue='true') if queue_name.endswith('.fifo') else {})
-
-    def _create_mock_notifications_queue(self):
-        self._create_mock_queues([config.notifications_queue.name])
 
 
 class WorkQueueTestCase(SqsTestCase):

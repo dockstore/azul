@@ -15,10 +15,10 @@ from more_itertools import (
     prepend,
 )
 
-from azul import (
+from azul.lib import (
     R,
 )
-from azul.strings import (
+from azul.lib.strings import (
     single_quote as sq,
 )
 
@@ -53,10 +53,10 @@ class CSP:
     def parse(cls, csp: str) -> Self:
         """(
 
-        Parse the given CSP or raise RequirementError if it is not syntactically
+        Parse the given CSP or raise AssertionError if it is not syntactically
         valid against the specification at https://www.w3.org/TR/CSP2.
 
-        >>> from azul.doctests import (
+        >>> from azul.lib.doctests import (
         ...     assert_json,
         ... )
 

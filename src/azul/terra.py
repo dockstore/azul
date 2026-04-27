@@ -16,12 +16,12 @@ from time import (
 )
 from typing import (
     ClassVar,
-    Optional,
     Self,
+    TypedDict,
 )
 
 import attrs
-from chalice import (
+from chalice.app import (
     UnauthorizedError,
 )
 from furl import (
@@ -57,19 +57,10 @@ import urllib3.response
 
 from azul import (
     Config,
-    R,
-    RequirementError,
-    cache,
     config,
-    mutable_furl,
-    reject,
-    require,
 )
 from azul.auth import (
     OAuth2,
-)
-from azul.bigquery import (
-    BigQueryRows,
 )
 from azul.deployment import (
     aws,
@@ -84,9 +75,26 @@ from azul.http import (
     LimitedTimeoutException,
     Propagate429HttpClient,
 )
-from azul.indexer import (
-    SourceRef,
-    SourceSpec,
+from azul.lib import (
+    R,
+    cache,
+    mutable_furl,
+)
+from azul.lib.bigquery import (
+    BigQueryRows,
+)
+from azul.lib.strings import (
+    trunc_ellipses,
+)
+from azul.lib.types import (
+    JSON,
+    MutableJSON,
+    is_of_type,
+    json_dict,
+    json_int,
+    json_list,
+    json_mapping,
+    json_str,
 )
 from azul.oauth2 import (
     CredentialsProvider,
@@ -94,17 +102,9 @@ from azul.oauth2 import (
     ServiceAccountCredentials,
     TokenCredentials,
 )
-from azul.strings import (
-    trunc_ellipses,
-)
-from azul.types import (
-    JSON,
-    MutableJSON,
-    json_dict,
-    json_int,
-    json_list,
-    json_mapping,
-    json_str,
+from azul.source import (
+    SourceRef,
+    SourceSpec,
 )
 
 log = logging.getLogger(__name__)
@@ -154,9 +154,9 @@ class TDRSourceSpec(SourceSpec):
         service, type, domain, subdomain, name = spec.split(':')
         assert service == 'tdr', service
         type = cls.Type(type)
-        reject(type == cls.Type.parquet, 'Parquet sources are not yet supported')
+        assert type != cls.Type.parquet, R('Parquet sources are not yet supported')
         domain = cls.Domain(domain)
-        reject(domain == cls.Domain.azure, 'Azure sources are not yet supported')
+        assert domain != cls.Domain.azure, R('Azure sources are not yet supported')
         self = cls(type=type,
                    domain=domain,
                    subdomain=subdomain,
@@ -215,7 +215,7 @@ class ServiceAccountCredentialsProvider(TerraCredentialsProvider):
         return credentials
 
     def insufficient_access(self, resource: str):
-        return RequirementError(
+        return AssertionError(
             f'The service account (SA) {self.scoped_credentials().service_account_email!r} is not '
             f'authorized to access {resource} or that resource does not exist. Make sure '
             f'that it exists, that the SA is registered with SAM and has been granted read '
@@ -382,9 +382,9 @@ class TDRClient(SAMClient, DRSClient):
         """
         source = self._lookup_source(source_spec)
         actual_project = source['dataProject']
-        require(actual_project == source_spec.subdomain,
-                'Actual Google project of TDR source differs from configured one',
-                actual_project, source_spec.subdomain)
+        assert actual_project == source_spec.subdomain, R(
+            'Actual Google project of TDR source differs from configured one',
+            actual_project, source_spec.subdomain)
         storage = one(
             resource
             for resource in map(json_dict, json_list(source['storage']))
@@ -393,17 +393,17 @@ class TDRClient(SAMClient, DRSClient):
         actual_location = json_str(storage['region'])
         # Uppercase is standard for multi-regions in the documentation but TDR
         # returns 'us' in lowercase
-        require(actual_location.lower() == config.tdr_source_location.lower(),
-                'Actual storage location of TDR source differs from configured one',
-                actual_location, config.tdr_source_location)
+        assert actual_location.lower() == config.tdr_source_location.lower(), R(
+            'Actual storage location of TDR source differs from configured one',
+            actual_location, config.tdr_source_location)
         return json_str(source['id'])
 
     def _retrieve_source(self, source: TDRSourceRef) -> MutableJSON:
         endpoint = self._repository_endpoint('snapshots', source.id)
         response = self._request('GET', endpoint)
         response = self._check_response(endpoint, response)
-        require(source.spec.name == response['name'],
-                'Source name changed unexpectedly', source, response)
+        assert source.spec.name == response['name'], R(
+            'Source name changed unexpectedly', source, response)
         return response
 
     def _lookup_source(self, source: TDRSourceSpec) -> MutableJSON:
@@ -551,20 +551,22 @@ class TDRClient(SAMClient, DRSClient):
 
     page_size: ClassVar[int] = 1000
 
-    def snapshot_ids(self) -> set[str]:
+    def list_snapshot_ids(self) -> set[str]:
         """
         List the IDs of the TDR snapshots accessible to the current credentials.
-        Much faster than listing the snapshots' names.
+        We were told that this is much faster than listing the snapshots.
         """
         endpoint = self._repository_endpoint('snapshots', 'roleMap')
         response = self._request('GET', endpoint, headers={'Connection': 'close'})
         response = self._check_response(endpoint, response)
         return set(json_dict(response['roleMap']).keys())
 
-    def snapshot_names_by_id(self,
-                             *,
-                             filter: Optional[str] = None
-                             ) -> dict[str, str]:
+    class Snapshot(TypedDict, total=False):
+        id: str
+        name: str
+        dataProject: str | None  # None for Azure-backed snapshots
+
+    def list_snapshots(self, *, filter: str | None = None) -> dict[str, Snapshot]:
         """
         List the TDR snapshots accessible to the current credentials.
 
@@ -587,8 +589,8 @@ class TDRClient(SAMClient, DRSClient):
         snapshots = {}
         before = 0
         while True:
-            args = dict(offset=before,
-                        limit=self.page_size,
+            args = dict(offset=str(before),
+                        limit=str(self.page_size),
                         sort='created_date',
                         direction='asc')
             if filter is not None:
@@ -596,10 +598,9 @@ class TDRClient(SAMClient, DRSClient):
             endpoint.set(args=args)
             response = self._request('GET', endpoint)
             response = self._check_response(endpoint, response)
-            snapshots.update({
-                json_str(snapshot['id']): json_str(snapshot['name'])
-                for snapshot in map(json_dict, json_list(response['items']))
-            })
+            for snapshot in json_list(response['items']):
+                assert is_of_type(snapshot, self.Snapshot)
+                snapshots[snapshot['id']] = snapshot
             after = len(snapshots)
             total = json_int(response['filteredTotal'])
             if after == total:
@@ -674,6 +675,6 @@ class TDRClient(SAMClient, DRSClient):
             else:
                 body = self._check_response(url, response)
                 consent_group = json_dict(one(json_list(body['consentGroups'])))
-                require(duos_id == json_str(consent_group['datasetIdentifier']),
-                        'Mismatched identifiers', duos_id, consent_group)
+                assert duos_id == json_str(consent_group['datasetIdentifier']), R(
+                    'Mismatched identifiers', duos_id, consent_group)
                 return duos_id, body

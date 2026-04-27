@@ -57,6 +57,12 @@ generic with minimal need for project-specific behavior.
   so the easiest method of installation is to download the binary and put it in
   a directory mentioned in the `PATH` environment variable.
 
+- [AWS CLI v2], for programmatic invocations to AWS services. Since v2 is not
+  available on PyPI, it must be installed separately. Install the version pinned
+  by Azul defined in a variable called `azul_awscli_version` in
+  [environment.py](environment.py). Follow the [AWS instructions for
+  installing past releases][AWS CLI v2].
+
 - AWS credentials configured in `~/.aws/credentials` and/or `~/.aws/config`
 
 - [git-secrets](#211-git-secrets)
@@ -79,7 +85,7 @@ generic with minimal need for project-specific behavior.
 
 [install terraform]: https://developer.hashicorp.com/terraform/downloads
 [Docker]: https://docs.docker.com/install/overview/
-
+[AWS CLI v2]: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-version.html
 
 ### 2.1.1 git-secrets
 
@@ -644,6 +650,14 @@ These steps are performed once per deployment (multiple times per project).
 
 9. `_refresh`
 
+10. Provision the OAuth2 client secret in AWS Secrets Manager:
+
+    ```
+    python scripts/provision_credentials.py oauth2_client_secret --create
+    ```
+
+    Follow the prompts to store the client secret.
+
 ## 3.3 Provisioning cloud infrastructure
 
 Once you've configured the project and your personal deployment or a shared
@@ -903,24 +917,93 @@ process.
 
 ## 4.2 Running the Data Browser locally
 
-Follow the steps in the [Data Browser's README] to install the prerequisites
-and launch a local version of the Data Browser's server.
+Follow the steps in the [Data Browser's README] to install its prerequisites and
+launch a local instance of the Data Browser. On on macOS an Linux, the version
+management tool [n] is a convenient way to install the required version of the
+Node.js prerequisite.
 
 [Data Browser's README]: https://github.com/DataBiosphere/data-browser/blob/main/README.md
+[n]: https://www.npmjs.com/package/n#third-party-installers
 
-The argument you specify in the launch command controls which deployment of Azul
-the server will connect to (e.g. `dev:hca-dcp` for the HCA `dev` deployment).
-To connect to another Azul deployment, see the list of site configs in the
-`/site-config` folder. To connect to a personal deployment of Azul, temporarily
-modify a related site config (e.g. `/site-config/hca-dcp/dev/config.ts` for an
-HCA-based personal deployment), set the `CATALOG` and `DATA_URL` properties to
-values matching your personal deployment, and then launch the Data Browser's
-server with the modified config specified.
+The `npm run` example in the [Data Browser's README] is outdated. Instead,
+follow the steps below in order to compose a suitable `npm run` invocation for
+launching a local instance of the Data Browser backed by a main deployment of
+Azul, say, a LungMAP instance backed by Azul `dev`:
 
-Note that when run locally, the Data Browser will make duplicate requests to
-Azul on every page load. This is due to React being run in dev mode with
-StrictMode enabled. To disable this behavior, modify `/next.config.mjs` and set
-the `reactStrictMode` property to false.
+1. Open `.gitlab/sites/{deployment}/{atlas}/base.yaml`, e.g,
+   `.gitlab/sites/dev/lungmap/base.yaml`, and note the value of
+   `data_browser_build_script`, in this case `build-dev:lungmap`. This is the
+   key of an `npm` script, which is what `npm run` expects as its argument. The
+   script we noted here is for *building* the Data Browser, which we'll use to
+   infer the key of the corresponding `npm` script for *launching* a local
+   instance.
+
+2. In the same file, note the value of `data_browser_build_env`, e.g. `dev`.
+
+3. Under `scripts` in `package.json`, locate the entry for the build script
+   using the key noted in step 1, e.g., `build-dev:lungmap`. The value of that
+   entry should start with the path to a shell script, in this case
+   `./scripts/common-build.sh`, followed by one or two arguments. Note the first
+   argument, e.g., `lungmap`.
+
+4. Under `scripts` in `package.json`, locate the entry whose value starts with
+   `./scripts/dev.sh` followed by the same first argument as the build script,
+   followed by the value of `data_browser_build_env` from step 2 above. In this
+   example the key of that entry is `dev:lungmap` and its value begins with
+   `./scripts/dev.sh lungmap dev && …`
+
+5. Invoke the launch script by passing its key to `npm run`, e.g., `npm run
+   dev:lungmap`.
+
+In some cases, there may be no matching launch script entry. For example, there
+is no launch script entry for running a LungMAP instance backed by Azul `prod`.
+There is only a build script for it (`build-prod:lungmap`), but no launch
+script. You can easily compose a launch script entry by duplicating and
+adjusting an existing entry.
+
+Furthermore, there are no entries in `.gitlab/sites` for personal deployments of
+Azul, and of course no launch scripts for them either. In order to launch a
+local instance of the Data Browser that is backed by a personal or sandbox
+deployment, pick the `.gitlab/sites` subdirectory for a collocated main
+deployment and follow the steps above to identify or create a suitable launch
+script entry. The `hannes2` deployment, for example, is collocated with
+`anvildev`. The matching launch script entry is `dev:anvil-cmg`, passing the two
+arguments `anvil-cmg` and `dev` to `./scripts/dev.sh`. These arguments refer to
+a file under `site-config`, in this case `site-config/anvil-cmg/dev/config.ts`.
+Modify that file as outlined in the patch below:
+
+```patch
+diff --git a/site-config/anvil-cmg/dev/config.ts b/site-config/anvil-cmg/dev/config.ts
+--- a/site-config/anvil-cmg/dev/config.ts (revision 082664c20b2ab8e7c757ceb42067654793880d0a)
++++ b/site-config/anvil-cmg/dev/config.ts (date 1776841405660)
+@@ -26,7 +26,7 @@
+ 
+ // Template constants
+ const APP_TITLE = "AnVIL Data Explorer";
+-const DATA_URL = "https://service.anvil.gi.ucsc.edu";
++const DATA_URL = "https://service.hannes2.anvil.gi.ucsc.edu";
+ const BROWSER_URL = "https://explore.anvil.gi.ucsc.edu";
+ const PORTAL_URL = "https://anvilproject.dev.clevercanary.com";
+ 
+@@ -35,7 +35,7 @@
+   portalUrl: string,
+   dataUrl: string,
+   gitHubUrl: string,
+-  catalog: string = CATALOG_DEFAULT
++  catalog: string = 'anvil-it'
+ ): SiteConfig {
+   return {
+     analytics: {
+```
+
+With those modifications in place, running `npm run dev:anvil-cmg` will launch a
+Data Browser instance that is backed by `hannes2` instead of `anvildev`, using
+`anvil-it` as the default catalog.
+
+Note that when run locally, the Data Browser may make duplicate requests to
+Azul on every page load. This is due to React being run in `dev` mode with
+`StrictMode` enabled. To disable this behavior, modify `next.config.mjs` and
+set the `reactStrictMode` property to false.
 
 
 # 5. Troubleshooting
@@ -1010,7 +1093,7 @@ diverging to reflect different states on PyPI. This can be fixed by incrementing
 `azul_image_version` in the Dockerfile.
 
 
-##  Unable to re-register service account with SAM
+## Unable to re-register service account with SAM
 
 If you have destroyed your deployment and are rebuilding it, it's possible that
 SAM will not allow the Google service account to be registered again because
@@ -1979,10 +2062,14 @@ The Gitlab EC2 instance is attached to an EBS volume that contains all of
 Gitlab's data and configuration. That volume is not controlled by Terraform and
 must be created manually before terraforming the `gitlab` component for the
 first time. Details about creating and formatting the volume can be found in
-[gitlab.tf.json.template.py]. The volume is mounted at `/mnt/gitlab`. The
-configuration changes are tracked in a local Git repository on the system 
-administrator's computer. The system administrator keeps the configuration files 
-consistent between GitLab instances.
+[gitlab.tf.json.template.py]. The volume is mounted at `/mnt/gitlab`. Also, the
+volume is mounted by its filesystem UUID rather than by device path
+(e.g., `/dev/nvme1n1`), ensuring reliable mounting across different instance
+types. This is because device names can vary and volumes may be attached in a
+non-deterministic order. See [gitlab.tf.json.template.py] for details on
+obtaining the UUID. The configuration changes are tracked in a local Git
+repository on the system administrator's computer. The system administrator
+keeps the configuration files consistent between GitLab instances.
 
 When an instance boots and finds the EBS volume empty, Gitlab will initialize it
 with default configuration. That configuration is very vulnerable because the

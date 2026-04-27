@@ -6,14 +6,14 @@ from furl import (
     furl,
 )
 
-from azul import (
-    RequirementError,
-)
 from azul.chalice import (
     AzulChaliceApp,
 )
-from azul.json import (
+from azul.lib.json import (
     copy_json,
+)
+from azul.lib.types import (
+    JSON,
 )
 from azul.logging import (
     configure_test_logging,
@@ -21,9 +21,6 @@ from azul.logging import (
 from azul.openapi import (
     params,
     schema,
-)
-from azul.types import (
-    JSON,
 )
 from azul_test_case import (
     AzulUnitTestCase,
@@ -54,7 +51,7 @@ class TestAppSpecs(AzulUnitTestCase):
                          'Changing input object should not affect specs')
 
     def test_already_annotated_top_level_spec(self):
-        with self.assertRaises(RequirementError):
+        with self.assertRaises(AssertionError):
             self.app({'paths': {'/': {'already': 'annotated'}}})
 
     def test_unannotated(self):
@@ -130,14 +127,14 @@ class TestAppSpecs(AzulUnitTestCase):
             'get': {'c': 'd'}
         }
 
-        with self.assertRaises(RequirementError) as cm:
+        with self.assertRaises(AssertionError) as cm:
             @app.route('/foo',
                        methods=['GET'],
                        path_spec=path_spec,
                        spec={'e': 'f'})
             def route():
                 pass  # no coverage
-        self.assertEqual(str(cm.exception),
+        self.assertEqual(cm.exception.args[0].args[0],
                          "Only specify 'spec' once per route path and method")
 
     def test_multiple_routes(self):
@@ -176,13 +173,13 @@ class TestAppSpecs(AzulUnitTestCase):
     def test_duplicate_specs(self):
         app = self.app({'foo': 'bar'})
 
-        with self.assertRaises(RequirementError) as cm:
+        with self.assertRaises(AssertionError) as cm:
             @app.route('/foo', methods=['GET'], spec={'a': 'b'})
             @app.route('/foo', methods=['GET'], spec={'a': 'XXX'})
             def route():
                 pass
         self.assertEqual("Only specify 'spec' once per route path and method",
-                         str(cm.exception))
+                         cm.exception.args[0].args[0])
 
     def test_duplicate_path_specs(self):
         app = self.app({'foo': 'bar'})
@@ -191,12 +188,12 @@ class TestAppSpecs(AzulUnitTestCase):
         def route1():
             pass
 
-        with self.assertRaises(RequirementError) as cm:
+        with self.assertRaises(AssertionError) as cm:
             @app.route('/foo', methods=['GET'], path_spec={'a': 'b'}, spec={})
             def route2():
                 pass
         self.assertEqual('Only specify path_spec once per route path',
-                         str(cm.exception))
+                         cm.exception.args[0].args[0])
 
     def test_shared_path_spec(self):
         """

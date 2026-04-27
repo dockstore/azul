@@ -31,19 +31,23 @@ from more_itertools import (
 )
 
 from azul import (
-    cache,
     config,
+)
+from azul.lib import (
+    cache,
+)
+from azul.lib.collections import (
+    OrderedSet,
+)
+from azul.lib.functions import (
     iif,
 )
-from azul.collections import (
-    OrderedSet,
+from azul.lib.strings import (
+    back_quote as bq,
+    join_grammatically,
 )
 from azul.modules import (
     load_script,
-)
-from azul.strings import (
-    back_quote as bq,
-    join_grammatically,
 )
 from azul.template import (
     emit_text,
@@ -210,7 +214,9 @@ class T(Enum):
             *iif(self is T.upgrade, ['backup:gitlab'], [
                 'API',
                 'reindex:partial',
-                *('reindex:' + d for d in self.downstream_deployments(target_branch))
+                *('reindex:' + d for d in self.downstream_deployments(target_branch)),
+                'mirror:partial',
+                *('mirror:' + d for d in self.downstream_deployments(target_branch)),
             ])
         ])
 
@@ -454,6 +460,38 @@ def emit(t: T, target_branch: str):
                         ])
                     )
                 },
+                {
+                    'type': 'h2',
+                    'content': 'Author (mirror)'
+                },
+                *[
+                    {
+                        'type': 'cli',
+                        'content': f'This PR is labeled `mirror:{d}`',
+                        'alt': f'or the changes introduced by it will not require mirroring of `{d}`'
+                    }
+                    for d in t.affected_deployments(target_branch)
+                ],
+                {
+                    'type': 'cli',
+                    'content': (
+                        'This PR is labeled `mirror:partial` and ' +
+                        'its description documents the specific mirroring procedure for ' +
+                        join_grammatically([
+                            f'`{d}`' for d in t.affected_deployments(target_branch)
+                        ])
+                    ),
+                    'alt': (
+                        'or requires a full mirroring ' +
+                        iif(len(t.affected_deployments(target_branch)) == 1,
+                            'or is not labeled',
+                            'or carries none of the labels ') +
+                        join_grammatically([
+                            f'`mirror:{d}`'
+                            for d in t.affected_deployments(target_branch)
+                        ])
+                    )
+                },
                 *iif(t is T.default, [
                     {
                         'type': 'h2',
@@ -607,6 +645,14 @@ def emit(t: T, target_branch: str):
                     'content': 'This PR is labeled `reqs`',
                     'alt': 'or does not modify `requirements*.txt`'
                 },
+                iif(t is T.upgrade, {
+                    'type': 'cli',
+                    'content': 'Updated the `AL2023_release` variable in [gitlab.tf.json.template.py]'
+                               '(../blob/develop/terraform/gitlab/gitlab.tf.json.template.py) to the '
+                               'most recent [AL2023 release](../blob/develop/OPERATOR.rst#updating-'
+                               'software-packages-via-release-version-upgrade-in-al2023-instances)',
+                    'alt': 'or no update is available'
+                }),
                 iif(t not in (T.backport, T.hotfix), {
                     'type': 'cli',
                     'content': '`make integration_test` passes in personal deployment',
@@ -713,6 +759,10 @@ def emit(t: T, target_branch: str):
                 {
                     'type': 'cli',
                     'content': 'Checked `reindex:…` labels and `r` commit title tag'
+                },
+                {
+                    'type': 'cli',
+                    'content': 'Checked `mirror:…` labels'
                 },
                 {
                     'type': 'cli',
@@ -862,7 +912,17 @@ def emit(t: T, target_branch: str):
                             'type': 'cli',
                             'content': f'Checked for failures in `{s}`',
                             'alt': f'or this PR is not labeled `reindex:{d}`'
-                        }
+                        },
+                        {
+                            'type': 'cli',
+                            'content': f'Started mirroring in `{s}`',
+                            'alt': f'or this PR is not labeled `mirror:{d}`'
+                        },
+                        {
+                            'type': 'cli',
+                            'content': f'Checked for failures in `{s}`',
+                            'alt': f'or this PR is not labeled `mirror:{d}`'
+                        },
                     ])
                 ]
                 for i, (d, s) in enumerate(t.target_deployments(target_branch).items())
@@ -1089,9 +1149,9 @@ def emit(t: T, target_branch: str):
                                 'type': 'cli',
                                 'content': f'{action} in `{d}`',
                                 'alt': (
-                                    'or neither this PR nor a failed, prior promotion requires it'
+                                    f'or neither this PR nor a failed, prior promotion is labelled `mirror:{d}`'
                                     if t is T.hotfix else
-                                    f'or this PR does not require mirroring `{d}`'
+                                    f'or this PR is not labelled `mirror:{d}`'
                                 )
                             }
                             for action in [

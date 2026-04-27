@@ -1772,6 +1772,16 @@ dcp57_sources = union(dcp56_sources, 528, delta([
     source('bigquery', 'datarepo-7731fc47', 'hca_prod_76bc0e978cae43d4a647477a13be47f9__20251202_dcp2_20260203_dcp57'),
 ]))
 
+dcp58_sources = union(dcp57_sources, 530, delta([
+    source('bigquery', 'datarepo-74756a12', 'hca_prod_984ce0a2682d47a3b80e1354dfe51ca3__20260304_dcp2_20260304_dcp58'),
+    source('bigquery', 'datarepo-90320986', 'hca_prod_ad04c8e79b7d4cceb8e901e31da10b94__20220118_dcp2_20260304_dcp58'),
+    source('bigquery', 'datarepo-04e4ece0', 'hca_prod_c8503de8d02d4bdaad064c851b37fa97__20260304_dcp2_20260304_dcp58'),
+]))
+
+dcp59_sources = union(dcp58_sources, 530, delta([
+    source('bigquery', 'datarepo-72daf113', 'hca_prod_87f519b4886241f9acff75e823e0e430__20240301_dcp2_20260331_dcp59'),
+]))
+
 lungmap_sources = union({}, 3, delta([
     source('bigquery', 'datarepo-32f75497', 'lungmap_prod_00f056f273ff43ac97ff69ca10e38c89__20220308_20220308'),
     source('bigquery', 'datarepo-7066459d', 'lungmap_prod_1bdcecde16be420888f478cd2133d11d__20220308_20220308'),
@@ -1845,7 +1855,8 @@ lm9_sources = union(lm8_sources, 16, delta([
     # @formatter:on
 ]))
 
-lm10_sources = union(lm9_sources, 23, delta([
+lm10_sources = union(lm9_sources, 25, delta([
+    source('bigquery', 'datarepo-27e08fa5', 'lungmap_prod_0e2b244192a5424cbce1abc13435686f__20251204_20251204_lm10'),
     source('bigquery', 'datarepo-96fffa45', 'lungmap_prod_1977dc4784144263a8706b0f207d8ab3__20240206_20251204_lm10'),
     source('bigquery', 'datarepo-6a0330b7', 'lungmap_prod_20037472ea1d4ddb9cd356a11a6f0f76__20220307_20251204_lm10'),
     source('bigquery', 'datarepo-b90b4d81', 'lungmap_prod_4ae8c5c91520437198276935661f6c84__20231004_20251204_lm10'),
@@ -1854,6 +1865,7 @@ lm10_sources = union(lm9_sources, 23, delta([
     source('bigquery', 'datarepo-e248f3b9', 'lungmap_prod_9393acbfe8d84b969c71996e245e5f23__20251204_20251204_lm10'),
     source('bigquery', 'datarepo-3d3a02e4', 'lungmap_prod_aef908bcfeec4c549b3b78b0adbd6502__20251204_20251204_lm10'),
     source('bigquery', 'datarepo-f5e7ee25', 'lungmap_prod_e99faee277064c1a9d2876c68320f549__20251204_20251204_lm10'),
+    source('bigquery', 'datarepo-ff773934', 'lungmap_prod_f899709cae2c4bb988f0131142e6c7ec__20220310_20251204_lm10'),
     source('bigquery', 'datarepo-1c09ab61', 'lungmap_prod_fdadee7e209745d5bf81cc280bd8348e__20240206_20251204_lm10'),
 ]))
 
@@ -1897,9 +1909,8 @@ def env() -> Mapping[str, str | None]:
                                                     repository=dict(name='tdr_hca')),
                                        sources=condense(sources))
             for atlas, catalog, sources, mirror_limit, it_mirror_limit in [
-                ('hca', 'dcp56', dcp56_sources, None, int(1.5 * 1024 ** 3)),
-                ('hca', 'dcp57', dcp57_sources, None, int(1.5 * 1024 ** 3)),
-                ('lungmap', 'lm9', lm9_sources, -1, -1),
+                ('hca', 'dcp58', dcp58_sources, None, int(1.5 * 1024 ** 3)),
+                ('hca', 'dcp59', dcp59_sources, None, int(1.5 * 1024 ** 3)),
                 ('lungmap', 'lm10', lm10_sources, -1, -1)
             ]
             for suffix, is_it in [
@@ -1912,11 +1923,12 @@ def env() -> Mapping[str, str | None]:
         'AZUL_TDR_SERVICE_URL': 'https://data.terra.bio',
         'AZUL_SAM_SERVICE_URL': 'https://sam.dsde-prod.broadinstitute.org',
         'AZUL_TERRA_SERVICE_URL': 'https://firecloud-orchestration.dsde-prod.broadinstitute.org',
+        'azul_ecm_service_url': 'https://externalcreds.dsde-prod.broadinstitute.org',
 
         'AZUL_ENABLE_MONITORING': '1',
 
-        'AZUL_ES_INSTANCE_TYPE': 'r6gd.xlarge.search',
-        'AZUL_ES_INSTANCE_COUNT': '6',
+        'AZUL_OPENSEARCH_INSTANCE_TYPE': 'r6gd.xlarge.search',
+        'AZUL_OPENSEARCH_INSTANCE_COUNT': '6',
 
         'AZUL_CONTRIBUTION_CONCURRENCY': '300/64',
 

@@ -9,10 +9,12 @@ from furl import (
 
 from azul import (
     config,
-    require,
 )
 from azul.http import (
     http_client,
+)
+from azul.lib import (
+    R,
 )
 from azul.logging import (
     configure_script_logging,
@@ -22,7 +24,7 @@ log = logging.getLogger(__name__)
 http = http_client(log)
 
 repository_url = 'https://raw.githubusercontent.com/swagger-api/swagger-ui'
-tag = 'v5.31.0'
+tag = 'v5.32.2'
 files = [
     'index.html',
     'index.css',
@@ -42,7 +44,7 @@ swagger_dir = Path(config.project_root) / 'resources/static/swagger'
 def download_file(name: str):
     object_url = furl(repository_url) / tag / 'dist' / name
     response = http.request('GET', str(object_url))
-    require(response.status == 200, name)
+    assert response.status == 200, R(name)
     with open(swagger_dir / name, 'wb') as f:
         f.write(response.data)
 

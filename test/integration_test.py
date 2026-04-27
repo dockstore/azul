@@ -60,6 +60,7 @@ from google.cloud import (
 from google.oauth2 import (
     service_account,
 )
+import jsonschema
 from more_itertools import (
     first,
     grouper,
@@ -76,13 +77,7 @@ import urllib3
 from azul import (
     CatalogName,
     Config,
-    RequirementError,
-    cache,
-    cached_property,
     config,
-    drs,
-    false,
-    mutable_furl,
 )
 from azul.auth import (
     OAuth2,
@@ -94,10 +89,6 @@ from azul.azulclient import (
 from azul.chalice import (
     AzulChaliceApp,
 )
-from azul.collections import (
-    alist,
-    lookup,
-)
 from azul.csp import (
     CSP,
 )
@@ -107,18 +98,11 @@ from azul.deployment import (
 from azul.drs import (
     AccessMethod,
 )
-from azul.es import (
-    ESClientFactory,
-)
 from azul.http import (
     HttpClient,
     http_client,
 )
 from azul.indexer import (
-    Prefix,
-    SourceConfig,
-    SourceRef,
-    SourceSpec,
     SourcedBundleFQID,
 )
 from azul.indexer.document import (
@@ -130,10 +114,26 @@ from azul.indexer.index_service import (
     IndexService,
 )
 from azul.indexer.mirror_service import (
-    BaseMirrorService,
+    MirrorService,
 )
-from azul.json_freeze import (
+from azul.lib import (
+    cache,
+    cached_property,
+    false,
+    mutable_furl,
+)
+from azul.lib.collections import (
+    alist,
+    lookup,
+)
+from azul.lib.json_freeze import (
     freeze,
+)
+from azul.lib.types import (
+    JSON,
+    JSONs,
+    MutableJSON,
+    MutableJSONs,
 )
 from azul.logging import (
     configure_test_logging,
@@ -145,6 +145,9 @@ from azul.modules import (
 )
 from azul.oauth2 import (
     OAuth2Client,
+)
+from azul.opensearch import (
+    OpenSearchClientFactory,
 )
 from azul.plugins import (
     File,
@@ -168,18 +171,19 @@ from azul.service.manifest_service import (
     ManifestFormat,
     ManifestGenerator,
 )
+from azul.source import (
+    Prefix,
+    Source,
+    SourceConfig,
+    SourceRef,
+    SourceSpec,
+)
 from azul.terra import (
     ServiceAccountCredentialsProvider,
     TDRClient,
     TDRSourceRef,
     TDRSourceSpec,
     UserCredentialsProvider,
-)
-from azul.types import (
-    JSON,
-    JSONs,
-    MutableJSON,
-    MutableJSONs,
 )
 from azul_test_case import (
     AzulTestCase,
@@ -226,8 +230,8 @@ class IntegrationTestCase(AzulTestCase):
         return self.azul_client.index_queue_service
 
     @property
-    def index_repository_service(self):
-        return self.azul_client.index_repository_service
+    def repository_service(self):
+        return self.azul_client.repository_service
 
     def repository_plugin(self, catalog: CatalogName) -> RepositoryPlugin:
         return self.azul_client.repository_plugin(catalog)
@@ -273,8 +277,8 @@ class IntegrationTestCase(AzulTestCase):
                          f'The "unregistered" service account ({email!r}) has '
                          f'been registered')
         # The unregistered service account should not have access to any sources
-        with self.assertRaises(RequirementError) as cm:
-            tdr.snapshot_names_by_id()
+        with self.assertRaises(AssertionError) as cm:
+            tdr.list_snapshots()
         msg = str(cm.exception)
         expected_msg_prefix = f'The service account (SA) {email!r} is not authorized'
         self.assertEqual(expected_msg_prefix, msg[:len(expected_msg_prefix)])
@@ -283,8 +287,8 @@ class IntegrationTestCase(AzulTestCase):
     @cached_property
     def managed_access_sources_by_catalog(self
                                           ) -> dict[CatalogName, set[TDRSourceRef]]:
-        public_sources = self._public_tdr_client.snapshot_names_by_id()
-        all_sources = self._tdr_client.snapshot_names_by_id()
+        public_sources = self._public_tdr_client.list_snapshots()
+        all_sources = self._tdr_client.list_snapshots()
         configured_sources = {
             catalog: self.repository_plugin(catalog).sources
             for catalog in config.integration_test_catalogs
@@ -293,7 +297,11 @@ class IntegrationTestCase(AzulTestCase):
         managed_access_sources = {catalog: set() for catalog in config.catalogs}
         for catalog, sources in configured_sources.items():
             for spec, _ in sources.items():
-                source_id = one(id for id, name in all_sources.items() if name == spec.name)
+                source_id = one(
+                    id
+                    for id, snapshot in all_sources.items()
+                    if snapshot['name'] == spec.name
+                )
                 if source_id not in public_sources:
                     ref = TDRSourceRef(id=source_id, spec=spec, prefix=None)
                     managed_access_sources[catalog].add(ref)
@@ -304,7 +312,7 @@ class IntegrationTestCase(AzulTestCase):
                        *,
                        public: bool | None = None,
                        mirror: bool = False,
-                       ) -> tuple[SourceRef, SourceConfig] | None:
+                       ) -> Source | None:
         """
         Choose an indexed source at random.
 
@@ -356,8 +364,8 @@ class IntegrationTestCase(AzulTestCase):
             assert public is False, 'An IT catalog must contain at least one public source'
             return None
         else:
-            source, cfg = self.random.choice(sorted(sources.items()))
-            return plugin.resolve_source(source), cfg
+            source, config = self.random.choice(sorted(sources.items()))
+            return Source(ref=plugin.resolve_source(source), config=config)
 
 
 class IndexingIntegrationTest(IntegrationTestCase):
@@ -433,8 +441,8 @@ class IndexingIntegrationTest(IntegrationTestCase):
         for page_size in 1, 2:
             with self.subTest(page_size=page_size):
                 with mock.patch.object(TDRClient, 'page_size', page_size):
-                    paged_snapshots = self._tdr_client.snapshot_names_by_id(filter=filter)
-                snapshots = self._tdr_client.snapshot_names_by_id(filter=filter)
+                    paged_snapshots = self._tdr_client.list_snapshots(filter=filter)
+                snapshots = self._tdr_client.list_snapshots(filter=filter)
                 self.assertLess(len(snapshots), 20)
                 # Show that multiple pages were fetched, via the pigeonhole
                 # principle, and under the assumption that the TDR client
@@ -472,17 +480,20 @@ class IndexingIntegrationTest(IntegrationTestCase):
         catalogs: list[Catalog] = []
         for catalog in config.integration_test_catalogs.values():
             if index:
-                public_source, _ = self._select_source(
+                public_source = self._select_source(
                     catalog.name,
                     public=True,
                     # If test_mirroring is run for the catalog, ensure that the
                     # source is not flagged as no_mirror so that we can test
                     # downloading a mirrored file
-                    mirror=mirror and self._mirror_service(catalog.name).may_mirror()
-                )
+                    #
+                    # FIXME: Revert, once the underlying issue with requester-pays is fixed
+                    #        https://github.com/DataBiosphere/azul/issues/7955
+                    #
+                    mirror=True and self._mirror_service(catalog.name).may_mirror()
+                ).ref
                 ma_source = self._select_source(catalog.name, public=False)
-                if ma_source is not None:
-                    ma_source = ma_source[0]
+                ma_source = None if ma_source is None else ma_source.ref
                 sources = alist(public_source, ma_source)
                 notifications, fqids = self._prepare_notifications(catalog.name, sources)
             else:
@@ -514,7 +525,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
         for catalog in catalogs:
             self._test_manifest(catalog.name)
             self._test_manifest_tagging_race(catalog.name)
-            self._test_dos_and_drs(catalog.name)
+            self._test_drs(catalog.name)
             self._test_repository_files(catalog.name)
             self._test_managed_access(catalog=catalog.name,
                                       public_source=catalog.public_source,
@@ -526,7 +537,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
         if index and delete:
             # FIXME: Test delete notifications
             #        https://github.com/DataBiosphere/azul/issues/3548
-            if false():
+            if false() and config.enable_bundle_notifications:
                 with self._service_account_credentials:
                     for catalog in catalogs:
                         self._assert_catalog_empty(catalog.name)
@@ -576,7 +587,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
             '',  # default keys for lambda
             '/',  # all keys
             '/basic',
-            '/elasticsearch',
+            '/opensearch',
             '/queues',
             '/progress',
             '/api_endpoints',
@@ -759,8 +770,12 @@ class IndexingIntegrationTest(IntegrationTestCase):
         plugin = self.repository_plugin(catalog)
         with self._public_service_account_credentials:
             # This depends on the indexing test choosing a public source that
-            # is not flagged as no_mirror
-            outer_file, inner_file = self._get_one_inner_file(catalog)
+            # is not flagged as no_mirror. It's possible that we selected a
+            # source with no files below the mirror limit, in which case the
+            # test will fail. For now, we consider that to be an acceptable risk
+            # given the cost associated with mirroring larger files.
+            outer_file, inner_file = self._get_one_file(catalog,
+                                                        max_size=config.catalogs[catalog].mirror_limit)
         # Order matters here because sha256 is present in the file response for
         # AnVIL, but is always set to the empty string
         file_digest = lookup(inner_file, 'file_md5sum', 'sha256')
@@ -778,17 +793,20 @@ class IndexingIntegrationTest(IntegrationTestCase):
         file = first(file for file in files if file.digest.value == file_digest)
         return file, source, inner_file
 
-    def _get_one_inner_file(self, catalog: CatalogName) -> tuple[JSON, JSON]:
-        outer_file = self._get_one_outer_file(catalog)
-        inner_files: JSONs = outer_file['files']
-        inner_file = one(inner_files)
-        return outer_file, inner_file
-
-    @cache
-    def _get_one_outer_file(self, catalog: CatalogName) -> JSON:
+    def _get_one_file(self,
+                      catalog: CatalogName,
+                      *,
+                      max_size: int | None = None,
+                      ) -> tuple[JSON, JSON]:
         # Try to filter for an easy-to-parse format to verify its contents
         file_size_facet = self._file_size_facet(catalog)
         for filters in [self._fastq_filter(catalog), {}]:
+            if max_size is not None:
+                filters.update({
+                    file_size_facet: {
+                        'within': [[1, max_size]],
+                    }
+                })
             response = self._check_endpoint(method=GET,
                                             path='/index/files',
                                             args=dict(catalog=catalog,
@@ -801,7 +819,10 @@ class IndexingIntegrationTest(IntegrationTestCase):
                 break
         else:
             self.fail('No files found')
-        return one(hits)
+        outer_file = one(hits)
+        inner_files: JSONs = outer_file['files']
+        inner_file = one(inner_files)
+        return outer_file, inner_file
 
     def _source_spec(self, catalog: CatalogName, entity: JSON) -> SourceSpec:
         source = self._source_from_response(catalog, one(entity['sources']))
@@ -850,12 +871,27 @@ class IndexingIntegrationTest(IntegrationTestCase):
         else:
             assert False, catalog
 
-    def _test_dos_and_drs(self, catalog: CatalogName):
+    def _test_drs(self, catalog: CatalogName):
         if config.is_dss_enabled(catalog) and config.dss_direct_access:
-            outer_file, inner_file = self._get_one_inner_file(catalog)
+            outer_file, inner_file = self._get_one_file(catalog)
             source = self._source_spec(catalog, outer_file)
-            self._test_dos(catalog, inner_file)
-            self._test_drs(catalog, source, inner_file)
+            repository_plugin = self.azul_client.repository_plugin(catalog)
+            file_uuid = lookup(inner_file, 'document_id', 'uuid')
+            drs_uri = f'drs://{config.api_lambda_domain("service")}/{file_uuid}'
+            drs_object = repository_plugin.drs_object(drs_uri)
+            for access_method in AccessMethod:
+                with self.subTest('drs', catalog=catalog, access_method=AccessMethod.https):
+                    log.info('Resolving file %r with DRS using %r', file_uuid, access_method)
+                    access = drs_object.get(access_method)
+                    self.assertIsNone(access.headers)
+                    if access.method is AccessMethod.https:
+                        response = self._get_url(GET, furl(access.url), stream=True)
+                        self._validate_file_response(response, source, inner_file)
+                    elif access.method is AccessMethod.gs:
+                        content = self._get_gs_url_content(furl(access.url), size=self.num_fastq_bytes)
+                        self._validate_file_content(content, inner_file)
+                    else:
+                        self.fail(access_method)
 
     @property
     def _service_account_credentials(self) -> ContextManager:
@@ -1146,7 +1182,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
 
     def _test_repository_files(self, catalog: CatalogName):
         with self.subTest('repository_files', catalog=catalog):
-            outer_file, inner_file = self._get_one_inner_file(catalog)
+            outer_file, inner_file = self._get_one_file(catalog)
             file_url = inner_file['azul_url']
             if file_url:
                 source = self._source_spec(catalog, outer_file)
@@ -1168,6 +1204,13 @@ class IndexingIntegrationTest(IntegrationTestCase):
             prefix = 'Unexpected response from '
             self.assertEqual(prefix, msg[:len(prefix)])
             self.assertNotIn(str(config.tdr_service_url), msg)
+            return None
+        elif response.status == 403:
+            # FIXME: Treat this as an error if requester-pays is enabled
+            #        https://github.com/DataBiosphere/azul/issues/7794
+            msg = json.loads(response.data)['Message']
+            prefix = 'DRS server requires requester-pays for '
+            self.assertEqual(prefix, msg[:len(prefix)])
             return None
         else:
             self.assertEqual(200, response.status)
@@ -1221,56 +1264,6 @@ class IndexingIntegrationTest(IntegrationTestCase):
         finally:
             response.close()
 
-    def _test_drs(self,
-                  catalog: CatalogName,
-                  source: SourceSpec,
-                  file: JSON
-                  ) -> None:
-        repository_plugin = self.azul_client.repository_plugin(catalog)
-        file_uuid = lookup(file, 'document_id', 'uuid')
-        drs_uri = f'drs://{config.api_lambda_domain("service")}/{file_uuid}'
-        drs_object = repository_plugin.drs_object(drs_uri)
-        for access_method in AccessMethod:
-            with self.subTest('drs', catalog=catalog, access_method=AccessMethod.https):
-                log.info('Resolving file %r with DRS using %r', file_uuid, access_method)
-                access = drs_object.get(access_method)
-                self.assertIsNone(access.headers)
-                if access.method is AccessMethod.https:
-                    response = self._get_url(GET, furl(access.url), stream=True)
-                    self._validate_file_response(response, source, file)
-                elif access.method is AccessMethod.gs:
-                    content = self._get_gs_url_content(furl(access.url), size=self.num_fastq_bytes)
-                    self._validate_file_content(content, file)
-                else:
-                    self.fail(access_method)
-
-    def _test_dos(self, catalog: CatalogName, file: JSON):
-        with self.subTest('dos', catalog=catalog):
-            file_uuid = lookup(file, 'document_id', 'uuid')
-            log.info('Resolving file %s with DOS', file_uuid)
-            response = self._check_endpoint(method=GET,
-                                            path=drs.dos_object_url_path(file_uuid),
-                                            args=dict(catalog=catalog))
-            json_data = json.loads(response)['data_object']
-            file_url = first(json_data['urls'])['azul_url']
-            while True:
-                with self._get_url(method=GET,
-                                   url=file_url,
-                                   stream=True
-                                   ) as response:
-                    if response.status in (301, 302):
-                        file_url = response.headers['Location']
-                        try:
-                            retry_after = response.headers['Retry-After']
-                        except KeyError:
-                            pass
-                        else:
-                            time.sleep(int(retry_after))
-                    else:
-                        break
-            self._assertResponseStatus(response, 200)
-            self._validate_file_content(response, file)
-
     def _get_gs_url_content(self,
                             url: furl,
                             size: int | None = None
@@ -1299,7 +1292,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
                                ) -> tuple[list[SQSMessage], set[SourcedBundleFQID]]:
         plugin = self.repository_plugin(catalog)
         queue_service = self.index_queue_service
-        repository_service = self.index_repository_service
+        repository_service = self.repository_service
         bundle_fqids, notifications = set(), []
         for source in sources:
             source = plugin.partition_source_for_indexing(catalog, source)
@@ -1371,7 +1364,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
                 expected_fqids -= replica_fqids
                 log.info('Ignoring replica bundles %r', replica_fqids)
             else:
-                service = self.index_repository_service
+                service = self.repository_service
                 expected_fqids = set(service.filter_obsolete_bundle_versions(expected_fqids))
                 obsolete_fqids = bundle_fqids - expected_fqids
                 if obsolete_fqids:
@@ -1407,7 +1400,8 @@ class IndexingIntegrationTest(IntegrationTestCase):
                                      ) -> None:
         entity_type = 'files'
         with self.subTest('single_entity', entity_type=entity_type, catalog=catalog):
-            entity_id = self._get_one_outer_file(catalog)['entryId']
+            outer_file, inner_file = self._get_one_file(catalog)
+            entity_id = outer_file['entryId']
             url = config.service_endpoint.set(path=('index', entity_type, entity_id),
                                               args=dict(catalog=catalog))
             hit = self._get_url_json(GET, url)
@@ -1456,10 +1450,10 @@ class IndexingIntegrationTest(IntegrationTestCase):
         that we can instantiate a local ES client pointing at a real, remote
         ES domain.
         """
-        es_client = ESClientFactory.get()
+        opensearch = OpenSearchClientFactory.get()
         service = IndexService()
         for index_name in service.index_names(catalog):
-            self.assertTrue(es_client.indices.exists(index=str(index_name)))
+            self.assertTrue(opensearch.indices.exists(index=str(index_name)))
 
     def _test_managed_access(self,
                              catalog: CatalogName,
@@ -1745,7 +1739,8 @@ class IndexingIntegrationTest(IntegrationTestCase):
         if ManifestFormat.curl in metadata_plugin.manifest_formats:
             # Create a single-file curl manifest and verify that the OAuth2
             # token is present on the command line
-            managed_access_file_id = one(self.random.choice(files)['files'])['uuid']
+            managed_access_file = one(self.random.choice(files)['files'])
+            managed_access_file_id = lookup(managed_access_file, 'document_id', 'uuid')
             filters = {metadata_plugin.special_fields.file_uuid.name: {'is': [managed_access_file_id]}}
             manifest_url.set(args=dict(catalog=catalog,
                                        filters=json.dumps(filters),
@@ -1767,7 +1762,7 @@ class IndexingIntegrationTest(IntegrationTestCase):
             for command_line in command_lines:
                 self.assertIn(expected_auth_header, command_line)
 
-    def _mirror_service(self, catalog: CatalogName) -> BaseMirrorService:
+    def _mirror_service(self, catalog: CatalogName) -> MirrorService:
         return self.azul_client.mirror_service(catalog)
 
     def _test_mirroring(self, *, delete: bool):
@@ -1819,6 +1814,18 @@ class IndexingIntegrationTest(IntegrationTestCase):
                         self.assertIsNotNone(actual_url)
                         actual_url.set(args=None)
                         self.assertEqual(expected_url, actual_url)
+
+                with self.subTest('validate_info_schemas'):
+                    service = self._mirror_service(catalog)
+                    info_objects = [service.info(file) for file in indexed_files.keys()]
+                    schema_url = info_objects[0]['$schema']
+                    self.assertTrue(schema_url.endswith(f'/v{service.info_schema_version}.json'))
+                    schema_response = self._get_url_json('GET', furl(schema_url))
+                    self.assertEqual(schema_url, schema_response['$id'])
+                    for info_object in info_objects:
+                        self.assertEqual(schema_url, info_object['$schema'])
+                        jsonschema.validate(info_object, schema_response)
+
             _delete()
 
 
@@ -1827,10 +1834,12 @@ class AzulClientIntegrationTest(IntegrationTestCase):
     def test_azul_client_error_handling(self):
         invalid_notification = {}
         notifications = [invalid_notification]
-        self.assertRaises(AzulClientNotificationError,
-                          self.azul_client.index,
-                          first(config.integration_test_catalogs),
-                          notifications)
+        with self.assertRaises(AzulClientNotificationError) as cm:
+            self.azul_client.index(catalog=first(config.integration_test_catalogs),
+                                   notifications=notifications)
+        self.assertEqual('Some notifications could not be sent', cm.exception.args[0])
+        expected = 400 if config.enable_bundle_notifications else 403
+        self.assertEqual({expected}, cm.exception.args[1])
 
 
 class OpenAPIIntegrationTest(AzulTestCase):
@@ -1986,10 +1995,10 @@ class CanBundleScriptIntegrationTest(IntegrationTestCase):
             self._test_catalog(mock_catalog)
 
     def bundle_fqid(self, catalog: CatalogName) -> SourcedBundleFQID:
-        source, _ = self._select_source(catalog)
+        source = self._select_source(catalog).ref
         # The plugin will raise an exception if the source lacks a prefix
         source = source.with_prefix(Prefix.of_everything)
-        bundle_fqids = self.azul_client.index_repository_service.list_bundles(catalog, source, prefix='')
+        bundle_fqids = self.azul_client.repository_service.list_bundles(catalog, source, prefix='')
         return self.random.choice(sorted(bundle_fqids))
 
     def _can_bundle(self,
@@ -2059,16 +2068,16 @@ class DeployedVersionIntegrationTest(AzulTestCase):
 class DisableAutomaticIndexCreationTest(IntegrationTestCase):
 
     def test(self):
-        es = ESClientFactory.get()
+        opensearch = OpenSearchClientFactory.get()
         index_name = 'no-auto-create-' + self.random.randbytes(4).hex() + '-it'
         try:
             with self.assertRaises(opensearchpy.exceptions.NotFoundError) as cm:
-                es.index(index=index_name, body={'foo': 'bar'})
+                opensearch.index(index=index_name, body={'foo': 'bar'})
             expected = ('no such index [' + index_name + ']')
             self.assertEqual(expected, cm.exception.args[2]['error']['reason'])
         finally:
-            if es.indices.exists(index=index_name):
-                es.indices.delete(index=[index_name])
+            if opensearch.indices.exists(index=index_name):
+                opensearch.indices.delete(index=[index_name])
 
 
 class ResponseHeadersTest(AzulTestCase):

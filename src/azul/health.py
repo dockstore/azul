@@ -17,9 +17,9 @@ import attr
 from botocore.exceptions import (
     ClientError,
 )
-import chalice
-from chalice import (
+from chalice.app import (
     ChaliceViewError,
+    CloudWatchEvent,
     NotFoundError,
     Response,
 )
@@ -30,29 +30,37 @@ import requests
 
 from azul import (
     CatalogName,
-    R,
-    cache,
-    cached_property,
     config,
-    lru_cache,
-    require,
 )
 from azul.chalice import (
-    AppController,
     AzulChaliceApp,
+    Controller,
     LambdaMetric,
 )
 from azul.deployment import (
     aws,
 )
-from azul.es import (
-    ESClientFactory,
+from azul.lib import (
+    R,
+    cache,
+    cached_property,
+    lru_cache,
+)
+from azul.lib.strings import (
+    format_and_dedent,
+)
+from azul.lib.types import (
+    JSON,
+    MutableJSON,
+    json_bool,
 )
 from azul.openapi import (
-    format_description,
     params,
     responses,
     schema,
+)
+from azul.opensearch import (
+    OpenSearchClientFactory,
 )
 from azul.plugins import (
     MetadataPlugin,
@@ -60,11 +68,6 @@ from azul.plugins import (
 from azul.service.storage_service import (
     StorageObjectNotFound,
     StorageService,
-)
-from azul.types import (
-    JSON,
-    MutableJSON,
-    json_bool,
 )
 
 log = logging.getLogger(__name__)
@@ -92,7 +95,7 @@ class health_property(cached_property):
 
 
 @attr.s(frozen=True, kw_only=True, auto_attribs=True)
-class HealthController(AppController):
+class HealthController(Controller):
     app_name: str
 
     @cached_property
@@ -191,7 +194,7 @@ class Health:
     def as_json(self, keys: Iterable[str]) -> JSON:
         keys = frozenset(keys)
         if keys:
-            require(keys <= self.all_keys)
+            assert keys <= self.all_keys, R('Extra keys', keys, self.all_keys)
         else:
             keys = self.all_keys
         json = {k: getattr(self, k) for k in sorted(keys)}
@@ -261,7 +264,7 @@ class Health:
         url = str(config.service_endpoint.join(relative_url))
         log.info('Making HEAD request to %s', url)
         start = time.time()
-        response = requests.head(url)
+        response = requests.api.head(url)
         log.info('Got %s response after %.3fs from HEAD request to %s',
                  response.status_code, time.time() - start, url)
         try:
@@ -284,12 +287,12 @@ class Health:
         return self._api_endpoint(entity_type)
 
     @health_property
-    def elasticsearch(self):
+    def opensearch(self):
         """
-        Indicates whether the Elasticsearch cluster is responsive.
+        Indicates whether the OpenSearch cluster is responsive.
         """
         return {
-            'up': ESClientFactory.get().ping(),
+            'up': OpenSearchClientFactory.get().ping(),
         }
 
     @lru_cache
@@ -298,7 +301,7 @@ class Health:
             url = config.lambda_endpoint(lambda_name).set(path='/health/basic',
                                                           args={'catalog': self.catalog})
             log.info('Requesting %r', url)
-            response = requests.get(str(url))
+            response = requests.api.get(str(url))
             response.raise_for_status()
             up = response.json()['up']
         except Exception as e:
@@ -313,12 +316,12 @@ class Health:
 
     fast_properties: ClassVar[Mapping[str, Iterable[health_property]]] = {
         'indexer': (
-            elasticsearch,
+            opensearch,
             queues,
             progress
         ),
         'service': (
-            elasticsearch,
+            opensearch,
             api_endpoints,
         )
     }
@@ -344,14 +347,14 @@ class HealthApp(AzulChaliceApp):
         _app_name = self.unqualified_app_name
 
         _up_key = {
-            'up': format_description('''
+            'up': format_and_dedent('''
                 indicates the overall result of the health check
             '''),
         }
 
         _fast_keys = {
             **{
-                prop.key: format_description(prop.description)
+                prop.key: format_and_dedent(prop.description)
                 for prop in Health.fast_properties[_app_name]
             },
             **_up_key
@@ -359,7 +362,7 @@ class HealthApp(AzulChaliceApp):
 
         _all_keys = {
             **{
-                prop.key: format_description(prop.description)
+                prop.key: format_and_dedent(prop.description)
                 for prop in Health.all_properties
             },
             **_up_key
@@ -369,18 +372,18 @@ class HealthApp(AzulChaliceApp):
             return {
                 'responses': {
                     f'{200 if up else 503}': {
-                        'description': format_description(f'''
+                        'description': format_and_dedent(f'''
                             {'The' if up else 'At least one of the'} checked resources
                             {'are' if up else 'is not'} healthy.
 
                             The response consists of the following keys:
 
-                        ''') + ''.join(f'* `{k}` {v}' for k, v in health_keys.items()) + format_description(f'''
+                        ''') + ''.join(f'* `{k}` {v}' for k, v in health_keys.items()) + format_and_dedent(f'''
 
                             The top-level `up` key of the response is
                             `{'true' if up else 'false'}`.
 
-                        ''') + (format_description(f'''
+                        ''') + (format_and_dedent(f'''
                             {'All' if up else 'At least one'} of the nested `up` keys
                             {'are `true`' if up else 'is `false`'}.
                         ''') if len(health_keys) > 1 else ''),
@@ -407,7 +410,7 @@ class HealthApp(AzulChaliceApp):
             cors=True,
             spec={
                 'summary': 'Complete health check',
-                'description': format_description(f'''
+                'description': format_and_dedent(f'''
                             Health check of the {_app_name} REST API and all
                             resources it depends on. This may take long time to complete
                             and exerts considerable load on the API. For that reason it
@@ -429,7 +432,7 @@ class HealthApp(AzulChaliceApp):
             cors=True,
             spec={
                 'summary': 'Basic health check',
-                'description': format_description(f'''
+                'description': format_and_dedent(f'''
                                 Health check of only the REST API itself, excluding other
                                 resources that it depends on. A 200 response indicates that
                                 the {_app_name} is reachable via HTTP(S) but nothing
@@ -447,7 +450,7 @@ class HealthApp(AzulChaliceApp):
             cors=True,
             spec={
                 'summary': 'Cached health check for continuous monitoring',
-                'description': format_description(f'''
+                'description': format_and_dedent(f'''
                                 Return a cached copy of the
                                 [`/health/fast`](#operations-Auxiliary-get_health_fast)
                                 response. This endpoint is optimized for continuously
@@ -468,7 +471,7 @@ class HealthApp(AzulChaliceApp):
             cors=True,
             spec={
                 'summary': 'Fast health check',
-                'description': format_description('''
+                'description': format_and_dedent('''
                                 Performance-optimized health check of the REST API and other
                                 critical resources tht it depends on. This endpoint can be
                                 requested more frequently than
@@ -488,7 +491,7 @@ class HealthApp(AzulChaliceApp):
             cors=True,
             spec={
                 'summary': 'Selective health check',
-                'description': format_description('''
+                'description': format_and_dedent('''
                                 This endpoint allows clients to request a health check on a
                                 specific set of resources. Each resource is identified by a
                                 *key*, the same key under which the resource appears in a
@@ -524,7 +527,7 @@ class HealthApp(AzulChaliceApp):
             'rate(1 minute)',
             name=self.unqualified_app_name + 'cachehealth'
         )
-        def update_health_cache(_event: chalice.app.CloudWatchEvent):
+        def update_health_cache(_event: CloudWatchEvent):
             self.health_controller.update_cache()
 
         return {

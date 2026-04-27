@@ -1,36 +1,32 @@
 from azul import (
     config,
 )
-from azul.terraform import (
+from azul.infra.terraform import (
     emit_tf,
 )
 
 emit_tf(tag_resources=False, config={
     'terraform': {
         'required_version': config.terraform_version,
+        # Note that a change to any of the providers below requires running
+        # `make provider_update`.
         'required_providers': {
             'external': {
                 'source': 'hashicorp/external',
-                'version': '2.2.0'
+                'version': '2.3.5'
             },
             'null': {
                 'source': 'hashicorp/null',
-                'version': '3.2.0'
+                'version': '3.2.4'
             },
             'google': {
                 'source': 'hashicorp/google',
-                'version': '4.58.0'
+                'version': '4.85.0'
             },
             'aws': {
                 'source': 'hashicorp/aws',
-                'version': '5.80.0'
+                'version': '6.40.0'
             },
-            # FIXME: Remove the provider
-            #        https://github.com/DataBiosphere/azul/pull/6285
-            'opensearch': {
-                'source': 'opensearch-project/opensearch',
-                'version': '2.2.1'
-            }
         },
     },
     'provider': [

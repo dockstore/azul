@@ -1,6 +1,8 @@
+from collections.abc import (
+    Collection,
+)
 import re
 from typing import (
-    Collection,
     Mapping,
     NamedTuple,
     TypeAliasType,
@@ -11,11 +13,10 @@ from more_itertools import (
     one,
 )
 
-from azul import (
-    reject,
-    require,
+from azul.lib import (
+    R,
 )
-from azul.types import (
+from azul.lib.types import (
     AnyJSON,
     JSON,
     PrimitiveJSON,
@@ -45,25 +46,27 @@ class optional(NamedTuple):
 # wholesale and its members referenced by fully qualifying their name so the
 # `object` builtin is not shadowed in the importing module.
 
-# noinspection PyShadowingBuiltins,PyPep8Naming
+@overload
+def object(**properties: Form | optional) -> JSON: ...
+
+
 @overload
 def object(*,
-           additionalProperties: JSON | bool = False,
-           **properties: Form | optional) -> JSON: ...
+           additionalProperties: JSON | bool,  # noqa: N803
+           **properties: Form | optional
+           ) -> JSON: ...
 
 
-# noinspection PyShadowingBuiltins,PyPep8Naming
 @overload
 def object(*, properties: JSON, **kwargs: AnyJSON) -> JSON: ...
 
 
-# noinspection PyShadowingBuiltins,PyPep8Naming
 def object(*,
            properties=None,
-           additionalProperties=None,
-           **kwargs) -> JSON:
+           additionalProperties=None,  # noqa: N803
+           **kwargs):
     """
-    >>> from azul.doctests import assert_json
+    >>> from azul.lib.doctests import assert_json
     >>> assert_json(object(x=int, y=int, relative=optional(bool)))
     {
         "type": "object",
@@ -136,7 +139,7 @@ def array(item: Form, *items: Form, **kwargs) -> JSON:
     Same as `array_type` but calls `property_type` for each positional argument,
     allowing for a more concise syntax.
 
-    >>> from azul.doctests import assert_json
+    >>> from azul.lib.doctests import assert_json
     >>> assert_json(array(str, bool, additionalItems=True))
     {
         "type": "array",
@@ -161,7 +164,7 @@ def enum(*items: PrimitiveJSON, form: Form = None) -> JSON:
     However, the current implementation cannot detect some cases in which the
     types of the enum values contradict the explicit type.
 
-    >>> from azul.doctests import assert_json
+    >>> from azul.lib.doctests import assert_json
     >>> assert_json(enum('foo', 'bar', form=str))
     {
         "type": "string",
@@ -239,7 +242,7 @@ def pattern(regex: str | re.Pattern, _type: Form = str) -> JSON:
                   that as of version 7.0 of JSON Schema, the `pattern` property
                   can only be used in conjunction with the `string` type.
 
-    >>> from azul.doctests import assert_json
+    >>> from azul.lib.doctests import assert_json
 
     >>> assert_json(pattern(r'[a-z]+'))
     {
@@ -263,11 +266,19 @@ def pattern(regex: str | re.Pattern, _type: Form = str) -> JSON:
     }
 
 
+def format(name: str, **kwargs) -> JSON:
+    return {
+        **schema(str),
+        'format': name,
+        **kwargs
+    }
+
+
 def default(default: PrimitiveJSON, /, form: Form = None) -> JSON:
     """
     Add a documented default value to the type schema.
 
-    >>> from azul.doctests import assert_json
+    >>> from azul.lib.doctests import assert_json
 
     >>> assert_json(default('foo'))
     {
@@ -293,7 +304,7 @@ def range[N: int | float](minimum: N | None,
                           form: Form = None
                           ) -> JSON:
     """
-    >>> from azul.doctests import assert_json
+    >>> from azul.lib.doctests import assert_json
 
     >>> assert_json(range(1, 2))
     {
@@ -320,7 +331,7 @@ def range[N: int | float](minimum: N | None,
     >>> assert_json(range(minimum=.5, maximum=2))
     Traceback (most recent call last):
     ...
-    azul.RequirementError: ('Mismatched argument types', <class 'float'>, <class 'int'>)
+    AssertionError: R('Mismatched argument types', <class 'float'>, <class 'int'>)
 
     >>> assert_json(range())
     Traceback (most recent call last):
@@ -330,14 +341,14 @@ def range[N: int | float](minimum: N | None,
     >>> assert_json(range(None, None))
     Traceback (most recent call last):
     ...
-    azul.RequirementError: Must pass at least one bound
+    AssertionError: R('Must pass at least one bound')
     """
     if form is None:
         types = (type(minimum), type(maximum))
         set_of_types = set(types)
         set_of_types.discard(type(None))
-        require(bool(set_of_types), 'Must pass at least one bound')
-        require(len(set_of_types) == 1, 'Mismatched argument types', *types)
+        assert bool(set_of_types), R('Must pass at least one bound')
+        assert len(set_of_types) == 1, R('Mismatched argument types', *types)
         form = one(set_of_types)
     return {
         **schema(form),
@@ -371,7 +382,7 @@ def array_type(item: JSON, *items: JSON, **kwargs) -> JSON:
 
     Not very useful by itself. You will likely want to use `array` instead.
 
-    >>> from azul.doctests import assert_json
+    >>> from azul.lib.doctests import assert_json
     >>> assert_json(array_type({'type': 'string'}, {'type': 'boolean'}, additionalItems=True))
     {
         "type": "array",
@@ -521,7 +532,7 @@ def nullable(t: Form, for_openapi: bool = True) -> JSON:
     >>> nullable(str, for_openapi=False)
     {'type': ['null', 'string']}
     """
-    reject(t is None or t is type(None))
+    assert t is not None and t is not type(None), R('Invalid type', t)
     if for_openapi:
         return {**schema(t), 'nullable': True}
     else:

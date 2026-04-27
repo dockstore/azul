@@ -36,15 +36,18 @@ import requests
 from app_test_case import (
     LocalAppTestCase,
 )
+from azul.filters import (
+    Filters,
+    FiltersJSON,
+)
+from azul.lib.types import (
+    JSON,
+)
 from azul.logging import (
     configure_test_logging,
 )
 from azul.plugins import (
     ManifestFormat,
-)
-from azul.service import (
-    Filters,
-    FiltersJSON,
 )
 from azul.service.async_manifest_service import (
     AsyncManifestService,
@@ -64,9 +67,6 @@ from azul.service.manifest_service import (
     ManifestPartition,
     ManifestService,
     SignedManifestKey,
-)
-from azul.types import (
-    JSON,
 )
 from azul_test_case import (
     AzulUnitTestCase,
@@ -213,7 +213,7 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                                      [True, False]):
             with self.subTest(format=format, fetch=fetch):
                 filters = {'fileFormat': {'is': ['txt']}, 'organ': {'is': ['heart', 'lung']}}
-                filters = Filters(explicit=filters, source_ids={self.source.id})
+                filters = Filters(explicit=filters, source_ids={self.source.ref.id})
                 params = {
                     'catalog': self.catalog,
                     'format': format.value,
@@ -255,7 +255,7 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                     ManifestPartition(index=1,
                                       is_last=False,
                                       file_name=file_name,
-                                      config=[[['foo', 'bar'], {'baz': 'blah'}]],
+                                      config={('foo', 'bar'): {'baz': 'blah'}},
                                       multipart_upload_id='some_upload_id',
                                       part_etags=('some_etag',),
                                       page_index=512,
@@ -267,7 +267,7 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                              manifest_key=manifest_key.to_json(),
                              partition=partitions[0].to_json())
                 controller: ManifestController = self._app.manifest_controller
-                service = controller.async_service
+                service = controller._async_service
                 generation_id = manifest_key.uuid
                 execution_names = [
                     service.execution_name(generation_id, iteration=i)
@@ -587,6 +587,13 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
     @contextmanager
     def _mock_error(self, error_code: str) -> ContextManager:
         with patch.object(AsyncManifestService, '_sfn') as _sfn:
+            # We need to mock every exception class for which there is an
+            # `except` clause in the code under test. If we don't we get
+            #
+            # TypeError: catching classes that do not inherit from
+            #            BaseException is not allowed
+            #
+            self._mock_sfn_exception_cls(_sfn, error_code='ExecutionDoesNotExist')
             exception = self._mock_sfn_exception(_sfn,
                                                  operation_name='DescribeExecution',
                                                  error_code=error_code)
@@ -598,16 +605,16 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
                             operation_name: str,
                             error_code: str
                             ) -> Exception:
-        exception_cls = type(error_code, (ClientError,), {})
-        setattr(_sfn.exceptions, error_code, exception_cls)
-        error_response = {
-            'Error': {
-                'Code': error_code
-            }
-        }
+        exception_cls = self._mock_sfn_exception_cls(_sfn, error_code)
+        error_response = {'Error': {'Code': error_code}}
         exception = exception_cls(operation_name=operation_name,
                                   error_response=error_response)
         return exception
+
+    def _mock_sfn_exception_cls(self, _sfn: mock.MagicMock, error_code: str) -> type:
+        exception_cls = type(error_code, (ClientError,), {})
+        setattr(_sfn.exceptions, error_code, exception_cls)
+        return exception_cls
 
     def test_execution_not_found(self):
         """
@@ -630,9 +637,8 @@ class TestManifestController(DCP1TestCase, LocalAppTestCase):
         Manifest status check should return a generic error (500 status code)
         if the execution errored.
         """
-        with patch.object(AsyncManifestService,
-                          'inspect_generation',
-                          side_effect=GenerationFailed):
+        e = GenerationFailed(status='status', output=None)
+        with patch.object(AsyncManifestService, 'inspect_generation', side_effect=e):
             self._test(expected_status=500)
 
     def test_invalid_token(self):

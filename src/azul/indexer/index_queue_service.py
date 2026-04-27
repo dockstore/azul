@@ -12,29 +12,34 @@ import attrs
 
 from azul import (
     CatalogName,
-    cached_property,
     config,
-    json_mapping,
 )
 from azul.deployment import (
     aws,
 )
 from azul.indexer import (
     BundlePartition,
-    SourceRef,
-    SourceSpec,
 )
 from azul.indexer.document import (
+    CataloguedEntityReference,
     Contribution,
     EntityReference,
     Replica,
 )
-from azul.indexer.index_repository_service import (
-    IndexRepositoryService,
-)
 from azul.indexer.index_service import (
-    CataloguedEntityReference,
     IndexService,
+)
+from azul.indexer.repository_service import (
+    RepositoryService,
+)
+from azul.lib import (
+    cached_property,
+)
+from azul.lib.types import (
+    JSON,
+    json_int,
+    json_mapping,
+    json_str,
 )
 from azul.queues import (
     Action,
@@ -42,10 +47,9 @@ from azul.queues import (
     SQSFifoMessage,
     SQSMessage,
 )
-from azul.types import (
-    JSON,
-    json_int,
-    json_str,
+from azul.source import (
+    SourceRef,
+    SourceSpec,
 )
 
 if TYPE_CHECKING:
@@ -84,22 +88,22 @@ class IndexPartitionAction(IndexAction):
 class IndexQueueService:
 
     @cached_property
-    def index_service(self) -> IndexService:
+    def _index_service(self) -> IndexService:
         return IndexService()
 
     @cached_property
-    def index_repository_service(self) -> IndexRepositoryService:
-        return IndexRepositoryService()
+    def _repository_service(self) -> RepositoryService:
+        return RepositoryService()
 
     @cached_property
-    def queues(self) -> Queues:
+    def _queues(self) -> Queues:
         return Queues()
 
-    def notifications_queue(self, *, retry: bool = False) -> 'Queue':
+    def _notifications_queue(self, *, retry: bool = False) -> Queue:
         name = config.notifications_queue.derive(retry=retry).name
         return aws.sqs_queue(name)
 
-    def tallies_queue(self, *, retry: bool = False) -> 'Queue':
+    def _tallies_queue(self, *, retry: bool = False) -> Queue:
         name = config.tallies_queue.derive(retry=retry).name
         return aws.sqs_queue(name)
 
@@ -108,25 +112,25 @@ class IndexQueueService:
                             *,
                             retry: bool = False
                             ) -> int:
-        queue = self.notifications_queue(retry=retry)
-        return self.queues.send_messages(queue, messages)
+        queue = self._notifications_queue(retry=retry)
+        return self._queues.send_messages(queue, messages)
 
     def queue_notification(self,
                            message: SQSMessage,
                            *,
                            retry: bool
                            ) -> None:
-        queue = self.notifications_queue(retry=retry)
-        self.queues.send_message(queue, message)
+        queue = self._notifications_queue(retry=retry)
+        self._queues.send_message(queue, message)
 
-    def queue_tallies(self,
-                      messages: Iterable[SQSMessage],
-                      *,
-                      retry: bool = False
-                      ) -> int:
-        queue = self.tallies_queue(retry=retry)
+    def _queue_tallies(self,
+                       messages: Iterable[SQSMessage],
+                       *,
+                       retry: bool = False
+                       ) -> int:
+        queue = self._tallies_queue(retry=retry)
         # Logging tallies would be excessively verbose
-        return self.queues.send_messages(queue, messages, log_level=0)
+        return self._queues.send_messages(queue, messages, log_level=0)
 
     def index_bundle_message(self,
                              catalog: CatalogName,
@@ -135,24 +139,24 @@ class IndexQueueService:
                              *,
                              delete: bool = False
                              ) -> SQSMessage:
-        message_cls = DeleteBundleAction if delete else AddBundleAction
-        message = message_cls(catalog=catalog,
-                              bundle_fqid=bundle_fqid,
-                              bundle_partition=bundle_partition)
-        return SQSMessage(body=json_mapping(message.to_json()))
+        action_cls = DeleteBundleAction if delete else AddBundleAction
+        action = action_cls(catalog=catalog,
+                            bundle_fqid=bundle_fqid,
+                            bundle_partition=bundle_partition)
+        return SQSMessage(body=json_mapping(action.to_json()))
 
     def index_partition_message(self,
                                 catalog: CatalogName,
                                 source: SourceRef,
                                 prefix: str
                                 ) -> SQSMessage:
-        message = IndexPartitionAction(catalog=catalog,
-                                       source=source,
-                                       prefix=prefix)
-        return SQSMessage(body=json_mapping(message.to_json()))
+        action = IndexPartitionAction(catalog=catalog,
+                                      source=source,
+                                      prefix=prefix)
+        return SQSMessage(body=json_mapping(action.to_json()))
 
-    def remote_reindex(self, catalog: CatalogName, sources: Iterable[SourceSpec]):
-        service = self.index_repository_service
+    def index_catalog(self, catalog: CatalogName, sources: Iterable[SourceSpec]):
+        service = self._repository_service
         plugin = service.repository_plugin(catalog)
         for source_spec in sources:
             source_ref = plugin.resolve_source(source_spec)
@@ -168,8 +172,14 @@ class IndexQueueService:
             messages = map(message, prefix.partition_prefixes())
             self.queue_notifications(messages)
 
-    def remote_reindex_partition(self, message: IndexPartitionAction) -> None:
-        service = self.index_repository_service
+    def contribute(self, action: IndexAction):
+        if isinstance(action, IndexPartitionAction):
+            self._index_partition(action)
+        elif isinstance(action, IndexBundleAction):
+            self._index_bundle(action)
+
+    def _index_partition(self, message: IndexPartitionAction) -> None:
+        service = self._repository_service
         catalog, prefix, source = message.catalog, message.prefix, message.source
         assert isinstance(catalog, str) and isinstance(prefix, str)
         bundle_fqids = service.list_bundles(catalog, source, prefix)
@@ -187,62 +197,59 @@ class IndexQueueService:
         log.info('Successfully queued %i notification(s) for prefix %s of '
                  'source %r', num_messages, prefix, source)
 
-    def contribute(self, message: IndexAction):
-        if isinstance(message, IndexPartitionAction):
-            self.remote_reindex_partition(message)
-        elif isinstance(message, IndexBundleAction):
-            catalog = json_str(message.catalog)
-            assert catalog is not None
-            delete = isinstance(message, DeleteBundleAction)
-            if not delete:
-                assert isinstance(message, AddBundleAction)
-            bundle_fqid = json_mapping(message.bundle_fqid)
-            bundle_partition = message.bundle_partition
-            contributions, replicas = self.transform(catalog,
-                                                     bundle_fqid,
-                                                     bundle_partition,
-                                                     delete=delete)
-            log.info('Writing %i contributions to index.', len(contributions))
-            tallies = self.index_service.contribute(catalog, contributions)
-            tallies = [DocumentTally.for_entity(catalog, entity, num_contributions)
-                       for entity, num_contributions in tallies.items()]
+    def _index_bundle(self, message: IndexBundleAction):
+        catalog = json_str(message.catalog)
+        assert catalog is not None
+        delete = isinstance(message, DeleteBundleAction)
+        if not delete:
+            assert isinstance(message, AddBundleAction)
+        bundle_fqid = json_mapping(message.bundle_fqid)
+        bundle_partition = message.bundle_partition
+        contributions, replicas = self._transform(catalog,
+                                                  bundle_fqid,
+                                                  bundle_partition,
+                                                  delete=delete)
+        log.info('Writing %i contributions to index.', len(contributions))
+        tallies = self._index_service.contribute(catalog, contributions)
+        tallies = [DocumentTally.for_entity(catalog, entity, num_contributions)
+                   for entity, num_contributions in tallies.items()]
 
-            if replicas:
-                if delete:
-                    # FIXME: Replica index does not support deletions
-                    #        https://github.com/DataBiosphere/azul/issues/5846
-                    log.warning('Deletion of replicas is not supported')
-                else:
-                    log.info('Writing %i replicas to index.', len(replicas))
-                    num_written = self.index_service.replicate(catalog, replicas)
-                    log.info('Successfully wrote %i replicas', num_written)
+        if replicas:
+            if delete:
+                # FIXME: Replica index does not support deletions
+                #        https://github.com/DataBiosphere/azul/issues/5846
+                log.warning('Deletion of replicas is not supported')
             else:
-                log.info('No replicas to write.')
+                log.info('Writing %i replicas to index.', len(replicas))
+                num_written = self._index_service.replicate(catalog, replicas)
+                log.info('Successfully wrote %i replicas', num_written)
+        else:
+            log.info('No replicas to write.')
 
-            log.info('Queueing %i entities for aggregating a total of %i contributions.',
-                     len(tallies), sum(tally.num_contributions for tally in tallies))
-            messages = (tally.to_message() for tally in tallies)
-            self.queue_tallies(messages)
+        log.info('Queueing %i entities for aggregating a total of %i contributions.',
+                 len(tallies), sum(tally.num_contributions for tally in tallies))
+        messages = (tally.to_message() for tally in tallies)
+        self._queue_tallies(messages)
 
-    def transform(self,
-                  catalog: CatalogName,
-                  bundle_fqid: JSON,
-                  bundle_partition: BundlePartition,
-                  *,
-                  delete: bool
-                  ) -> tuple[list[Contribution], list[Replica]]:
+    def _transform(self,
+                   catalog: CatalogName,
+                   bundle_fqid: JSON,
+                   bundle_partition: BundlePartition,
+                   *,
+                   delete: bool
+                   ) -> tuple[list[Contribution], list[Replica]]:
         """
         Transform the metadata in the bundle referenced by the given
         notification into a list of contributions to documents, each document
         representing one metadata entity in the index. Replicas of the original,
         untransformed metadata are returned as well.
         """
-        bundle = self.index_repository_service.fetch_bundle(catalog,
-                                                            bundle_fqid)
-        results = self.index_service.transform(catalog,
-                                               bundle,
-                                               bundle_partition,
-                                               delete=delete)
+        bundle = self._repository_service.fetch_bundle(catalog,
+                                                       bundle_fqid)
+        results = self._index_service.transform(catalog,
+                                                bundle,
+                                                bundle_partition,
+                                                delete=delete)
         if isinstance(results, list):
             for bundle_partition in results:
                 assert isinstance(bundle_partition, BundlePartition)
@@ -263,9 +270,9 @@ class IndexQueueService:
     #: Note that the retry lambda does first attempts, too, namely on re-fed and
     #: deferred tallies.
     #
-    num_batched_aggregation_attempts = 3
+    _num_batched_aggregation_attempts = 3
 
-    def aggregate(self, tallies: list['DocumentTally'], *, retry: bool):
+    def aggregate(self, tallies: list[DocumentTally], *, retry: bool):
         tallies_by_entity: dict[CataloguedEntityReference, list[DocumentTally]] = defaultdict(list)
         for tally in tallies:
             tallies_by_entity[tally.entity].append(tally)
@@ -279,7 +286,7 @@ class IndexQueueService:
                 assert False
         if referrals:
             for i, tally in enumerate(referrals):
-                if tally.attempts > self.num_batched_aggregation_attempts:
+                if tally.attempts > self._num_batched_aggregation_attempts:
                     log.info('Only aggregating problematic entity %s, deferring all others',
                              tally.entity)
                     referrals.pop(i)
@@ -294,7 +301,7 @@ class IndexQueueService:
                          tally.num_contributions, tally.entity)
                 tally_by_entity[tally.entity] = tally.num_contributions
 
-            self.index_service.aggregate(tally_by_entity)
+            self._index_service.aggregate(tally_by_entity)
 
             for tally in referrals:
                 log.info('Successfully aggregated %i contribution(s) to entity %s',
@@ -309,7 +316,7 @@ class IndexQueueService:
             # Hopefully this is more or less atomic. If we crash below here,
             # tallies will be inflated because some or all deferrals have
             # been sent and the original tallies will be returned.
-            self.queue_tallies(messages, retry=retry)
+            self._queue_tallies(messages, retry=retry)
 
 
 @attrs.frozen(kw_only=True)
@@ -358,7 +365,7 @@ class DocumentTally:
         return SQSFifoMessage(body=self.to_json(),
                               group_id=str(self.entity))
 
-    def consolidate(self, others: list['DocumentTally']) -> Self:
+    def consolidate(self, others: list[DocumentTally]) -> Self:
         assert all(self.entity == other.entity for other in others)
         num_contributions = sum((other.num_contributions for other in others),
                                 start=self.num_contributions)

@@ -36,6 +36,10 @@ from azul.indexer.document import (
     DocumentType,
     EntityReference,
 )
+from azul.lib.types import (
+    JSONs,
+    MutableJSONs,
+)
 from azul.logging import (
     configure_test_logging,
 )
@@ -43,16 +47,10 @@ from azul.plugins.repository import (
     tdr_anvil,
 )
 from azul.plugins.repository.tdr_anvil import (
-    BundleType,
     TDRAnvilBundle,
-    TDRAnvilBundleFQID,
 )
 from azul.terra import (
     TDRClient,
-)
-from azul.types import (
-    JSONs,
-    MutableJSONs,
 )
 from azul_test_case import (
     TDRTestCase,
@@ -83,7 +81,7 @@ class DUOSTestCase(TDRTestCase, ABC):
         return [
             # TDR's /snapshots/{snapshot_id} response:
             {
-                'name': self.source.spec.name,
+                'name': self.source.ref.spec.name,
                 'duosFirecloudGroup': {'duosId': duos_id}
             },
             # DUOS' /dataset/registration/{duos_id}:
@@ -107,25 +105,7 @@ class DUOSTestCase(TDRTestCase, ABC):
 
 
 class AnvilIndexerTestCase(AnvilCannedBundleTestCase, IndexerTestCase):
-
-    @classmethod
-    def primary_bundle(cls) -> TDRAnvilBundleFQID:
-        return cls.bundle_fqid(uuid='826dea02-e274-affe-aabc-eb3db63ad068')
-
-    @classmethod
-    def supplementary_bundle(cls) -> TDRAnvilBundleFQID:
-        return cls.bundle_fqid(uuid='595c469e-604d-ab34-af39-f5b9f5d61818',
-                               table_name=BundleType.supplementary.value)
-
-    @classmethod
-    def duos_bundle(cls) -> TDRAnvilBundleFQID:
-        return cls.bundle_fqid(uuid='2370f948-2783-aeb6-afea-e022897f4dcf',
-                               table_name=BundleType.duos.value)
-
-    @classmethod
-    def replica_bundle(cls) -> TDRAnvilBundleFQID:
-        return cls.bundle_fqid(uuid='f4b39881-d519-ab6f-99a0-7cc5089caee6',
-                               table_name='non_schema_orphan_table')
+    pass
 
 
 class TestAnvilIndexer(AnvilIndexerTestCase,
@@ -165,7 +145,7 @@ class TestAnvilIndexer(AnvilIndexerTestCase,
 
     def test_list_and_fetch_bundles(self):
         self._mock_normal_duos()
-        source_ref = self.source
+        source_ref = self.source.ref
         self._make_mock_tables(source_ref)
         canned_bundle_fqids = [
             self.primary_bundle(),
@@ -205,21 +185,21 @@ class TestAnvilIndexer(AnvilIndexerTestCase,
                 self.assertEqual(canned_bundle.orphans, bundle.orphans)
 
     def test_absent_duos_id(self):
-        source_ref = self.source
+        source_ref = self.source.ref
         self._make_mock_tables(source_ref)
         cases = {
             'Absent duosFirecloudGroup': [
-                {'name': self.source.spec.name}
+                {'name': self.source.ref.spec.name}
             ],
             'Empty duosFirecloudGroup': [
                 {
-                    'name': self.source.spec.name,
+                    'name': self.source.ref.spec.name,
                     'duosFirecloudGroup': {}
                 }
             ],
             'Null duosId': [
                 {
-                    'name': self.source.spec.name,
+                    'name': self.source.ref.spec.name,
                     'duosFirecloudGroup': {'duosId': None}
                 }
             ]

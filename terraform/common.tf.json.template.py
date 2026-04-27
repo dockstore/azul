@@ -4,17 +4,20 @@ from pathlib import (
 
 from azul import (
     config,
-    require,
 )
-from azul.terraform import (
+from azul.infra.terraform import (
     emit_tf,
+)
+from azul.lib import (
+    R,
 )
 
 expected_component_path = Path(config.project_root) / 'terraform' / config.terraform_component
 actual_component_path = Path(__file__).absolute().parent
-require(expected_component_path.samefile(actual_component_path),
-        f"The current Terraform component is set to '{config.terraform_component}'. "
-        f"You should therefore be in '{expected_component_path}'")
+assert expected_component_path.samefile(actual_component_path), R(
+    f"The current Terraform component is set to '{config.terraform_component}'. "
+    f"You should therefore be in '{expected_component_path}'"
+)
 
 emit_tf({
     "data": [
@@ -36,7 +39,7 @@ emit_tf({
     ],
     "locals": {
         "account_id": "${data.aws_caller_identity.current.account_id}",
-        "region": "${data.aws_region.current.name}",
+        "region": "${data.aws_region.current.region}",
         "google_project": "${data.google_client_config.current.project}" if config.enable_gcp() else None
     },
 })
