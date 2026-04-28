@@ -1,4 +1,0 @@
-https://pypi.org/project/protobuf/
-
-License: 3-Clause BSD License
-
