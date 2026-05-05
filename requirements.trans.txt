@@ -15,7 +15,6 @@ markupsafe==3.0.2
 orderedmultidict==1.0.1
 packaging==25.0
 proto-plus==1.26.1
-protobuf==4.25.8
 pyasn1==0.6.1
 pyasn1_modules==0.4.2
 pycparser==2.22
