@@ -31,7 +31,7 @@ jobs:
           make requirements || true
           
           # Run the export script, should bomb due to no credentials, not a dependency issue
-          python scripts/export_inspector_findings.py
+          python scripts/export_inspector_findings.py | tee $SCRIPT_OUTPUT
 
       - name: Verify expected failure message
         run: |
