@@ -29,10 +29,11 @@ jobs:
           make requirements || true
           
           # Run the export script, should bomb due to no credentials, not a dependency issue
-          python scripts/export_inspector_findings.py || [ $? -eq 1 ]
+          ERROR_MSG=$(python scripts/export_inspector_findings.py > 2>&1) || true
+        
           
-          if [[ $EXIT_CODE -eq 1 && "$ERROR_MSG" =~ "botocore.exceptions.NoCredentialsError: Unable to locate credentials" ]]; then
-              echo "Command failed as expected with code 1 and expected error message."
+          if [[ "$ERROR_MSG" =~ "botocore.exceptions.NoCredentialsError: Unable to locate credentials" ]]; then
+              echo "Command failed as expected with expected error message."
           else
               # fail for any other reason
               exit 429
