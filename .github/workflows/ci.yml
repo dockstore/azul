@@ -19,11 +19,11 @@ jobs:
           cache: 'pip'
           cache-dependency-path: 'requirements.dev.txt'
 
-      - name: 'Run unit tests and other checks'
+      - name: 'Create environment'
         run: |
-          source environment  # load global defaults
-          _select dev
-          source environment
+          source environment | true  # load global defaults
+          _select dev | true
+          source environment | true
           make virtualenv
           source .venv/bin/activate
           make requirements | true
