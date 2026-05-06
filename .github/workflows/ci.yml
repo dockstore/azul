@@ -20,8 +20,6 @@ jobs:
           cache-dependency-path: 'requirements.dev.txt'
 
       - name: 'Create environment'
-        continue-on-error: true
-        id: run_script
         run: |
           source environment || true  # load global defaults
           _select dev || true
@@ -31,13 +29,4 @@ jobs:
           make requirements || true
           
           # Run the export script, should bomb due to no credentials, not a dependency issue
-          python scripts/export_inspector_findings.py | tee $SCRIPT_OUTPUT
-
-      - name: Verify expected failure message
-        run: |
-          if [[ "${{join(steps.run_script.outputs.*, '\n')}}" =~ "botocore.exceptions.NoCredentialsError: Unable to locate credentials" ]]; then
-              echo "Command failed as expected with expected error message."
-          else
-              # fail for any other reason
-              exit 429
-          fi
+          python scripts/export_inspector_findings.py  2?&1 | tee /dev/tty | grep -c "Unable to locate credentials"
