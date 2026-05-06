@@ -22,12 +22,11 @@ jobs:
       - name: 'Create environment'
         run: |
           source environment || true  # load global defaults
-          _select dev | true
+          _select dev || true
           source environment || true
           make virtualenv
           source .venv/bin/activate
           make requirements || true
-
-      - name: 'Run the export script, should bomb due to no credentials, not a dependency issue'
-        run: |
+          
+          # Run the export script, should bomb due to no credentials, not a dependency issue
           python scripts/export_inspector_findings.py
