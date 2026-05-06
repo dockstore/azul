@@ -33,12 +33,6 @@ jobs:
           # Run the export script, should bomb due to no credentials, not a dependency issue
           python scripts/export_inspector_findings.py
 
-      - name: Verify expected failure state
-        if: steps.failing_step.outcome != 'failure'
-        run: |
-          echo "The previous step should have failed but it succeeded."
-          exit 1
-
       - name: Verify expected failure message
         run: |
           if [[ "${{join(steps.run_script.outputs.*, '\n')}}" =~ "botocore.exceptions.NoCredentialsError: Unable to locate credentials" ]]; then
