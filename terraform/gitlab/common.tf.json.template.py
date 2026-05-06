@@ -1,1 +1,0 @@
-../common.tf.json.template.py

@@ -1,5 +1,0 @@
-https://github.com/cllunsford/aws-signing-proxy/blob/master/README.md
-
-License
-MIT 2018 (c) Chris Lunsford
-
