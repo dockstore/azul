@@ -22,9 +22,11 @@ jobs:
       - name: 'Run unit tests and other checks'
         run: |
           source environment  # load global defaults
-
+          _select dev
+          source environment
           make virtualenv
           source .venv/bin/activate
+          make requirements
 
       - name: 'Run the export script, should bomb due to no credentials, not a dependency issue'
         run: |
