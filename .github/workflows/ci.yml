@@ -26,7 +26,6 @@ jobs:
           source environment | true
           make virtualenv
           source .venv/bin/activate
-          make requirements | true
 
       - name: 'Run the export script, should bomb due to no credentials, not a dependency issue'
         run: |
