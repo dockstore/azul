@@ -19,7 +19,7 @@ jobs:
           cache: 'pip'
           cache-dependency-path: 'requirements.dev.txt'
 
-      - name: 'Create environment'
+      - name: 'Create environment and check that script runs with expected error message'
         run: |
           source environment || true  # load global defaults
           _select dev || true
