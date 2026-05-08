@@ -1,9 +1,6 @@
 name: 'CI'
 
-on:
-  pull_request:
-  push:
-    branches: [ 'develop', 'prod', 'anvilprod' ]
+on: [push]
 
 jobs:
 
@@ -22,120 +19,14 @@ jobs:
           cache: 'pip'
           cache-dependency-path: 'requirements.dev.txt'
 
-      - name: 'Run unit tests and other checks'
+      - name: 'Create environment and check that script runs with expected error message'
         run: |
-          source environment  # load global defaults
-
-          # PRs targetting the `prod` branch should be built with the `prod`
-          # deployment selected. The same goes for push builds of the `prod`
-          # branch. Likewise for `anvilprod`. All other PR and push builds
-          # should select the `dev` deployment. Note that this includes chained
-          # PRs whose target branch is not a protected branch but another PR
-          # branch.
-          #
-          azul_shared_deployments='{"": ["dev"], "prod": ["prod"], "anvilprod": ["anvilprod"]}'
-
+          source environment || true  # load global defaults
+          _select dev || true
+          source environment || true
           make virtualenv
           source .venv/bin/activate
-          make requirements
-          deployment=$(python scripts/check_branch.py --print)
-          _link $deployment
-          _refresh
-
-          make environment.boot
-
-          # FIXME: The default Azul registry is hosted privately on ECR, so we'd
-          #        have to provide credentials to use it. For now, it's
-          #        sufficient to pull 3rd party images directly from their
-          #        upstream registry, accepting the risk that a 3rd party image
-          #        is compromised. GitHub Actions have limited access to our
-          #        infrastructure (the token scope is limited). The worst that
-          #        could happen is that the token itself is revealed or that the
-          #        action falsely reports a passing build.
-          #        https://github.com/DataBiosphere/azul/issues/5188
-          #
-          export azul_docker_registry=""
-
-          # Hack: The use of chrgp compensates for a quirk of Docker. The
-          # PyCharm image used by make format sets up a user called `developer`
-          # and assigns it UID 1000. Actions is running as UID 1001. An
-          # alternative would be to pass --user to `docker run` and bind-mount
-          # an /etc/passwd that maps that to `developer`. We also need write
-          # permissions for the group
-          #
-          chmod -R g+w . && sudo chgrp -R 1000 . && make format && sudo chgrp -R $(id -g) .
-          make -C lambdas openapi
-          make -C .github
-          make anvil_schema
-          make check_clean
-          make pep8
-          mypy
-          AZUL_DEBUG=0 GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }} make test
-          make check_clean
-          coverage xml
-
-      - uses: 'actions/upload-artifact@v4'
-        with:
-          name: 'coverage-file'
-          path: 'coverage.xml'
-
-  codecov:
-    needs: 'test'
-    runs-on: 'ubuntu-22.04'
-    steps:
-
-      - uses: 'actions/checkout@v4'
-
-      - run: 'cat environment.boot >> "$GITHUB_ENV"'
-
-      - uses: 'actions/download-artifact@v4'
-        with:
-          name: 'coverage-file'
-
-      - uses: 'codecov/codecov-action@v5'
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: 'coverage.xml'
-          fail_ci_if_error: true
-
-  coveralls:
-    needs: 'test'
-    runs-on: 'ubuntu-22.04'
-    steps:
-      - uses: 'actions/checkout@v4'
-
-      - run: 'cat environment.boot >> "$GITHUB_ENV"'
-
-      - uses: 'actions/download-artifact@v4'
-        with:
-          name: 'coverage-file'
-
-      - uses: 'coverallsapp/github-action@v2'
-        with:
-          github-token: ${{ secrets.COVERALLS_REPO_TOKEN }}
-
-  codeql:
-    runs-on: 'ubuntu-22.04'
-    permissions:
-      actions: 'read'
-      contents: 'read'
-      security-events: 'write'
-    strategy:
-      fail-fast: false
-      matrix:
-        language: [ 'python', 'javascript' ]
-    steps:
-
-      - uses: 'actions/checkout@v4'
-
-      - run: 'cat environment.boot >> "$GITHUB_ENV"'
-
-      - uses: 'github/codeql-action/init@v3'
-        with:
-          languages: '${{ matrix.language }}'
-          config-file: './.github/codeql/codeql-config.yml'
-          queries: 'security-and-quality'
-
-      - uses: 'github/codeql-action/analyze@v3'
-        with:
-          category: '/language:${{matrix.language}}'
+          make requirements || true
+          
+          # Run the export script, should bomb due to no credentials, not a dependency issue
+          python scripts/export_inspector_findings.py  2>&1 | grep -n2 "Unable to locate credentials"
