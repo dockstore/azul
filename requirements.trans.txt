@@ -10,7 +10,7 @@ google-resumable-media==2.7.2
 googleapis-common-protos==1.70.0
 grpcio==1.74.0
 grpcio-status==1.62.3
-idna==3.10
+idna==3.15
 markupsafe==3.0.2
 orderedmultidict==1.0.1
 packaging==25.0
