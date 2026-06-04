@@ -45,7 +45,6 @@ grpcio-status==1.62.3
 http-message-signatures==1.0.0
 http_sfv==0.9.9
 httplib2==0.22.0
-idna==3.10
 inquirer==3.4.1
 jinja2==3.1.6
 jmespath==1.0.1
