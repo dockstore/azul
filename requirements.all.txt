@@ -16,7 +16,7 @@ chevron==0.14.0
 click==8.2.1
 colorama==0.4.6
 coverage==7.10.2
-cryptography==45.0.6
+cryptography==48.0.1
 deprecated==1.2.18
 docker==7.1.0
 docutils==0.19
