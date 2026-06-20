@@ -57,7 +57,7 @@ markupsafe==3.0.2
 mccabe==0.7.0
 more-itertools==10.7.0
 moto==5.1.9
-msgpack==1.1.1
+msgpack==1.2.1
 mypy==1.17.1
 mypy-boto3-apigateway==1.40.0
 mypy-boto3-cloudwatch==1.40.0
