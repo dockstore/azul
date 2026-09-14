@@ -1,8 +1,0 @@
-[flake8]
-max-line-length=120
-extend-select=AZL
-[flake8:local-plugins]
-extension =
-    AZL = azul_flake8:AzulImports
-paths =
-    .flake8

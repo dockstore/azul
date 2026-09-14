@@ -11,22 +11,19 @@ jobs:
 
       - uses: 'actions/checkout@v4'
 
-      - run: 'cat environment.boot >> "$GITHUB_ENV"'
-
       - uses: 'actions/setup-python@v5'
         with:
-          python-version: '${{ env.azul_python_version }}'
+          python-version: '3.12'
           cache: 'pip'
-          cache-dependency-path: 'requirements.dev.txt'
+          cache-dependency-path: 'requirements.txt'
 
-      - name: 'Create environment and check that script runs with expected error message'
+      - name: 'Install dependencies and check that script runs with expected error message'
+        env:
+          AZUL_DEBUG: '0'
+          AWS_DEFAULT_REGION: 'us-east-1'
+          PYTHONPATH: 'src'
         run: |
-          source environment || true  # load global defaults
-          _select dev || true
-          source environment || true
-          make virtualenv
-          source .venv/bin/activate
-          make requirements || true
-          
+          pip install -r requirements.txt
+
           # Run the export script, should bomb due to no credentials, not a dependency issue
-          python scripts/export_inspector_findings.py  2>&1 | grep -n2 "Unable to locate credentials"
+          python scripts/export_inspector_findings.py 2>&1 | grep -n2 "Unable to locate credentials"

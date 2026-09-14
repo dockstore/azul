@@ -1,3 +1,0 @@
-source "${azul_home}/deployments/dev/environment"
-
-_set azul_terraform_component gitlab
