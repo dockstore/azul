@@ -9,7 +9,17 @@ import csv
 import datetime
 import json
 import logging
+import os
+from pathlib import (
+    Path,
+)
 import sys
+
+import boto3
+
+# Make the `azul` package importable when this script is run directly,
+# without requiring PYTHONPATH to be set beforehand.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / 'src'))
 
 from azul.args import (
     AzulArgumentHelpFormatter,
@@ -253,7 +263,19 @@ class ParseInspectorFindings:
             csv_writer.writerows(rows)
 
 
+def _set_env_defaults() -> None:
+    # AZUL_DEBUG controls log verbosity for azul.logging; default to the
+    # production logging level when the caller hasn't set it explicitly.
+    os.environ.setdefault('AZUL_DEBUG', '0')
+    # Only default the region if boto3 can't otherwise resolve one (from
+    # AWS_DEFAULT_REGION/AWS_REGION or the ~/.aws/config profile), so an
+    # explicit configuration is never overridden.
+    if boto3.Session().region_name is None:
+        os.environ.setdefault('AWS_DEFAULT_REGION', 'us-east-1')
+
+
 if __name__ == '__main__':
+    _set_env_defaults()
     configure_script_logging(log)
     parser = ParseInspectorFindings(sys.argv[1:])
     sys.exit(parser.main())

@@ -1,27 +1,13 @@
 # Python
 *.pyc
 __pycache__/
-.mypy_cache/
-# Python coverage
-/.coverage
-/.coverage.*
-/test_profile.html
-/fedramp_inventory.xlsx
-# FIXME: Remove fips_enabled
-#        https://github.com/DataBiosphere/azul/issues/6675
-/fips_enabled
 
-## Build products above this line. Please see the `clean` target in Makefile.
-
-# Local environment configuration
-/deployments/.active
-/deployments/*.local/
-/environment.local.py
-/deployments/*/environment.local.py
-/deployments/*/.terraform/
-/deployments/*/.terraform.*/
-/deployments/*/.gcloud/
-# Virtual environment created by Makefile
+# Virtual environment
 /.venv/
+
 # PyCharm
 /.idea
+
+# Script output
+/inspector-findings_*.csv
+/inspector-findings_*.json
